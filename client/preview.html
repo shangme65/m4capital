@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>M4 Capital - Enhanced Animations & Features</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- TradingView Widget Script -->
+    <script
+      type="text/javascript"
+      src="https://s3.tradingview.com/tv.js"
+    ></script>
+    <style>
+      /* ===== KEYFRAMES DEFINITIONS ===== */
+
+      /* Enhanced fade in animations with different directions */
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(60px);
+        }
+        50% {
+          opacity: 0.6;
+          transform: translateY(15px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        10%,
+        30%,
+        50%,
+        70%,
+        90% {
+          transform: translateX(-10px);
+        }
+        20%,
+        40%,
+        60%,
+        80% {
+          transform: translateX(10px);
+        }
+      }
+
+      .animate-shake {
+        animation: shake 0.8s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      }
+
+      .animate-fadeIn {
+        animation: fadeInUp 0.6s ease-out;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0) translateX(0) scale(1);
+          opacity: 0.4;
+        }
+        25% {
+          transform: translateY(-25px) translateX(15px) scale(1.05);
+          opacity: 0.9;
+        }
+        50% {
+          transform: translateY(-50px) translateX(-20px) scale(1);
+          opacity: 0.5;
+        }
+        75% {
+          transform: translateY(-20px) translateX(25px) scale(1.05);
+          opacity: 0.7;
+        }
+      }
+
+      .animate-float {
+        animation: float linear infinite;
+      }
+
+      .bg-grid-pattern {
+        background-image: linear-gradient(
+            rgba(255, 255, 255, 0.05) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+        background-size: 20px 20px;
+      }
+
+      /* For the preloader animation */
+      .animate-ping {
+        animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+      }
+
+      @keyframes ping {
+        0% {
+          transform: scale(1);
+          opacity: 0.9;
+        }
+        50% {
+          transform: scale(1.5);
+          opacity: 0.5;
+        }
+        75%,
+        100% {
+          transform: scale(2.5);
+          opacity: 0;
+        }
+      }
+
+      .animate-spin {
+        animation: spin 6s linear infinite;
+      }
+
+      /* Additional animations */
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 0.6;
+        }
+        100% {
+          opacity: 1;
+        }
+      }
+
+      @keyframes fadeInLeft {
+        0% {
+          opacity: 0;
+          transform: translate3d(-70px, 0, 0);
+        }
+        60% {
+          opacity: 0.7;
+          transform: translate3d(-20px, 0, 0);
+        }
+        100% {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+
+      @keyframes fadeInRight {
+        0% {
+          opacity: 0;
+          transform: translate3d(70px, 0, 0);
+        }
+        60% {
+          opacity: 0.7;
+          transform: translate3d(20px, 0, 0);
+        }
+        100% {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+        }
+      }
+
+      @keyframes zoomIn {
+        0% {
+          opacity: 0;
+          transform: scale3d(0.2, 0.2, 0.2);
+        }
+        50% {
+          opacity: 0.7;
+          transform: scale3d(1.1, 1.1, 1.1);
+        }
+        100% {
+          opacity: 1;
+          transform: scale3d(1, 1, 1);
+        }
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(255, 204, 0, 0.4);
+        }
+        50% {
+          transform: scale(1.1);
+          box-shadow: 0 0 0 10px rgba(255, 204, 0, 0);
+        }
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(255, 204, 0, 0);
+        }
+      }
+
+      @keyframes gradientBackground {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .animate-fadeIn {
+        animation: fadeIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      .animate-fadeInUp {
+        animation: fadeInUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      .animate-fadeInLeft {
+        animation: fadeInLeft 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      .animate-fadeInRight {
+        animation: fadeInRight 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      .animate-zoomIn {
+        animation: zoomIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      .animate-pulse {
+        animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      }
+
+      /* Animation delay classes */
+      .delay-100 {
+        animation-delay: 100ms;
+      }
+      .delay-200 {
+        animation-delay: 200ms;
+      }
+      .delay-300 {
+        animation-delay: 300ms;
+      }
+      .delay-400 {
+        animation-delay: 400ms;
+      }
+      .delay-500 {
+        animation-delay: 500ms;
+      }
+      .delay-600 {
+        animation-delay: 600ms;
+      }
+      .delay-700 {
+        animation-delay: 700ms;
+      }
+      .delay-800 {
+        animation-delay: 800ms;
+      }
+      .delay-900 {
+        animation-delay: 900ms;
+      }
+      .delay-1000 {
+        animation-delay: 1000ms;
+      }
+
+      /* Gradient animation background */
+      .animated-gradient {
+        background: linear-gradient(270deg, #0f172a, #1e293b, #334155);
+        background-size: 600% 600%;
+        animation: gradientBackground 15s ease infinite;
+      }
+
+      /* Forex ticker animation */
+      @keyframes tickerMove {
+        0% {
+          transform: translateX(100%);
+        }
+        100% {
+          transform: translateX(-100%);
+        }
+      }
+
+      .ticker-container {
+        overflow: hidden;
+        white-space: nowrap;
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .ticker-move {
+        animation: tickerMove 30s linear infinite;
+        display: inline-block;
+      }
+
+      /* Improved responsive design */
+      @media (max-width: 768px) {
+        .ticker-container {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        .ticker-move {
+          animation: none;
+        }
+      }
+      @keyframes spin {
+        from {
+          transform: rotate(0deg);
+        }
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @keyframes bounce {
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-30px);
+        }
+        60% {
+          transform: translateY(-15px);
+        }
+      }
+
+      .animate-bounce {
+        animation: bounce 2s ease infinite;
+      }
+    </style>
+  </head>
+  <body class="bg-indigo-900 min-h-screen">
+    <!-- Navigation -->
+    <nav
+      id="header-nav"
+      class="fixed w-full z-50 transition-all duration-300 bg-indigo-900/95 backdrop-blur-md py-2 md:py-3 shadow-lg animate-fadeIn"
+    >
+      <div
+        class="container mx-auto px-3 md:px-6 flex flex-wrap md:flex-nowrap items-center justify-between"
+      >
+        <!-- Logo -->
+        <div class="flex items-center animate-fadeInLeft">
+          <!-- Dynamic triangular logo -->
+          <div class="mr-2 md:mr-3">
+            <!-- Triangle shapes -->
+            <div
+              class="relative w-12 h-12 md:w-16 md:h-16 flex items-center justify-center"
+            >
+              <!-- Bottom triangle - yellow -->
+              <div
+                class="absolute w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-b-[36px] border-b-yellow-400 animate-pulse"
+                style="animation-duration: 3s; transform-origin: center bottom"
+              ></div>
+              <!-- Top triangle - semi-transparent -->
+              <div
+                class="absolute w-0 h-0 border-l-[16px] border-l-transparent border-r-[16px] border-r-transparent border-b-[28px] border-b-indigo-900 transform -translate-y-1 animate-float"
+                style="animation-duration: 6s; transform-origin: center bottom"
+              ></div>
+              <!-- M4 text -->
+              <div class="absolute top-2 z-10 animate-zoomIn delay-500">
+                <span
+                  class="font-extrabold text-xl text-yellow-400 animate-pulse"
+                  style="animation-duration: 2s"
+                  >M4+</span
+                >
+              </div>
+            </div>
+          </div>
+          <!-- Company name -->
+          <div class="flex flex-col">
+            <div
+              class="text-xl md:text-2xl font-bold text-white animate-fadeIn delay-300"
+            >
+              <span
+                class="text-yellow-400 animate-pulse"
+                style="animation-duration: 4s"
+                >M4</span
+              >
+              Capital
+            </div>
+            <div
+              class="text-xs text-gray-300 tracking-widest uppercase animate-fadeInRight delay-600 hidden sm:block"
+            >
+              Trading Excellence
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <div
+          class="hidden lg:flex lg:items-center lg:space-x-8 animate-fadeInRight"
+        >
+          <a
+            href="#"
+            class="text-white hover:text-yellow-400 font-medium flex items-center space-x-1 transition-colors duration-200 py-2 px-1 relative group text-yellow-400 animate-zoomIn delay-100"
+            style="animation-duration: 1.5s"
+          >
+            <span
+              class="mr-1 animate-pulse"
+              style="animation-duration: 3s; display: inline-block"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"
+                />
+              </svg>
+            </span>
+            <span>Home</span>
+            <span
+              class="absolute bottom-0 left-0 w-full h-0.5 bg-yellow-400 transform scale-x-100 group-hover:scale-x-100 transition-transform duration-300"
+            ></span>
+          </a>
+          <a
+            href="#"
+            class="text-white hover:text-yellow-400 font-medium flex items-center space-x-1 transition-colors duration-200 py-2 px-1 relative group animate-fadeIn delay-200"
+          >
+            <span class="mr-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fill-rule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </span>
+            <span>About</span>
+            <span
+              class="absolute bottom-0 left-0 w-full h-0.5 bg-yellow-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+            ></span>
+          </a>
+          <a
+            href="#"
+            class="text-white hover:text-yellow-400 font-medium flex items-center space-x-1 transition-colors duration-200 py-2 px-1 relative group"
+          >
+            <span class="mr-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"
+                />
+              </svg>
+            </span>
+            <span>Features</span>
+            <span
+              class="absolute bottom-0 left-0 w-full h-0.5 bg-yellow-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+            ></span>
+          </a>
+          <a
+            href="#"
+            class="text-white hover:text-yellow-400 font-medium flex items-center space-x-1 transition-colors duration-200 py-2 px-1 relative group"
+          >
+            <span class="mr-1">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"
+                />
+                <path
+                  d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"
+                />
+              </svg>
+            </span>
+            <span>Contact</span>
+            <span
+              class="absolute bottom-0 left-0 w-full h-0.5 bg-yellow-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"
+            ></span>
+          </a>
+        </div>
+
+        <!-- User actions - desktop -->
+        <div class="hidden lg:flex items-center">
+          <button
+            class="bg-gradient-to-r from-yellow-400 to-yellow-500 px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-indigo-900 font-bold shadow-md hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center animate-bounce text-sm md:text-base"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-4 w-4 md:h-5 md:w-5 mr-1 md:mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fill-rule="evenodd"
+                d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            Login / Register
+          </button>
+        </div>
+
+        <!-- Mobile menu button -->
+        <button
+          class="lg:hidden text-white p-1.5 md:p-2 bg-indigo-700/80 hover:bg-yellow-500/90 hover:text-indigo-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-yellow-400 rounded-md ml-auto"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h16m-7 6h7"
+            />
+          </svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- About Page -->
+    <div class="pt-16 md:pt-20 lg:pt-24 pb-12 md:pb-16 animated-gradient">
+      <div class="container mx-auto px-3 sm:px-4">
+        <!-- About Hero Section -->
+        <div
+          class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-900 to-indigo-800 mb-16 animate-fadeIn shadow-xl"
+        >
+          <div
+            class="absolute top-0 right-0 w-64 h-64 bg-yellow-400/20 rounded-full -translate-y-1/2 translate-x-1/2 filter blur-3xl animate-pulse"
+            style="animation-duration: 6s"
+          ></div>
+          <div
+            class="absolute bottom-0 left-0 w-64 h-64 bg-indigo-400/20 rounded-full translate-y-1/2 -translate-x-1/2 filter blur-3xl animate-pulse"
+            style="animation-duration: 8s; animation-delay: 1s"
+          ></div>
+
+          <div
+            class="grid md:grid-cols-2 gap-6 lg:gap-8 items-center py-8 md:py-12 px-4 sm:px-6 md:px-12 relative z-10"
+          >
+            <div class="order-2 md:order-1 animate-fadeInLeft">
+              <h1 class="text-4xl md:text-5xl font-bold mb-4 text-white">
+                About
+                <span
+                  class="text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-200"
+                  style="animation: gradientBackground 3s ease infinite"
+                  >M4 Capital</span
+                >
+              </h1>
+              <p class="text-indigo-100 text-lg mb-6 animate-fadeIn delay-300">
+                Founded in 2022, M4 Capital has quickly established itself as a
+                leading platform for forex trading. Our mission is to provide
+                accessible, transparent, and powerful trading tools to investors
+                worldwide.
+              </p>
+              <div class="flex flex-wrap gap-4">
+                <div
+                  class="bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-1 min-w-[180px] animate-fadeInUp delay-200 hover:bg-white/20 transition-all duration-300"
+                >
+                  <div
+                    class="text-yellow-400 text-2xl font-bold animate-fadeIn delay-400"
+                  >
+                    $1.2B+
+                  </div>
+                  <div class="text-indigo-200">Trading Volume</div>
+                </div>
+                <div
+                  class="bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-1 min-w-[180px] animate-fadeInUp delay-400 hover:bg-white/20 transition-all duration-300"
+                >
+                  <div
+                    class="text-yellow-400 text-2xl font-bold animate-fadeIn delay-600"
+                  >
+                    25K+
+                  </div>
+                  <div class="text-indigo-200">Active Traders</div>
+                </div>
+                <div
+                  class="bg-white/10 backdrop-blur-sm rounded-xl p-4 flex-1 min-w-[180px] animate-fadeInUp delay-600 hover:bg-white/20 transition-all duration-300"
+                >
+                  <div
+                    class="text-yellow-400 text-2xl font-bold animate-zoomIn delay-800"
+                    style="animation-duration: 2s"
+                  >
+                    50+
+                  </div>
+                  <div class="text-indigo-200 animate-fadeInUp delay-1000">
+                    Countries Served
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              class="order-1 md:order-2 flex justify-center animate-fadeInRight"
+            >
+              <div class="relative">
+                <div
+                  class="absolute inset-0 bg-yellow-400 rounded-full opacity-20 blur-md transform -translate-x-4 translate-y-4 animate-pulse"
+                  style="animation-duration: 4s"
+                ></div>
+                <img
+                  src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1740&q=80"
+                  alt="Professional trader"
+                  class="relative z-10 rounded-2xl border-2 border-indigo-300/30 shadow-2xl max-w-full h-auto"
+                  width="400"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Cryptocurrency Prices -->
+        <div
+          class="mb-12 md:mb-16 mt-6 md:mt-8 bg-indigo-800/70 py-3 md:py-4 border-t border-b border-indigo-700 shadow-lg rounded-xl overflow-hidden"
+        >
+          <div class="container mx-auto px-2">
+            <h3
+              class="text-base md:text-lg font-semibold text-white mb-3 md:mb-4 text-center"
+            >
+              Live Cryptocurrency Market
+            </h3>
+
+            <!-- TradingView Crypto Market Widget BEGIN -->
+            <div class="tradingview-widget-container">
+              <div class="tradingview-widget-container__widget"></div>
+              <div class="tradingview-widget-copyright">
+                <a
+                  href="https://www.tradingview.com/markets/cryptocurrencies/prices-all/"
+                  rel="noopener nofollow"
+                  target="_blank"
+                >
+                  <span class="blue-text">Cryptocurrency Markets</span>
+                </a>
+                by M4Capital
+              </div>
+              <script
+                type="text/javascript"
+                src="https://s3.tradingview.com/external-embedding/embed-widget-screener.js"
+                async
+              >
+                {
+                  "width": "100%",
+                  "height": 180,
+                  "defaultColumn": "overview",
+                  "screener_type": "crypto_mkt",
+                  "displayCurrency": "USD",
+                  "colorTheme": "dark",
+                  "locale": "en",
+                  "isTransparent": true,
+                  "largeChartUrl": "",
+                  "market": "crypto"
+                }
+              </script>
+            </div>
+            <!-- TradingView Widget END -->
+          </div>
+        </div>
+
+        <!-- Our Vision -->
+        <div class="mb-16">
+          <h2
+            class="text-3xl font-bold mb-8 text-center animate-pulse"
+            style="
+              animation-duration: 3s;
+              background: linear-gradient(to right, #4338ca, #818cf8, #4338ca);
+              -webkit-background-clip: text;
+              background-clip: text;
+              -webkit-text-fill-color: transparent;
+              color: transparent;
+              background-size: 200% auto;
+              animation: gradientBackground 3s ease infinite;
+            "
+          >
+            Our Vision
+          </h2>
+          <div class="grid md:grid-cols-2 gap-10 items-center">
+            <div>
+              <p class="text-gray-800 dark:text-gray-300 text-lg mb-4">
+                At M4 Capital, we envision a future where financial trading is
+                accessible to everyone, regardless of their background or
+                experience level. We're committed to democratizing access to
+                financial markets through cutting-edge technology and
+                educational resources.
+              </p>
+              <p class="text-gray-800 dark:text-gray-300 text-lg">
+                Our platform is built on the principles of transparency,
+                security, and innovation. We continuously evolve our offerings
+                to meet the changing needs of traders in a dynamic global
+                market.
+              </p>
+            </div>
+            <div
+              class="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/30 dark:to-gray-800/30 p-8 rounded-2xl shadow-lg"
+            >
+              <h3
+                class="font-bold text-xl text-indigo-800 dark:text-indigo-300 mb-4"
+              >
+                Core Values
+              </h3>
+              <ul class="space-y-3">
+                <li class="flex items-start">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-yellow-500 mr-2 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span class="text-gray-700 dark:text-gray-300"
+                    ><strong class="text-indigo-700 dark:text-indigo-300"
+                      >Integrity:</strong
+                    >
+                    We uphold the highest standards of honesty and ethical
+                    conduct in all our operations.</span
+                  >
+                </li>
+                <li class="flex items-start">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-yellow-500 mr-2 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span class="text-gray-700 dark:text-gray-300"
+                    ><strong class="text-indigo-700 dark:text-indigo-300"
+                      >Innovation:</strong
+                    >
+                    We constantly push the boundaries of what's possible in
+                    trading technology.</span
+                  >
+                </li>
+                <li class="flex items-start">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-yellow-500 mr-2 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span class="text-gray-700 dark:text-gray-300"
+                    ><strong class="text-indigo-700 dark:text-indigo-300"
+                      >Accessibility:</strong
+                    >
+                    We make trading approachable for both beginners and
+                    experienced traders.</span
+                  >
+                </li>
+                <li class="flex items-start">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-yellow-500 mr-2 flex-shrink-0"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span class="text-gray-700 dark:text-gray-300"
+                    ><strong class="text-indigo-700 dark:text-indigo-300"
+                      >Security:</strong
+                    >
+                    We implement rigorous protection measures to safeguard our
+                    clients' investments.</span
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Why Choose Us -->
+        <div class="mb-16">
+          <h2
+            class="text-3xl font-bold text-indigo-900 dark:text-indigo-300 mb-8 text-center"
+          >
+            Why Choose Us
+          </h2>
+          <div class="grid md:grid-cols-3 gap-6">
+            <div
+              class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+            >
+              <div class="h-2 bg-yellow-400"></div>
+              <div class="p-6">
+                <div
+                  class="bg-indigo-100 dark:bg-indigo-900/30 rounded-full w-12 h-12 flex items-center justify-center mb-4"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-indigo-700 dark:text-indigo-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                </div>
+                <h3
+                  class="text-xl font-bold text-gray-900 dark:text-white mb-2"
+                >
+                  Advanced Security
+                </h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                  We utilize state-of-the-art encryption and security protocols
+                  to ensure your investments and personal information remain
+                  protected at all times.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+            >
+              <div class="h-2 bg-indigo-600"></div>
+              <div class="p-6">
+                <div
+                  class="bg-indigo-100 dark:bg-indigo-900/30 rounded-full w-12 h-12 flex items-center justify-center mb-4"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-indigo-700 dark:text-indigo-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                </div>
+                <h3
+                  class="text-xl font-bold text-gray-900 dark:text-white mb-2"
+                >
+                  Market Analytics
+                </h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                  Our platform provides comprehensive market analysis tools that
+                  help you make informed decisions based on real-time data and
+                  trends.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
+            >
+              <div class="h-2 bg-green-500"></div>
+              <div class="p-6">
+                <div
+                  class="bg-indigo-100 dark:bg-indigo-900/30 rounded-full w-12 h-12 flex items-center justify-center mb-4"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 text-indigo-700 dark:text-indigo-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"
+                    />
+                  </svg>
+                </div>
+                <h3
+                  class="text-xl font-bold text-gray-900 dark:text-white mb-2"
+                >
+                  24/7 Support
+                </h3>
+                <p class="text-gray-600 dark:text-gray-300">
+                  Our dedicated team of experts is available around the clock to
+                  assist you with any questions or concerns about your trading
+                  experience.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team Section -->
+        <div class="animate-fadeIn" style="animation-delay: 300ms">
+          <h2
+            class="text-3xl font-bold text-indigo-900 dark:text-indigo-300 mb-8 text-center animate-fadeInUp"
+          >
+            Our Leadership Team
+          </h2>
+          <div class="grid md:grid-cols-4 gap-6">
+            <div
+              class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg group animate-fadeInUp delay-100 hover:shadow-2xl transition-all duration-300"
+            >
+              <div class="h-48 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"
+                  alt="CEO"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-gray-900 dark:text-white">
+                  James Wilson
+                </h3>
+                <p class="text-indigo-600 dark:text-indigo-400 text-sm mb-2">
+                  Chief Executive Officer
+                </p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">
+                  Former investment banker with 15+ years experience in
+                  financial markets.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg group"
+            >
+              <div class="h-48 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=688&q=80"
+                  alt="CTO"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-gray-900 dark:text-white">
+                  Sarah Chen
+                </h3>
+                <p class="text-indigo-600 dark:text-indigo-400 text-sm mb-2">
+                  Chief Technology Officer
+                </p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">
+                  Tech innovator with background in fintech and algorithmic
+                  trading systems.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg group"
+            >
+              <div class="h-48 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80"
+                  alt="CFO"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-gray-900 dark:text-white">
+                  Michael Rodriguez
+                </h3>
+                <p class="text-indigo-600 dark:text-indigo-400 text-sm mb-2">
+                  Chief Financial Officer
+                </p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">
+                  Certified financial analyst with expertise in risk management
+                  and compliance.
+                </p>
+              </div>
+            </div>
+
+            <div
+              class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg group"
+            >
+              <div class="h-48 bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1580894732444-8ecded7900cd?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
+                  alt="COO"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div class="p-4">
+                <h3 class="font-bold text-gray-900 dark:text-white">
+                  Amanda Lewis
+                </h3>
+                <p class="text-indigo-600 dark:text-indigo-400 text-sm mb-2">
+                  Chief Operating Officer
+                </p>
+                <p class="text-gray-600 dark:text-gray-300 text-sm">
+                  Strategic operations expert with experience scaling fintech
+                  startups.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testimonials Section -->
+        <div class="py-12 md:py-16 bg-gradient-to-b from-indigo-800 to-indigo-900">
+          <div class="container mx-auto px-4 sm:px-6">
+            <div class="text-center mb-8 md:mb-12">
+              <h2
+                class="text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-3 md:mb-4 animate-fadeIn"
+              >
+                What Our <span class="text-yellow-400">Clients</span> Say
+              </h2>
+              <p
+                class="text-indigo-200 max-w-2xl mx-auto text-sm md:text-base animate-fadeInUp delay-300"
+              >
+                Discover why thousands of traders choose M4 Capital for their forex
+                trading needs. Here's what some of our satisfied clients have to
+                share about their experience.
+              </p>
+            </div>
+
+            <div id="testimonial-carousel" class="max-w-2xl mx-auto"></div>
+            <script>
+            // Advanced testimonials data
+            const testimonials = [
+              {
+                name: "James Davidson",
+                nationality: "United Kingdom",
+                flag: "🇬🇧",
+                image: "https://randomuser.me/api/portraits/men/32.jpg",
+                role: "Professional Trader, 2 years with M4",
+                review: "M4 Capital has transformed my trading experience. Their platform is intuitive, fast, and provides real-time analytics that have helped me make informed decisions. I've increased my monthly returns by 27% since joining.",
+                rating: 5
+              },
+              {
+                name: "Sarah Reynolds",
+                nationality: "United States",
+                flag: "🇺🇸",
+                image: "https://randomuser.me/api/portraits/women/44.jpg",
+                role: "Retail Investor, 1.5 years with M4",
+                review: "The customer support at M4 Capital is unmatched. Whenever I've had questions or concerns, they've responded quickly and effectively. Their educational resources have helped me grow from a novice to a confident trader.",
+                rating: 5
+              },
+              {
+                name: "Michael Thompson",
+                nationality: "Canada",
+                flag: "🇨🇦",
+                image: "https://randomuser.me/api/portraits/men/65.jpg",
+                role: "Financial Advisor, 3 years with M4",
+                review: "As a financial advisor, I recommend M4 Capital to my clients who are interested in forex trading. The platform's security features, transparent fee structure, and detailed reporting make it an excellent choice for serious investors.",
+                rating: 5
+              },
+              {
+                name: "Aiko Tanaka",
+                nationality: "Japan",
+                flag: "🇯🇵",
+                image: "https://randomuser.me/api/portraits/women/68.jpg",
+                role: "Forex Analyst, 4 years with M4",
+                review: "M4 Capital's analytics tools are top-notch. I can track trends and make predictions with confidence. The platform is secure and always up-to-date.",
+                rating: 5
+              },
+              {
+                name: "Carlos Mendez",
+                nationality: "Mexico",
+                flag: "🇲🇽",
+                image: "https://randomuser.me/api/portraits/men/23.jpg",
+                role: "Day Trader, 2.5 years with M4",
+                review: "I love the mobile app! Trading on the go is seamless and fast. The deposit and withdrawal process is smooth and transparent.",
+                rating: 4
+              },
+              {
+                name: "Fatima Al-Farsi",
+                nationality: "United Arab Emirates",
+                flag: "🇦🇪",
+                image: "https://randomuser.me/api/portraits/women/12.jpg",
+                role: "Institutional Investor, 5 years with M4",
+                review: "M4 Capital's risk management features are excellent. I can set limits and alerts easily. The support team is always available.",
+                rating: 5
+              },
+              {
+                name: "Luca Rossi",
+                nationality: "Italy",
+                flag: "🇮🇹",
+                image: "https://randomuser.me/api/portraits/men/41.jpg",
+                role: "Swing Trader, 3 years with M4",
+                review: "The educational webinars and resources have helped me refine my strategies. The community is active and supportive.",
+                rating: 4
+              },
+              {
+                name: "Sophie Dubois",
+                nationality: "France",
+                flag: "🇫🇷",
+                image: "https://randomuser.me/api/portraits/women/56.jpg",
+                role: "Portfolio Manager, 2 years with M4",
+                review: "Portfolio management is a breeze with M4 Capital. The dashboard is clear and customizable. Highly recommended!",
+                rating: 5
+              },
+              {
+                name: "Hans Müller",
+                nationality: "Germany",
+                flag: "🇩🇪",
+                image: "https://randomuser.me/api/portraits/men/77.jpg",
+                role: "Algorithmic Trader, 4 years with M4",
+                review: "API access and automation features are robust. I can run my trading bots with zero downtime. The platform is reliable.",
+                rating: 5
+              },
+              {
+                name: "Priya Singh",
+                nationality: "India",
+                flag: "🇮🇳",
+                image: "https://randomuser.me/api/portraits/women/21.jpg",
+                role: "Options Trader, 2 years with M4",
+                review: "Options trading is easy to understand and execute. The tutorials and guides are very helpful for beginners.",
+                rating: 4
+              },
+              {
+                name: "Ahmed El-Sayed",
+                nationality: "Egypt",
+                flag: "🇪🇬",
+                image: "https://randomuser.me/api/portraits/men/14.jpg",
+                role: "Market Strategist, 3 years with M4",
+                review: "I appreciate the transparency in fees and commissions. The reporting tools are detailed and easy to use.",
+                rating: 5
+              },
+              {
+                name: "Maria Ivanova",
+                nationality: "Russia",
+                flag: "🇷🇺",
+                image: "https://randomuser.me/api/portraits/women/33.jpg",
+                role: "Crypto Trader, 2 years with M4",
+                review: "Crypto trading is secure and fast. I can easily switch between forex and crypto markets. The interface is modern and intuitive.",
+                rating: 5
+              },
+              {
+                name: "Chloe Smith",
+                nationality: "Australia",
+                flag: "🇦🇺",
+                image: "https://randomuser.me/api/portraits/women/45.jpg",
+                role: "Long-term Investor, 3 years with M4",
+                review: "Long-term investing is simple with M4 Capital. The analytics and projections are very useful for planning.",
+                rating: 4
+              },
+              {
+                name: "Pedro Silva",
+                nationality: "Brazil",
+                flag: "🇧🇷",
+                image: "https://randomuser.me/api/portraits/men/52.jpg",
+                role: "Scalper, 1.5 years with M4",
+                review: "Fast execution and low spreads make scalping profitable. The real-time alerts are a game changer.",
+                rating: 5
+              },
+              {
+                name: "Elena Popescu",
+                nationality: "Romania",
+                flag: "🇷🇴",
+                image: "https://randomuser.me/api/portraits/women/29.jpg",
+                role: "Technical Analyst, 2 years with M4",
+                review: "Technical analysis tools are advanced and easy to use. I can save and share my charts with colleagues.",
+                rating: 5
+              }
+            ];
+
+            function renderTestimonial(index) {
+              const t = testimonials[index];
+              const stars = Array.from({length: t.rating}, (_, i) => `<svg xmlns='http://www.w3.org/2000/svg' class='h-5 w-5 inline-block text-yellow-400' viewBox='0 0 20 20' fill='currentColor'><path d='M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z'/></svg>`).join("");
+              document.getElementById('testimonial-carousel').innerHTML = `
+                <div class='relative bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl flex flex-col items-center text-center animate-fadeInUp transition-all duration-500'>
+                  <div class='w-24 h-24 rounded-full overflow-hidden border-4 border-yellow-400 shadow-lg mb-4'>
+                    <img src='${t.image}' alt='${t.name}' class='w-full h-full object-cover'/>
+                  </div>
+                  <div class='flex items-center justify-center mb-2'>
+                    <span class='text-2xl mr-2'>${t.flag}</span>
+                    <span class='text-indigo-200 text-base font-semibold'>${t.nationality}</span>
+                  </div>
+                  <h4 class='font-bold text-white text-xl mb-1'>${t.name}</h4>
+                  <p class='text-indigo-300 text-sm mb-2'>${t.role}</p>
+                  <div class='mb-3'>${stars}</div>
+                  <p class='text-indigo-100 italic text-lg mb-2 max-w-xl mx-auto'>"${t.review}"</p>
+                </div>
+              `;
+            }
+
+            let testimonialIndex = 0;
+            renderTestimonial(testimonialIndex);
+            setInterval(() => {
+              testimonialIndex = (testimonialIndex + 1) % testimonials.length;
+              renderTestimonial(testimonialIndex);
+            }, 3000);
+            </script>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-indigo-900 text-white">
+          <div class="container mx-auto px-6 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div class="md:col-span-1">
+                <div class="flex items-center mb-4">
+                  <div
+                    class="w-10 h-10 rounded-full bg-yellow-400 flex items-center justify-center text-indigo-900 font-bold mr-3"
+                  >
+                    M4
+                  </div>
+                  <span class="text-xl font-bold">M4 Capital</span>
+                </div>
+                <p class="text-indigo-200 mb-4">
+                  Empowering traders with cutting-edge technology and market
+                  insights.
+                </p>
+                <div class="flex space-x-4">
+                  <a href="#" class="text-gray-300 hover:text-white">
+                    <span class="sr-only">Facebook</span>
+                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path
+                        fill-rule="evenodd"
+                        d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                  </a>
+                  <a href="#" class="text-gray-300 hover:text-white">
+                    <span class="sr-only">Instagram</span>
+                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path
+                        fill-rule="evenodd"
+                        d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z"
+                        clip-rule="evenodd"
+                      ></path>
+                    </svg>
+                  </a>
+                  <a href="#" class="text-gray-300 hover:text-white">
+                    <span class="sr-only">Twitter</span>
+                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                      <path
+                        d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"
+                      ></path>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-4">Quick Links</h3>
+                <ul class="space-y-2">
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white">Home</a>
+                  </li>
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white"
+                      >About Us</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white"
+                      >Features</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white">Pricing</a>
+                  </li>
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white">Contact</a>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-4">Resources</h3>
+                <ul class="space-y-2">
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white">Blog</a>
+                  </li>
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white"
+                      >Market Analysis</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white"
+                      >Trading Guides</a
+                    >
+                  </li>
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white">FAQ</a>
+                  </li>
+                  <li>
+                    <a href="#" class="text-indigo-200 hover:text-white"
+                      >Help Center</a
+                    >
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h3 class="text-lg font-semibold mb-4">Subscribe</h3>
+                <p class="text-indigo-200 mb-4">
+                  Get the latest updates and offers.
+                </p>
+                <form class="flex mb-4">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    class="px-4 py-2 rounded-l-lg w-full focus:outline-none text-gray-900"
+                  />
+                  <button
+                    class="bg-yellow-400 text-indigo-900 font-bold px-4 py-2 rounded-r-lg hover:bg-yellow-500 transition-colors"
+                  >
+                    Subscribe
+                  </button>
+                </form>
+                <p class="text-indigo-300 text-sm">
+                  By subscribing, you agree to our Privacy Policy.
+                </p>
+              </div>
+            </div>
+            <div
+              class="border-t border-indigo-800 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center"
+            >
+              <p class="text-indigo-300 text-sm">
+                &copy; 2025 M4 Capital. All rights reserved.
+              </p>
+              <div class="flex space-x-4 mt-4 md:mt-0">
+                <a href="#" class="text-indigo-300 hover:text-white text-sm"
+                  >Privacy Policy</a
+                >
+                <a href="#" class="text-indigo-300 hover:text-white text-sm"
+                  >Terms of Service</a
+                >
+                <a href="#" class="text-indigo-300 hover:text-white text-sm"
+                  >Legal</a
+                >
+              </div>
+            </div>
+          </div>
+        </footer>
+
+        <!-- Preview of preloader (shows for 5 seconds then fades out) -->
+        <div
+          id="preloader"
+          class="fixed inset-0 bg-gradient-to-br from-indigo-900 via-gray-900 to-black flex flex-col items-center justify-center z-50 overflow-hidden"
+        >
+          <!-- Decorative background elements -->
+          <div class="absolute inset-0 overflow-hidden">
+            <div
+              class="absolute top-1/3 left-1/4 w-64 h-64 bg-yellow-400/10 rounded-full filter blur-3xl animate-pulse"
+            ></div>
+            <div
+              class="absolute bottom-1/3 right-1/4 w-80 h-80 bg-indigo-600/10 rounded-full filter blur-3xl animate-pulse"
+              style="animation-delay: 1s"
+            ></div>
+
+            <!-- Grid lines -->
+            <div class="absolute inset-0 bg-grid-pattern opacity-10"></div>
+
+            <!-- Animated particles -->
+            <div class="absolute inset-0">
+              <div
+                class="absolute w-1 h-1 bg-white rounded-full animate-float"
+                style="top: 20%; left: 30%; opacity: 0.5; animation-duration: 6s"
+              ></div>
+              <div
+                class="absolute w-1 h-1 bg-white rounded-full animate-float"
+                style="
+                  top: 70%;
+                  left: 10%;
+                  opacity: 0.4;
+                  animation-duration: 8s;
+                  animation-delay: 1s;
+                "
+              ></div>
+              <div
+                class="absolute w-1 h-1 bg-white rounded-full animate-float"
+                style="
+                  top: 40%;
+                  left: 80%;
+                  opacity: 0.6;
+                  animation-duration: 7s;
+                  animation-delay: 2s;
+                "
+              ></div>
+              <div
+                class="absolute w-1 h-1 bg-white rounded-full animate-float"
+                style="
+                  top: 60%;
+                  left: 60%;
+                  opacity: 0.5;
+                  animation-duration: 9s;
+                  animation-delay: 0.5s;
+                "
+              ></div>
+              <div
+                class="absolute w-1 h-1 bg-white rounded-full animate-float"
+                style="top: 30%; left: 50%; opacity: 0.7; animation-duration: 5s"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Main content -->
+          <div class="relative text-center max-w-md mx-auto px-6">
+            <!-- Logo animation -->
+            <div class="mb-8 relative animate-zoomIn">
+              <div class="relative w-24 h-24 mx-auto">
+                <div
+                  class="absolute inset-0 bg-yellow-400 rounded-full opacity-20 animate-ping"
+                  style="animation-duration: 3s"
+                ></div>
+                <div
+                  class="absolute inset-0 border-4 border-indigo-500/50 rounded-full animate-spin"
+                  style="animation-duration: 8s; border-right-color: transparent"
+                ></div>
+                <div
+                  class="absolute inset-2 border-4 border-yellow-400/50 rounded-full animate-spin"
+                  style="
+                    animation-duration: 5s;
+                    animation-direction: reverse;
+                    border-top-color: transparent;
+                  "
+                ></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div
+                    class="text-yellow-400 font-bold text-3xl animate-pulse"
+                    style="animation-duration: 2.5s"
+                  >
+                    M4
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h1
+              class="text-4xl font-bold text-white mb-2 relative animate-fadeInUp delay-300"
+            >
+              <span
+                class="bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-yellow-200"
+              >
+                M4 Capital
+              </span>
+            </h1>
+
+            <p class="text-indigo-200 mb-6 text-lg animate-fadeInUp delay-500">
+              Loading your financial dashboard...
+            </p>
+
+            <!-- Progress bar -->
+            <div
+              class="w-full bg-gray-700/50 rounded-full h-1.5 mb-8 overflow-hidden animate-fadeIn delay-700"
+            >
+              <div
+                class="bg-gradient-to-r from-yellow-400 via-yellow-300 to-indigo-400 h-full rounded-full transition-all duration-1000"
+                style="width: 70%; animation: gradientBackground 2s ease infinite"
+              ></div>
+            </div>
+
+            <div
+              class="text-sm text-indigo-200/80 p-4 bg-white/5 rounded-xl backdrop-blur-sm border border-white/10 animate-fadeInUp delay-900"
+            >
+              <div class="flex items-center justify-center space-x-2 mb-2">
+                <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                <p>
+                  User:
+                  <span
+                    class="text-yellow-300 font-medium animate-pulse"
+                    style="animation-duration: 3s"
+                    >victordots</span
+                  >
+                </p>
+              </div>
+              <p>
+                Time (UTC):
+                <span class="font-mono animate-fadeIn delay-1000"
+                  >2025-08-09 15:39:04</span
+                >
+              </p>
+              <div class="mt-3 flex items-center justify-center space-x-3">
+                <div class="w-2 h-2 bg-green-400 rounded-full animate-ping"></div>
+                <div
+                  class="w-2 h-2 bg-blue-400 rounded-full animate-ping"
+                  style="animation-delay: 0.3s"
+                ></div>
+                <div
+                  class="w-2 h-2 bg-yellow-400 rounded-full animate-ping"
+                  style="animation-delay: 0.6s"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="absolute bottom-6 left-0 right-0 text-center">
+            <p class="text-gray-400 text-xs">
+              © 2025 M4 Capital. All rights reserved.
+              <span class="ml-1 text-indigo-400">Secure Trading Platform</span>
+            </p>
+          </div>
+        </div>
+
+        <script>
+          // Auto-hide preloader after 5 seconds
+          setTimeout(function () {
+            document.getElementById("preloader").style.opacity = "0";
+            document.getElementById("preloader").style.transition =
+              "opacity 1s ease-out";
+            setTimeout(function () {
+              document.getElementById("preloader").style.display = "none";
+            }, 1000);
+          }, 5000);
+
+          // Header fade on scroll
+          window.addEventListener("scroll", function () {
+            // Get viewport width
+            const vw = Math.max(
+              document.documentElement.clientWidth || 0,
+              window.innerWidth || 0
+            );
+
+            // Adjust fade threshold based on screen size
+            const startFade = vw < 768 ? 50 : 100;
+            const fadeRange = vw < 768 ? 150 : 200;
+
+            // Calculate opacity based on scroll position
+            const opacity = Math.max(
+              0.98 - (window.scrollY - startFade) / fadeRange,
+              0.2
+            );
+            const headerNav = document.getElementById("header-nav");
+            if (headerNav) {
+              headerNav.style.opacity = opacity > 0.2 ? opacity : 0.2;
+            }
+          });
+        </script>
+      </body>
+    </html>
