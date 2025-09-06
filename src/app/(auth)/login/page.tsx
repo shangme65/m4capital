@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AnimatedButton from "@/components/client/AnimatedButton";
+import Link from "next/link";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
