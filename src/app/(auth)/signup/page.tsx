@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import AnimatedButton from "@/components/client/AnimatedButton";
+import Link from "next/link";
 
-export default function LoginPage() {
+export default function SignUpPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,26 +16,51 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-    });
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    if (result?.error) {
-      setError("Invalid email or password. Please try again.");
-    } else {
-      router.push("/dashboard");
+      if (res.ok) {
+        router.push("/login");
+      } else {
+        const data = await res.json();
+        setError(data.message || "Something went wrong.");
+      }
+    } catch (error) {
+      setError("Something went wrong.");
     }
   };
 
   return (
     <div className="animate-slide-in-elliptic-top-fwd bg-gray-900 bg-opacity-75 backdrop-blur-md p-8 rounded-2xl shadow-2xl border border-gray-700">
       <h2 className="text-3xl font-bold text-center text-white mb-6">
-        Login to m4capital
+        Create an Account
       </h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         {error && <p className="text-red-500 text-center">{error}</p>}
+        <div>
+          <label
+            htmlFor="name"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Full Name
+          </label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            autoComplete="name"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
         <div>
           <label
             htmlFor="email"
@@ -64,7 +90,7 @@ export default function LoginPage() {
             id="password"
             name="password"
             type="password"
-            autoComplete="current-password"
+            autoComplete="new-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -72,16 +98,16 @@ export default function LoginPage() {
           />
         </div>
         <div>
-          <AnimatedButton type="submit" text="Sign In" className="w-full" />
+          <AnimatedButton type="submit" text="Sign Up" className="w-full" />
         </div>
       </form>
       <p className="mt-6 text-center text-sm text-gray-400">
-        Don't have an account?{" "}
+        Already have an account?{" "}
         <Link
-          href="/signup"
+          href="/login"
           className="font-medium text-indigo-400 hover:text-indigo-300"
         >
-          Sign up
+          Sign in
         </Link>
       </p>
     </div>
