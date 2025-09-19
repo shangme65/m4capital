@@ -12,6 +12,16 @@ import HowItWorks from "@/components/client/HowItWorks";
 import MarketNews from "@/components/client/MarketNews";
 import TradingPlatforms from "@/components/client/TradingPlatforms";
 
+type AnimationVariant = {
+  initial: { opacity: number; x?: number; y?: number; scale?: number };
+  animate: { opacity: number; x?: number; y?: number; scale?: number };
+  exit: { opacity: number; x?: number; y?: number; scale?: number };
+};
+
+type AnimationVariants = {
+  [key: string]: AnimationVariant;
+};
+
 function Hero() {
   const images = [
     "/background-1.jpg",
@@ -121,7 +131,7 @@ function Hero() {
     },
   ];
 
-  const animationVariants = {
+  const animationVariants: AnimationVariants = {
     slideLeft: {
       initial: { opacity: 0, x: -100 },
       animate: { opacity: 1, x: 0 },
