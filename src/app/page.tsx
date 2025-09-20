@@ -11,6 +11,7 @@ import FAQ from "@/components/client/FAQ";
 import HowItWorks from "@/components/client/HowItWorks";
 import MarketNews from "@/components/client/MarketNews";
 import TradingPlatforms from "@/components/client/TradingPlatforms";
+import Preloader from "@/components/client/Preloader";
 
 type AnimationVariant = {
   initial: { opacity: number; x?: number; y?: number; scale?: number };
@@ -252,6 +253,17 @@ function CallToAction() {
 }
 
 export default function Home() {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 3500); // Corresponds to preloader animation
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return <Preloader />;
+  }
+
   return (
     <main>
       <Hero />
