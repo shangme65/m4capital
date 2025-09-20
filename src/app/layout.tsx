@@ -7,17 +7,19 @@ import { Footer } from "@/components/layout/Footer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://m4capital-fqpoqgx2h-shang-team.vercel.app"),
   title: "m4capital - The Future of Forex Trading",
-  description: "High-performance and user-friendly Forex trading website with dynamic designs.",
+  description:
+    "High-performance and user-friendly Forex trading website with dynamic designs.",
   keywords: "Forex, Trading, Crypto, Investment, m4capital",
   openGraph: {
     title: "m4capital - The Future of Forex Trading",
     description: "Join the next generation of trading.",
-    url: "https://your-domain.com", // Replace with your domain
+    url: "https://m4capital-fqpoqgx2h-shang-team.vercel.app",
     siteName: "m4capital",
     images: [
       {
-        url: "https://your-domain.com/og-image.png", // Replace with your OG image URL
+        url: "/og-image.png", // Hosted at the root
         width: 1200,
         height: 630,
       },
@@ -28,7 +30,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "m4capital - The Future of Forex Trading",
-    description: "High-performance and user-friendly Forex trading website with dynamic designs.",
+    description:
+      "High-performance and user-friendly Forex trading website with dynamic designs.",
     // creator: "@yourtwitterhandle", // Replace with your Twitter handle
     images: ["https://your-domain.com/og-image.png"], // Replace
   },
