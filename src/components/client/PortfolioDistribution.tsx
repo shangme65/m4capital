@@ -53,7 +53,10 @@ const PortfolioDistribution = () => {
                 {asset.change}%
               </p>
             </div>
-            <button className="ml-4 text-gray-400 hover:text-white">
+            <button
+              className="ml-4 text-gray-400 hover:text-white"
+              title="More options"
+            >
               <MoreVertical size={20} />
             </button>
           </li>

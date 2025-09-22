@@ -34,8 +34,12 @@ export default async function handler(
         data: {
           amount,
           status: "COMPLETED",
-          userId,
-          portfolioId: updatedPortfolio.id,
+          currency: "USD", // Or get from request if available
+          portfolio: {
+            connect: {
+              id: updatedPortfolio.id,
+            },
+          },
         },
       });
 

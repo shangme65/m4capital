@@ -9,8 +9,6 @@ import Testimonials from "@/components/client/Testimonials";
 import CryptoPriceTicker from "@/components/client/CryptoPriceTicker";
 import FAQ from "@/components/client/FAQ";
 import HowItWorks from "@/components/client/HowItWorks";
-import MarketNews from "@/components/client/MarketNews";
-import TradingPlatforms from "@/components/client/TradingPlatforms";
 import Preloader from "@/components/client/Preloader";
 
 type AnimationVariant = {
@@ -24,11 +22,7 @@ type AnimationVariants = {
 };
 
 function Hero() {
-  const images = [
-    "/background-1.jpg",
-    "/background-2.jpg",
-    "/background-3.jpg",
-  ];
+  const images = ["/hero-bg-1.jpg", "/hero-bg-2.jpg", "/hero-bg-3.jpg"];
 
   const heroContent = [
     {
@@ -161,39 +155,41 @@ function Hero() {
   };
   const variantNames = Object.keys(animationVariants);
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [contentIndex, setContentIndex] = useState(0);
+  const [title, setTitle] = useState(heroContent[0].title);
+  const [description, setDescription] = useState(heroContent[0].description);
   const [titleAnimation, setTitleAnimation] = useState(variantNames[0]);
   const [descAnimation, setDescAnimation] = useState(variantNames[1]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % heroContent.length);
-    }, 5000); // Change index every 5 seconds
+      const nextIndex = (contentIndex + 1) % heroContent.length;
+
+      // Start title change
+      setTimeout(() => {
+        let newTitleVariantName =
+          variantNames[Math.floor(Math.random() * variantNames.length)];
+        setTitleAnimation(newTitleVariantName);
+        setTitle(heroContent[nextIndex].title);
+      }, 0);
+
+      // Start description change after a delay
+      setTimeout(() => {
+        let newDescVariantName =
+          variantNames[Math.floor(Math.random() * variantNames.length)];
+        while (newDescVariantName === titleAnimation) {
+          newDescVariantName =
+            variantNames[Math.floor(Math.random() * variantNames.length)];
+        }
+        setDescAnimation(newDescVariantName);
+        setDescription(heroContent[nextIndex].description);
+      }, 1500); // 1.5s delay for description
+
+      setContentIndex(nextIndex);
+    }, 5000); // Change content every 5 seconds
 
     return () => clearInterval(interval);
-  }, [heroContent.length]);
-
-  useEffect(() => {
-    // Update title animation
-    let newTitleVariantName =
-      variantNames[Math.floor(Math.random() * variantNames.length)];
-    setTitleAnimation(newTitleVariantName);
-
-    // Update description animation with a delay
-    const timeoutId = setTimeout(() => {
-      let newDescVariantName =
-        variantNames[Math.floor(Math.random() * variantNames.length)];
-      while (newDescVariantName === newTitleVariantName) {
-        newDescVariantName =
-          variantNames[Math.floor(Math.random() * variantNames.length)];
-      }
-      setDescAnimation(newDescVariantName);
-    }, 2500); // 2.5 seconds delay
-
-    return () => clearTimeout(timeoutId);
-  }, [currentIndex]);
-
-  const currentContent = heroContent[currentIndex];
+  }, [contentIndex, heroContent.length, titleAnimation]);
 
   return (
     <div className="relative h-screen w-full flex items-center justify-center overflow-hidden">
@@ -202,7 +198,7 @@ function Hero() {
       <div className="relative z-10 text-center text-white p-4 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.h1
-            key={`title-${currentIndex}`}
+            key={title}
             variants={animationVariants[titleAnimation]}
             initial="initial"
             animate="animate"
@@ -211,12 +207,12 @@ function Hero() {
             className="text-4xl md:text-6xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400"
             style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.5)" }}
           >
-            {currentContent.title}
+            {title}
           </motion.h1>
         </AnimatePresence>
         <AnimatePresence mode="wait">
           <motion.p
-            key={`description-${currentIndex}`}
+            key={description}
             variants={animationVariants[descAnimation]}
             initial="initial"
             animate="animate"
@@ -224,7 +220,7 @@ function Hero() {
             transition={{ duration: 0.7, ease: "circOut" }}
             className="text-xl md:text-2xl mb-8 drop-shadow-md max-w-3xl mx-auto"
           >
-            {currentContent.description}
+            {description}
           </motion.p>
         </AnimatePresence>
         <div className="space-x-4 mt-8">
@@ -270,10 +266,8 @@ export default function Home() {
       <CryptoPriceTicker />
       <Features />
       <HowItWorks />
-      <TradingPlatforms />
       <Testimonials />
       <FAQ />
-      <MarketNews />
       <CallToAction />
     </main>
   );

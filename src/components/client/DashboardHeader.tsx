@@ -15,7 +15,10 @@ const DashboardHeader = () => {
     >
       <h1 className="text-2xl font-bold text-white">Dashboard</h1>
       <div className="flex items-center">
-        <button className="text-gray-400 hover:text-white mr-6">
+        <button
+          className="text-gray-400 hover:text-white mr-6"
+          title="Notifications"
+        >
           <Bell size={24} />
         </button>
         <div className="flex items-center">
