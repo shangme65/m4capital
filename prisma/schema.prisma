@@ -49,6 +49,7 @@ model User {
 
   // M4Capital specific fields
   role          UserRole  @default(USER)
+  accountType   AccountType @default(INVESTOR)
   portfolio     Portfolio?
 }
 
@@ -63,6 +64,11 @@ model VerificationToken {
 enum UserRole {
   USER
   ADMIN
+}
+
+enum AccountType {
+  INVESTOR
+  TRADER
 }
 
 model Portfolio {

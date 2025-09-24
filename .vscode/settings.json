@@ -1,0 +1,43 @@
+{
+  // VS Code MCP Configuration
+  "mcp.servers": {
+    "filesystem": {
+      "command": "node",
+      "args": [
+        "--experimental-modules",
+        "-e",
+        "console.log('MCP Filesystem Server')"
+      ],
+      "env": {
+        "MCP_ROOT_PATH": "c:/Users/HP/Desktop/m4capital"
+      }
+    }
+  },
+
+  // Disable problematic MCP servers
+  "copilot-mcp.disableServers": ["figma"],
+
+  // General VS Code Settings for Development
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "typescript.preferences.importModuleSpecifier": "relative",
+  "emmet.includeLanguages": {
+    "typescript": "html",
+    "typescriptreact": "html"
+  },
+  "files.associations": {
+    "*.tsx": "typescriptreact",
+    "*.ts": "typescript"
+  },
+  "tailwindCSS.includeLanguages": {
+    "typescript": "typescript",
+    "typescriptreact": "typescriptreact"
+  },
+  "tailwindCSS.experimental.classRegex": [
+    ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+    ["classnames\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ]
+}

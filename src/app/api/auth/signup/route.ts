@@ -4,11 +4,16 @@ import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const { name, email, password, accountType } = await req.json();
 
     if (!name || !email || !password) {
       return new NextResponse("Missing fields", { status: 400 });
     }
+
+    const normalizedAccountType =
+      accountType && ["INVESTOR", "TRADER"].includes(accountType)
+        ? accountType
+        : "INVESTOR"; // default
 
     const exist = await prisma.user.findUnique({
       where: {
@@ -27,6 +32,7 @@ export async function POST(req: Request) {
         name,
         email,
         password: hashedPassword,
+        accountType: normalizedAccountType,
         portfolio: {
           create: {},
         },

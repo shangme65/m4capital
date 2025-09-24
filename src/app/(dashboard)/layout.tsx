@@ -1,6 +1,7 @@
 import Sidebar from "@/components/client/Sidebar";
 import DashboardHeader from "@/components/client/DashboardHeader";
 import AuthProvider from "@/components/client/AuthProvider";
+import { SidebarProvider } from "@/components/client/SidebarContext";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -18,15 +19,17 @@ export default async function DashboardLayout({
 
   return (
     <AuthProvider>
-      <div className="flex h-screen bg-gray-900">
-        <Sidebar />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <DashboardHeader />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-8">
-            {children}
-          </main>
+      <SidebarProvider>
+        <div className="flex h-screen bg-gray-900 relative">
+          <Sidebar />
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <DashboardHeader />
+            <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-8">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
+      </SidebarProvider>
     </AuthProvider>
   );
 }

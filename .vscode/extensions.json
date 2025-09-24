@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode",
+    "ms-vscode.vscode-json",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+    "ms-vscode.vscode-eslint",
+    "ms-vscode-remote.remote-containers",
+    "ms-vscode.vscode-github-copilot",
+    "ms-vscode.vscode-github-copilot-chat",
+    "ms-vscode.hexeditor",
+    "ms-vscode.powershell",
+    "ms-vscode.vscode-git-graph"
+  ]
+}

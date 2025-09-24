@@ -27,7 +27,7 @@ export function Header() {
             width={40}
             height={40}
           />
-          <span className="ml-2 text-xl font-bold md:hidden">capital</span>
+          <span className="ml-0.1 text-xl font-bold md:hidden">capital</span>
         </Link>
 
         {/* Widescreen Menu */}

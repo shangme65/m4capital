@@ -47,7 +47,20 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as User).role; // Casting to include role
+        token.role = (user as User).role;
+        token.accountType = (
+          user as User & { accountType?: string }
+        ).accountType;
+      } else if (token.id) {
+        // Ensure we refresh accountType from DB in case it changed
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { accountType: true, role: true },
+        });
+        if (dbUser) {
+          token.accountType = dbUser.accountType;
+          token.role = dbUser.role;
+        }
       }
       return token;
     },
@@ -55,6 +68,7 @@ export const authOptions: AuthOptions = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.accountType = token.accountType as string | undefined;
       }
       return session;
     },
