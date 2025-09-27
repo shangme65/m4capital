@@ -10,13 +10,14 @@ const Preloader = () => {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black"
     >
       <motion.div
-        initial={{ scale: 0 }}
-        animate={{ rotate: 360, scale: 1 }}
+        initial={{ scale: 0.9 }}
+        animate={{
+          scale: [0.9, 1.05, 0.9],
+        }}
         transition={{
-          type: "spring",
-          stiffness: 260,
-          damping: 20,
-          duration: 2,
+          duration: 1.4,
+          ease: "easeInOut",
+          repeat: Infinity,
         }}
         className="w-32 h-32"
       >

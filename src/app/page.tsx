@@ -204,26 +204,28 @@ function Hero() {
             animate="animate"
             exit="exit"
             transition={{ duration: 0.7, ease: "circOut" }}
-            className="text-4xl md:text-6xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400"
+            className="text-4xl md:text-6xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400"
             style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.5)" }}
           >
             {title}
           </motion.h1>
         </AnimatePresence>
-        <AnimatePresence mode="wait">
-          <motion.p
-            key={description}
-            variants={animationVariants[descAnimation]}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.7, ease: "circOut" }}
-            className="text-xl md:text-2xl mb-8 drop-shadow-md max-w-3xl mx-auto"
-          >
-            {description}
-          </motion.p>
-        </AnimatePresence>
-        <div className="space-x-4 mt-8">
+        <div className="h-28 flex items-center justify-center mb-8">
+          <AnimatePresence mode="wait">
+            <motion.p
+              key={description}
+              variants={animationVariants[descAnimation]}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.7, ease: "circOut" }}
+              className="text-xl md:text-2xl drop-shadow-md max-w-3xl mx-auto"
+            >
+              {description}
+            </motion.p>
+          </AnimatePresence>
+        </div>
+        <div className="space-x-4 mt-12">
           <AnimatedButton href="/login" text="Get Started" />
         </div>
       </div>

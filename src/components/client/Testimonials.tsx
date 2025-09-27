@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FaStar } from "react-icons/fa";
+import { SiTrustpilot } from "react-icons/si";
 import { VscVerifiedFilled } from "react-icons/vsc";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -182,14 +183,12 @@ const testimonials = [
   },
 ];
 
-const StarRating = ({ rating }: { rating: number }) => (
-  <div className="flex items-center justify-center">
-    {[...Array(5)].map((_, i) => (
-      <FaStar
-        key={i}
-        className={i < rating ? "text-yellow-400" : "text-gray-600"}
-      />
-    ))}
+const TrustpilotRating = () => (
+  <div className="flex items-center justify-center gap-2 text-lg text-gray-300">
+    <SiTrustpilot className="text-green-500" size={24} />
+    <span className="font-bold">4.5</span>
+    <FaStar className="text-gray-300" size={18} />
+    <span>on Trustpilot</span>
   </div>
 );
 
@@ -229,7 +228,7 @@ const Testimonials: React.FC = () => {
               className="rounded-full mb-4 border-4 border-indigo-500 shadow-lg"
             />
             <div className="mb-4">
-              <StarRating rating={currentTestimonial.rating} />
+              <TrustpilotRating />
             </div>
             <blockquote className="text-xl italic leading-8 mb-6">
               <p>"{currentTestimonial.quote}"</p>

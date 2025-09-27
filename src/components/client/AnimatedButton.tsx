@@ -18,7 +18,8 @@ export default function AnimatedButton({
   variant = "primary",
   className = ""
 }: AnimatedButtonProps) {
-  const primaryClasses = "bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white";
+  // Brand orange primary button to match logo color
+  const primaryClasses = "bg-orange-500 hover:bg-orange-600 text-white";
   const secondaryClasses = "bg-transparent border-2 border-white text-white";
 
   const buttonContent = (

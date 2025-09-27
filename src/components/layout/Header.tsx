@@ -19,7 +19,7 @@ export function Header() {
 
   return (
     <header className="absolute top-0 left-0 right-0 z-20 bg-black bg-opacity-0 text-white">
-      <nav className="container mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
+      <nav className="container mx-auto px-8 sm:px-12 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center">
           <Image
             src="/m4capitallogo2.png"
@@ -27,7 +27,7 @@ export function Header() {
             width={40}
             height={40}
           />
-          <span className="ml-0.1 text-xl font-bold md:hidden">capital</span>
+          <span className="ml-0. text-xl font-bold">capital</span>
         </Link>
 
         {/* Widescreen Menu */}
