@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, accountType } = await req.json();
+    const { name, email, password, accountType, country } = await req.json();
 
     if (!name || !email || !password) {
       return new NextResponse("Missing fields", { status: 400 });
@@ -28,15 +28,17 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await prisma.user.create({
+      // Cast to any to allow optional 'country' before migration is applied across all environments
       data: {
         name,
         email,
         password: hashedPassword,
         accountType: normalizedAccountType,
+        country: country || undefined,
         portfolio: {
           create: {},
         },
-      },
+      } as any,
     });
 
     return NextResponse.json(user);

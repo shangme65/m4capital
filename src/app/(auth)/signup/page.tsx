@@ -10,6 +10,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accountType, setAccountType] = useState("INVESTOR");
+  const [country, setCountry] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
 
@@ -23,7 +24,7 @@ export default function SignUpPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name, email, password, accountType }),
+        body: JSON.stringify({ name, email, password, accountType, country }),
       });
 
       if (res.ok) {
@@ -64,6 +65,42 @@ export default function SignUpPage() {
         </div>
         <div>
           <label
+            htmlFor="country"
+            className="block text-sm font-medium text-gray-300"
+          >
+            Country
+          </label>
+          <select
+            id="country"
+            name="country"
+            required
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          >
+            <option value="" disabled>
+              Select your country
+            </option>
+            <option value="US">United States</option>
+            <option value="GB">United Kingdom</option>
+            <option value="CA">Canada</option>
+            <option value="AU">Australia</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+            <option value="NG">Nigeria</option>
+            <option value="ZA">South Africa</option>
+            <option value="IN">India</option>
+            <option value="SG">Singapore</option>
+            <option value="BR">Brazil</option>
+            <option value="JP">Japan</option>
+            <option value="CN">China</option>
+            <option value="MX">Mexico</option>
+            <option value="ES">Spain</option>
+            <option value="IT">Italy</option>
+          </select>
+        </div>
+        <div>
+          <label
             htmlFor="email"
             className="block text-sm font-medium text-gray-300"
           >
@@ -86,35 +123,6 @@ export default function SignUpPage() {
             className="block text-sm font-medium text-gray-300"
           >
             Password
-            <fieldset>
-              <legend className="block text-sm font-medium text-gray-300 mb-2">
-                Registering As
-              </legend>
-              <div className="flex gap-6">
-                <label className="flex items-center gap-2 text-gray-300 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="accountType"
-                    value="INVESTOR"
-                    checked={accountType === "INVESTOR"}
-                    onChange={(e) => setAccountType(e.target.value)}
-                    className="text-indigo-500 focus:ring-indigo-500 focus:outline-none"
-                  />
-                  Investor
-                </label>
-                <label className="flex items-center gap-2 text-gray-300 text-sm cursor-pointer">
-                  <input
-                    type="radio"
-                    name="accountType"
-                    value="TRADER"
-                    checked={accountType === "TRADER"}
-                    onChange={(e) => setAccountType(e.target.value)}
-                    className="text-indigo-500 focus:ring-indigo-500 focus:outline-none"
-                  />
-                  Trader
-                </label>
-              </div>
-            </fieldset>
           </label>
           <input
             id="password"
@@ -126,6 +134,37 @@ export default function SignUpPage() {
             onChange={(e) => setPassword(e.target.value)}
             className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           />
+        </div>
+        <div>
+          <fieldset>
+            <legend className="block text-sm font-medium text-gray-300 mb-2">
+              Registering As
+            </legend>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 text-gray-300 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  name="accountType"
+                  value="INVESTOR"
+                  checked={accountType === "INVESTOR"}
+                  onChange={(e) => setAccountType(e.target.value)}
+                  className="text-indigo-500 focus:ring-indigo-500 focus:outline-none"
+                />
+                Investor
+              </label>
+              <label className="flex items-center gap-2 text-gray-300 text-sm cursor-pointer">
+                <input
+                  type="radio"
+                  name="accountType"
+                  value="TRADER"
+                  checked={accountType === "TRADER"}
+                  onChange={(e) => setAccountType(e.target.value)}
+                  className="text-indigo-500 focus:ring-indigo-500 focus:outline-none"
+                />
+                Trader
+              </label>
+            </div>
+          </fieldset>
         </div>
         <div>
           <AnimatedButton type="submit" text="Sign Up" className="w-full" />
