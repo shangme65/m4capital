@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AnimatedButton from "@/components/client/AnimatedButton";
+import { countriesSorted } from "@/lib/countries";
 import Link from "next/link";
 
 export default function SignUpPage() {
@@ -81,22 +82,11 @@ export default function SignUpPage() {
             <option value="" disabled>
               Select your country
             </option>
-            <option value="US">United States</option>
-            <option value="GB">United Kingdom</option>
-            <option value="CA">Canada</option>
-            <option value="AU">Australia</option>
-            <option value="DE">Germany</option>
-            <option value="FR">France</option>
-            <option value="NG">Nigeria</option>
-            <option value="ZA">South Africa</option>
-            <option value="IN">India</option>
-            <option value="SG">Singapore</option>
-            <option value="BR">Brazil</option>
-            <option value="JP">Japan</option>
-            <option value="CN">China</option>
-            <option value="MX">Mexico</option>
-            <option value="ES">Spain</option>
-            <option value="IT">Italy</option>
+            {countriesSorted.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
           </select>
         </div>
         <div>

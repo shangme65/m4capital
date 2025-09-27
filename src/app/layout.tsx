@@ -11,8 +11,29 @@ export const metadata: Metadata = {
   description:
     "High-performance and user-friendly Forex trading website with dynamic designs.",
   keywords: "Forex, Trading, Crypto, Investment, m4capital",
+  icons: {
+    icon: [
+      { url: "/icons/icon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/icons/icon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/icons/icon-48.png", type: "image/png", sizes: "48x48" },
+      { url: "/icons/icon-64.png", type: "image/png", sizes: "64x64" },
+      { url: "/icons/icon-96.png", type: "image/png", sizes: "96x96" },
+      { url: "/icons/icon-128.png", type: "image/png", sizes: "128x128" },
+      { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icons/icon-256.png", type: "image/png", sizes: "256x256" },
+      { url: "/icons/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/icons/icon-120.png", sizes: "120x120", type: "image/png" },
+      { url: "/icons/icon-152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icons/icon-167.png", sizes: "167x167", type: "image/png" },
+      { url: "/icons/icon-180.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: ["/icons/icon-96.png"],
+  },
+  manifest: "/site.webmanifest",
   openGraph: {
-    title: "m4capital - The Future of Forex Trading",
+    title: "The Future of Forex Trading - M4 Capital",
     description: "Join the next generation of trading.",
     url: "https://m4capital-fqpoqgx2h-shang-team.vercel.app",
     siteName: "m4capital",
