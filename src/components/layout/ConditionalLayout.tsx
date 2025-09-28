@@ -11,7 +11,8 @@ export function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const isDashboardRoute =
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/admin") ||
-    pathname === "/dashboard";
+    pathname === "/dashboard" ||
+    pathname?.startsWith("/settings");
 
   if (isDashboardRoute) {
     // For dashboard routes, don't show header and footer

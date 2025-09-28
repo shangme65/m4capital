@@ -1,65 +1,541 @@
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
-import BalanceSummary from "@/components/client/BalanceSummary";
-import PortfolioDistribution from "@/components/client/PortfolioDistribution";
-import RecentTransactions from "@/components/client/RecentTransactions";
+"use client";
+import { useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 
-// This is a server component to fetch data
-async function getPortfolioData(userId: string) {
-  const portfolio = await prisma.portfolio.findUnique({
-    where: { userId },
-    include: {
-      deposits: true,
-      withdrawals: true,
+export default function DashboardPage() {
+  const { data: session } = useSession();
+  const [portfolioValue] = useState(24891.42);
+  const [todayChange] = useState(2.45);
+  const [availableBalance] = useState(5420.0);
+  const [lastUpdated, setLastUpdated] = useState("Just now");
+
+  // Mock data for user assets
+  const [userAssets] = useState([
+    {
+      symbol: "BTC",
+      name: "Bitcoin",
+      amount: 0.8542,
+      value: 52847.32,
+      change: 3.24,
+      icon: "₿",
     },
-  });
-  return portfolio;
-}
+    {
+      symbol: "ETH",
+      name: "Ethereum",
+      amount: 12.67,
+      value: 31245.89,
+      change: -1.45,
+      icon: "Ξ",
+    },
+    {
+      symbol: "ADA",
+      name: "Cardano",
+      amount: 8420.15,
+      value: 2847.21,
+      change: 5.67,
+      icon: "₳",
+    },
+    {
+      symbol: "SOL",
+      name: "Solana",
+      amount: 45.23,
+      value: 6789.43,
+      change: 2.81,
+      icon: "◎",
+    },
+    {
+      symbol: "USDT",
+      name: "Tether",
+      amount: 5420.0,
+      value: 5420.0,
+      change: 0.01,
+      icon: "₮",
+    },
+  ]);
 
-export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    redirect("/login");
-  }
+  // Mock data for recent activity
+  const [recentActivity] = useState([
+    {
+      id: 1,
+      type: "buy",
+      asset: "BTC",
+      amount: 0.1234,
+      value: 7856.32,
+      timestamp: "2 hours ago",
+      status: "completed",
+    },
+    {
+      id: 2,
+      type: "sell",
+      asset: "ETH",
+      amount: 2.5,
+      value: 6234.78,
+      timestamp: "5 hours ago",
+      status: "completed",
+    },
+    {
+      id: 3,
+      type: "deposit",
+      asset: "USD",
+      amount: 10000,
+      value: 10000,
+      timestamp: "1 day ago",
+      status: "completed",
+    },
+    {
+      id: 4,
+      type: "convert",
+      asset: "ADA → SOL",
+      amount: 1000,
+      value: 425.67,
+      timestamp: "2 days ago",
+      status: "completed",
+    },
+    {
+      id: 5,
+      type: "withdraw",
+      asset: "USD",
+      amount: 2500,
+      value: 2500,
+      timestamp: "3 days ago",
+      status: "pending",
+    },
+  ]);
 
-  const portfolio = await getPortfolioData(session.user.id);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLastUpdated("Just now");
+    }, 30000); // Update every 30 seconds
 
-  if (!portfolio) {
-    return (
-      <div className="text-white">
-        No portfolio found. Please contact support.
-      </div>
-    );
-  }
+    return () => clearInterval(timer);
+  }, []);
 
-  const totalDeposits = portfolio.deposits.reduce(
-    (acc, d) => acc + Number(d.amount),
-    0
-  );
-  const totalWithdrawals = portfolio.withdrawals.reduce(
-    (acc, w) => acc + Number(w.amount),
-    0
-  );
-  // Placeholder for profit/loss calculation
-  const profitLoss =
-    Number(portfolio.balance) - totalDeposits + totalWithdrawals;
+  const handleDeposit = () => {
+    // TODO: Implement deposit functionality
+    console.log("Deposit clicked");
+  };
+
+  const handleWithdraw = () => {
+    // TODO: Implement withdraw functionality
+    console.log("Withdraw clicked");
+  };
+
+  const handleBuy = () => {
+    // TODO: Implement buy functionality
+    console.log("Buy clicked");
+  };
+
+  const handleSell = () => {
+    // TODO: Implement sell functionality
+    console.log("Sell clicked");
+  };
+
+  const handleTransfer = () => {
+    // TODO: Implement transfer functionality
+    console.log("Transfer clicked");
+  };
+
+  const handleConvert = () => {
+    // TODO: Implement convert functionality
+    console.log("Convert clicked");
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case "buy":
+        return (
+          <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 11l5-5m0 0l5 5m-5-5v12"
+              />
+            </svg>
+          </div>
+        );
+      case "sell":
+        return (
+          <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 13l-5 5m0 0l-5-5m5 5V6"
+              />
+            </svg>
+          </div>
+        );
+      case "deposit":
+        return (
+          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+              />
+            </svg>
+          </div>
+        );
+      case "withdraw":
+        return (
+          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M18 12H6"
+              />
+            </svg>
+          </div>
+        );
+      case "convert":
+        return (
+          <div className="w-8 h-8 bg-orange-600 rounded-full flex items-center justify-center">
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              />
+            </svg>
+          </div>
+        );
+      default:
+        return (
+          <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
+            <svg
+              className="w-4 h-4 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="space-y-8">
-      <BalanceSummary
-        balance={Number(portfolio.balance)}
-        profitLoss={profitLoss}
-        deposits={totalDeposits}
-        withdrawals={totalWithdrawals}
-      />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <PortfolioDistribution />
+      {/* Portfolio Value Card */}
+      <div className="bg-gray-800/50 rounded-2xl p-8 border border-gray-700/50">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-white">Portfolio Value</h1>
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <span>Last updated: {lastUpdated}</span>
+            <button
+              onClick={() => setLastUpdated("Just now")}
+              className="text-gray-400 hover:text-white transition-colors"
+              title="Refresh data"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
-        <div>
-          <RecentTransactions />
+
+        <div className="mb-8">
+          <div className="text-5xl font-bold text-white mb-2">
+            $
+            {portfolioValue.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-green-400 text-lg font-medium">
+              +{todayChange}%
+            </span>
+            <span className="text-gray-400">Today</span>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mb-8">
+          <button
+            onClick={handleDeposit}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          >
+            Deposit
+          </button>
+          <button
+            onClick={handleWithdraw}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium border border-gray-600 transition-colors"
+          >
+            Withdraw
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-gray-400 text-lg">Available</span>
+          <span className="text-white text-xl font-medium">
+            $
+            {availableBalance.toLocaleString("en-US", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="mt-3">
+          <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-500 rounded-full transition-all duration-300 w-[22%]" />
+          </div>
+        </div>
+      </div>
+
+      {/* Trading Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <button
+          onClick={handleBuy}
+          className="bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl font-semibold text-lg transition-colors flex flex-col items-center gap-2"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 11l5-5m0 0l5 5m-5-5v12"
+            />
+          </svg>
+          Buy
+        </button>
+
+        <button
+          onClick={handleSell}
+          className="bg-red-600 hover:bg-red-700 text-white p-6 rounded-xl font-semibold text-lg transition-colors flex flex-col items-center gap-2"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 13l-5 5m0 0l-5-5m5 5V6"
+            />
+          </svg>
+          Sell
+        </button>
+
+        <button
+          onClick={handleTransfer}
+          className="bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-xl font-semibold text-lg transition-colors flex flex-col items-center gap-2"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+            />
+          </svg>
+          Transfer
+        </button>
+
+        <button
+          onClick={handleConvert}
+          className="bg-orange-600 hover:bg-orange-700 text-white p-6 rounded-xl font-semibold text-lg transition-colors flex flex-col items-center gap-2"
+        >
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 5H6a2 2 0 00-2 2v6a2 2 0 002 2h2m2-6h10m0 0l-4-4m4 4l-4 4m0 0v-5m0 5h2a2 2 0 002-2V7a2 2 0 00-2-2h-2"
+            />
+          </svg>
+          Convert
+        </button>
+      </div>
+
+      {/* User Assets and Recent Activity */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        {/* User Assets */}
+        <div className="xl:col-span-2">
+          <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">Your Assets</h2>
+              <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                View All
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {userAssets.map((asset) => (
+                <div
+                  key={asset.symbol}
+                  className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl border border-gray-700/30"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-white">
+                      {asset.icon}
+                    </div>
+                    <div>
+                      <div className="text-white font-semibold">
+                        {asset.symbol}
+                      </div>
+                      <div className="text-gray-400 text-sm">{asset.name}</div>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-white font-semibold">
+                      $
+                      {asset.value.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </div>
+                    <div className="text-sm text-gray-400">
+                      {asset.amount.toLocaleString("en-US", {
+                        minimumFractionDigits: 4,
+                        maximumFractionDigits: 4,
+                      })}{" "}
+                      {asset.symbol}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`text-sm font-medium ${
+                      asset.change >= 0 ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {asset.change >= 0 ? "+" : ""}
+                    {asset.change}%
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="xl:col-span-1">
+          <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-white">Recent Activity</h2>
+              <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+                View All
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {recentActivity.map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-center gap-4 p-3 bg-gray-900/30 rounded-lg border border-gray-700/20"
+                >
+                  {getActivityIcon(activity.type)}
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <div className="text-white font-medium capitalize truncate">
+                        {activity.type} {activity.asset}
+                      </div>
+                      <div
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          activity.status === "completed"
+                            ? "bg-green-900/50 text-green-400"
+                            : "bg-yellow-900/50 text-yellow-400"
+                        }`}
+                      >
+                        {activity.status}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="text-gray-400 text-sm">
+                        {activity.type === "deposit" ||
+                        activity.type === "withdraw"
+                          ? `$${activity.amount.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}`
+                          : `${activity.amount} ${
+                              activity.asset.split(" ")[0]
+                            }`}
+                      </div>
+                      <div className="text-gray-500 text-xs">
+                        {activity.timestamp}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button className="w-full mt-6 py-3 bg-gray-700/50 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors border border-gray-600">
+              View Transaction History
+            </button>
+          </div>
         </div>
       </div>
     </div>

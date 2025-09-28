@@ -19,8 +19,11 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
+        // Normalize email to avoid case/whitespace mismatches
+        const normalizedEmail = credentials.email.toLowerCase().trim();
+
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: { email: normalizedEmail },
         });
 
         if (!user || !user.password) {

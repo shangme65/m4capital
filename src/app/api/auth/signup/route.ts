@@ -15,9 +15,11 @@ export async function POST(req: Request) {
         ? accountType
         : "INVESTOR"; // default
 
+    const normalizedEmail = (email as string).toLowerCase().trim();
+
     const exist = await prisma.user.findUnique({
       where: {
-        email,
+        email: normalizedEmail,
       },
     });
 
@@ -31,7 +33,7 @@ export async function POST(req: Request) {
       // Cast to any to allow optional 'country' before migration is applied across all environments
       data: {
         name,
-        email,
+        email: normalizedEmail,
         password: hashedPassword,
         accountType: normalizedAccountType,
         country: country || undefined,

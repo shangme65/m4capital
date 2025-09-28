@@ -183,10 +183,10 @@ const testimonials = [
   },
 ];
 
-const TrustpilotRating = () => (
+const TrustpilotRating = ({ rating }: { rating: number }) => (
   <div className="flex items-center justify-center gap-2 text-lg text-gray-300">
     <SiTrustpilot className="text-green-500" size={24} />
-    <span className="font-bold">4.5</span>
+    <span className="font-bold">{rating.toFixed(1)}</span>
     <FaStar className="text-gray-300" size={18} />
     <span>on Trustpilot</span>
   </div>
@@ -204,6 +204,14 @@ const Testimonials: React.FC = () => {
   }, []);
 
   const currentTestimonial = testimonials[currentIndex];
+
+  // Deterministic pseudo-random rating in [4.5, 5.0] based on index to avoid hydration mismatch
+  const seededRating = (i: number) => {
+    const x = Math.sin(i * 9301 + 49297) * 233280; // simple deterministic noise
+    const frac = x - Math.floor(x);
+    return Math.round((4.5 + frac * 0.5) * 10) / 10; // one decimal between 4.5 and 5.0
+  };
+  const displayRating = seededRating(currentIndex);
 
   return (
     <div className="bg-gray-900 text-white py-16 sm:py-24">
@@ -228,7 +236,7 @@ const Testimonials: React.FC = () => {
               className="rounded-full mb-4 border-4 border-indigo-500 shadow-lg"
             />
             <div className="mb-4">
-              <TrustpilotRating />
+              <TrustpilotRating rating={displayRating} />
             </div>
             <blockquote className="text-xl italic leading-8 mb-6">
               <p>"{currentTestimonial.quote}"</p>

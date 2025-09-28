@@ -1,10 +1,12 @@
 "use client";
 import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const [saving, setSaving] = useState(false);
+  const router = useRouter();
 
   // Placeholder handlers (extend later)
   const handleProfileSave = async (e: React.FormEvent) => {
@@ -14,8 +16,70 @@ export default function SettingsPage() {
     setTimeout(() => setSaving(false), 800);
   };
 
+  // Simple accordion section component (local to this page)
+  const AccordionSection = ({
+    id,
+    title,
+    children,
+    defaultOpen = false,
+  }: {
+    id: string;
+    title: string;
+    children: React.ReactNode;
+    defaultOpen?: boolean;
+  }) => {
+    const [open, setOpen] = useState(defaultOpen);
+    return (
+      <section className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+        <button
+          type="button"
+          {...(open
+            ? { "aria-expanded": "true" }
+            : { "aria-expanded": "false" })}
+          aria-controls={`${id}-content`}
+          onClick={() => setOpen((v) => !v)}
+          className="w-full flex items-center justify-between px-4 sm:px-6 py-4 hover:bg-gray-750 text-left"
+        >
+          <span className="text-base sm:text-lg font-semibold">{title}</span>
+          <svg
+            className={`h-5 w-5 transition-transform duration-200 ${
+              open ? "rotate-180" : "rotate-0"
+            }`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path
+              fillRule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </button>
+        <div
+          id={`${id}-content`}
+          className={`${open ? "block" : "hidden"} border-t border-gray-700`}
+        >
+          <div className="p-4 sm:p-6">{children}</div>
+        </div>
+      </section>
+    );
+  };
+
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-10">
+    <div className="max-w-4xl mx-auto p-6 space-y-6 sm:space-y-8">
+      {/* Back button */}
+      <div className="mb-2">
+        <button
+          onClick={() => router.back()}
+          aria-label="Go back"
+          className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white px-3 py-1.5 rounded-lg bg-gray-800/60 border border-gray-700"
+        >
+          <span aria-hidden>←</span>
+          <span>Back</span>
+        </button>
+      </div>
+
       <header>
         <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
         <p className="text-gray-400 text-sm">
@@ -23,21 +87,27 @@ export default function SettingsPage() {
         </p>
       </header>
 
-      {/* 1. Profile / Identity */}
-      <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-        <h2 className="text-xl font-semibold mb-4">Profile</h2>
+      {/* Accordion: Profile */}
+      <AccordionSection id="profile" title="Profile">
         <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
           <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
+            <label className="block text-sm font-medium mb-1" htmlFor="name">
+              Name
+            </label>
             <input
+              id="name"
               type="text"
               defaultValue={session?.user?.name || ""}
               className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              placeholder="Your full name"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
+            <label className="block text-sm font-medium mb-1" htmlFor="email">
+              Email
+            </label>
             <input
+              id="email"
               type="email"
               disabled
               defaultValue={session?.user?.email || ""}
@@ -45,10 +115,14 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-1">
+            <label
+              className="block text-sm font-medium mb-1"
+              htmlFor="accountType"
+            >
               Account Type
             </label>
             <input
+              id="accountType"
               type="text"
               disabled
               value={
@@ -71,21 +145,19 @@ export default function SettingsPage() {
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </form>
-      </section>
+      </AccordionSection>
 
-      {/* 2. Security */}
-      <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-        <h2 className="text-xl font-semibold mb-4">Security</h2>
+      {/* Accordion: Security */}
+      <AccordionSection id="security" title="Security">
         <ul className="space-y-3 text-sm text-gray-300">
           <li>• Password change (coming soon)</li>
           <li>• Two-factor authentication (planned)</li>
           <li>• Active sessions / device management (planned)</li>
         </ul>
-      </section>
+      </AccordionSection>
 
-      {/* 3. Notifications */}
-      <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-        <h2 className="text-xl font-semibold mb-4">Notifications</h2>
+      {/* Accordion: Notifications */}
+      <AccordionSection id="notifications" title="Notifications">
         <p className="text-sm text-gray-300 mb-4">
           Granular control over market alerts, portfolio events, and platform
           messages (coming soon).
@@ -104,28 +176,26 @@ export default function SettingsPage() {
             Regulatory / Compliance Notices (planned)
           </div>
         </div>
-      </section>
+      </AccordionSection>
 
-      {/* 4. Preferences */}
-      <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-        <h2 className="text-xl font-semibold mb-4">Preferences</h2>
+      {/* Accordion: Preferences */}
+      <AccordionSection id="preferences" title="Preferences">
         <ul className="space-y-3 text-sm text-gray-300">
           <li>• Theme (light/dark/auto)</li>
           <li>• Default dashboard layout</li>
           <li>• Data refresh interval</li>
           <li>• Currency & locale formatting</li>
         </ul>
-      </section>
+      </AccordionSection>
 
-      {/* 5. Data & Privacy */}
-      <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-        <h2 className="text-xl font-semibold mb-4">Data & Privacy</h2>
+      {/* Accordion: Data & Privacy */}
+      <AccordionSection id="data-privacy" title="Data & Privacy">
         <ul className="space-y-3 text-sm text-gray-300">
           <li>• Download account data (planned)</li>
           <li>• Delete account request (planned)</li>
           <li>• Consent & regulatory disclosures</li>
         </ul>
-      </section>
+      </AccordionSection>
 
       {/* Logout */}
       <section className="flex justify-end">

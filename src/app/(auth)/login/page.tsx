@@ -18,12 +18,12 @@ export default function LoginPage() {
 
     const result = await signIn("credentials", {
       redirect: false,
-      email,
+      email: email.toLowerCase().trim(),
       password,
     });
 
     if (result?.error) {
-      setError("Invalid email or password. Please try again.");
+      setError(result.error || "Invalid email or password. Please try again.");
     } else {
       router.push("/dashboard");
     }

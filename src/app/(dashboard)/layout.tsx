@@ -1,5 +1,5 @@
 import Sidebar from "@/components/client/Sidebar";
-import DashboardHeader from "@/components/client/DashboardHeader";
+import DashboardHeaderWrapper from "@/components/client/DashboardHeaderWrapper";
 import AuthProvider from "@/components/client/AuthProvider";
 import { SidebarProvider } from "@/components/client/SidebarContext";
 import { getServerSession } from "next-auth";
@@ -23,7 +23,7 @@ export default async function DashboardLayout({
         <div className="flex h-screen bg-gray-900 relative">
           <Sidebar />
           <div className="flex-1 flex flex-col overflow-hidden">
-            <DashboardHeader />
+            <DashboardHeaderWrapper />
             <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-8">
               {children}
             </main>

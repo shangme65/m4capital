@@ -16,7 +16,7 @@ export default function AnimatedButton({
   text,
   type = "button",
   variant = "primary",
-  className = ""
+  className = "",
 }: AnimatedButtonProps) {
   // Brand orange primary button to match logo color
   const primaryClasses = "bg-orange-500 hover:bg-orange-600 text-white";
@@ -30,7 +30,7 @@ export default function AnimatedButton({
         px-8 py-3 rounded-full font-semibold transition-all duration-300
         shadow-lg hover:shadow-xl
         animate-gradient-x
-        ${variant === 'primary' ? primaryClasses : secondaryClasses}
+        ${variant === "primary" ? primaryClasses : secondaryClasses}
         ${className}
       `}
       type={type}
