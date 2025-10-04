@@ -24,7 +24,7 @@ const Sidebar = () => {
 
   const navItems = [
     { icon: <Briefcase size={24} />, name: "Dashboard", href: "/dashboard" },
-    { icon: <TrendingUp size={24} />, name: "Trade", href: "#" },
+    { icon: <TrendingUp size={24} />, name: "Trade", href: "/dashboard/trade" },
     { icon: <Newspaper size={24} />, name: "Market News", href: "#" },
     { icon: <DollarSign size={24} />, name: "Finance", href: "#" },
     { icon: <Settings size={24} />, name: "Settings", href: "/settings" },
