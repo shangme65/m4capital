@@ -8,6 +8,7 @@ import ExpirationTimer from "@/components/client/ExpirationTimer";
 import TradingAppLoader from "@/components/client/TradingAppLoader";
 import LivePositions from "@/components/client/LivePositions";
 import ConnectionStatus from "@/components/client/ConnectionStatus";
+import WebAssemblyTradingEngine from "@/components/client/WebAssemblyTradingEngine";
 import {
   TradingProvider,
   useTradingContext,
@@ -300,6 +301,11 @@ function TradingInterface() {
         {/* Emscripten WebAssembly Demo */}
         <div className="mt-4">
           <EmscriptenDemo />
+        </div>
+
+        {/* WebAssembly Trading Engine */}
+        <div className="mt-4">
+          <WebAssemblyTradingEngine />
         </div>
       </div>
     </div>
