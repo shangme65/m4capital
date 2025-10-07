@@ -1,7 +1,12 @@
 // Type declaration for WebAssembly trading engine module
-declare module '/trading_engine.js' {
+declare module "/trading_engine.js" {
   interface TradingEngineModule {
-    ccall: (funcName: string, returnType: string, argTypes: string[], args: any[]) => any;
+    ccall: (
+      funcName: string,
+      returnType: string,
+      argTypes: string[],
+      args: any[]
+    ) => any;
     cwrap: (funcName: string, returnType: string, argTypes: string[]) => any;
     _malloc: (size: number) => number;
     _free: (ptr: number) => void;

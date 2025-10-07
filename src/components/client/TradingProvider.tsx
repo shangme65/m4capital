@@ -7,6 +7,12 @@ import {
   useState,
   ReactNode,
 } from "react";
+import {
+  useMarketData,
+  usePrice,
+  MarketDataProvider,
+} from "./MarketDataProvider";
+import { MarketTick } from "@/lib/marketData";
 
 export interface MarketData {
   symbol: string;
@@ -30,6 +36,32 @@ export interface CandlestickData {
   volume: number;
 }
 
+export interface Position {
+  id: string;
+  symbol: string;
+  direction: "HIGHER" | "LOWER";
+  amount: number;
+  entryPrice: number;
+  currentPrice?: number;
+  entryTime: Date;
+  expirationTime: Date;
+  status: "OPEN" | "WIN" | "LOSS" | "EXPIRED";
+  pnl?: number;
+}
+
+export interface Trade {
+  id: string;
+  symbol: string;
+  direction: "HIGHER" | "LOWER";
+  amount: number;
+  entryPrice: number;
+  exitPrice?: number;
+  entryTime: Date;
+  exitTime?: Date;
+  status: "WIN" | "LOSS";
+  profit: number;
+}
+
 export interface TradingContextType {
   marketData: Record<string, MarketData>;
   candlestickData: Record<string, CandlestickData[]>;
@@ -42,8 +74,8 @@ export interface TradingContextType {
     amount: number,
     expiration: number
   ) => Promise<boolean>;
-  openPositions: any[];
-  tradeHistory: any[];
+  openPositions: Position[];
+  tradeHistory: Trade[];
 }
 
 const TradingContext = createContext<TradingContextType | null>(null);

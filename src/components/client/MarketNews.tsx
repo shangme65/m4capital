@@ -1,80 +1,225 @@
 "use client";
-import React from "react";
-import { motion } from "framer-motion";
-import AnimatedButton from "./AnimatedButton";
 
-const articles = [
-  {
-    title: "Market Analysis: The Week Ahead",
-    date: "September 20, 2025",
-    excerpt:
-      "A look at the key economic events and market-moving news to watch for in the coming week.",
-    link: "/blog/market-analysis-week-ahead",
-  },
-  {
-    title: "Understanding Leverage in Forex Trading",
-    date: "September 18, 2025",
-    excerpt:
-      "A deep dive into how leverage works and how to use it responsibly in your trading strategy.",
-    link: "/blog/understanding-leverage",
-  },
-  {
-    title: "Top 5 Technical Indicators for Day Trading",
-    date: "September 15, 2025",
-    excerpt:
-      "Discover the most effective technical indicators that successful day traders use to make decisions.",
-    link: "/blog/top-5-indicators",
-  },
-];
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useMarketNews, useMarketData } from "./MarketDataProvider";
+import { NewsItem } from "@/lib/marketData";
+import {
+  Clock,
+  TrendingUp,
+  TrendingDown,
+  AlertCircle,
+  RefreshCw,
+} from "lucide-react";
 
-const MarketNews = () => {
+interface MarketNewsProps {
+  maxItems?: number;
+  showSentiment?: boolean;
+  autoRefresh?: boolean;
+  refreshInterval?: number;
+}
+
+const MarketNews: React.FC<MarketNewsProps> = ({
+  maxItems = 10,
+  showSentiment = true,
+  autoRefresh = true,
+  refreshInterval = 300000, // 5 minutes
+}) => {
+  const { news, refreshNews } = useMarketNews();
+  const { isConnected } = useMarketData();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [expandedNews, setExpandedNews] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (autoRefresh && isConnected) {
+      const interval = setInterval(async () => {
+        await handleRefresh();
+      }, refreshInterval);
+
+      return () => clearInterval(interval);
+    }
+  }, [autoRefresh, isConnected, refreshInterval]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshNews();
+    } catch (error) {
+      console.error("Failed to refresh news:", error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const formatTimeAgo = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return "Just now";
+  };
+
+  const getSentimentIcon = (sentiment?: string) => {
+    switch (sentiment) {
+      case "positive":
+        return <TrendingUp className="w-4 h-4 text-green-400" />;
+      case "negative":
+        return <TrendingDown className="w-4 h-4 text-red-400" />;
+      case "neutral":
+        return <AlertCircle className="w-4 h-4 text-yellow-400" />;
+      default:
+        return <AlertCircle className="w-4 h-4 text-gray-400" />;
+    }
+  };
+
+  const getSentimentColor = (sentiment?: string) => {
+    switch (sentiment) {
+      case "positive":
+        return "border-l-green-400 bg-green-400/5";
+      case "negative":
+        return "border-l-red-400 bg-red-400/5";
+      case "neutral":
+        return "border-l-yellow-400 bg-yellow-400/5";
+      default:
+        return "border-l-gray-400 bg-gray-400/5";
+    }
+  };
+
+  const displayedNews = news.slice(0, maxItems);
+
   return (
-    <div className="bg-black py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl lg:text-center">
-          <h2 className="text-base font-semibold leading-7 text-indigo-400">
-            Market Insights
-          </h2>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Stay Ahead of the Curve
-          </p>
-          <p className="mt-6 text-lg leading-8 text-gray-300">
-            The latest news, analysis, and educational content from our team of
-            experts.
-          </p>
+    <div className="bg-gray-800 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-white flex items-center">
+          <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+          Market News
+        </h3>
+        <button
+          onClick={handleRefresh}
+          disabled={isRefreshing || !isConnected}
+          className="p-2 hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50"
+          title="Refresh news"
+        >
+          <RefreshCw
+            className={`w-4 h-4 text-gray-400 ${
+              isRefreshing ? "animate-spin" : ""
+            }`}
+          />
+        </button>
+      </div>
+
+      {!isConnected && (
+        <div className="text-center py-4">
+          <div className="text-gray-400 text-sm">
+            Not connected to market data
+          </div>
         </div>
-        <div className="mx-auto mt-16 grid max-w-lg grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-3">
-          {articles.map((article, index) => (
+      )}
+
+      <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+        <AnimatePresence>
+          {displayedNews.map((item, index) => (
             <motion.div
-              key={article.title}
-              className="flex flex-col p-8 bg-gray-900 rounded-lg shadow-lg"
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.2 }}
+              key={item.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3, delay: index * 0.1 }}
+              className={`border-l-4 p-3 rounded-r-lg ${getSentimentColor(
+                item.sentiment
+              )} cursor-pointer hover:bg-gray-700/30 transition-colors`}
+              onClick={() =>
+                setExpandedNews(expandedNews === item.id ? null : item.id)
+              }
             >
-              <h3 className="text-xl font-semibold text-white">
-                {article.title}
-              </h3>
-              <p className="text-sm text-gray-400 mt-2">{article.date}</p>
-              <p className="mt-4 text-gray-300 flex-grow">{article.excerpt}</p>
-              <div className="mt-6">
-                <a
-                  href={article.link}
-                  className="text-indigo-400 hover:text-indigo-300"
-                >
-                  Read More &rarr;
-                </a>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-1">
+                    {showSentiment && getSentimentIcon(item.sentiment)}
+                    <span className="text-xs text-gray-400 uppercase font-medium">
+                      {item.source}
+                    </span>
+                    <div className="flex items-center text-xs text-gray-500">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {formatTimeAgo(item.timestamp)}
+                    </div>
+                  </div>
+
+                  <h4 className="text-white font-medium text-sm leading-tight mb-1">
+                    {item.title}
+                  </h4>
+
+                  <AnimatePresence>
+                    {expandedNews === item.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="text-gray-300 text-xs mt-2 leading-relaxed">
+                          {item.summary}
+                        </p>
+
+                        {item.symbols && item.symbols.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {item.symbols.map((symbol) => (
+                              <span
+                                key={symbol}
+                                className="px-2 py-1 bg-gray-700 rounded text-xs text-gray-300"
+                              >
+                                {symbol}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
             </motion.div>
           ))}
-        </div>
-        <div className="mt-16 text-center">
-          <AnimatedButton href="/blog" text="Visit Our Blog" />
-        </div>
+        </AnimatePresence>
       </div>
+
+      {displayedNews.length === 0 && isConnected && (
+        <div className="text-center py-8">
+          <div className="text-gray-400 text-sm mb-2">
+            No recent news available
+          </div>
+          <button
+            onClick={handleRefresh}
+            className="text-blue-400 hover:text-blue-300 text-sm underline"
+          >
+            Try refreshing
+          </button>
+        </div>
+      )}
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(55, 65, 81, 0.3);
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(156, 163, 175, 0.5);
+          border-radius: 2px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(156, 163, 175, 0.8);
+        }
+      `}</style>
     </div>
   );
 };
-
 export default MarketNews;

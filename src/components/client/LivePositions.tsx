@@ -1,6 +1,6 @@
 "use client";
 
-import { useTradingContext } from "./TradingProvider";
+import { useTradingContext } from "./EnhancedTradingProvider";
 import { motion } from "framer-motion";
 
 export default function LivePositions() {

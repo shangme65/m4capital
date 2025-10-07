@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from "react";
 
 // Define the WebAssembly module interface
 interface TradingEngineModule {
-  ccall: (funcName: string, returnType: string, argTypes: string[], args: any[]) => any;
+  ccall: (
+    funcName: string,
+    returnType: string,
+    argTypes: string[],
+    args: any[]
+  ) => any;
   cwrap: (funcName: string, returnType: string, argTypes: string[]) => any;
   _malloc: (size: number) => number;
   _free: (ptr: number) => void;
@@ -17,7 +22,7 @@ interface Position {
   symbol: string;
   size: number;
   price: number;
-  type: 'LONG' | 'SHORT';
+  type: "LONG" | "SHORT";
   pnl?: number;
 }
 
@@ -35,10 +40,12 @@ export default function WebAssemblyTradingEngine() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [positions, setPositions] = useState<Position[]>([]);
-  const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(null);
-  const [currentPrice, setCurrentPrice] = useState(1.2500);
+  const [portfolioStats, setPortfolioStats] = useState<PortfolioStats | null>(
+    null
+  );
+  const [currentPrice, setCurrentPrice] = useState(1.25);
   const [tradeAmount, setTradeAmount] = useState(1000);
-  const [selectedSymbol, setSelectedSymbol] = useState('EURUSD');
+  const [selectedSymbol, setSelectedSymbol] = useState("EURUSD");
 
   // Function wrappers
   const createTradingEngine = useRef<any>(null);
@@ -58,35 +65,92 @@ export default function WebAssemblyTradingEngine() {
     const loadModule = async () => {
       try {
         setIsLoading(true);
-        
-        // Dynamically import the WebAssembly module
-        const TradingEngineModule = (await import('/trading_engine.js')) as any;
-        const wasmModule = await TradingEngineModule.default();
-        
-        setModule(wasmModule);
+
+        // Create a script element to load the Emscripten-generated JavaScript
+        const script = document.createElement("script");
+        script.src = "/trading_engine.js";
+
+        // Wait for the script to load
+        await new Promise((resolve, reject) => {
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+
+        // The Module should now be available globally
+        const Module = (window as any).Module;
+        if (!Module) {
+          throw new Error("WebAssembly module not loaded");
+        }
+
+        // Wait for the module to be ready
+        await new Promise((resolve) => {
+          if (Module.onRuntimeInitialized) {
+            Module.onRuntimeInitialized = resolve;
+          } else {
+            resolve(undefined);
+          }
+        });
+
+        setModule(Module);
 
         // Create function wrappers
-        createTradingEngine.current = wasmModule.cwrap('createTradingEngine', 'number', ['number']);
-        deleteTradingEngine.current = wasmModule.cwrap('deleteTradingEngine', 'null', ['number']);
-        addPosition.current = wasmModule.cwrap('addPosition', 'number', ['number', 'string', 'number', 'number', 'string']);
-        removePosition.current = wasmModule.cwrap('removePosition', 'number', ['number', 'number']);
-        updatePrice.current = wasmModule.cwrap('updatePrice', 'null', ['number', 'number']);
-        calculatePortfolioValue.current = wasmModule.cwrap('calculatePortfolioValue', 'number', ['number']);
-        getPortfolioRisk.current = wasmModule.cwrap('getPortfolioRisk', 'number', ['number']);
-        getTotalPnL.current = wasmModule.cwrap('getTotalPnL', 'number', ['number']);
-        getPositionCount.current = wasmModule.cwrap('getPositionCount', 'number', ['number']);
-        getPositionInfo.current = wasmModule.cwrap('getPositionInfo', 'number', ['number', 'number']);
-        getPortfolioStats.current = wasmModule.cwrap('getPortfolioStats', 'string', ['number']);
+        createTradingEngine.current = Module.cwrap(
+          "createTradingEngine",
+          "number",
+          ["number"]
+        );
+        deleteTradingEngine.current = Module.cwrap(
+          "deleteTradingEngine",
+          "null",
+          ["number"]
+        );
+        addPosition.current = Module.cwrap("addPosition", "number", [
+          "number",
+          "string",
+          "number",
+          "number",
+          "string",
+        ]);
+        removePosition.current = Module.cwrap("removePosition", "number", [
+          "number",
+          "number",
+        ]);
+        updatePrice.current = Module.cwrap("updatePrice", "null", [
+          "number",
+          "number",
+        ]);
+        calculatePortfolioValue.current = Module.cwrap(
+          "calculatePortfolioValue",
+          "number",
+          ["number"]
+        );
+        getPortfolioRisk.current = Module.cwrap("getPortfolioRisk", "number", [
+          "number",
+        ]);
+        getTotalPnL.current = Module.cwrap("getTotalPnL", "number", ["number"]);
+        getPositionCount.current = Module.cwrap("getPositionCount", "number", [
+          "number",
+        ]);
+        getPositionInfo.current = Module.cwrap("getPositionInfo", "number", [
+          "number",
+          "number",
+        ]);
+        getPortfolioStats.current = Module.cwrap(
+          "getPortfolioStats",
+          "string",
+          ["number"]
+        );
 
         // Initialize trading engine with $10,000 balance
         const enginePointer = createTradingEngine.current(10000);
         setEnginePtr(enginePointer);
 
-        console.log('WebAssembly Trading Engine loaded successfully');
+        console.log("WebAssembly Trading Engine loaded successfully");
         setIsLoading(false);
       } catch (err) {
-        console.error('Failed to load WebAssembly module:', err);
-        setError('Failed to load trading engine');
+        console.error("Failed to load WebAssembly module:", err);
+        setError("Failed to load trading engine");
         setIsLoading(false);
       }
     };
@@ -122,14 +186,14 @@ export default function WebAssemblyTradingEngine() {
         totalPnL,
         riskLevel,
         positionCount,
-        balance: 10000 // Initial balance
+        balance: 10000, // Initial balance
       });
     } catch (err) {
-      console.error('Error updating portfolio stats:', err);
+      console.error("Error updating portfolio stats:", err);
     }
   };
 
-  const handleAddPosition = (type: 'LONG' | 'SHORT') => {
+  const handleAddPosition = (type: "LONG" | "SHORT") => {
     if (!enginePtr || !addPosition.current) return;
 
     try {
@@ -147,14 +211,14 @@ export default function WebAssemblyTradingEngine() {
           symbol: selectedSymbol,
           size: tradeAmount,
           price: currentPrice,
-          type: type
+          type: type,
         };
 
-        setPositions(prev => [...prev, newPosition]);
+        setPositions((prev) => [...prev, newPosition]);
         console.log(`Added ${type} position:`, newPosition);
       }
     } catch (err) {
-      console.error('Error adding position:', err);
+      console.error("Error adding position:", err);
     }
   };
 
@@ -164,11 +228,11 @@ export default function WebAssemblyTradingEngine() {
     try {
       const success = removePosition.current(enginePtr, positionId);
       if (success) {
-        setPositions(prev => prev.filter(pos => pos.id !== positionId));
+        setPositions((prev) => prev.filter((pos) => pos.id !== positionId));
         console.log(`Removed position ${positionId}`);
       }
     } catch (err) {
-      console.error('Error removing position:', err);
+      console.error("Error removing position:", err);
     }
   };
 
@@ -197,7 +261,9 @@ export default function WebAssemblyTradingEngine() {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-        <span className="ml-2 text-gray-300">Loading WebAssembly Trading Engine...</span>
+        <span className="ml-2 text-gray-300">
+          Loading WebAssembly Trading Engine...
+        </span>
       </div>
     );
   }
@@ -214,7 +280,9 @@ export default function WebAssemblyTradingEngine() {
   return (
     <div className="bg-gray-800 rounded-lg p-6 space-y-6">
       <div className="border-b border-gray-700 pb-4">
-        <h2 className="text-xl font-bold text-white mb-2">WebAssembly Trading Engine</h2>
+        <h2 className="text-xl font-bold text-white mb-2">
+          WebAssembly Trading Engine
+        </h2>
         <div className="text-sm text-gray-400">
           High-performance C++ trading engine compiled to WebAssembly
         </div>
@@ -231,9 +299,11 @@ export default function WebAssemblyTradingEngine() {
           </div>
           <div className="bg-gray-700 rounded p-3">
             <div className="text-xs text-gray-400">Total P&L</div>
-            <div className={`text-lg font-semibold ${
-              portfolioStats.totalPnL >= 0 ? 'text-green-400' : 'text-red-400'
-            }`}>
+            <div
+              className={`text-lg font-semibold ${
+                portfolioStats.totalPnL >= 0 ? "text-green-400" : "text-red-400"
+              }`}
+            >
               ${portfolioStats.totalPnL.toFixed(2)}
             </div>
           </div>
@@ -262,8 +332,12 @@ export default function WebAssemblyTradingEngine() {
       <div className="bg-gray-700 rounded-lg p-4">
         <div className="flex justify-between items-center">
           <div>
-            <div className="text-sm text-gray-400">Current Price ({selectedSymbol})</div>
-            <div className="text-2xl font-bold text-white">{currentPrice.toFixed(5)}</div>
+            <div className="text-sm text-gray-400">
+              Current Price ({selectedSymbol})
+            </div>
+            <div className="text-2xl font-bold text-white">
+              {currentPrice.toFixed(5)}
+            </div>
           </div>
           <button
             onClick={simulatePriceMovement}
@@ -277,7 +351,7 @@ export default function WebAssemblyTradingEngine() {
       {/* Trading Controls */}
       <div className="bg-gray-700 rounded-lg p-4 space-y-4">
         <h3 className="text-lg font-semibold text-white">Add Position</h3>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-sm text-gray-400 mb-1">Symbol</label>
@@ -293,9 +367,11 @@ export default function WebAssemblyTradingEngine() {
               <option value="USDCHF">USD/CHF</option>
             </select>
           </div>
-          
+
           <div>
-            <label className="block text-sm text-gray-400 mb-1">Amount ($)</label>
+            <label className="block text-sm text-gray-400 mb-1">
+              Amount ($)
+            </label>
             <input
               type="number"
               value={tradeAmount}
@@ -311,13 +387,13 @@ export default function WebAssemblyTradingEngine() {
 
           <div className="flex space-x-2">
             <button
-              onClick={() => handleAddPosition('LONG')}
+              onClick={() => handleAddPosition("LONG")}
               className="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded transition-colors"
             >
               BUY
             </button>
             <button
-              onClick={() => handleAddPosition('SHORT')}
+              onClick={() => handleAddPosition("SHORT")}
               className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded transition-colors"
             >
               SELL
@@ -329,7 +405,9 @@ export default function WebAssemblyTradingEngine() {
       {/* Active Positions */}
       {positions.length > 0 && (
         <div className="bg-gray-700 rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-white mb-4">Active Positions</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">
+            Active Positions
+          </h3>
           <div className="space-y-2">
             {positions.map((position) => (
               <div
@@ -338,12 +416,16 @@ export default function WebAssemblyTradingEngine() {
               >
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <span className="text-white font-semibold">{position.symbol}</span>
-                    <span className={`px-2 py-1 text-xs rounded ${
-                      position.type === 'LONG' 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-red-600 text-white'
-                    }`}>
+                    <span className="text-white font-semibold">
+                      {position.symbol}
+                    </span>
+                    <span
+                      className={`px-2 py-1 text-xs rounded ${
+                        position.type === "LONG"
+                          ? "bg-green-600 text-white"
+                          : "bg-red-600 text-white"
+                      }`}
+                    >
                       {position.type}
                     </span>
                   </div>

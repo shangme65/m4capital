@@ -1,6 +1,6 @@
 "use client";
 
-import { useTradingContext } from "./TradingProvider";
+import { useTradingContext } from "./EnhancedTradingProvider";
 
 export default function ConnectionStatus() {
   const { isConnected, marketData } = useTradingContext();

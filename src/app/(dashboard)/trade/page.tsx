@@ -12,7 +12,9 @@ import WebAssemblyTradingEngine from "@/components/client/WebAssemblyTradingEngi
 import {
   TradingProvider,
   useTradingContext,
-} from "@/components/client/TradingProvider";
+} from "@/components/client/EnhancedTradingProvider";
+import MarketNews from "@/components/client/MarketNews";
+import PriceTicker from "@/components/client/PriceTicker";
 
 function TradingInterface() {
   const [amount, setAmount] = useState(10000);
@@ -159,7 +161,8 @@ function TradingInterface() {
         {/* Market Analysis */}
         <div className="p-4 border-b border-gray-700">
           <div className="text-xs text-gray-400 mb-2">MARKET</div>
-          <div className="text-xs text-gray-400 mb-2">ANALYSIS</div>
+          <div className="text-xs text-gray-400 mb-4">ANALYSIS</div>
+          <MarketNews />
         </div>
 
         {/* Promo */}
@@ -178,6 +181,11 @@ function TradingInterface() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
+        {/* Price Ticker */}
+        <div className="bg-gray-900 border-b border-gray-700">
+          <PriceTicker />
+        </div>
+
         {/* Trading Tabs */}
         <div className="bg-gray-800 border-b border-gray-700 px-4 py-2">
           <div className="flex space-x-1">
