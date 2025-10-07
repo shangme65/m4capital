@@ -10,6 +10,7 @@ import CryptoPriceTicker from "@/components/client/CryptoPriceTicker";
 import FAQ from "@/components/client/FAQ";
 import HowItWorks from "@/components/client/HowItWorks";
 import Preloader from "@/components/client/Preloader";
+import React from "react";
 
 type AnimationVariant = {
   initial: { opacity: number; x?: number; y?: number; scale?: number };
@@ -26,101 +27,229 @@ function Hero() {
 
   const heroContent = [
     {
-      title: "Unlock Global Markets",
+      title: (
+        <>
+          <span className="text-blue-400">Unlock</span>{" "}
+          <span className="text-purple-400">Global</span>{" "}
+          <span className="text-green-400">Markets</span>
+        </>
+      ),
       description:
         "Trade Forex, stocks, and commodities from a single, powerful platform.",
     },
     {
-      title: "Precision Trading Tools",
+      title: (
+        <>
+          <span className="text-orange-400">Precision</span>{" "}
+          <span className="text-pink-400">Trading</span>{" "}
+          <span className="text-cyan-400">Tools</span>
+        </>
+      ),
       description:
         "Leverage advanced charting and analytics for surgical market entry and exit.",
     },
     {
-      title: "Institutional-Grade Liquidity",
+      title: (
+        <>
+          <span className="text-emerald-400">Institutional</span>{" "}
+          <span className="text-yellow-400">Grade</span>{" "}
+          <span className="text-red-400">Liquidity</span>
+        </>
+      ),
       description:
         "Experience tight spreads and minimal slippage with our deep liquidity pools.",
     },
     {
-      title: "Automate Your Strategies",
+      title: (
+        <>
+          <span className="text-indigo-400">Automate</span>{" "}
+          <span className="text-rose-400">Your</span>{" "}
+          <span className="text-lime-400">Strategies</span>
+        </>
+      ),
       description:
         "Build, backtest, and deploy trading algorithms with our robust API.",
     },
     {
-      title: "Blazing-Fast Execution",
+      title: (
+        <>
+          <span className="text-violet-400">Blazing</span>{" "}
+          <span className="text-teal-400">Fast</span>{" "}
+          <span className="text-amber-400">Execution</span>
+        </>
+      ),
       description:
         "Gain a competitive edge with our low-latency infrastructure.",
     },
     {
-      title: "Actionable Market Insights",
+      title: (
+        <>
+          <span className="text-sky-400">Actionable</span>{" "}
+          <span className="text-fuchsia-400">Market</span>{" "}
+          <span className="text-green-400">Insights</span>
+        </>
+      ),
       description:
         "Receive real-time news and analysis to make informed trading decisions.",
     },
     {
-      title: "Your Capital, Secured",
+      title: (
+        <>
+          <span className="text-purple-400">Your</span>{" "}
+          <span className="text-orange-400">Capital</span>{" "}
+          <span className="text-blue-400">Secured</span>
+        </>
+      ),
       description:
         "Trade with confidence, knowing your funds are protected by industry-leading security.",
     },
     {
-      title: "Master the Markets",
+      title: (
+        <>
+          <span className="text-cyan-400">Master</span>{" "}
+          <span className="text-pink-400">the</span>{" "}
+          <span className="text-yellow-400">Markets</span>
+        </>
+      ),
       description:
         "Access exclusive educational content and webinars from seasoned trading experts.",
     },
     {
-      title: "Trade on Your Terms",
+      title: (
+        <>
+          <span className="text-emerald-400">Trade</span>{" "}
+          <span className="text-red-400">on</span>{" "}
+          <span className="text-indigo-400">Your</span>{" "}
+          <span className="text-lime-400">Terms</span>
+        </>
+      ),
       description:
         "Customize your trading environment with flexible layouts and powerful tools.",
     },
     {
-      title: "24/7 Dedicated Support",
+      title: (
+        <>
+          <span className="text-rose-400">24/7</span>{" "}
+          <span className="text-teal-400">Dedicated</span>{" "}
+          <span className="text-violet-400">Support</span>
+        </>
+      ),
       description:
         "Our expert support team is always available to assist you, day or night.",
     },
     {
-      title: "Seamless Mobile Trading",
+      title: (
+        <>
+          <span className="text-amber-400">Seamless</span>{" "}
+          <span className="text-sky-400">Mobile</span>{" "}
+          <span className="text-fuchsia-400">Trading</span>
+        </>
+      ),
       description:
         "Trade on-the-go with our full-featured and intuitive mobile application.",
     },
     {
-      title: "Social Trading Revolution",
+      title: (
+        <>
+          <span className="text-green-400">Social</span>{" "}
+          <span className="text-purple-400">Trading</span>{" "}
+          <span className="text-orange-400">Revolution</span>
+        </>
+      ),
       description:
         "Copy the strategies of top-performing traders and enhance your portfolio.",
     },
     {
-      title: "Transparent Fee Structure",
+      title: (
+        <>
+          <span className="text-blue-400">Transparent</span>{" "}
+          <span className="text-pink-400">Fee</span>{" "}
+          <span className="text-cyan-400">Structure</span>
+        </>
+      ),
       description:
         "Enjoy competitive pricing with no hidden costs or commissions.",
     },
     {
-      title: "Advanced Risk Management",
+      title: (
+        <>
+          <span className="text-yellow-400">Advanced</span>{" "}
+          <span className="text-red-400">Risk</span>{" "}
+          <span className="text-emerald-400">Management</span>
+        </>
+      ),
       description:
         "Protect your investments with sophisticated stop-loss and take-profit orders.",
     },
     {
-      title: "Diverse Asset Portfolio",
+      title: (
+        <>
+          <span className="text-indigo-400">Diverse</span>{" "}
+          <span className="text-rose-400">Asset</span>{" "}
+          <span className="text-lime-400">Portfolio</span>
+        </>
+      ),
       description:
         "Explore a wide range of currency pairs, indices, and cryptocurrencies.",
     },
     {
-      title: "The Future of Algorithmic Trading",
+      title: (
+        <>
+          <span className="text-violet-400">The</span>{" "}
+          <span className="text-teal-400">Future</span>{" "}
+          <span className="text-amber-400">of</span>{" "}
+          <span className="text-sky-400">Algorithmic</span>{" "}
+          <span className="text-fuchsia-400">Trading</span>
+        </>
+      ),
       description:
         "Harness the power of AI to optimize your trading performance.",
     },
     {
-      title: "Join a Global Trading Community",
+      title: (
+        <>
+          <span className="text-green-400">Join</span>{" "}
+          <span className="text-purple-400">a</span>{" "}
+          <span className="text-orange-400">Global</span>{" "}
+          <span className="text-blue-400">Trading</span>{" "}
+          <span className="text-pink-400">Community</span>
+        </>
+      ),
       description:
         "Connect with and learn from a network of thousands of traders worldwide.",
     },
     {
-      title: "Regulated and Trusted Broker",
+      title: (
+        <>
+          <span className="text-cyan-400">Regulated</span>{" "}
+          <span className="text-yellow-400">and</span>{" "}
+          <span className="text-red-400">Trusted</span>{" "}
+          <span className="text-emerald-400">Broker</span>
+        </>
+      ),
       description: "Operate in a secure and compliant trading environment.",
     },
     {
-      title: "Unleash Your Trading Potential",
+      title: (
+        <>
+          <span className="text-indigo-400">Unleash</span>{" "}
+          <span className="text-rose-400">Your</span>{" "}
+          <span className="text-lime-400">Trading</span>{" "}
+          <span className="text-violet-400">Potential</span>
+        </>
+      ),
       description:
         "We provide the tools, you define the success. Start your journey today.",
     },
     {
-      title: "Next-Generation Trading Platform",
+      title: (
+        <>
+          <span className="text-teal-400">Next</span>{" "}
+          <span className="text-amber-400">Generation</span>{" "}
+          <span className="text-sky-400">Trading</span>{" "}
+          <span className="text-fuchsia-400">Platform</span>
+        </>
+      ),
       description:
         "Experience the pinnacle of trading technology, designed for performance and reliability.",
     },
@@ -156,7 +285,7 @@ function Hero() {
   const variantNames = Object.keys(animationVariants);
 
   const [contentIndex, setContentIndex] = useState(0);
-  const [title, setTitle] = useState(heroContent[0].title);
+  const [title, setTitle] = useState<React.ReactNode>(heroContent[0].title);
   const [description, setDescription] = useState(heroContent[0].description);
   const [titleAnimation, setTitleAnimation] = useState(variantNames[0]);
   const [descAnimation, setDescAnimation] = useState(variantNames[1]);
@@ -198,7 +327,7 @@ function Hero() {
       <div className="relative z-10 text-center text-white p-4 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.h1
-            key={title}
+            key={`title-${contentIndex}`}
             variants={animationVariants[titleAnimation]}
             initial="initial"
             animate="animate"
@@ -213,7 +342,7 @@ function Hero() {
         <div className="h-28 flex items-center justify-center mb-8">
           <AnimatePresence mode="wait">
             <motion.p
-              key={description}
+              key={`desc-${contentIndex}`}
               variants={animationVariants[descAnimation]}
               initial="initial"
               animate="animate"
