@@ -269,7 +269,7 @@ export const TradingProvider: React.FC<TradingProviderProps> = ({
   }, [isConnected, subscribedSymbols, marketData]);
 
   const subscribeToSymbol = (symbol: string) => {
-    setSubscribedSymbols((prev) => new Set([...prev, symbol]));
+    setSubscribedSymbols((prev) => new Set(Array.from(prev).concat(symbol)));
   };
 
   const unsubscribeFromSymbol = (symbol: string) => {
