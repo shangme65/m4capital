@@ -7,7 +7,12 @@ import ForTradersDropdown from "../client/ForTradersDropdown";
 import AboutUsDropdown from "../client/AboutUsDropdown";
 import LanguageDropdown from "../client/LanguageDropdown";
 
-export function Header() {
+interface HeaderProps {
+  onLoginClick?: () => void;
+  onSignupClick?: () => void;
+}
+
+export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
@@ -27,7 +32,7 @@ export function Header() {
             width={40}
             height={40}
           />
-          <span className="ml-0. text-xl font-bold">capital</span>
+          <span className="ml-0 text-xl font-bold">capital</span>
         </Link>
 
         {/* Widescreen Menu */}
@@ -85,37 +90,37 @@ export function Header() {
               </button>
               {activeDropdown === "lang" && <LanguageDropdown />}
             </div>
-            <Link
-              href="/login"
+            <button
+              onClick={onLoginClick}
               className="flex items-center space-x-2 bg-gray-800/70 px-4 py-2 rounded-2xl hover:bg-gray-700 transition-colors"
               aria-label="Login"
             >
               <LogIn size={18} />
               <span>Log in</span>
-            </Link>
-            <Link
-              href="/signup"
+            </button>
+            <button
+              onClick={onSignupClick}
               className="bg-orange-600 px-5 py-2.5 text-sm font-bold rounded-2xl hover:bg-orange-700 transition-colors whitespace-nowrap"
             >
               Sign Up
-            </Link>
+            </button>
           </div>
 
           {/* Mobile Menu */}
           <div className="md:hidden flex items-center space-x-2">
-            <Link
-              href="/login"
+            <button
+              onClick={onLoginClick}
               className="p-2.5 bg-gray-800/50 rounded-2xl hover:bg-gray-800/75 transition-colors"
               aria-label="Login"
             >
               <LogIn size={18} />
-            </Link>
-            <Link
-              href="/signup"
+            </button>
+            <button
+              onClick={onSignupClick}
               className="bg-orange-600 px-5 py-2.5 text-sm font-bold rounded-2xl hover:bg-orange-700 transition-colors whitespace-nowrap"
             >
               Sign Up
-            </Link>
+            </button>
             <button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
               className="p-2.5 bg-gray-800/50 rounded-2xl hover:bg-gray-800/75 transition-colors"
@@ -152,20 +157,26 @@ export function Header() {
               ))}
             </ul>
             <div className="mt-8 flex flex-col items-center space-y-4">
-              <Link
-                href="/login"
+              <button
+                onClick={() => {
+                  onLoginClick?.();
+                  setMobileMenuOpen(false);
+                }}
                 className="flex items-center space-x-2 bg-gray-800/70 px-6 py-3 rounded-2xl hover:bg-gray-700 transition-colors w-full text-center"
                 aria-label="Login"
               >
                 <LogIn size={18} />
                 <span>Log in</span>
-              </Link>
-              <Link
-                href="/signup"
+              </button>
+              <button
+                onClick={() => {
+                  onSignupClick?.();
+                  setMobileMenuOpen(false);
+                }}
                 className="bg-orange-600 px-6 py-3 text-sm font-bold rounded-2xl hover:bg-orange-700 transition-colors w-full text-center whitespace-nowrap"
               >
                 Sign Up
-              </Link>
+              </button>
             </div>
           </nav>
         </div>

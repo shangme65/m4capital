@@ -10,6 +10,7 @@ import CryptoPriceTicker from "@/components/client/CryptoPriceTicker";
 import FAQ from "@/components/client/FAQ";
 import HowItWorks from "@/components/client/HowItWorks";
 import Preloader from "@/components/client/Preloader";
+import { useModal } from "@/contexts/ModalContext";
 import React from "react";
 
 type AnimationVariant = {
@@ -23,6 +24,7 @@ type AnimationVariants = {
 };
 
 function Hero() {
+  const { openLoginModal } = useModal();
   const images = ["/hero-bg-1.jpg", "/hero-bg-2.jpg", "/hero-bg-3.jpg"];
 
   const heroContent = [
@@ -324,6 +326,7 @@ function Hero() {
     <div className="relative h-screen w-full flex items-center justify-center overflow-hidden">
       <BackgroundSlider images={images} />
       <div className="absolute inset-0 bg-black bg-opacity-50" />
+
       <div className="relative z-10 text-center text-white p-4 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.h1
@@ -355,7 +358,12 @@ function Hero() {
           </AnimatePresence>
         </div>
         <div className="space-x-4 mt-12">
-          <AnimatedButton href="/login" text="Get Started" />
+          <button
+            onClick={openLoginModal}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
+          >
+            Get Started
+          </button>
         </div>
       </div>
     </div>
@@ -363,6 +371,7 @@ function Hero() {
 }
 
 function CallToAction() {
+  const { openSignupModal } = useModal();
   return (
     <div className="bg-gray-800">
       <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:flex lg:items-center lg:justify-between lg:px-8">
@@ -372,7 +381,12 @@ function CallToAction() {
           Start your trading journey today.
         </h2>
         <div className="mt-10 flex items-center gap-x-6 lg:mt-0 lg:flex-shrink-0">
-          <AnimatedButton href="/signup" text="Create an account" />
+          <button
+            onClick={openSignupModal}
+            className="rounded-lg bg-orange-500 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-all duration-200 transform hover:scale-105"
+          >
+            Create an account
+          </button>
         </div>
       </div>
     </div>

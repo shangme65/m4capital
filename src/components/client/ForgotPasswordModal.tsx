@@ -1,0 +1,178 @@
+"use client";
+
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+
+interface ForgotPasswordModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onGoBack: () => void;
+  onSwitchToSignup: () => void;
+}
+
+export default function ForgotPasswordModal({
+  isOpen,
+  onClose,
+  onGoBack,
+  onSwitchToSignup,
+}: ForgotPasswordModalProps) {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setMessage("");
+
+    try {
+      // Here you would typically call your password reset API
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+        }),
+      });
+
+      if (response.ok) {
+        setMessage("Password reset instructions have been sent to your email.");
+      } else {
+        const errorData = await response.json();
+        setMessage(
+          errorData.message ||
+            "Failed to send reset instructions. Please try again."
+        );
+      }
+    } catch (error) {
+      setMessage("Network error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
+            style={{ touchAction: "none" }}
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+            style={{ touchAction: "auto" }}
+          >
+            <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
+              {/* Header with back button and close button */}
+              <div className="flex items-center justify-between p-4 sticky top-0 bg-[#1f1f1f] z-10">
+                <button
+                  onClick={onGoBack}
+                  className="text-orange-500 hover:text-orange-400 transition-colors flex items-center"
+                >
+                  ← Go back
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="px-8 pb-8">
+                {/* Logo */}
+                <div className="flex items-center justify-center mb-6">
+                  <Image
+                    src="/m4capitallogo2.png"
+                    alt="Capital Logo"
+                    width={32}
+                    height={32}
+                  />
+                  <span className="ml-2 text-orange-500 font-medium text-xl">
+                    Capital
+                  </span>
+                </div>
+
+                {/* Title */}
+                <h2 className="text-3xl font-bold text-white mb-4">
+                  Password recovery
+                </h2>
+
+                {/* Description */}
+                <p className="text-gray-400 text-sm mb-6">
+                  To proceed with changing your password, please enter your
+                  phone or email.
+                </p>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {message && (
+                    <div
+                      className={`text-sm text-center p-3 rounded-lg border ${
+                        message.includes("sent")
+                          ? "text-green-500 bg-green-500/10 border-green-500/20"
+                          : "text-red-500 bg-red-500/10 border-red-500/20"
+                      }`}
+                    >
+                      {message}
+                    </div>
+                  )}
+
+                  {/* Email or phone field */}
+                  <div>
+                    <label className="block text-gray-400 text-sm mb-2">
+                      Email or phone
+                    </label>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email or phone"
+                      className="w-full px-4 py-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-400"
+                      required
+                    />
+                  </div>
+
+                  {/* Continue button */}
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
+                  >
+                    {isLoading ? "Sending..." : "Continue"}
+                  </button>
+
+                  {/* Don't have account */}
+                  <div className="text-center text-sm">
+                    <span className="text-gray-400">
+                      Don't have an account?{" "}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={onSwitchToSignup}
+                      className="text-orange-500 hover:text-orange-400 transition-colors"
+                    >
+                      Sign Up
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}

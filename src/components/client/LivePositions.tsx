@@ -63,9 +63,7 @@ export default function LivePositions() {
                     </div>
                     <div className="text-xs text-gray-400">
                       {Math.ceil(
-                        (position.expirationTime.getTime() -
-                          Date.now()) /
-                          1000
+                        (position.expirationTime.getTime() - Date.now()) / 1000
                       )}
                       s
                     </div>
