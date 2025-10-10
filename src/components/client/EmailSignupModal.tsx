@@ -20,7 +20,7 @@ export default function EmailSignupModal({
 }: EmailSignupModalProps) {
   const [name, setName] = useState("");
   const [accountType, setAccountType] = useState("INVESTOR");
-  const [country, setCountry] = useState("Nigeria");
+  const [country, setCountry] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -218,6 +218,9 @@ export default function EmailSignupModal({
                         title="Select your country of residence"
                         className="w-full px-4 py-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-400 appearance-none"
                       >
+                        <option value="" disabled>
+                          Select country
+                        </option>
                         <option value="Nigeria">🇳🇬 Nigeria</option>
                         <option value="United States">🇺🇸 United States</option>
                         <option value="United Kingdom">
