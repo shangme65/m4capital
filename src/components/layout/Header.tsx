@@ -25,14 +25,17 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   return (
     <header className="absolute top-0 left-0 right-0 z-20 bg-black bg-opacity-0 text-white">
       <nav className="container mx-auto px-8 sm:px-12 py-3 flex justify-between items-center">
-        <Link href="/" className="flex items-center">
+        <Link href="/" className="flex items-center group">
           <Image
             src="/m4capitallogo2.png"
             alt="m4capital Logo"
             width={40}
             height={40}
+            className="transition-transform duration-300 group-hover:scale-110 group-hover:animate-bounce"
           />
-          <span className="ml-0 text-xl font-bold">capital</span>
+          <span className="ml-0 text-xl font-bold transition-transform duration-300 group-hover:scale-110 group-hover:animate-bounce">
+            capital
+          </span>
         </Link>
 
         {/* Widescreen Menu */}
@@ -42,8 +45,14 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             onMouseEnter={() => setActiveDropdown("download")}
             onMouseLeave={() => setActiveDropdown(null)}
           >
-            <button className="flex items-center hover:text-orange-500">
-              Download App <ChevronDown size={16} className="ml-1" />
+            <button className="flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:text-orange-500 hover:scale-105 text-sm font-bold">
+              Download App
+              <ChevronDown
+                size={14}
+                className={`ml-1 transition-transform duration-300 ${
+                  activeDropdown === "download" ? "rotate-180" : ""
+                }`}
+              />
             </button>
             {/* Add dropdown component if needed */}
           </div>
@@ -53,11 +62,19 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             onMouseLeave={() => setActiveDropdown(null)}
           >
             <button
-              className={`flex items-center ${
-                activeDropdown === "traders" ? "text-orange-500" : ""
+              className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
+                activeDropdown === "traders"
+                  ? "text-orange-500 bg-gray-700"
+                  : ""
               } hover:text-orange-500`}
             >
-              For Traders <ChevronDown size={16} className="ml-1" />
+              For Traders
+              <ChevronDown
+                size={14}
+                className={`ml-1 transition-transform duration-300 ${
+                  activeDropdown === "traders" ? "rotate-180" : ""
+                }`}
+              />
             </button>
             {activeDropdown === "traders" && <ForTradersDropdown />}
           </div>
@@ -67,11 +84,17 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             onMouseLeave={() => setActiveDropdown(null)}
           >
             <button
-              className={`flex items-center ${
-                activeDropdown === "about" ? "text-orange-500" : ""
+              className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
+                activeDropdown === "about" ? "text-orange-500 bg-gray-700" : ""
               } hover:text-orange-500`}
             >
-              About Us <ChevronDown size={16} className="ml-1" />
+              About Us
+              <ChevronDown
+                size={14}
+                className={`ml-1 transition-transform duration-300 ${
+                  activeDropdown === "about" ? "rotate-180" : ""
+                }`}
+              />
             </button>
             {activeDropdown === "about" && <AboutUsDropdown />}
           </div>
@@ -85,14 +108,24 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               onMouseEnter={() => setActiveDropdown("lang")}
               onMouseLeave={() => setActiveDropdown(null)}
             >
-              <button className="flex items-center hover:text-orange-500">
-                EN <ChevronDown size={16} className="ml-1" />
+              <button
+                className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
+                  activeDropdown === "lang" ? "text-orange-500 bg-gray-700" : ""
+                } hover:text-orange-500`}
+              >
+                EN
+                <ChevronDown
+                  size={14}
+                  className={`ml-1 transition-transform duration-300 ${
+                    activeDropdown === "lang" ? "rotate-180" : ""
+                  }`}
+                />
               </button>
               {activeDropdown === "lang" && <LanguageDropdown />}
             </div>
             <button
               onClick={onLoginClick}
-              className="flex items-center space-x-1.5 bg-gray-800/70 px-3 py-1.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs"
+              className="flex items-center space-x-1.5 bg-gray-800/70 px-3 py-1.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs font-bold"
               aria-label="Login"
             >
               <LogIn size={16} />
@@ -110,7 +143,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           <div className="md:hidden flex items-center space-x-2">
             <button
               onClick={onLoginClick}
-              className="flex items-center space-x-1.5 bg-gray-800/70 px-3 py-1.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs"
+              className="flex items-center space-x-1.5 bg-gray-800/70 px-3 py-1.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs font-bold"
               aria-label="Login"
             >
               <LogIn size={16} />
@@ -163,7 +196,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   onLoginClick?.();
                   setMobileMenuOpen(false);
                 }}
-                className="flex items-center space-x-2 bg-gray-800/70 px-6 py-3 rounded-2xl hover:bg-gray-700 transition-colors w-full text-center"
+                className="flex items-center justify-center space-x-2 bg-gray-800/70 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform w-full"
                 aria-label="Login"
               >
                 <LogIn size={18} />
@@ -174,7 +207,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   onSignupClick?.();
                   setMobileMenuOpen(false);
                 }}
-                className="bg-orange-600 px-6 py-3 text-sm font-bold rounded-2xl hover:bg-orange-700 transition-colors w-full text-center whitespace-nowrap"
+                className="bg-orange-600 px-6 py-3 text-sm font-bold rounded-2xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform w-full whitespace-nowrap"
               >
                 Sign Up
               </button>
