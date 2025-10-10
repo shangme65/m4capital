@@ -92,15 +92,15 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             </div>
             <button
               onClick={onLoginClick}
-              className="flex items-center space-x-2 bg-gray-800/70 px-4 py-2 rounded-2xl hover:bg-gray-700 transition-colors"
+              className="flex items-center space-x-1.5 bg-gray-800/70 px-3 py-1.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs"
               aria-label="Login"
             >
-              <LogIn size={18} />
+              <LogIn size={16} />
               <span>Log in</span>
             </button>
             <button
               onClick={onSignupClick}
-              className="bg-orange-600 px-5 py-2.5 text-sm font-bold rounded-2xl hover:bg-orange-700 transition-colors whitespace-nowrap"
+              className="bg-orange-600 px-3 py-1.5 text-xs font-bold rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
             >
               Sign Up
             </button>
@@ -110,23 +110,24 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           <div className="md:hidden flex items-center space-x-2">
             <button
               onClick={onLoginClick}
-              className="p-2.5 bg-gray-800/50 rounded-2xl hover:bg-gray-800/75 transition-colors"
+              className="flex items-center space-x-1.5 bg-gray-800/70 px-3 py-1.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs"
               aria-label="Login"
             >
-              <LogIn size={18} />
+              <LogIn size={16} />
+              <span>Log in</span>
             </button>
             <button
               onClick={onSignupClick}
-              className="bg-orange-600 px-5 py-2.5 text-sm font-bold rounded-2xl hover:bg-orange-700 transition-colors whitespace-nowrap"
+              className="bg-orange-600 px-3 py-1.5 text-xs font-bold rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
             >
               Sign Up
             </button>
             <button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-              className="p-2.5 bg-gray-800/50 rounded-2xl hover:bg-gray-800/75 transition-colors"
+              className="bg-gray-800/50 px-3 py-1.5 rounded-xl hover:bg-gray-800/50 hover:scale-105 hover:rotate-180 active:bg-purple-800 active:scale-90 active:text-yellow-300 transition-all duration-300 transform"
               aria-label="Open menu"
             >
-              {isMobileMenuOpen ? <X size={18} /> : <Menu size={18} />}
+              {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
             </button>
           </div>
         </div>

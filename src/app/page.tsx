@@ -360,7 +360,7 @@ function Hero() {
         <div className="space-x-4 mt-12">
           <button
             onClick={openLoginModal}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
+            className="bg-orange-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
           >
             Get Started
           </button>
