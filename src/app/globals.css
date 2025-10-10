@@ -31,3 +31,17 @@ body {
     text-wrap: balance;
   }
 }
+
+/* Close Button Styles */
+.button-close {
+  @apply w-10 h-10 rounded-lg border border-gray-600/50 bg-transparent hover:bg-gray-700/50 flex items-center justify-center transition-all duration-200;
+  @apply text-gray-400 hover:text-white;
+}
+
+.button-close svg {
+  @apply w-5 h-5;
+}
+
+.button-close:hover {
+  @apply border-gray-500/70;
+}
