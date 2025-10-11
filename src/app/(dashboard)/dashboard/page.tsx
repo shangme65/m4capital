@@ -1,13 +1,55 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { useModal } from "@/contexts/ModalContext";
+import { useNotifications, Transaction } from "@/contexts/NotificationContext";
+import TransactionDetailsModal from "@/components/client/TransactionDetailsModal";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const {
+    openDepositModal,
+    openWithdrawModal,
+    openBuyModal,
+    openTransferModal,
+    openConvertModal,
+    openSellModal,
+  } = useModal();
+  const { recentActivity } = useNotifications();
   const [portfolioValue] = useState(24891.42);
   const [todayChange] = useState(2.45);
   const [availableBalance] = useState(5420.0);
   const [lastUpdated, setLastUpdated] = useState("Just now");
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<Transaction | null>(null);
+  const [showTransactionDetails, setShowTransactionDetails] = useState(false);
+
+  const handleTransactionClick = (transaction: Transaction) => {
+    // Enhance transaction with additional details for the modal
+    const enhancedTransaction = {
+      ...transaction,
+      date: new Date(),
+      fee:
+        transaction.type === "deposit" ? transaction.value * 0.02 : undefined,
+      method: transaction.type === "deposit" ? "Bitcoin (BTC)" : undefined,
+      description: `${transaction.type} transaction for ${transaction.asset}`,
+      confirmations: transaction.status === "pending" ? 3 : 6,
+      maxConfirmations: 6,
+      hash:
+        transaction.status !== "failed"
+          ? `0x${Math.random().toString(16).substr(2, 64)}`
+          : undefined,
+      network:
+        transaction.asset === "BTC" ? "Bitcoin Network" : "Ethereum Network",
+      address:
+        transaction.type === "deposit"
+          ? `1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa`
+          : undefined,
+    };
+
+    setSelectedTransaction(enhancedTransaction);
+    setShowTransactionDetails(true);
+  };
 
   // Mock data for user assets
   const [userAssets] = useState([
@@ -53,55 +95,6 @@ export default function DashboardPage() {
     },
   ]);
 
-  // Mock data for recent activity
-  const [recentActivity] = useState([
-    {
-      id: 1,
-      type: "buy",
-      asset: "BTC",
-      amount: 0.1234,
-      value: 7856.32,
-      timestamp: "2 hours ago",
-      status: "completed",
-    },
-    {
-      id: 2,
-      type: "sell",
-      asset: "ETH",
-      amount: 2.5,
-      value: 6234.78,
-      timestamp: "5 hours ago",
-      status: "completed",
-    },
-    {
-      id: 3,
-      type: "deposit",
-      asset: "USD",
-      amount: 10000,
-      value: 10000,
-      timestamp: "1 day ago",
-      status: "completed",
-    },
-    {
-      id: 4,
-      type: "convert",
-      asset: "ADA → SOL",
-      amount: 1000,
-      value: 425.67,
-      timestamp: "2 days ago",
-      status: "completed",
-    },
-    {
-      id: 5,
-      type: "withdraw",
-      asset: "USD",
-      amount: 2500,
-      value: 2500,
-      timestamp: "3 days ago",
-      status: "pending",
-    },
-  ]);
-
   useEffect(() => {
     const timer = setInterval(() => {
       setLastUpdated("Just now");
@@ -111,33 +104,27 @@ export default function DashboardPage() {
   }, []);
 
   const handleDeposit = () => {
-    // TODO: Implement deposit functionality
-    console.log("Deposit clicked");
+    openDepositModal();
   };
 
   const handleWithdraw = () => {
-    // TODO: Implement withdraw functionality
-    console.log("Withdraw clicked");
+    openWithdrawModal();
   };
 
   const handleBuy = () => {
-    // TODO: Implement buy functionality
-    console.log("Buy clicked");
+    openBuyModal();
   };
 
   const handleSell = () => {
-    // TODO: Implement sell functionality
-    console.log("Sell clicked");
+    openSellModal();
   };
 
   const handleTransfer = () => {
-    // TODO: Implement transfer functionality
-    console.log("Transfer clicked");
+    openTransferModal();
   };
 
   const handleConvert = () => {
-    // TODO: Implement convert functionality
-    console.log("Convert clicked");
+    openConvertModal();
   };
 
   const getActivityIcon = (type: string) => {
@@ -491,7 +478,8 @@ export default function DashboardPage() {
               {recentActivity.map((activity) => (
                 <div
                   key={activity.id}
-                  className="flex items-center gap-4 p-3 bg-gray-900/30 rounded-lg border border-gray-700/20"
+                  onClick={() => handleTransactionClick(activity)}
+                  className="flex items-center gap-4 p-3 bg-gray-900/30 rounded-lg border border-gray-700/20 hover:bg-gray-800/50 cursor-pointer transition-all duration-200 hover:border-orange-500/30"
                 >
                   {getActivityIcon(activity.type)}
 
@@ -528,6 +516,23 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   </div>
+
+                  {/* Click indicator */}
+                  <div className="text-gray-500 hover:text-orange-400 transition-colors">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
                 </div>
               ))}
             </div>
@@ -538,6 +543,13 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Transaction Details Modal */}
+      <TransactionDetailsModal
+        isOpen={showTransactionDetails}
+        onClose={() => setShowTransactionDetails(false)}
+        transaction={selectedTransaction}
+      />
     </div>
   );
 }

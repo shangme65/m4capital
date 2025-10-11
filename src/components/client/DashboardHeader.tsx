@@ -1,12 +1,18 @@
 "use client";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Bell, ChevronDown } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useSidebar } from "./SidebarContext";
+import { useNotifications } from "@/contexts/NotificationContext";
+import NotificationsPanel from "./NotificationsPanel";
 
 const DashboardHeader = () => {
   const { data: session } = useSession();
   const { toggleSidebar } = useSidebar();
+  const { unreadCount } = useNotifications();
+  const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] =
+    useState(false);
 
   // Derive the secondary label (Investor / Trader, etc.)
   const secondaryLabel = (() => {
@@ -31,10 +37,16 @@ const DashboardHeader = () => {
       <h1 className="text-2xl font-bold text-white">Dashboard</h1>
       <div className="flex items-center">
         <button
-          className="text-gray-400 hover:text-white mr-6"
+          onClick={() => setIsNotificationsPanelOpen(true)}
+          className="relative text-gray-400 hover:text-white mr-6 transition-colors"
           title="Notifications"
         >
           <Bell size={24} />
+          {unreadCount > 0 && (
+            <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
         </button>
         <button
           type="button"
@@ -70,6 +82,11 @@ const DashboardHeader = () => {
           <ChevronDown size={18} className="ml-2 text-gray-400" />
         </button>
       </div>
+
+      <NotificationsPanel
+        isOpen={isNotificationsPanelOpen}
+        onClose={() => setIsNotificationsPanelOpen(false)}
+      />
     </motion.header>
   );
 };

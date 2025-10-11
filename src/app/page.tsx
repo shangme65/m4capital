@@ -371,7 +371,7 @@ function Hero() {
 }
 
 function CallToAction() {
-  const { openSignupModal } = useModal();
+  const { openLoginModal } = useModal();
   return (
     <div className="bg-gray-800">
       <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:flex lg:items-center lg:justify-between lg:px-8">
@@ -382,8 +382,8 @@ function CallToAction() {
         </h2>
         <div className="mt-10 flex items-center gap-x-6 lg:mt-0 lg:flex-shrink-0">
           <button
-            onClick={openSignupModal}
-            className="rounded-lg bg-orange-500 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-orange-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-all duration-200 transform hover:scale-105"
+            onClick={openLoginModal}
+            className="rounded-lg bg-orange-500 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-all duration-200 transform hover:scale-105"
           >
             Create an account
           </button>
