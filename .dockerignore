@@ -14,3 +14,6 @@ Dockerfile
 coverage
 .DS_Store
 *.log
+public/avatars/
+public/hero-bg-3.jpg
+public/m4capitallogo2.png
