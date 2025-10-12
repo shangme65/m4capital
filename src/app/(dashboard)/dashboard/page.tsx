@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import TransactionDetailsModal from "@/components/client/TransactionDetailsModal";
+import AssetDetailsModal from "@/components/client/AssetDetailsModal";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -23,6 +24,8 @@ export default function DashboardPage() {
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState<any>(null);
+  const [showAssetDetails, setShowAssetDetails] = useState(false);
 
   const handleTransactionClick = (transaction: Transaction) => {
     // Enhance transaction with additional details for the modal
@@ -125,6 +128,11 @@ export default function DashboardPage() {
 
   const handleConvert = () => {
     openConvertModal();
+  };
+
+  const handleAssetClick = (asset: any) => {
+    setSelectedAsset(asset);
+    setShowAssetDetails(true);
   };
 
   const getActivityIcon = (type: string) => {
@@ -424,7 +432,8 @@ export default function DashboardPage() {
               {userAssets.map((asset) => (
                 <div
                   key={asset.symbol}
-                  className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl border border-gray-700/30"
+                  onClick={() => handleAssetClick(asset)}
+                  className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl border border-gray-700/30 cursor-pointer hover:bg-gray-900/70 transition-colors"
                 >
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-white">
@@ -557,6 +566,13 @@ export default function DashboardPage() {
         isOpen={showTransactionDetails}
         onClose={() => setShowTransactionDetails(false)}
         transaction={selectedTransaction}
+      />
+
+      {/* Asset Details Modal */}
+      <AssetDetailsModal
+        isOpen={showAssetDetails}
+        onClose={() => setShowAssetDetails(false)}
+        asset={selectedAsset}
       />
     </div>
   );
