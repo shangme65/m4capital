@@ -59,14 +59,14 @@ const Sidebar = () => {
 
           {/* Sidebar */}
           <motion.div
-            className="fixed left-0 top-0 h-full bg-gray-800 text-white w-64 p-6 flex flex-col z-50"
-            initial={{ x: -256 }}
+            className="fixed left-0 top-0 h-full bg-gray-800 text-white w-56 sm:w-64 p-4 sm:p-6 flex flex-col z-50"
+            initial={{ x: "-100%" }}
             animate={{ x: 0 }}
-            exit={{ x: -256 }}
+            exit={{ x: "-100%" }}
             transition={{ duration: 0.3 }}
           >
             {/* Close button */}
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex justify-between items-center mb-6 sm:mb-8">
               <div className="flex items-center">
                 <motion.div
                   animate={{
@@ -85,7 +85,7 @@ const Sidebar = () => {
                     alt="M4Capital"
                     width={120}
                     height={40}
-                    className="h-10 w-auto"
+                    className="h-8 sm:h-10 w-auto"
                   />
                 </motion.div>
               </div>
@@ -107,7 +107,7 @@ const Sidebar = () => {
             <nav className="flex-1 overflow-y-auto">
               <ul>
                 {navItems.map((item) => (
-                  <li key={item.name} className="mb-6">
+                  <li key={item.name} className="mb-4 sm:mb-6">
                     <motion.div
                       animate={{
                         y: [0, -3, 0],
@@ -126,7 +126,7 @@ const Sidebar = () => {
                           href={`${baseUrl}${item.href}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group w-full"
+                          className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group w-full"
                           onClick={closeSidebar}
                           onMouseEnter={() => setHoveredItem(item.name)}
                           onMouseLeave={() => setHoveredItem(null)}
@@ -178,7 +178,7 @@ const Sidebar = () => {
                               {item.icon}
                             </motion.div>
                             <motion.span
-                              className="ml-4 text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                              className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
                               whileHover={{
                                 x: [0, 3, 0],
                                 transition: {
@@ -225,7 +225,7 @@ const Sidebar = () => {
                         // Regular Next.js Link for other navigation items
                         <Link
                           href={item.href}
-                          className="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
+                          className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
                           onClick={closeSidebar}
                           onMouseEnter={() => setHoveredItem(item.name)}
                           onMouseLeave={() => setHoveredItem(null)}
@@ -265,7 +265,7 @@ const Sidebar = () => {
                                 </motion.div>
                               </motion.div>
                               <motion.span
-                                className="ml-4 text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                                className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
                                 whileHover={{
                                   x: [0, 3, 0],
                                   transition: {
@@ -356,7 +356,7 @@ const Sidebar = () => {
                                 {item.icon}
                               </motion.div>
                               <motion.span
-                                className="ml-4 text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                                className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
                                 whileHover={{
                                   x: [0, 3, 0],
                                   transition: {
@@ -420,7 +420,7 @@ const Sidebar = () => {
                     >
                       <Link
                         href={adminItem.href}
-                        className="flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
+                        className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
                         onClick={closeSidebar}
                         onMouseEnter={() => setHoveredItem("Admin")}
                         onMouseLeave={() => setHoveredItem(null)}
@@ -471,7 +471,7 @@ const Sidebar = () => {
                           {adminItem.icon}
                         </motion.div>
                         <motion.span
-                          className="ml-4 text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                          className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
                           whileHover={{
                             x: [0, 3, 0],
                             transition: {
@@ -519,7 +519,7 @@ const Sidebar = () => {
               </ul>
             </nav>
             {/* Logout button at bottom */}
-            <div className="mt-4 pt-4 border-t border-gray-700">
+            <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-700">
               <motion.div
                 animate={{
                   y: [0, -3, 0],
@@ -537,7 +537,7 @@ const Sidebar = () => {
                     closeSidebar();
                     signOut({ callbackUrl: "/" });
                   }}
-                  className="w-full flex items-center p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 text-left group"
+                  className="w-full flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 text-left group"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onMouseEnter={() => setHoveredItem("Logout")}
@@ -588,7 +588,7 @@ const Sidebar = () => {
                     <LogOut size={22} />
                   </motion.div>
                   <motion.span
-                    className="ml-4 text-lg text-red-400 group-hover:text-orange-500 transition-colors duration-300"
+                    className="ml-3 sm:ml-4 text-base sm:text-lg text-red-400 group-hover:text-orange-500 transition-colors duration-300"
                     whileHover={{
                       x: [0, 3, 0],
                       transition: {

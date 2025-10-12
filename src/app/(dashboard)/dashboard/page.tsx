@@ -241,20 +241,25 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Portfolio Value Card */}
-      <div className="bg-gray-800/50 rounded-2xl p-8 border border-gray-700/50">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-white">Portfolio Value</h1>
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <span>Last updated: {lastUpdated}</span>
+      <div className="bg-gray-800/50 rounded-2xl p-4 sm:p-8 border border-gray-700/50">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">
+            Portfolio Value
+          </h1>
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
+            <span className="hidden sm:inline">
+              Last updated: {lastUpdated}
+            </span>
+            <span className="sm:hidden">{lastUpdated}</span>
             <button
               onClick={() => setLastUpdated("Just now")}
               className="text-gray-400 hover:text-white transition-colors"
               title="Refresh data"
             >
               <svg
-                className="w-4 h-4"
+                className="w-3 h-3 sm:w-4 sm:h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -270,8 +275,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="mb-8">
-          <div className="text-5xl font-bold text-white mb-2">
+        <div className="mb-6 sm:mb-8">
+          <div className="text-3xl sm:text-5xl font-bold text-white mb-2">
             $
             {portfolioValue.toLocaleString("en-US", {
               minimumFractionDigits: 2,
@@ -279,31 +284,31 @@ export default function DashboardPage() {
             })}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-green-400 text-lg font-medium">
+            <span className="text-green-400 text-base sm:text-lg font-medium">
               +{todayChange}%
             </span>
-            <span className="text-gray-400">Today</span>
+            <span className="text-gray-400 text-sm sm:text-base">Today</span>
           </div>
         </div>
 
-        <div className="flex gap-3 mb-8">
+        <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8">
           <button
             onClick={handleDeposit}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base"
           >
             Deposit
           </button>
           <button
             onClick={handleWithdraw}
-            className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-2 rounded-lg font-medium border border-gray-600 transition-colors"
+            className="bg-gray-700 hover:bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium border border-gray-600 transition-colors text-sm sm:text-base"
           >
             Withdraw
           </button>
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-gray-400 text-lg">Available</span>
-          <span className="text-white text-xl font-medium">
+          <span className="text-gray-400 text-base sm:text-lg">Available</span>
+          <span className="text-white text-lg sm:text-xl font-medium">
             $
             {availableBalance.toLocaleString("en-US", {
               minimumFractionDigits: 2,
@@ -321,13 +326,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Trading Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-4 gap-2 sm:gap-4">
         <button
           onClick={handleBuy}
-          className="bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl font-semibold text-lg transition-colors flex flex-col items-center gap-2"
+          className="bg-green-600 hover:bg-green-700 text-white p-2 sm:p-6 rounded-xl font-semibold text-xs sm:text-lg transition-colors flex flex-col items-center gap-1 sm:gap-2"
         >
           <svg
-            className="w-6 h-6"
+            className="w-3 h-3 sm:w-6 sm:h-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -344,10 +349,10 @@ export default function DashboardPage() {
 
         <button
           onClick={handleSell}
-          className="bg-red-600 hover:bg-red-700 text-white p-6 rounded-xl font-semibold text-lg transition-colors flex flex-col items-center gap-2"
+          className="bg-red-600 hover:bg-red-700 text-white p-2 sm:p-6 rounded-xl font-semibold text-xs sm:text-lg transition-colors flex flex-col items-center gap-1 sm:gap-2"
         >
           <svg
-            className="w-6 h-6"
+            className="w-3 h-3 sm:w-6 sm:h-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -364,10 +369,10 @@ export default function DashboardPage() {
 
         <button
           onClick={handleTransfer}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-xl font-semibold text-lg transition-colors flex flex-col items-center gap-2"
+          className="bg-purple-600 hover:bg-purple-700 text-white p-2 sm:p-6 rounded-xl font-semibold text-xs sm:text-lg transition-colors flex flex-col items-center gap-1 sm:gap-2"
         >
           <svg
-            className="w-6 h-6"
+            className="w-3 h-3 sm:w-6 sm:h-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -384,10 +389,10 @@ export default function DashboardPage() {
 
         <button
           onClick={handleConvert}
-          className="bg-orange-600 hover:bg-orange-700 text-white p-6 rounded-xl font-semibold text-lg transition-colors flex flex-col items-center gap-2"
+          className="bg-orange-600 hover:bg-orange-700 text-white p-2 sm:p-6 rounded-xl font-semibold text-xs sm:text-lg transition-colors flex flex-col items-center gap-1 sm:gap-2"
         >
           <svg
-            className="w-6 h-6"
+            className="w-3 h-3 sm:w-6 sm:h-6"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -426,8 +431,20 @@ export default function DashboardPage() {
                       {asset.icon}
                     </div>
                     <div>
-                      <div className="text-white font-semibold">
-                        {asset.symbol}
+                      <div className="flex items-center gap-1">
+                        <span className="text-white font-semibold">
+                          {asset.symbol}
+                        </span>
+                        <span
+                          className={`text-[10px] font-medium ${
+                            asset.change >= 0
+                              ? "text-green-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {asset.change >= 0 ? "+" : ""}
+                          {asset.change}%
+                        </span>
                       </div>
                       <div className="text-gray-400 text-sm">{asset.name}</div>
                     </div>
@@ -448,15 +465,6 @@ export default function DashboardPage() {
                       })}{" "}
                       {asset.symbol}
                     </div>
-                  </div>
-
-                  <div
-                    className={`text-sm font-medium ${
-                      asset.change >= 0 ? "text-green-400" : "text-red-400"
-                    }`}
-                  >
-                    {asset.change >= 0 ? "+" : ""}
-                    {asset.change}%
                   </div>
                 </div>
               ))}
