@@ -4,6 +4,7 @@ import { useModal } from "@/contexts/ModalContext";
 import DepositModal from "../client/DepositModal";
 import WithdrawModal from "../client/WithdrawModal";
 import BuyModal from "../client/BuyModal";
+import SellModal from "../client/SellModal";
 import TransferModal from "../client/TransferModal";
 import ConvertModal from "../client/ConvertModal";
 
@@ -16,11 +17,13 @@ export function DashboardModalWrapper({
     isDepositModalOpen,
     isWithdrawModalOpen,
     isBuyModalOpen,
+    isSellModalOpen,
     isTransferModalOpen,
     isConvertModalOpen,
     closeDepositModal,
     closeWithdrawModal,
     closeBuyModal,
+    closeSellModal,
     closeTransferModal,
     closeConvertModal,
   } = useModal();
@@ -36,6 +39,7 @@ export function DashboardModalWrapper({
         onClose={closeWithdrawModal}
       />
       <BuyModal isOpen={isBuyModalOpen} onClose={closeBuyModal} />
+      <SellModal isOpen={isSellModalOpen} onClose={closeSellModal} />
       <TransferModal
         isOpen={isTransferModalOpen}
         onClose={closeTransferModal}

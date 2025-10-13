@@ -25,6 +25,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     SOL: 150,
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [showAmountInCrypto, setShowAmountInCrypto] = useState(false);
   const { addTransaction, addNotification } = useNotifications();
 
   // Prevent body scroll when modal is open
@@ -54,6 +55,45 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     const usdAmount = parseFloat(buyData.amount);
     const price = getCurrentPrice();
     return usdAmount / price;
+  };
+
+  const toggleCurrency = () => {
+    const currentAmount = parseFloat(buyData.amount) || 0;
+    const price = getCurrentPrice();
+
+    if (showAmountInCrypto) {
+      // Convert from crypto to USD
+      const usdAmount = currentAmount * price;
+      setBuyData((prev) => ({
+        ...prev,
+        amount: usdAmount.toFixed(2),
+      }));
+    } else {
+      // Convert from USD to crypto
+      const cryptoAmount = currentAmount / price;
+      setBuyData((prev) => ({
+        ...prev,
+        amount: cryptoAmount.toString(),
+      }));
+    }
+
+    setShowAmountInCrypto(!showAmountInCrypto);
+  };
+
+  const getCurrentCurrencySymbol = () => {
+    return showAmountInCrypto ? buyData.asset : "USD";
+  };
+
+  const getCurrentAmountLabel = () => {
+    return showAmountInCrypto ? `Amount (${buyData.asset})` : "Amount (USD)";
+  };
+
+  const getAmountPlaceholder = () => {
+    return showAmountInCrypto ? "0.00000000" : "0.00";
+  };
+
+  const getAmountStep = () => {
+    return showAmountInCrypto ? "0.00000001" : "0.01";
   };
 
   const validateForm = () => {
@@ -239,7 +279,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                   onChange={(e) =>
                     setBuyData((prev) => ({ ...prev, asset: e.target.value }))
                   }
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0"
                   aria-label="Select asset to buy"
                 >
                   <option value="BTC">Bitcoin (BTC)</option>
@@ -284,15 +324,15 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                 </div>
               )}
 
-              {/* Amount in USD */}
+              {/* Amount with Currency Toggle */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount (USD)
+                  {getCurrentAmountLabel()}
                 </label>
                 <div className="relative">
                   <input
                     type="number"
-                    step="0.01"
+                    step={getAmountStep()}
                     value={buyData.amount}
                     onChange={(e) =>
                       setBuyData((prev) => ({
@@ -300,32 +340,51 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         amount: e.target.value,
                       }))
                     }
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 pr-16 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="0.00"
+                    className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    placeholder={getAmountPlaceholder()}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                    USD
-                  </span>
+                  <button
+                    type="button"
+                    onClick={toggleCurrency}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                  >
+                    {getCurrentCurrencySymbol()}
+                  </button>
                 </div>
                 {errors.amount && (
                   <p className="text-red-400 text-sm mt-1">{errors.amount}</p>
                 )}
 
                 <div className="flex space-x-2 mt-2">
-                  {[100, 250, 500, 1000].map((preset) => (
-                    <button
-                      key={preset}
-                      onClick={() =>
-                        setBuyData((prev) => ({
-                          ...prev,
-                          amount: preset.toString(),
-                        }))
-                      }
-                      className="text-orange-400 text-sm hover:text-orange-300 transition-colors"
-                    >
-                      ${preset}
-                    </button>
-                  ))}
+                  {showAmountInCrypto
+                    ? [0.001, 0.01, 0.1, 1].map((preset) => (
+                        <button
+                          key={preset}
+                          onClick={() =>
+                            setBuyData((prev) => ({
+                              ...prev,
+                              amount: preset.toString(),
+                            }))
+                          }
+                          className="text-orange-400 text-sm hover:text-orange-300 transition-colors"
+                        >
+                          {preset} {buyData.asset}
+                        </button>
+                      ))
+                    : [100, 250, 500, 1000].map((preset) => (
+                        <button
+                          key={preset}
+                          onClick={() =>
+                            setBuyData((prev) => ({
+                              ...prev,
+                              amount: preset.toString(),
+                            }))
+                          }
+                          className="text-orange-400 text-sm hover:text-orange-300 transition-colors"
+                        >
+                          ${preset}
+                        </button>
+                      ))}
                 </div>
               </div>
 

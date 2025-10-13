@@ -255,7 +255,7 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
                         fromAsset: e.target.value,
                       }))
                     }
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent appearance-none"
+                    className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none appearance-none border-0"
                     aria-label="Select asset to convert from"
                   >
                     {assets.map((asset) => (
@@ -298,7 +298,7 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
                         amount: e.target.value,
                       }))
                     }
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 pr-16 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="0.00"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -363,7 +363,7 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
                         toAsset: e.target.value,
                       }))
                     }
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent appearance-none"
+                    className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none appearance-none border-0"
                     aria-label="Select asset to convert to"
                   >
                     {assets.map((asset) => (

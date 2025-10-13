@@ -30,6 +30,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     SOL: 150,
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [showAmountInUSD, setShowAmountInUSD] = useState(false);
   const { addTransaction, addNotification } = useNotifications();
 
   // Prevent body scroll when modal is open
@@ -67,6 +68,45 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     const amount = getAmountToSell();
     const price = getCurrentPrice();
     return amount * price;
+  };
+
+  const toggleSellCurrency = () => {
+    const currentAmount = parseFloat(sellData.amount) || 0;
+    const price = getCurrentPrice();
+
+    if (showAmountInUSD) {
+      // Convert from USD to crypto
+      const cryptoAmount = currentAmount / price;
+      setSellData((prev) => ({
+        ...prev,
+        amount: cryptoAmount.toString(),
+      }));
+    } else {
+      // Convert from crypto to USD
+      const usdAmount = currentAmount * price;
+      setSellData((prev) => ({
+        ...prev,
+        amount: usdAmount.toFixed(2),
+      }));
+    }
+
+    setShowAmountInUSD(!showAmountInUSD);
+  };
+
+  const getSellCurrencySymbol = () => {
+    return showAmountInUSD ? "USD" : sellData.asset;
+  };
+
+  const getSellAmountLabel = () => {
+    return showAmountInUSD ? "Amount (USD)" : `Amount (${sellData.asset})`;
+  };
+
+  const getSellAmountPlaceholder = () => {
+    return showAmountInUSD ? "0.00" : "Enter amount";
+  };
+
+  const getSellAmountStep = () => {
+    return showAmountInUSD ? "0.01" : "0.00000001";
   };
 
   const validateForm = () => {
@@ -270,7 +310,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                   onChange={(e) =>
                     setSellData((prev) => ({ ...prev, asset: e.target.value }))
                   }
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0"
                   aria-label="Select asset to sell"
                 >
                   <option value="BTC">Bitcoin (BTC)</option>
@@ -319,7 +359,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                     step="0.01"
                     value={limitPrice}
                     onChange={(e) => setLimitPrice(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="Enter limit price"
                   />
                   {errors.limitPrice && (
@@ -367,23 +407,32 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                 </div>
 
                 {sellData.sellType === "partial" && (
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.00000001"
-                      value={sellData.amount}
-                      onChange={(e) =>
-                        setSellData((prev) => ({
-                          ...prev,
-                          amount: e.target.value,
-                        }))
-                      }
-                      className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 pr-16 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      placeholder="Enter amount"
-                    />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                      {sellData.asset}
-                    </span>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      {getSellAmountLabel()}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        step={getSellAmountStep()}
+                        value={sellData.amount}
+                        onChange={(e) =>
+                          setSellData((prev) => ({
+                            ...prev,
+                            amount: e.target.value,
+                          }))
+                        }
+                        className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        placeholder={getSellAmountPlaceholder()}
+                      />
+                      <button
+                        type="button"
+                        onClick={toggleSellCurrency}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                      >
+                        {getSellCurrencySymbol()}
+                      </button>
+                    </div>
                   </div>
                 )}
                 {errors.amount && (

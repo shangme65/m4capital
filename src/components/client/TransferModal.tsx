@@ -13,7 +13,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [transferData, setTransferData] = useState({
     asset: "BTC",
     amount: "",
-    recipient: "",
+    walletAddress: "",
     memo: "",
   });
   const [availableBalances] = useState({
@@ -22,26 +22,14 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
     ADA: 8420.15,
     SOL: 45.23,
   });
-  const [recentContacts] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      email: "john@example.com",
-      lastUsed: "2 days ago",
-    },
-    {
-      id: 2,
-      name: "Sarah Smith",
-      email: "sarah@example.com",
-      lastUsed: "1 week ago",
-    },
-    {
-      id: 3,
-      name: "Mike Johnson",
-      email: "mike@example.com",
-      lastUsed: "2 weeks ago",
-    },
-  ]);
+  const [recentAddresses, setRecentAddresses] = useState<
+    Array<{
+      id: number;
+      address: string;
+      asset: string;
+      lastUsed: string;
+    }>
+  >([]);
   const [transferFee] = useState(0.0001);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const { addTransaction, addNotification } = useNotifications();
@@ -76,14 +64,13 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       newErrors.amount = "Insufficient balance";
     }
 
-    if (!transferData.recipient.trim()) {
-      newErrors.recipient = "Recipient is required";
+    if (!transferData.walletAddress.trim()) {
+      newErrors.walletAddress = "Wallet address is required";
     }
 
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (transferData.recipient && !emailRegex.test(transferData.recipient)) {
-      newErrors.recipient = "Please enter a valid email address";
+    // Basic wallet address validation (check for minimum length and alphanumeric characters)
+    if (transferData.walletAddress && transferData.walletAddress.length < 26) {
+      newErrors.walletAddress = "Please enter a valid wallet address";
     }
 
     setErrors(newErrors);
@@ -95,6 +82,21 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       try {
         const amount = parseFloat(transferData.amount);
         const totalDeducted = amount + transferFee;
+
+        // Add to recent addresses after successful transfer
+        const newAddress = {
+          id: Date.now(),
+          address: transferData.walletAddress,
+          asset: transferData.asset,
+          lastUsed: new Date().toLocaleDateString(),
+        };
+
+        setRecentAddresses((prev) => {
+          const filtered = prev.filter(
+            (addr) => addr.address !== transferData.walletAddress
+          );
+          return [newAddress, ...filtered].slice(0, 3); // Keep only 3 most recent
+        });
 
         // Create transaction
         const transaction = {
@@ -112,8 +114,13 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
           timestamp: new Date().toLocaleString(),
           status: "pending" as const,
           fee: transferFee,
-          method: "Internal Transfer",
-          description: `Transfer ${amount} ${transferData.asset} to ${transferData.recipient}`,
+          method: "External Transfer",
+          description: `Transfer ${amount} ${
+            transferData.asset
+          } to ${transferData.walletAddress.slice(
+            0,
+            6
+          )}...${transferData.walletAddress.slice(-4)}`,
           memo: transferData.memo,
         };
 
@@ -123,14 +130,14 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
         addNotification({
           type: "transaction",
           title: "Transfer Initiated",
-          message: `Transfer of ${amount} ${transferData.asset} to ${transferData.recipient} is being processed`,
+          message: `Transfer of ${amount} ${transferData.asset} to wallet address is being processed`,
         });
 
         // Reset form and close modal
         setTransferData({
           asset: "BTC",
           amount: "",
-          recipient: "",
+          walletAddress: "",
           memo: "",
         });
         setErrors({});
@@ -206,7 +213,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 <h2 className="text-2xl font-bold text-white">
                   Transfer Crypto
                 </h2>
-                <p className="text-gray-400">Send to another M4Capital user</p>
+                <p className="text-gray-400">Send to external wallet</p>
               </div>
             </div>
 
@@ -224,7 +231,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       asset: e.target.value,
                     }))
                   }
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0"
                   aria-label="Select asset to transfer"
                 >
                   <option value="BTC">Bitcoin (BTC)</option>
@@ -265,7 +272,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         amount: e.target.value,
                       }))
                     }
-                    className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 pr-16 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     placeholder="0.00"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -293,59 +300,58 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 </button>
               </div>
 
-              {/* Recipient */}
+              {/* Destination Wallet Address */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Recipient Email
+                  Destination Wallet Address
                 </label>
                 <input
-                  type="email"
-                  value={transferData.recipient}
+                  type="text"
+                  value={transferData.walletAddress}
                   onChange={(e) =>
                     setTransferData((prev) => ({
                       ...prev,
-                      recipient: e.target.value,
+                      walletAddress: e.target.value,
                     }))
                   }
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Enter recipient's email address"
+                  className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0"
+                  placeholder="Enter destination wallet address"
                 />
-                {errors.recipient && (
+                {errors.walletAddress && (
                   <p className="text-red-400 text-sm mt-1">
-                    {errors.recipient}
+                    {errors.walletAddress}
                   </p>
                 )}
               </div>
 
-              {/* Recent Contacts */}
-              {recentContacts.length > 0 && (
+              {/* Recent Addresses */}
+              {recentAddresses.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Recent Contacts
+                    Recent Addresses
                   </label>
                   <div className="space-y-2">
-                    {recentContacts.map((contact) => (
+                    {recentAddresses.map((addressData) => (
                       <button
-                        key={contact.id}
+                        key={addressData.id}
                         onClick={() =>
                           setTransferData((prev) => ({
                             ...prev,
-                            recipient: contact.email,
+                            walletAddress: addressData.address,
                           }))
                         }
                         className="w-full text-left bg-gray-800/50 hover:bg-gray-700/50 rounded-lg p-3 transition-colors"
                       >
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="text-white font-medium">
-                              {contact.name}
+                            <div className="text-white font-medium text-sm">
+                              {addressData.address.slice(0, 8)}...
+                              {addressData.address.slice(-6)}
                             </div>
-                            <div className="text-gray-400 text-sm">
-                              {contact.email}
+                            <div className="text-gray-400 text-xs">
+                              {addressData.asset} - Last used:{" "}
+                              {addressData.lastUsed}
                             </div>
-                          </div>
-                          <div className="text-gray-500 text-xs">
-                            {contact.lastUsed}
                           </div>
                         </div>
                       </button>
@@ -367,7 +373,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                       memo: e.target.value,
                     }))
                   }
-                  className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none resize-none border-0"
                   placeholder="Add a note for this transfer"
                   rows={3}
                 />
@@ -449,11 +455,11 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   </svg>
                   <div>
                     <p className="text-blue-400 text-sm font-medium">
-                      Internal Transfer
+                      External Transfer
                     </p>
                     <p className="text-blue-300 text-sm mt-1">
-                      Transfers to other M4Capital users are instant and have
-                      minimal fees.
+                      Transfers to external wallets are processed securely with
+                      network fees.
                     </p>
                   </div>
                 </div>

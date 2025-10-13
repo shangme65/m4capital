@@ -24,7 +24,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
   return (
     <header className="absolute top-0 left-0 right-0 z-20 bg-black bg-opacity-0 text-white">
-      <nav className="container mx-auto px-8 sm:px-12 py-3 flex justify-between items-center">
+      <nav className="container mx-auto px-4 sm:px-12 md:px-20 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center group">
           <Image
             src="/m4capitallogo2.png"
@@ -140,27 +140,32 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           </div>
 
           {/* Mobile Menu */}
-          <div className="md:hidden flex items-center space-x-2">
+          <div className="md:hidden flex items-center space-x-2 sm:space-x-3">
             <button
               onClick={onLoginClick}
-              className="flex items-center space-x-1.5 bg-gray-800/70 px-3 py-1.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs font-bold"
+              className="flex items-center space-x-1 bg-gray-800/70 px-2 sm:px-3 py-2 sm:py-2 rounded-lg sm:rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs font-bold"
               aria-label="Login"
             >
-              <LogIn size={16} />
-              <span>Log in</span>
+              <LogIn size={16} className="sm:w-5 sm:h-5" />
+              <span className="hidden xs:inline">Log in</span>
+              <span className="xs:hidden">Login</span>
             </button>
             <button
               onClick={onSignupClick}
-              className="bg-orange-600 px-3 py-1.5 text-xs font-bold rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
+              className="bg-orange-600 px-2 sm:px-3 py-2 sm:py-2 text-xs font-bold rounded-lg sm:rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
             >
               Sign Up
             </button>
             <button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-              className="bg-gray-800/50 px-3 py-1.5 rounded-xl hover:bg-gray-800/50 hover:scale-105 hover:rotate-180 active:bg-purple-800 active:scale-90 active:text-yellow-300 transition-all duration-300 transform"
+              className="bg-gray-800/50 px-2 sm:px-3 py-2 sm:py-2 rounded-lg sm:rounded-xl hover:bg-gray-800/50 hover:scale-105 hover:rotate-180 active:bg-purple-800 active:scale-90 active:text-yellow-300 transition-all duration-300 transform"
               aria-label="Open menu"
             >
-              {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
+              {isMobileMenuOpen ? (
+                <X size={14} className="sm:w-4 sm:h-4" />
+              ) : (
+                <Menu size={14} className="sm:w-4 sm:h-4" />
+              )}
             </button>
           </div>
         </div>

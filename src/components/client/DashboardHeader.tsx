@@ -51,7 +51,7 @@ const DashboardHeader = () => {
         <button
           type="button"
           onClick={toggleSidebar}
-          className="flex items-center cursor-pointer hover:bg-gray-800 p-1 sm:p-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          className="flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none"
           aria-haspopup="true"
           aria-label="Open navigation sidebar"
         >

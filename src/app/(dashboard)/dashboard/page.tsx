@@ -1,6 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import TransactionDetailsModal from "@/components/client/TransactionDetailsModal";
@@ -26,6 +27,8 @@ export default function DashboardPage() {
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [showAssetDetails, setShowAssetDetails] = useState(false);
+  const [showAllAssets, setShowAllAssets] = useState(false);
+  const [showAllActivity, setShowAllActivity] = useState(false);
 
   const handleTransactionClick = (transaction: Transaction) => {
     // Enhance transaction with additional details for the modal
@@ -133,6 +136,14 @@ export default function DashboardPage() {
   const handleAssetClick = (asset: any) => {
     setSelectedAsset(asset);
     setShowAssetDetails(true);
+  };
+
+  const handleViewAllAssets = () => {
+    setShowAllAssets(true);
+  };
+
+  const handleViewAllActivity = () => {
+    setShowAllActivity(true);
   };
 
   const getActivityIcon = (type: string) => {
@@ -412,7 +423,7 @@ export default function DashboardPage() {
               d="M8 5H6a2 2 0 00-2 2v6a2 2 0 002 2h2m2-6h10m0 0l-4-4m4 4l-4 4m0 0v-5m0 5h2a2 2 0 002-2V7a2 2 0 00-2-2h-2"
             />
           </svg>
-          Convert
+          Swap
         </button>
       </div>
 
@@ -423,7 +434,10 @@ export default function DashboardPage() {
           <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Your Assets</h2>
-              <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+              <button
+                onClick={handleViewAllAssets}
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
                 View All
               </button>
             </div>
@@ -486,7 +500,10 @@ export default function DashboardPage() {
           <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">Recent Activity</h2>
-              <button className="text-sm text-blue-400 hover:text-blue-300 transition-colors">
+              <button
+                onClick={handleViewAllActivity}
+                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+              >
                 View All
               </button>
             </div>
@@ -554,7 +571,10 @@ export default function DashboardPage() {
               ))}
             </div>
 
-            <button className="w-full mt-6 py-3 bg-gray-700/50 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors border border-gray-600">
+            <button
+              onClick={handleViewAllActivity}
+              className="w-full mt-6 py-3 bg-gray-700/50 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors border border-gray-600"
+            >
               View Transaction History
             </button>
           </div>
@@ -574,6 +594,207 @@ export default function DashboardPage() {
         onClose={() => setShowAssetDetails(false)}
         asset={selectedAsset}
       />
+
+      {/* All Assets Modal */}
+      <AnimatePresence>
+        {showAllAssets && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowAllAssets(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-800 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">All Assets</h2>
+                <button
+                  onClick={() => setShowAllAssets(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {userAssets.map((asset) => (
+                  <div
+                    key={asset.symbol}
+                    onClick={() => {
+                      setShowAllAssets(false);
+                      handleAssetClick(asset);
+                    }}
+                    className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl border border-gray-700/30 cursor-pointer hover:bg-gray-900/70 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-white">
+                        {asset.icon}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-white">
+                            {asset.symbol}
+                          </span>
+                          <span
+                            className={`text-sm ${
+                              asset.change >= 0
+                                ? "text-green-400"
+                                : "text-red-400"
+                            }`}
+                          >
+                            {asset.change >= 0 ? "+" : ""}
+                            {asset.change.toFixed(2)}%
+                          </span>
+                        </div>
+                        <p className="text-gray-400 text-sm">{asset.name}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-white">
+                        $
+                        {asset.value.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                        })}
+                      </p>
+                      <p className="text-gray-400 text-sm">
+                        {asset.amount.toLocaleString("en-US", {
+                          minimumFractionDigits: 4,
+                        })}{" "}
+                        {asset.symbol}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* All Activity Modal */}
+      <AnimatePresence>
+        {showAllActivity && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+            onClick={() => setShowAllActivity(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-gray-800 rounded-2xl p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-white">
+                  Transaction History
+                </h2>
+                <button
+                  onClick={() => setShowAllActivity(false)}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {recentActivity.map((activity) => (
+                  <div
+                    key={activity.id}
+                    onClick={() => {
+                      setShowAllActivity(false);
+                      handleTransactionClick(activity);
+                    }}
+                    className="flex items-center gap-4 p-4 bg-gray-900/30 rounded-lg border border-gray-700/20 hover:bg-gray-800/50 cursor-pointer transition-all duration-200 hover:border-orange-500/30"
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        getActivityIcon(activity.type).bgColor
+                      }`}
+                    >
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d={getActivityIcon(activity.type).path}
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-white">
+                          {activity.type} {activity.asset}
+                        </span>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            activity.status === "completed"
+                              ? "bg-green-900/30 text-green-400"
+                              : activity.status === "pending"
+                              ? "bg-orange-900/30 text-orange-400"
+                              : "bg-red-900/30 text-red-400"
+                          }`}
+                        >
+                          {activity.status}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-gray-400 text-sm">
+                          $
+                          {activity.value.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          {activity.timestamp}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
