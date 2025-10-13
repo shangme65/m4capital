@@ -146,6 +146,41 @@ export default function DashboardPage() {
     setShowAllActivity(true);
   };
 
+  const getActivityIconData = (type: string) => {
+    switch (type) {
+      case "buy":
+        return {
+          bgColor: "bg-green-600",
+          path: "M7 11l5-5m0 0l5 5m-5-5v12",
+        };
+      case "sell":
+        return {
+          bgColor: "bg-red-600",
+          path: "M17 13l-5 5m0 0l-5-5m5 5V6",
+        };
+      case "deposit":
+        return {
+          bgColor: "bg-blue-600",
+          path: "M12 6v6m0 0v6m0-6h6m-6 0H6",
+        };
+      case "withdraw":
+        return {
+          bgColor: "bg-gray-600",
+          path: "M18 12H6",
+        };
+      case "convert":
+        return {
+          bgColor: "bg-orange-600",
+          path: "M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4",
+        };
+      default:
+        return {
+          bgColor: "bg-gray-600",
+          path: "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z",
+        };
+    }
+  };
+
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "buy":
@@ -742,7 +777,7 @@ export default function DashboardPage() {
                   >
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        getActivityIcon(activity.type).bgColor
+                        getActivityIconData(activity.type).bgColor
                       }`}
                     >
                       <svg
@@ -755,7 +790,7 @@ export default function DashboardPage() {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d={getActivityIcon(activity.type).path}
+                          d={getActivityIconData(activity.type).path}
                         />
                       </svg>
                     </div>
