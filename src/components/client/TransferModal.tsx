@@ -401,7 +401,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
               </div>
 
               {/* Transfer Summary */}
-              {transferData.amount && transferData.recipient && (
+              {transferData.amount && transferData.walletAddress && (
                 <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
                   <h3 className="text-orange-400 font-medium mb-2">
                     Transfer Summary
@@ -410,7 +410,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     <div className="flex justify-between">
                       <span className="text-gray-400">To:</span>
                       <span className="text-white">
-                        {transferData.recipient}
+                        {transferData.walletAddress}
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -431,7 +431,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
               <button
                 onClick={handleTransfer}
-                disabled={!transferData.amount || !transferData.recipient}
+                disabled={!transferData.amount || !transferData.walletAddress}
                 className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
               >
                 Send Transfer
