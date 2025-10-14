@@ -20,16 +20,27 @@ export async function GET(req: NextRequest) {
         role: true,
         accountType: true,
         country: true,
-        balance: true,
         createdAt: true,
         updatedAt: true,
+        portfolio: {
+          select: {
+            balance: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    return NextResponse.json(users);
+    // Transform the data to include balance at the user level for easier frontend consumption
+    const usersWithBalance = users.map(user => ({
+      ...user,
+      balance: user.portfolio?.balance || 0,
+      portfolio: undefined, // Remove nested portfolio object
+    }));
+
+    return NextResponse.json(usersWithBalance);
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
