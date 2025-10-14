@@ -258,10 +258,16 @@ const AdminDashboard = () => {
   );
   const [notificationMessage, setNotificationMessage] = useState("");
   const [showNotification, setShowNotification] = useState(false);
-  const [notificationType, setNotificationType] = useState<"success" | "error">("success");
+  const [notificationType, setNotificationType] = useState<"success" | "error">(
+    "success"
+  );
+  const [showAdminMode, setShowAdminMode] = useState(true);
 
   // Show popup notification
-  const showPopupNotification = (message: string, type: "success" | "error" = "success") => {
+  const showPopupNotification = (
+    message: string,
+    type: "success" | "error" = "success"
+  ) => {
     setNotificationMessage(message);
     setNotificationType(type);
     setShowNotification(true);
@@ -269,6 +275,17 @@ const AdminDashboard = () => {
       setShowNotification(false);
     }, 3000); // Hide after 3 seconds
   };
+
+  // Auto-hide admin mode notification after 5 seconds
+  useEffect(() => {
+    if (session?.user?.role === "ADMIN" && showAdminMode) {
+      const timer = setTimeout(() => {
+        setShowAdminMode(false);
+      }, 5000); // Hide after 5 seconds
+
+      return () => clearTimeout(timer);
+    }
+  }, [session, showAdminMode]);
 
   useEffect(() => {
     if (activeTab === "users") {
@@ -286,7 +303,10 @@ const AdminDashboard = () => {
 
   const handleTopUp = async () => {
     if (!selectedUser || amount <= 0) {
-      showPopupNotification("Please select a user and enter a valid amount.", "error");
+      showPopupNotification(
+        "Please select a user and enter a valid amount.",
+        "error"
+      );
       return;
     }
 
@@ -358,12 +378,18 @@ const AdminDashboard = () => {
     });
 
     if (res.ok) {
-      showPopupNotification(`User role updated successfully to ${newRole}`, "success");
+      showPopupNotification(
+        `User role updated successfully to ${newRole}`,
+        "success"
+      );
       fetchUsers();
       setEditingUser(null);
     } else {
       const error = await res.json();
-      showPopupNotification(`Failed to update user role: ${error.error}`, "error");
+      showPopupNotification(
+        `Failed to update user role: ${error.error}`,
+        "error"
+      );
     }
     setLoading(false);
   };
@@ -401,15 +427,25 @@ const AdminDashboard = () => {
       {/* Popup Notification */}
       {showNotification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
-          <div className={`p-4 rounded-lg border shadow-lg ${
-            notificationType === "success" 
-              ? "bg-green-900/90 border-green-500/50 text-green-400" 
-              : "bg-red-900/90 border-red-500/50 text-red-400"
-          }`}>
+          <div
+            className={`p-4 rounded-lg border shadow-lg ${
+              notificationType === "success"
+                ? "bg-green-900/90 border-green-500/50 text-green-400"
+                : "bg-red-900/90 border-red-500/50 text-red-400"
+            }`}
+          >
             <div className="flex items-center space-x-2">
               {notificationType === "success" ? (
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               ) : (
                 <AlertTriangle size={20} />
@@ -421,8 +457,8 @@ const AdminDashboard = () => {
       )}
 
       {/* Move logged in notification to popup */}
-      {session?.user?.role === "ADMIN" && !showNotification && (
-        <div className="fixed top-4 right-4 z-40">
+      {session?.user?.role === "ADMIN" && showAdminMode && (
+        <div className="fixed top-4 right-4 z-40 animate-slide-in">
           <div className="bg-orange-500/20 border border-orange-500/30 rounded-lg p-3 backdrop-blur-sm">
             <div className="flex items-center space-x-2">
               <Shield className="text-orange-400" size={16} />
@@ -470,53 +506,6 @@ const AdminDashboard = () => {
       {/* Tab Content */}
       {activeTab === "dashboard" && (
         <div className="space-y-8">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Total Users</p>
-                  <p className="text-2xl font-bold text-white">{totalUsers}</p>
-                </div>
-                <Users className="text-blue-400" size={32} />
-              </div>
-            </div>
-
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Admin Users</p>
-                  <p className="text-2xl font-bold text-orange-400">
-                    {adminUsers}
-                  </p>
-                </div>
-                <UserCheck className="text-orange-400" size={32} />
-              </div>
-            </div>
-
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Regular Users</p>
-                  <p className="text-2xl font-bold text-green-400">
-                    {regularUsers}
-                  </p>
-                </div>
-                <UserX className="text-green-400" size={32} />
-              </div>
-            </div>
-
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-sm">Active Sessions</p>
-                  <p className="text-2xl font-bold text-purple-400">24</p>
-                </div>
-                <Activity className="text-purple-400" size={32} />
-              </div>
-            </div>
-          </div>
-
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
@@ -590,7 +579,55 @@ const AdminDashboard = () => {
       )}
 
       {activeTab === "users" && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className="space-y-8">
+          {/* User Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">Total Users</p>
+                  <p className="text-2xl font-bold text-white">{totalUsers}</p>
+                </div>
+                <Users className="text-blue-400" size={32} />
+              </div>
+            </div>
+
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">Admin Users</p>
+                  <p className="text-2xl font-bold text-orange-400">
+                    {adminUsers}
+                  </p>
+                </div>
+                <UserCheck className="text-orange-400" size={32} />
+              </div>
+            </div>
+
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">Regular Users</p>
+                  <p className="text-2xl font-bold text-green-400">
+                    {regularUsers}
+                  </p>
+                </div>
+                <UserX className="text-green-400" size={32} />
+              </div>
+            </div>
+
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-gray-400 text-sm">Active Sessions</p>
+                  <p className="text-2xl font-bold text-purple-400">24</p>
+                </div>
+                <Activity className="text-purple-400" size={32} />
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
           {/* Users List */}
           <div className="xl:col-span-2">
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
@@ -672,6 +709,7 @@ const AdminDashboard = () => {
               </div>
             )}
           </div>
+        </div>
         </div>
       )}
 
@@ -808,56 +846,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Tab Content */}
-      {activeTab === "dashboard" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Stats Cards */}
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Total Users</p>
-                <p className="text-2xl font-bold text-white">{users.length}</p>
-              </div>
-              <Users className="text-blue-400" size={32} />
-            </div>
-          </div>
-          
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Admin Users</p>
-                <p className="text-2xl font-bold text-orange-400">
-                  {users.filter(user => user.role === "ADMIN").length}
-                </p>
-              </div>
-              <UserCheck className="text-orange-400" size={32} />
-            </div>
-          </div>
-          
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Regular Users</p>
-                <p className="text-2xl font-bold text-green-400">
-                  {users.filter(user => user.role === "USER").length}
-                </p>
-              </div>
-              <UserX className="text-green-400" size={32} />
-            </div>
-          </div>
-          
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-400 text-sm">Active Sessions</p>
-                <p className="text-2xl font-bold text-purple-400">12</p>
-              </div>
-              <Activity className="text-purple-400" size={32} />
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Analytics Tab */}
       {activeTab === "analytics" && (
         <div className="space-y-6">
@@ -868,17 +856,23 @@ const AdminDashboard = () => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-gray-700/30 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-blue-400 mb-2">User Growth</h4>
+                <h4 className="text-lg font-semibold text-blue-400 mb-2">
+                  User Growth
+                </h4>
                 <p className="text-3xl font-bold text-white">+24%</p>
                 <p className="text-sm text-gray-400">This month</p>
               </div>
               <div className="bg-gray-700/30 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-green-400 mb-2">Trading Volume</h4>
+                <h4 className="text-lg font-semibold text-green-400 mb-2">
+                  Trading Volume
+                </h4>
                 <p className="text-3xl font-bold text-white">$2.4M</p>
                 <p className="text-sm text-gray-400">Last 30 days</p>
               </div>
               <div className="bg-gray-700/30 rounded-lg p-4">
-                <h4 className="text-lg font-semibold text-purple-400 mb-2">Revenue</h4>
+                <h4 className="text-lg font-semibold text-purple-400 mb-2">
+                  Revenue
+                </h4>
                 <p className="text-3xl font-bold text-white">$48.2K</p>
                 <p className="text-sm text-gray-400">Monthly</p>
               </div>
@@ -899,7 +893,9 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
                 <div>
                   <p className="font-medium">Maintenance Mode</p>
-                  <p className="text-sm text-gray-400">Temporarily disable user access</p>
+                  <p className="text-sm text-gray-400">
+                    Temporarily disable user access
+                  </p>
                 </div>
                 <button className="bg-red-500/20 text-red-400 px-3 py-1 rounded border border-red-500/30">
                   Disabled
@@ -908,7 +904,9 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
                 <div>
                   <p className="font-medium">Auto Backups</p>
-                  <p className="text-sm text-gray-400">Daily database backups</p>
+                  <p className="text-sm text-gray-400">
+                    Daily database backups
+                  </p>
                 </div>
                 <button className="bg-green-500/20 text-green-400 px-3 py-1 rounded border border-green-500/30">
                   Enabled
@@ -917,7 +915,9 @@ const AdminDashboard = () => {
               <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
                 <div>
                   <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-gray-400">System alerts and updates</p>
+                  <p className="text-sm text-gray-400">
+                    System alerts and updates
+                  </p>
                 </div>
                 <button className="bg-green-500/20 text-green-400 px-3 py-1 rounded border border-green-500/30">
                   Enabled
@@ -942,7 +942,9 @@ const AdminDashboard = () => {
                   <DollarSign className="text-green-400" size={24} />
                   <div>
                     <p className="font-medium">Financial Report</p>
-                    <p className="text-sm text-gray-400">Revenue and transactions</p>
+                    <p className="text-sm text-gray-400">
+                      Revenue and transactions
+                    </p>
                   </div>
                 </div>
               </button>
@@ -951,7 +953,9 @@ const AdminDashboard = () => {
                   <Users className="text-blue-400" size={24} />
                   <div>
                     <p className="font-medium">User Activity</p>
-                    <p className="text-sm text-gray-400">Login and engagement</p>
+                    <p className="text-sm text-gray-400">
+                      Login and engagement
+                    </p>
                   </div>
                 </div>
               </button>
@@ -960,7 +964,9 @@ const AdminDashboard = () => {
                   <Shield className="text-orange-400" size={24} />
                   <div>
                     <p className="font-medium">Security Audit</p>
-                    <p className="text-sm text-gray-400">Access logs and alerts</p>
+                    <p className="text-sm text-gray-400">
+                      Access logs and alerts
+                    </p>
                   </div>
                 </div>
               </button>
@@ -1027,18 +1033,51 @@ const AdminDashboard = () => {
             </h3>
             <div className="space-y-3">
               {[
-                { action: "User login", user: "admin@m4capital.com", time: "2 mins ago", type: "success" },
-                { action: "Balance updated", user: "user@m4capital.com", time: "5 mins ago", type: "info" },
-                { action: "User registration", user: "newuser@email.com", time: "10 mins ago", type: "success" },
-                { action: "Failed login attempt", user: "unknown@email.com", time: "15 mins ago", type: "warning" },
-                { action: "System backup", user: "system", time: "2 hours ago", type: "info" },
+                {
+                  action: "User login",
+                  user: "admin@m4capital.com",
+                  time: "2 mins ago",
+                  type: "success",
+                },
+                {
+                  action: "Balance updated",
+                  user: "user@m4capital.com",
+                  time: "5 mins ago",
+                  type: "info",
+                },
+                {
+                  action: "User registration",
+                  user: "newuser@email.com",
+                  time: "10 mins ago",
+                  type: "success",
+                },
+                {
+                  action: "Failed login attempt",
+                  user: "unknown@email.com",
+                  time: "15 mins ago",
+                  type: "warning",
+                },
+                {
+                  action: "System backup",
+                  user: "system",
+                  time: "2 hours ago",
+                  type: "info",
+                },
               ].map((log, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg"
+                >
                   <div className="flex items-center space-x-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      log.type === "success" ? "bg-green-400" :
-                      log.type === "warning" ? "bg-yellow-400" : "bg-blue-400"
-                    }`} />
+                    <div
+                      className={`w-3 h-3 rounded-full ${
+                        log.type === "success"
+                          ? "bg-green-400"
+                          : log.type === "warning"
+                          ? "bg-yellow-400"
+                          : "bg-blue-400"
+                      }`}
+                    />
                     <div>
                       <p className="font-medium">{log.action}</p>
                       <p className="text-sm text-gray-400">{log.user}</p>
@@ -1062,7 +1101,9 @@ const AdminDashboard = () => {
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Notification Type</label>
+                <label className="block text-sm font-medium mb-2">
+                  Notification Type
+                </label>
                 <select className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white">
                   <option value="info">Information</option>
                   <option value="warning">Warning</option>
@@ -1071,7 +1112,9 @@ const AdminDashboard = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Recipients</label>
+                <label className="block text-sm font-medium mb-2">
+                  Recipients
+                </label>
                 <select className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white">
                   <option value="all">All Users</option>
                   <option value="admins">Admin Users Only</option>
@@ -1080,8 +1123,10 @@ const AdminDashboard = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Message</label>
-                <textarea 
+                <label className="block text-sm font-medium mb-2">
+                  Message
+                </label>
+                <textarea
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white h-24 resize-none"
                   placeholder="Enter notification message..."
                 />
