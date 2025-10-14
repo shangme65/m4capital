@@ -60,9 +60,9 @@ export async function PUT(req: NextRequest) {
       where: { id: userId },
       data: { role },
     });
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: "User role updated successfully",
-      user: updatedUser 
+      user: updatedUser,
     });
   } catch (error) {
     return NextResponse.json(

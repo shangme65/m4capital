@@ -6,7 +6,6 @@ import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import TransactionDetailsModal from "@/components/client/TransactionDetailsModal";
 import AssetDetailsModal from "@/components/client/AssetDetailsModal";
-import SessionDebug from "@/components/client/SessionDebug";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
@@ -297,9 +296,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      {/* Temporary Session Debug */}
-      <SessionDebug />
-      
       {/* Portfolio Value Card */}
       <div className="bg-gray-800/50 rounded-2xl p-4 sm:p-8 border border-gray-700/50">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
