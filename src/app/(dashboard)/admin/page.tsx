@@ -579,137 +579,139 @@ const AdminDashboard = () => {
       )}
 
       {activeTab === "users" && (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* User Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Total Users</p>
-                  <p className="text-2xl font-bold text-white">{totalUsers}</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">Total Users</p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">{totalUsers}</p>
                 </div>
-                <Users className="text-blue-400" size={32} />
+                <Users className="text-blue-400" size={24} />
               </div>
             </div>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Admin Users</p>
-                  <p className="text-2xl font-bold text-orange-400">
+                  <p className="text-gray-400 text-xs sm:text-sm">Admin Users</p>
+                  <p className="text-xl sm:text-2xl font-bold text-orange-400">
                     {adminUsers}
                   </p>
                 </div>
-                <UserCheck className="text-orange-400" size={32} />
+                <UserCheck className="text-orange-400" size={24} />
               </div>
             </div>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Regular Users</p>
-                  <p className="text-2xl font-bold text-green-400">
+                  <p className="text-gray-400 text-xs sm:text-sm">Regular Users</p>
+                  <p className="text-xl sm:text-2xl font-bold text-green-400">
                     {regularUsers}
                   </p>
                 </div>
-                <UserX className="text-green-400" size={32} />
+                <UserX className="text-green-400" size={24} />
               </div>
             </div>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-sm">Active Sessions</p>
-                  <p className="text-2xl font-bold text-purple-400">24</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">Active Sessions</p>
+                  <p className="text-xl sm:text-2xl font-bold text-purple-400">24</p>
                 </div>
-                <Activity className="text-purple-400" size={32} />
+                <Activity className="text-purple-400" size={24} />
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Users List */}
-          <div className="xl:col-span-2">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <Users className="text-orange-400" size={24} />
-                <h2 className="text-2xl font-bold">User Management</h2>
-              </div>
-              <div className="max-h-96 overflow-y-auto">
-                <div className="space-y-2">
-                  {users.map((user) => (
-                    <div
-                      key={user.id}
-                      className={`p-4 rounded-lg border transition-all cursor-pointer ${
-                        selectedUser?.id === user.id
-                          ? "bg-orange-500/20 border-orange-500/50"
-                          : "bg-gray-700/30 border-gray-600/30 hover:bg-gray-700/50"
-                      }`}
-                      onClick={() => setSelectedUser(user)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium text-white">{user.email}</p>
-                          <p className="text-sm text-gray-400">
-                            {user.name || "No name"}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Account: {user.accountType}
-                          </p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              user.role === "ADMIN"
-                                ? "bg-orange-500/20 text-orange-400"
-                                : "bg-gray-500/20 text-gray-400"
-                            }`}
-                          >
-                            {user.role}
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingUser(user);
-                              setNewRole(user.role as "USER" | "ADMIN");
-                            }}
-                            className="text-gray-400 hover:text-orange-400 transition-colors"
-                          >
-                            <Settings size={16} />
-                          </button>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Users List */}
+            <div className="xl:col-span-2">
+              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 sm:p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Users className="text-orange-400" size={20} />
+                  <h2 className="text-xl sm:text-2xl font-bold">User Management</h2>
+                </div>
+                <div className="max-h-96 overflow-y-auto">
+                  <div className="space-y-2">
+                    {users.map((user) => (
+                      <div
+                        key={user.id}
+                        className={`p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
+                          selectedUser?.id === user.id
+                            ? "bg-orange-500/20 border-orange-500/50"
+                            : "bg-gray-700/30 border-gray-600/30 hover:bg-gray-700/50"
+                        }`}
+                        onClick={() => setSelectedUser(user)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-white text-sm sm:text-base truncate">
+                              {user.email}
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-400">
+                              {user.name || "No name"}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              Account: {user.accountType}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2 flex-shrink-0">
+                            <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                user.role === "ADMIN"
+                                  ? "bg-orange-500/20 text-orange-400"
+                                  : "bg-gray-500/20 text-gray-400"
+                              }`}
+                            >
+                              {user.role}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingUser(user);
+                                setNewRole(user.role as "USER" | "ADMIN");
+                              }}
+                              className="text-gray-400 hover:text-orange-400 transition-colors"
+                            >
+                              <Settings size={14} />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* User Actions */}
-          <div className="space-y-6">
-            {selectedUser && (
-              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <UserCheck className="text-blue-400" size={24} />
-                  <h3 className="text-xl font-bold">User Actions</h3>
+            {/* User Actions */}
+            <div className="space-y-6">
+              {selectedUser && (
+                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <UserCheck className="text-blue-400" size={24} />
+                    <h3 className="text-xl font-bold">User Actions</h3>
+                  </div>
+                  <div className="space-y-3">
+                    <p className="text-sm text-gray-400">Selected User:</p>
+                    <p className="font-semibold text-white">
+                      {selectedUser.email}
+                    </p>
+                    <button
+                      onClick={() => setActiveTab("payments")}
+                      className="w-full bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-400 py-2 px-4 rounded-lg transition-colors"
+                    >
+                      Process Payment
+                    </button>
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <p className="text-sm text-gray-400">Selected User:</p>
-                  <p className="font-semibold text-white">
-                    {selectedUser.email}
-                  </p>
-                  <button
-                    onClick={() => setActiveTab("payments")}
-                    className="w-full bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-400 py-2 px-4 rounded-lg transition-colors"
-                  >
-                    Process Payment
-                  </button>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
         </div>
       )}
 
