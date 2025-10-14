@@ -585,8 +585,12 @@ const AdminDashboard = () => {
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xs sm:text-sm">Total Users</p>
-                  <p className="text-xl sm:text-2xl font-bold text-white">{totalUsers}</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">
+                    Total Users
+                  </p>
+                  <p className="text-xl sm:text-2xl font-bold text-white">
+                    {totalUsers}
+                  </p>
                 </div>
                 <Users className="text-blue-400" size={24} />
               </div>
@@ -595,7 +599,9 @@ const AdminDashboard = () => {
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xs sm:text-sm">Admin Users</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">
+                    Admin Users
+                  </p>
                   <p className="text-xl sm:text-2xl font-bold text-orange-400">
                     {adminUsers}
                   </p>
@@ -607,7 +613,9 @@ const AdminDashboard = () => {
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xs sm:text-sm">Regular Users</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">
+                    Regular Users
+                  </p>
                   <p className="text-xl sm:text-2xl font-bold text-green-400">
                     {regularUsers}
                   </p>
@@ -619,8 +627,12 @@ const AdminDashboard = () => {
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xs sm:text-sm">Active Sessions</p>
-                  <p className="text-xl sm:text-2xl font-bold text-purple-400">24</p>
+                  <p className="text-gray-400 text-xs sm:text-sm">
+                    Active Sessions
+                  </p>
+                  <p className="text-xl sm:text-2xl font-bold text-purple-400">
+                    24
+                  </p>
                 </div>
                 <Activity className="text-purple-400" size={24} />
               </div>
@@ -633,7 +645,9 @@ const AdminDashboard = () => {
               <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 sm:p-6">
                 <div className="flex items-center space-x-2 mb-4">
                   <Users className="text-orange-400" size={20} />
-                  <h2 className="text-xl sm:text-2xl font-bold">User Management</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold">
+                    User Management
+                  </h2>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   <div className="space-y-2">

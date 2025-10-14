@@ -27,24 +27,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Find the user to update
+    // Find user with portfolio
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      include: { portfolio: true },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Update user balance
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        balance: {
-          increment: amount,
+    // Create portfolio if it doesn't exist
+    if (!user.portfolio) {
+      await prisma.portfolio.create({
+        data: {
+          userId: userId,
+          balance: amount,
         },
-      },
-    });
+      });
+    } else {
+      // Update portfolio balance
+      await prisma.portfolio.update({
+        where: { userId: userId },
+        data: {
+          balance: {
+            increment: amount,
+          },
+        },
+      });
+    }
 
     // Create a transaction record (you may want to create a Transaction model)
     // For now, we'll log the transaction details
@@ -65,12 +76,18 @@ export async function POST(req: NextRequest) {
     // In a real application, you would save this to a transactions table:
     // await prisma.transaction.create({ data: transactionRecord });
 
+    // Get updated user with portfolio
+    const updatedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { portfolio: true },
+    });
+
     return NextResponse.json({
       message: "Balance updated successfully",
       user: {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        balance: updatedUser.balance,
+        id: updatedUser!.id,
+        email: updatedUser!.email,
+        balance: updatedUser!.portfolio?.balance || 0,
       },
       transaction: transactionRecord,
     });
