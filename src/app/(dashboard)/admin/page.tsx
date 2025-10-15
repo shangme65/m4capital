@@ -480,7 +480,9 @@ const AdminDashboard = () => {
               <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                 Admin Control Panel
               </h1>
-              <p className="text-xs sm:text-sm text-gray-400">Complete administrative dashboard</p>
+              <p className="text-xs sm:text-sm text-gray-400">
+                Complete administrative dashboard
+              </p>
             </div>
           </div>
         </div>
@@ -911,7 +913,9 @@ const AdminDashboard = () => {
             <div className="space-y-3 sm:space-y-4">
               <div className="flex items-center justify-between p-2 sm:p-3 bg-gray-700/30 rounded-lg">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm sm:text-base">Maintenance Mode</p>
+                  <p className="font-medium text-sm sm:text-base">
+                    Maintenance Mode
+                  </p>
                   <p className="text-xs sm:text-sm text-gray-400">
                     Temporarily disable user access
                   </p>
@@ -922,7 +926,9 @@ const AdminDashboard = () => {
               </div>
               <div className="flex items-center justify-between p-2 sm:p-3 bg-gray-700/30 rounded-lg">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm sm:text-base">Auto Backups</p>
+                  <p className="font-medium text-sm sm:text-base">
+                    Auto Backups
+                  </p>
                   <p className="text-xs sm:text-sm text-gray-400">
                     Daily database backups
                   </p>
@@ -933,7 +939,9 @@ const AdminDashboard = () => {
               </div>
               <div className="flex items-center justify-between p-2 sm:p-3 bg-gray-700/30 rounded-lg">
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm sm:text-base">Email Notifications</p>
+                  <p className="font-medium text-sm sm:text-base">
+                    Email Notifications
+                  </p>
                   <p className="text-xs sm:text-sm text-gray-400">
                     System alerts and updates
                   </p>
@@ -1014,26 +1022,38 @@ const AdminDashboard = () => {
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div className="bg-gray-700/30 rounded-lg p-3 sm:p-4">
-                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">Database Size</h4>
-                  <p className="text-lg sm:text-2xl font-bold text-green-400">2.3 GB</p>
+                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">
+                    Database Size
+                  </h4>
+                  <p className="text-lg sm:text-2xl font-bold text-green-400">
+                    2.3 GB
+                  </p>
                 </div>
                 <div className="bg-gray-700/30 rounded-lg p-3 sm:p-4">
-                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">Total Records</h4>
-                  <p className="text-lg sm:text-2xl font-bold text-blue-400">15,432</p>
+                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">
+                    Total Records
+                  </h4>
+                  <p className="text-lg sm:text-2xl font-bold text-blue-400">
+                    15,432
+                  </p>
                 </div>
                 <div className="bg-gray-700/30 rounded-lg p-3 sm:p-4">
-                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">Last Backup</h4>
-                  <p className="text-lg sm:text-2xl font-bold text-purple-400">2h ago</p>
+                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">
+                    Last Backup
+                  </h4>
+                  <p className="text-lg sm:text-2xl font-bold text-purple-400">
+                    2h ago
+                  </p>
                 </div>
               </div>
-              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base">
+              <div className="flex flex-row space-x-2 sm:space-x-4">
+                <button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-base">
                   Create Backup
                 </button>
-                <button className="bg-orange-500 hover:bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base">
+                <button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-base">
                   Optimize DB
                 </button>
-                <button className="bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base">
+                <button className="flex-1 bg-red-500 hover:bg-red-600 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-base">
                   Clear Logs
                 </button>
               </div>
