@@ -46,12 +46,12 @@ export default function LoginModal({
   const handleFacebookLogin = async () => {
     setError("");
     setIsLoading(true);
-    
+
     try {
       const result = await signIn("facebook", {
         redirect: false,
       });
-      
+
       if (result?.ok) {
         onClose();
         router.push("/dashboard");
@@ -68,10 +68,18 @@ export default function LoginModal({
   const handleGoogleLogin = async () => {
     setError("");
     setIsLoading(true);
-    
+
     try {
-      // Google login would be implemented similarly
-      setError("Google login not yet implemented.");
+      const result = await signIn("google", {
+        redirect: false,
+      });
+
+      if (result?.ok) {
+        onClose();
+        router.push("/dashboard");
+      } else {
+        setError("Google login failed. Please try again.");
+      }
     } catch (err) {
       setError("An error occurred during Google login.");
     } finally {

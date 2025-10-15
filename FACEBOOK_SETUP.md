@@ -46,11 +46,13 @@ FACEBOOK_CLIENT_SECRET="your-app-secret-here"
 ## 5. App Review and Permissions
 
 ### Development Mode
+
 - Your app starts in Development mode
 - Only you and other app developers can log in
 - No review required for basic login
 
 ### Production Mode
+
 1. Go to "App Review" > "Permissions and Features"
 2. Request permission for:
    - `email` (usually approved automatically)
@@ -110,6 +112,7 @@ NEXTAUTH_SECRET="your-nextauth-secret"
 ## Next Steps
 
 After setting up Facebook OAuth:
+
 1. Test the login flow thoroughly
 2. Handle edge cases (user denies permission, etc.)
 3. Add Google OAuth if desired
