@@ -28,6 +28,9 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
+
 type PaymentMethod = {
   id: string;
   name: string;

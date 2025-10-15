@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
+import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+
+// Force dynamic for API routes that use headers
+export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,8 +23,6 @@ export async function GET(req: NextRequest) {
         role: true,
         accountType: true,
         country: true,
-        createdAt: true,
-        updatedAt: true,
         portfolio: {
           select: {
             balance: true,
@@ -29,12 +30,12 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: {
-        createdAt: "desc",
+        email: "asc",
       },
     });
 
     // Transform the data to include balance at the user level for easier frontend consumption
-    const usersWithBalance = users.map(user => ({
+    const usersWithBalance = users.map((user) => ({
       ...user,
       balance: user.portfolio?.balance || 0,
       portfolio: undefined, // Remove nested portfolio object
