@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 
 // Force dynamic rendering for this page
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 type PaymentMethod = {
   id: string;
@@ -473,33 +473,33 @@ const AdminDashboard = () => {
         </div>
       )}
       {/* Admin Header */}
-      <div className="mb-8">
+      <div className="mb-4 sm:mb-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4">
             <div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                 Admin Control Panel
               </h1>
-              <p className="text-gray-400">Complete administrative dashboard</p>
+              <p className="text-xs sm:text-sm text-gray-400">Complete administrative dashboard</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Admin Navigation Tabs */}
-      <div className="mb-8">
-        <div className="flex flex-wrap gap-2">
+      <div className="mb-4 sm:mb-8">
+        <div className="flex flex-wrap gap-1 sm:gap-2">
           {adminTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-all ${
+              className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-lg transition-all text-xs sm:text-sm ${
                 activeTab === tab.id
                   ? "bg-orange-500/20 border border-orange-500/50 text-orange-400"
                   : "bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:text-white"
               }`}
             >
-              {tab.icon}
+              <div className="w-4 h-4 sm:w-5 sm:h-5">{tab.icon}</div>
               <span className="hidden sm:inline">{tab.name}</span>
             </button>
           ))}
@@ -508,42 +508,42 @@ const AdminDashboard = () => {
 
       {/* Tab Content */}
       {activeTab === "dashboard" && (
-        <div className="space-y-8">
+        <div className="space-y-4 sm:space-y-8">
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <CreditCard className="text-green-400" size={24} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
+                <CreditCard className="text-green-400" size={20} />
                 <span>Quick Actions</span>
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <button
                   onClick={() => setActiveTab("payments")}
-                  className="w-full bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-400 py-2 px-4 rounded-lg transition-colors text-left"
+                  className="w-full bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
                 >
                   Process Manual Payment
                 </button>
                 <button
                   onClick={() => setActiveTab("users")}
-                  className="w-full bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-400 py-2 px-4 rounded-lg transition-colors text-left"
+                  className="w-full bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
                 >
                   Manage Users
                 </button>
                 <button
                   onClick={() => setActiveTab("notifications")}
-                  className="w-full bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 text-purple-400 py-2 px-4 rounded-lg transition-colors text-left"
+                  className="w-full bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 text-purple-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
                 >
                   Send Notifications
                 </button>
               </div>
             </div>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <BarChart3 className="text-blue-400" size={24} />
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
+                <BarChart3 className="text-blue-400" size={20} />
                 <span>System Overview</span>
               </h3>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-xs sm:text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Server Status:</span>
                   <span className="text-green-400">Online</span>
@@ -563,12 +563,12 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <AlertTriangle className="text-yellow-400" size={24} />
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
+              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
+                <AlertTriangle className="text-yellow-400" size={20} />
                 <span>Recent Alerts</span>
               </h3>
-              <div className="space-y-2 text-sm">
+              <div className="space-y-2 text-xs sm:text-sm">
                 <div className="text-yellow-400">
                   • High volume deposits detected
                 </div>
@@ -902,43 +902,43 @@ const AdminDashboard = () => {
 
       {/* System Settings Tab */}
       {activeTab === "system" && (
-        <div className="space-y-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-              <Settings className="text-gray-400" />
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
+              <Settings className="text-gray-400" size={20} />
               <span>System Configuration</span>
             </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
-                <div>
-                  <p className="font-medium">Maintenance Mode</p>
-                  <p className="text-sm text-gray-400">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between p-2 sm:p-3 bg-gray-700/30 rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm sm:text-base">Maintenance Mode</p>
+                  <p className="text-xs sm:text-sm text-gray-400">
                     Temporarily disable user access
                   </p>
                 </div>
-                <button className="bg-red-500/20 text-red-400 px-3 py-1 rounded border border-red-500/30">
+                <button className="bg-red-500/20 text-red-400 px-2 sm:px-3 py-1 rounded border border-red-500/30 text-xs sm:text-sm whitespace-nowrap ml-2">
                   Disabled
                 </button>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
-                <div>
-                  <p className="font-medium">Auto Backups</p>
-                  <p className="text-sm text-gray-400">
+              <div className="flex items-center justify-between p-2 sm:p-3 bg-gray-700/30 rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm sm:text-base">Auto Backups</p>
+                  <p className="text-xs sm:text-sm text-gray-400">
                     Daily database backups
                   </p>
                 </div>
-                <button className="bg-green-500/20 text-green-400 px-3 py-1 rounded border border-green-500/30">
+                <button className="bg-green-500/20 text-green-400 px-2 sm:px-3 py-1 rounded border border-green-500/30 text-xs sm:text-sm whitespace-nowrap ml-2">
                   Enabled
                 </button>
               </div>
-              <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
-                <div>
-                  <p className="font-medium">Email Notifications</p>
-                  <p className="text-sm text-gray-400">
+              <div className="flex items-center justify-between p-2 sm:p-3 bg-gray-700/30 rounded-lg">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm sm:text-base">Email Notifications</p>
+                  <p className="text-xs sm:text-sm text-gray-400">
                     System alerts and updates
                   </p>
                 </div>
-                <button className="bg-green-500/20 text-green-400 px-3 py-1 rounded border border-green-500/30">
+                <button className="bg-green-500/20 text-green-400 px-2 sm:px-3 py-1 rounded border border-green-500/30 text-xs sm:text-sm whitespace-nowrap ml-2">
                   Enabled
                 </button>
               </div>
@@ -1005,35 +1005,35 @@ const AdminDashboard = () => {
 
       {/* Database Tab */}
       {activeTab === "database" && (
-        <div className="space-y-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-              <Database className="text-green-400" />
+        <div className="space-y-4 sm:space-y-6">
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
+              <Database className="text-green-400" size={20} />
               <span>Database Management</span>
             </h3>
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gray-700/30 rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Database Size</h4>
-                  <p className="text-2xl font-bold text-green-400">2.3 GB</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="bg-gray-700/30 rounded-lg p-3 sm:p-4">
+                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">Database Size</h4>
+                  <p className="text-lg sm:text-2xl font-bold text-green-400">2.3 GB</p>
                 </div>
-                <div className="bg-gray-700/30 rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Total Records</h4>
-                  <p className="text-2xl font-bold text-blue-400">15,432</p>
+                <div className="bg-gray-700/30 rounded-lg p-3 sm:p-4">
+                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">Total Records</h4>
+                  <p className="text-lg sm:text-2xl font-bold text-blue-400">15,432</p>
                 </div>
-                <div className="bg-gray-700/30 rounded-lg p-4">
-                  <h4 className="font-medium mb-2">Last Backup</h4>
-                  <p className="text-2xl font-bold text-purple-400">2h ago</p>
+                <div className="bg-gray-700/30 rounded-lg p-3 sm:p-4">
+                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">Last Backup</h4>
+                  <p className="text-lg sm:text-2xl font-bold text-purple-400">2h ago</p>
                 </div>
               </div>
-              <div className="flex space-x-4">
-                <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                <button className="bg-blue-500 hover:bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base">
                   Create Backup
                 </button>
-                <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg transition-colors">
+                <button className="bg-orange-500 hover:bg-orange-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base">
                   Optimize DB
                 </button>
-                <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                <button className="bg-red-500 hover:bg-red-600 text-white px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base">
                   Clear Logs
                 </button>
               </div>

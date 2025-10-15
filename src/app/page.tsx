@@ -14,7 +14,7 @@ import { useModal } from "@/contexts/ModalContext";
 import React from "react";
 
 // Force dynamic rendering for this page
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 type AnimationVariant = {
   initial: { opacity: number; x?: number; y?: number; scale?: number };
