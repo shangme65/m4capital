@@ -43,6 +43,42 @@ export default function LoginModal({
     };
   }, [isOpen]);
 
+  const handleFacebookLogin = async () => {
+    setError("");
+    setIsLoading(true);
+    
+    try {
+      const result = await signIn("facebook", {
+        redirect: false,
+      });
+      
+      if (result?.ok) {
+        onClose();
+        router.push("/dashboard");
+      } else {
+        setError("Facebook login failed. Please try again.");
+      }
+    } catch (err) {
+      setError("An error occurred during Facebook login.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    setIsLoading(true);
+    
+    try {
+      // Google login would be implemented similarly
+      setError("Google login not yet implemented.");
+    } catch (err) {
+      setError("An error occurred during Google login.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -138,7 +174,9 @@ export default function LoginModal({
                     <div className="grid grid-cols-2 gap-4 mb-6">
                       <button
                         type="button"
-                        className="bg-[#2a2a2a] hover:bg-[#333] text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s"
+                        onClick={handleGoogleLogin}
+                        disabled={isLoading}
+                        className="bg-[#2a2a2a] hover:bg-[#333] disabled:bg-[#1a1a1a] disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s"
                       >
                         <svg
                           width="18"
@@ -171,7 +209,9 @@ export default function LoginModal({
                       </button>
                       <button
                         type="button"
-                        className="bg-[#2a2a2a] hover:bg-[#333] text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s"
+                        onClick={handleFacebookLogin}
+                        disabled={isLoading}
+                        className="bg-[#2a2a2a] hover:bg-[#333] disabled:bg-[#1a1a1a] disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s"
                       >
                         <svg
                           width="18"
