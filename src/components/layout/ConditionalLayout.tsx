@@ -36,7 +36,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     pathname?.startsWith("/dashboard") ||
     pathname?.startsWith("/admin") ||
     pathname === "/dashboard" ||
-    pathname?.startsWith("/settings");
+    pathname?.startsWith("/settings") ||
+    pathname?.startsWith("/news");
 
   if (isDashboardRoute) {
     // For dashboard routes, don't show header and footer

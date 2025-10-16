@@ -32,8 +32,8 @@ const Sidebar = () => {
 
   const navItems = [
     { icon: <Briefcase size={24} />, name: "Dashboard", href: "/dashboard" },
-    { icon: <TrendingUp size={24} />, name: "Trade", href: "/trade" },
-    { icon: <Newspaper size={24} />, name: "Market News", href: "#" },
+    { icon: <TrendingUp size={24} />, name: "traderoom", href: "/trade" },
+    { icon: <Newspaper size={24} />, name: "Market News", href: "/news" },
     { icon: <DollarSign size={24} />, name: "Finance", href: "/finance" },
     { icon: <Settings size={24} />, name: "Settings", href: "/settings" },
   ];
@@ -120,7 +120,7 @@ const Sidebar = () => {
                         },
                       }}
                     >
-                      {item.name === "Trade" ? (
+                      {item.name === "traderoom" ? (
                         // Trade link opens in new tab
                         <a
                           href={`${baseUrl}${item.href}`}

@@ -291,16 +291,21 @@ const AdminDashboard = () => {
   }, [session, showAdminMode]);
 
   useEffect(() => {
-    if (activeTab === "users") {
+    // Only run in browser environment, not during build
+    if (activeTab === "users" && typeof window !== "undefined") {
       fetchUsers();
     }
   }, [activeTab]);
 
   const fetchUsers = async () => {
-    const res = await fetch("/api/admin/users");
-    if (res.ok) {
-      const data = await res.json();
-      setUsers(data);
+    try {
+      const res = await fetch("/api/admin/users");
+      if (res.ok) {
+        const data = await res.json();
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
     }
   };
 
@@ -315,44 +320,52 @@ const AdminDashboard = () => {
 
     setLoading(true);
 
-    // Prepare the payment details for the transaction
-    const transactionData = {
-      userId: selectedUser.id,
-      amount,
-      paymentMethod: selectedPaymentMethod.name,
-      paymentDetails,
-      adminNote:
-        notificationMessage ||
-        `Manual top-up via ${selectedPaymentMethod.name}`,
-      processedBy: session?.user?.email,
-    };
-
-    const res = await fetch("/api/admin/top-up", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(transactionData),
-    });
-
-    if (res.ok) {
-      showPopupNotification(
-        `Successfully topped up ${selectedUser.email} with $${amount} via ${selectedPaymentMethod.name}.`,
-        "success"
-      );
-      setAmount(0);
-      setPaymentDetails({});
-      setNotificationMessage("");
-
-      // Send notification to user
-      await sendUserNotification(selectedUser.id, {
-        type: "balance_update",
-        title: "Balance Updated",
-        message: `Your account has been credited with $${amount} via ${selectedPaymentMethod.name}`,
+    try {
+      // Prepare the payment details for the transaction
+      const transactionData = {
+        userId: selectedUser.id,
         amount,
         paymentMethod: selectedPaymentMethod.name,
+        paymentDetails,
+        adminNote:
+          notificationMessage ||
+          `Manual top-up via ${selectedPaymentMethod.name}`,
+        processedBy: session?.user?.email,
+      };
+
+      const res = await fetch("/api/admin/top-up", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(transactionData),
       });
-    } else {
-      const error = await res.json();
-      showPopupNotification(`Failed to top up: ${error.error}`, "error");
+
+      if (res.ok) {
+        showPopupNotification(
+          `Successfully topped up ${selectedUser.email} with $${amount} via ${selectedPaymentMethod.name}.`,
+          "success"
+        );
+        setAmount(0);
+        setPaymentDetails({});
+        setNotificationMessage("");
+
+        // Send notification to user
+        await sendUserNotification(selectedUser.id, {
+          type: "balance_update",
+          title: "Balance Updated",
+          message: `Your account has been credited with $${amount} via ${selectedPaymentMethod.name}`,
+          amount,
+          paymentMethod: selectedPaymentMethod.name,
+        });
+      } else {
+        const error = await res.json();
+        showPopupNotification(`Failed to top up: ${error.error}`, "error");
+      }
+    } catch (error) {
+      console.error("Top-up error:", error);
+      showPopupNotification(
+        "Failed to process top-up. Please try again.",
+        "error"
+      );
     }
     setLoading(false);
   };
@@ -374,23 +387,31 @@ const AdminDashboard = () => {
     newRole: "USER" | "ADMIN"
   ) => {
     setLoading(true);
-    const res = await fetch("/api/admin/update-user", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId, role: newRole }),
-    });
+    try {
+      const res = await fetch("/api/admin/update-user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, role: newRole }),
+      });
 
-    if (res.ok) {
+      if (res.ok) {
+        showPopupNotification(
+          `User role updated successfully to ${newRole}`,
+          "success"
+        );
+        fetchUsers();
+        setEditingUser(null);
+      } else {
+        const error = await res.json();
+        showPopupNotification(
+          `Failed to update user role: ${error.error}`,
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Update user role error:", error);
       showPopupNotification(
-        `User role updated successfully to ${newRole}`,
-        "success"
-      );
-      fetchUsers();
-      setEditingUser(null);
-    } else {
-      const error = await res.json();
-      showPopupNotification(
-        `Failed to update user role: ${error.error}`,
+        "Failed to update user role. Please try again.",
         "error"
       );
     }

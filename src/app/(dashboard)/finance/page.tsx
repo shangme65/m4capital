@@ -42,6 +42,7 @@ import RiskDashboard from "@/components/finance/RiskDashboard";
 import InvestmentPlanning from "@/components/finance/InvestmentPlanning";
 import TradingJournal from "@/components/finance/TradingJournal";
 import TaxOptimization from "@/components/finance/TaxOptimization";
+import BitcoinWallet from "@/components/finance/BitcoinWallet";
 
 // Finance Tab Navigation
 interface FinanceTab {
@@ -75,6 +76,12 @@ const financeTabs: FinanceTab[] = [
     name: "Budgeting",
     icon: <Calculator size={20} />,
     description: "Budget planning and cash flow management",
+  },
+  {
+    id: "bitcoin",
+    name: "Bitcoin",
+    icon: <Wallet size={20} />,
+    description: "Bitcoin wallet and cryptocurrency management",
   },
   {
     id: "risk",
@@ -321,6 +328,8 @@ function renderTabContent(
       return <ReportsTab />;
     case "budgeting":
       return <BudgetingTab />;
+    case "bitcoin":
+      return <BitcoinTab />;
     case "risk":
       return <RiskTab />;
     case "planning":
@@ -764,6 +773,10 @@ function BudgetingTab() {
 
 function RiskTab() {
   return <RiskDashboard />;
+}
+
+function BitcoinTab() {
+  return <BitcoinWallet />;
 }
 
 function PlanningTab() {

@@ -134,7 +134,7 @@ const NewsPage = () => {
       const source = sources[Math.floor(Math.random() * sources.length)];
       const timestamp = Date.now() - Math.floor(Math.random() * 86400000); // Within last 24 hours
 
-      const sentiments = ["positive", "negative", "neutral"];
+      const sentiments = ["positive", "negative", "neutral"] as const;
       const sentiment =
         sentiments[Math.floor(Math.random() * sentiments.length)];
 
