@@ -22,7 +22,12 @@ export default async function TraderoomLayout({
       <ModalProvider>
         <NotificationProvider>
           <MarketDataProvider>
-            <div className="h-screen bg-gray-900">{children}</div>
+            <div
+              className="h-screen w-screen m-0 p-0 overflow-hidden"
+              style={{ margin: 0, padding: 0 }}
+            >
+              {children}
+            </div>
           </MarketDataProvider>
         </NotificationProvider>
       </ModalProvider>

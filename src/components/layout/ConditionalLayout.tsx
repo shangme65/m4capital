@@ -38,7 +38,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     pathname === "/dashboard" ||
     pathname?.startsWith("/settings") ||
     pathname?.startsWith("/news") ||
-    pathname?.startsWith("/trade") ||
     pathname?.startsWith("/traderoom");
 
   if (isDashboardRoute) {

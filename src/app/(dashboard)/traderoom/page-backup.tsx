@@ -6,27 +6,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
   TrendingDown,
-  Activity,
-  DollarSign,
   Clock,
-  Target,
   BarChart3,
-  Shield,
   RefreshCw,
-  Settings,
   Plus,
-  User,
   Bell,
+  Settings,
   Search,
-  Calendar,
-  Briefcase,
-  History,
-  MessageCircle,
-  Gift,
-  Handshake,
-  TrendingUpIcon,
-  BookOpen,
-  MoreHorizontal,
+  Star,
+  ChevronDown,
+  Activity,
+  Zap,
 } from "lucide-react";
 import {
   TradingProvider,
@@ -56,6 +46,9 @@ function TradingInterface() {
     { symbol: "EUR/USD", type: "Binary" },
   ]);
   const [activeTab, setActiveTab] = useState(0);
+
+  // Add mounted state to prevent hydration mismatches
+  const [mounted, setMounted] = useState(false);
 
   const symbols = [
     {
@@ -128,6 +121,8 @@ function TradingInterface() {
   const EDGE_OFFSET_CLASS = "-m-0"; // <-- edit this line to adjust top/right/bottom/left offsets
 
   useEffect(() => {
+    // set mounted to true to prevent hydration mismatches
+    setMounted(true);
     // set initial time on client only and update every second
     setCurrentTime(new Date());
     const timer = setInterval(() => {
@@ -146,52 +141,119 @@ function TradingInterface() {
     }, 2000);
   };
 
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <div className="h-screen bg-slate-900 text-white overflow-hidden flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+          <p className="mt-4">Loading Trading Interface...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen bg-slate-900 text-white overflow-hidden">
+    <div className="h-screen overflow-hidden" style={{
+      backgroundColor: '#1b1817',
+      color: '#eceae9',
+      fontFamily: '"Inter", Arial, sans-serif'
+    }}>
       {/* Wrapper that cancels outer layout padding — change EDGE_OFFSET_CLASS above to adjust */}
       <div className={EDGE_OFFSET_CLASS}>
-        {/* Top Header with Logo and Asset Tabs */}
-        <div className="bg-slate-800 border-b border-slate-700">
-          <div className="flex items-center h-14 px-2">
-            {/* Logo and App Name */}
-            <div className="flex items-center space-x-2 mr-4">
-              <div className="flex items-center space-x-2">
+        {/* IQ Option Style Header */}
+        <div style={{ backgroundColor: '#26211f', borderBottom: '1px solid #38312e' }}>
+          <div className="flex items-center justify-between h-16 px-4">
+            {/* Left: Logo and Navigation */}
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-3">
                 <Image
                   src="/m4capitallogo2.png"
                   alt="M4Capital"
-                  width={40}
-                  height={40}
+                  width={32}
+                  height={32}
                   className="object-contain"
                 />
-                <span className="text-xl font-bold text-white">capital</span>
+                <span className="text-lg font-semibold" style={{ color: '#eceae9' }}>
+                  M4Capital
+                </span>
+              </div>
+
+              {/* Navigation Tabs */}
+              <div className="flex items-center space-x-1">
+                <button 
+                  className="px-4 py-2 rounded-lg transition-all duration-200"
+                  style={{ 
+                    backgroundColor: '#ff8516', 
+                    color: '#ffffff',
+                    fontWeight: '500',
+                    fontSize: '14px'
+                  }}
+                >
+                  Trading
+                </button>
+                <button 
+                  className="px-4 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10"
+                  style={{ 
+                    color: '#afadac',
+                    fontSize: '14px'
+                  }}
+                >
+                  Portfolio
+                </button>
+                <button 
+                  className="px-4 py-2 rounded-lg transition-all duration-200 hover:bg-opacity-10"
+                  style={{ 
+                    color: '#afadac',
+                    fontSize: '14px'
+                  }}
+                >
+                  History
+                </button>
               </div>
             </div>
 
-            {/* Asset Tabs */}
-            <div className="flex items-center space-x-1 flex-1">
+            {/* Right: User Controls */}
+            <div className="flex items-center space-x-3">
+              <button className="p-2 rounded-lg hover:bg-opacity-10 transition-all duration-200">
+                <Bell className="w-5 h-5" style={{ color: '#afadac' }} />
+              </button>
+              <button className="p-2 rounded-lg hover:bg-opacity-10 transition-all duration-200">
+                <Settings className="w-5 h-5" style={{ color: '#afadac' }} />
+              </button>
+              <div 
+                className="px-4 py-2 rounded-lg flex items-center space-x-2"
+                style={{ backgroundColor: '#38312e' }}
+              >
+                <span style={{ color: '#eceae9', fontSize: '14px', fontWeight: '500' }}>
+                  $50,000.00
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Asset Selection Bar */}
+        <div style={{ backgroundColor: '#1b1817', borderBottom: '1px solid #38312e' }}>
+          <div className="flex items-center px-4 py-3">
+            <div className="flex items-center space-x-2 flex-1">
               {openTabs.map((tab, index) => (
                 <button
-                  key={index}
+                  key={`tab-${index}-${tab.symbol}`}
                   onClick={() => {
                     setActiveTab(index);
                     setSelectedSymbol(tab.symbol);
                   }}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
-                    activeTab === index
-                      ? "bg-orange-500 text-white"
-                      : "bg-slate-700 text-slate-300 hover:bg-slate-600"
-                  }`}
+                  className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200"
+                  style={{
+                    backgroundColor: activeTab === index ? '#ff8516' : '#38312e',
+                    color: activeTab === index ? '#ffffff' : '#afadac'
+                  }}
                 >
-                  <div className="w-6 h-6 bg-slate-600 rounded flex items-center justify-center">
-                    <span className="text-xs">
-                      {symbols.find((s) => s.symbol === tab.symbol)?.flag ||
-                        "💱"}
-                    </span>
-                  </div>
-                  <div className="flex flex-col items-start">
-                    <span className="text-sm font-medium">{tab.symbol}</span>
-                    <span className="text-xs opacity-75">{tab.type}</span>
-                  </div>
+                  <span className="text-sm">
+                    {symbols.find((s) => s.symbol === tab.symbol)?.flag || "💱"}
+                  </span>
+                  <span className="text-sm font-medium">{tab.symbol}</span>
                   {openTabs.length > 1 && (
                     <button
                       onClick={(e) => {
@@ -203,7 +265,11 @@ function TradingInterface() {
                           setSelectedSymbol(newTabs[0].symbol);
                         }
                       }}
-                      className="ml-2 text-slate-400 hover:text-white"
+                      className="ml-2 hover:opacity-75 transition-opacity"
+                      style={{ 
+                        color: activeTab === index ? '#ffffff' : '#afadac',
+                        fontSize: '16px'
+                      }}
                       title="Close tab"
                     >
                       ×
@@ -215,18 +281,62 @@ function TradingInterface() {
               {/* Add Asset Button */}
               <button
                 onClick={() => setShowAddAssetModal(true)}
-                className="w-10 h-10 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center justify-center transition-colors"
+                className="p-2 rounded-lg hover:opacity-75 transition-all duration-200"
+                style={{ 
+                  backgroundColor: '#38312e',
+                  color: '#afadac'
+                }}
                 title="Add new asset"
               >
-                <Plus className="w-5 h-5" />
+                <Plus className="w-4 h-4" />
               </button>
             </div>
           </div>
         </div>
 
-        <div className="flex h-[calc(100vh-56px)]">
-          {/* Left Sidebar - hidden on small screens */}
-          <div className="hidden md:flex w-48 bg-slate-800 border-r border-slate-700 flex-col">
+        {/* Main Trading Interface */}
+        <div className="flex h-[calc(100vh-120px)]">
+          {/* Left Asset Panel */}
+          <div 
+            className="hidden md:flex w-80 flex-col border-r"
+            style={{ 
+              backgroundColor: '#26211f',
+              borderColor: '#38312e'
+            }}
+          >
+            {/* Asset Search & Filter */}
+            <div className="p-4 border-b" style={{ borderColor: '#38312e' }}>
+              <div className="flex items-center space-x-2 mb-3">
+                <Search className="w-4 h-4" style={{ color: '#827e7d' }} />
+                <input 
+                  type="text" 
+                  placeholder="Search assets..."
+                  className="flex-1 bg-transparent outline-none text-sm"
+                  style={{ 
+                    color: '#eceae9',
+                    fontSize: '14px'
+                  }}
+                />
+              </div>
+              <div className="flex space-x-1">
+                {['All', 'Forex', 'Crypto', 'Stocks'].map((filter) => (
+                  <button 
+                    key={filter}
+                    className="px-3 py-1 rounded-lg text-xs transition-all duration-200"
+                    style={{
+                      backgroundColor: filter === 'All' ? '#ff8516' : 'transparent',
+                      color: filter === 'All' ? '#ffffff' : '#afadac',
+                      border: filter !== 'All' ? '1px solid #38312e' : 'none'
+                    }}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Asset List */}
+            <div className="flex-1 overflow-y-auto">
             <div className="space-y-1">
               {/* Total Portfolio */}
               <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
@@ -639,96 +749,98 @@ function TradingInterface() {
           </div>
         </div>
 
-        {/* Close EDGE_OFFSET wrapper */}
-      </div>
-
-      {/* Add Asset Modal */}
-      <AnimatePresence>
-        {showAddAssetModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => setShowAddAssetModal(false)}
-          >
+        {/* Add Asset Modal */}
+        <AnimatePresence>
+          {showAddAssetModal && (
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-slate-800 rounded-lg p-6 w-96 max-h-96 overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              onClick={() => setShowAddAssetModal(false)}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Add Asset</h3>
-                <button
-                  onClick={() => setShowAddAssetModal(false)}
-                  className="text-slate-400 hover:text-white"
-                  title="Close modal"
-                >
-                  ×
-                </button>
-              </div>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-slate-800 rounded-lg p-6 w-96 max-h-96 overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Add Asset</h3>
+                  <button
+                    onClick={() => setShowAddAssetModal(false)}
+                    className="text-slate-400 hover:text-white"
+                    title="Close modal"
+                  >
+                    ×
+                  </button>
+                </div>
 
-              <div className="space-y-3">
-                {symbols
-                  .filter(
-                    (symbol) =>
-                      !openTabs.some((tab) => tab.symbol === symbol.symbol)
-                  )
-                  .map((symbol) => (
-                    <button
-                      key={symbol.symbol}
-                      onClick={() => {
-                        const newTab = {
-                          symbol: symbol.symbol,
-                          type: "Binary",
-                        };
-                        setOpenTabs([...openTabs, newTab]);
-                        setActiveTab(openTabs.length);
-                        setSelectedSymbol(symbol.symbol);
-                        setShowAddAssetModal(false);
-                      }}
-                      className="w-full p-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-left transition-colors"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-slate-600 rounded flex items-center justify-center">
-                            <span className="text-xs">{symbol.flag}</span>
+                <div className="space-y-3">
+                  {symbols
+                    .filter(
+                      (symbol) =>
+                        !openTabs.some((tab) => tab.symbol === symbol.symbol)
+                    )
+                    .map((symbol) => (
+                      <button
+                        key={symbol.symbol}
+                        onClick={() => {
+                          const newTab = {
+                            symbol: symbol.symbol,
+                            type: "Binary",
+                          };
+                          setOpenTabs([...openTabs, newTab]);
+                          setActiveTab(openTabs.length);
+                          setSelectedSymbol(symbol.symbol);
+                          setShowAddAssetModal(false);
+                        }}
+                        className="w-full p-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-left transition-colors"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-slate-600 rounded flex items-center justify-center">
+                              <span className="text-xs">{symbol.flag}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {symbol.symbol}
+                              </span>
+                              <div className="text-sm text-slate-400">
+                                Binary Option
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{symbol.symbol}</span>
-                            <div className="text-sm text-slate-400">
-                              Binary Option
+
+                          <div className="text-right">
+                            <div className="font-bold">{symbol.price}</div>
+                            <div
+                              className={`text-xs ${
+                                symbol.change.startsWith("+")
+                                  ? "text-green-400"
+                                  : "text-red-400"
+                              }`}
+                            >
+                              {symbol.change} ({symbol.percentage})
                             </div>
                           </div>
                         </div>
-
-                        <div className="text-right">
-                          <div className="font-bold">{symbol.price}</div>
-                          <div
-                            className={`text-xs ${
-                              symbol.change.startsWith("+")
-                                ? "text-green-400"
-                                : "text-red-400"
-                            }`}
-                          >
-                            {symbol.change} ({symbol.percentage})
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-              </div>
+                      </button>
+                    ))}
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+
+        {/* Close EDGE_OFFSET wrapper */}
+      </div>
     </div>
   );
 }
 
-export default function TradePage() {
+export default function TraderoomPage() {
   return (
     <TradingProvider>
       <TradingInterface />
