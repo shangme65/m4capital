@@ -141,9 +141,9 @@ function TradingInterface() {
     <div className="h-screen bg-slate-900 text-white overflow-hidden">
       {/* Top Header with Logo and Asset Tabs */}
       <div className="bg-slate-800 border-b border-slate-700">
-        <div className="flex items-center h-14 px-4">
+        <div className="flex items-center h-14 px-2">
           {/* Logo and App Name */}
-          <div className="flex items-center space-x-3 mr-8">
+          <div className="flex items-center space-x-2 mr-4">
             <div className="flex items-center space-x-2">
               <Image
                 src="/m4capitallogo2.png"
@@ -215,7 +215,7 @@ function TradingInterface() {
       <div className="flex h-[calc(100vh-56px)]">
         {/* Left Sidebar - hidden on small screens */}
         <div className="hidden md:flex w-48 bg-slate-800 border-r border-slate-700 flex-col">
-          <div className="space-y-1 py-2 px-2">
+          <div className="space-y-1">
             {/* Total Portfolio */}
             <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
               <div className="w-8 h-8 flex items-center justify-center">
@@ -330,9 +330,9 @@ function TradingInterface() {
         <div className="flex-1 flex flex-col md:flex-row">
           {/* Chart Area */}
           <div className="flex-1 bg-slate-800">
-            <div className="h-full p-4">
+            <div className="h-full p-2">
               {/* Symbol Info */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl">
@@ -379,7 +379,7 @@ function TradingInterface() {
               </div>
 
               {/* Chart Placeholder */}
-              <div className="h-60 sm:h-72 md:h-96 bg-slate-700 flex items-center justify-center mb-4">
+              <div className="h-60 sm:h-72 md:h-96 bg-slate-700 flex items-center justify-center mb-2">
                 <div className="text-center">
                   <BarChart3 className="w-16 h-16 mx-auto mb-4 text-slate-500" />
                   <p className="text-slate-400">Trading Chart</p>
@@ -390,7 +390,7 @@ function TradingInterface() {
               </div>
 
               {/* Trading Controls */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <motion.button
                   onClick={() => executeTrade("higher")}
                   disabled={isExecutingTrade}
@@ -421,10 +421,10 @@ function TradingInterface() {
           </div>
 
           {/* Right Trading Panel - becomes full width on small screens and stacks below chart */}
-          <div className="w-full md:w-80 bg-slate-800 border-t md:border-t-0 md:border-l border-slate-700 p-4 space-y-4">
+          <div className="w-full md:w-80 bg-slate-800 border-t md:border-t-0 md:border-l border-slate-700 p-2 space-y-2">
             {/* Trading Mode */}
-            <div className="bg-slate-700 rounded-lg p-4">
-              <h3 className="font-semibold mb-3">Trading Mode</h3>
+            <div className="bg-slate-700 rounded-lg p-2">
+              <h3 className="font-semibold mb-2">Trading Mode</h3>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setTradingMode("binary")}
@@ -460,8 +460,8 @@ function TradingInterface() {
             </div>
 
             {/* Amount Selection */}
-            <div className="bg-slate-700 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
+            <div className="bg-slate-700 rounded-lg p-2">
+              <div className="flex items-center justify-between mb-2">
                 <h3 className="font-semibold">Amount</h3>
                 <button
                   onClick={() => setShowQuickAmounts(!showQuickAmounts)}
@@ -471,7 +471,7 @@ function TradingInterface() {
                 </button>
               </div>
 
-              <div className="flex items-center space-x-2 mb-3">
+              <div className="flex items-center space-x-2 mb-2">
                 <span className="text-xl">$</span>
                 <input
                   type="number"
@@ -505,9 +505,9 @@ function TradingInterface() {
             </div>
 
             {/* Expiration */}
-            <div className="bg-slate-700 rounded-lg p-4">
-              <h3 className="font-semibold mb-3">Expiration</h3>
-              <div className="flex items-center space-x-2 mb-3">
+            <div className="bg-slate-700 rounded-lg p-2">
+              <h3 className="font-semibold mb-2">Expiration</h3>
+              <div className="flex items-center space-x-2 mb-2">
                 <Clock className="w-4 h-4 text-slate-400" />
                 <select
                   value={expirationSeconds}
@@ -528,8 +528,8 @@ function TradingInterface() {
             </div>
 
             {/* Risk Management */}
-            <div className="bg-slate-700 rounded-lg p-4">
-              <h3 className="font-semibold mb-3">Risk Level</h3>
+            <div className="bg-slate-700 rounded-lg p-2">
+              <h3 className="font-semibold mb-2">Risk Level</h3>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setRiskLevel("low")}
@@ -565,14 +565,14 @@ function TradingInterface() {
             </div>
 
             {/* Market Symbols */}
-            <div className="bg-slate-700 rounded-lg p-4">
-              <h3 className="font-semibold mb-3">Markets</h3>
+            <div className="bg-slate-700 rounded-lg p-2">
+              <h3 className="font-semibold mb-2">Markets</h3>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {symbols.map((item) => (
                   <button
                     key={item.symbol}
                     onClick={() => setSelectedSymbol(item.symbol)}
-                    className={`w-full p-3 rounded-lg text-left transition-colors ${
+                    className={`w-full p-2 rounded-lg text-left transition-colors ${
                       selectedSymbol === item.symbol
                         ? "bg-emerald-600"
                         : "bg-slate-600 hover:bg-slate-500"
