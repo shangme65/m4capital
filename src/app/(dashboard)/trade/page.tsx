@@ -42,6 +42,12 @@ function TradingInterface() {
   const [riskLevel, setRiskLevel] = useState<"low" | "medium" | "high">(
     "medium"
   );
+  const [showAddAssetModal, setShowAddAssetModal] = useState(false);
+  const [openTabs, setOpenTabs] = useState([
+    { symbol: "USD/CAD", type: "Binary" },
+    { symbol: "EUR/USD", type: "Binary" },
+  ]);
+  const [activeTab, setActiveTab] = useState(0);
 
   const symbols = [
     {
@@ -49,30 +55,56 @@ function TradingInterface() {
       price: "1.35742",
       change: "+0.0015",
       percentage: "+0.11%",
+      flag: "🇺🇸🇨🇦",
     },
     {
       symbol: "EUR/USD",
       price: "1.08532",
       change: "-0.0023",
       percentage: "-0.21%",
+      flag: "🇪🇺🇺🇸",
     },
     {
       symbol: "GBP/USD",
       price: "1.27854",
       change: "+0.0045",
       percentage: "+0.35%",
+      flag: "🇬🇧🇺🇸",
     },
     {
       symbol: "USD/JPY",
       price: "149.235",
       change: "+0.125",
       percentage: "+0.08%",
+      flag: "🇺🇸🇯🇵",
     },
     {
       symbol: "AUD/USD",
       price: "0.67321",
       change: "-0.0012",
       percentage: "-0.18%",
+      flag: "🇦🇺🇺🇸",
+    },
+    {
+      symbol: "BTC/USD",
+      price: "67890.45",
+      change: "+1234.56",
+      percentage: "+1.85%",
+      flag: "₿💵",
+    },
+    {
+      symbol: "ETH/USD",
+      price: "2456.78",
+      change: "-23.45",
+      percentage: "-0.95%",
+      flag: "⟠💵",
+    },
+    {
+      symbol: "USD/BRL",
+      price: "5.27535",
+      change: "+0.0523",
+      percentage: "+1.00%",
+      flag: "🇺🇸🇧🇷",
     },
   ];
 
@@ -99,9 +131,80 @@ function TradingInterface() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      {/* NOTE: header removed for trade page to avoid duplicate headers in dashboard */}
+      {/* Top Header with Logo and Asset Tabs */}
+      <div className="bg-slate-800 border-b border-slate-700">
+        <div className="flex items-center h-14 px-4">
+          {/* Logo and App Name */}
+          <div className="flex items-center space-x-3 mr-8">
+            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+              <Image
+                src="/icons/icon-192x192.png"
+                alt="M4Capital"
+                width={24}
+                height={24}
+                className="rounded"
+              />
+            </div>
+            <span className="text-lg font-bold text-white">M4Capital</span>
+          </div>
 
-      <div className="flex flex-1 min-h-[calc(100vh-0px)] md:h-[calc(100vh-73px)]">
+          {/* Asset Tabs */}
+          <div className="flex items-center space-x-1 flex-1">
+            {openTabs.map((tab, index) => (
+              <button
+                key={index}
+                onClick={() => {
+                  setActiveTab(index);
+                  setSelectedSymbol(tab.symbol);
+                }}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                  activeTab === index
+                    ? "bg-orange-500 text-white"
+                    : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                }`}
+              >
+                <div className="w-6 h-6 bg-slate-600 rounded flex items-center justify-center">
+                  <span className="text-xs">
+                    {symbols.find(s => s.symbol === tab.symbol)?.flag || "💱"}
+                  </span>
+                </div>
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium">{tab.symbol}</span>
+                  <span className="text-xs opacity-75">{tab.type}</span>
+                </div>
+                {openTabs.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const newTabs = openTabs.filter((_, i) => i !== index);
+                      setOpenTabs(newTabs);
+                      if (activeTab === index && newTabs.length > 0) {
+                        setActiveTab(0);
+                        setSelectedSymbol(newTabs[0].symbol);
+                      }
+                    }}
+                    className="ml-2 text-slate-400 hover:text-white"
+                    title="Close tab"
+                  >
+                    ×
+                  </button>
+                )}
+              </button>
+            ))}
+
+            {/* Add Asset Button */}
+            <button
+              onClick={() => setShowAddAssetModal(true)}
+              className="w-10 h-10 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center justify-center transition-colors"
+              title="Add new asset"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 min-h-[calc(100vh-56px)]">
         {/* Left Sidebar - hidden on small screens */}
         <div className="hidden md:flex w-16 bg-slate-800 border-r border-slate-700 flex-col items-center py-4 space-y-4">
           <button className="p-3 bg-emerald-600 text-white rounded-lg">
@@ -135,14 +238,22 @@ function TradingInterface() {
               {/* Symbol Info */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-4">
-                  <h2 className="text-2xl font-bold">{selectedSymbol}</h2>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-2xl">
+                      {symbols.find(s => s.symbol === selectedSymbol)?.flag || "💱"}
+                    </span>
+                    <h2 className="text-2xl font-bold">{selectedSymbol}</h2>
+                  </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl font-bold text-green-400">
-                      1.35742
+                      {symbols.find(s => s.symbol === selectedSymbol)?.price || "1.35742"}
                     </span>
                     <div className="flex items-center text-green-400">
                       <TrendingUp className="w-4 h-4 mr-1" />
-                      <span>+0.0015 (+0.11%)</span>
+                      <span>
+                        {symbols.find(s => s.symbol === selectedSymbol)?.change || "+0.0015"} (
+                        {symbols.find(s => s.symbol === selectedSymbol)?.percentage || "+0.11%"})
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -406,6 +517,75 @@ function TradingInterface() {
           </div>
         </div>
       </div>
+
+      {/* Add Asset Modal */}
+      <AnimatePresence>
+        {showAddAssetModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            onClick={() => setShowAddAssetModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-slate-800 rounded-lg p-6 w-96 max-h-96 overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Add Asset</h3>
+                <button
+                  onClick={() => setShowAddAssetModal(false)}
+                  className="text-slate-400 hover:text-white"
+                  title="Close modal"
+                >
+                  ×
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {symbols
+                  .filter((symbol) => !openTabs.some((tab) => tab.symbol === symbol.symbol))
+                  .map((symbol) => (
+                    <button
+                      key={symbol.symbol}
+                      onClick={() => {
+                        const newTab = { symbol: symbol.symbol, type: "Binary" };
+                        setOpenTabs([...openTabs, newTab]);
+                        setActiveTab(openTabs.length);
+                        setSelectedSymbol(symbol.symbol);
+                        setShowAddAssetModal(false);
+                      }}
+                      className="w-full p-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-left transition-colors"
+                    >
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="font-medium">{symbol.symbol}</span>
+                          <div className="text-sm text-slate-400">Binary Option</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold">{symbol.price}</div>
+                          <div
+                            className={`text-xs ${
+                              symbol.change.startsWith("+")
+                                ? "text-green-400"
+                                : "text-red-400"
+                            }`}
+                          >
+                            {symbol.change} ({symbol.percentage})
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
