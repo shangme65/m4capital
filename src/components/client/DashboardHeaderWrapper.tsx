@@ -8,6 +8,7 @@ export default function DashboardHeaderWrapper() {
   const hideOnSettings = pathname?.startsWith("/settings");
   const hideOnNews = pathname?.startsWith("/news");
   const hideOnTrade = pathname?.startsWith("/trade");
-  if (hideOnSettings || hideOnNews || hideOnTrade) return null;
+  const hideOnTraderoom = pathname?.startsWith("/traderoom");
+  if (hideOnSettings || hideOnNews || hideOnTrade || hideOnTraderoom) return null;
   return <DashboardHeader />;
 }

@@ -56,6 +56,9 @@ function TradingInterface() {
     { symbol: "EUR/USD", type: "Binary" },
   ]);
   const [activeTab, setActiveTab] = useState(0);
+  
+  // Add mounted state to prevent hydration mismatches
+  const [mounted, setMounted] = useState(false);
 
   const symbols = [
     {
@@ -128,6 +131,8 @@ function TradingInterface() {
   const EDGE_OFFSET_CLASS = "-m-0"; // <-- edit this line to adjust top/right/bottom/left offsets
 
   useEffect(() => {
+    // set mounted to true to prevent hydration mismatches
+    setMounted(true);
     // set initial time on client only and update every second
     setCurrentTime(new Date());
     const timer = setInterval(() => {
@@ -145,6 +150,18 @@ function TradingInterface() {
       setTradeDirection(null);
     }, 2000);
   };
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <div className="h-screen bg-slate-900 text-white overflow-hidden flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+          <p className="mt-4">Loading Trading Interface...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-slate-900 text-white overflow-hidden">
@@ -171,7 +188,7 @@ function TradingInterface() {
             <div className="flex items-center space-x-1 flex-1">
               {openTabs.map((tab, index) => (
                 <button
-                  key={index}
+                  key={`tab-${index}-${tab.symbol}`}
                   onClick={() => {
                     setActiveTab(index);
                     setSelectedSymbol(tab.symbol);
@@ -348,8 +365,8 @@ function TradingInterface() {
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center space-x-2">
                       <span className="text-2xl">
-                        {symbols.find((s) => s.symbol === selectedSymbol)
-                          ?.flag || "💱"}
+                        {symbols.find((s) => s.symbol === selectedSymbol)?.flag ||
+                          "💱"}
                       </span>
                       <h2 className="text-2xl font-bold">{selectedSymbol}</h2>
                     </div>
@@ -525,9 +542,7 @@ function TradingInterface() {
                   <Clock className="w-4 h-4 text-slate-400" />
                   <select
                     value={expirationSeconds}
-                    onChange={(e) =>
-                      setExpirationSeconds(Number(e.target.value))
-                    }
+                    onChange={(e) => setExpirationSeconds(Number(e.target.value))}
                     className="flex-1 bg-slate-600 border border-slate-500 rounded px-3 py-2 text-white"
                     aria-label="Expiration time"
                   >
@@ -623,9 +638,7 @@ function TradingInterface() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     className={`fixed top-20 right-4 p-4 rounded-lg ${
-                      tradeDirection === "higher"
-                        ? "bg-green-600"
-                        : "bg-red-600"
+                      tradeDirection === "higher" ? "bg-green-600" : "bg-red-600"
                     } text-white shadow-lg`}
                   >
                     <div className="flex items-center space-x-2">
@@ -639,96 +652,94 @@ function TradingInterface() {
           </div>
         </div>
 
-        {/* Close EDGE_OFFSET wrapper */}
-      </div>
-
-      {/* Add Asset Modal */}
-      <AnimatePresence>
-        {showAddAssetModal && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-            onClick={() => setShowAddAssetModal(false)}
-          >
+        {/* Add Asset Modal */}
+        <AnimatePresence>
+          {showAddAssetModal && (
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-slate-800 rounded-lg p-6 w-96 max-h-96 overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              onClick={() => setShowAddAssetModal(false)}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Add Asset</h3>
-                <button
-                  onClick={() => setShowAddAssetModal(false)}
-                  className="text-slate-400 hover:text-white"
-                  title="Close modal"
-                >
-                  ×
-                </button>
-              </div>
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-slate-800 rounded-lg p-6 w-96 max-h-96 overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Add Asset</h3>
+                  <button
+                    onClick={() => setShowAddAssetModal(false)}
+                    className="text-slate-400 hover:text-white"
+                    title="Close modal"
+                  >
+                    ×
+                  </button>
+                </div>
 
-              <div className="space-y-3">
-                {symbols
-                  .filter(
-                    (symbol) =>
-                      !openTabs.some((tab) => tab.symbol === symbol.symbol)
-                  )
-                  .map((symbol) => (
-                    <button
-                      key={symbol.symbol}
-                      onClick={() => {
-                        const newTab = {
-                          symbol: symbol.symbol,
-                          type: "Binary",
-                        };
-                        setOpenTabs([...openTabs, newTab]);
-                        setActiveTab(openTabs.length);
-                        setSelectedSymbol(symbol.symbol);
-                        setShowAddAssetModal(false);
-                      }}
-                      className="w-full p-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-left transition-colors"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-slate-600 rounded flex items-center justify-center">
-                            <span className="text-xs">{symbol.flag}</span>
+                <div className="space-y-3">
+                  {symbols
+                    .filter(
+                      (symbol) =>
+                        !openTabs.some((tab) => tab.symbol === symbol.symbol)
+                    )
+                    .map((symbol) => (
+                      <button
+                        key={symbol.symbol}
+                        onClick={() => {
+                          const newTab = {
+                            symbol: symbol.symbol,
+                            type: "Binary",
+                          };
+                          setOpenTabs([...openTabs, newTab]);
+                          setActiveTab(openTabs.length);
+                          setSelectedSymbol(symbol.symbol);
+                          setShowAddAssetModal(false);
+                        }}
+                        className="w-full p-3 bg-slate-700 hover:bg-slate-600 rounded-lg text-left transition-colors"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-slate-600 rounded flex items-center justify-center">
+                              <span className="text-xs">{symbol.flag}</span>
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="font-medium">{symbol.symbol}</span>
+                              <div className="text-sm text-slate-400">Binary Option</div>
+                            </div>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="font-medium">{symbol.symbol}</span>
-                            <div className="text-sm text-slate-400">
-                              Binary Option
+
+                          <div className="text-right">
+                            <div className="font-bold">{symbol.price}</div>
+                            <div
+                              className={`text-xs ${
+                                symbol.change.startsWith("+")
+                                  ? "text-green-400"
+                                  : "text-red-400"
+                              }`}
+                            >
+                              {symbol.change} ({symbol.percentage})
                             </div>
                           </div>
                         </div>
-
-                        <div className="text-right">
-                          <div className="font-bold">{symbol.price}</div>
-                          <div
-                            className={`text-xs ${
-                              symbol.change.startsWith("+")
-                                ? "text-green-400"
-                                : "text-red-400"
-                            }`}
-                          >
-                            {symbol.change} ({symbol.percentage})
-                          </div>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-              </div>
+                      </button>
+                    ))}
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+
+        {/* Close EDGE_OFFSET wrapper */}
+      </div>
     </div>
   );
 }
 
-export default function TradePage() {
+export default function TraderoomPage() {
   return (
     <TradingProvider>
       <TradingInterface />
