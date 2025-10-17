@@ -19,6 +19,14 @@ import {
   Bell,
   Search,
   Calendar,
+  Briefcase,
+  History,
+  MessageCircle,
+  Gift,
+  Handshake,
+  TrendingUpIcon,
+  BookOpen,
+  MoreHorizontal,
 } from "lucide-react";
 import {
   TradingProvider,
@@ -130,22 +138,22 @@ function TradingInterface() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className="h-screen bg-slate-900 text-white overflow-hidden">
       {/* Top Header with Logo and Asset Tabs */}
       <div className="bg-slate-800 border-b border-slate-700">
         <div className="flex items-center h-14 px-4">
           {/* Logo and App Name */}
           <div className="flex items-center space-x-3 mr-8">
-            <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
+            <div className="flex items-center space-x-2">
               <Image
-                src="/icons/icon-192x192.png"
+                src="/m4capitallogo2.png"
                 alt="M4Capital"
-                width={24}
-                height={24}
-                className="rounded"
+                width={40}
+                height={40}
+                className="object-contain"
               />
+              <span className="text-xl font-bold text-white">capital</span>
             </div>
-            <span className="text-lg font-bold text-white">M4Capital</span>
           </div>
 
           {/* Asset Tabs */}
@@ -165,7 +173,7 @@ function TradingInterface() {
               >
                 <div className="w-6 h-6 bg-slate-600 rounded flex items-center justify-center">
                   <span className="text-xs">
-                    {symbols.find(s => s.symbol === tab.symbol)?.flag || "💱"}
+                    {symbols.find((s) => s.symbol === tab.symbol)?.flag || "💱"}
                   </span>
                 </div>
                 <div className="flex flex-col items-start">
@@ -204,55 +212,149 @@ function TradingInterface() {
         </div>
       </div>
 
-      <div className="flex flex-1 min-h-[calc(100vh-56px)]">
+      <div className="flex h-[calc(100vh-56px)]">
         {/* Left Sidebar - hidden on small screens */}
-        <div className="hidden md:flex w-16 bg-slate-800 border-r border-slate-700 flex-col items-center py-4 space-y-4">
-          <button className="p-3 bg-emerald-600 text-white rounded-lg">
-            <BarChart3 className="w-5 h-5" />
-          </button>
-          <button className="p-3 hover:bg-slate-700 rounded-lg transition-colors">
-            <Activity className="w-5 h-5" />
-          </button>
-          <button className="p-3 hover:bg-slate-700 rounded-lg transition-colors">
-            <DollarSign className="w-5 h-5" />
-          </button>
-          <button className="p-3 hover:bg-slate-700 rounded-lg transition-colors">
-            <Target className="w-5 h-5" />
-          </button>
-          <button className="p-3 hover:bg-slate-700 rounded-lg transition-colors">
-            <Shield className="w-5 h-5" />
-          </button>
-          <button className="p-3 hover:bg-slate-700 rounded-lg transition-colors">
-            <Calendar className="w-5 h-5" />
-          </button>
-          <button className="p-3 hover:bg-slate-700 rounded-lg transition-colors">
-            <Settings className="w-5 h-5" />
-          </button>
+        <div className="hidden md:flex w-48 bg-slate-800 border-r border-slate-700 flex-col">
+          <div className="space-y-1 py-2 px-2">
+            {/* Total Portfolio */}
+            <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 flex items-center justify-center">
+                <Briefcase className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  TOTAL
+                </span>
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  PORTFOLIO
+                </span>
+              </div>
+            </div>
+
+            {/* Trading History */}
+            <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 flex items-center justify-center">
+                <History className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  TRADING
+                </span>
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  HISTORY
+                </span>
+              </div>
+            </div>
+
+            {/* Chats & Support */}
+            <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 flex items-center justify-center">
+                <MessageCircle className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  CHATS &
+                </span>
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  SUPPORT
+                </span>
+              </div>
+            </div>
+
+            {/* Promo */}
+            <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 flex items-center justify-center">
+                <Gift className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  PROMO
+                </span>
+              </div>
+            </div>
+
+            {/* Partnership */}
+            <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 flex items-center justify-center">
+                <Handshake className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  PARTNERSHIP
+                </span>
+              </div>
+            </div>
+
+            {/* Market Analysis */}
+            <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 flex items-center justify-center">
+                <BarChart3 className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  MARKET
+                </span>
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  ANALYSIS
+                </span>
+              </div>
+            </div>
+
+            {/* Tutorials */}
+            <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  TUTORIALS
+                </span>
+              </div>
+            </div>
+
+            {/* More */}
+            <div className="flex items-center space-x-3 p-3 hover:bg-slate-700 rounded-lg transition-colors cursor-pointer">
+              <div className="w-8 h-8 flex items-center justify-center">
+                <MoreHorizontal className="w-5 h-5 text-slate-400" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-xs text-slate-400 uppercase tracking-wide">
+                  MORE
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Main Content - stack on small screens */}
         <div className="flex-1 flex flex-col md:flex-row">
           {/* Chart Area */}
-          <div className="flex-1 bg-slate-900 p-4">
-            <div className="h-full bg-slate-800 rounded-lg p-4">
+          <div className="flex-1 bg-slate-800">
+            <div className="h-full p-4">
               {/* Symbol Info */}
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl">
-                      {symbols.find(s => s.symbol === selectedSymbol)?.flag || "💱"}
+                      {symbols.find((s) => s.symbol === selectedSymbol)?.flag ||
+                        "💱"}
                     </span>
                     <h2 className="text-2xl font-bold">{selectedSymbol}</h2>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-2xl font-bold text-green-400">
-                      {symbols.find(s => s.symbol === selectedSymbol)?.price || "1.35742"}
+                      {symbols.find((s) => s.symbol === selectedSymbol)
+                        ?.price || "1.35742"}
                     </span>
                     <div className="flex items-center text-green-400">
                       <TrendingUp className="w-4 h-4 mr-1" />
                       <span>
-                        {symbols.find(s => s.symbol === selectedSymbol)?.change || "+0.0015"} (
-                        {symbols.find(s => s.symbol === selectedSymbol)?.percentage || "+0.11%"})
+                        {symbols.find((s) => s.symbol === selectedSymbol)
+                          ?.change || "+0.0015"}{" "}
+                        (
+                        {symbols.find((s) => s.symbol === selectedSymbol)
+                          ?.percentage || "+0.11%"}
+                        )
                       </span>
                     </div>
                   </div>
@@ -277,7 +379,7 @@ function TradingInterface() {
               </div>
 
               {/* Chart Placeholder */}
-              <div className="h-60 sm:h-72 md:h-96 bg-slate-700 rounded-lg flex items-center justify-center mb-4">
+              <div className="h-60 sm:h-72 md:h-96 bg-slate-700 flex items-center justify-center mb-4">
                 <div className="text-center">
                   <BarChart3 className="w-16 h-16 mx-auto mb-4 text-slate-500" />
                   <p className="text-slate-400">Trading Chart</p>
@@ -292,7 +394,7 @@ function TradingInterface() {
                 <motion.button
                   onClick={() => executeTrade("higher")}
                   disabled={isExecutingTrade}
-                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white p-4 rounded-lg font-bold text-lg transition-colors"
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white p-4 font-bold text-lg transition-colors"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -305,7 +407,7 @@ function TradingInterface() {
                 <motion.button
                   onClick={() => executeTrade("lower")}
                   disabled={isExecutingTrade}
-                  className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white p-4 rounded-lg font-bold text-lg transition-colors"
+                  className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white p-4 font-bold text-lg transition-colors"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -548,12 +650,18 @@ function TradingInterface() {
 
               <div className="space-y-3">
                 {symbols
-                  .filter((symbol) => !openTabs.some((tab) => tab.symbol === symbol.symbol))
+                  .filter(
+                    (symbol) =>
+                      !openTabs.some((tab) => tab.symbol === symbol.symbol)
+                  )
                   .map((symbol) => (
                     <button
                       key={symbol.symbol}
                       onClick={() => {
-                        const newTab = { symbol: symbol.symbol, type: "Binary" };
+                        const newTab = {
+                          symbol: symbol.symbol,
+                          type: "Binary",
+                        };
                         setOpenTabs([...openTabs, newTab]);
                         setActiveTab(openTabs.length);
                         setSelectedSymbol(symbol.symbol);
@@ -564,7 +672,9 @@ function TradingInterface() {
                       <div className="flex justify-between items-center">
                         <div>
                           <span className="font-medium">{symbol.symbol}</span>
-                          <div className="text-sm text-slate-400">Binary Option</div>
+                          <div className="text-sm text-slate-400">
+                            Binary Option
+                          </div>
                         </div>
                         <div className="text-right">
                           <div className="font-bold">{symbol.price}</div>
