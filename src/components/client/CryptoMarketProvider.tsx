@@ -149,6 +149,10 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
         );
 
         if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        if (!response.ok) {
           throw new Error(`Failed to fetch prices: ${response.status}`);
         }
 
@@ -181,15 +185,22 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
           });
         });
 
-        console.log(
-          `Updated ${data.prices.length} crypto prices (cached: ${data.cached})`
-        );
+        // Only log in development
+        if (process.env.NODE_ENV === "development") {
+          console.log(
+            `Updated ${data.prices.length} crypto prices (cached: ${data.cached})`
+          );
+        }
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Unknown error";
         setError(errorMessage);
         setIsConnected(false);
-        console.error("Failed to fetch crypto prices:", errorMessage);
+
+        // Only log errors in development
+        if (process.env.NODE_ENV === "development") {
+          console.error("Failed to fetch crypto prices:", errorMessage);
+        }
       } finally {
         isUpdatingRef.current = false;
       }
@@ -209,9 +220,12 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
       fetchCryptoPrices();
     }, updateInterval);
 
-    console.log(
-      `Started crypto price updates every ${updateInterval / 1000} seconds`
-    );
+    // Only log in development
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `Started crypto price updates every ${updateInterval / 1000} seconds`
+      );
+    }
   }, [fetchCryptoPrices, updateInterval]);
 
   // Stop automatic price updates
@@ -220,7 +234,11 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
       clearInterval(intervalRef.current);
       intervalRef.current = null;
       setIsConnected(false);
-      console.log("Stopped crypto price updates");
+
+      // Only log in development
+      if (process.env.NODE_ENV === "development") {
+        console.log("Stopped crypto price updates");
+      }
     }
   }, []);
 
@@ -242,7 +260,10 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
         fetchCryptoPrices(missingSymbols);
       }
 
-      console.log(`Subscribed to crypto prices: ${symbols.join(", ")}`);
+      // Only log in development
+      if (process.env.NODE_ENV === "development") {
+        console.log(`Subscribed to crypto prices: ${symbols.join(", ")}`);
+      }
       return subscriptionId;
     },
     [cryptoPrices, fetchCryptoPrices]
@@ -251,7 +272,11 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
   const unsubscribeFromCrypto = useCallback((subscriptionId: string) => {
     if (subscriptionsRef.current.has(subscriptionId)) {
       subscriptionsRef.current.delete(subscriptionId);
-      console.log(`Unsubscribed from crypto prices: ${subscriptionId}`);
+
+      // Only log in development
+      if (process.env.NODE_ENV === "development") {
+        console.log(`Unsubscribed from crypto prices: ${subscriptionId}`);
+      }
     }
   }, []);
 

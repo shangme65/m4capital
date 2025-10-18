@@ -43,6 +43,7 @@ import {
   BitcoinPriceWidget,
   CryptoPriceTicker,
 } from "@/components/client/CryptoPriceTicker";
+import ErrorBoundary from "@/components/client/ErrorBoundary";
 
 function TradingInterface() {
   const [amount, setAmount] = useState(10000);
@@ -2868,10 +2869,12 @@ function TradingInterface() {
 
 export default function TraderoomPage() {
   return (
-    <CryptoMarketProvider>
-      <TradingProvider>
-        <TradingInterface />
-      </TradingProvider>
-    </CryptoMarketProvider>
+    <ErrorBoundary>
+      <CryptoMarketProvider>
+        <TradingProvider>
+          <TradingInterface />
+        </TradingProvider>
+      </CryptoMarketProvider>
+    </ErrorBoundary>
   );
 }

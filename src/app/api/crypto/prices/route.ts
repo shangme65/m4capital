@@ -65,7 +65,11 @@ async function fetchCryptoPrices(
     }
 
     const data: CoinGeckoPrice = await response.json();
-    console.log("CoinGecko response:", data);
+
+    // Only log in development
+    if (process.env.NODE_ENV === "development") {
+      console.log("CoinGecko response:", data);
+    }
 
     const prices: CryptoPriceResponse[] = [];
 
