@@ -7,6 +7,7 @@ import AnimatedButton from "@/components/client/AnimatedButton";
 import Features from "@/components/client/Features";
 import Testimonials from "@/components/client/Testimonials";
 import CryptoPriceTicker from "@/components/client/CryptoPriceTicker";
+import { CryptoMarketProvider } from "@/components/client/CryptoMarketProvider";
 import FAQ from "@/components/client/FAQ";
 import HowItWorks from "@/components/client/HowItWorks";
 import Preloader from "@/components/client/Preloader";
@@ -409,14 +410,16 @@ export default function Home() {
   }
 
   return (
-    <main>
-      <Hero />
-      <CryptoPriceTicker />
-      <Features />
-      <HowItWorks />
-      <Testimonials />
-      <FAQ />
-      <CallToAction />
-    </main>
+    <CryptoMarketProvider>
+      <main>
+        <Hero />
+        <CryptoPriceTicker />
+        <Features />
+        <HowItWorks />
+        <Testimonials />
+        <FAQ />
+        <CallToAction />
+      </main>
+    </CryptoMarketProvider>
   );
 }
