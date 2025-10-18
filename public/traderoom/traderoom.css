@@ -2,7 +2,7 @@
 
 /* World Map Background for Chart Areas */
 .traderoom-chart-bg {
-  background-image: url('/traderoom/backgrounds/world-map-detailed.svg');
+  background-image: url("/traderoom/backgrounds/world-map-detailed.svg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -10,7 +10,7 @@
 }
 
 .traderoom-chart-bg-small {
-  background-image: url('/traderoom/backgrounds/world-map-detailed.svg');
+  background-image: url("/traderoom/backgrounds/world-map-detailed.svg");
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
@@ -18,7 +18,7 @@
 
 /* Alternative subtle background for different chart views */
 .traderoom-chart-bg-dots {
-  background-image: url('/traderoom/backgrounds/world-map-dots.svg');
+  background-image: url("/traderoom/backgrounds/world-map-dots.svg");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -36,7 +36,8 @@
 
 /* Animation for world map background */
 @keyframes worldMapPulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.12;
   }
   50% {

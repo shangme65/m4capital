@@ -17,6 +17,7 @@ This directory contains all assets specifically for the traderoom interface.
 ## Files
 
 ### Backgrounds
+
 - `world-map-dots.svg` - Simple dotted world map pattern for chart background
   - Basic continents outline with subtle dots
   - Low opacity for minimal visual impact
@@ -28,6 +29,7 @@ This directory contains all assets specifically for the traderoom interface.
   - Dotted pattern matching IQ Option style
 
 ### Styles
+
 - `traderoom.css` - CSS classes for easy background application
   - `.traderoom-chart-bg` - Full cover world map background
   - `.traderoom-chart-bg-small` - Contained world map background
@@ -37,15 +39,16 @@ This directory contains all assets specifically for the traderoom interface.
 ## Usage
 
 ### World Map Background
+
 ```tsx
 // In chart component
-<div 
+<div
   className="chart-container"
   style={{
-    backgroundImage: 'url(/traderoom/backgrounds/world-map-dots.svg)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat'
+    backgroundImage: "url(/traderoom/backgrounds/world-map-dots.svg)",
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    backgroundRepeat: "no-repeat",
   }}
 >
   {/* Chart content */}
@@ -55,7 +58,8 @@ This directory contains all assets specifically for the traderoom interface.
 ## Adding New Assets
 
 When adding new traderoom assets:
-1. Place general assets in `/assets/` 
+
+1. Place general assets in `/assets/`
 2. Place background images in `/backgrounds/`
 3. Use descriptive, kebab-case filenames
 4. Optimize images for web (SVG preferred for graphics)

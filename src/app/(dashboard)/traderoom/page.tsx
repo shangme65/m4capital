@@ -63,6 +63,9 @@ function TradingInterface() {
   const [historyFilter, setHistoryFilter] = useState("All Positions");
   const [showMoreItems, setShowMoreItems] = useState(false);
 
+  // Get trading context for history data
+  const { tradeHistory, openPositions } = useTradingContext();
+
   const symbols = [
     {
       symbol: "USD/CAD",
@@ -379,7 +382,7 @@ function TradingInterface() {
           <div className="flex flex-col items-center py-4 space-y-6">
             {/* Total Portfolio */}
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-orange-500/20">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <Briefcase
                   className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
@@ -403,7 +406,7 @@ function TradingInterface() {
 
             {/* Trading History */}
             <div
-              className="group flex flex-col items-center cursor-pointer"
+              className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300"
               onClick={() => setShowTradingHistory(!showTradingHistory)}
             >
               <div
@@ -415,7 +418,7 @@ function TradingInterface() {
                 }}
               >
                 <History
-                  className="w-6 h-6"
+                  className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                   style={{
                     color: showTradingHistory ? "#ffffff" : "#827e7d",
                   }}
@@ -423,7 +426,7 @@ function TradingInterface() {
               </div>
               <div className="mt-1 text-center">
                 <div
-                  className="text-[9px] leading-tight"
+                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{
                     color: showTradingHistory ? "#ff8516" : "#827e7d",
                   }}
@@ -431,7 +434,7 @@ function TradingInterface() {
                   TRADING
                 </div>
                 <div
-                  className="text-[9px] leading-tight"
+                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{
                     color: showTradingHistory ? "#ff8516" : "#827e7d",
                   }}
@@ -443,7 +446,7 @@ function TradingInterface() {
 
             {/* Chats & Support */}
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-orange-500/20">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <MessageCircle
                   className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
@@ -467,7 +470,7 @@ function TradingInterface() {
 
             {/* Promo */}
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-orange-500/20">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <Gift
                   className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
@@ -485,7 +488,7 @@ function TradingInterface() {
 
             {/* Market Analysis */}
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-orange-500/20">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <BarChart3
                   className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
@@ -509,7 +512,7 @@ function TradingInterface() {
 
             {/* Tutorials */}
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-orange-500/20">
+              <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <BookOpen
                   className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
@@ -531,7 +534,7 @@ function TradingInterface() {
               onClick={() => setShowMoreItems(!showMoreItems)}
             >
               <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 group-hover:bg-orange-500/20"
+                className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
                 style={{
                   backgroundColor: showMoreItems ? "#ff8516" : "transparent",
                 }}
@@ -2092,15 +2095,23 @@ function TradingInterface() {
           {/* Chart Area */}
           <div
             className="flex-1 flex items-center justify-center relative"
-            style={{ 
+            style={{
               backgroundColor: "#1b1817",
-              backgroundImage: "url(/traderoom/backgrounds/world-map-detailed.svg)",
+              backgroundImage: "url(/traderoom/backgrounds/world-map.webp)",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
-              backgroundAttachment: "fixed"
+              backgroundAttachment: "fixed",
             }}
           >
+            {/* World map overlay for opacity control */}
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundColor: "#1b1817",
+                opacity: 0.85,
+              }}
+            />
             <div className="text-center relative z-10">
               <BarChart3
                 className="w-16 h-16 mx-auto mb-4"
@@ -2153,13 +2164,21 @@ function TradingInterface() {
               style={{
                 backgroundColor: "#1b1817",
                 borderColor: "#38312e",
-                backgroundImage: "url(/traderoom/backgrounds/world-map-detailed.svg)",
+                backgroundImage: "url(/traderoom/backgrounds/world-map.webp)",
                 backgroundSize: "contain",
                 backgroundPosition: "center",
-                backgroundRepeat: "no-repeat"
+                backgroundRepeat: "no-repeat",
               }}
             >
-              <div className="text-center">
+              {/* World map overlay for opacity control */}
+              <div
+                className="absolute inset-0"
+                style={{
+                  backgroundColor: "#1b1817",
+                  opacity: 0.9,
+                }}
+              />
+              <div className="text-center relative z-10">
                 <div className="mb-4 relative">
                   {/* Simple price line visualization */}
                   <div
@@ -2532,6 +2551,262 @@ function TradingInterface() {
                       </div>
                     </button>
                   ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Trading History Modal */}
+      <AnimatePresence>
+        {showTradingHistory && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowTradingHistory(false)}
+            className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-4xl max-h-[80vh] rounded-lg overflow-hidden"
+              style={{ backgroundColor: "#1b1817" }}
+            >
+              {/* Header */}
+              <div
+                className="p-4 border-b flex items-center justify-between"
+                style={{ borderColor: "#38312e" }}
+              >
+                <div className="flex items-center space-x-3">
+                  <History className="w-6 h-6" style={{ color: "#ff8516" }} />
+                  <h2
+                    className="text-xl font-semibold"
+                    style={{ color: "#ffffff" }}
+                  >
+                    Trading History
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setShowTradingHistory(false)}
+                  className="p-2 hover:opacity-75 transition-opacity"
+                  style={{ color: "#afadac" }}
+                >
+                  <span className="text-xl">×</span>
+                </button>
+              </div>
+
+              {/* Filter Bar */}
+              <div
+                className="p-4 border-b flex items-center justify-between"
+                style={{ borderColor: "#38312e" }}
+              >
+                <div className="flex items-center space-x-4">
+                  <select
+                    value={historyFilter}
+                    onChange={(e) => setHistoryFilter(e.target.value)}
+                    className="px-3 py-2 rounded-lg text-sm border"
+                    style={{
+                      backgroundColor: "#38312e",
+                      borderColor: "#4a4540",
+                      color: "#afadac",
+                    }}
+                  >
+                    <option value="All Positions">All Positions</option>
+                    <option value="Win">Wins Only</option>
+                    <option value="Loss">Losses Only</option>
+                    <option value="Open">Open Positions</option>
+                  </select>
+                </div>
+                <div className="text-sm" style={{ color: "#afadac" }}>
+                  Total Trades: {tradeHistory.length + openPositions.length}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-4 overflow-y-auto max-h-96">
+                {/* Open Positions */}
+                {openPositions.length > 0 && (
+                  <div className="mb-6">
+                    <h3
+                      className="text-lg font-medium mb-3"
+                      style={{ color: "#ff8516" }}
+                    >
+                      Open Positions ({openPositions.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {openPositions.map((position) => (
+                        <div
+                          key={position.id}
+                          className="p-3 rounded-lg border flex items-center justify-between"
+                          style={{
+                            backgroundColor: "#252320",
+                            borderColor: "#38312e",
+                          }}
+                        >
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span
+                                className="font-medium"
+                                style={{ color: "#ffffff" }}
+                              >
+                                {position.symbol}
+                              </span>
+                              <span
+                                className="px-2 py-1 rounded text-xs"
+                                style={{
+                                  backgroundColor:
+                                    position.direction === "HIGHER"
+                                      ? "#5ddf38"
+                                      : "#ff4747",
+                                  color: "#ffffff",
+                                }}
+                              >
+                                {position.direction}
+                              </span>
+                            </div>
+                            <div
+                              className="text-sm"
+                              style={{ color: "#afadac" }}
+                            >
+                              Amount: ${position.amount} • Entry: $
+                              {position.entryPrice}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div
+                              className="text-sm"
+                              style={{ color: "#afadac" }}
+                            >
+                              {new Date(
+                                position.entryTime
+                              ).toLocaleTimeString()}
+                            </div>
+                            <div
+                              className="text-xs px-2 py-1 rounded"
+                              style={{
+                                backgroundColor: "#ffa500",
+                                color: "#ffffff",
+                              }}
+                            >
+                              ACTIVE
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Trade History */}
+                {tradeHistory.length > 0 ? (
+                  <div>
+                    <h3
+                      className="text-lg font-medium mb-3"
+                      style={{ color: "#ff8516" }}
+                    >
+                      Completed Trades ({tradeHistory.length})
+                    </h3>
+                    <div className="space-y-2">
+                      {tradeHistory
+                        .filter((trade) => {
+                          if (historyFilter === "All Positions") return true;
+                          if (historyFilter === "Win")
+                            return trade.status === "WIN";
+                          if (historyFilter === "Loss")
+                            return trade.status === "LOSS";
+                          return false;
+                        })
+                        .map((trade) => (
+                          <div
+                            key={trade.id}
+                            className="p-3 rounded-lg border flex items-center justify-between"
+                            style={{
+                              backgroundColor: "#252320",
+                              borderColor: "#38312e",
+                            }}
+                          >
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span
+                                  className="font-medium"
+                                  style={{ color: "#ffffff" }}
+                                >
+                                  {trade.symbol}
+                                </span>
+                                <span
+                                  className="px-2 py-1 rounded text-xs"
+                                  style={{
+                                    backgroundColor:
+                                      trade.direction === "HIGHER"
+                                        ? "#5ddf38"
+                                        : "#ff4747",
+                                    color: "#ffffff",
+                                  }}
+                                >
+                                  {trade.direction}
+                                </span>
+                              </div>
+                              <div
+                                className="text-sm"
+                                style={{ color: "#afadac" }}
+                              >
+                                Amount: ${trade.amount} • Entry: $
+                                {trade.entryPrice}
+                                {trade.exitPrice &&
+                                  ` • Exit: $${trade.exitPrice}`}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div
+                                className={`font-medium ${
+                                  trade.profit >= 0
+                                    ? "text-green-400"
+                                    : "text-red-400"
+                                }`}
+                              >
+                                {trade.profit >= 0 ? "+" : ""}$
+                                {trade.profit.toFixed(2)}
+                              </div>
+                              <div
+                                className="text-sm"
+                                style={{ color: "#afadac" }}
+                              >
+                                {new Date(trade.entryTime).toLocaleString()}
+                              </div>
+                              <div
+                                className={`text-xs px-2 py-1 rounded ${
+                                  trade.status === "WIN"
+                                    ? "bg-green-500/20 text-green-400"
+                                    : "bg-red-500/20 text-red-400"
+                                }`}
+                              >
+                                {trade.status}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <History
+                      className="w-16 h-16 mx-auto mb-4 opacity-50"
+                      style={{ color: "#827e7d" }}
+                    />
+                    <p
+                      className="text-lg font-medium mb-2"
+                      style={{ color: "#afadac" }}
+                    >
+                      No Trading History
+                    </p>
+                    <p className="text-sm" style={{ color: "#827e7d" }}>
+                      Execute some trades to see your history here
+                    </p>
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
