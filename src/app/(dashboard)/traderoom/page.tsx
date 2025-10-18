@@ -2091,10 +2091,17 @@ function TradingInterface() {
 
           {/* Chart Area */}
           <div
-            className="flex-1 flex items-center justify-center"
-            style={{ backgroundColor: "#1b1817" }}
+            className="flex-1 flex items-center justify-center relative"
+            style={{ 
+              backgroundColor: "#1b1817",
+              backgroundImage: "url(/traderoom/backgrounds/world-map-detailed.svg)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+              backgroundAttachment: "fixed"
+            }}
           >
-            <div className="text-center">
+            <div className="text-center relative z-10">
               <BarChart3
                 className="w-16 h-16 mx-auto mb-4"
                 style={{ color: "#827e7d" }}
@@ -2142,10 +2149,14 @@ function TradingInterface() {
 
             {/* Chart Area - Simplified */}
             <div
-              className="h-48 border-b flex items-center justify-center"
+              className="h-48 border-b flex items-center justify-center relative"
               style={{
                 backgroundColor: "#1b1817",
                 borderColor: "#38312e",
+                backgroundImage: "url(/traderoom/backgrounds/world-map-detailed.svg)",
+                backgroundSize: "contain",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat"
               }}
             >
               <div className="text-center">

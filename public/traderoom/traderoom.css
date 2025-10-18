@@ -1,0 +1,49 @@
+/* Traderoom Specific Styles */
+
+/* World Map Background for Chart Areas */
+.traderoom-chart-bg {
+  background-image: url('/traderoom/backgrounds/world-map-detailed.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+.traderoom-chart-bg-small {
+  background-image: url('/traderoom/backgrounds/world-map-detailed.svg');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Alternative subtle background for different chart views */
+.traderoom-chart-bg-dots {
+  background-image: url('/traderoom/backgrounds/world-map-dots.svg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Overlay to ensure content readability over world map */
+.chart-content-overlay {
+  position: relative;
+  z-index: 10;
+  background: rgba(27, 24, 23, 0.7);
+  backdrop-filter: blur(1px);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+/* Animation for world map background */
+@keyframes worldMapPulse {
+  0%, 100% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.18;
+  }
+}
+
+.traderoom-chart-animated {
+  animation: worldMapPulse 8s ease-in-out infinite;
+}
