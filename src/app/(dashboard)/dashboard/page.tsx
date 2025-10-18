@@ -4,14 +4,27 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
+import {
+  CryptoMarketProvider,
+  useBitcoinPrice,
+} from "@/components/client/CryptoMarketProvider";
+import { usePortfolio } from "@/lib/usePortfolio";
 import TransactionDetailsModal from "@/components/client/TransactionDetailsModal";
 import AssetDetailsModal from "@/components/client/AssetDetailsModal";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
 
-export default function DashboardPage() {
+// Dashboard content component with crypto integration
+function DashboardContent() {
   const { data: session } = useSession();
+  const btcPrice = useBitcoinPrice();
+  const {
+    portfolio,
+    isLoading: portfolioLoading,
+    error: portfolioError,
+    refetch,
+  } = usePortfolio();
   const {
     openDepositModal,
     openWithdrawModal,
@@ -21,9 +34,6 @@ export default function DashboardPage() {
     openSellModal,
   } = useModal();
   const { recentActivity } = useNotifications();
-  const [portfolioValue] = useState(24891.42);
-  const [todayChange] = useState(2.45);
-  const [availableBalance] = useState(5420.0);
   const [lastUpdated, setLastUpdated] = useState("Just now");
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
@@ -60,14 +70,17 @@ export default function DashboardPage() {
     setShowTransactionDetails(true);
   };
 
-  // Mock data for user assets
-  const [userAssets] = useState([
+  // Get available balance from portfolio
+  const availableBalance = portfolio?.portfolio.balance || 0;
+
+  // Dynamic user assets with real-time Bitcoin prices
+  const defaultAssets = [
     {
       symbol: "BTC",
       name: "Bitcoin",
       amount: 0.8542,
-      value: 52847.32,
-      change: 3.24,
+      value: btcPrice ? btcPrice.price * 0.8542 : 52847.32,
+      change: btcPrice ? btcPrice.changePercent24h : 3.24,
       icon: "₿",
     },
     {
@@ -97,12 +110,43 @@ export default function DashboardPage() {
     {
       symbol: "USDT",
       name: "Tether",
-      amount: 5420.0,
-      value: 5420.0,
+      amount: availableBalance,
+      value: availableBalance,
       change: 0.01,
       icon: "₮",
     },
-  ]);
+  ];
+
+  // Use portfolio assets if available, otherwise use default
+  const userAssets =
+    portfolio?.portfolio.assets && portfolio.portfolio.assets.length > 0
+      ? portfolio.portfolio.assets.map((asset: any) => ({
+          symbol: asset.symbol,
+          name: asset.symbol,
+          amount: asset.amount,
+          value:
+            asset.symbol === "BTC" && btcPrice
+              ? btcPrice.price * asset.amount
+              : asset.amount * asset.averagePrice,
+          change:
+            asset.symbol === "BTC" && btcPrice ? btcPrice.changePercent24h : 0,
+          icon:
+            asset.symbol === "BTC" ? "₿" : asset.symbol === "ETH" ? "Ξ" : "○",
+        }))
+      : defaultAssets;
+
+  // Calculate dynamic portfolio value based on real-time prices
+  const portfolioValue = portfolioLoading
+    ? 0
+    : userAssets.reduce((total, asset) => total + asset.value, 0);
+
+  const todayChange =
+    btcPrice && portfolioValue > 0
+      ? ((portfolioValue -
+          portfolioValue / (1 + btcPrice.changePercent24h / 100)) /
+          portfolioValue) *
+        100
+      : 2.45;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -334,18 +378,43 @@ export default function DashboardPage() {
 
         <div className="mb-6 sm:mb-8">
           <div className="text-3xl sm:text-5xl font-bold text-white mb-2">
-            $
-            {portfolioValue.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {portfolioLoading ? (
+              <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
+            ) : (
+              <>
+                $
+                {portfolioValue.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-green-400 text-base sm:text-lg font-medium">
-              +{todayChange}%
-            </span>
-            <span className="text-gray-400 text-sm sm:text-base">Today</span>
+            {portfolioLoading ? (
+              <div className="animate-pulse bg-gray-700 h-6 w-24 rounded"></div>
+            ) : (
+              <>
+                <span className="text-green-400 text-base sm:text-lg font-medium">
+                  +{todayChange.toFixed(2)}%
+                </span>
+                <span className="text-gray-400 text-sm sm:text-base">
+                  Today
+                </span>
+              </>
+            )}
           </div>
+          {portfolioError && (
+            <div className="text-red-400 text-sm mt-2">
+              Failed to load portfolio data.
+              <button
+                onClick={refetch}
+                className="ml-2 underline hover:text-red-300"
+              >
+                Retry
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8">
@@ -366,11 +435,17 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <span className="text-gray-400 text-base sm:text-lg">Available</span>
           <span className="text-white text-lg sm:text-xl font-medium">
-            $
-            {availableBalance.toLocaleString("en-US", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
+            {portfolioLoading ? (
+              <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
+            ) : (
+              <>
+                $
+                {availableBalance.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </>
+            )}
           </span>
         </div>
 
@@ -834,5 +909,14 @@ export default function DashboardPage() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// Main Dashboard component wrapped with crypto provider
+export default function DashboardPage() {
+  return (
+    <CryptoMarketProvider>
+      <DashboardContent />
+    </CryptoMarketProvider>
   );
 }

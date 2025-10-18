@@ -47,7 +47,10 @@ async function fetchCryptoPrices(
     const idsString = cryptoIds.join(",");
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${idsString}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`;
 
-    console.log("Fetching crypto prices from:", url);
+    // Only log in development
+    if (process.env.NODE_ENV === "development") {
+      console.log("Fetching crypto prices from:", url);
+    }
 
     const response = await fetch(url, {
       method: "GET",
@@ -127,7 +130,10 @@ export async function GET(request: NextRequest) {
     const cached = priceCache.get(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log("Returning cached crypto prices");
+      // Only log in development
+      if (process.env.NODE_ENV === "development") {
+        console.log("Returning cached crypto prices");
+      }
       return NextResponse.json({
         prices: cached.data,
         cached: true,
