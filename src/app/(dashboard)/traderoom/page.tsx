@@ -35,6 +35,14 @@ import {
   TradingProvider,
   useTradingContext,
 } from "@/components/client/EnhancedTradingProvider";
+import {
+  CryptoMarketProvider,
+  useCryptoMarket,
+} from "@/components/client/CryptoMarketProvider";
+import {
+  BitcoinPriceWidget,
+  CryptoPriceTicker,
+} from "@/components/client/CryptoPriceTicker";
 
 function TradingInterface() {
   const [amount, setAmount] = useState(10000);
@@ -65,6 +73,13 @@ function TradingInterface() {
 
   // Get trading context for history data
   const { tradeHistory, openPositions } = useTradingContext();
+
+  // Get crypto market data
+  const {
+    cryptoPrices,
+    getCryptoPrice,
+    isConnected: cryptoConnected,
+  } = useCryptoMarket();
 
   const symbols = [
     {
@@ -104,16 +119,26 @@ function TradingInterface() {
     },
     {
       symbol: "BTC/USD",
-      price: "67890.45",
-      change: "+1234.56",
-      percentage: "+1.85%",
+      price:
+        getCryptoPrice("BTC")?.price?.toLocaleString("en-US", {
+          maximumFractionDigits: 2,
+        }) || "67890.45",
+      change: getCryptoPrice("BTC")?.change24h?.toFixed(2) || "+1234.56",
+      percentage: `${
+        (getCryptoPrice("BTC")?.changePercent24h || 0) >= 0 ? "+" : ""
+      }${getCryptoPrice("BTC")?.changePercent24h?.toFixed(2) || "1.85"}%`,
       flag: "₿💵",
     },
     {
       symbol: "ETH/USD",
-      price: "2456.78",
-      change: "-23.45",
-      percentage: "-0.95%",
+      price:
+        getCryptoPrice("ETH")?.price?.toLocaleString("en-US", {
+          maximumFractionDigits: 2,
+        }) || "2456.78",
+      change: getCryptoPrice("ETH")?.change24h?.toFixed(2) || "-23.45",
+      percentage: `${
+        (getCryptoPrice("ETH")?.changePercent24h || 0) >= 0 ? "+" : ""
+      }${getCryptoPrice("ETH")?.changePercent24h?.toFixed(2) || "0.95"}%`,
       flag: "⟠💵",
     },
   ];
@@ -2323,6 +2348,9 @@ function TradingInterface() {
           style={{ backgroundColor: "#393741", borderColor: "#38312e" }}
         >
           <div className="p-4 space-y-4">
+            {/* Live Bitcoin Price Widget */}
+            <BitcoinPriceWidget />
+
             {/* Amount Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -2398,7 +2426,7 @@ function TradingInterface() {
                   Profit
                 </span>
                 <button
-                  className="w-4 h-4 rounded-full text-xs flex items-center justify-center ml-1 inline-flex"
+                  className="w-4 h-4 rounded-full text-xs flex items-center justify-center ml-1"
                   style={{ backgroundColor: "#4a4a4a", color: "#b8b8b8" }}
                 >
                   ?
@@ -2840,8 +2868,10 @@ function TradingInterface() {
 
 export default function TraderoomPage() {
   return (
-    <TradingProvider>
-      <TradingInterface />
-    </TradingProvider>
+    <CryptoMarketProvider>
+      <TradingProvider>
+        <TradingInterface />
+      </TradingProvider>
+    </CryptoMarketProvider>
   );
 }
