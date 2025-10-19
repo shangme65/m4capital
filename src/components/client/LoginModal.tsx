@@ -46,17 +46,13 @@ export default function LoginModal({
   const handleFacebookLogin = async () => {
     setError("");
     setIsLoading(true);
-
     try {
-      const result = await signIn("facebook", {
-        redirect: false,
-      });
-
-      if (result?.ok) {
+      const result = await signIn("facebook", { redirect: false });
+      if (result?.error) {
+        setError("Facebook login failed. Please try again.");
+      } else if (result?.ok) {
         onClose();
         router.push("/dashboard");
-      } else {
-        setError("Facebook login failed. Please try again.");
       }
     } catch (err) {
       setError("An error occurred during Facebook login.");
