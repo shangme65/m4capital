@@ -258,7 +258,7 @@ const NewsPage = () => {
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("News Updated", {
           body: `Updated with ${freshNews.length} fresh articles`,
-          icon: "/m4capitallogo2.png",
+          icon: "/m4capitallogo1.png",
         });
       }
     } catch (error) {
@@ -289,7 +289,7 @@ const NewsPage = () => {
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("More News Loaded", {
           body: `Loaded ${newNews.length} additional articles`,
-          icon: "/m4capitallogo2.png",
+          icon: "/m4capitallogo1.png",
         });
       }
     } catch (error) {
@@ -431,7 +431,7 @@ const NewsPage = () => {
         <div className="max-w-6xl mx-auto px-3 py-3">
           <Link href="/" className="flex items-center group">
             <Image
-              src="/m4capitallogo2.png"
+              src="/m4capitallogo1.png"
               alt="M4 Capital Logo"
               width={24}
               height={24}

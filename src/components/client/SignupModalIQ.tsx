@@ -81,14 +81,11 @@ export default function SignupModalIQ({
                 {/* Logo */}
                 <div className="flex items-center justify-center mb-6">
                   <Image
-                    src="/m4capitallogo2.png"
+                    src="/m4capitallogo1.png"
                     alt="Capital Logo"
-                    width={32}
-                    height={32}
+                    width={96}
+                    height={96}
                   />
-                  <span className="ml-2 text-orange-500 font-medium text-xl">
-                    Capital
-                  </span>
                 </div>
 
                 {/* Subtitle */}

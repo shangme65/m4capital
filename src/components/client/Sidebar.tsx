@@ -81,7 +81,7 @@ const Sidebar = () => {
                   className="relative"
                 >
                   <Image
-                    src="/m4capitallogo2.png"
+                    src="/m4capitallogo1.png"
                     alt="M4Capital"
                     width={120}
                     height={40}

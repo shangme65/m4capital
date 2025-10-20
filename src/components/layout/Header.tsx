@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, X, LogIn, ChevronDown } from "lucide-react";
 import ForTradersDropdown from "../client/ForTradersDropdown";
 import AboutUsDropdown from "../client/AboutUsDropdown";
@@ -15,6 +15,8 @@ interface HeaderProps {
 export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isDropdownLocked, setIsDropdownLocked] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const navLinks = [
     { href: "#features", text: "Features" },
@@ -22,30 +24,81 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
     { href: "/contact", text: "Contact" },
   ];
 
+  const toggleDropdown = (dropdown: string) => {
+    if (activeDropdown === dropdown) {
+      setActiveDropdown(null);
+      setIsDropdownLocked(false);
+    } else {
+      setActiveDropdown(dropdown);
+      setIsDropdownLocked(true);
+    }
+  };
+
+  const handleMouseEnter = (dropdown: string) => {
+    if (!isDropdownLocked) {
+      setActiveDropdown(dropdown);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isDropdownLocked) {
+      setActiveDropdown(null);
+    }
+  };
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setActiveDropdown(null);
+        setIsDropdownLocked(false);
+      }
+    };
+
+    if (activeDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [activeDropdown]);
+
   return (
-    <header className="absolute top-0 left-0 right-0 z-20 bg-black bg-opacity-0 text-white">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-0 text-white">
       <nav className="container mx-auto px-4 sm:px-12 md:px-20 py-3 flex justify-between items-center">
         <Link href="/" className="flex items-center group">
           <Image
-            src="/m4capitallogo2.png"
-            alt="m4capital Logo"
-            width={40}
-            height={40}
+            src="/m4capitallogo1.png"
+            alt="M4 Capital Logo"
+            width={120}
+            height={50}
             className="transition-transform duration-300 group-hover:scale-110 group-hover:animate-bounce"
+            priority
           />
-          <span className="ml-0 text-xl font-bold transition-transform duration-300 group-hover:scale-110 group-hover:animate-bounce">
-            capital
-          </span>
         </Link>
 
         {/* Widescreen Menu */}
-        <div className="hidden md:flex items-center space-x-6">
+        <div
+          className="hidden md:flex items-center space-x-6"
+          ref={dropdownRef}
+        >
           <div
             className="relative"
-            onMouseEnter={() => setActiveDropdown("download")}
-            onMouseLeave={() => setActiveDropdown(null)}
+            onMouseEnter={() => handleMouseEnter("download")}
+            onMouseLeave={handleMouseLeave}
           >
-            <button className="flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:text-orange-500 hover:scale-105 text-sm font-bold">
+            <button
+              onClick={() => toggleDropdown("download")}
+              className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
+                activeDropdown === "download"
+                  ? "text-orange-500 bg-gray-700"
+                  : ""
+              } hover:text-orange-500`}
+            >
               Download App
               <ChevronDown
                 size={14}
@@ -58,10 +111,11 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           </div>
           <div
             className="relative"
-            onMouseEnter={() => setActiveDropdown("traders")}
-            onMouseLeave={() => setActiveDropdown(null)}
+            onMouseEnter={() => handleMouseEnter("traders")}
+            onMouseLeave={handleMouseLeave}
           >
             <button
+              onClick={() => toggleDropdown("traders")}
               className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
                 activeDropdown === "traders"
                   ? "text-orange-500 bg-gray-700"
@@ -80,10 +134,11 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           </div>
           <div
             className="relative"
-            onMouseEnter={() => setActiveDropdown("about")}
-            onMouseLeave={() => setActiveDropdown(null)}
+            onMouseEnter={() => handleMouseEnter("about")}
+            onMouseLeave={handleMouseLeave}
           >
             <button
+              onClick={() => toggleDropdown("about")}
               className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
                 activeDropdown === "about" ? "text-orange-500 bg-gray-700" : ""
               } hover:text-orange-500`}
@@ -105,10 +160,11 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           <div className="hidden md:flex items-center space-x-4">
             <div
               className="relative"
-              onMouseEnter={() => setActiveDropdown("lang")}
-              onMouseLeave={() => setActiveDropdown(null)}
+              onMouseEnter={() => handleMouseEnter("lang")}
+              onMouseLeave={handleMouseLeave}
             >
               <button
+                onClick={() => toggleDropdown("lang")}
                 className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
                   activeDropdown === "lang" ? "text-orange-500 bg-gray-700" : ""
                 } hover:text-orange-500`}
@@ -125,15 +181,15 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             </div>
             <button
               onClick={onLoginClick}
-              className="flex items-center space-x-1.5 bg-gray-800/70 px-3 py-1.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs font-bold"
+              className="flex items-center space-x-2 bg-gray-800/70 px-5 py-2.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-sm font-bold"
               aria-label="Login"
             >
-              <LogIn size={16} />
+              <LogIn size={18} />
               <span>Log in</span>
             </button>
             <button
               onClick={onSignupClick}
-              className="bg-orange-600 px-3 py-1.5 text-xs font-bold rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
+              className="bg-orange-600 px-5 py-2.5 text-sm font-bold rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
             >
               Sign Up
             </button>

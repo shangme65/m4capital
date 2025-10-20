@@ -209,7 +209,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 {/* Header */}
                 <div className="flex items-center justify-center mb-6">
                   <Image
-                    src="/m4capitallogo2.png"
+                    src="/m4capitallogo1.png"
                     alt="Capital Logo"
                     width={32}
                     height={32}

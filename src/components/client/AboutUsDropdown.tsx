@@ -9,6 +9,8 @@ const AboutUsDropdown = () => {
           <li>
             <Link
               href="/in-numbers"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hover:text-orange-500 font-semibold"
             >
               In Numbers
