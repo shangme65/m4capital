@@ -59,7 +59,7 @@ const Sidebar = () => {
 
           {/* Sidebar */}
           <motion.div
-            className="fixed left-0 top-0 h-full bg-gray-800 text-white w-56 sm:w-64 p-4 sm:p-6 flex flex-col z-50"
+            className="fixed left-0 top-0 h-full bg-gray-800 text-white w-60 sm:w-72 p-4 sm:p-6 flex flex-col z-50"
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
@@ -85,7 +85,7 @@ const Sidebar = () => {
                     alt="M4Capital"
                     width={120}
                     height={40}
-                    className="h-8 sm:h-10 w-auto"
+                    className="h-8 sm:h-10 w-auto object-contain"
                   />
                 </motion.div>
               </div>
