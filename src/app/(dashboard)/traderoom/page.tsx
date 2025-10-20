@@ -20,6 +20,7 @@ import {
   Briefcase,
   History,
   MessageCircle,
+  MessagesSquare,
   Gift,
   Handshake,
   BookOpen,
@@ -30,6 +31,8 @@ import {
   Users,
   Headphones,
   Grid3X3,
+  Info,
+  CircleHelp,
 } from "lucide-react";
 import {
   TradingProvider,
@@ -245,15 +248,70 @@ function TradingInterface() {
   if (!mounted) {
     return (
       <div
-        className="h-screen flex items-center justify-center"
+        className="h-screen flex flex-col items-center justify-center"
         style={{ backgroundColor: "#1b1817", color: "#eceae9" }}
       >
-        <div className="text-center">
-          <div
-            className="animate-spin rounded-full h-32 w-32 border-b-2 mb-4"
-            style={{ borderColor: "#ff8516" }}
-          ></div>
-          <p>Loading Trading Interface...</p>
+        <div className="text-center space-y-6">
+          {/* Logo */}
+          <motion.div
+            animate={{
+              scale: [1, 1.05, 1],
+              opacity: [0.8, 1, 0.8],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="mb-8"
+          >
+            <Image
+              src="/m4capitallogo2.png"
+              alt="M4Capital"
+              width={120}
+              height={120}
+              className="mx-auto object-contain"
+            />
+          </motion.div>
+
+          {/* Loading Bar */}
+          <div className="w-64 mx-auto">
+            <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full rounded-full"
+                style={{ backgroundColor: "#ff8516" }}
+                animate={{
+                  x: ["-100%", "100%"],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Loading Text */}
+          <motion.p
+            className="text-lg font-medium"
+            style={{ color: "#ff8516" }}
+            animate={{
+              opacity: [0.5, 1, 0.5],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            Preparing Your Trading Experience...
+          </motion.p>
+
+          {/* Subtext */}
+          <p className="text-sm" style={{ color: "#827e7d" }}>
+            Setting up markets, charts, and real-time data
+          </p>
         </div>
       </div>
     );
@@ -282,7 +340,7 @@ function TradingInterface() {
           borderBottom: "1px solid #38312e",
         }}
       >
-        <div className="flex items-center justify-between h-32 md:h-16 px-4">
+        <div className="flex items-center justify-between h-32 md:h-18 px-4">
           {/* Left: Logo and Navigation */}
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-3">
@@ -291,8 +349,8 @@ function TradingInterface() {
                 <Image
                   src="/m4capitallogo1.png"
                   alt="M4Capital"
-                  width={112}
-                  height={112}
+                  width={128}
+                  height={128}
                   className="object-contain"
                 />
               </div>
@@ -407,7 +465,7 @@ function TradingInterface() {
       <div className="flex h-[calc(100vh-120px)]">
         {/* IQ Option Style Sidebar */}
         <div
-          className="w-16 flex-col border-r flex"
+          className="w-20 flex-col border-r flex"
           style={{ backgroundColor: "#1b1817", borderColor: "#38312e" }}
         >
           {/* Sidebar Icons */}
@@ -416,19 +474,19 @@ function TradingInterface() {
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <Briefcase
-                  className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                  className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 />
               </div>
               <div className="mt-1 text-center">
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 >
                   TOTAL
                 </div>
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 >
                   PORTFOLIO
@@ -450,7 +508,7 @@ function TradingInterface() {
                 }}
               >
                 <History
-                  className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                  className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
                   style={{
                     color: showTradingHistory ? "#ffffff" : "#827e7d",
                   }}
@@ -458,7 +516,7 @@ function TradingInterface() {
               </div>
               <div className="mt-1 text-center">
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{
                     color: showTradingHistory ? "#ff8516" : "#827e7d",
                   }}
@@ -466,7 +524,7 @@ function TradingInterface() {
                   TRADING
                 </div>
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{
                     color: showTradingHistory ? "#ff8516" : "#827e7d",
                   }}
@@ -480,19 +538,19 @@ function TradingInterface() {
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <MessageCircle
-                  className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                  className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 />
               </div>
               <div className="mt-1 text-center">
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 >
                   CHATS &
                 </div>
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 >
                   SUPPORT
@@ -504,13 +562,13 @@ function TradingInterface() {
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <Gift
-                  className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                  className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 />
               </div>
               <div className="mt-1 text-center">
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 >
                   PROMO
@@ -522,19 +580,19 @@ function TradingInterface() {
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <BarChart3
-                  className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                  className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 />
               </div>
               <div className="mt-1 text-center">
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 >
                   MARKET
                 </div>
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 >
                   ANALYSIS
@@ -546,13 +604,13 @@ function TradingInterface() {
             <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
                 <BookOpen
-                  className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                  className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 />
               </div>
               <div className="mt-1 text-center">
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{ color: "#827e7d" }}
                 >
                   TUTORIALS
@@ -572,7 +630,7 @@ function TradingInterface() {
                 }}
               >
                 <MoreHorizontal
-                  className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                  className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
                   style={{
                     color: showMoreItems ? "#ffffff" : "#827e7d",
                   }}
@@ -580,7 +638,7 @@ function TradingInterface() {
               </div>
               <div className="mt-1 text-center">
                 <div
-                  className="text-[9px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                  className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{
                     color: showMoreItems ? "#ff8516" : "#827e7d",
                   }}
@@ -808,7 +866,7 @@ function TradingInterface() {
 
         {/* Center: Chart and Controls */}
         <div className="flex-1 flex flex-col">
-          {/* Chart Header */}
+          {/* Chart Header 
           <div
             className="flex items-center justify-between p-4 border-b"
             style={{ borderColor: "#38312e" }}
@@ -858,7 +916,7 @@ function TradingInterface() {
                 </button>
               ))}
             </div>
-          </div>
+          </div> */}
 
           {/* Chart Grids Panel */}
           <AnimatePresence>
@@ -2129,32 +2187,13 @@ function TradingInterface() {
             className="flex-1 flex items-center justify-center relative"
             style={{
               backgroundColor: "#1b1817",
-              backgroundImage: "url(/traderoom/backgrounds/world-map.webp)",
+              backgroundImage: "url(/traderoom/backgrounds/m4capital1.svg)",
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
-              backgroundAttachment: "fixed",
+              minHeight: "500px",
             }}
-          >
-            {/* World map overlay for opacity control */}
-            <div
-              className="absolute inset-0"
-              style={{
-                backgroundColor: "#1b1817",
-                opacity: 0.85,
-              }}
-            />
-            <div className="text-center relative z-10">
-              <BarChart3
-                className="w-16 h-16 mx-auto mb-4"
-                style={{ color: "#827e7d" }}
-              />
-              <p style={{ color: "#afadac" }}>Advanced Trading Chart</p>
-              <p className="text-sm" style={{ color: "#827e7d" }}>
-                Real-time price visualization
-              </p>
-            </div>
-          </div>
+          ></div>
         </div>
 
         {/* Trade Details Panel */}
@@ -2869,6 +2908,89 @@ function TradingInterface() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Footer */}
+      <footer
+        className="fixed bottom-0 left-0 right-0 h-11 flex items-center justify-between text-xs z-50"
+        style={{
+          backgroundColor: "#2c3e50",
+          color: "#95a5a6",
+        }}
+      >
+        <div className="flex items-center pl-3 space-x-3">
+          {/* Double-round support button: outer ring + inner red button with icon and text */}
+          <div className="relative flex items-center justify-center">
+            <div
+              className="w-[80px] h-[32px] rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+            >
+              <button
+                className="h-[28px] px-3 rounded-md flex items-center space-x-1.5 transition-opacity duration-200 hover:opacity-90"
+                style={{
+                  backgroundColor: "#e74c3c",
+                  color: "#ffffff",
+                }}
+              >
+                <MessagesSquare className="w-3.5 h-3.5" />
+                <span className="font-semibold text-[10px] tracking-wide">
+                  SUPPORT
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <CircleHelp className="w-4 h-4" style={{ color: "#95a5a6" }} />
+
+          <a
+            href="mailto:support@m4capital.online"
+            className="text-[13px] hover:text-orange-500 transition-colors duration-150"
+            style={{ color: "#ffffff" }}
+          >
+            support@m4capital.online
+          </a>
+
+          <div className="text-[12px] font-bold text-gray-400 ml-2">
+            EVERY DAY, AROUND THE CLOCK
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2">
+            <span>Powered by</span>
+            <Image
+              src="/m4capitallogo2.png"
+              alt="M4Capital"
+              width={20}
+              height={20}
+              className="object-contain"
+            />
+          </div>
+          <button className="hover:text-orange-500 transition-colors duration-200">
+            <Settings className="w-4 h-4" />
+          </button>
+          <button className="hover:text-orange-500 transition-colors duration-200">
+            <Bell className="w-4 h-4" />
+          </button>
+          {currentTime && (
+            <span className="font-mono">
+              CURRENT TIME:{" "}
+              {currentTime
+                .toLocaleString("en-US", {
+                  day: "2-digit",
+                  month: "long",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                })
+                .toUpperCase()
+                .replace(",", ",")}{" "}
+              (UTC+1)
+            </span>
+          )}
+        </div>
+      </footer>
     </div>
   );
 }
