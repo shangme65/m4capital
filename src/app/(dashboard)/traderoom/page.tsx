@@ -282,22 +282,28 @@ function TradingInterface() {
           borderBottom: "1px solid #38312e",
         }}
       >
-        <div className="flex items-center justify-between h-16 px-4">
+        <div className="flex items-center justify-between h-32 md:h-16 px-4">
           {/* Left: Logo and Navigation */}
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-3">
-              <Image
-                src="/m4capitallogo2.png"
-                alt="M4Capital"
-                width={32}
-                height={32}
-              />
-              <span
-                className="text-lg font-semibold"
-                style={{ color: "#eceae9" }}
-              >
-                M4Capital
-              </span>
+              {/* Desktop: logo1, Mobile: logo2 */}
+              <div className="hidden md:block">
+                <Image
+                  src="/m4capitallogo1.png"
+                  alt="M4Capital"
+                  width={112}
+                  height={112}
+                  className="object-contain"
+                />
+              </div>
+              <div className="block md:hidden w-14 h-14 relative">
+                <Image
+                  src="/m4capitallogo2.png"
+                  alt="M4Capital"
+                  fill
+                  className="object-contain"
+                />
+              </div>
             </div>
 
             {/* Chart Grid Icon */}
