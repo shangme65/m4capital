@@ -31,6 +31,7 @@ import {
   Users,
   Headphones,
   Grid3X3,
+  Grid2X2,
   Info,
   CircleHelp,
 } from "lucide-react";
@@ -331,6 +332,7 @@ function TradingInterface() {
         left: 0,
         right: 0,
         bottom: 0,
+        zoom: 0.95,
       }}
     >
       {/* IQ Option Header */}
@@ -367,13 +369,36 @@ function TradingInterface() {
             {/* Chart Grid Icon */}
             <button
               onClick={() => setShowChartGrids(!showChartGrids)}
-              className="p-2 rounded-lg transition-all duration-200"
+              className="rounded transition-all duration-200 hover:opacity-80"
               style={{
-                backgroundColor: showChartGrids ? "#ff8516" : "#38312e",
-                color: showChartGrids ? "#ffffff" : "#afadac",
+                backgroundColor: "transparent",
+                padding: "6px",
+                border: "1px solid rgba(139, 133, 131, 0.3)",
               }}
             >
-              <Grid3X3 className="w-4 h-4" />
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Top-left box */}
+                <rect x="4" y="4" width="7" height="7" fill="#8b8583" rx="1" />
+                {/* Top-right box */}
+                <rect x="13" y="4" width="7" height="7" fill="#8b8583" rx="1" />
+                {/* Bottom-left box */}
+                <rect x="4" y="13" width="7" height="7" fill="#8b8583" rx="1" />
+                {/* Bottom-right box */}
+                <rect
+                  x="13"
+                  y="13"
+                  width="7"
+                  height="7"
+                  fill="#8b8583"
+                  rx="1"
+                />
+              </svg>
             </button>
 
             {/* Trading Pair Tabs */}
@@ -465,8 +490,12 @@ function TradingInterface() {
       <div className="flex h-[calc(100vh-120px)]">
         {/* IQ Option Style Sidebar */}
         <div
-          className="w-20 flex-col border-r flex"
-          style={{ backgroundColor: "#1b1817", borderColor: "#38312e" }}
+          className="flex-col border-r flex"
+          style={{
+            backgroundColor: "#1b1817",
+            borderColor: "#38312e",
+            width: "76px",
+          }}
         >
           {/* Sidebar Icons */}
           <div className="flex flex-col items-center py-4 space-y-6">
@@ -503,7 +532,7 @@ function TradingInterface() {
                 className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
                 style={{
                   backgroundColor: showTradingHistory
-                    ? "#ff8516"
+                    ? "#4a4a4a"
                     : "transparent",
                 }}
               >
@@ -518,7 +547,7 @@ function TradingInterface() {
                 <div
                   className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{
-                    color: showTradingHistory ? "#ff8516" : "#827e7d",
+                    color: showTradingHistory ? "#4a4a4a" : "#827e7d",
                   }}
                 >
                   TRADING
@@ -526,7 +555,7 @@ function TradingInterface() {
                 <div
                   className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{
-                    color: showTradingHistory ? "#ff8516" : "#827e7d",
+                    color: showTradingHistory ? "#4a4a4a" : "#827e7d",
                   }}
                 >
                   HISTORY
@@ -626,7 +655,7 @@ function TradingInterface() {
               <div
                 className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
                 style={{
-                  backgroundColor: showMoreItems ? "#ff8516" : "transparent",
+                  backgroundColor: showMoreItems ? "#4a4a4a" : "transparent",
                 }}
               >
                 <MoreHorizontal
@@ -640,7 +669,7 @@ function TradingInterface() {
                 <div
                   className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                   style={{
-                    color: showMoreItems ? "#ff8516" : "#827e7d",
+                    color: showMoreItems ? "#4a4a4a" : "#827e7d",
                   }}
                 >
                   MORE
@@ -2192,6 +2221,7 @@ function TradingInterface() {
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
               minHeight: "500px",
+              opacity: 0.15,
             }}
           ></div>
         </div>
@@ -2391,45 +2421,87 @@ function TradingInterface() {
         {/* Right Panel: IQ Option Style Trading Panel */}
         <div
           className="w-64 flex-col border-l hidden xl:flex"
-          style={{ backgroundColor: "#393741", borderColor: "#38312e" }}
+          style={{ backgroundColor: "#2b2a3e", borderColor: "#38312e" }}
         >
           <div className="p-4 space-y-4">
-            {/* Live Bitcoin Price Widget */}
-            <BitcoinPriceWidget />
+            {/* Live Bitcoin Price Widget with red border */}
+            <div
+              className="rounded-lg border-2 p-4"
+              style={{
+                backgroundColor: "#1a1a2e",
+                borderColor: "#e74c3c",
+              }}
+            >
+              <div className="flex items-center space-x-3 mb-3">
+                <div
+                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: "#ff8516" }}
+                >
+                  <span className="text-white font-bold text-lg">₿</span>
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-white font-bold text-lg">
+                      Bitcoin
+                    </span>
+                    <span className="text-red-500 font-bold text-lg">$107</span>
+                  </div>
+                  <span className="text-gray-400 text-sm">BTC</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mb-2">
+                <div>
+                  <div className="text-gray-400 text-xs mb-1">Market Cap</div>
+                  <div className="text-white font-semibold text-sm">$2.15T</div>
+                </div>
+                <div>
+                  <div className="text-gray-400 text-xs mb-1">24h Volume</div>
+                  <div className="text-white font-semibold text-sm">
+                    $60.22B
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-1 text-xs">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-gray-400">
+                  Live Price Updated: 07:32:18
+                </span>
+              </div>
+            </div>
 
             {/* Amount Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm" style={{ color: "#b8b8b8" }}>
+                <span className="text-sm" style={{ color: "#9e9aa7" }}>
                   Amount
                 </span>
                 <div className="flex items-center space-x-1">
                   <button
-                    className="w-4 h-4 rounded-full text-xs flex items-center justify-center"
-                    style={{ backgroundColor: "#4a4a4a", color: "#b8b8b8" }}
+                    className="w-5 h-5 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
                   >
                     ?
                   </button>
                   <button
-                    className="w-4 h-4 rounded-full text-xs flex items-center justify-center"
-                    style={{ backgroundColor: "#4a4a4a", color: "#b8b8b8" }}
+                    className="w-5 h-5 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
                   >
                     +
                   </button>
                   <button
-                    className="w-4 h-4 rounded-full text-xs flex items-center justify-center"
-                    style={{ backgroundColor: "#4a4a4a", color: "#b8b8b8" }}
+                    className="w-5 h-5 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
+                    style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
                   >
                     -
                   </button>
                 </div>
               </div>
               <div
-                className="flex items-center px-3 py-2 rounded"
-                style={{ backgroundColor: "#4a4a4a" }}
+                className="flex items-center px-4 py-3 rounded"
+                style={{ backgroundColor: "#3d3c4f" }}
               >
                 <span
-                  className="text-lg font-bold"
+                  className="text-xl font-semibold"
                   style={{ color: "#ffffff" }}
                 >
                   $ {amount.toLocaleString()}
@@ -2440,22 +2512,25 @@ function TradingInterface() {
             {/* Expiration Section */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm" style={{ color: "#b8b8b8" }}>
+                <span className="text-sm" style={{ color: "#9e9aa7" }}>
                   Expiration
                 </span>
                 <button
-                  className="w-4 h-4 rounded-full text-xs flex items-center justify-center"
-                  style={{ backgroundColor: "#4a4a4a", color: "#b8b8b8" }}
+                  className="w-5 h-5 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
+                  style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
                 >
                   ?
                 </button>
               </div>
               <div
-                className="flex items-center px-3 py-2 rounded"
-                style={{ backgroundColor: "#4a4a4a" }}
+                className="flex items-center px-4 py-3 rounded"
+                style={{ backgroundColor: "#3d3c4f" }}
               >
-                <Clock className="w-4 h-4 mr-2" style={{ color: "#b8b8b8" }} />
-                <span className="text-sm" style={{ color: "#ffffff" }}>
+                <Clock className="w-4 h-4 mr-2" style={{ color: "#9e9aa7" }} />
+                <span
+                  className="text-sm font-medium"
+                  style={{ color: "#ffffff" }}
+                >
                   {expirationSeconds < 60
                     ? `${expirationSeconds} sec`
                     : expirationSeconds < 3600
@@ -2466,27 +2541,27 @@ function TradingInterface() {
             </div>
 
             {/* Profit Display */}
-            <div className="text-center py-4">
-              <div className="mb-2">
-                <span className="text-sm" style={{ color: "#b8b8b8" }}>
+            <div className="py-3">
+              <div className="flex items-center justify-center mb-2">
+                <span className="text-sm" style={{ color: "#9e9aa7" }}>
                   Profit
                 </span>
                 <button
-                  className="w-4 h-4 rounded-full text-xs flex items-center justify-center ml-1"
-                  style={{ backgroundColor: "#4a4a4a", color: "#b8b8b8" }}
+                  className="w-5 h-5 rounded text-xs flex items-center justify-center ml-2 hover:opacity-80 transition-opacity"
+                  style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
                 >
                   ?
                 </button>
               </div>
               <div
-                className="text-3xl font-bold mb-1"
-                style={{ color: "#5ddf38" }}
+                className="text-4xl font-bold mb-2 text-center"
+                style={{ color: "#22c55e" }}
               >
                 +86%
               </div>
               <div
-                className="text-lg font-semibold"
-                style={{ color: "#5ddf38" }}
+                className="text-xl font-semibold text-center"
+                style={{ color: "#22c55e" }}
               >
                 +${" "}
                 {(amount * 0.86)
@@ -2496,35 +2571,39 @@ function TradingInterface() {
             </div>
 
             {/* Trading Buttons */}
-            <div className="space-y-2">
+            <div className="space-y-3">
               {/* Higher Button */}
               <motion.button
                 onClick={() => executeTrade("higher")}
                 disabled={isExecutingTrade}
-                className="w-full py-4 rounded-lg font-bold text-white transition-all duration-200 disabled:opacity-50"
-                style={{ backgroundColor: "#5ddf38" }}
+                className="w-full transition-all duration-200 disabled:opacity-50 border-0 p-0 bg-transparent cursor-pointer"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className="flex items-center justify-center space-x-2">
-                  <TrendingUp className="w-5 h-5" />
-                  <span>HIGHER</span>
-                </div>
+                <Image
+                  src="/traderoom/icons/higher-button.png"
+                  alt="HIGHER"
+                  width={256}
+                  height={64}
+                  className="w-full h-auto"
+                />
               </motion.button>
 
               {/* Lower Button */}
               <motion.button
                 onClick={() => executeTrade("lower")}
                 disabled={isExecutingTrade}
-                className="w-full py-4 rounded-lg font-bold text-white transition-all duration-200 disabled:opacity-50"
-                style={{ backgroundColor: "#ff4747" }}
+                className="w-full transition-all duration-200 disabled:opacity-50 border-0 p-0 bg-transparent cursor-pointer"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <div className="flex items-center justify-center space-x-2">
-                  <TrendingDown className="w-5 h-5" />
-                  <span>LOWER</span>
-                </div>
+                <Image
+                  src="/traderoom/icons/lower-button.png"
+                  alt="LOWER"
+                  width={256}
+                  height={64}
+                  className="w-full h-auto"
+                />
               </motion.button>
             </div>
           </div>
@@ -2911,10 +2990,11 @@ function TradingInterface() {
 
       {/* Footer */}
       <footer
-        className="fixed bottom-0 left-0 right-0 h-11 flex items-center justify-between text-xs z-50"
+        className="fixed bottom-0 left-0 right-0 flex items-center justify-between text-xs z-50"
         style={{
           backgroundColor: "#2c3e50",
           color: "#95a5a6",
+          height: "40px",
         }}
       >
         <div className="flex items-center pl-3 space-x-3">
