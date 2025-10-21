@@ -3089,17 +3089,22 @@ function TradingInterface() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center space-x-2">
-              <span>Powered by</span>
-              <Image
-                src="/m4capitallogo2.png"
-                alt="M4Capital"
-                width={20}
-                height={20}
-                className="object-contain"
-              />
-            </div>
+          {/* Centered Powered by */}
+          <div
+            className="absolute left-1/2 flex items-center space-x-2"
+            style={{ transform: "translateX(calc(-50% + 216px))" }}
+          >
+            <span className="text-sm">Powered by</span>
+            <Image
+              src="/m4capitallogo2.png"
+              alt="M4Capital"
+              width={24}
+              height={24}
+              className="object-contain"
+            />
+          </div>
+
+          <div className="flex items-center space-x-6 pr-3">
             <button className="hover:text-orange-500 transition-colors duration-200">
               <Settings className="w-4 h-4" />
             </button>
