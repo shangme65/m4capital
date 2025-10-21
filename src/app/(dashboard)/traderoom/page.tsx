@@ -348,7 +348,6 @@ function TradingInterface() {
           left: 0,
           right: 0,
           bottom: 0,
-          zoom: 0.95,
           overflow: "hidden",
         }}
       >
@@ -440,7 +439,7 @@ function TradingInterface() {
               </button>
 
               {/* Trading Pair Tabs */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-1">
                 {openTabs.map((tab, index) => (
                   <button
                     key={`header-tab-${index}-${tab.symbol}`}
@@ -448,18 +447,31 @@ function TradingInterface() {
                       setActiveTab(index);
                       setSelectedSymbol(tab.symbol);
                     }}
-                    className="flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200"
+                    className="flex items-center space-x-1 px-1.5 rounded-md transition-all duration-200 relative"
                     style={{
                       backgroundColor:
-                        activeTab === index ? "#ff8516" : "#38312e",
-                      color: activeTab === index ? "#ffffff" : "#afadac",
+                        activeTab === index ? "#ff8516" : "#2c2826",
+                      color: activeTab === index ? "#ffffff" : "#999999",
+                      borderBottom:
+                        activeTab === index
+                          ? "2px solid #ff8516"
+                          : "2px solid transparent",
+                      height: "44px",
                     }}
                   >
-                    <span className="text-sm">
+                    <span className="text-xs">
                       {symbols.find((s) => s.symbol === tab.symbol)?.flag ||
                         "💱"}
                     </span>
-                    <span className="text-sm font-medium">{tab.symbol}</span>
+                    <span className="text-xs font-medium">{tab.symbol}</span>
+                    <span
+                      className="text-[10px]"
+                      style={{
+                        color: activeTab === index ? "#ffffff" : "#666666",
+                      }}
+                    >
+                      ({tab.symbol.includes("USD") ? "OTC" : "Binary"})
+                    </span>
                     {openTabs.length > 1 && (
                       <button
                         onClick={(e) => {
@@ -473,10 +485,10 @@ function TradingInterface() {
                             setSelectedSymbol(newTabs[0].symbol);
                           }
                         }}
-                        className="ml-1 hover:opacity-75 transition-opacity"
+                        className="ml-2 hover:bg-black/20 rounded transition-all w-4 h-4 flex items-center justify-center"
                         style={{
-                          color: activeTab === index ? "#ffffff" : "#afadac",
-                          fontSize: "16px",
+                          color: activeTab === index ? "#ffffff" : "#666666",
+                          fontSize: "14px",
                         }}
                       >
                         ×
@@ -486,8 +498,16 @@ function TradingInterface() {
                 ))}
                 <button
                   onClick={() => setShowAddAssetModal(true)}
-                  className="p-2 rounded-lg hover:opacity-75 transition-all duration-200"
-                  style={{ backgroundColor: "#38312e", color: "#afadac" }}
+                  className="rounded-md hover:opacity-75 transition-all duration-200"
+                  style={{
+                    backgroundColor: "#2c2826",
+                    color: "#999999",
+                    height: "44px",
+                    width: "44px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -2491,10 +2511,9 @@ function TradingInterface() {
 
           {/* Right Panel: IQ Option Style Trading Panel */}
           <div
-            className="w-64 flex-col border-l hidden xl:flex"
+            className="w-64 flex-col hidden xl:flex"
             style={{
               backgroundColor: "#2b2a3e",
-              borderColor: "#38312e",
               overflow: "hidden",
             }}
           >
