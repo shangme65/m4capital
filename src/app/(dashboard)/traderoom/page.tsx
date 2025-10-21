@@ -340,7 +340,7 @@ function TradingInterface() {
           borderBottom: "1px solid #38312e",
         }}
       >
-        <div className="flex items-center justify-between h-32 md:h-18 px-4">
+        <div className="flex items-center justify-between h-32 md:h-14 px-4">
           {/* Left: Logo and Navigation */}
           <div className="flex items-center space-x-8">
             <div className="flex items-center space-x-3">
