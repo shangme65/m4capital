@@ -354,7 +354,7 @@ function TradingInterface() {
         {/* IQ Option Header */}
         <header
           style={{
-            backgroundColor: "#26211f",
+            backgroundColor: "transparent",
             borderBottom: "1px solid #38312e",
           }}
         >
@@ -2511,62 +2511,14 @@ function TradingInterface() {
 
           {/* Right Panel: IQ Option Style Trading Panel */}
           <div
-            className="w-64 flex-col hidden xl:flex"
+            className="flex-col hidden xl:flex"
             style={{
-              backgroundColor: "#2b2a3e",
+              backgroundColor: "transparent",
               overflow: "hidden",
+              width: "130px",
             }}
           >
             <div className="p-3 space-y-2 h-full overflow-hidden">
-              {/* Live Bitcoin Price Widget with red border */}
-              <div
-                className="rounded-lg border-2 p-3"
-                style={{
-                  backgroundColor: "#1a1a2e",
-                  borderColor: "#e74c3c",
-                }}
-              >
-                <div className="flex items-center space-x-2 mb-2">
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: "#ff8516" }}
-                  >
-                    <span className="text-white font-bold text-sm">₿</span>
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-white font-bold text-base">
-                        Bitcoin
-                      </span>
-                      <span className="text-red-500 font-bold text-base">
-                        $107
-                      </span>
-                    </div>
-                    <span className="text-gray-400 text-xs">BTC</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-2 mb-2">
-                  <div>
-                    <div className="text-gray-400 text-xs mb-1">Market Cap</div>
-                    <div className="text-white font-semibold text-xs">
-                      $2.15T
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-gray-400 text-xs mb-1">24h Volume</div>
-                    <div className="text-white font-semibold text-xs">
-                      $60.22B
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-1 text-xs">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <span className="text-gray-400 text-xs">
-                    Live Price Updated: 07:32:18
-                  </span>
-                </div>
-              </div>
-
               {/* Amount Section */}
               <div>
                 <div className="flex items-center justify-between mb-1">
@@ -2684,8 +2636,8 @@ function TradingInterface() {
                   <Image
                     src="/traderoom/icons/higher-button.png"
                     alt="HIGHER"
-                    width={240}
-                    height={50}
+                    width={200}
+                    height={42}
                     className="w-full h-auto rounded"
                     style={{ maxWidth: "100%", height: "auto" }}
                   />
@@ -2702,8 +2654,8 @@ function TradingInterface() {
                   <Image
                     src="/traderoom/icons/lower-button.png"
                     alt="LOWER"
-                    width={240}
-                    height={50}
+                    width={200}
+                    height={42}
                     className="w-full h-auto rounded"
                     style={{ maxWidth: "100%", height: "auto" }}
                   />
