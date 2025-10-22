@@ -110,3 +110,211 @@ model Withdrawal {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+// Telegram Bot Features
+model TelegramUser {
+  id                String   @id @default(cuid())
+  telegramId        BigInt   @unique
+  username          String?
+  firstName         String?
+  lastName          String?
+  languageCode      String   @default("en")
+  isBot             Boolean  @default(false)
+  isPremium         Boolean  @default(false)
+  
+  // Settings
+  preferredLanguage String   @default("en")
+  timezone          String?
+  notifications     Boolean  @default(true)
+  
+  // Moderation
+  warningCount      Int      @default(0)
+  isBanned          Boolean  @default(false)
+  bannedAt          DateTime?
+  bannedReason      String?
+  
+  // Stats
+  messageCount      Int      @default(0)
+  lastMessageAt     DateTime?
+  joinedAt          DateTime @default(now())
+  
+  // Relations
+  watchlists        CryptoWatchlist[]
+  priceAlerts       PriceAlert[]
+  statistics        UserStatistics[]
+  scheduledMessages ScheduledMessage[]
+  files             FileStorage[]
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@index([telegramId])
+  @@index([username])
+}
+
+model CryptoWatchlist {
+  id            String       @id @default(cuid())
+  userId        String
+  user          TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  symbol        String       // bitcoin, ethereum, etc
+  displayName   String       // Bitcoin, Ethereum, etc
+  addedAt       DateTime     @default(now())
+  
+  @@unique([userId, symbol])
+  @@index([userId])
+}
+
+model PriceAlert {
+  id            String       @id @default(cuid())
+  userId        String
+  user          TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  symbol        String       // bitcoin, ethereum, etc
+  targetPrice   Decimal
+  condition     String       // ABOVE, BELOW
+  isActive      Boolean      @default(true)
+  triggered     Boolean      @default(false)
+  triggeredAt   DateTime?
+  
+  chatId        BigInt       // Where to send alert
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+  @@index([userId])
+  @@index([symbol, isActive])
+}
+
+model UserStatistics {
+  id                  String       @id @default(cuid())
+  userId              String
+  user                TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  date                DateTime     @default(now())
+  messagesCount       Int          @default(0)
+  imagesGenerated     Int          @default(0)
+  cryptoQueriesCount  Int          @default(0)
+  commandsUsed        Json         @default("{}") // {"imagine": 5, "price": 10}
+  
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model ScheduledMessage {
+  id            String       @id @default(cuid())
+  userId        String
+  user          TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  chatId        BigInt
+  message       String       @db.Text
+  scheduledFor  DateTime
+  sent          Boolean      @default(false)
+  sentAt        DateTime?
+  
+  recurring     Boolean      @default(false)
+  recurringType String?      // DAILY, WEEKLY, MONTHLY
+  
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  
+  @@index([scheduledFor, sent])
+  @@index([userId])
+}
+
+model FileStorage {
+  id            String       @id @default(cuid())
+  userId        String
+  user          TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  fileId        String       @unique // Telegram file ID
+  fileType      String       // photo, document, voice, video
+  fileName      String?
+  fileSize      Int?
+  mimeType      String?
+  
+  extractedText String?      @db.Text
+  metadata      Json?        @default("{}")
+  
+  uploadedAt    DateTime     @default(now())
+  
+  @@index([userId])
+  @@index([fileType])
+}
+
+model ModerationRule {
+  id            String   @id @default(cuid())
+  
+  keyword       String
+  action        String   // WARN, BAN, DELETE
+  severity      String   // LOW, MEDIUM, HIGH
+  isActive      Boolean  @default(true)
+  
+  caseSensitive Boolean  @default(false)
+  isRegex       Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([isActive])
+}
+
+model TradingSignal {
+  id            String   @id @default(cuid())
+  
+  symbol        String   // BTC, ETH, etc
+  action        String   // BUY, SELL, HOLD
+  price         Decimal
+  targetPrice   Decimal?
+  stopLoss      Decimal?
+  confidence    Decimal  // 0-1
+  
+  analysis      String   @db.Text
+  indicators    Json     @default("{}") // RSI, MACD, etc
+  
+  isActive      Boolean  @default(true)
+  expiresAt     DateTime?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([symbol, isActive])
+  @@index([createdAt])
+}
+
+model Quiz {
+  id            String   @id @default(cuid())
+  
+  title         String
+  description   String?  @db.Text
+  questions     Json     // [{question: "", options: [], correct: 0}]
+  
+  chatId        BigInt?
+  messageId     BigInt?
+  
+  isActive      Boolean  @default(true)
+  responses     Json     @default("[]") // [{"userId": 123, "answers": [0,1,2]}]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([isActive])
+}
+
+model NewsArticle {
+  id            String   @id @default(cuid())
+  
+  title         String
+  description   String?  @db.Text
+  url           String
+  source        String
+  category      String   // CRYPTO, FINANCE, GENERAL
+  
+  publishedAt   DateTime
+  sentiment     String?  // POSITIVE, NEGATIVE, NEUTRAL
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([category])
+  @@index([publishedAt])
+}
