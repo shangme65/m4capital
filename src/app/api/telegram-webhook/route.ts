@@ -14,16 +14,21 @@ const conversationHistory = new Map<
 
 export async function POST(req: NextRequest) {
   try {
-    // Verify Telegram secret token for webhook security
+    // Verify Telegram secret token for webhook security (only if set)
     const secretToken = req.headers.get("x-telegram-bot-api-secret-token");
-    if (secretToken !== process.env.TELEGRAM_SECRET_TOKEN) {
+    const expectedSecret = process.env.TELEGRAM_SECRET_TOKEN;
+    
+    if (expectedSecret && secretToken !== expectedSecret) {
+      console.error("Invalid secret token received");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
+    console.log("Received webhook:", JSON.stringify(body));
 
     // Telegram webhook verification
     if (!body.message) {
+      console.log("No message in webhook body");
       return NextResponse.json({ ok: true });
     }
 
@@ -32,13 +37,17 @@ export async function POST(req: NextRequest) {
     const text = message.text;
     const userId = message.from.id;
 
+    console.log(`Message from user ${userId} in chat ${chatId}: ${text}`);
+
     // Ignore non-text messages
     if (!text) {
+      console.log("Non-text message, ignoring");
       return NextResponse.json({ ok: true });
     }
 
     // Handle /start command
     if (text === "/start") {
+      console.log("Handling /start command");
       await sendTelegramMessage(
         chatId,
         "Welcome to M4Capital AI Assistant! 🤖\n\nI am powered by ChatGPT and ready to help you with any questions.\n\nJust send me a message and I'll respond!"
@@ -48,6 +57,7 @@ export async function POST(req: NextRequest) {
 
     // Handle /clear command to reset conversation
     if (text === "/clear") {
+      console.log("Handling /clear command");
       conversationHistory.delete(userId);
       await sendTelegramMessage(
         chatId,
@@ -119,17 +129,31 @@ async function sendTelegramMessage(chatId: number, text: string) {
 
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
 
-  await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: text,
-      parse_mode: "Markdown",
-    }),
-  });
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: "Markdown",
+      }),
+    });
+
+    const result = await response.json();
+    
+    if (!result.ok) {
+      console.error("Failed to send message:", result);
+    } else {
+      console.log("Message sent successfully");
+    }
+    
+    return result;
+  } catch (error) {
+    console.error("Error sending Telegram message:", error);
+  }
 }
 
 // Helper function to send typing action

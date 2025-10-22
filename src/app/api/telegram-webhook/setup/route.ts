@@ -12,19 +12,26 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    if (!secretToken) {
-      return NextResponse.json(
-        { error: "TELEGRAM_SECRET_TOKEN is not configured" },
-        { status: 500 }
-      );
-    }
-
     // Get the webhook URL from query params or construct from host
     const webhookUrl =
       req.nextUrl.searchParams.get("url") ||
       `${req.nextUrl.origin}/api/telegram-webhook`;
 
-    // Set the webhook with secret token
+    // Prepare webhook payload
+    const webhookPayload: any = {
+      url: webhookUrl,
+      allowed_updates: ["message"],
+    };
+
+    // Only add secret token if it's configured
+    if (secretToken) {
+      webhookPayload.secret_token = secretToken;
+    }
+
+    console.log("Setting webhook with URL:", webhookUrl);
+    console.log("Secret token configured:", !!secretToken);
+
+    // Set the webhook
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/setWebhook`,
       {
@@ -32,21 +39,19 @@ export async function GET(req: NextRequest) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          url: webhookUrl,
-          allowed_updates: ["message"],
-          secret_token: secretToken,
-        }),
+        body: JSON.stringify(webhookPayload),
       }
     );
 
     const data = await response.json();
+    console.log("Telegram API response:", data);
 
     if (data.ok) {
       return NextResponse.json({
         success: true,
         message: "Webhook set successfully",
         webhook_url: webhookUrl,
+        secret_token_used: !!secretToken,
         telegram_response: data,
       });
     } else {
