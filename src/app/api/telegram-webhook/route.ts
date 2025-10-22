@@ -148,7 +148,10 @@ async function getTopCryptos(limit: number = 200): Promise<string[]> {
 }
 
 // AI-powered content moderation
-async function moderateContent(text: string, username: string): Promise<{
+async function moderateContent(
+  text: string,
+  username: string
+): Promise<{
   shouldModerate: boolean;
   reason: string;
   severity: "low" | "medium" | "high";
@@ -159,16 +162,16 @@ async function moderateContent(text: string, username: string): Promise<{
     });
 
     const result = moderationResponse.results[0];
-    
+
     // Check if content is flagged
     if (result.flagged) {
       const categories = result.categories;
       const scores = result.category_scores;
-      
+
       // Determine severity and reason
       let highestScore = 0;
       let highestCategory = "";
-      
+
       for (const [category, flagged] of Object.entries(categories)) {
         if (flagged) {
           const score = scores[category as keyof typeof scores];
@@ -178,18 +181,17 @@ async function moderateContent(text: string, username: string): Promise<{
           }
         }
       }
-      
-      const severity: "low" | "medium" | "high" = 
-        highestScore > 0.9 ? "high" : 
-        highestScore > 0.7 ? "medium" : "low";
-      
+
+      const severity: "low" | "medium" | "high" =
+        highestScore > 0.9 ? "high" : highestScore > 0.7 ? "medium" : "low";
+
       return {
         shouldModerate: true,
         reason: `Flagged for ${highestCategory.replace(/[_-]/g, " ")}`,
         severity,
       };
     }
-    
+
     // Additional AI analysis for spam/promotional content
     const aiAnalysis = await openai.chat.completions.create({
       model: "gpt-4o-mini",
@@ -215,17 +217,20 @@ async function moderateContent(text: string, username: string): Promise<{
       response_format: { type: "json_object" },
       max_tokens: 150,
     });
-    
+
     const analysis = JSON.parse(aiAnalysis.choices[0].message.content || "{}");
-    
-    if (analysis.is_spam && analysis.confidence > MODERATION_CONFIG.TOXICITY_THRESHOLD) {
+
+    if (
+      analysis.is_spam &&
+      analysis.confidence > MODERATION_CONFIG.TOXICITY_THRESHOLD
+    ) {
       return {
         shouldModerate: true,
         reason: analysis.reason || "Potential spam detected",
         severity: analysis.confidence > 0.9 ? "high" : "medium",
       };
     }
-    
+
     return {
       shouldModerate: false,
       reason: "",
@@ -258,7 +263,7 @@ async function banUser(chatId: number, userId: number): Promise<boolean> {
         }),
       }
     );
-    
+
     const result = await response.json();
     return result.ok;
   } catch (error) {
@@ -268,7 +273,10 @@ async function banUser(chatId: number, userId: number): Promise<boolean> {
 }
 
 // Delete message
-async function deleteMessage(chatId: number, messageId: number): Promise<boolean> {
+async function deleteMessage(
+  chatId: number,
+  messageId: number
+): Promise<boolean> {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   if (!botToken) return false;
 
@@ -284,12 +292,79 @@ async function deleteMessage(chatId: number, messageId: number): Promise<boolean
         }),
       }
     );
-    
+
     const result = await response.json();
     return result.ok;
   } catch (error) {
     console.error("Error deleting message:", error);
     return false;
+  }
+}
+
+// Send photo to Telegram
+async function sendTelegramPhoto(
+  chatId: number,
+  photoUrl: string,
+  caption?: string
+): Promise<boolean> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return false;
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/sendPhoto`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: photoUrl,
+          caption: caption,
+        }),
+      }
+    );
+
+    const result = await response.json();
+    return result.ok;
+  } catch (error) {
+    console.error("Error sending photo:", error);
+    return false;
+  }
+}
+
+// Generate image using DALL-E
+async function generateImage(
+  prompt: string,
+  size: "1024x1024" | "1792x1024" | "1024x1792" = "1024x1024"
+): Promise<{
+  success: boolean;
+  imageUrl?: string;
+  error?: string;
+}> {
+  try {
+    console.log(`Generating image with prompt: ${prompt}`);
+
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: prompt,
+      n: 1,
+      size: size,
+      quality: "standard",
+    });
+
+    const imageUrl = response.data?.[0]?.url;
+
+    if (!imageUrl) {
+      return { success: false, error: "No image URL returned" };
+    }
+
+    return { success: true, imageUrl };
+  } catch (error: any) {
+    console.error("Image generation error:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to generate image",
+    };
   }
 }
 
@@ -304,7 +379,9 @@ async function warnUser(
   const warnings = (userWarnings.get(warningKey) || 0) + 1;
   userWarnings.set(warningKey, warnings);
 
-  const message = `⚠️ Warning ${warnings}/${MODERATION_CONFIG.MAX_WARNINGS} for @${username}\n\nReason: ${reason}\n\n${
+  const message = `⚠️ Warning ${warnings}/${
+    MODERATION_CONFIG.MAX_WARNINGS
+  } for @${username}\n\nReason: ${reason}\n\n${
     warnings >= MODERATION_CONFIG.MAX_WARNINGS
       ? "⛔️ Maximum warnings reached. User will be banned."
       : `You have ${MODERATION_CONFIG.MAX_WARNINGS - warnings} warning(s) left.`
@@ -313,7 +390,10 @@ async function warnUser(
   await sendTelegramMessage(chatId, message);
 
   // Auto-ban if max warnings reached
-  if (warnings >= MODERATION_CONFIG.MAX_WARNINGS && MODERATION_CONFIG.AUTO_BAN_ENABLED) {
+  if (
+    warnings >= MODERATION_CONFIG.MAX_WARNINGS &&
+    MODERATION_CONFIG.AUTO_BAN_ENABLED
+  ) {
     await banUser(chatId, userId);
     await sendTelegramMessage(
       chatId,
@@ -347,10 +427,13 @@ export async function POST(req: NextRequest) {
     const text = message.text;
     const userId = message.from.id;
     const username = message.from.username || message.from.first_name || "User";
-    const isGroup = message.chat.type === "group" || message.chat.type === "supergroup";
+    const isGroup =
+      message.chat.type === "group" || message.chat.type === "supergroup";
     const messageId = message.message_id;
 
-    console.log(`Message from user ${userId} (@${username}) in chat ${chatId}: ${text}`);
+    console.log(
+      `Message from user ${userId} (@${username}) in chat ${chatId}: ${text}`
+    );
 
     // Ignore non-text messages
     if (!text) {
@@ -362,13 +445,15 @@ export async function POST(req: NextRequest) {
     if (isGroup && MODERATION_CONFIG.AUTO_MODERATE_GROUPS) {
       console.log("Running AI moderation check...");
       const moderation = await moderateContent(text, username);
-      
+
       if (moderation.shouldModerate) {
-        console.log(`Content flagged: ${moderation.reason} (${moderation.severity})`);
-        
+        console.log(
+          `Content flagged: ${moderation.reason} (${moderation.severity})`
+        );
+
         // Delete the message
         await deleteMessage(chatId, messageId);
-        
+
         // Handle based on severity
         if (moderation.severity === "high") {
           // Immediate ban for severe violations
@@ -381,7 +466,7 @@ export async function POST(req: NextRequest) {
           // Warn user for medium/low violations
           await warnUser(chatId, userId, username, moderation.reason);
         }
-        
+
         return NextResponse.json({ ok: true });
       }
     }
@@ -389,10 +474,10 @@ export async function POST(req: NextRequest) {
     // Handle /start command
     if (text === "/start") {
       console.log("Handling /start command");
-      const welcomeMsg = isGroup 
+      const welcomeMsg = isGroup
         ? "Welcome to M4Capital AI Assistant! 🤖\n\nI provide AI-powered moderation and can answer your questions about crypto and trading.\n\n👮 Auto-moderation is active to keep this group safe and spam-free."
-        : "Welcome to M4Capital AI Assistant! 🤖\n\nI am powered by ChatGPT and ready to help you with any questions.\n\nJust send me a message and I'll respond!";
-      
+        : "Welcome to M4Capital AI Assistant! 🤖\n\nI'm powered by ChatGPT and can help you with:\n\n💰 Real-time crypto prices\n🎨 Image generation (DALL-E 3)\n💬 General questions\n\nCommands:\n/imagine [description] - Generate an image\n/clear - Clear conversation history\n\nJust chat with me naturally!";
+
       await sendTelegramMessage(chatId, welcomeMsg);
       return NextResponse.json({ ok: true });
     }
@@ -411,12 +496,13 @@ export async function POST(req: NextRequest) {
     // Handle /ban command (admin only - reply to message or mention user)
     if (text.startsWith("/ban") && isGroup) {
       console.log("Handling /ban command");
-      
+
       const replyToMessage = message.reply_to_message;
       if (replyToMessage) {
         const targetUserId = replyToMessage.from.id;
-        const targetUsername = replyToMessage.from.username || replyToMessage.from.first_name;
-        
+        const targetUsername =
+          replyToMessage.from.username || replyToMessage.from.first_name;
+
         const banned = await banUser(chatId, targetUserId);
         if (banned) {
           await deleteMessage(chatId, replyToMessage.message_id);
@@ -437,13 +523,15 @@ export async function POST(req: NextRequest) {
     // Handle /warn command (admin only)
     if (text.startsWith("/warn") && isGroup) {
       console.log("Handling /warn command");
-      
+
       const replyToMessage = message.reply_to_message;
       if (replyToMessage) {
         const targetUserId = replyToMessage.from.id;
-        const targetUsername = replyToMessage.from.username || replyToMessage.from.first_name;
-        const reason = text.replace("/warn", "").trim() || "Violation of group rules";
-        
+        const targetUsername =
+          replyToMessage.from.username || replyToMessage.from.first_name;
+        const reason =
+          text.replace("/warn", "").trim() || "Violation of group rules";
+
         await warnUser(chatId, targetUserId, targetUsername, reason);
       } else {
         await sendTelegramMessage(
@@ -456,11 +544,18 @@ export async function POST(req: NextRequest) {
 
     // Handle /modstatus command
     if (text === "/modstatus" && isGroup) {
-      const statusMsg = `🤖 **AI Moderation Status**\n\n` +
-        `✅ Auto-moderation: ${MODERATION_CONFIG.AUTO_MODERATE_GROUPS ? "Enabled" : "Disabled"}\n` +
-        `🔨 Auto-ban: ${MODERATION_CONFIG.AUTO_BAN_ENABLED ? "Enabled" : "Disabled"}\n` +
+      const statusMsg =
+        `🤖 **AI Moderation Status**\n\n` +
+        `✅ Auto-moderation: ${
+          MODERATION_CONFIG.AUTO_MODERATE_GROUPS ? "Enabled" : "Disabled"
+        }\n` +
+        `🔨 Auto-ban: ${
+          MODERATION_CONFIG.AUTO_BAN_ENABLED ? "Enabled" : "Disabled"
+        }\n` +
         `⚠️ Max warnings: ${MODERATION_CONFIG.MAX_WARNINGS}\n` +
-        `📊 Toxicity threshold: ${(MODERATION_CONFIG.TOXICITY_THRESHOLD * 100).toFixed(0)}%\n\n` +
+        `📊 Toxicity threshold: ${(
+          MODERATION_CONFIG.TOXICITY_THRESHOLD * 100
+        ).toFixed(0)}%\n\n` +
         `The bot uses OpenAI to detect:\n` +
         `• Spam & scams\n` +
         `• Harassment & hate speech\n` +
@@ -469,8 +564,45 @@ export async function POST(req: NextRequest) {
         `Admin commands:\n` +
         `/ban - Ban user (reply to message)\n` +
         `/warn - Warn user (reply to message)`;
-      
+
       await sendTelegramMessage(chatId, statusMsg);
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /imagine command for image generation
+    if (text.startsWith("/imagine ")) {
+      console.log("Handling /imagine command");
+      const prompt = text.replace("/imagine ", "").trim();
+
+      if (!prompt) {
+        await sendTelegramMessage(
+          chatId,
+          "❌ Please provide a description.\n\nUsage: /imagine a sunset over mountains"
+        );
+        return NextResponse.json({ ok: true });
+      }
+
+      await sendTelegramTypingAction(chatId);
+      await sendTelegramMessage(
+        chatId,
+        "🎨 Generating your image... This may take a moment."
+      );
+
+      const result = await generateImage(prompt);
+
+      if (result.success && result.imageUrl) {
+        await sendTelegramPhoto(
+          chatId,
+          result.imageUrl,
+          `Generated: ${prompt}`
+        );
+      } else {
+        await sendTelegramMessage(
+          chatId,
+          `❌ Failed to generate image: ${result.error || "Unknown error"}`
+        );
+      }
+
       return NextResponse.json({ ok: true });
     }
 
@@ -531,6 +663,31 @@ export async function POST(req: NextRequest) {
           },
         },
       },
+      {
+        type: "function" as const,
+        function: {
+          name: "generate_image",
+          description:
+            "Generate an image using DALL-E 3 based on a text description. Use when users ask to create, generate, draw, or visualize images.",
+          parameters: {
+            type: "object",
+            properties: {
+              prompt: {
+                type: "string",
+                description:
+                  "Detailed description of the image to generate. Be specific and descriptive.",
+              },
+              size: {
+                type: "string",
+                enum: ["1024x1024", "1792x1024", "1024x1792"],
+                description:
+                  "Image size. Use 1024x1024 for square, 1792x1024 for landscape, 1024x1792 for portrait. Default: 1024x1024",
+              },
+            },
+            required: ["prompt"],
+          },
+        },
+      },
     ];
 
     // Get response from OpenAI with function calling
@@ -540,7 +697,7 @@ export async function POST(req: NextRequest) {
         {
           role: "system",
           content:
-            "You are a helpful AI assistant for M4Capital, a trading platform. You can provide real-time cryptocurrency prices for the top 200 cryptocurrencies using multiple data sources (CoinGecko, Binance, and CoinMarketCap). When users ask about crypto prices, use the get_crypto_prices function. Be concise, friendly, and helpful. Format prices clearly with currency symbols and percentage changes.",
+            "You are a helpful AI assistant for M4Capital, a trading platform. You can provide real-time cryptocurrency prices for the top 200 cryptocurrencies and generate images using DALL-E 3. When users ask about crypto prices, use get_crypto_prices. When they ask to create, generate, or visualize images, use generate_image. Be concise, friendly, and helpful.",
         },
         ...history,
       ],
@@ -571,6 +728,7 @@ export async function POST(req: NextRequest) {
         console.log(`Calling function: ${functionName}`, functionArgs);
 
         let functionResponse = "";
+        let imageGenerated = false;
 
         if (functionName === "get_crypto_prices") {
           functionResponse = await getCryptoPrices(functionArgs.symbols);
@@ -580,40 +738,63 @@ export async function POST(req: NextRequest) {
           functionResponse = `Top ${limit} cryptocurrencies by market cap:\n${topCryptos
             .slice(0, limit)
             .join(", ")}`;
+        } else if (functionName === "generate_image") {
+          await sendTelegramMessage(chatId, "🎨 Generating your image...");
+
+          const size = functionArgs.size || "1024x1024";
+          const result = await generateImage(functionArgs.prompt, size);
+
+          if (result.success && result.imageUrl) {
+            await sendTelegramPhoto(
+              chatId,
+              result.imageUrl,
+              `Generated: ${functionArgs.prompt}`
+            );
+            functionResponse = `Image generated successfully with prompt: "${functionArgs.prompt}"`;
+            imageGenerated = true;
+          } else {
+            functionResponse = `Failed to generate image: ${result.error}`;
+          }
         }
 
-        // Get final response from OpenAI with function result
-        const secondCompletion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are a helpful AI assistant for M4Capital, a trading platform. Present cryptocurrency data in a clear, formatted way.",
-            },
-            ...history,
-            responseMessage,
-            {
-              role: "tool",
-              tool_call_id: toolCall.id,
-              content: functionResponse,
-            },
-          ],
-          max_tokens: 1000,
-          temperature: 0.7,
-        });
+        // Get final response from OpenAI with function result (skip if image was generated)
+        if (!imageGenerated) {
+          const secondCompletion = await openai.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+              {
+                role: "system",
+                content:
+                  "You are a helpful AI assistant for M4Capital, a trading platform. Present data in a clear, formatted way.",
+              },
+              ...history,
+              responseMessage,
+              {
+                role: "tool",
+                tool_call_id: toolCall.id,
+                content: functionResponse,
+              },
+            ],
+            max_tokens: 1000,
+            temperature: 0.7,
+          });
 
-        assistantMessage =
-          secondCompletion.choices[0].message.content ||
-          "Sorry, I could not generate a response.";
+          assistantMessage =
+            secondCompletion.choices[0].message.content ||
+            "Sorry, I could not generate a response.";
+        } else {
+          assistantMessage = "I've generated the image for you! 🎨";
+        }
       }
     }
 
     // Add assistant response to history
     history.push({ role: "assistant", content: assistantMessage });
 
-    // Send response to user
-    await sendTelegramMessage(chatId, assistantMessage);
+    // Send response to user (skip if image was already sent)
+    if (!assistantMessage.includes("generated the image")) {
+      await sendTelegramMessage(chatId, assistantMessage);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
