@@ -278,6 +278,9 @@ export async function POST(req: NextRequest) {
       console.log("Function calls detected:", toolCalls);
 
       for (const toolCall of toolCalls) {
+        // Type guard to check if it's a function tool call
+        if (toolCall.type !== 'function') continue;
+        
         const functionName = toolCall.function.name;
         const functionArgs = JSON.parse(toolCall.function.arguments);
 
