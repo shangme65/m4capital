@@ -50,13 +50,15 @@ async function getCryptoPriceFromBinance(symbols: string[]): Promise<any> {
   }
 }
 
-async function getCryptoPriceFromCoinMarketCap(symbols: string[]): Promise<any> {
+async function getCryptoPriceFromCoinMarketCap(
+  symbols: string[]
+): Promise<any> {
   try {
     const apiKey = process.env.COINMARKETCAP_API_KEY;
     if (!apiKey) {
       return null;
     }
-    
+
     const slugs = symbols.join(",");
     const response = await fetch(
       `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?slug=${slugs}`,
@@ -83,34 +85,40 @@ async function getCryptoPrices(symbols: string[]): Promise<string> {
   ]);
 
   const validResults = results.filter((r) => r !== null);
-  
+
   if (validResults.length === 0) {
     return "Unable to fetch crypto prices at the moment.";
   }
 
   let response = "📊 **Cryptocurrency Prices** (from multiple sources):\n\n";
-  
+
   for (const result of validResults) {
     response += `**${result.source}:**\n`;
     const data = result.data;
-    
+
     for (const [key, value] of Object.entries(data)) {
       if (typeof value === "object" && value !== null) {
         const priceData: any = value;
         const price = priceData.usd || priceData.lastPrice || "N/A";
-        const change = priceData.usd_24h_change || priceData.priceChangePercent || "N/A";
-        response += `  • ${key.toUpperCase()}: $${typeof price === 'number' ? price.toLocaleString() : price}`;
+        const change =
+          priceData.usd_24h_change || priceData.priceChangePercent || "N/A";
+        response += `  • ${key.toUpperCase()}: $${
+          typeof price === "number" ? price.toLocaleString() : price
+        }`;
         if (change !== "N/A") {
-          const changeNum = typeof change === 'number' ? change : parseFloat(change);
+          const changeNum =
+            typeof change === "number" ? change : parseFloat(change);
           const emoji = changeNum >= 0 ? "📈" : "📉";
-          response += ` (${changeNum >= 0 ? '+' : ''}${changeNum.toFixed(2)}% ${emoji})`;
+          response += ` (${changeNum >= 0 ? "+" : ""}${changeNum.toFixed(
+            2
+          )}% ${emoji})`;
         }
         response += "\n";
       }
     }
     response += "\n";
   }
-  
+
   return response;
 }
 
@@ -205,14 +213,16 @@ export async function POST(req: NextRequest) {
         type: "function" as const,
         function: {
           name: "get_crypto_prices",
-          description: "Get real-time cryptocurrency prices from multiple sources (CoinGecko, Binance, CoinMarketCap). Supports top 200 cryptocurrencies by market cap.",
+          description:
+            "Get real-time cryptocurrency prices from multiple sources (CoinGecko, Binance, CoinMarketCap). Supports top 200 cryptocurrencies by market cap.",
           parameters: {
             type: "object",
             properties: {
               symbols: {
                 type: "array",
                 items: { type: "string" },
-                description: "Array of cryptocurrency symbols or IDs (e.g., ['bitcoin', 'ethereum', 'cardano']). Use lowercase names.",
+                description:
+                  "Array of cryptocurrency symbols or IDs (e.g., ['bitcoin', 'ethereum', 'cardano']). Use lowercase names.",
               },
             },
             required: ["symbols"],
@@ -223,13 +233,15 @@ export async function POST(req: NextRequest) {
         type: "function" as const,
         function: {
           name: "get_top_cryptos",
-          description: "Get a list of top cryptocurrencies by market cap (up to 200).",
+          description:
+            "Get a list of top cryptocurrencies by market cap (up to 200).",
           parameters: {
             type: "object",
             properties: {
               limit: {
                 type: "number",
-                description: "Number of top cryptocurrencies to return (default: 10, max: 200)",
+                description:
+                  "Number of top cryptocurrencies to return (default: 10, max: 200)",
               },
             },
           },
@@ -278,7 +290,9 @@ export async function POST(req: NextRequest) {
         } else if (functionName === "get_top_cryptos") {
           const limit = functionArgs.limit || 10;
           const topCryptos = await getTopCryptos(limit);
-          functionResponse = `Top ${limit} cryptocurrencies by market cap:\n${topCryptos.slice(0, limit).join(", ")}`;
+          functionResponse = `Top ${limit} cryptocurrencies by market cap:\n${topCryptos
+            .slice(0, limit)
+            .join(", ")}`;
         }
 
         // Get final response from OpenAI with function result

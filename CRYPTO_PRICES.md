@@ -5,13 +5,14 @@ Your Telegram bot now supports real-time cryptocurrency prices from multiple sou
 ## Features
 
 - **Multi-Source Data**: Fetches prices from 3 APIs:
+
   - CoinGecko (no API key required)
   - Binance (no API key required)
   - CoinMarketCap (optional - requires free API key)
 
 - **Top 200 Cryptocurrencies**: Supports the top 200 cryptocurrencies by market cap
 
-- **Real-Time Data**: 
+- **Real-Time Data**:
   - Current USD price
   - 24-hour price change percentage
   - Market cap information
@@ -30,10 +31,12 @@ The bot will automatically fetch prices from all available sources and display t
 ## Setup
 
 ### Required (Already Configured)
+
 - ✅ OpenAI API Key
 - ✅ Telegram Bot Token
 
 ### Optional (For CoinMarketCap Data)
+
 1. Sign up at https://pro.coinmarketcap.com/signup
 2. Get your free API key (Basic plan: 10,000 calls/month)
 3. Add to your `.env` file:
@@ -49,6 +52,7 @@ The bot will automatically fetch prices from all available sources and display t
 The bot supports the top 200 cryptocurrencies including:
 
 **Top 10 by Market Cap:**
+
 - Bitcoin (BTC)
 - Ethereum (ETH)
 - Tether (USDT)
@@ -66,7 +70,8 @@ The bot supports the top 200 cryptocurrencies including:
 
 **User**: "Bitcoin price"
 
-**Bot**: 
+**Bot**:
+
 ```
 📊 Cryptocurrency Prices (from multiple sources):
 
