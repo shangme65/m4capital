@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -7,12 +7,15 @@ const openai = new OpenAI({
 });
 
 // Store conversation history per user (in production, use a database)
-const conversationHistory = new Map<number, Array<{ role: 'user' | 'assistant'; content: string }>>();
+const conversationHistory = new Map<
+  number,
+  Array<{ role: "user" | "assistant"; content: string }>
+>();
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    
+
     // Telegram webhook verification
     if (!body.message) {
       return NextResponse.json({ ok: true });
@@ -29,20 +32,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Handle /start command
-    if (text === '/start') {
+    if (text === "/start") {
       await sendTelegramMessage(
         chatId,
-        'Welcome to M4Capital AI Assistant! 🤖\n\nI am powered by ChatGPT and ready to help you with any questions.\n\nJust send me a message and I\'ll respond!'
+        "Welcome to M4Capital AI Assistant! 🤖\n\nI am powered by ChatGPT and ready to help you with any questions.\n\nJust send me a message and I'll respond!"
       );
       return NextResponse.json({ ok: true });
     }
 
     // Handle /clear command to reset conversation
-    if (text === '/clear') {
+    if (text === "/clear") {
       conversationHistory.delete(userId);
       await sendTelegramMessage(
         chatId,
-        'Conversation history cleared! Starting fresh. 🔄'
+        "Conversation history cleared! Starting fresh. 🔄"
       );
       return NextResponse.json({ ok: true });
     }
@@ -54,7 +57,7 @@ export async function POST(req: NextRequest) {
     const history = conversationHistory.get(userId)!;
 
     // Add user message to history
-    history.push({ role: 'user', content: text });
+    history.push({ role: "user", content: text });
 
     // Keep only last 10 messages to manage token usage
     if (history.length > 10) {
@@ -66,31 +69,34 @@ export async function POST(req: NextRequest) {
 
     // Get response from OpenAI
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Use gpt-4o-mini for cost efficiency, or 'gpt-4' for better quality
+      model: "gpt-4o-mini", // Use gpt-4o-mini for cost efficiency, or 'gpt-4' for better quality
       messages: [
         {
-          role: 'system',
-          content: 'You are a helpful AI assistant for M4Capital, a trading platform. Be concise, friendly, and helpful. Keep responses clear and to the point.'
+          role: "system",
+          content:
+            "You are a helpful AI assistant for M4Capital, a trading platform. Be concise, friendly, and helpful. Keep responses clear and to the point.",
         },
-        ...history
+        ...history,
       ],
       max_tokens: 500,
       temperature: 0.7,
     });
 
-    const assistantMessage = completion.choices[0].message.content || 'Sorry, I could not generate a response.';
+    const assistantMessage =
+      completion.choices[0].message.content ||
+      "Sorry, I could not generate a response.";
 
     // Add assistant response to history
-    history.push({ role: 'assistant', content: assistantMessage });
+    history.push({ role: "assistant", content: assistantMessage });
 
     // Send response to user
     await sendTelegramMessage(chatId, assistantMessage);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Telegram webhook error:', error);
+    console.error("Telegram webhook error:", error);
     return NextResponse.json(
-      { ok: false, error: 'Internal server error' },
+      { ok: false, error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -99,23 +105,23 @@ export async function POST(req: NextRequest) {
 // Helper function to send Telegram message
 async function sendTelegramMessage(chatId: number, text: string) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  
+
   if (!botToken) {
-    console.error('TELEGRAM_BOT_TOKEN is not set');
+    console.error("TELEGRAM_BOT_TOKEN is not set");
     return;
   }
 
   const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-  
+
   await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       chat_id: chatId,
       text: text,
-      parse_mode: 'Markdown',
+      parse_mode: "Markdown",
     }),
   });
 }
@@ -123,26 +129,26 @@ async function sendTelegramMessage(chatId: number, text: string) {
 // Helper function to send typing action
 async function sendTelegramTypingAction(chatId: number) {
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  
+
   if (!botToken) {
     return;
   }
 
   const url = `https://api.telegram.org/bot${botToken}/sendChatAction`;
-  
+
   await fetch(url, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     },
     body: JSON.stringify({
       chat_id: chatId,
-      action: 'typing',
+      action: "typing",
     }),
   });
 }
 
 // Handle GET request (for webhook verification)
 export async function GET() {
-  return NextResponse.json({ status: 'Telegram bot webhook is active' });
+  return NextResponse.json({ status: "Telegram bot webhook is active" });
 }

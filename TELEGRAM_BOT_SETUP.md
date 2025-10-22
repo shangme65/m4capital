@@ -53,16 +53,19 @@ git push
 After deployment, you need to register the webhook with Telegram:
 
 **Option A: Via Browser**
+
 1. Visit: `https://your-app.vercel.app/api/telegram-webhook/setup`
 2. This will automatically set up the webhook using your deployment URL
 3. You should see a success message
 
 **Option B: Via cURL**
+
 ```bash
 curl https://your-app.vercel.app/api/telegram-webhook/setup
 ```
 
 **Option C: Custom Webhook URL**
+
 ```bash
 curl "https://your-app.vercel.app/api/telegram-webhook/setup?url=https://custom-url.com/api/telegram-webhook"
 ```
@@ -82,17 +85,20 @@ curl "https://your-app.vercel.app/api/telegram-webhook/setup?url=https://custom-
 ## API Endpoints
 
 ### Webhook Endpoint
+
 - **URL**: `/api/telegram-webhook`
 - **Method**: POST
 - **Description**: Receives messages from Telegram
 
 ### Setup Endpoint
+
 - **URL**: `/api/telegram-webhook/setup`
 - **Method**: GET
 - **Description**: Registers the webhook with Telegram
 - **Query Params**: `url` (optional) - Custom webhook URL
 
 ### Webhook Management
+
 - **URL**: `/api/telegram-webhook/setup`
 - **Method**: POST
 - **Description**: Manage webhook (get info or delete)
@@ -106,6 +112,7 @@ curl "https://your-app.vercel.app/api/telegram-webhook/setup?url=https://custom-
 ## Vercel Deployment Steps
 
 1. **Add Environment Variables in Vercel Dashboard**:
+
    - Go to your project settings
    - Navigate to "Environment Variables"
    - Add:
@@ -121,6 +128,7 @@ curl "https://your-app.vercel.app/api/telegram-webhook/setup?url=https://custom-
 ### Bot Not Responding
 
 1. **Check Webhook Status**:
+
    ```bash
    curl -X POST https://your-app.vercel.app/api/telegram-webhook/setup \
      -H "Content-Type: application/json" \
@@ -128,6 +136,7 @@ curl "https://your-app.vercel.app/api/telegram-webhook/setup?url=https://custom-
    ```
 
 2. **Check Vercel Logs**:
+
    - Go to Vercel Dashboard
    - Navigate to your project
    - Check "Functions" logs
@@ -141,6 +150,7 @@ curl "https://your-app.vercel.app/api/telegram-webhook/setup?url=https://custom-
 If you need to change the webhook URL:
 
 1. **Delete existing webhook**:
+
    ```bash
    curl -X POST https://your-app.vercel.app/api/telegram-webhook/setup \
      -H "Content-Type: application/json" \
