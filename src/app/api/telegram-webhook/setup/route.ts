@@ -3,10 +3,18 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   try {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    const secretToken = process.env.TELEGRAM_SECRET_TOKEN;
 
     if (!botToken) {
       return NextResponse.json(
         { error: "TELEGRAM_BOT_TOKEN is not configured" },
+        { status: 500 }
+      );
+    }
+
+    if (!secretToken) {
+      return NextResponse.json(
+        { error: "TELEGRAM_SECRET_TOKEN is not configured" },
         { status: 500 }
       );
     }
@@ -16,7 +24,7 @@ export async function GET(req: NextRequest) {
       req.nextUrl.searchParams.get("url") ||
       `${req.nextUrl.origin}/api/telegram-webhook`;
 
-    // Set the webhook
+    // Set the webhook with secret token
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/setWebhook`,
       {
@@ -27,6 +35,7 @@ export async function GET(req: NextRequest) {
         body: JSON.stringify({
           url: webhookUrl,
           allowed_updates: ["message"],
+          secret_token: secretToken,
         }),
       }
     );

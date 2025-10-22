@@ -14,6 +14,12 @@ const conversationHistory = new Map<
 
 export async function POST(req: NextRequest) {
   try {
+    // Verify Telegram secret token for webhook security
+    const secretToken = req.headers.get("x-telegram-bot-api-secret-token");
+    if (secretToken !== process.env.TELEGRAM_SECRET_TOKEN) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
 
     // Telegram webhook verification
