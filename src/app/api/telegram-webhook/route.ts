@@ -12,6 +12,17 @@ const conversationHistory = new Map<
   Array<{ role: "user" | "assistant"; content: string }>
 >();
 
+// Store warning counts per user per chat
+const userWarnings = new Map<string, number>();
+
+// Moderation settings
+const MODERATION_CONFIG = {
+  MAX_WARNINGS: 3,
+  AUTO_BAN_ENABLED: true,
+  AUTO_MODERATE_GROUPS: true,
+  TOXICITY_THRESHOLD: 0.7, // 0-1 scale, higher = more strict
+};
+
 // Crypto price API functions
 async function getCryptoPriceFromCoinGecko(symbols: string[]): Promise<any> {
   try {
@@ -136,6 +147,181 @@ async function getTopCryptos(limit: number = 200): Promise<string[]> {
   }
 }
 
+// AI-powered content moderation
+async function moderateContent(text: string, username: string): Promise<{
+  shouldModerate: boolean;
+  reason: string;
+  severity: "low" | "medium" | "high";
+}> {
+  try {
+    const moderationResponse = await openai.moderations.create({
+      input: text,
+    });
+
+    const result = moderationResponse.results[0];
+    
+    // Check if content is flagged
+    if (result.flagged) {
+      const categories = result.categories;
+      const scores = result.category_scores;
+      
+      // Determine severity and reason
+      let highestScore = 0;
+      let highestCategory = "";
+      
+      for (const [category, flagged] of Object.entries(categories)) {
+        if (flagged) {
+          const score = scores[category as keyof typeof scores];
+          if (score > highestScore) {
+            highestScore = score;
+            highestCategory = category;
+          }
+        }
+      }
+      
+      const severity: "low" | "medium" | "high" = 
+        highestScore > 0.9 ? "high" : 
+        highestScore > 0.7 ? "medium" : "low";
+      
+      return {
+        shouldModerate: true,
+        reason: `Flagged for ${highestCategory.replace(/[_-]/g, " ")}`,
+        severity,
+      };
+    }
+    
+    // Additional AI analysis for spam/promotional content
+    const aiAnalysis = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `You are a content moderator. Analyze if this message is spam, scam, or inappropriate for a professional trading community. 
+          
+          Consider:
+          - Excessive promotional content
+          - Scam/phishing attempts
+          - Off-topic spam
+          - Repetitive messages
+          - Suspicious links
+          
+          Respond with JSON only: {"is_spam": boolean, "confidence": number (0-1), "reason": "brief explanation"}`,
+        },
+        {
+          role: "user",
+          content: `Username: ${username}\nMessage: ${text}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 150,
+    });
+    
+    const analysis = JSON.parse(aiAnalysis.choices[0].message.content || "{}");
+    
+    if (analysis.is_spam && analysis.confidence > MODERATION_CONFIG.TOXICITY_THRESHOLD) {
+      return {
+        shouldModerate: true,
+        reason: analysis.reason || "Potential spam detected",
+        severity: analysis.confidence > 0.9 ? "high" : "medium",
+      };
+    }
+    
+    return {
+      shouldModerate: false,
+      reason: "",
+      severity: "low",
+    };
+  } catch (error) {
+    console.error("Moderation error:", error);
+    return {
+      shouldModerate: false,
+      reason: "",
+      severity: "low",
+    };
+  }
+}
+
+// Ban user from chat
+async function banUser(chatId: number, userId: number): Promise<boolean> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return false;
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/banChatMember`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          user_id: userId,
+        }),
+      }
+    );
+    
+    const result = await response.json();
+    return result.ok;
+  } catch (error) {
+    console.error("Error banning user:", error);
+    return false;
+  }
+}
+
+// Delete message
+async function deleteMessage(chatId: number, messageId: number): Promise<boolean> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return false;
+
+  try {
+    const response = await fetch(
+      `https://api.telegram.org/bot${botToken}/deleteMessage`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: chatId,
+          message_id: messageId,
+        }),
+      }
+    );
+    
+    const result = await response.json();
+    return result.ok;
+  } catch (error) {
+    console.error("Error deleting message:", error);
+    return false;
+  }
+}
+
+// Warn user
+async function warnUser(
+  chatId: number,
+  userId: number,
+  username: string,
+  reason: string
+): Promise<void> {
+  const warningKey = `${chatId}_${userId}`;
+  const warnings = (userWarnings.get(warningKey) || 0) + 1;
+  userWarnings.set(warningKey, warnings);
+
+  const message = `⚠️ Warning ${warnings}/${MODERATION_CONFIG.MAX_WARNINGS} for @${username}\n\nReason: ${reason}\n\n${
+    warnings >= MODERATION_CONFIG.MAX_WARNINGS
+      ? "⛔️ Maximum warnings reached. User will be banned."
+      : `You have ${MODERATION_CONFIG.MAX_WARNINGS - warnings} warning(s) left.`
+  }`;
+
+  await sendTelegramMessage(chatId, message);
+
+  // Auto-ban if max warnings reached
+  if (warnings >= MODERATION_CONFIG.MAX_WARNINGS && MODERATION_CONFIG.AUTO_BAN_ENABLED) {
+    await banUser(chatId, userId);
+    await sendTelegramMessage(
+      chatId,
+      `🔨 User @${username} has been banned for repeated violations.`
+    );
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Verify Telegram secret token for webhook security (only if set)
@@ -160,8 +346,11 @@ export async function POST(req: NextRequest) {
     const chatId = message.chat.id;
     const text = message.text;
     const userId = message.from.id;
+    const username = message.from.username || message.from.first_name || "User";
+    const isGroup = message.chat.type === "group" || message.chat.type === "supergroup";
+    const messageId = message.message_id;
 
-    console.log(`Message from user ${userId} in chat ${chatId}: ${text}`);
+    console.log(`Message from user ${userId} (@${username}) in chat ${chatId}: ${text}`);
 
     // Ignore non-text messages
     if (!text) {
@@ -169,13 +358,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // AI-powered moderation for group chats
+    if (isGroup && MODERATION_CONFIG.AUTO_MODERATE_GROUPS) {
+      console.log("Running AI moderation check...");
+      const moderation = await moderateContent(text, username);
+      
+      if (moderation.shouldModerate) {
+        console.log(`Content flagged: ${moderation.reason} (${moderation.severity})`);
+        
+        // Delete the message
+        await deleteMessage(chatId, messageId);
+        
+        // Handle based on severity
+        if (moderation.severity === "high") {
+          // Immediate ban for severe violations
+          await banUser(chatId, userId);
+          await sendTelegramMessage(
+            chatId,
+            `🚫 User @${username} has been banned.\n\nReason: ${moderation.reason}\n\nThis action was taken by AI moderation for severe policy violation.`
+          );
+        } else {
+          // Warn user for medium/low violations
+          await warnUser(chatId, userId, username, moderation.reason);
+        }
+        
+        return NextResponse.json({ ok: true });
+      }
+    }
+
     // Handle /start command
     if (text === "/start") {
       console.log("Handling /start command");
-      await sendTelegramMessage(
-        chatId,
-        "Welcome to M4Capital AI Assistant! 🤖\n\nI am powered by ChatGPT and ready to help you with any questions.\n\nJust send me a message and I'll respond!"
-      );
+      const welcomeMsg = isGroup 
+        ? "Welcome to M4Capital AI Assistant! 🤖\n\nI provide AI-powered moderation and can answer your questions about crypto and trading.\n\n👮 Auto-moderation is active to keep this group safe and spam-free."
+        : "Welcome to M4Capital AI Assistant! 🤖\n\nI am powered by ChatGPT and ready to help you with any questions.\n\nJust send me a message and I'll respond!";
+      
+      await sendTelegramMessage(chatId, welcomeMsg);
       return NextResponse.json({ ok: true });
     }
 
@@ -187,6 +405,72 @@ export async function POST(req: NextRequest) {
         chatId,
         "Conversation history cleared! Starting fresh. 🔄"
       );
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /ban command (admin only - reply to message or mention user)
+    if (text.startsWith("/ban") && isGroup) {
+      console.log("Handling /ban command");
+      
+      const replyToMessage = message.reply_to_message;
+      if (replyToMessage) {
+        const targetUserId = replyToMessage.from.id;
+        const targetUsername = replyToMessage.from.username || replyToMessage.from.first_name;
+        
+        const banned = await banUser(chatId, targetUserId);
+        if (banned) {
+          await deleteMessage(chatId, replyToMessage.message_id);
+          await sendTelegramMessage(
+            chatId,
+            `🔨 User @${targetUsername} has been banned by admin.`
+          );
+        }
+      } else {
+        await sendTelegramMessage(
+          chatId,
+          "❌ Reply to a message to ban that user."
+        );
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /warn command (admin only)
+    if (text.startsWith("/warn") && isGroup) {
+      console.log("Handling /warn command");
+      
+      const replyToMessage = message.reply_to_message;
+      if (replyToMessage) {
+        const targetUserId = replyToMessage.from.id;
+        const targetUsername = replyToMessage.from.username || replyToMessage.from.first_name;
+        const reason = text.replace("/warn", "").trim() || "Violation of group rules";
+        
+        await warnUser(chatId, targetUserId, targetUsername, reason);
+      } else {
+        await sendTelegramMessage(
+          chatId,
+          "❌ Reply to a message to warn that user.\n\nUsage: /warn [reason]"
+        );
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /modstatus command
+    if (text === "/modstatus" && isGroup) {
+      const statusMsg = `🤖 **AI Moderation Status**\n\n` +
+        `✅ Auto-moderation: ${MODERATION_CONFIG.AUTO_MODERATE_GROUPS ? "Enabled" : "Disabled"}\n` +
+        `🔨 Auto-ban: ${MODERATION_CONFIG.AUTO_BAN_ENABLED ? "Enabled" : "Disabled"}\n` +
+        `⚠️ Max warnings: ${MODERATION_CONFIG.MAX_WARNINGS}\n` +
+        `📊 Toxicity threshold: ${(MODERATION_CONFIG.TOXICITY_THRESHOLD * 100).toFixed(0)}%\n\n` +
+        `The bot uses OpenAI to detect:\n` +
+        `• Spam & scams\n` +
+        `• Harassment & hate speech\n` +
+        `• Inappropriate content\n` +
+        `• Phishing attempts\n\n` +
+        `Admin commands:\n` +
+        `/ban - Ban user (reply to message)\n` +
+        `/warn - Warn user (reply to message)`;
+      
+      await sendTelegramMessage(chatId, statusMsg);
       return NextResponse.json({ ok: true });
     }
 
@@ -279,8 +563,8 @@ export async function POST(req: NextRequest) {
 
       for (const toolCall of toolCalls) {
         // Type guard to check if it's a function tool call
-        if (toolCall.type !== 'function') continue;
-        
+        if (toolCall.type !== "function") continue;
+
         const functionName = toolCall.function.name;
         const functionArgs = JSON.parse(toolCall.function.arguments);
 
