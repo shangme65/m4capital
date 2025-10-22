@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { PrismaClient } from "@prisma/client";
 
 // Initialize OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+
+// Initialize Prisma
+const prisma = new PrismaClient();
 
 // Store conversation history per user (in production, use a database)
 const conversationHistory = new Map<
@@ -15,6 +19,9 @@ const conversationHistory = new Map<
 // Store warning counts per user per chat
 const userWarnings = new Map<string, number>();
 
+// Price alert monitoring (in-memory for now)
+const priceAlertLastChecked = new Map<string, number>();
+
 // Moderation settings
 const MODERATION_CONFIG = {
   MAX_WARNINGS: 3,
@@ -22,6 +29,65 @@ const MODERATION_CONFIG = {
   AUTO_MODERATE_GROUPS: true,
   TOXICITY_THRESHOLD: 0.7, // 0-1 scale, higher = more strict
 };
+
+// Multi-language translations
+const translations: Record<string, Record<string, string>> = {
+  en: {
+    welcome: "Welcome to M4Capital AI Assistant! 🤖",
+    help: "Available commands:",
+    lang_changed: "Language changed to English",
+  },
+  es: {
+    welcome: "¡Bienvenido al Asistente de IA de M4Capital! 🤖",
+    help: "Comandos disponibles:",
+    lang_changed: "Idioma cambiado a Español",
+  },
+  fr: {
+    welcome: "Bienvenue dans l'Assistant IA M4Capital ! 🤖",
+    help: "Commandes disponibles:",
+    lang_changed: "Langue changée en Français",
+  },
+  de: {
+    welcome: "Willkommen beim M4Capital KI-Assistenten! 🤖",
+    help: "Verfügbare Befehle:",
+    lang_changed: "Sprache auf Deutsch geändert",
+  },
+  pt: {
+    welcome: "Bem-vindo ao Assistente de IA M4Capital! 🤖",
+    help: "Comandos disponíveis:",
+    lang_changed: "Idioma alterado para Português",
+  },
+  ru: {
+    welcome: "Добро пожаловать в AI-помощник M4Capital! 🤖",
+    help: "Доступные команды:",
+    lang_changed: "Язык изменен на Русский",
+  },
+  zh: {
+    welcome: "欢迎使用 M4Capital AI 助手！🤖",
+    help: "可用命令：",
+    lang_changed: "语言已更改为中文",
+  },
+  ja: {
+    welcome: "M4Capital AIアシスタントへようこそ！🤖",
+    help: "利用可能なコマンド：",
+    lang_changed: "言語が日本語に変更されました",
+  },
+  ar: {
+    welcome: "مرحبًا بك في مساعد M4Capital AI! 🤖",
+    help: "الأوامر المتاحة:",
+    lang_changed: "تم تغيير اللغة إلى العربية",
+  },
+  hi: {
+    welcome: "M4Capital AI सहायक में आपका स्वागत है! 🤖",
+    help: "उपलब्ध कमांड:",
+    lang_changed: "भाषा हिंदी में बदली गई",
+  },
+};
+
+// Helper function to get translation
+function t(lang: string, key: string): string {
+  return translations[lang]?.[key] || translations["en"][key] || key;
+}
 
 // Crypto price API functions
 async function getCryptoPriceFromCoinGecko(symbols: string[]): Promise<any> {
@@ -144,6 +210,261 @@ async function getTopCryptos(limit: number = 200): Promise<string[]> {
   } catch (error) {
     console.error("Error fetching top cryptos:", error);
     return ["bitcoin", "ethereum", "tether", "binancecoin", "solana"];
+  }
+}
+
+// ===== FEATURE 1: Multi-language Support =====
+async function getUserLanguage(telegramId: number): Promise<string> {
+  try {
+    const user = await prisma.telegramUser.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+      select: { preferredLanguage: true },
+    });
+    return user?.preferredLanguage || "en";
+  } catch (error) {
+    return "en";
+  }
+}
+
+async function setUserLanguage(
+  telegramId: number,
+  language: string
+): Promise<void> {
+  try {
+    await prisma.telegramUser.upsert({
+      where: { telegramId: BigInt(telegramId) },
+      update: { preferredLanguage: language },
+      create: {
+        telegramId: BigInt(telegramId),
+        preferredLanguage: language,
+      },
+    });
+  } catch (error) {
+    console.error("Error setting user language:", error);
+  }
+}
+
+// ===== FEATURE 2: Crypto Watchlist =====
+async function addToWatchlist(
+  telegramId: number,
+  symbol: string,
+  displayName: string
+): Promise<boolean> {
+  try {
+    const user = await prisma.telegramUser.upsert({
+      where: { telegramId: BigInt(telegramId) },
+      update: {},
+      create: { telegramId: BigInt(telegramId) },
+    });
+
+    await prisma.cryptoWatchlist.create({
+      data: {
+        userId: user.id,
+        symbol: symbol.toLowerCase(),
+        displayName,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error("Error adding to watchlist:", error);
+    return false;
+  }
+}
+
+async function removeFromWatchlist(
+  telegramId: number,
+  symbol: string
+): Promise<boolean> {
+  try {
+    const user = await prisma.telegramUser.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+    });
+
+    if (!user) return false;
+
+    await prisma.cryptoWatchlist.deleteMany({
+      where: {
+        userId: user.id,
+        symbol: symbol.toLowerCase(),
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error("Error removing from watchlist:", error);
+    return false;
+  }
+}
+
+async function getWatchlist(telegramId: number): Promise<string[]> {
+  try {
+    const user = await prisma.telegramUser.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+      include: { watchlists: true },
+    });
+
+    return user?.watchlists.map((w) => w.symbol) || [];
+  } catch (error) {
+    console.error("Error getting watchlist:", error);
+    return [];
+  }
+}
+
+// ===== FEATURE 3: Price Alerts =====
+async function createPriceAlert(
+  telegramId: number,
+  chatId: number,
+  symbol: string,
+  targetPrice: number,
+  condition: "ABOVE" | "BELOW"
+): Promise<boolean> {
+  try {
+    const user = await prisma.telegramUser.upsert({
+      where: { telegramId: BigInt(telegramId) },
+      update: {},
+      create: { telegramId: BigInt(telegramId) },
+    });
+
+    await prisma.priceAlert.create({
+      data: {
+        userId: user.id,
+        symbol: symbol.toLowerCase(),
+        targetPrice,
+        condition,
+        chatId: BigInt(chatId),
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error("Error creating price alert:", error);
+    return false;
+  }
+}
+
+async function getUserAlerts(telegramId: number): Promise<any[]> {
+  try {
+    const user = await prisma.telegramUser.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+      include: { priceAlerts: { where: { isActive: true } } },
+    });
+
+    return user?.priceAlerts || [];
+  } catch (error) {
+    console.error("Error getting alerts:", error);
+    return [];
+  }
+}
+
+async function deleteAlert(
+  telegramId: number,
+  alertId: string
+): Promise<boolean> {
+  try {
+    const user = await prisma.telegramUser.findUnique({
+      where: { telegramId: BigInt(telegramId) },
+    });
+
+    if (!user) return false;
+
+    await prisma.priceAlert.deleteMany({
+      where: {
+        id: alertId,
+        userId: user.id,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error("Error deleting alert:", error);
+    return false;
+  }
+}
+
+// ===== FEATURE 4: Voice Transcription =====
+async function transcribeVoice(fileId: string): Promise<string | null> {
+  try {
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) return null;
+
+    // Get file path from Telegram
+    const fileResponse = await fetch(
+      `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`
+    );
+    const fileData = await fileResponse.json();
+
+    if (!fileData.ok) return null;
+
+    const filePath = fileData.result.file_path;
+    const fileUrl = `https://api.telegram.org/file/bot${botToken}/${filePath}`;
+
+    // Download the audio file
+    const audioResponse = await fetch(fileUrl);
+    const audioBuffer = await audioResponse.arrayBuffer();
+
+    // Convert to File object for OpenAI
+    const audioFile = new File([audioBuffer], "voice.ogg", {
+      type: "audio/ogg",
+    });
+
+    // Transcribe using Whisper
+    const transcription = await openai.audio.transcriptions.create({
+      file: audioFile,
+      model: "whisper-1",
+    });
+
+    return transcription.text;
+  } catch (error) {
+    console.error("Error transcribing voice:", error);
+    return null;
+  }
+}
+
+// ===== FEATURE 5: News Fetching =====
+async function fetchCryptoNews(limit: number = 5): Promise<string> {
+  try {
+    // Using CoinGecko news endpoint (free)
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/news?page=1&per_page=${limit}`
+    );
+
+    if (!response.ok) {
+      // Fallback: Use CryptoCompare news (also free)
+      const cryptoCompareResponse = await fetch(
+        `https://min-api.cryptocompare.com/data/v2/news/?lang=EN&sortOrder=latest`
+      );
+
+      if (cryptoCompareResponse.ok) {
+        const data = await cryptoCompareResponse.json();
+        const articles = data.Data.slice(0, limit);
+
+        let newsText = "📰 **Latest Crypto News:**\n\n";
+        articles.forEach((article: any, index: number) => {
+          newsText += `${index + 1}. **${article.title}**\n`;
+          newsText += `   ${article.body.substring(0, 150)}...\n`;
+          newsText += `   🔗 [Read more](${article.url})\n`;
+          newsText += `   📅 ${new Date(
+            article.published_on * 1000
+          ).toLocaleString()}\n\n`;
+        });
+
+        return newsText;
+      }
+    }
+
+    const data = await response.json();
+    let newsText = "📰 **Latest Crypto News:**\n\n";
+
+    data.data.slice(0, limit).forEach((article: any, index: number) => {
+      newsText += `${index + 1}. **${article.title}**\n`;
+      newsText += `   ${
+        article.description?.substring(0, 150) || "No description"
+      }...\n`;
+      newsText += `   🔗 [Read more](${article.url})\n`;
+      newsText += `   📅 ${article.updated_at}\n\n`;
+    });
+
+    return newsText;
+  } catch (error) {
+    console.error("Error fetching news:", error);
+    return "❌ Unable to fetch news at the moment. Please try again later.";
   }
 }
 
@@ -476,7 +797,7 @@ export async function POST(req: NextRequest) {
       console.log("Handling /start command");
       const welcomeMsg = isGroup
         ? "Welcome to M4Capital AI Assistant! 🤖\n\nI provide AI-powered moderation and can answer your questions about crypto and trading.\n\n👮 Auto-moderation is active to keep this group safe and spam-free."
-        : "Welcome to M4Capital AI Assistant! 🤖\n\nI'm powered by ChatGPT and can help you with:\n\n💰 Real-time crypto prices\n🎨 Image generation (DALL-E 3)\n💬 General questions\n\nCommands:\n/imagine [description] - Generate an image\n/clear - Clear conversation history\n\nJust chat with me naturally!";
+        : "Welcome to M4Capital AI Assistant! 🤖\n\nI'm powered by ChatGPT with advanced features:\n\n💰 **Crypto Features:**\n/watchlist - Manage your crypto watchlist\n/alert - Set price alerts\n\n🎨 **AI Tools:**\n/imagine - Generate images (DALL-E 3)\n/news - Latest crypto news\n🎤 Send voice messages (auto-transcribed)\n\n🌐 **Settings:**\n/language - Change language\n/clear - Clear conversation\n\nJust chat with me naturally! I support 8 languages.";
 
       await sendTelegramMessage(chatId, welcomeMsg);
       return NextResponse.json({ ok: true });
@@ -603,6 +924,195 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      return NextResponse.json({ ok: true });
+    }
+
+    // ===== NEW FEATURE COMMANDS =====
+
+    // Handle /language command
+    if (text.startsWith("/language")) {
+      const args = text.split(" ");
+      if (args.length === 1) {
+        const currentLang = await getUserLanguage(userId);
+        await sendTelegramMessage(
+          chatId,
+          `🌐 Your current language: ${currentLang}\n\nAvailable languages:\n• en (English)\n• es (Español)\n• fr (Français)\n• de (Deutsch)\n• zh (中文)\n• ja (日本語)\n• ko (한국어)\n• ru (Русский)\n\nUsage: /language <code>\nExample: /language es`
+        );
+      } else {
+        const newLang = args[1].toLowerCase();
+        const validLangs = ["en", "es", "fr", "de", "zh", "ja", "ko", "ru"];
+        if (validLangs.includes(newLang)) {
+          await setUserLanguage(userId, newLang);
+          const messages: Record<string, string> = {
+            en: "✅ Language set to English",
+            es: "✅ Idioma configurado en Español",
+            fr: "✅ Langue définie sur Français",
+            de: "✅ Sprache auf Deutsch eingestellt",
+            zh: "✅ 语言设置为中文",
+            ja: "✅ 言語が日本語に設定されました",
+            ko: "✅ 언어가 한국어로 설정되었습니다",
+            ru: "✅ Язык установлен на Русский",
+          };
+          await sendTelegramMessage(chatId, messages[newLang]);
+        } else {
+          await sendTelegramMessage(
+            chatId,
+            "❌ Invalid language code. Use: en, es, fr, de, zh, ja, ko, ru"
+          );
+        }
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /watchlist command
+    if (text.startsWith("/watchlist")) {
+      const args = text.split(" ");
+      const subcommand = args[1]?.toLowerCase();
+
+      if (!subcommand || subcommand === "view") {
+        const watchlist = await getWatchlist(userId);
+        if (watchlist.length === 0) {
+          await sendTelegramMessage(
+            chatId,
+            "📋 Your watchlist is empty.\n\nAdd cryptos with:\n/watchlist add bitcoin\n/watchlist add ethereum"
+          );
+        } else {
+          const prices = await getCryptoPrices(watchlist);
+          await sendTelegramMessage(
+            chatId,
+            `📋 **Your Watchlist**\n\n${prices}`
+          );
+        }
+      } else if (subcommand === "add" && args[2]) {
+        const symbol = args[2].toLowerCase();
+        const success = await addToWatchlist(userId, username, symbol);
+        if (success) {
+          await sendTelegramMessage(
+            chatId,
+            `✅ Added ${symbol} to your watchlist`
+          );
+        } else {
+          await sendTelegramMessage(
+            chatId,
+            `❌ Failed to add ${symbol}. It might already be in your watchlist.`
+          );
+        }
+      } else if (subcommand === "remove" && args[2]) {
+        const symbol = args[2].toLowerCase();
+        const success = await removeFromWatchlist(userId, symbol);
+        if (success) {
+          await sendTelegramMessage(
+            chatId,
+            `✅ Removed ${symbol} from your watchlist`
+          );
+        } else {
+          await sendTelegramMessage(chatId, `❌ Failed to remove ${symbol}`);
+        }
+      } else {
+        await sendTelegramMessage(
+          chatId,
+          "Usage:\n/watchlist view - Show your watchlist\n/watchlist add <crypto> - Add crypto\n/watchlist remove <crypto> - Remove crypto\n\nExample: /watchlist add bitcoin"
+        );
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /alert command
+    if (text.startsWith("/alert")) {
+      const args = text.split(" ");
+      const subcommand = args[1]?.toLowerCase();
+
+      if (!subcommand || subcommand === "list") {
+        const alerts = await getUserAlerts(userId);
+        if (alerts.length === 0) {
+          await sendTelegramMessage(
+            chatId,
+            "🔔 You have no active price alerts.\n\nCreate one with:\n/alert set bitcoin 70000 above"
+          );
+        } else {
+          let message = "🔔 **Your Price Alerts**\n\n";
+          alerts.forEach((alert: any, i: number) => {
+            message += `${i + 1}. ${alert.symbol.toUpperCase()}: ${
+              alert.condition
+            } $${alert.targetPrice}\n`;
+          });
+          message += "\nRemove with: /alert delete <number>";
+          await sendTelegramMessage(chatId, message);
+        }
+      } else if (subcommand === "set" && args[2] && args[3] && args[4]) {
+        const symbol = args[2].toLowerCase();
+        const price = parseFloat(args[3]);
+        const condition = args[4].toUpperCase();
+
+        if (["ABOVE", "BELOW"].includes(condition) && !isNaN(price)) {
+          const success = await createPriceAlert(
+            userId,
+            chatId,
+            symbol,
+            price,
+            condition
+          );
+          if (success) {
+            await sendTelegramMessage(
+              chatId,
+              `✅ Alert set: ${symbol.toUpperCase()} ${condition.toLowerCase()} $${price}`
+            );
+          } else {
+            await sendTelegramMessage(chatId, "❌ Failed to create alert");
+          }
+        } else {
+          await sendTelegramMessage(
+            chatId,
+            "❌ Invalid format. Use: /alert set <crypto> <price> <above/below>"
+          );
+        }
+      } else if (subcommand === "delete" && args[2]) {
+        const alertIndex = parseInt(args[2]) - 1;
+        const alerts = await getUserAlerts(userId);
+        if (alerts[alertIndex]) {
+          await deleteAlert(userId, alerts[alertIndex].id);
+          await sendTelegramMessage(chatId, "✅ Alert deleted");
+        } else {
+          await sendTelegramMessage(chatId, "❌ Invalid alert number");
+        }
+      } else {
+        await sendTelegramMessage(
+          chatId,
+          "Usage:\n/alert list - Show your alerts\n/alert set <crypto> <price> <above/below> - Create alert\n/alert delete <number> - Remove alert\n\nExample: /alert set bitcoin 70000 above"
+        );
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /news command
+    if (text.startsWith("/news")) {
+      const args = text.split(" ");
+      const limit = args[1] ? parseInt(args[1]) : 5;
+
+      await sendTelegramTypingAction(chatId);
+      const news = await fetchCryptoNews(limit);
+      await sendTelegramMessage(chatId, news);
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle voice messages
+    if (message.voice) {
+      console.log("Handling voice message");
+      await sendTelegramTypingAction(chatId);
+
+      const transcription = await transcribeVoice(message.voice.file_id);
+      if (transcription) {
+        await sendTelegramMessage(
+          chatId,
+          `🎤 **Transcription:**\n\n${transcription}`
+        );
+        // Note: User can then use the transcribed text in their next message
+      } else {
+        await sendTelegramMessage(
+          chatId,
+          "❌ Failed to transcribe voice message"
+        );
+      }
       return NextResponse.json({ ok: true });
     }
 
