@@ -13,7 +13,7 @@ export default function TelegramSetup() {
     try {
       const response = await fetch("/api/telegram-webhook/setup");
       const data = await response.json();
-      
+
       if (data.success) {
         setStatus("✅ Webhook setup successful!");
         console.log("Setup response:", data);
@@ -38,7 +38,7 @@ export default function TelegramSetup() {
         body: JSON.stringify({ action: "info" }),
       });
       const data = await response.json();
-      
+
       if (data.success) {
         setWebhookInfo(data.webhook_info);
         setStatus("✅ Webhook info retrieved!");
@@ -61,7 +61,7 @@ export default function TelegramSetup() {
         body: JSON.stringify({ action: "delete" }),
       });
       const data = await response.json();
-      
+
       if (data.success) {
         setStatus("✅ Webhook deleted!");
         setWebhookInfo(null);
@@ -198,7 +198,8 @@ export default function TelegramSetup() {
               📋 Setup Instructions
             </h3>
             <ol className="list-decimal list-inside space-y-2 text-gray-300 text-sm">
-              <li>Make sure your environment variables are set in Vercel:
+              <li>
+                Make sure your environment variables are set in Vercel:
                 <ul className="list-disc list-inside ml-6 mt-1 text-gray-400">
                   <li>TELEGRAM_BOT_TOKEN</li>
                   <li>TELEGRAM_SECRET_TOKEN</li>
@@ -208,7 +209,9 @@ export default function TelegramSetup() {
               <li>Click "Setup Webhook" to register your bot with Telegram</li>
               <li>Click "Get Webhook Info" to verify the setup</li>
               <li>Test your bot by sending a message to @m4capital_bot</li>
-              <li>If issues persist, click "Delete Webhook" and try setup again</li>
+              <li>
+                If issues persist, click "Delete Webhook" and try setup again
+              </li>
             </ol>
           </div>
 
