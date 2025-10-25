@@ -1019,6 +1019,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // Quick test response
+    if (text.toLowerCase() === "test") {
+      await sendTelegramMessage(chatId, "✅ Bot is working!");
+      return NextResponse.json({ ok: true });
+    }
+
     // AI-powered moderation for group chats
     if (isGroup && MODERATION_CONFIG.AUTO_MODERATE_GROUPS) {
       console.log("Running AI moderation check...");
