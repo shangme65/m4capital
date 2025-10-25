@@ -1054,7 +1054,7 @@ export async function POST(req: NextRequest) {
       console.log("Handling /start command");
       const welcomeMsg = isGroup
         ? "Welcome to M4Capital AI Assistant! 🤖\n\nI provide AI-powered moderation and can answer your questions about crypto and trading.\n\n👮 Auto-moderation is active to keep this group safe and spam-free."
-        : "Welcome to M4Capital AI Assistant! 🤖\n\nI'm powered by ChatGPT with advanced features:\n\n💰 **Crypto Features:**\n/watchlist - Manage your crypto watchlist\n/alert - Set price alerts\n\n🎨 **AI Tools:**\n/imagine - Generate images (DALL-E 3)\n/news - Latest crypto news\n🎤 Send voice messages (auto-transcribed)\n📄 Send PDF files (auto-analyzed with AI summary)\n📦 Send ZIP files (view contents & structure)\n\n🌐 **Settings:**\n/language - Change language\n/clear - Clear conversation\n\nJust chat with me naturally! I support 8 languages.";
+        : "Welcome to M4Capital AI Assistant! 🤖\n\n💰 **Crypto Features:**\n/watchlist - Manage your crypto watchlist\n/alert - Set price alerts\n\n🎨 **AI Tools:**\n/imagine - Generate images (DALL-E 3)\n/news - Latest crypto news\n🎤 Send voice messages (auto-transcribed)\n📄 Send PDF files (auto-analyzed with AI summary)\n📦 Send ZIP files (view contents & structure)\n\n🌐 **Settings:**\n/language - Change language\n/clear - Clear conversation\n\nJust chat with me naturally! I support 8 languages.";
 
       await sendTelegramMessage(chatId, welcomeMsg);
       return NextResponse.json({ ok: true });
