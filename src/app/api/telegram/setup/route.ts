@@ -12,10 +12,8 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get the webhook URL from query params or construct from host
-    const webhookUrl =
-      req.nextUrl.searchParams.get("url") ||
-      `${req.nextUrl.origin}/api/telegram-webhook`;
+    // Get webhook URL
+    const webhookUrl = `${req.nextUrl.origin}/api/telegram`;
 
     // Prepare webhook payload
     const webhookPayload: any = {
@@ -23,35 +21,31 @@ export async function GET(req: NextRequest) {
       allowed_updates: ["message"],
     };
 
-    // Only add secret token if it's configured
+    // Add secret token if configured
     if (secretToken) {
       webhookPayload.secret_token = secretToken;
     }
 
-    console.log("Setting webhook with URL:", webhookUrl);
-    console.log("Secret token configured:", !!secretToken);
+    console.log("Setting webhook:", webhookUrl);
 
     // Set the webhook
     const response = await fetch(
       `https://api.telegram.org/bot${botToken}/setWebhook`,
       {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(webhookPayload),
       }
     );
 
     const data = await response.json();
-    console.log("Telegram API response:", data);
+    console.log("Telegram response:", data);
 
     if (data.ok) {
       return NextResponse.json({
         success: true,
         message: "Webhook set successfully",
         webhook_url: webhookUrl,
-        secret_token_used: !!secretToken,
         telegram_response: data,
       });
     } else {
@@ -65,15 +59,15 @@ export async function GET(req: NextRequest) {
       );
     }
   } catch (error) {
-    console.error("Setup webhook error:", error);
+    console.error("Setup error:", error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error) },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
-// Get webhook info
+// POST endpoint for webhook management
 export async function POST(req: NextRequest) {
   try {
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -89,7 +83,6 @@ export async function POST(req: NextRequest) {
     const action = body.action;
 
     if (action === "delete") {
-      // Delete webhook
       const response = await fetch(
         `https://api.telegram.org/bot${botToken}/deleteWebhook`
       );
@@ -103,7 +96,6 @@ export async function POST(req: NextRequest) {
     }
 
     if (action === "info") {
-      // Get webhook info
       const response = await fetch(
         `https://api.telegram.org/bot${botToken}/getWebhookInfo`
       );
@@ -122,7 +114,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Webhook management error:", error);
     return NextResponse.json(
-      { error: "Internal server error", details: String(error) },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
