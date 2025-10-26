@@ -12,37 +12,51 @@ interface SignupModalProps {
 
 export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
   const router = useRouter();
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleEmailSignup = () => {
     router.push("/signup");
   };
 
-  const handleGoogleSignup = () => {
-    // TODO: Implement Google OAuth
-    console.log("Google signup clicked");
-  };
-
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleFacebookSignup = async () => {
+  const handleGoogleSignup = async () => {
     setError("");
     setIsLoading(true);
     try {
-      const result = await signIn("facebook", { redirect: false });
+      const result = await signIn("google", { redirect: false });
+
       if (result?.error) {
-        if (result.error.includes("already exists")) {
-          setError(
-            "An account with this Facebook profile already exists. Please log in instead."
-          );
-        } else {
-          setError("Facebook signup failed. Please try again.");
-        }
+        setError("Google signup failed. Please try again.");
       } else if (result?.ok) {
         onClose();
         router.push("/dashboard");
       }
     } catch (err) {
+      setError("An error occurred during Google signup.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFacebookSignup = async () => {
+    console.log("Facebook signup button clicked");
+    setError("");
+    setIsLoading(true);
+    try {
+      console.log("Calling signIn for facebook");
+      const result = await signIn("facebook", { redirect: false });
+      console.log("Facebook signIn result:", result);
+
+      if (result?.error) {
+        console.error("Facebook error:", result.error);
+        setError(`Facebook signup failed: ${result.error}`);
+      } else if (result?.ok) {
+        console.log("Facebook signup successful");
+        onClose();
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      console.error("Facebook exception:", err);
       setError("An error occurred during Facebook signup.");
     } finally {
       setIsLoading(false);
@@ -113,7 +127,10 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                     {/* Google button */}
                     <button
                       onClick={handleGoogleSignup}
-                      className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-3 transition-colors"
+                      disabled={isLoading}
+                      className={`w-full bg-gray-800 hover:bg-gray-700 text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-3 transition-colors ${
+                        isLoading ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                     >
                       <svg className="w-5 h-5" viewBox="0 0 24 24">
                         <path
@@ -133,7 +150,7 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                         />
                       </svg>
-                      <span>Google</span>
+                      <span>{isLoading ? "Signing up..." : "Google"}</span>
                     </button>
 
                     {/* Facebook button */}
@@ -152,12 +169,14 @@ export default function SignupModal({ isOpen, onClose }: SignupModalProps) {
                         <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                       </svg>
                       <span>{isLoading ? "Signing up..." : "Facebook"}</span>
-                      {error && (
-                        <div className="text-red-500 text-sm mt-2 text-center">
-                          {error}
-                        </div>
-                      )}
                     </button>
+
+                    {/* Error display */}
+                    {error && (
+                      <div className="text-red-500 text-sm text-center bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                        {error}
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -90,7 +90,7 @@ const CryptoPriceCard: React.FC<{
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`${
-        compact ? "p-3" : "p-4"
+        compact ? "p-1" : "p-4"
       } rounded-lg border transition-all duration-300 hover:border-opacity-75`}
       style={{
         backgroundColor: "#252320",
@@ -99,10 +99,12 @@ const CryptoPriceCard: React.FC<{
       }}
     >
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-1.5">
           {/* Crypto Icon */}
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
+            className={`${
+              compact ? "w-5 h-5 text-[9px]" : "w-8 h-8 text-xs"
+            } rounded-full flex items-center justify-center font-bold`}
             style={{
               backgroundColor:
                 symbol === "BTC"
@@ -117,19 +119,30 @@ const CryptoPriceCard: React.FC<{
           </div>
 
           <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="font-semibold text-white">{price.name}</h3>
-              <span
-                className="text-xs px-2 py-1 rounded"
-                style={{ backgroundColor: "#38312e", color: "#afadac" }}
+            <div className="flex items-center">
+              <h3
+                className={`font-semibold text-white ${
+                  compact ? "text-xs" : ""
+                }`}
               >
-                {symbol}
+                {price.name}
+              </h3>
+              {/* Change Percentage next to name */}
+              <span
+                className={`${
+                  compact ? "text-[10px]" : "text-sm"
+                } font-medium ${
+                  isPositive ? "text-green-400" : "text-red-400"
+                }`}
+                style={{ marginLeft: 0, paddingLeft: 0 }}
+              >
+                {formatChange(price.changePercent24h)}
               </span>
             </div>
 
             {/* Price */}
             <motion.div
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-0.5"
               animate={{
                 color:
                   priceDirection === "up"
@@ -140,7 +153,7 @@ const CryptoPriceCard: React.FC<{
               }}
               transition={{ duration: 0.3 }}
             >
-              <span className={`${compact ? "text-lg" : "text-xl"} font-bold`}>
+              <span className={`${compact ? "text-xs" : "text-xl"} font-bold`}>
                 {formatPrice(price.price)}
               </span>
               {priceDirection !== "neutral" && (
@@ -150,38 +163,22 @@ const CryptoPriceCard: React.FC<{
                   transition={{ duration: 0.3 }}
                 >
                   {priceDirection === "up" ? (
-                    <TrendingUp className="w-4 h-4 text-green-400" />
+                    <TrendingUp
+                      className={`${
+                        compact ? "w-3 h-3" : "w-4 h-4"
+                      } text-green-400`}
+                    />
                   ) : (
-                    <TrendingDown className="w-4 h-4 text-red-400" />
+                    <TrendingDown
+                      className={`${
+                        compact ? "w-3 h-3" : "w-4 h-4"
+                      } text-red-400`}
+                    />
                   )}
                 </motion.div>
               )}
             </motion.div>
           </div>
-        </div>
-
-        {/* Change Indicator */}
-        <div className="text-right">
-          <div
-            className={`flex items-center space-x-1 px-2 py-1 rounded text-sm font-medium ${
-              isPositive
-                ? "bg-green-500/20 text-green-400"
-                : "bg-red-500/20 text-red-400"
-            }`}
-          >
-            {isPositive ? (
-              <TrendingUp className="w-4 h-4" />
-            ) : (
-              <TrendingDown className="w-4 h-4" />
-            )}
-            <span>{formatChange(price.changePercent24h)}</span>
-          </div>
-
-          {showDetails && (
-            <div className="mt-1 text-xs" style={{ color: "#827e7d" }}>
-              24h: {formatChange(price.changePercent24h)}
-            </div>
-          )}
         </div>
       </div>
 
@@ -238,42 +235,28 @@ export const CryptoPriceTicker: React.FC<CryptoPriceTickerProps> = ({
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white flex items-center space-x-2">
-          <Activity className="w-5 h-5 text-orange-500" />
-          <span>Live Crypto Prices</span>
-        </h2>
-
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="p-2 rounded-lg transition-all duration-200 hover:opacity-75"
-          style={{ backgroundColor: "#38312e", color: "#afadac" }}
-        >
-          <RefreshCw
-            className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`}
-          />
-        </button>
-      </div>
-
-      {/* Price Cards */}
+    <div className={`${className}`}>
+      {/* Horizontal Scrolling Ticker */}
       <div
-        className={`grid gap-4 ${
-          compact
-            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
-            : "grid-cols-1 lg:grid-cols-2"
-        }`}
+        className="relative overflow-hidden"
+        style={{ backgroundColor: "#1b1817", borderRadius: "0.5rem" }}
       >
-        {symbols.map((symbol) => (
-          <CryptoPriceCard
-            key={symbol}
-            symbol={symbol}
-            showDetails={showDetails}
-            compact={compact}
-          />
-        ))}
+        <div className="flex animate-scroll" style={{ width: "max-content" }}>
+          {/* Triple the symbols array for seamless infinite loop */}
+          {[...symbols, ...symbols, ...symbols].map((symbol, index) => (
+            <div
+              key={`${symbol}-${index}`}
+              className="flex-shrink-0 px-2 py-2 border-r"
+              style={{ borderColor: "#38312e", width: "145px" }}
+            >
+              <CryptoPriceCard
+                symbol={symbol}
+                showDetails={false}
+                compact={true}
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

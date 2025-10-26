@@ -96,3 +96,22 @@ html {
 .animate-slide-in-right {
   animation: slideInRight 0.3s ease-out forwards;
 }
+
+/* Crypto Price Ticker Scroll Animation */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(calc(-100% / 3));
+  }
+}
+
+.animate-scroll {
+  animation: scroll 25s linear infinite;
+  will-change: transform;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
+}

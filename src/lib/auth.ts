@@ -58,20 +58,18 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      // Handle social login (Facebook, Google, etc.)
+      // PrismaAdapter handles creating users automatically for OAuth providers
+      // We just need to set default values when the user is first created
       if (account?.provider === "facebook" || account?.provider === "google") {
-        // Check if user already exists
         const existingUser = await prisma.user.findUnique({
           where: { email: user.email! },
         });
 
-        if (!existingUser) {
-          // Create new user with default values for social login
-          await prisma.user.create({
+        // Only update if user was just created by PrismaAdapter (no role/accountType set)
+        if (existingUser && !existingUser.role) {
+          await prisma.user.update({
+            where: { email: user.email! },
             data: {
-              email: user.email!,
-              name: user.name,
-              image: user.image,
               role: "USER",
               accountType: "INVESTOR",
             },
