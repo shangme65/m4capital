@@ -52,6 +52,13 @@ model User {
   role          UserRole  @default(USER)
   accountType   AccountType @default(INVESTOR)
   portfolio     Portfolio?
+  kycVerification KycVerification?
+  
+  // Email notification preferences
+  emailNotifications Boolean @default(true)
+  kycNotifications   Boolean @default(true)
+  tradingNotifications Boolean @default(true)
+  securityNotifications Boolean @default(true)
 }
 
 model VerificationToken {
@@ -70,6 +77,53 @@ enum UserRole {
 enum AccountType {
   INVESTOR
   TRADER
+}
+
+model KycVerification {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Information
+  firstName       String
+  lastName        String
+  dateOfBirth     DateTime
+  nationality     String
+  phoneNumber     String
+  
+  // Address Information
+  address         String
+  city            String
+  postalCode      String
+  country         String?
+  
+  // Document URLs (stored in /public/kyc-documents/)
+  idDocumentUrl   String
+  proofOfAddressUrl String
+  selfieUrl       String
+  
+  // Verification Status
+  status          KycStatus @default(PENDING)
+  submittedAt     DateTime  @default(now())
+  reviewedAt      DateTime?
+  reviewedBy      String?   // Admin user ID who reviewed
+  
+  // Rejection/Review Notes
+  rejectionReason String?   @db.Text
+  adminNotes      String?   @db.Text
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([status])
+  @@index([submittedAt])
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  UNDER_REVIEW
 }
 
 model Portfolio {

@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useSidebar } from "./SidebarContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import NotificationsPanel from "./NotificationsPanel";
+import Image from "next/image";
 
 const DashboardHeader = () => {
   const { data: session } = useSession();
@@ -34,7 +35,14 @@ const DashboardHeader = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <h1 className="text-lg sm:text-2xl font-bold text-white">Dashboard</h1>
+      <Image
+        src="/m4capitallogo1.png"
+        alt="M4 Capital Logo"
+        width={120}
+        height={40}
+        className="object-contain w-28 md:w-auto"
+        priority
+      />
       <div className="flex items-center">
         <button
           onClick={() => setIsNotificationsPanelOpen(true)}

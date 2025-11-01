@@ -38,5 +38,9 @@ yarn-error.log*
 next-env.d.ts
 setup.sh
 
+# KYC uploaded documents (sensitive data)
+/public/uploads/kyc/*
+!/public/uploads/kyc/.gitkeep
+
 # emscripten toolchain
 /emsdk

@@ -265,6 +265,7 @@ const AdminDashboard = () => {
     "success"
   );
   const [showAdminMode, setShowAdminMode] = useState(true);
+  const [pendingKycCount, setPendingKycCount] = useState(0);
 
   // Show popup notification
   const showPopupNotification = (
@@ -289,6 +290,25 @@ const AdminDashboard = () => {
       return () => clearTimeout(timer);
     }
   }, [session, showAdminMode]);
+
+  useEffect(() => {
+    // Fetch KYC pending count
+    const fetchKycCount = async () => {
+      try {
+        const res = await fetch("/api/admin/kyc/list?status=PENDING");
+        if (res.ok) {
+          const data = await res.json();
+          setPendingKycCount(data.submissions?.length || 0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch KYC count:", error);
+      }
+    };
+
+    if (session?.user?.role === "ADMIN") {
+      fetchKycCount();
+    }
+  }, [session]);
 
   useEffect(() => {
     // Only run in browser environment, not during build
@@ -553,6 +573,12 @@ const AdminDashboard = () => {
                   Manage Users
                 </button>
                 <button
+                  onClick={() => (window.location.href = "/admin/kyc")}
+                  className="w-full bg-orange-500/20 border border-orange-500/30 hover:bg-orange-500/30 text-orange-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
+                >
+                  KYC Verification
+                </button>
+                <button
                   onClick={() => setActiveTab("notifications")}
                   className="w-full bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 text-purple-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
                 >
@@ -592,6 +618,14 @@ const AdminDashboard = () => {
                 <span>Recent Alerts</span>
               </h3>
               <div className="space-y-2 text-xs sm:text-sm">
+                {pendingKycCount > 0 && (
+                  <div
+                    className="text-orange-400 cursor-pointer hover:text-orange-300 transition-colors"
+                    onClick={() => (window.location.href = "/admin/kyc")}
+                  >
+                    • Pending KYC verifications: {pendingKycCount}
+                  </div>
+                )}
                 <div className="text-yellow-400">
                   • High volume deposits detected
                 </div>
