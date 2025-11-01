@@ -50,7 +50,6 @@ export default function EmailSignupModal({
     setIsLoading(true);
 
     try {
-      // Here you would typically call your signup API
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
@@ -65,27 +64,18 @@ export default function EmailSignupModal({
         }),
       });
 
-      if (response.ok) {
-        // Auto-login after successful signup
-        const result = await signIn("credentials", {
-          redirect: false,
-          email: email.toLowerCase().trim(),
-          password,
-        });
+      const data = await response.json();
 
-        if (result?.error) {
-          setError(
-            "Account created but login failed. Please try logging in manually."
-          );
-        } else {
-          onClose();
-          router.push("/dashboard");
-        }
-      } else {
-        const errorData = await response.json();
-        setError(
-          errorData.message || "Failed to create account. Please try again."
+      if (response.ok && data.success) {
+        // Redirect to verification page
+        onClose();
+        router.push(
+          `/verify-email?email=${encodeURIComponent(
+            email.toLowerCase().trim()
+          )}`
         );
+      } else {
+        setError(data.message || "Failed to create account. Please try again.");
       }
     } catch (error) {
       setError("Network error. Please try again.");

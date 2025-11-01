@@ -292,3 +292,33 @@ Review KYC: ${process.env.NEXTAUTH_URL}/admin/kyc
 
 This notification was sent to all admin users.
 `;
+
+// Email Verification Code Template
+export const verificationCodeTemplate = (name: string, code: string) => `
+<div style="text-align: center;">
+  <h1 style="color: #333333; margin-bottom: 10px;">Verify Your Email</h1>
+  <p style="font-size: 16px; color: #666666; margin-bottom: 30px;">
+    Welcome to M4 Capital, ${name}! Please use the code below to verify your email address.
+  </p>
+</div>
+
+<div style="background-color: #f8f9fa; border-radius: 10px; padding: 30px; margin: 30px 0; text-align: center;">
+  <p style="font-size: 14px; color: #666666; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
+  <div style="font-size: 42px; font-weight: bold; letter-spacing: 8px; color: #667eea; font-family: 'Courier New', monospace; margin: 10px 0;">
+    ${code}
+  </div>
+  <p style="font-size: 12px; color: #999999; margin-top: 15px;">This code will expire in 15 minutes</p>
+</div>
+
+<div style="margin-top: 30px;">
+  <p style="font-size: 14px; color: #666666;">
+    If you didn't create an account with M4 Capital, you can safely ignore this email.
+  </p>
+</div>
+
+<div style="border-top: 1px solid #eeeeee; margin-top: 30px; padding-top: 20px;">
+  <p style="font-size: 12px; color: #999999; margin: 5px 0;">
+    <strong>Security Tip:</strong> Never share this code with anyone. M4 Capital will never ask you for this code.
+  </p>
+</div>
+`;

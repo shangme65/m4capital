@@ -54,6 +54,11 @@ model User {
   portfolio     Portfolio?
   kycVerification KycVerification?
   
+  // Email verification fields
+  isEmailVerified Boolean @default(false)
+  emailVerificationCode String?
+  emailVerificationExpires DateTime?
+  
   // Email notification preferences
   emailNotifications Boolean @default(true)
   kycNotifications   Boolean @default(true)

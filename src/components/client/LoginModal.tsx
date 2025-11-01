@@ -97,7 +97,23 @@ export default function LoginModal({
     setIsLoading(false);
 
     if (result?.error) {
-      setError("Invalid email or password. Please try again.");
+      // Check for email verification error
+      if (result.error === "EMAIL_NOT_VERIFIED") {
+        setError(
+          "Please verify your email address before logging in. Check your email for the verification code."
+        );
+        // Optionally, redirect to verification page
+        setTimeout(() => {
+          onClose();
+          router.push(
+            `/verify-email?email=${encodeURIComponent(
+              email.toLowerCase().trim()
+            )}`
+          );
+        }, 2000);
+      } else {
+        setError("Invalid email or password. Please try again.");
+      }
     } else {
       onClose();
       router.push("/dashboard");

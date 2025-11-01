@@ -49,6 +49,11 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
+        // Check if email is verified
+        if (!(user as any).isEmailVerified) {
+          throw new Error("EMAIL_NOT_VERIFIED");
+        }
+
         return user;
       },
     }),
@@ -72,7 +77,8 @@ export const authOptions: AuthOptions = {
             data: {
               role: "USER",
               accountType: "INVESTOR",
-            },
+              isEmailVerified: true, // Auto-verify OAuth users
+            } as any,
           });
         }
       }
