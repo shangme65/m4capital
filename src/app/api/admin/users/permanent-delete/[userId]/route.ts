@@ -12,10 +12,10 @@ export async function POST(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const authSession = await getServerSession(authOptions);
 
     // Check if user is authenticated and is an admin
-    if (!session || session.user.role !== "ADMIN") {
+    if (!authSession || authSession.user.role !== "ADMIN") {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 403 }
@@ -25,7 +25,7 @@ export async function POST(
     const { userId } = await params;
 
     // Don't allow admins to permanently delete themselves
-    if (session.user.id === userId) {
+    if (authSession.user.id === userId) {
       return NextResponse.json(
         { success: false, error: "Cannot delete your own account" },
         { status: 400 }
@@ -79,16 +79,15 @@ export async function POST(
         where: { userId: userId },
       });
 
-      // Delete user's accounts and sessions (NextAuth)
+      // Delete user's accounts (NextAuth)
       await tx.account.deleteMany({
         where: { userId: userId },
       });
 
-      await tx.session.deleteMany({
-        where: { userId: userId },
-      });
+      // Sessions will be automatically deleted via CASCADE constraint
+      // No need to explicitly delete them here
 
-      // Finally, delete the user
+      // Finally, delete the user (this will cascade delete sessions)
       await tx.user.delete({
         where: { id: userId },
       });

@@ -26,6 +26,7 @@ import {
   Activity,
   Mail,
   ArrowLeft,
+  Trash2,
 } from "lucide-react";
 
 // Force dynamic rendering for this page
@@ -247,6 +248,7 @@ const paymentMethods: PaymentMethod[] = [
 const AdminDashboard = () => {
   const { data: session } = useSession();
   const [users, setUsers] = useState<User[]>([]);
+  const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [amount, setAmount] = useState(0);
   const [message, setMessage] = useState("");
@@ -307,6 +309,8 @@ const AdminDashboard = () => {
 
     if (session?.user?.role === "ADMIN") {
       fetchKycCount();
+      // Also fetch deleted users count for the quick action badge
+      fetchDeletedUsers();
     }
   }, [session]);
 
@@ -314,6 +318,8 @@ const AdminDashboard = () => {
     // Only run in browser environment, not during build
     if (activeTab === "users" && typeof window !== "undefined") {
       fetchUsers();
+    } else if (activeTab === "bin" && typeof window !== "undefined") {
+      fetchDeletedUsers();
     }
   }, [activeTab]);
 
@@ -326,6 +332,20 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
+    }
+  };
+
+  const fetchDeletedUsers = async () => {
+    try {
+      const res = await fetch("/api/admin/users/bin");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setDeletedUsers(data.users);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch deleted users:", error);
     }
   };
 
@@ -438,6 +458,112 @@ const AdminDashboard = () => {
     setLoading(false);
   };
 
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to move ${userEmail} to the bin?`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/delete/${userId}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showPopupNotification("User moved to bin successfully", "success");
+        fetchUsers();
+        if (selectedUser?.id === userId) {
+          setSelectedUser(null);
+        }
+      } else {
+        showPopupNotification(`Failed to delete user: ${data.error}`, "error");
+      }
+    } catch (error) {
+      console.error("Delete user error:", error);
+      showPopupNotification(
+        "Failed to delete user. Please try again.",
+        "error"
+      );
+    }
+    setLoading(false);
+  };
+
+  const handleRestoreUser = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to restore ${userEmail}?`)) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/restore/${userId}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showPopupNotification("User restored successfully", "success");
+        fetchDeletedUsers();
+        if (selectedUser?.id === userId) {
+          setSelectedUser(null);
+        }
+      } else {
+        showPopupNotification(`Failed to restore user: ${data.error}`, "error");
+      }
+    } catch (error) {
+      console.error("Restore user error:", error);
+      showPopupNotification(
+        "Failed to restore user. Please try again.",
+        "error"
+      );
+    }
+    setLoading(false);
+  };
+
+  const handlePermanentDelete = async (userId: string, userEmail: string) => {
+    const confirmation = prompt(
+      `⚠️ PERMANENT DELETE - This action is IRREVERSIBLE!\n\n` +
+        `This will completely remove the user and all their data from the database.\n` +
+        `The email "${userEmail}" will be freed for reuse.\n\n` +
+        `Type "DELETE FOREVER" to confirm:`
+    );
+
+    if (confirmation !== "DELETE FOREVER") {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/users/permanent-delete/${userId}`, {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showPopupNotification(
+          data.message || "User permanently deleted",
+          "success"
+        );
+        fetchDeletedUsers();
+        if (selectedUser?.id === userId) {
+          setSelectedUser(null);
+        }
+      } else {
+        showPopupNotification(
+          `Failed to permanently delete user: ${data.error}`,
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Permanent delete error:", error);
+      showPopupNotification(
+        "Failed to permanently delete user. Please try again.",
+        "error"
+      );
+    }
+    setLoading(false);
+  };
+
   const handlePaymentDetailChange = (field: string, value: string) => {
     setPaymentDetails((prev) => ({
       ...prev,
@@ -448,10 +574,12 @@ const AdminDashboard = () => {
   const totalUsers = users.length;
   const adminUsers = users.filter((user) => user.role === "ADMIN").length;
   const regularUsers = users.filter((user) => user.role === "USER").length;
+  const deletedUsersCount = deletedUsers.length;
 
   const adminTabs = [
     { id: "dashboard", name: "Dashboard", icon: <BarChart3 size={20} /> },
     { id: "users", name: "User Management", icon: <Users size={20} /> },
+    { id: "bin", name: "Deleted Users", icon: <Trash2 size={20} /> },
     { id: "payments", name: "Manual Payments", icon: <CreditCard size={20} /> },
     { id: "notifications", name: "Notifications", icon: <Bell size={20} /> },
     {
@@ -571,6 +699,17 @@ const AdminDashboard = () => {
                   className="w-full bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
                 >
                   Manage Users
+                </button>
+                <button
+                  onClick={() => setActiveTab("bin")}
+                  className="w-full bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center justify-between"
+                >
+                  <span>Deleted Users Bin</span>
+                  {deletedUsersCount > 0 && (
+                    <span className="bg-red-500 text-white rounded-full px-2 py-0.5 text-xs">
+                      {deletedUsersCount}
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => (window.location.href = "/admin/kyc")}
@@ -750,8 +889,22 @@ const AdminDashboard = () => {
                                 setNewRole(user.role as "USER" | "ADMIN");
                               }}
                               className="text-gray-400 hover:text-orange-400 transition-colors"
+                              title="Edit Role"
                             >
                               <Settings size={14} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteUser(
+                                  user.id,
+                                  user.email || "Unknown"
+                                );
+                              }}
+                              className="text-gray-400 hover:text-red-400 transition-colors"
+                              title="Delete User"
+                            >
+                              <Trash2 size={14} />
                             </button>
                           </div>
                         </div>
@@ -785,6 +938,150 @@ const AdminDashboard = () => {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bin Tab - Deleted Users */}
+      {activeTab === "bin" && (
+        <div className="space-y-4">
+          {/* Bin Stats - Compact */}
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Trash2 className="text-red-400" size={20} />
+                <div>
+                  <h2 className="text-lg font-bold">Deleted Users Bin</h2>
+                  <p className="text-xs text-gray-400">
+                    Restore or permanently delete users
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-400">Total</p>
+                <p className="text-2xl font-bold text-red-400">
+                  {deletedUsersCount}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Deleted Users List - Compact */}
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+            {deletedUsers.length === 0 ? (
+              <div className="text-center py-8">
+                <Trash2 className="mx-auto mb-3 text-gray-600" size={36} />
+                <p className="text-gray-400 text-sm">No deleted users in bin</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-700/50">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                        User
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                        Role
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                        Type
+                      </th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase">
+                        Deleted At
+                      </th>
+                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-300 uppercase">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-700">
+                    {deletedUsers.map((user: any) => (
+                      <tr
+                        key={user.id}
+                        className="hover:bg-gray-700/30 transition-colors"
+                      >
+                        <td className="px-3 py-2">
+                          <div>
+                            <p className="font-medium text-white text-sm">
+                              {user.email}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {user.name || "No name"}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                              user.role === "ADMIN"
+                                ? "bg-orange-500/20 text-orange-400"
+                                : "bg-gray-500/20 text-gray-400"
+                            }`}
+                          >
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-xs text-gray-300">
+                          {user.accountType}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-gray-400">
+                          {user.deletedAt
+                            ? new Date(user.deletedAt).toLocaleDateString()
+                            : "N/A"}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() =>
+                                handleRestoreUser(
+                                  user.id,
+                                  user.email || "Unknown"
+                                )
+                              }
+                              disabled={loading}
+                              className="text-green-400 hover:text-green-300 disabled:opacity-50"
+                              title="Restore User"
+                            >
+                              <ArrowLeft size={14} />
+                            </button>
+                            <button
+                              onClick={() =>
+                                handlePermanentDelete(
+                                  user.id,
+                                  user.email || "Unknown"
+                                )
+                              }
+                              disabled={loading}
+                              className="text-red-400 hover:text-red-300 disabled:opacity-50"
+                              title="Delete Forever"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {deletedUsers.length > 0 && (
+              <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle
+                    className="text-yellow-400 flex-shrink-0"
+                    size={14}
+                  />
+                  <p className="text-gray-300">
+                    <strong className="text-yellow-400">Note:</strong> Restore
+                    moves user back to active. Delete Forever is permanent &
+                    irreversible.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
