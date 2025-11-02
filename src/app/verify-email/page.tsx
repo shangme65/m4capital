@@ -45,9 +45,9 @@ function VerifyEmailContent() {
           type: "success",
           text: data.message || "Email verified successfully!",
         });
-        // Redirect to login after 2 seconds
+        // Redirect to homepage after 2 seconds
         setTimeout(() => {
-          router.push("/login");
+          router.push("/");
         }, 2000);
       } else {
         setMessage({
@@ -220,7 +220,7 @@ function VerifyEmailContent() {
         <div className="mt-8 text-center">
           <button
             type="button"
-            onClick={() => router.push("/login")}
+            onClick={() => router.push("/")}
             className="text-gray-400 hover:text-gray-300 text-sm"
           >
             Back to Login

@@ -7,7 +7,7 @@ export const transporter = nodemailer.createTransport({
   secure: process.env.SMTP_SECURE === "true", // true for 465, false for other ports
   auth: {
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
+    pass: process.env.SMTP_PASS,
   },
 });
 
@@ -37,8 +37,8 @@ export async function sendEmail({
 }) {
   try {
     const info = await transporter.sendMail({
-      from: `"${process.env.EMAIL_FROM_NAME || "M4 Capital"}" <${
-        process.env.EMAIL_FROM_ADDRESS || process.env.SMTP_USER
+      from: `"${process.env.SMTP_FROM_NAME || "M4 Capital"}" <${
+        process.env.SMTP_FROM || process.env.SMTP_USER
       }>`,
       to,
       subject,
