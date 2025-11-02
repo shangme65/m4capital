@@ -72,7 +72,7 @@ export async function GET() {
           role: "ADMIN",
           emailVerified: new Date(), // NextAuth field
           isEmailVerified: true, // Custom verification field
-          accountType: "BASIC",
+          accountType: "INVESTOR",
         },
         select: {
           id: true,

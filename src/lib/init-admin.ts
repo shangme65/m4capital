@@ -53,7 +53,7 @@ export async function initializeOriginAdmin() {
           role: "ADMIN",
           emailVerified: new Date(), // NextAuth field
           isEmailVerified: true, // Custom verification field
-          accountType: "BASIC",
+          accountType: "INVESTOR",
         },
       });
       console.log("✅ Origin admin created:", email);
