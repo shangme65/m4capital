@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { usePortfolio } from "@/lib/usePortfolio";
 
 interface ConvertModalProps {
   isOpen: boolean;
@@ -15,12 +16,7 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
     toAsset: "ETH",
     amount: "",
   });
-  const [availableBalances] = useState({
-    BTC: 0.8542,
-    ETH: 12.67,
-    ADA: 8420.15,
-    SOL: 45.23,
-  });
+  const { portfolio } = usePortfolio();
   const [exchangeRates] = useState({
     BTC: { ETH: 26, ADA: 185714, SOL: 433 },
     ETH: { BTC: 0.038, ADA: 7143, SOL: 16.7 },
@@ -30,6 +26,13 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
   const [conversionFee] = useState(0.5); // 0.5% fee
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const { addTransaction, addNotification } = useNotifications();
+
+  // Calculate available balances from portfolio assets
+  const availableBalances =
+    portfolio?.portfolio?.assets?.reduce((acc: any, asset: any) => {
+      acc[asset.symbol] = asset.amount || 0;
+      return acc;
+    }, {} as Record<string, number>) || {};
 
   // Prevent body scroll when modal is open
   useEffect(() => {

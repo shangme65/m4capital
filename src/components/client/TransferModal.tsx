@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { usePortfolio } from "@/lib/usePortfolio";
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -16,12 +17,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
     walletAddress: "",
     memo: "",
   });
-  const [availableBalances] = useState({
-    BTC: 0.8542,
-    ETH: 12.67,
-    ADA: 8420.15,
-    SOL: 45.23,
-  });
+  const { portfolio } = usePortfolio();
   const [recentAddresses, setRecentAddresses] = useState<
     Array<{
       id: number;
@@ -33,6 +29,13 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [transferFee] = useState(0.0001);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const { addTransaction, addNotification } = useNotifications();
+
+  // Calculate available balances from portfolio assets
+  const availableBalances =
+    portfolio?.portfolio?.assets?.reduce((acc: any, asset: any) => {
+      acc[asset.symbol] = asset.amount || 0;
+      return acc;
+    }, {} as Record<string, number>) || {};
 
   // Prevent body scroll when modal is open
   useEffect(() => {

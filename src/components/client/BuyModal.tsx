@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { usePortfolio } from "@/lib/usePortfolio";
 
 interface BuyModalProps {
   isOpen: boolean;
@@ -17,7 +18,10 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   });
   const [orderType, setOrderType] = useState<"market" | "limit">("market");
   const [limitPrice, setLimitPrice] = useState("");
-  const [availableBalance] = useState(5420.0);
+  const { portfolio } = usePortfolio();
+  const availableBalance = portfolio?.portfolio?.balance
+    ? parseFloat(portfolio.portfolio.balance.toString())
+    : 0;
   const [assetPrices] = useState({
     BTC: 65000,
     ETH: 2500,

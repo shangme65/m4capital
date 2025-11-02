@@ -882,30 +882,37 @@ const AdminDashboard = () => {
                             >
                               {user.role}
                             </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingUser(user);
-                                setNewRole(user.role as "USER" | "ADMIN");
-                              }}
-                              className="text-gray-400 hover:text-orange-400 transition-colors"
-                              title="Edit Role"
-                            >
-                              <Settings size={14} />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteUser(
-                                  user.id,
-                                  user.email || "Unknown"
-                                );
-                              }}
-                              className="text-gray-400 hover:text-red-400 transition-colors"
-                              title="Delete User"
-                            >
-                              <Trash2 size={14} />
-                            </button>
+                            {/* Hide settings and delete buttons for super admin */}
+                            {user.email !==
+                              process.env.NEXT_PUBLIC_ORIGIN_ADMIN_EMAIL &&
+                              user.email !== "admin@m4capital.com" && (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingUser(user);
+                                      setNewRole(user.role as "USER" | "ADMIN");
+                                    }}
+                                    className="text-gray-400 hover:text-orange-400 transition-colors"
+                                    title="Edit Role"
+                                  >
+                                    <Settings size={14} />
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDeleteUser(
+                                        user.id,
+                                        user.email || "Unknown"
+                                      );
+                                    }}
+                                    className="text-gray-400 hover:text-red-400 transition-colors"
+                                    title="Delete User"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </>
+                              )}
                           </div>
                         </div>
                       </div>

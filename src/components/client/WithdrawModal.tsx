@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { usePortfolio } from "@/lib/usePortfolio";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -18,15 +19,17 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     memo: "",
     twoFACode: "",
   });
-  const [availableBalances] = useState({
-    BTC: 0.8542,
-    ETH: 12.67,
-    ADA: 8420.15,
-    SOL: 45.23,
-  });
+  const { portfolio } = usePortfolio();
   const [estimatedFee, setEstimatedFee] = useState(0.0005);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const { addTransaction, addNotification } = useNotifications();
+
+  // Calculate available balances from portfolio assets
+  const availableBalances =
+    portfolio?.portfolio?.assets?.reduce((acc: any, asset: any) => {
+      acc[asset.symbol] = asset.amount || 0;
+      return acc;
+    }, {} as Record<string, number>) || {};
 
   // Prevent body scroll when modal is open
   useEffect(() => {

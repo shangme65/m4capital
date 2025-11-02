@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { usePortfolio } from "@/lib/usePortfolio";
 
 interface SellModalProps {
   isOpen: boolean;
@@ -17,12 +18,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   });
   const [orderType, setOrderType] = useState<"market" | "limit">("market");
   const [limitPrice, setLimitPrice] = useState("");
-  const [availableBalances] = useState({
-    BTC: 0.8542,
-    ETH: 12.67,
-    ADA: 8420.15,
-    SOL: 45.23,
-  });
+  const { portfolio } = usePortfolio();
   const [assetPrices] = useState({
     BTC: 65000,
     ETH: 2500,
@@ -32,6 +28,13 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showAmountInUSD, setShowAmountInUSD] = useState(false);
   const { addTransaction, addNotification } = useNotifications();
+
+  // Calculate available balances from portfolio assets
+  const availableBalances =
+    portfolio?.portfolio?.assets?.reduce((acc: any, asset: any) => {
+      acc[asset.symbol] = asset.amount || 0;
+      return acc;
+    }, {} as Record<string, number>) || {};
 
   // Prevent body scroll when modal is open
   useEffect(() => {
