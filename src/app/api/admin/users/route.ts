@@ -14,8 +14,11 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch all users with essential information
+    // Fetch all active users (not deleted) with essential information
     const users = await prisma.user.findMany({
+      where: {
+        isDeleted: false
+      },
       select: {
         id: true,
         email: true,
