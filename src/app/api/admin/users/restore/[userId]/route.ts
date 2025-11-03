@@ -28,7 +28,6 @@ export async function POST(
       where: { id: userId },
       data: {
         isDeleted: false,
-        deletedAt: null,
       },
       select: {
         id: true,

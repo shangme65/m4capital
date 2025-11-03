@@ -36,7 +36,6 @@ export async function POST(
       where: { id: userId },
       data: {
         isDeleted: true,
-        deletedAt: new Date(),
       },
       select: {
         id: true,

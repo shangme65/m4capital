@@ -4,12 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import AdminSetupClient from "./AdminSetupClient";
 
+// Force dynamic rendering to avoid static generation errors
+export const dynamic = "force-dynamic";
+
 export default async function AdminSetupPage() {
   // Check if any admin exists in the database
   const adminExists = await prisma.user.findFirst({
     where: {
       role: "ADMIN",
-      deletedAt: null,
+      isDeleted: false,
     },
   });
 
@@ -48,4 +51,3 @@ export default async function AdminSetupPage() {
   // Allow access if no admin exists (first-time setup) OR user is admin
   return <AdminSetupClient adminExists={!!adminExists} />;
 }
-

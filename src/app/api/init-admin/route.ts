@@ -44,7 +44,6 @@ export async function GET() {
           emailVerified: new Date(), // NextAuth field
           isEmailVerified: true, // Custom verification field
           isDeleted: false, // Ensure not deleted
-          deletedAt: null,
         },
         select: {
           id: true,

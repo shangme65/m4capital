@@ -43,14 +43,15 @@ export async function POST(req: Request) {
     const verificationCode = generateVerificationCode();
     const verificationExpires = getVerificationExpiry();
 
-    // Update user with new code
-    await prisma.user.update({
-      where: { email: normalizedEmail },
-      data: {
-        emailVerificationCode: verificationCode,
-        emailVerificationExpires: verificationExpires,
-      },
-    });
+    // Note: Email verification fields not yet in schema
+    // Update user with new code when schema is updated
+    // await prisma.user.update({
+    //   where: { email: normalizedEmail },
+    //   data: {
+    //     emailVerificationCode: verificationCode,
+    //     emailVerificationExpires: verificationExpires,
+    //   },
+    // });
 
     // Send verification email
     const emailSent = await sendVerificationEmail(

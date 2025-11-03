@@ -57,7 +57,6 @@ export async function POST() {
       },
       data: {
         isDeleted: true,
-        deletedAt: new Date(),
       },
     });
 

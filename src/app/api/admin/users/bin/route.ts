@@ -29,7 +29,7 @@ export async function GET(req: Request) {
         role: true,
         accountType: true,
         country: true,
-        deletedAt: true,
+        isDeleted: true,
         createdAt: true,
         kycVerification: {
           select: {
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
         },
       },
       orderBy: {
-        deletedAt: "desc",
+        createdAt: "desc",
       },
     });
 

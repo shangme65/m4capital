@@ -39,7 +39,6 @@ export async function initializeOriginAdmin() {
           emailVerified: new Date(), // NextAuth field
           isEmailVerified: true, // Custom verification field
           isDeleted: false, // Ensure not deleted
-          deletedAt: null,
         },
       });
       console.log("✅ Origin admin updated:", email);

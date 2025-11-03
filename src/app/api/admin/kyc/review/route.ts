@@ -1,10 +1,110 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { sendKycApprovedEmail, sendKycRejectedEmail } from "@/lib/kyc-emails";
 
-// KYC feature not yet implemented - KycVerification model does not exist in schema
-// TODO: Add KycVerification model to prisma/schema.prisma before enabling this feature
 export async function POST(req: NextRequest) {
-  return NextResponse.json(
-    { error: "KYC verification feature not yet implemented" },
-    { status: 501 }
-  );
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user is admin
+    const admin = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, role: true, name: true },
+    });
+
+    if (admin?.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Forbidden - Admin only" },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const { kycId, action, rejectionReason } = body;
+
+    if (!kycId || !action) {
+      return NextResponse.json(
+        { error: "Missing required fields: kycId, action" },
+        { status: 400 }
+      );
+    }
+
+    if (action !== "APPROVE" && action !== "REJECT") {
+      return NextResponse.json(
+        { error: "Invalid action. Must be APPROVE or REJECT" },
+        { status: 400 }
+      );
+    }
+
+    if (action === "REJECT" && !rejectionReason) {
+      return NextResponse.json(
+        { error: "Rejection reason is required when rejecting" },
+        { status: 400 }
+      );
+    }
+
+    // Get KYC verification
+    const kycVerification = await prisma.kycVerification.findUnique({
+      where: { id: kycId },
+      include: { user: true },
+    });
+
+    if (!kycVerification) {
+      return NextResponse.json(
+        { error: "KYC verification not found" },
+        { status: 404 }
+      );
+    }
+
+    // Update KYC status
+    const updatedKyc = await prisma.kycVerification.update({
+      where: { id: kycId },
+      data: {
+        status: action === "APPROVE" ? "APPROVED" : "REJECTED",
+        reviewedBy: admin.id,
+        reviewedAt: new Date(),
+        rejectionReason: action === "REJECT" ? rejectionReason : null,
+      },
+    });
+
+    // Send email notification to user
+    if (action === "APPROVE") {
+      await sendKycApprovedEmail(
+        kycVerification.user.email!,
+        kycVerification.user.name || "User"
+      );
+    } else {
+      await sendKycRejectedEmail(
+        kycVerification.user.email!,
+        kycVerification.user.name || "User",
+        rejectionReason
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: `KYC verification ${
+        action === "APPROVE" ? "approved" : "rejected"
+      } successfully`,
+      kycVerification: {
+        id: updatedKyc.id,
+        status: updatedKyc.status,
+        reviewedBy: updatedKyc.reviewedBy,
+        reviewedAt: updatedKyc.reviewedAt,
+        rejectionReason: updatedKyc.rejectionReason,
+      },
+    });
+  } catch (error) {
+    console.error("KYC review error:", error);
+    return NextResponse.json(
+      { error: "Failed to review KYC verification" },
+      { status: 500 }
+    );
+  }
 }

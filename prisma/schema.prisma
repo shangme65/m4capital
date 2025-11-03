@@ -34,18 +34,27 @@ model Session {
 }
 
 model User {
-  id            String      @id @default(cuid())
-  name          String?
-  email         String?     @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          UserRole    @default(USER)
-  accountType   AccountType @default(INVESTOR)
-  country       String?
-  accounts      Account[]
-  portfolio     Portfolio?
-  sessions      Session[]
+  id                     String            @id @default(cuid())
+  name                   String?
+  email                  String?           @unique
+  emailVerified          DateTime?
+  image                  String?
+  password               String?
+  role                   UserRole          @default(USER)
+  accountType            AccountType       @default(INVESTOR)
+  country                String?
+  isEmailVerified        Boolean           @default(false)
+  isDeleted              Boolean           @default(false)
+  emailNotifications     Boolean           @default(true)
+  tradingNotifications   Boolean           @default(true)
+  securityNotifications  Boolean           @default(true)
+  kycNotifications       Boolean           @default(true)
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+  accounts               Account[]
+  portfolio              Portfolio?
+  sessions               Session[]
+  kycVerification        KycVerification?
 }
 
 model VerificationToken {
@@ -54,6 +63,47 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model KycVerification {
+  id                String        @id @default(cuid())
+  userId            String        @unique
+  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Personal Information
+  firstName         String
+  lastName          String
+  dateOfBirth       String
+  nationality       String
+  phoneNumber       String
+  
+  // Address Information
+  address           String
+  city              String
+  postalCode        String
+  country           String
+  
+  // Document URLs
+  idDocumentUrl     String
+  proofOfAddressUrl String
+  selfieUrl         String
+  
+  // Verification Status
+  status            KycStatus     @default(PENDING)
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  rejectionReason   String?
+  
+  // Timestamps
+  submittedAt       DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+enum KycStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
 }
 
 model Portfolio {

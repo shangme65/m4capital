@@ -10,13 +10,6 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export async function POST(req: NextRequest) {
-  // KYC feature not yet implemented - model does not exist in schema
-  return NextResponse.json(
-    { error: "KYC verification feature not yet implemented" },
-    { status: 501 }
-  );
-  
-  /* TODO: Implement KYC model in prisma/schema.prisma first
   try {
     const session = await getServerSession(authOptions);
 
@@ -100,7 +93,7 @@ export async function POST(req: NextRequest) {
     );
     await writeFile(selfiePath, selfieBuffer);
 
-    // Generate public URLs
+    // Generate public URLs for documents
     const idDocumentUrl = `/kyc-documents/${user.id}/${path.basename(
       idDocumentPath
     )}`;
@@ -113,7 +106,7 @@ export async function POST(req: NextRequest) {
     const kycData = {
       firstName,
       lastName,
-      dateOfBirth: new Date(dateOfBirth),
+      dateOfBirth,
       nationality,
       phoneNumber,
       address,
@@ -129,13 +122,13 @@ export async function POST(req: NextRequest) {
 
     let kycVerification;
     if (user.kycVerification) {
-      // Update existing
+      // Update existing KYC
       kycVerification = await prisma.kycVerification.update({
         where: { userId: user.id },
         data: kycData,
       });
     } else {
-      // Create new
+      // Create new KYC
       kycVerification = await prisma.kycVerification.create({
         data: {
           ...kycData,
@@ -144,23 +137,16 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Send email notifications asynchronously (don't wait for them)
-    if (user.email) {
-      Promise.all([
-        // Send confirmation email to user
-        sendKycSubmissionEmail(user.email, user.name || "User"),
-        // Send notification to all admins
-        sendKycAdminNotification(
-          user.name || "User",
-          user.email,
-          user.id,
-          kycVerification.id
-        ),
-      ]).catch((error) => {
-        console.error("Error sending KYC notification emails:", error);
-        // Don't fail the request if emails fail
-      });
-    }
+    // Send confirmation email to user
+    await sendKycSubmissionEmail(user.email!, user.name || "User");
+
+    // Notify admins
+    await sendKycAdminNotification(
+      user.name || "User",
+      user.email!,
+      user.id,
+      kycVerification.id
+    );
 
     return NextResponse.json({
       success: true,
