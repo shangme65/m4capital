@@ -23,11 +23,11 @@ export const emailTemplate = (content: string) => `
       padding: 40px 20px;
       text-align: center;
     }
-    .logo {
-      color: #ffffff;
-      font-size: 32px;
-      font-weight: bold;
-      margin: 0;
+    .logo-img {
+      max-width: 200px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
     }
     .content {
       padding: 40px 30px;
@@ -81,7 +81,9 @@ export const emailTemplate = (content: string) => `
 <body>
   <div class="container">
     <div class="header">
-      <h1 class="logo">M4 Capital</h1>
+      <img src="${
+        process.env.NEXTAUTH_URL || "https://m4capital.online"
+      }/m4capitallogo1.png" alt="M4 Capital" class="logo-img" />
     </div>
     <div class="content">
       ${content}

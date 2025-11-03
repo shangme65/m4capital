@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -16,15 +13,14 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -38,41 +34,18 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String      @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?     @unique
   emailVerified DateTime?
   image         String?
   password      String?
+  role          UserRole    @default(USER)
+  accountType   AccountType @default(INVESTOR)
   country       String?
   accounts      Account[]
-  sessions      Session[]
-
-  // M4Capital specific fields
-  role          UserRole  @default(USER)
-  accountType   AccountType @default(INVESTOR)
   portfolio     Portfolio?
-  kycVerification KycVerification?
-  
-  // Email verification fields
-  isEmailVerified Boolean @default(false)
-  emailVerificationCode String?
-  emailVerificationExpires DateTime?
-  
-  // Email notification preferences
-  emailNotifications Boolean @default(true)
-  kycNotifications   Boolean @default(true)
-  tradingNotifications Boolean @default(true)
-  securityNotifications Boolean @default(true)
-  
-  // Soft delete fields (for admin bin/restore)
-  isDeleted     Boolean   @default(false)
-  deletedAt     DateTime?
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  @@index([isDeleted])
+  sessions      Session[]
 }
 
 model VerificationToken {
@@ -83,6 +56,44 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+model Portfolio {
+  id          String       @id @default(cuid())
+  userId      String       @unique
+  balance     Decimal      @default(0.00)
+  assets      Json         @default("[]")
+  deposits    Deposit[]
+  user        User         @relation(fields: [userId], references: [id])
+  withdrawals Withdrawal[]
+}
+
+model Deposit {
+  id            String    @id @default(cuid())
+  portfolioId   String
+  amount        Decimal
+  currency      String
+  status        String    @default("PENDING")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  metadata      Json?     @default("{}")
+  transactionId String?
+  type          String?
+  portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
+}
+
+model Withdrawal {
+  id            String    @id @default(cuid())
+  portfolioId   String
+  amount        Decimal
+  currency      String
+  status        String    @default("PENDING")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  metadata      Json?     @default("{}")
+  transactionId String?
+  type          String?
+  portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -91,298 +102,4 @@ enum UserRole {
 enum AccountType {
   INVESTOR
   TRADER
-}
-
-model KycVerification {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Personal Information
-  firstName       String
-  lastName        String
-  dateOfBirth     DateTime
-  nationality     String
-  phoneNumber     String
-  
-  // Address Information
-  address         String
-  city            String
-  postalCode      String
-  country         String?
-  
-  // Document URLs (stored in /public/kyc-documents/)
-  idDocumentUrl   String
-  proofOfAddressUrl String
-  selfieUrl       String
-  
-  // Verification Status
-  status          KycStatus @default(PENDING)
-  submittedAt     DateTime  @default(now())
-  reviewedAt      DateTime?
-  reviewedBy      String?   // Admin user ID who reviewed
-  
-  // Rejection/Review Notes
-  rejectionReason String?   @db.Text
-  adminNotes      String?   @db.Text
-  
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  
-  @@index([status])
-  @@index([submittedAt])
-}
-
-enum KycStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  UNDER_REVIEW
-}
-
-model Portfolio {
-  id      String @id @default(cuid())
-  userId  String @unique
-  user    User   @relation(fields: [userId], references: [id])
-  balance Decimal @default(0.00)
-
-  assets     Json      @default("[]") // [{ "symbol": "BTC", "amount": 0.5 }, { "symbol": "ETH", "amount": 10 }]
-  deposits   Deposit[]
-  withdrawals Withdrawal[]
-}
-
-model Deposit {
-  id            String   @id @default(cuid())
-  portfolioId   String
-  portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
-  amount        Decimal
-  currency      String
-  status        String   @default("PENDING") // PENDING, COMPLETED, FAILED
-  type          String?  // CRYPTO, CARD, BANK_TRANSFER
-  transactionId String?  // External transaction ID
-  metadata      Json?    @default("{}")  // Additional payment data
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-model Withdrawal {
-  id            String   @id @default(cuid())
-  portfolioId   String
-  portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
-  amount        Decimal
-  currency      String
-  status        String   @default("PENDING") // PENDING, COMPLETED, FAILED
-  type          String?  // CRYPTO, CARD, BANK_TRANSFER
-  transactionId String?  // External transaction ID
-  metadata      Json?    @default("{}")  // Additional payment data
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-}
-
-// Telegram Bot Features
-model TelegramUser {
-  id                String   @id @default(cuid())
-  telegramId        BigInt   @unique
-  username          String?
-  firstName         String?
-  lastName          String?
-  languageCode      String   @default("en")
-  isBot             Boolean  @default(false)
-  isPremium         Boolean  @default(false)
-  
-  // Settings
-  preferredLanguage String   @default("en")
-  timezone          String?
-  notifications     Boolean  @default(true)
-  
-  // Moderation
-  warningCount      Int      @default(0)
-  isBanned          Boolean  @default(false)
-  bannedAt          DateTime?
-  bannedReason      String?
-  
-  // Stats
-  messageCount      Int      @default(0)
-  lastMessageAt     DateTime?
-  joinedAt          DateTime @default(now())
-  
-  // Relations
-  watchlists        CryptoWatchlist[]
-  priceAlerts       PriceAlert[]
-  statistics        UserStatistics[]
-  scheduledMessages ScheduledMessage[]
-  files             FileStorage[]
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  @@index([telegramId])
-  @@index([username])
-}
-
-model CryptoWatchlist {
-  id            String       @id @default(cuid())
-  userId        String
-  user          TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  symbol        String       // bitcoin, ethereum, etc
-  displayName   String       // Bitcoin, Ethereum, etc
-  addedAt       DateTime     @default(now())
-  
-  @@unique([userId, symbol])
-  @@index([userId])
-}
-
-model PriceAlert {
-  id            String       @id @default(cuid())
-  userId        String
-  user          TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  symbol        String       // bitcoin, ethereum, etc
-  targetPrice   Decimal
-  condition     String       // ABOVE, BELOW
-  isActive      Boolean      @default(true)
-  triggered     Boolean      @default(false)
-  triggeredAt   DateTime?
-  
-  chatId        BigInt       // Where to send alert
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  
-  @@index([userId])
-  @@index([symbol, isActive])
-}
-
-model UserStatistics {
-  id                  String       @id @default(cuid())
-  userId              String
-  user                TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  date                DateTime     @default(now())
-  messagesCount       Int          @default(0)
-  imagesGenerated     Int          @default(0)
-  cryptoQueriesCount  Int          @default(0)
-  commandsUsed        Json         @default("{}") // {"imagine": 5, "price": 10}
-  
-  @@unique([userId, date])
-  @@index([userId])
-  @@index([date])
-}
-
-model ScheduledMessage {
-  id            String       @id @default(cuid())
-  userId        String
-  user          TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  chatId        BigInt
-  message       String       @db.Text
-  scheduledFor  DateTime
-  sent          Boolean      @default(false)
-  sentAt        DateTime?
-  
-  recurring     Boolean      @default(false)
-  recurringType String?      // DAILY, WEEKLY, MONTHLY
-  
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  
-  @@index([scheduledFor, sent])
-  @@index([userId])
-}
-
-model FileStorage {
-  id            String       @id @default(cuid())
-  userId        String
-  user          TelegramUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  fileId        String       @unique // Telegram file ID
-  fileType      String       // photo, document, voice, video
-  fileName      String?
-  fileSize      Int?
-  mimeType      String?
-  
-  extractedText String?      @db.Text
-  metadata      Json?        @default("{}")
-  
-  uploadedAt    DateTime     @default(now())
-  
-  @@index([userId])
-  @@index([fileType])
-}
-
-model ModerationRule {
-  id            String   @id @default(cuid())
-  
-  keyword       String
-  action        String   // WARN, BAN, DELETE
-  severity      String   // LOW, MEDIUM, HIGH
-  isActive      Boolean  @default(true)
-  
-  caseSensitive Boolean  @default(false)
-  isRegex       Boolean  @default(false)
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  @@index([isActive])
-}
-
-model TradingSignal {
-  id            String   @id @default(cuid())
-  
-  symbol        String   // BTC, ETH, etc
-  action        String   // BUY, SELL, HOLD
-  price         Decimal
-  targetPrice   Decimal?
-  stopLoss      Decimal?
-  confidence    Decimal  // 0-1
-  
-  analysis      String   @db.Text
-  indicators    Json     @default("{}") // RSI, MACD, etc
-  
-  isActive      Boolean  @default(true)
-  expiresAt     DateTime?
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  @@index([symbol, isActive])
-  @@index([createdAt])
-}
-
-model Quiz {
-  id            String   @id @default(cuid())
-  
-  title         String
-  description   String?  @db.Text
-  questions     Json     // [{question: "", options: [], correct: 0}]
-  
-  chatId        BigInt?
-  messageId     BigInt?
-  
-  isActive      Boolean  @default(true)
-  responses     Json     @default("[]") // [{"userId": 123, "answers": [0,1,2]}]
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  
-  @@index([isActive])
-}
-
-model NewsArticle {
-  id            String   @id @default(cuid())
-  
-  title         String
-  description   String?  @db.Text
-  url           String
-  source        String
-  category      String   // CRYPTO, FINANCE, GENERAL
-  
-  publishedAt   DateTime
-  sentiment     String?  // POSITIVE, NEGATIVE, NEUTRAL
-  
-  createdAt     DateTime @default(now())
-  
-  @@index([category])
-  @@index([publishedAt])
 }

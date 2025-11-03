@@ -74,45 +74,15 @@ function DashboardContent() {
   const availableBalance = portfolio?.portfolio.balance || 0;
 
   // Dynamic user assets with real-time Bitcoin prices
+  // If a user has no portfolio assets yet, don't show demo asset values.
+  // Show only the available (fiat) balance (usually 0 until deposit).
   const defaultAssets = [
-    {
-      symbol: "BTC",
-      name: "Bitcoin",
-      amount: 0.8542,
-      value: btcPrice ? btcPrice.price * 0.8542 : 52847.32,
-      change: btcPrice ? btcPrice.changePercent24h : 3.24,
-      icon: "₿",
-    },
-    {
-      symbol: "ETH",
-      name: "Ethereum",
-      amount: 12.67,
-      value: 31245.89,
-      change: -1.45,
-      icon: "Ξ",
-    },
-    {
-      symbol: "ADA",
-      name: "Cardano",
-      amount: 8420.15,
-      value: 2847.21,
-      change: 5.67,
-      icon: "₳",
-    },
-    {
-      symbol: "SOL",
-      name: "Solana",
-      amount: 45.23,
-      value: 6789.43,
-      change: 2.81,
-      icon: "◎",
-    },
     {
       symbol: "USDT",
       name: "Tether",
-      amount: availableBalance,
-      value: availableBalance,
-      change: 0.01,
+      amount: availableBalance || 0,
+      value: availableBalance || 0,
+      change: 0,
       icon: "₮",
     },
   ];

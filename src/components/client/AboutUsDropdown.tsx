@@ -18,7 +18,9 @@ const AboutUsDropdown = () => {
           </li>
           <li>
             <Link
-              href="/in-the-press"
+              href="/press"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hover:text-orange-500 font-semibold"
             >
               In the Press
@@ -26,7 +28,9 @@ const AboutUsDropdown = () => {
           </li>
           <li>
             <Link
-              href="/contact-us"
+              href="/contact"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hover:text-orange-500 font-semibold"
             >
               Contact Us
@@ -35,6 +39,8 @@ const AboutUsDropdown = () => {
           <li>
             <Link
               href="/awards"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hover:text-orange-500 font-semibold"
             >
               Awards
@@ -43,6 +49,8 @@ const AboutUsDropdown = () => {
           <li>
             <Link
               href="/licenses-and-safeguards"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hover:text-orange-500 font-semibold"
             >
               Licenses and Safeguards
