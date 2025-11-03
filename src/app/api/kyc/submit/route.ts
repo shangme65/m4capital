@@ -10,6 +10,13 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 export async function POST(req: NextRequest) {
+  // KYC feature not yet implemented - model does not exist in schema
+  return NextResponse.json(
+    { error: "KYC verification feature not yet implemented" },
+    { status: 501 }
+  );
+  
+  /* TODO: Implement KYC model in prisma/schema.prisma first
   try {
     const session = await getServerSession(authOptions);
 

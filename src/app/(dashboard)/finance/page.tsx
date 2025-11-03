@@ -117,13 +117,13 @@ export default function FinancePage() {
 
   // Mock data - replace with real API calls
   const [portfolioData, setPortfolioData] = useState({
-    totalValue: 124891.42,
-    todayChange: 2847.63,
-    todayChangePercent: 2.33,
-    availableCash: 15420.5,
-    totalInvested: 110000.0,
-    totalReturn: 14891.42,
-    totalReturnPercent: 13.54,
+    totalValue: 0,
+    todayChange: 0,
+    todayChangePercent: 0,
+    availableCash: 0,
+    totalInvested: 0,
+    totalReturn: 0,
+    totalReturnPercent: 0,
   });
 
   useEffect(() => {
@@ -305,7 +305,7 @@ export default function FinancePage() {
               className="space-y-4"
             >
               {/* Content will be rendered based on active tab */}
-              {renderTabContent(activeTab, setActiveTab)}
+              {renderTabContent(activeTab, setActiveTab, portfolioData)}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -317,11 +317,17 @@ export default function FinancePage() {
 // Tab Content Renderer
 function renderTabContent(
   activeTab: string,
-  setActiveTab: (tab: string) => void
+  setActiveTab: (tab: string) => void,
+  portfolioData: any
 ) {
   switch (activeTab) {
     case "overview":
-      return <OverviewTab setActiveTab={setActiveTab} />;
+      return (
+        <OverviewTab
+          setActiveTab={setActiveTab}
+          portfolioData={portfolioData}
+        />
+      );
     case "analytics":
       return <AnalyticsTab />;
     case "reports":
@@ -339,15 +345,22 @@ function renderTabContent(
     case "taxes":
       return <TaxesTab />;
     default:
-      return <OverviewTab setActiveTab={setActiveTab} />;
+      return (
+        <OverviewTab
+          setActiveTab={setActiveTab}
+          portfolioData={portfolioData}
+        />
+      );
   }
 }
 
 // Overview Tab Component
 function OverviewTab({
   setActiveTab,
+  portfolioData,
 }: {
   setActiveTab: (tab: string) => void;
+  portfolioData: any;
 }) {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
@@ -374,14 +387,14 @@ function OverviewTab({
 
   // Function to actually download/export the report
   const downloadReport = (format: string) => {
-    // Mock data for the report
+    // Use actual portfolio data for the report
     const reportData = {
-      portfolioValue: 124891.42,
-      todayChange: 2847.63,
-      availableCash: 15420.5,
-      totalInvested: 110000.0,
-      totalReturn: 14891.42,
-      totalReturnPercent: 13.54,
+      portfolioValue: portfolioData.totalValue,
+      todayChange: portfolioData.todayChange,
+      availableCash: portfolioData.availableCash,
+      totalInvested: portfolioData.totalInvested,
+      totalReturn: portfolioData.totalReturn,
+      totalReturnPercent: portfolioData.totalReturnPercent,
       generatedAt: new Date().toISOString(),
     };
 

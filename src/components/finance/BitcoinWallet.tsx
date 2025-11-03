@@ -22,25 +22,11 @@ interface BitcoinDeposit {
 
 export default function BitcoinWallet() {
   const [walletAddress, setWalletAddress] = useState("");
-  const [balance, setBalance] = useState(0.5432);
+  const [balance, setBalance] = useState(0); // Start with 0, updated from real deposits
   const [copied, setCopied] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
-  const [deposits, setDeposits] = useState<BitcoinDeposit[]>([
-    {
-      id: "1",
-      amount: 0.1,
-      txHash: "bc1q9x8y7z6a5b4c3d2e1f0...shortened",
-      status: "COMPLETED",
-      createdAt: "2025-10-14T10:30:00Z",
-    },
-    {
-      id: "2",
-      amount: 0.05,
-      txHash: "bc1q2w3e4r5t6y7u8i9o0p1...shortened",
-      status: "PENDING",
-      createdAt: "2025-10-15T09:15:00Z",
-    },
-  ]);
+  const [deposits, setDeposits] = useState<BitcoinDeposit[]>([]);
+  // No demo deposits - will be populated from actual transactions
 
   useEffect(() => {
     // Generate a mock Bitcoin address for demo purposes

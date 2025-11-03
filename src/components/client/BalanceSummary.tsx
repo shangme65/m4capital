@@ -62,12 +62,8 @@ const BalanceSummary = ({
 }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <BalanceCard title="Total Balance" amount={balance} change={5.2} />
-      <BalanceCard
-        title="24h Profit / Loss"
-        amount={profitLoss}
-        change={-1.8}
-      />
+      <BalanceCard title="Total Balance" amount={balance} />
+      <BalanceCard title="24h Profit / Loss" amount={profitLoss} />
       <BalanceCard title="Total Deposits" amount={deposits} />
       <BalanceCard title="Total Withdrawals" amount={withdrawals} />
     </div>

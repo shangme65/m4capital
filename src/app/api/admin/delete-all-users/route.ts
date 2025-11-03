@@ -30,14 +30,8 @@ export async function POST(req: Request) {
     const sessions = await prisma.session.deleteMany();
     const verificationTokens = await prisma.verificationToken.deleteMany();
 
-    // KYC and other user-linked models (some have onDelete: Cascade already)
-    const kyc = await prisma.kycVerification.deleteMany();
-
     // Delete web users
     const users = await prisma.user.deleteMany();
-
-    // Telegram users and related data (many relations have cascade)
-    const telegramUsers = await prisma.telegramUser.deleteMany();
 
     return NextResponse.json({
       success: true,
@@ -48,9 +42,7 @@ export async function POST(req: Request) {
         accounts: accounts.count,
         sessions: sessions.count,
         verificationTokens: verificationTokens.count,
-        kyc: kyc.count,
         users: users.count,
-        telegramUsers: telegramUsers.count,
       },
     });
   } catch (err) {
