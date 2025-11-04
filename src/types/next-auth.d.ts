@@ -11,6 +11,7 @@ declare module "next-auth" {
       role: string;
       accountType?: string;
       country?: string | null;
+      isEmailVerified?: boolean;
     } & DefaultSession["user"];
   }
 
@@ -18,6 +19,7 @@ declare module "next-auth" {
     role: string;
     accountType?: string;
     country?: string | null;
+    isEmailVerified?: boolean;
   }
 }
 
@@ -29,5 +31,7 @@ declare module "next-auth/jwt" {
     role: string;
     accountType?: string;
     country?: string | null;
+    isEmailVerified?: boolean;
+    lastUpdated?: number;
   }
 }

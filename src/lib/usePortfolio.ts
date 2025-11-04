@@ -64,6 +64,14 @@ export const usePortfolio = () => {
       );
 
       if (!response.ok) {
+        // Handle authentication errors gracefully
+        if (response.status === 401) {
+          console.log("⚠️ Not authenticated - user needs to login");
+          setError("Authentication required");
+          setIsLoading(false);
+          return; // Don't throw error for auth issues
+        }
+
         // Try to parse JSON, but handle cases where it's not JSON
         let errorMessage = `Failed to fetch portfolio (${response.status})`;
         try {

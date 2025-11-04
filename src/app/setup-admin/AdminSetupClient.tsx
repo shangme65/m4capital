@@ -43,16 +43,16 @@ export default function AdminSetupClient({
             email: data.admin.email,
             password: data.tempPassword,
             redirect: false,
+            callbackUrl: "/dashboard",
           });
 
           if (loginResult?.ok) {
-            // Refresh the page to show updated authentication status
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
+            // Successfully logged in - redirect to dashboard
+            window.location.href = "/dashboard";
           } else {
             setError(
-              "Admin created but auto-login failed. Please login manually."
+              loginResult?.error ||
+                "Admin created but auto-login failed. Please login manually."
             );
           }
         }
