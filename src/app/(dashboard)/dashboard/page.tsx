@@ -17,8 +17,17 @@ export const dynamic = "force-dynamic";
 
 // Dashboard content component with crypto integration
 function DashboardContent() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const btcPrice = useBitcoinPrice();
+
+  // Debug logging for session
+  console.log("🎯 Dashboard Component Rendered");
+  console.log("🔐 Session Status:", status);
+  console.log(
+    "👤 Session Data:",
+    session ? { user: session.user } : "No session"
+  );
+
   const {
     portfolio,
     isLoading: portfolioLoading,
@@ -376,7 +385,16 @@ function DashboardContent() {
           </div>
           {portfolioError && (
             <div className="text-red-400 text-sm mt-2">
-              Failed to load portfolio data.
+              Failed to load portfolio data: {portfolioError}
+              {status === "unauthenticated" && (
+                <div className="text-yellow-400 mt-1">
+                  ⚠️ You are not logged in. Please{" "}
+                  <a href="/signin" className="underline">
+                    sign in
+                  </a>{" "}
+                  to view your portfolio.
+                </div>
+              )}
               <button
                 onClick={refetch}
                 className="ml-2 underline hover:text-red-300"

@@ -8,9 +8,16 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
+    console.log("📊 Portfolio API endpoint called");
     const session = await getServerSession(authOptions);
 
+    console.log(
+      "🔐 Session:",
+      session ? `User: ${session.user?.email}` : "No session"
+    );
+
     if (!session?.user?.email) {
+      console.error("❌ No authentication - session:", session);
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }

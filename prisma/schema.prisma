@@ -55,6 +55,8 @@ model User {
   portfolio              Portfolio?
   sessions               Session[]
   kycVerification        KycVerification?
+  deposits               Deposit[]
+  withdrawals            Withdrawal[]
 }
 
 model VerificationToken {
@@ -117,22 +119,35 @@ model Portfolio {
 }
 
 model Deposit {
-  id            String    @id @default(cuid())
-  portfolioId   String
-  amount        Decimal
-  currency      String
-  status        String    @default("PENDING")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  metadata      Json?     @default("{}")
-  transactionId String?
-  type          String?
-  portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
+  id              String    @id @default(cuid())
+  portfolioId     String
+  userId          String?
+  amount          Decimal
+  currency        String
+  status          String    @default("PENDING")
+  method          String?   // NOWPAYMENTS_BTC, BANK_TRANSFER, etc.
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  metadata        Json?     @default("{}")
+  transactionId   String?
+  type            String?
+  
+  // NOWPayments fields
+  paymentId       String?   @unique // NOWPayments payment_id
+  paymentAddress  String?   // Bitcoin address to send to
+  paymentAmount   Decimal?  // Amount in BTC
+  paymentStatus   String?   // NOWPayments status (waiting, confirming, confirmed, etc.)
+  cryptoAmount    Decimal?  // Estimated crypto amount
+  cryptoCurrency  String?   // BTC, ETH, etc.
+  
+  portfolio       Portfolio @relation(fields: [portfolioId], references: [id])
+  user            User?     @relation(fields: [userId], references: [id])
 }
 
 model Withdrawal {
   id            String    @id @default(cuid())
   portfolioId   String
+  userId        String?
   amount        Decimal
   currency      String
   status        String    @default("PENDING")
@@ -142,6 +157,7 @@ model Withdrawal {
   transactionId String?
   type          String?
   portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
+  user          User?     @relation(fields: [userId], references: [id])
 }
 
 enum UserRole {
