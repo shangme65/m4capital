@@ -324,3 +324,54 @@ export const verificationCodeTemplate = (name: string, code: string) => `
   </p>
 </div>
 `;
+
+// Welcome Email Template (after verification)
+export const welcomeEmailTemplate = (name: string) => `
+<div style="text-align: center;">
+  <h1 style="color: #333333; margin-bottom: 10px;">Welcome to M4 Capital!</h1>
+  <p style="font-size: 16px; color: #666666; margin-bottom: 30px;">
+    Your email has been successfully verified, ${name}!
+  </p>
+</div>
+
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 30px; margin: 30px 0; text-align: center;">
+  <h2 style="color: #ffffff; margin: 0 0 15px 0; font-size: 24px;">🎉 You're All Set!</h2>
+  <p style="color: #ffffff; opacity: 0.9; margin: 0;">
+    Your M4 Capital account is now active and ready to use.
+  </p>
+</div>
+
+<div style="margin: 30px 0;">
+  <h3 style="color: #333333; font-size: 18px; margin-bottom: 15px;">What's Next?</h3>
+  <ul style="list-style: none; padding: 0; margin: 0;">
+    <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+      <span style="color: #667eea; margin-right: 10px;">📊</span>
+      <span style="color: #666666;">Monitor real-time cryptocurrency prices</span>
+    </li>
+    <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+      <span style="color: #667eea; margin-right: 10px;">💼</span>
+      <span style="color: #666666;">Manage your investment portfolio</span>
+    </li>
+    <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+      <span style="color: #667eea; margin-right: 10px;">📈</span>
+      <span style="color: #666666;">Access trading signals and market insights</span>
+    </li>
+    <li style="padding: 12px 0;">
+      <span style="color: #667eea; margin-right: 10px;">✅</span>
+      <span style="color: #666666;">Complete your KYC verification for full access</span>
+    </li>
+  </ul>
+</div>
+
+<div style="margin-top: 30px; text-align: center;">
+  <p style="font-size: 14px; color: #666666; margin-bottom: 15px;">
+    Need help getting started? Our support team is here to assist you.
+  </p>
+</div>
+
+<div style="border-top: 1px solid #eeeeee; margin-top: 30px; padding-top: 20px; text-align: center;">
+  <p style="font-size: 12px; color: #999999; margin: 5px 0;">
+    Thank you for choosing M4 Capital - Your trusted partner in crypto investment.
+  </p>
+</div>
+`;
