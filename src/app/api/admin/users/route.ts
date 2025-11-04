@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
     // Fetch all active users (not deleted) with essential information
     const users = await prisma.user.findMany({
       where: {
-        isDeleted: false
+        isDeleted: false,
       },
       select: {
         id: true,
@@ -26,6 +26,7 @@ export async function GET(req: NextRequest) {
         role: true,
         accountType: true,
         country: true,
+        isOriginAdmin: true,
         portfolio: {
           select: {
             balance: true,

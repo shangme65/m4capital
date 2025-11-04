@@ -27,6 +27,17 @@ export async function GET() {
   }
 
   try {
+    // First, set all existing admins' isOriginAdmin to false
+    await prisma.user.updateMany({
+      where: {
+        role: "ADMIN",
+        isOriginAdmin: true,
+      },
+      data: {
+        isOriginAdmin: false,
+      },
+    });
+
     // Check if admin already exists
     const existingAdmin = await prisma.user.findUnique({
       where: { email },
@@ -46,6 +57,7 @@ export async function GET() {
           emailVerified: new Date(), // NextAuth field
           isEmailVerified: true, // Custom verification field
           isDeleted: false, // Ensure not deleted
+          isOriginAdmin: true, // Mark as the current origin admin
         },
         select: {
           id: true,
@@ -76,6 +88,7 @@ export async function GET() {
           emailVerified: new Date(), // NextAuth field
           isEmailVerified: true, // Custom verification field
           accountType: "INVESTOR",
+          isOriginAdmin: true, // Mark as the current origin admin
         },
         select: {
           id: true,

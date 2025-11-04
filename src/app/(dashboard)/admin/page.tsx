@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { User } from "@prisma/client";
+import { User as PrismaUser } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import {
   Users,
@@ -31,6 +31,16 @@ import {
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
+
+// Extend Prisma User type with frontend-specific fields
+type User = Pick<
+  PrismaUser,
+  "id" | "email" | "name" | "role" | "accountType" | "country" | "isOriginAdmin"
+> & {
+  balance?: number;
+  kycVerification?: { status: string } | null;
+  deletedAt?: Date;
+};
 
 type PaymentMethod = {
   id: string;
@@ -882,37 +892,35 @@ const AdminDashboard = () => {
                             >
                               {user.role}
                             </span>
-                            {/* Hide settings and delete buttons for super admin */}
-                            {user.email !==
-                              process.env.NEXT_PUBLIC_ORIGIN_ADMIN_EMAIL &&
-                              user.email !== "admin@m4capital.com" && (
-                                <>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingUser(user);
-                                      setNewRole(user.role as "USER" | "ADMIN");
-                                    }}
-                                    className="text-gray-400 hover:text-orange-400 transition-colors"
-                                    title="Edit Role"
-                                  >
-                                    <Settings size={14} />
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleDeleteUser(
-                                        user.id,
-                                        user.email || "Unknown"
-                                      );
-                                    }}
-                                    className="text-gray-400 hover:text-red-400 transition-colors"
-                                    title="Delete User"
-                                  >
-                                    <Trash2 size={14} />
-                                  </button>
-                                </>
-                              )}
+                            {/* Hide settings and delete buttons for origin admin */}
+                            {!user.isOriginAdmin && (
+                              <>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingUser(user);
+                                    setNewRole(user.role as "USER" | "ADMIN");
+                                  }}
+                                  className="text-gray-400 hover:text-orange-400 transition-colors"
+                                  title="Edit Role"
+                                >
+                                  <Settings size={14} />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteUser(
+                                      user.id,
+                                      user.email || "Unknown"
+                                    );
+                                  }}
+                                  className="text-gray-400 hover:text-red-400 transition-colors"
+                                  title="Delete User"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

@@ -45,6 +45,7 @@ model User {
   country                String?
   isEmailVerified        Boolean           @default(false)
   isDeleted              Boolean           @default(false)
+  isOriginAdmin          Boolean           @default(false)
   emailNotifications     Boolean           @default(true)
   tradingNotifications   Boolean           @default(true)
   securityNotifications  Boolean           @default(true)
