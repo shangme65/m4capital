@@ -5,10 +5,14 @@ import { useRouter } from "next/navigation";
 
 interface AdminSetupClientProps {
   adminExists: boolean;
+  isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
 export default function AdminSetupClient({
   adminExists,
+  isAuthenticated,
+  isAdmin,
 }: AdminSetupClientProps) {
   const [initLoading, setInitLoading] = useState(false);
   const [removeLoading, setRemoveLoading] = useState(false);
@@ -78,9 +82,14 @@ export default function AdminSetupClient({
       <div className="max-w-2xl w-full bg-white rounded-lg shadow-2xl p-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Admin Setup</h1>
-          {adminExists && (
+          {isAuthenticated && isAdmin && (
             <span className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
               Authenticated
+            </span>
+          )}
+          {adminExists && !isAuthenticated && (
+            <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">
+              Not Logged In
             </span>
           )}
         </div>
@@ -92,6 +101,21 @@ export default function AdminSetupClient({
               exists yet. This page is publicly accessible for initial setup.
               After creating an admin, this page will require admin
               authentication.
+            </p>
+          </div>
+        )}
+
+        {adminExists && !isAuthenticated && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-yellow-800 text-sm">
+              <strong>Admin already exists:</strong> An admin account exists in
+              the database. You can still use this page to reinitialize or
+              update the origin admin account from your .env file. For security
+              operations, please{" "}
+              <a href="/?login=true" className="underline font-semibold">
+                login as admin
+              </a>
+              .
             </p>
           </div>
         )}

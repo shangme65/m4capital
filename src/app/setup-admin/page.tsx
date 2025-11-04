@@ -16,17 +16,13 @@ export default async function AdminSetupPage() {
     },
   });
 
-  // If admin exists, require authentication
+  // Get current session
+  const session = await getServerSession(authOptions);
+
+  // If admin exists, check authentication
   if (adminExists) {
-    const session = await getServerSession(authOptions);
-
-    // Not logged in - redirect to home page
-    if (!session) {
-      redirect("/?login=true");
-    }
-
     // Logged in but not an admin - deny access
-    if (session.user.role !== "ADMIN") {
+    if (session && session.user.role !== "ADMIN") {
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-white rounded-lg shadow-2xl p-8 text-center">
@@ -46,8 +42,17 @@ export default async function AdminSetupPage() {
         </div>
       );
     }
+
+    // Not logged in - show page with login prompt
+    // (they can still use the Initialize Admin button if needed)
   }
 
-  // Allow access if no admin exists (first-time setup) OR user is admin
-  return <AdminSetupClient adminExists={!!adminExists} />;
+  // Allow access: no admin exists (first-time setup), user is admin, or not logged in (for admin setup)
+  return (
+    <AdminSetupClient
+      adminExists={!!adminExists}
+      isAuthenticated={!!session}
+      isAdmin={session?.user.role === "ADMIN"}
+    />
+  );
 }
