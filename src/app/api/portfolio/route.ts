@@ -24,6 +24,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log("🔍 Looking up user:", session.user.email);
+
     // Find user and their portfolio
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
@@ -44,6 +46,9 @@ export async function GET(request: NextRequest) {
         },
       },
     });
+
+    console.log("👤 User found:", user ? `ID: ${user.id}` : "Not found");
+    console.log("💼 Portfolio exists:", user?.portfolio ? "Yes" : "No");
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -108,7 +113,13 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Portfolio API error:", error);
+    console.error("❌ Portfolio API error:", error);
+    
+    // Log detailed error information
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
 
     // Handle specific Prisma/database errors
     if (
@@ -122,7 +133,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error instanceof Error ? error.message : "Internal server error" },
       { status: 500 }
     );
   }
