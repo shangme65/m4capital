@@ -1,11 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import {
-  generateVerificationCode,
-  getVerificationExpiry,
-  sendVerificationEmail,
-} from "@/lib/email-verification";
 
 export async function POST(req: Request) {
   try {
@@ -34,12 +29,7 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Generate verification code
-    const verificationCode = generateVerificationCode();
-    const verificationExpires = getVerificationExpiry();
-
     const user = await prisma.user.create({
-      // Cast to any to allow optional 'country' before migration is applied across all environments
       data: {
         name,
         email: normalizedEmail,
@@ -47,31 +37,16 @@ export async function POST(req: Request) {
         accountType: normalizedAccountType,
         country: country || undefined,
         isEmailVerified: false,
-        emailVerificationCode: verificationCode,
-        emailVerificationExpires: verificationExpires,
         portfolio: {
           create: {},
         },
-      } as any,
+      },
     });
-
-    // Send verification email
-    const emailSent = await sendVerificationEmail(
-      normalizedEmail,
-      name,
-      verificationCode
-    );
-
-    if (!emailSent) {
-      console.error("Failed to send verification email to:", normalizedEmail);
-    }
 
     return NextResponse.json({
       success: true,
-      message:
-        "Account created successfully. Please check your email for the verification code.",
+      message: "Account created successfully. You can now sign in.",
       email: normalizedEmail,
-      requiresVerification: true,
     });
   } catch (error) {
     console.error("SIGNUP_ERROR", error);
