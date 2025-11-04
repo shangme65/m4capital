@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 
 interface AdminSetupClientProps {
   adminExists: boolean;
@@ -31,6 +32,30 @@ export default function AdminSetupClient({
 
       if (data.success) {
         setResult(data);
+
+        // After successful initialization, auto-login with credentials
+        if (
+          (data.action === "created" || data.action === "updated") &&
+          data.tempPassword
+        ) {
+          // Use NextAuth signIn to authenticate
+          const loginResult = await signIn("credentials", {
+            email: data.admin.email,
+            password: data.tempPassword,
+            redirect: false,
+          });
+
+          if (loginResult?.ok) {
+            // Refresh the page to show updated authentication status
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          } else {
+            setError(
+              "Admin created but auto-login failed. Please login manually."
+            );
+          }
+        }
       } else {
         setError(data.error || "Failed to initialize admin");
       }

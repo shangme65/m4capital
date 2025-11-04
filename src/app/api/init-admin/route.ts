@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 /**
  * Initialize or update the origin admin user
@@ -60,6 +62,8 @@ export async function GET() {
         message: "Origin admin updated successfully",
         admin: updatedAdmin,
         action: "updated",
+        // Return password for auto-login (only for this endpoint)
+        tempPassword: password,
       });
     } else {
       // Create new admin
@@ -88,6 +92,8 @@ export async function GET() {
         message: "Origin admin created successfully",
         admin: newAdmin,
         action: "created",
+        // Return password for auto-login (only for this endpoint)
+        tempPassword: password,
       });
     }
   } catch (error) {
