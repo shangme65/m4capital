@@ -30,20 +30,7 @@ export async function GET(request: NextRequest) {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       include: {
-        portfolio: {
-          include: {
-            deposits: {
-              where: { status: "COMPLETED" },
-              orderBy: { createdAt: "desc" },
-              take: 10,
-            },
-            withdrawals: {
-              where: { status: "COMPLETED" },
-              orderBy: { createdAt: "desc" },
-              take: 10,
-            },
-          },
-        },
+        portfolio: true,
       },
     });
 
@@ -57,26 +44,34 @@ export async function GET(request: NextRequest) {
     // Create portfolio if it doesn't exist
     let portfolio = user.portfolio;
     if (!portfolio) {
+      console.log("📝 Creating new portfolio for user:", user.id);
       portfolio = await prisma.portfolio.create({
         data: {
           userId: user.id,
           balance: 0.0,
           assets: [],
         },
-        include: {
-          deposits: {
-            where: { status: "COMPLETED" },
-            orderBy: { createdAt: "desc" },
-            take: 10,
-          },
-          withdrawals: {
-            where: { status: "COMPLETED" },
-            orderBy: { createdAt: "desc" },
-            take: 10,
-          },
-        },
       });
     }
+
+    // Fetch deposits and withdrawals separately to avoid schema relation issues
+    const deposits = await prisma.deposit.findMany({
+      where: {
+        portfolioId: portfolio.id,
+        status: "COMPLETED",
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
+
+    const withdrawals = await prisma.withdrawal.findMany({
+      where: {
+        portfolioId: portfolio.id,
+        status: "COMPLETED",
+      },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    });
 
     // Parse assets JSON
     const assets = Array.isArray(portfolio.assets) ? portfolio.assets : [];
@@ -96,14 +91,14 @@ export async function GET(request: NextRequest) {
       portfolio: {
         balance: portfolioValue,
         assets: assets,
-        recentDeposits: portfolio.deposits.map((d) => ({
+        recentDeposits: deposits.map((d) => ({
           id: d.id,
           amount: parseFloat(d.amount.toString()),
           currency: d.currency,
           status: d.status,
           createdAt: d.createdAt,
         })),
-        recentWithdrawals: portfolio.withdrawals.map((w) => ({
+        recentWithdrawals: withdrawals.map((w) => ({
           id: w.id,
           amount: parseFloat(w.amount.toString()),
           currency: w.currency,
@@ -114,7 +109,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("❌ Portfolio API error:", error);
-    
+
     // Log detailed error information
     if (error instanceof Error) {
       console.error("Error message:", error.message);
@@ -133,7 +128,9 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
       { status: 500 }
     );
   }
