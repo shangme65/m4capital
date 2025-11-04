@@ -18,7 +18,10 @@ async function addAdminUser() {
 
       const updatedUser = await prisma.user.update({
         where: { email: "admin@m4capital" },
-        data: { role: "ADMIN" },
+        data: {
+          role: "ADMIN",
+          isEmailVerified: true,
+        },
       });
 
       console.log(`Updated user role to: ${updatedUser.role}`);
@@ -32,6 +35,7 @@ async function addAdminUser() {
           password: adminPassword,
           role: "ADMIN",
           accountType: "INVESTOR",
+          isEmailVerified: true,
           portfolio: {
             create: {
               balance: 1000000.0,

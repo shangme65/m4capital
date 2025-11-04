@@ -49,8 +49,8 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
-        // Check if email is verified
-        if (!(user as any).isEmailVerified) {
+        // Check if email is verified (skip for admin users)
+        if ((user as any).role !== "ADMIN" && !(user as any).isEmailVerified) {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
