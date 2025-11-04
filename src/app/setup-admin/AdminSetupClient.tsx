@@ -155,7 +155,7 @@ export default function AdminSetupClient({
               {result.action === "created" && (
                 <div className="mt-4">
                   <button
-                    onClick={() => router.push("/login")}
+                    onClick={() => router.push("/?login=true")}
                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold"
                   >
                     Go to Login

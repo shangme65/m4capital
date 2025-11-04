@@ -20,9 +20,9 @@ export default async function AdminSetupPage() {
   if (adminExists) {
     const session = await getServerSession(authOptions);
 
-    // Not logged in - redirect to login
+    // Not logged in - redirect to home page
     if (!session) {
-      redirect("/login?callbackUrl=/setup-admin");
+      redirect("/?login=true");
     }
 
     // Logged in but not an admin - deny access
