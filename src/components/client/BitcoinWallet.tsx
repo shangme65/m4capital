@@ -54,7 +54,8 @@ export default function BitcoinWallet({
       setIsLoading(true);
       setError("");
 
-      const response = await fetch("/api/payment/create-bitcoin", {
+      // Use invoice API to avoid Cloudflare blocking
+      const response = await fetch("/api/payment/create-bitcoin-invoice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

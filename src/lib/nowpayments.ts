@@ -41,6 +41,33 @@ interface CreatePaymentParams {
   order_description?: string;
 }
 
+interface CreateInvoiceParams {
+  price_amount: number;
+  price_currency: string;
+  pay_currency?: string;
+  ipn_callback_url?: string;
+  order_id?: string;
+  order_description?: string;
+  success_url?: string;
+  cancel_url?: string;
+}
+
+interface Invoice {
+  id: string;
+  order_id?: string;
+  order_description?: string;
+  price_amount: number;
+  price_currency: string;
+  pay_currency?: string;
+  pay_amount?: number;
+  pay_address?: string;
+  invoice_url: string;
+  success_url?: string;
+  cancel_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface EstimateParams {
   amount: number;
   currency_from: string;
@@ -71,16 +98,25 @@ class NOWPaymentsClient {
     const headers = {
       "x-api-key": this.apiKey,
       "Content-Type": "application/json",
+      "User-Agent": "M4Capital/1.0",
+      Accept: "application/json",
       ...options.headers,
     };
+
+    console.log(`NOWPayments request: ${options.method || "GET"} ${url}`);
 
     const response = await fetch(url, {
       ...options,
       headers,
     });
 
+    console.log(
+      `NOWPayments response: ${response.status} ${response.statusText}`
+    );
+
     if (!response.ok) {
       const error = await response.text();
+      console.error(`NOWPayments API error:`, error);
       throw new Error(`NOWPayments API error (${response.status}): ${error}`);
     }
 
@@ -120,6 +156,16 @@ class NOWPaymentsClient {
    */
   async createPayment(params: CreatePaymentParams): Promise<PaymentStatus> {
     return this.request("/payment", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  /**
+   * Create an invoice (alternative to payment - doesn't require payment tool setup)
+   */
+  async createInvoice(params: CreateInvoiceParams): Promise<Invoice> {
+    return this.request("/invoice", {
       method: "POST",
       body: JSON.stringify(params),
     });
