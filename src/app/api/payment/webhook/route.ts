@@ -105,6 +105,15 @@ export async function POST(request: NextRequest) {
     if (newStatus === "COMPLETED" && deposit.status !== "COMPLETED") {
       console.log("✅ Payment completed! Crediting user portfolio...");
 
+      // Check if user exists
+      if (!deposit.user) {
+        console.error("❌ Deposit has no associated user!");
+        return NextResponse.json(
+          { success: false, error: "User not found" },
+          { status: 400 }
+        );
+      }
+
       // Get or create portfolio
       let portfolio = deposit.user.portfolio;
       if (!portfolio) {

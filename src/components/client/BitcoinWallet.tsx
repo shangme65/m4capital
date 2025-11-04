@@ -416,7 +416,9 @@ export default function BitcoinWallet({
               Important Instructions:
             </p>
             <ul className="text-gray-300 text-xs space-y-1">
-              <li>• Send exactly {btcAmount.toFixed(8)} BTC to the address above</li>
+              <li>
+                • Send exactly {btcAmount.toFixed(8)} BTC to the address above
+              </li>
               <li>
                 • Only send Bitcoin (BTC) - other cryptocurrencies will be lost
               </li>

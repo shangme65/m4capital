@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { depositId: string } }
+  { params }: { params: Promise<{ depositId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -24,7 +24,7 @@ export async function GET(
       );
     }
 
-    const { depositId } = params;
+    const { depositId } = await params;
 
     // Find deposit
     const deposit = await prisma.deposit.findUnique({
