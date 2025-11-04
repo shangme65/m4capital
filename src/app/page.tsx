@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import BackgroundSlider from "@/components/client/BackgroundSlider";
 import AnimatedButton from "@/components/client/AnimatedButton";
 import Features from "@/components/client/Features";
@@ -28,7 +30,9 @@ type AnimationVariants = {
 };
 
 function Hero() {
-  const { openLoginModal } = useModal();
+  const { openLoginModal, openSignupModal } = useModal();
+  const { data: session } = useSession();
+  const router = useRouter();
   const images = ["/hero-bg-1.jpg", "/hero-bg-2.jpg", "/hero-bg-3.jpg"];
 
   const heroContent = [
@@ -362,12 +366,31 @@ function Hero() {
           </AnimatePresence>
         </div>
         <div className="space-x-4 mt-12">
-          <button
-            onClick={openLoginModal}
-            className="bg-orange-500 hover:bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
-          >
-            Get Started
-          </button>
+          {session ? (
+            // Logged in - Show "Go to Dashboard" button
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-10 py-4 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+            >
+              Go to Dashboard
+            </button>
+          ) : (
+            // Not logged in - Show "Get Started" and "Try Free Demo" buttons
+            <>
+              <button
+                onClick={openSignupModal}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
+              >
+                Get Started
+              </button>
+              <button
+                onClick={openLoginModal}
+                className="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 border border-gray-600"
+              >
+                Try Free Demo
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -375,7 +398,14 @@ function Hero() {
 }
 
 function CallToAction() {
-  const { openLoginModal } = useModal();
+  const { openSignupModal } = useModal();
+  const { data: session } = useSession();
+
+  // Hide CallToAction section when user is logged in
+  if (session) {
+    return null;
+  }
+
   return (
     <div className="bg-gray-800">
       <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:flex lg:items-center lg:justify-between lg:px-8">
@@ -386,8 +416,8 @@ function CallToAction() {
         </h2>
         <div className="mt-10 flex items-center gap-x-6 lg:mt-0 lg:flex-shrink-0">
           <button
-            onClick={openLoginModal}
-            className="rounded-lg bg-orange-500 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-all duration-200 transform hover:scale-105"
+            onClick={openSignupModal}
+            className="rounded-lg bg-orange-500 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-orange-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-all duration-200 transform hover:scale-105"
           >
             Create an account
           </button>

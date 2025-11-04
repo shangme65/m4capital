@@ -2,7 +2,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, LogIn, ChevronDown } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Menu, X, LogIn, ChevronDown, LayoutDashboard } from "lucide-react";
 import ForTradersDropdown from "../client/ForTradersDropdown";
 import AboutUsDropdown from "../client/AboutUsDropdown";
 import LanguageDropdown from "../client/LanguageDropdown";
@@ -17,6 +19,8 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isDropdownLocked, setIsDropdownLocked] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { data: session } = useSession();
+  const router = useRouter();
 
   const navLinks = [
     { href: "#features", text: "Features" },
@@ -179,39 +183,65 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               </button>
               {activeDropdown === "lang" && <LanguageDropdown />}
             </div>
-            <button
-              onClick={onLoginClick}
-              className="flex items-center space-x-2 bg-gray-800/70 px-5 py-2.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-sm font-bold"
-              aria-label="Login"
-            >
-              <LogIn size={18} />
-              <span>Log in</span>
-            </button>
-            <button
-              onClick={onSignupClick}
-              className="bg-orange-600 px-5 py-2.5 text-sm font-bold rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
-            >
-              Sign Up
-            </button>
+            {session ? (
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="flex items-center space-x-2 bg-orange-600 px-8 py-2.5 rounded-xl hover:bg-orange-700 hover:scale-105 transition-all duration-300 transform text-sm font-bold"
+                aria-label="Go to Dashboard"
+              >
+                <LayoutDashboard size={18} />
+                <span>Go to Dashboard</span>
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={onLoginClick}
+                  className="flex items-center space-x-2 bg-gray-800/70 px-5 py-2.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-sm font-bold"
+                  aria-label="Login"
+                >
+                  <LogIn size={18} />
+                  <span>Log in</span>
+                </button>
+                <button
+                  onClick={onSignupClick}
+                  className="bg-orange-600 px-5 py-2.5 text-sm font-bold rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
+                >
+                  Sign Up
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu */}
           <div className="md:hidden flex items-center space-x-2 sm:space-x-3">
-            <button
-              onClick={onLoginClick}
-              className="flex items-center space-x-1 bg-gray-800/70 px-2 sm:px-3 py-2 sm:py-2 rounded-lg sm:rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs font-bold"
-              aria-label="Login"
-            >
-              <LogIn size={16} className="sm:w-5 sm:h-5" />
-              <span className="hidden xs:inline">Log in</span>
-              <span className="xs:hidden">Login</span>
-            </button>
-            <button
-              onClick={onSignupClick}
-              className="bg-orange-600 px-2 sm:px-3 py-2 sm:py-2 text-xs font-bold rounded-lg sm:rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
-            >
-              Sign Up
-            </button>
+            {session ? (
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="flex items-center space-x-1 bg-orange-600 px-4 py-2 rounded-lg hover:bg-orange-700 transition-all duration-300"
+                aria-label="Go to Dashboard"
+              >
+                <LayoutDashboard size={16} />
+                <span className="text-xs font-bold">Dashboard</span>
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={onLoginClick}
+                  className="flex items-center space-x-1 bg-gray-800/70 px-2 sm:px-3 py-2 sm:py-2 rounded-lg sm:rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs font-bold"
+                  aria-label="Login"
+                >
+                  <LogIn size={16} className="sm:w-5 sm:h-5" />
+                  <span className="hidden xs:inline">Log in</span>
+                  <span className="xs:hidden">Login</span>
+                </button>
+                <button
+                  onClick={onSignupClick}
+                  className="bg-orange-600 px-2 sm:px-3 py-2 sm:py-2 text-xs font-bold rounded-lg sm:rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
+                >
+                  Sign Up
+                </button>
+              </>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
               className="bg-gray-800/50 px-2 sm:px-3 py-2 sm:py-2 rounded-lg sm:rounded-xl hover:bg-gray-800/50 hover:scale-105 hover:rotate-180 active:bg-purple-800 active:scale-90 active:text-yellow-300 transition-all duration-300 transform"
@@ -252,26 +282,42 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               ))}
             </ul>
             <div className="mt-8 flex flex-col items-center space-y-4">
-              <button
-                onClick={() => {
-                  onLoginClick?.();
-                  setMobileMenuOpen(false);
-                }}
-                className="flex items-center justify-center space-x-2 bg-gray-800/70 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform w-full"
-                aria-label="Login"
-              >
-                <LogIn size={18} />
-                <span>Log in</span>
-              </button>
-              <button
-                onClick={() => {
-                  onSignupClick?.();
-                  setMobileMenuOpen(false);
-                }}
-                className="bg-orange-600 px-6 py-3 text-sm font-bold rounded-2xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform w-full whitespace-nowrap"
-              >
-                Sign Up
-              </button>
+              {session ? (
+                <button
+                  onClick={() => {
+                    router.push("/dashboard");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="flex items-center justify-center space-x-2 bg-orange-600 px-8 py-3 rounded-2xl hover:bg-orange-700 hover:scale-105 transition-all duration-300 transform w-full"
+                  aria-label="Go to Dashboard"
+                >
+                  <LayoutDashboard size={20} />
+                  <span className="font-bold">Go to Dashboard</span>
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      onLoginClick?.();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center justify-center space-x-2 bg-gray-800/70 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform w-full"
+                    aria-label="Login"
+                  >
+                    <LogIn size={18} />
+                    <span>Log in</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onSignupClick?.();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="bg-orange-600 px-6 py-3 text-sm font-bold rounded-2xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform w-full whitespace-nowrap"
+                  >
+                    Sign Up
+                  </button>
+                </>
+              )}
             </div>
           </nav>
         </div>
