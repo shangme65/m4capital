@@ -18,6 +18,8 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [showBitcoinWallet, setShowBitcoinWallet] = useState(false);
+  const [showCryptoSelection, setShowCryptoSelection] = useState(false);
+  const [selectedCrypto, setSelectedCrypto] = useState<string>("");
 
   // Use notification context if available (dashboard), otherwise use null
   let addNotification = null;
@@ -58,6 +60,8 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setError("");
       setSuccess("");
       setShowBitcoinWallet(false);
+      setShowCryptoSelection(false);
+      setSelectedCrypto("");
     }
   }, [isOpen]);
 
@@ -84,8 +88,8 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     try {
       // Check if cryptocurrency is selected
       if (paymentMethod === "crypto") {
-        // Show Bitcoin wallet instead of success message
-        setShowBitcoinWallet(true);
+        // Show cryptocurrency selection instead of immediately creating payment
+        setShowCryptoSelection(true);
         setIsLoading(false);
         return;
       }
@@ -150,8 +154,31 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
   const handleBitcoinWalletBack = () => {
     setShowBitcoinWallet(false);
+    setShowCryptoSelection(true);
     setError("");
     setSuccess("");
+  };
+
+  const handleCryptoSelectionBack = () => {
+    setShowCryptoSelection(false);
+    setSelectedCrypto("");
+    setError("");
+  };
+
+  const handleProceedToPayment = () => {
+    if (!selectedCrypto) {
+      setError("Please select a cryptocurrency");
+      return;
+    }
+    // For now, only Bitcoin is implemented
+    if (selectedCrypto === "btc") {
+      setShowCryptoSelection(false);
+      setShowBitcoinWallet(true);
+    } else {
+      setError(
+        "This cryptocurrency is not yet supported. Please select Bitcoin."
+      );
+    }
   };
 
   const handleBitcoinPaymentComplete = () => {
@@ -232,6 +259,213 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     onBack={handleBitcoinWalletBack}
                     onComplete={handleBitcoinPaymentComplete}
                   />
+                ) : showCryptoSelection ? (
+                  <div className="space-y-6">
+                    {error && (
+                      <div className="text-red-500 text-sm text-center bg-red-500/10 p-3 rounded-lg border border-red-500/20">
+                        {error}
+                      </div>
+                    )}
+
+                    <div>
+                      <h3 className="text-xl font-bold text-white mb-4">
+                        Select Cryptocurrency
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-6">
+                        Choose which cryptocurrency you want to use for your
+                        deposit of ${amount}
+                      </p>
+
+                      <div className="space-y-3">
+                        {/* Bitcoin */}
+                        <div
+                          onClick={() => setSelectedCrypto("btc")}
+                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            selectedCrypto === "btc"
+                              ? "border-orange-500 bg-orange-500/10"
+                              : "border-gray-600 bg-gray-800/50 hover:border-gray-500"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
+                                <span className="text-orange-500 font-bold text-lg">
+                                  ₿
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">
+                                  Bitcoin
+                                </p>
+                                <p className="text-gray-400 text-sm">BTC</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-white text-sm">
+                                Min: 0.0002 BTC
+                              </p>
+                              <p className="text-gray-400 text-xs">~$20 USD</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Ethereum */}
+                        <div
+                          onClick={() => setSelectedCrypto("eth")}
+                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            selectedCrypto === "eth"
+                              ? "border-blue-500 bg-blue-500/10"
+                              : "border-gray-600 bg-gray-800/50 hover:border-gray-500"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                <span className="text-blue-500 font-bold text-lg">
+                                  Ξ
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">
+                                  Ethereum
+                                </p>
+                                <p className="text-gray-400 text-sm">ETH</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-white text-sm">
+                                Min: 0.001 ETH
+                              </p>
+                              <p className="text-gray-400 text-xs">~$3 USD</p>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-yellow-400 text-xs flex items-center">
+                            <svg
+                              className="w-4 h-4 mr-1"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Coming soon
+                          </div>
+                        </div>
+
+                        {/* USDT (TRC20) */}
+                        <div
+                          onClick={() => setSelectedCrypto("usdttrc20")}
+                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            selectedCrypto === "usdttrc20"
+                              ? "border-green-500 bg-green-500/10"
+                              : "border-gray-600 bg-gray-800/50 hover:border-gray-500"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                                <span className="text-green-500 font-bold text-sm">
+                                  ₮
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">
+                                  Tether (TRC20)
+                                </p>
+                                <p className="text-gray-400 text-sm">USDT</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-white text-sm">Min: 1 USDT</p>
+                              <p className="text-gray-400 text-xs">~$1 USD</p>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-yellow-400 text-xs flex items-center">
+                            <svg
+                              className="w-4 h-4 mr-1"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Coming soon
+                          </div>
+                        </div>
+
+                        {/* Litecoin */}
+                        <div
+                          onClick={() => setSelectedCrypto("ltc")}
+                          className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                            selectedCrypto === "ltc"
+                              ? "border-gray-400 bg-gray-400/10"
+                              : "border-gray-600 bg-gray-800/50 hover:border-gray-500"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-10 h-10 rounded-full bg-gray-400/20 flex items-center justify-center">
+                                <span className="text-gray-400 font-bold text-lg">
+                                  Ł
+                                </span>
+                              </div>
+                              <div>
+                                <p className="text-white font-medium">
+                                  Litecoin
+                                </p>
+                                <p className="text-gray-400 text-sm">LTC</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-white text-sm">
+                                Min: 0.01 LTC
+                              </p>
+                              <p className="text-gray-400 text-xs">~$1 USD</p>
+                            </div>
+                          </div>
+                          <div className="mt-2 text-yellow-400 text-xs flex items-center">
+                            <svg
+                              className="w-4 h-4 mr-1"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                            Coming soon
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={handleCryptoSelectionBack}
+                        className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-all"
+                      >
+                        Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleProceedToPayment}
+                        disabled={!selectedCrypto}
+                        className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white py-3 px-4 rounded-lg font-medium transition-all transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed"
+                      >
+                        Proceed to Payment
+                      </button>
+                    </div>
+                  </div>
                 ) : success ? (
                   <div className="text-center">
                     <div className="text-green-500 text-lg mb-4">
