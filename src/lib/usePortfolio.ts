@@ -76,14 +76,16 @@ export const usePortfolio = () => {
         let errorMessage = `Failed to fetch portfolio (${response.status})`;
         try {
           const errorData = await response.json();
-          console.error("❌ Portfolio API error:", errorData);
+          console.log("⚠️ Portfolio API error:", errorData);
           errorMessage = errorData.error || errorMessage;
         } catch (parseError) {
           const textError = await response.text();
-          console.error("❌ Non-JSON error response:", textError);
+          console.log("⚠️ Non-JSON error response:", textError);
           errorMessage = textError || errorMessage;
         }
-        throw new Error(errorMessage);
+        setError(errorMessage);
+        setIsLoading(false);
+        return; // Don't throw, just set error state
       }
 
       const data = await response.json();
@@ -91,7 +93,7 @@ export const usePortfolio = () => {
       setPortfolio(data);
       setError(null);
     } catch (err) {
-      console.error("❌ Portfolio fetch error:", err);
+      console.log("⚠️ Portfolio fetch error:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
