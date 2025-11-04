@@ -55,6 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Fetch deposits and withdrawals separately to avoid schema relation issues
+    // Query by portfolioId (not userId) to match current schema
     const deposits = await prisma.deposit.findMany({
       where: {
         portfolioId: portfolio.id,
