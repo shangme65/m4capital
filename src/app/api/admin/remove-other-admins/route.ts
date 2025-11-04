@@ -47,19 +47,47 @@ export async function POST() {
       });
     }
 
-    // Soft delete the origin admin
-    await prisma.user.update({
+    // Hard delete the origin admin and all related data
+    // We need to delete in the correct order due to foreign key constraints
+    
+    // 1. Delete deposits and withdrawals first
+    await prisma.deposit.deleteMany({
+      where: { userId: adminToRemove.id },
+    });
+    
+    await prisma.withdrawal.deleteMany({
+      where: { userId: adminToRemove.id },
+    });
+    
+    // 2. Delete portfolio
+    await prisma.portfolio.deleteMany({
+      where: { userId: adminToRemove.id },
+    });
+    
+    // 3. Delete KYC verification if exists
+    await prisma.kycVerification.deleteMany({
+      where: { userId: adminToRemove.id },
+    });
+    
+    // 4. Delete sessions and accounts (these have onDelete: Cascade but we'll delete them explicitly)
+    await prisma.session.deleteMany({
+      where: { userId: adminToRemove.id },
+    });
+    
+    await prisma.account.deleteMany({
+      where: { userId: adminToRemove.id },
+    });
+    
+    // 5. Finally delete the user
+    await prisma.user.delete({
       where: {
         email: originAdminEmail,
-      },
-      data: {
-        isDeleted: true,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: `Removed origin admin: ${originAdminEmail}`,
+      message: `Permanently deleted origin admin: ${originAdminEmail}`,
       removedAdmin: adminToRemove,
     });
   } catch (error) {
