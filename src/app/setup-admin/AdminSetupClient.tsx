@@ -45,11 +45,7 @@ export default function AdminSetupClient({
   };
 
   const removeOtherAdmins = async () => {
-    if (
-      !confirm(
-        "This will remove all admin accounts except the origin admin. Continue?"
-      )
-    ) {
+    if (!confirm("This will remove the origin admin account. Continue?")) {
       return;
     }
 
@@ -65,7 +61,7 @@ export default function AdminSetupClient({
       if (data.success) {
         setResult(data);
       } else {
-        setError(data.error || "Failed to remove other admins");
+        setError(data.error || "Failed to remove origin admin");
       }
     } catch (err) {
       setError(
@@ -146,15 +142,14 @@ export default function AdminSetupClient({
           {/* Remove Other Admins Section */}
           <div className="border border-red-200 rounded-lg p-6 bg-red-50">
             <h2 className="text-xl font-semibold text-red-800 mb-3">
-              2. Remove Other Admins (Optional)
+              2. Remove Origin Admin (Optional)
             </h2>
             <p className="text-red-600 mb-4">
-              Remove all admin accounts except the origin admin. This helps
-              clean up test/dev admins.
+              Remove the origin admin account. This helps clean up the admin if
+              you want to start fresh.
               <br />
               <span className="text-sm text-red-500">
-                ⚠️ This will soft-delete all admins except the one set in
-                ORIGIN_ADMIN_EMAIL
+                ⚠️ This will soft-delete the admin set in ORIGIN_ADMIN_EMAIL
               </span>
             </p>
             <button
@@ -162,7 +157,7 @@ export default function AdminSetupClient({
               disabled={removeLoading}
               className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
             >
-              {removeLoading ? "Processing..." : "Remove Other Admins"}
+              {removeLoading ? "Processing..." : "Remove Origin Admin"}
             </button>
           </div>
 
@@ -221,7 +216,8 @@ export default function AdminSetupClient({
                 You can now login using the credentials from your .env file
               </li>
               <li>
-                (Optional) Use "Remove Other Admins" to clean up test accounts
+                (Optional) Use "Remove Origin Admin" to clean up the admin
+                account
               </li>
             </ol>
           </div>

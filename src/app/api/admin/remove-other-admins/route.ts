@@ -1,25 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 
 /**
- * Remove all admins EXCEPT the origin admin
- * This helps clean up test/development admins
- * Requires the requester to be an admin
+ * Remove the origin admin account
+ * This helps clean up the origin admin if needed
+ * Does not require authentication - can be used for setup/cleanup
  */
 export async function POST() {
   try {
-    const session = await getServerSession(authOptions);
-
-    // Only admins can use this endpoint
-    if (!session || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized - Admin access required" },
-        { status: 403 }
-      );
-    }
-
     const originAdminEmail = process.env.ORIGIN_ADMIN_EMAIL;
 
     if (!originAdminEmail) {
@@ -32,28 +20,37 @@ export async function POST() {
       );
     }
 
-    // Find all admins except the origin admin
-    const adminsToRemove = await prisma.user.findMany({
+    // Find the origin admin
+    const adminToRemove = await prisma.user.findUnique({
       where: {
-        role: "ADMIN",
-        email: {
-          not: originAdminEmail,
-        },
+        email: originAdminEmail,
       },
       select: {
         id: true,
         email: true,
         name: true,
+        role: true,
       },
     });
 
-    // Soft delete all non-origin admins
-    const result = await prisma.user.updateMany({
+    if (!adminToRemove) {
+      return NextResponse.json({
+        success: false,
+        error: "Origin admin not found in database",
+      });
+    }
+
+    if (adminToRemove.role !== "ADMIN") {
+      return NextResponse.json({
+        success: false,
+        error: "User found but is not an admin",
+      });
+    }
+
+    // Soft delete the origin admin
+    await prisma.user.update({
       where: {
-        role: "ADMIN",
-        email: {
-          not: originAdminEmail,
-        },
+        email: originAdminEmail,
       },
       data: {
         isDeleted: true,
@@ -62,16 +59,15 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: `Removed ${result.count} admin(s), keeping origin admin`,
-      removedAdmins: adminsToRemove,
-      originAdminEmail,
+      message: `Removed origin admin: ${originAdminEmail}`,
+      removedAdmin: adminToRemove,
     });
   } catch (error) {
-    console.error("Failed to remove other admins:", error);
+    console.error("Failed to remove origin admin:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to remove other admins",
+        error: "Failed to remove origin admin",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
