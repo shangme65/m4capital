@@ -34,6 +34,7 @@ import {
   Grid2X2,
   Info,
   CircleHelp,
+  Calculator,
 } from "lucide-react";
 import {
   TradingProvider,
@@ -47,6 +48,7 @@ import {
   BitcoinPriceWidget,
   CryptoPriceTicker,
 } from "@/components/client/CryptoPriceTicker";
+import TradingCalculators from "@/components/client/TradingCalculators";
 import ErrorBoundary from "@/components/client/ErrorBoundary";
 
 function TradingInterface() {
@@ -75,6 +77,7 @@ function TradingInterface() {
   const [selectedTrade, setSelectedTrade] = useState<any>(null);
   const [historyFilter, setHistoryFilter] = useState("All Positions");
   const [showMoreItems, setShowMoreItems] = useState(false);
+  const [showCalculators, setShowCalculators] = useState(false);
 
   // Get trading context for history data
   const { tradeHistory, openPositions } = useTradingContext();
@@ -690,6 +693,38 @@ function TradingInterface() {
                 </div>
               </div>
 
+              {/* Calculators */}
+              <div
+                className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300"
+                onClick={() => setShowCalculators(!showCalculators)}
+              >
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
+                  style={{
+                    backgroundColor: showCalculators
+                      ? "#4a4a4a"
+                      : "transparent",
+                  }}
+                >
+                  <Calculator
+                    className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
+                    style={{
+                      color: showCalculators ? "#ffffff" : "#827e7d",
+                    }}
+                  />
+                </div>
+                <div className="mt-1 text-center">
+                  <div
+                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    style={{
+                      color: showCalculators ? "#4a4a4a" : "#827e7d",
+                    }}
+                  >
+                    CALCULATORS
+                  </div>
+                </div>
+              </div>
+
               {/* Tutorials */}
               <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
@@ -952,6 +987,45 @@ function TradingInterface() {
                       </span>
                     </div>
                   </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Calculators Panel */}
+          <AnimatePresence>
+            {showCalculators && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="w-96 flex-col border-r z-10 overflow-hidden"
+                style={{ backgroundColor: "#26211f", borderColor: "#38312e" }}
+              >
+                {/* Header */}
+                <div
+                  className="flex items-center justify-between p-4 border-b"
+                  style={{ borderColor: "#38312e" }}
+                >
+                  <h3
+                    className="font-semibold text-lg"
+                    style={{ color: "#eceae9" }}
+                  >
+                    Trading Calculators
+                  </h3>
+                  <button
+                    onClick={() => setShowCalculators(false)}
+                    className="hover:opacity-75 transition-opacity"
+                    style={{ color: "#afadac", fontSize: "20px" }}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Calculators Content */}
+                <div className="flex-1 overflow-y-auto">
+                  <TradingCalculators />
                 </div>
               </motion.div>
             )}

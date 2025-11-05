@@ -6,6 +6,7 @@ import { ModalProvider } from "@/contexts/ModalContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { DashboardModalWrapper } from "@/components/layout/DashboardModalWrapper";
 import MarketDataProvider from "@/components/client/MarketDataProvider";
+import AIChatbot from "@/components/client/AIChatbot";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -35,6 +36,7 @@ export default async function DashboardLayout({
                     <DashboardModalWrapper>{children}</DashboardModalWrapper>
                   </main>
                 </div>
+                <AIChatbot />
               </div>
             </MarketDataProvider>
           </NotificationProvider>

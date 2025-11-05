@@ -372,7 +372,7 @@ function DashboardContent() {
             ) : (
               <>
                 $
-                {portfolioValue.toLocaleString("en-US", {
+                {(portfolioValue || 0).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -488,7 +488,7 @@ function DashboardContent() {
             ) : (
               <>
                 $
-                {availableBalance.toLocaleString("en-US", {
+                {(availableBalance || 0).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -637,13 +637,13 @@ function DashboardContent() {
                   <div className="text-right">
                     <div className="text-white font-semibold">
                       $
-                      {asset.value.toLocaleString("en-US", {
+                      {(asset.value || 0).toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
                     </div>
                     <div className="text-sm text-gray-400">
-                      {asset.amount.toLocaleString("en-US", {
+                      {(asset.amount || 0).toLocaleString("en-US", {
                         minimumFractionDigits: 4,
                         maximumFractionDigits: 4,
                       })}{" "}
@@ -698,12 +698,12 @@ function DashboardContent() {
                       <div className="text-gray-400 text-sm">
                         {activity.type === "deposit" ||
                         activity.type === "withdraw"
-                          ? `$${activity.amount.toLocaleString("en-US", {
+                          ? `$${(activity.amount || 0).toLocaleString("en-US", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}`
-                          : `${activity.amount} ${
-                              activity.asset.split(" ")[0]
+                          : `${activity.amount || 0} ${
+                              activity.asset?.split(" ")[0] || ""
                             }`}
                       </div>
                       <div className="text-gray-500 text-xs">
@@ -831,12 +831,12 @@ function DashboardContent() {
                     <div className="text-right">
                       <p className="font-semibold text-white">
                         $
-                        {asset.value.toLocaleString("en-US", {
+                        {(asset.value || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                         })}
                       </p>
                       <p className="text-gray-400 text-sm">
-                        {asset.amount.toLocaleString("en-US", {
+                        {(asset.amount || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 4,
                         })}{" "}
                         {asset.symbol}
@@ -940,7 +940,7 @@ function DashboardContent() {
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-gray-400 text-sm">
                           $
-                          {activity.value.toLocaleString("en-US", {
+                          {(activity.value || 0).toLocaleString("en-US", {
                             minimumFractionDigits: 2,
                           })}
                         </span>

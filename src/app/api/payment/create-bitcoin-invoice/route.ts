@@ -70,37 +70,35 @@ export async function POST(request: NextRequest) {
         amount: parseFloat(amount),
         currency: currency,
         status: "PENDING",
-        method: "NOWPAYMENTS_INVOICE_BTC",
+        method: "NOWPAYMENTS_BTC",
       },
     });
 
-    // Create invoice with NOWPayments (doesn't require payment tool setup)
+    // Create payment directly (provides immediate payment address and amount)
     const callbackUrl = `${process.env.NEXTAUTH_URL}/api/payment/webhook`;
-    const successUrl = `${process.env.NEXTAUTH_URL}/dashboard?payment=success`;
-    const cancelUrl = `${process.env.NEXTAUTH_URL}/finance?payment=cancelled`;
 
-    console.log("Creating NOWPayments invoice...");
+    console.log("Creating NOWPayments payment...");
 
-    const invoice = await nowPayments.createInvoice({
+    const payment = await nowPayments.createPayment({
       price_amount: parseFloat(amount),
       price_currency: currency.toLowerCase(),
       pay_currency: "btc",
       ipn_callback_url: callbackUrl,
       order_id: deposit.id,
       order_description: `Deposit for user ${user.email}`,
-      success_url: successUrl,
-      cancel_url: cancelUrl,
     });
 
-    console.log("Invoice created:", invoice);
+    console.log("Payment created:", payment);
 
-    // Update deposit with invoice details
+    // Update deposit with payment details
     await prisma.deposit.update({
       where: { id: deposit.id },
       data: {
-        paymentId: invoice.id,
-        paymentAddress: invoice.pay_address || "pending",
-        paymentAmount: invoice.pay_amount || 0,
+        paymentId: payment.payment_id,
+        paymentAddress: payment.pay_address || "pending",
+        paymentAmount: payment.pay_amount || 0,
+        paymentStatus: payment.payment_status,
+        cryptoCurrency: payment.pay_currency?.toUpperCase(),
       },
     });
 
@@ -110,15 +108,14 @@ export async function POST(request: NextRequest) {
         id: deposit.id,
         amount: amount,
         currency: currency,
-        paymentId: invoice.id,
-        invoiceUrl: invoice.invoice_url,
-        paymentAddress: invoice.pay_address,
-        paymentAmount: invoice.pay_amount,
+        paymentId: payment.payment_id,
+        paymentAddress: payment.pay_address,
+        paymentAmount: payment.pay_amount,
+        paymentStatus: payment.payment_status,
         status: "PENDING",
         createdAt: deposit.createdAt,
       },
-      message:
-        "Invoice created. User will be redirected to NOWPayments to complete payment.",
+      message: "Payment created successfully",
     });
   } catch (error) {
     console.error("Create Bitcoin invoice error:", error);

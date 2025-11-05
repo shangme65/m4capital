@@ -42,8 +42,10 @@ export async function GET(
     }
 
     // If payment has a NOWPayments ID, fetch latest status
+    // Note: For invoices, we rely on webhook callbacks instead of polling
+    // because NOWPayments doesn't provide a direct invoice status endpoint
     let nowPaymentsStatus = null;
-    if (deposit.paymentId) {
+    if (deposit.paymentId && deposit.method !== "NOWPAYMENTS_INVOICE_BTC") {
       try {
         nowPaymentsStatus = await nowPayments.getPaymentStatus(
           deposit.paymentId
@@ -60,10 +62,12 @@ export async function GET(
         }
       } catch (error) {
         console.error("Failed to fetch NOWPayments status:", error);
+        // Don't throw - just log and continue with database status
       }
     }
 
     return NextResponse.json({
+      success: true,
       deposit: {
         id: deposit.id,
         amount: parseFloat(deposit.amount.toString()),
@@ -77,7 +81,9 @@ export async function GET(
           ? parseFloat(deposit.paymentAmount.toString())
           : null,
         paymentStatus:
-          nowPaymentsStatus?.payment_status || deposit.paymentStatus,
+          nowPaymentsStatus?.payment_status ||
+          deposit.paymentStatus ||
+          "waiting",
         cryptoCurrency: deposit.cryptoCurrency,
       },
       nowPaymentsData: nowPaymentsStatus,
