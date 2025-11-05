@@ -91,7 +91,6 @@ export async function POST(request: NextRequest) {
     const [trade, updatedPortfolio] = await prisma.$transaction([
       prisma.trade.create({
         data: {
-          portfolioId: portfolio.id,
           userId: user.id,
           symbol,
           side,
@@ -101,6 +100,7 @@ export async function POST(request: NextRequest) {
           profit: new Decimal(profit),
           commission: new Decimal(commission),
           leverage: leverage,
+          status: "CLOSED",
           closedAt: closedAt ? new Date(closedAt) : new Date(),
         },
       }),

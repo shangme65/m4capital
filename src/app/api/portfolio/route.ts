@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
 
     // Calculate period start date
     let periodStart: Date | undefined;
+    let periodEnd: Date;
     const now = new Date();
+    periodEnd = now; // End period is always now
 
     switch (period) {
       case "today":
@@ -135,12 +137,17 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Aggregate trade profits for the period
-    const periodTradeSum = await prisma.trade.aggregate({
-      _sum: { profit: true },
+    // Trade earnings tracking
+    const periodTradeEarnings = await prisma.trade.aggregate({
       where: {
-        portfolioId: portfolio.id,
-        ...(periodStart && { closedAt: { gte: periodStart } }),
+        userId: user.id,
+        createdAt: {
+          gte: periodStart,
+          lte: periodEnd,
+        },
+      },
+      _sum: {
+        profit: true,
       },
     });
 
@@ -155,9 +162,6 @@ export async function GET(request: NextRequest) {
     const periodWithdrawals = parseFloat(
       (periodWithdrawalSum._sum.amount ?? 0).toString()
     );
-    const periodTradeEarnings = parseFloat(
-      (periodTradeSum._sum.profit ?? 0).toString()
-    );
 
     // Net added money = deposits - withdrawals. This represents total money
     // the user has put into the account (not market movements).
@@ -165,7 +169,9 @@ export async function GET(request: NextRequest) {
 
     // Period net change = deposits - withdrawals + trade earnings for period
     const periodNetChange =
-      periodDeposits - periodWithdrawals + periodTradeEarnings;
+      periodDeposits -
+      periodWithdrawals +
+      parseFloat((periodTradeEarnings._sum.profit ?? 0).toString());
 
     // Parse assets JSON
     const assets = Array.isArray(portfolio.assets) ? portfolio.assets : [];

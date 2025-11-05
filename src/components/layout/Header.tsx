@@ -210,10 +210,10 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {session ? (
               <button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center space-x-2 bg-orange-600 px-8 py-2.5 rounded-xl hover:bg-orange-700 hover:scale-105 transition-all duration-300 transform text-sm font-bold"
+                className="flex items-center space-x-2 bg-orange-600 px-10 py-3.5 rounded-xl hover:bg-orange-700 hover:scale-105 transition-all duration-300 transform text-sm font-bold"
                 aria-label="Go to Dashboard"
               >
-                <LayoutDashboard size={18} />
+                <LayoutDashboard size={22} />
                 <span>Go to Dashboard</span>
               </button>
             ) : (
@@ -241,10 +241,10 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {session ? (
               <button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center space-x-1 bg-orange-600 px-4 py-2 rounded-lg hover:bg-orange-700 transition-all duration-300"
+                className="flex items-center space-x-1 bg-orange-600 px-4 py-2.5 rounded-lg hover:bg-orange-700 transition-all duration-300"
                 aria-label="Go to Dashboard"
               >
-                <LayoutDashboard size={16} />
+                <LayoutDashboard size={18} />
                 <span className="text-xs font-bold">Dashboard</span>
               </button>
             ) : (
@@ -315,7 +315,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   className="flex items-center justify-center space-x-2 bg-orange-600 px-8 py-3 rounded-2xl hover:bg-orange-700 hover:scale-105 transition-all duration-300 transform w-full"
                   aria-label="Go to Dashboard"
                 >
-                  <LayoutDashboard size={20} />
+                  <LayoutDashboard size={22} />
                   <span className="font-bold">Go to Dashboard</span>
                 </button>
               ) : (

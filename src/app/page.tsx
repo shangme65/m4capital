@@ -367,12 +367,12 @@ function Hero() {
         </div>
         <div className="space-x-4 mt-12">
           {session ? (
-            // Logged in - Show "Go to Dashboard" button
+            // Logged in - Show "Go to Traderoom" button
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/dashboard/traderoom")}
               className="bg-orange-500 hover:bg-orange-600 text-white px-10 py-4 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
-              Go to Dashboard
+              Go to Traderoom
             </button>
           ) : (
             // Not logged in - Show "Get Started" and "Try Free Demo" buttons

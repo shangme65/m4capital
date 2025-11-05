@@ -58,6 +58,7 @@ model User {
   kycVerification        KycVerification?
   deposits               Deposit[]
   withdrawals            Withdrawal[]
+  trades                 Trade[]
 }
 
 model VerificationToken {
@@ -160,6 +161,41 @@ model Withdrawal {
   type          String?
   portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
   user          User?     @relation(fields: [userId], references: [id])
+}
+
+model Trade {
+  id            String      @id @default(cuid())
+  userId        String
+  symbol        String      // Trading pair (e.g., BTC/USD, ETH/USD)
+  side          TradeType   // BUY or SELL
+  entryPrice    Decimal     // Entry price
+  exitPrice     Decimal?    // Exit price (null if still open)
+  quantity      Decimal     // Quantity traded
+  profit        Decimal     @default(0.00) // Profit or loss from the trade
+  commission    Decimal     @default(0.00) // Trading commission
+  leverage      Int         @default(1) // Leverage multiplier
+  status        TradeStatus @default(OPEN)
+  openedAt      DateTime    @default(now())
+  closedAt      DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  metadata      Json?       @default("{}")
+  
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum TradeType {
+  BUY
+  SELL
+}
+
+enum TradeStatus {
+  OPEN
+  CLOSED
+  CANCELLED
 }
 
 enum UserRole {
