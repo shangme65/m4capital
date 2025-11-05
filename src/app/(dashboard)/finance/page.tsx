@@ -127,9 +127,37 @@ export default function FinancePage() {
   });
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
+    // Fetch portfolio aggregates from API (total balance, deposits, income percent)
+    const fetchPortfolio = async () => {
+      try {
+        const res = await fetch("/api/portfolio", { credentials: "include" });
+        if (!res.ok) {
+          setIsLoading(false);
+          return;
+        }
+        const data = await res.json();
+        const pf = data.portfolio || {};
+        const balance = pf.balance ?? 0;
+        const netAdded = pf.netAdded ?? 0;
+        const incomePercent = pf.incomePercent ?? 0;
+
+        setPortfolioData({
+          totalValue: balance,
+          todayChange: balance - netAdded, // monetary change relative to net added
+          todayChangePercent: incomePercent,
+          availableCash: balance,
+          totalInvested: netAdded,
+          totalReturn: balance - netAdded,
+          totalReturnPercent: incomePercent,
+        });
+      } catch (e) {
+        console.error("Failed to load portfolio for finance page", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPortfolio();
   }, []);
 
   const activeTabData = financeTabs.find((tab) => tab.id === activeTab);
@@ -173,7 +201,35 @@ export default function FinancePage() {
                 </p>
               </div>
               <div className="bg-gray-800/50 rounded-md px-3 py-2 min-w-0 flex-1 lg:flex-none lg:min-w-[100px]">
-                <p className="text-xs text-gray-400">Today</p>
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-gray-400">Today</p>
+                  {/* Info icon with tooltip */}
+                  <div className="group relative">
+                    <svg
+                      className="w-3 h-3 text-gray-500 hover:text-gray-400 cursor-help"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-700">
+                      <div className="text-center">
+                        Income from deposits, withdrawals and trading (not
+                        market price changes)
+                      </div>
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                        <div className="border-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <p
                   className={`text-sm font-bold truncate ${
                     portfolioData.todayChange >= 0

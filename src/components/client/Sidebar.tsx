@@ -9,6 +9,7 @@ import {
   X,
   LogOut,
   Newspaper,
+  Home,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -31,6 +32,7 @@ const Sidebar = () => {
   }, []);
 
   const navItems = [
+    { icon: <Home size={24} />, name: "Homepage", href: "/" },
     { icon: <Briefcase size={24} />, name: "Dashboard", href: "/dashboard" },
     { icon: <TrendingUp size={24} />, name: "Traderoom", href: "/traderoom" },
     { icon: <Newspaper size={24} />, name: "Market News", href: "/news" },

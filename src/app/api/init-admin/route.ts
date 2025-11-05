@@ -3,26 +3,52 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { rateLimiters } from "@/lib/middleware/ratelimit";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+} from "@/lib/middleware/errorHandler";
 
 /**
  * Initialize or update the origin admin user
- * This endpoint can be called to ensure the super admin exists
+ * SECURITY: This endpoint can only be called once, or by existing admins
  * GET request to keep it simple and accessible
  */
-export async function GET() {
+export async function GET(request: Request) {
+  // Apply strict rate limiting
+  const rateLimitResult = await rateLimiters.strict(request as any);
+  if (rateLimitResult instanceof NextResponse) {
+    return rateLimitResult;
+  }
+
   const email = process.env.ORIGIN_ADMIN_EMAIL;
   const password = process.env.ORIGIN_ADMIN_PASSWORD;
   const name = process.env.ORIGIN_ADMIN_NAME || "Super Admin";
 
   // Validate environment variables
   if (!email || !password) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Origin admin credentials not set in environment variables",
-        hint: "Set ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD in .env file",
-      },
-      { status: 400 }
+    return createErrorResponse(
+      "Configuration error",
+      "Origin admin credentials not set in environment variables. Set ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD in .env file",
+      undefined,
+      400
+    );
+  }
+
+  // SECURITY CHECK: Only allow if no admin exists OR caller is already an admin
+  const session = await getServerSession(authOptions);
+  const existingAdmins = await prisma.user.count({
+    where: { role: "ADMIN" },
+  });
+
+  const isCallerAdmin = session?.user && (session.user as any).role === "ADMIN";
+
+  if (existingAdmins > 0 && !isCallerAdmin) {
+    return createErrorResponse(
+      "Forbidden",
+      "Admin already exists. Only existing admins can modify the origin admin account.",
+      undefined,
+      403
     );
   }
 
@@ -69,14 +95,13 @@ export async function GET() {
         },
       });
 
-      return NextResponse.json({
-        success: true,
-        message: "Origin admin updated successfully",
-        admin: updatedAdmin,
-        action: "updated",
-        // Return password for auto-login (only for this endpoint)
-        tempPassword: password,
-      });
+      return createSuccessResponse(
+        {
+          admin: updatedAdmin,
+          action: "updated",
+        },
+        "Origin admin updated successfully"
+      );
     } else {
       // Create new admin
       const newAdmin = await prisma.user.create({
@@ -100,24 +125,21 @@ export async function GET() {
         },
       });
 
-      return NextResponse.json({
-        success: true,
-        message: "Origin admin created successfully",
-        admin: newAdmin,
-        action: "created",
-        // Return password for auto-login (only for this endpoint)
-        tempPassword: password,
-      });
+      return createSuccessResponse(
+        {
+          admin: newAdmin,
+          action: "created",
+        },
+        "Origin admin created successfully"
+      );
     }
   } catch (error) {
-    console.error("Failed to initialize origin admin:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to initialize origin admin",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
+    console.error("Init admin error:", error);
+    return createErrorResponse(
+      "Internal server error",
+      "Failed to initialize admin account",
+      error,
+      500
     );
   }
 }

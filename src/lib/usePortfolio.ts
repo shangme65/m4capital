@@ -23,6 +23,18 @@ interface Portfolio {
     status: string;
     createdAt: string;
   }>;
+  // optional aggregates provided by the API
+  totalDeposited?: number;
+  totalWithdrawn?: number;
+  netAdded?: number;
+  incomePercent?: number;
+  // period-specific aggregates
+  period?: string; // 'all' | 'today' | '7d' | '30d'
+  periodDeposits?: number;
+  periodWithdrawals?: number;
+  periodTradeEarnings?: number;
+  periodNetChange?: number;
+  periodIncomePercent?: number;
 }
 
 interface PortfolioUser {
@@ -38,18 +50,19 @@ interface PortfolioData {
   portfolio: Portfolio;
 }
 
-export const usePortfolio = () => {
+export const usePortfolio = (period: string = "all") => {
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log("🎯 usePortfolio hook initialized");
+  console.log("🎯 usePortfolio hook initialized with period:", period);
 
-  const fetchPortfolio = async () => {
+  const fetchPortfolio = async (fetchPeriod?: string) => {
     try {
-      console.log("🔄 Fetching portfolio data...");
+      const queryPeriod = fetchPeriod || period;
+      console.log("🔄 Fetching portfolio data for period:", queryPeriod);
       setIsLoading(true);
-      const response = await fetch("/api/portfolio", {
+      const response = await fetch(`/api/portfolio?period=${queryPeriod}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -103,7 +116,7 @@ export const usePortfolio = () => {
   useEffect(() => {
     console.log("🚀 usePortfolio useEffect running");
     fetchPortfolio();
-  }, []);
+  }, [period]); // Re-fetch when period changes
 
   return {
     portfolio,

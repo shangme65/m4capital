@@ -19,6 +19,7 @@ export const dynamic = "force-dynamic";
 function DashboardContent() {
   const { data: session, status } = useSession();
   const btcPrice = useBitcoinPrice();
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("all");
 
   // Debug logging for session
   console.log("🎯 Dashboard Component Rendered");
@@ -33,7 +34,7 @@ function DashboardContent() {
     isLoading: portfolioLoading,
     error: portfolioError,
     refetch,
-  } = usePortfolio();
+  } = usePortfolio(selectedPeriod);
   const {
     openDepositModal,
     openWithdrawModal,
@@ -119,13 +120,22 @@ function DashboardContent() {
     ? 0
     : userAssets.reduce((total, asset) => total + asset.value, 0);
 
-  const todayChange =
-    btcPrice && portfolioValue > 0
-      ? ((portfolioValue -
-          portfolioValue / (1 + btcPrice.changePercent24h / 100)) /
-          portfolioValue) *
-        100
-      : 2.45;
+  // Income percent: measure change of user's money (deposits + received + earnings)
+  // Use server-provided periodIncomePercent when available for selected period
+  const incomePercent =
+    portfolio &&
+    portfolio.portfolio &&
+    typeof portfolio.portfolio.periodIncomePercent === "number"
+      ? portfolio.portfolio.periodIncomePercent
+      : 0;
+
+  // Period labels for display
+  const periodLabels: Record<string, string> = {
+    all: "All Time",
+    today: "Today",
+    "7d": "7 Days",
+    "30d": "30 Days",
+  };
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -369,17 +379,67 @@ function DashboardContent() {
               </>
             )}
           </div>
+
+          {/* Period Selector */}
+          <div className="flex items-center gap-1 mb-3">
+            {["today", "7d", "30d", "all"].map((period) => (
+              <button
+                key={period}
+                onClick={() => setSelectedPeriod(period)}
+                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
+                  selectedPeriod === period
+                    ? "bg-orange-500 text-white"
+                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                }`}
+              >
+                {periodLabels[period]}
+              </button>
+            ))}
+          </div>
+
           <div className="flex items-center gap-2">
             {portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-24 rounded"></div>
             ) : (
               <>
-                <span className="text-green-400 text-base sm:text-lg font-medium">
-                  +{todayChange.toFixed(2)}%
+                <span
+                  className={`text-base sm:text-lg font-medium ${
+                    incomePercent >= 0 ? "text-green-400" : "text-red-400"
+                  }`}
+                >
+                  {incomePercent >= 0 ? "+" : ""}
+                  {incomePercent.toFixed(2)}%
                 </span>
                 <span className="text-gray-400 text-sm sm:text-base">
-                  Today
+                  {periodLabels[selectedPeriod]}
                 </span>
+                {/* Info icon for tooltip */}
+                <div className="group relative">
+                  <svg
+                    className="w-4 h-4 text-gray-400 hover:text-gray-300 cursor-help"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-700">
+                    <div className="text-center">
+                      This percentage measures changes to your account balance
+                      from deposits, withdrawals and trading results (not market
+                      price movement).
+                    </div>
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                      <div className="border-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -396,7 +456,7 @@ function DashboardContent() {
                 </div>
               )}
               <button
-                onClick={refetch}
+                onClick={() => refetch()}
                 className="ml-2 underline hover:text-red-300"
               >
                 Retry

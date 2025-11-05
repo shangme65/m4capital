@@ -140,6 +140,7 @@ model Deposit {
   paymentStatus   String?   // NOWPayments status (waiting, confirming, confirmed, etc.)
   cryptoAmount    Decimal?  // Estimated crypto amount
   cryptoCurrency  String?   // BTC, ETH, etc.
+  invoiceUrl      String?   // NOWPayments invoice URL (for invoice API method)
   
   portfolio       Portfolio @relation(fields: [portfolioId], references: [id])
   user            User?     @relation(fields: [userId], references: [id])

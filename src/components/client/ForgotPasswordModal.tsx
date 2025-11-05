@@ -20,14 +20,15 @@ export default function ForgotPasswordModal({
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setMessage("");
+    setIsSuccess(false);
 
     try {
-      // Here you would typically call your password reset API
       const response = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: {
@@ -38,17 +39,23 @@ export default function ForgotPasswordModal({
         }),
       });
 
-      if (response.ok) {
-        setMessage("Password reset instructions have been sent to your email.");
-      } else {
-        const errorData = await response.json();
+      const data = await response.json();
+
+      if (response.ok && data.success) {
         setMessage(
-          errorData.message ||
-            "Failed to send reset instructions. Please try again."
+          data.message ||
+            "Password reset instructions have been sent to your email. Please check your inbox."
         );
+        setIsSuccess(true);
+      } else {
+        setMessage(
+          data.message || "Failed to send reset instructions. Please try again."
+        );
+        setIsSuccess(false);
       }
     } catch (error) {
       setMessage("Network error. Please try again.");
+      setIsSuccess(false);
     } finally {
       setIsLoading(false);
     }
@@ -125,15 +132,15 @@ export default function ForgotPasswordModal({
 
                 {/* Description */}
                 <p className="text-gray-400 text-sm mb-6">
-                  To proceed with changing your password, please enter your
-                  phone or email.
+                  Enter your email address and we'll send you a link to reset
+                  your password.
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {message && (
                     <div
                       className={`text-sm text-center p-3 rounded-lg border ${
-                        message.includes("sent")
+                        isSuccess
                           ? "text-green-500 bg-green-500/10 border-green-500/20"
                           : "text-red-500 bg-red-500/10 border-red-500/20"
                       }`}
@@ -142,18 +149,19 @@ export default function ForgotPasswordModal({
                     </div>
                   )}
 
-                  {/* Email or phone field */}
+                  {/* Email field */}
                   <div>
                     <label className="block text-gray-400 text-sm mb-2">
-                      Email or phone
+                      Email Address
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Email or phone"
+                      placeholder="your@email.com"
                       className="w-full px-4 py-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-400"
                       required
+                      disabled={isLoading}
                     />
                   </div>
 

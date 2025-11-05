@@ -375,3 +375,63 @@ export const welcomeEmailTemplate = (name: string) => `
   </p>
 </div>
 `;
+
+// Password Reset Email Template
+export const passwordResetTemplate = (name: string, resetUrl: string) => `
+<div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+  <!-- Header -->
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
+    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Password Reset Request</h1>
+  </div>
+
+  <!-- Content -->
+  <div style="padding: 40px 30px;">
+    <h2 style="color: #333333; margin-bottom: 20px;">Hi ${name},</h2>
+    
+    <p style="font-size: 16px; color: #666666; line-height: 1.6; margin-bottom: 20px;">
+      We received a request to reset your password for your M4 Capital account. If you made this request, click the button below to reset your password:
+    </p>
+
+    <div style="text-align: center; margin: 30px 0;">
+      <a href="${resetUrl}" style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
+        Reset Password
+      </a>
+    </div>
+
+    <p style="font-size: 14px; color: #666666; line-height: 1.6; margin-bottom: 20px;">
+      Or copy and paste this link into your browser:
+    </p>
+    
+    <p style="font-size: 14px; color: #667eea; word-break: break-all; background: #f5f5f5; padding: 12px; border-radius: 5px; margin-bottom: 20px;">
+      ${resetUrl}
+    </p>
+
+    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
+      <p style="font-size: 14px; color: #856404; margin: 0;">
+        <strong>⚠️ Security Notice:</strong> This link will expire in 1 hour for security reasons.
+      </p>
+    </div>
+
+    <p style="font-size: 14px; color: #666666; line-height: 1.6;">
+      If you didn't request a password reset, please ignore this email or contact our support team if you have concerns about your account security.
+    </p>
+
+    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eeeeee;">
+      <p style="font-size: 12px; color: #999999; margin: 5px 0;">
+        Best regards,<br>
+        M4 Capital Security Team
+      </p>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="background: #f5f5f5; padding: 20px; text-align: center;">
+    <p style="font-size: 12px; color: #999999; margin: 5px 0;">
+      This is an automated message, please do not reply to this email.
+    </p>
+    <p style="font-size: 12px; color: #999999; margin: 5px 0;">
+      © 2025 M4 Capital. All rights reserved.
+    </p>
+  </div>
+</div>
+`;

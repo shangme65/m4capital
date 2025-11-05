@@ -24,7 +24,38 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log("🔍 Looking up user:", session.user.email);
+    // Get period parameter from query string (default: 'all')
+    const { searchParams } = new URL(request.url);
+    const period = searchParams.get("period") || "all"; // all, today, 7d, 30d
+
+    console.log("🔍 Looking up user:", session.user.email, "| Period:", period);
+
+    // Calculate period start date
+    let periodStart: Date | undefined;
+    const now = new Date();
+
+    switch (period) {
+      case "today":
+        periodStart = new Date(
+          now.getFullYear(),
+          now.getMonth(),
+          now.getDate(),
+          0,
+          0,
+          0
+        );
+        break;
+      case "7d":
+        periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case "30d":
+        periodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case "all":
+      default:
+        periodStart = undefined; // No filter
+        break;
+    }
 
     // Find user and their portfolio
     const user = await prisma.user.findUnique({
@@ -74,11 +105,89 @@ export async function GET(request: NextRequest) {
       take: 10,
     });
 
+    // Aggregate sums for full history to compute income percent
+    const depositSum = await prisma.deposit.aggregate({
+      _sum: { amount: true },
+      where: { portfolioId: portfolio.id, status: "COMPLETED" },
+    });
+
+    const withdrawalSum = await prisma.withdrawal.aggregate({
+      _sum: { amount: true },
+      where: { portfolioId: portfolio.id, status: "COMPLETED" },
+    });
+
+    // Aggregate sums for the specific period
+    const periodDepositSum = await prisma.deposit.aggregate({
+      _sum: { amount: true },
+      where: {
+        portfolioId: portfolio.id,
+        status: "COMPLETED",
+        ...(periodStart && { createdAt: { gte: periodStart } }),
+      },
+    });
+
+    const periodWithdrawalSum = await prisma.withdrawal.aggregate({
+      _sum: { amount: true },
+      where: {
+        portfolioId: portfolio.id,
+        status: "COMPLETED",
+        ...(periodStart && { createdAt: { gte: periodStart } }),
+      },
+    });
+
+    // Aggregate trade profits for the period
+    const periodTradeSum = await prisma.trade.aggregate({
+      _sum: { profit: true },
+      where: {
+        portfolioId: portfolio.id,
+        ...(periodStart && { closedAt: { gte: periodStart } }),
+      },
+    });
+
+    const totalDeposited = parseFloat((depositSum._sum.amount ?? 0).toString());
+    const totalWithdrawn = parseFloat(
+      (withdrawalSum._sum.amount ?? 0).toString()
+    );
+
+    const periodDeposits = parseFloat(
+      (periodDepositSum._sum.amount ?? 0).toString()
+    );
+    const periodWithdrawals = parseFloat(
+      (periodWithdrawalSum._sum.amount ?? 0).toString()
+    );
+    const periodTradeEarnings = parseFloat(
+      (periodTradeSum._sum.profit ?? 0).toString()
+    );
+
+    // Net added money = deposits - withdrawals. This represents total money
+    // the user has put into the account (not market movements).
+    const netAdded = totalDeposited - totalWithdrawn;
+
+    // Period net change = deposits - withdrawals + trade earnings for period
+    const periodNetChange =
+      periodDeposits - periodWithdrawals + periodTradeEarnings;
+
     // Parse assets JSON
     const assets = Array.isArray(portfolio.assets) ? portfolio.assets : [];
 
     // Calculate portfolio value (this would integrate with real-time crypto prices)
     const portfolioValue = parseFloat(portfolio.balance.toString());
+
+    // Income percent = percentage change of user's money (current balance
+    // relative to the net amount they added). This excludes crypto market
+    // fluctuations and only measures increase/decrease of user's funds.
+    const incomePercent =
+      netAdded > 0 ? ((portfolioValue - netAdded) / netAdded) * 100 : 0;
+
+    // Period income percent - calculate baseline balance at period start
+    // Baseline = current balance - period net change
+    const periodBaselineBalance = portfolioValue - periodNetChange;
+    const periodIncomePercent =
+      periodBaselineBalance > 0
+        ? (periodNetChange / periodBaselineBalance) * 100
+        : periodNetChange > 0
+        ? 100
+        : 0; // If starting from 0, show 100% if positive gain
 
     // Return portfolio data
     return NextResponse.json({
@@ -92,6 +201,16 @@ export async function GET(request: NextRequest) {
       portfolio: {
         balance: portfolioValue,
         assets: assets,
+        totalDeposited,
+        totalWithdrawn,
+        netAdded,
+        incomePercent,
+        period,
+        periodDeposits,
+        periodWithdrawals,
+        periodTradeEarnings,
+        periodNetChange,
+        periodIncomePercent,
         recentDeposits: deposits.map((d) => ({
           id: d.id,
           amount: parseFloat(d.amount.toString()),

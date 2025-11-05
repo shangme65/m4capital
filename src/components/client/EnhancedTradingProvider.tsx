@@ -76,6 +76,32 @@ export interface TradingContextType {
 
 const TradingContext = createContext<TradingContextType | null>(null);
 
+// Helper function to record trade to server
+async function recordTradeToServer(tradeData: {
+  symbol: string;
+  side: "BUY" | "SELL";
+  entryPrice: number;
+  exitPrice: number;
+  quantity: number;
+  commission?: number;
+  leverage?: number;
+  closedAt?: string;
+}) {
+  const response = await fetch("/api/trades/record", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(tradeData),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to record trade: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export const useTradingContext = () => {
   const context = useContext(TradingContext);
   if (!context) {
@@ -267,6 +293,21 @@ const InternalTradingProvider: React.FC<TradingProviderProps> = ({
       };
 
       setTradeHistory((prev) => [trade, ...prev]);
+
+      // Record trade to server for persistence and portfolio balance update
+      recordTradeToServer({
+        symbol: position.symbol,
+        side: position.direction === "HIGHER" ? "BUY" : "SELL",
+        entryPrice: position.entryPrice,
+        exitPrice,
+        quantity: position.amount,
+        commission: 0,
+        leverage: 1,
+        closedAt: new Date().toISOString(),
+      }).catch((error) => {
+        console.error("Failed to record trade to server:", error);
+        // Trade still recorded locally; server sync failed
+      });
 
       return prev.filter((p) => p.id !== positionId);
     });

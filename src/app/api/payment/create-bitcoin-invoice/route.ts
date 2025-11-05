@@ -7,11 +7,22 @@ import { nowPayments } from "@/lib/nowpayments";
 export const dynamic = "force-dynamic";
 
 /**
+ * @deprecated This endpoint is deprecated. Use /api/payment/create-bitcoin with useInvoice=true instead.
+ *
  * POST /api/payment/create-bitcoin-invoice
  * Create a Bitcoin deposit invoice via NOWPayments (alternative to payment API)
  * This doesn't require payment tool setup in NOWPayments dashboard
+ *
+ * MIGRATION: This endpoint will be removed in a future version.
+ * Please use /api/payment/create-bitcoin with the following body:
+ * { amount: number, currency: string, useInvoice: true }
  */
 export async function POST(request: NextRequest) {
+  // Log deprecation warning
+  console.warn(
+    "⚠️  DEPRECATED: /api/payment/create-bitcoin-invoice is deprecated. Use /api/payment/create-bitcoin with useInvoice=true"
+  );
+
   try {
     const session = await getServerSession(authOptions);
 

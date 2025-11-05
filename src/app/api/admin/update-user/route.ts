@@ -1,20 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/middleware/auth";
+import { rateLimiters } from "@/lib/middleware/ratelimit";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+} from "@/lib/middleware/errorHandler";
 import { prisma } from "@/lib/prisma";
 
 // PATCH: Update user data (admin only)
 export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  // Apply rate limiting
+  const rateLimitResult = await rateLimiters.admin(req);
+  if (rateLimitResult instanceof NextResponse) {
+    return rateLimitResult;
   }
+
+  // Check admin authentication
+  const { error, session } = await requireAdmin(req);
+  if (error) return error;
 
   const { userId, data } = await req.json();
   if (!userId || !data) {
-    return NextResponse.json(
-      { error: "Missing userId or data" },
-      { status: 400 }
+    return createErrorResponse(
+      "Invalid input",
+      "Missing userId or data",
+      undefined,
+      400
     );
   }
 
@@ -23,35 +34,50 @@ export async function PATCH(req: NextRequest) {
       where: { id: userId },
       data,
     });
-    return NextResponse.json({ user: updatedUser });
+    return createSuccessResponse(
+      { user: updatedUser },
+      "User updated successfully"
+    );
   } catch (error) {
-    return NextResponse.json(
-      { error: "Update failed", details: error },
-      { status: 500 }
+    console.error("Update user error:", error);
+    return createErrorResponse(
+      "Update failed",
+      "Failed to update user",
+      error,
+      500
     );
   }
 }
 
 // PUT: Update user role specifically (admin only)
 export async function PUT(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
+  // Apply rate limiting
+  const rateLimitResult = await rateLimiters.admin(req);
+  if (rateLimitResult instanceof NextResponse) {
+    return rateLimitResult;
   }
+
+  // Check admin authentication
+  const { error, session } = await requireAdmin(req);
+  if (error) return error;
 
   const { userId, role } = await req.json();
   if (!userId || !role) {
-    return NextResponse.json(
-      { error: "Missing userId or role" },
-      { status: 400 }
+    return createErrorResponse(
+      "Invalid input",
+      "Missing userId or role",
+      undefined,
+      400
     );
   }
 
   // Validate role
   if (!["USER", "ADMIN"].includes(role)) {
-    return NextResponse.json(
-      { error: "Invalid role. Must be USER or ADMIN" },
-      { status: 400 }
+    return createErrorResponse(
+      "Invalid role",
+      "Role must be USER or ADMIN",
+      undefined,
+      400
     );
   }
 
@@ -60,14 +86,17 @@ export async function PUT(req: NextRequest) {
       where: { id: userId },
       data: { role },
     });
-    return NextResponse.json({
-      message: "User role updated successfully",
-      user: updatedUser,
-    });
+    return createSuccessResponse(
+      { user: updatedUser },
+      "User role updated successfully"
+    );
   } catch (error) {
-    return NextResponse.json(
-      { error: "Role update failed", details: error },
-      { status: 500 }
+    console.error("Update user role error:", error);
+    return createErrorResponse(
+      "Update failed",
+      "Failed to update user role",
+      error,
+      500
     );
   }
 }
