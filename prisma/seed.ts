@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Start seeding...");
+  console.log("🌱 Starting database seed...");
 
   // Get admin credentials from environment variables
   const adminEmail = process.env.ORIGIN_ADMIN_EMAIL;
@@ -17,11 +17,22 @@ async function main() {
     process.exit(1);
   }
 
+  // Check if admin already exists
+  const existingAdmin = await prisma.user.findUnique({
+    where: { email: adminEmail },
+  });
+
+  if (existingAdmin) {
+    console.log(`✅ Admin user already exists: ${existingAdmin.email}`);
+    console.log("⏭️  Skipping admin creation");
+    return;
+  }
+
   // Create admin user from environment variables
   const adminPassword = await bcrypt.hash(adminPasswordRaw, 10);
   const adminUser = await prisma.user.create({
     data: {
-      name: "Admin User",
+      name: process.env.ORIGIN_ADMIN_NAME || "Admin",
       email: adminEmail,
       password: adminPassword,
       role: "ADMIN",
@@ -29,60 +40,15 @@ async function main() {
       accountType: "INVESTOR",
       portfolio: {
         create: {
-          balance: 1000000.0,
-          assets: [
-            { symbol: "BTC", amount: 10 },
-            { symbol: "ETH", amount: 100 },
-          ],
+          balance: 0, // Production starts with zero balance
+          assets: [], // No sample assets
         },
       },
     },
   });
 
-  // Create a sample test user (optional - only in development)
-  if (process.env.NODE_ENV !== "production") {
-    const testPassword = process.env.TEST_USER_PASSWORD || "test-password-change-me";
-    const userPassword = await bcrypt.hash(testPassword, 10);
-    const regularUser = await prisma.user.create({
-      data: {
-        name: "Test User",
-        email: "testuser@example.com",
-        password: userPassword,
-        role: "USER",
-        accountType: "INVESTOR",
-        isEmailVerified: true,
-        portfolio: {
-          create: {
-            balance: 5000.0,
-            assets: [{ symbol: "ADA", amount: 5000 }],
-          },
-        },
-      },
-    });
-
-    // Create sample deposits for the test user
-    await prisma.deposit.createMany({
-      data: [
-        {
-          portfolioId: regularUser.id,
-          amount: 2000.0,
-          currency: "USD",
-          status: "COMPLETED",
-        },
-        {
-          portfolioId: regularUser.id,
-          amount: 3000.0,
-          currency: "USD",
-          status: "COMPLETED",
-        },
-      ],
-    });
-
-    console.log(`Created test user: ${regularUser.email}`);
-  }
-
-  console.log(`Created admin user: ${adminUser.email}`);
-  console.log("Seeding finished.");
+  console.log(`✅ Created admin user: ${adminUser.email}`);
+  console.log("✅ Seeding finished.");
 }
 
 main()
