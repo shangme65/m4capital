@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { nowPayments } from "@/lib/nowpayments";
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,33 +67,105 @@ export async function POST(request: NextRequest) {
       .toString(36)
       .substr(2, 9)}`;
 
-    // Create deposit record (using only existing fields for now)
+    // Handle crypto payments via NowPayments
+    if (paymentMethod === "crypto") {
+      try {
+        // Create NowPayments payment
+        const payCurrency = (cryptoType || "BTC").toLowerCase();
+        const payment = await nowPayments.createPayment({
+          price_amount: amount,
+          price_currency: currency,
+          pay_currency: payCurrency,
+          order_id: transactionId,
+          order_description: `Deposit ${amount} ${currency}`,
+          ipn_callback_url: `${process.env.NEXTAUTH_URL}/api/payment/webhook`,
+        });
+
+        // Create deposit record with NowPayments data
+        const deposit = await prisma.deposit.create({
+          data: {
+            portfolioId: portfolio.id,
+            amount: amount,
+            currency: currency.toUpperCase(),
+            status: "PENDING",
+            method: `NOWPAYMENTS_${payCurrency.toUpperCase()}`,
+            paymentId: payment.payment_id,
+            paymentAddress: payment.pay_address,
+            paymentAmount: payment.pay_amount,
+            cryptoCurrency: payment.pay_currency.toUpperCase(),
+            paymentStatus: payment.payment_status,
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
+          deposit: {
+            id: deposit.id,
+            transactionId: transactionId,
+            amount: parseFloat(deposit.amount.toString()),
+            currency: deposit.currency,
+            status: deposit.status,
+            paymentMethod,
+            createdAt: deposit.createdAt,
+          },
+          paymentInstructions: {
+            type: "crypto",
+            address: payment.pay_address,
+            cryptoType: payment.pay_currency.toUpperCase(),
+            amount: payment.pay_amount,
+            amountUSD: amount,
+            network:
+              payment.network ||
+              (payCurrency === "btc" ? "Bitcoin" : "Ethereum"),
+            paymentId: payment.payment_id,
+            expiresAt: payment.expiration_estimate_date,
+            instructions: [
+              `Send exactly ${
+                payment.pay_amount
+              } ${payment.pay_currency.toUpperCase()} to the address above`,
+              "Include the exact amount to avoid processing delays",
+              "Transaction will be confirmed automatically",
+              "Do not close this page until payment is confirmed",
+            ],
+          },
+        });
+      } catch (error) {
+        console.error("NowPayments API error:", error);
+        return NextResponse.json(
+          {
+            error: "Failed to create crypto payment",
+            details: error instanceof Error ? error.message : "Unknown error",
+          },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Handle non-crypto payments (credit card, bank transfer)
     const deposit = await prisma.deposit.create({
       data: {
         portfolioId: portfolio.id,
         amount: amount,
         currency: currency.toUpperCase(),
-        status: paymentMethod === "crypto" ? "PENDING" : "COMPLETED",
-        // Note: type, transactionId, and metadata fields will be added after migration
+        status: "COMPLETED",
+        method: paymentMethod.toUpperCase(),
       },
     });
 
-    // If payment is completed (non-crypto), update user's portfolio balance
-    if (paymentMethod !== "crypto") {
-      await prisma.portfolio.update({
-        where: { id: portfolio.id },
-        data: {
-          balance: {
-            increment: amount,
-          },
+    // Update portfolio balance for completed payments
+    await prisma.portfolio.update({
+      where: { id: portfolio.id },
+      data: {
+        balance: {
+          increment: amount,
         },
-      });
-    }
+      },
+    });
 
     // Get payment instructions
     const paymentInstructions = getPaymentInstructions(
       paymentMethod,
-      cryptoType,
+      undefined,
       amount,
       currency
     );
@@ -119,24 +192,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// TODO: REPLACE WITH REAL CRYPTO WALLET SERVICE INTEGRATION
-// This function generates FAKE addresses and must be replaced with:
-// - Integration with NowPayments, Coinbase Commerce, or similar payment gateway
-// - Real wallet address generation per user/transaction
-// - Proper transaction tracking and confirmations
-// - NEVER use these hardcoded addresses in production
-function generateCryptoAddress(cryptoType: string): string {
-  const addresses = {
-    BTC: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-    ETH: "0x742d35Cc6734C0532925a3b8D6E382dE0C86E6a0",
-    USDT: "0x742d35Cc6734C0532925a3b8D6E382dE0C86E6a0",
-    LTC: "LQTpS7xRbVXz5xrXhQk1UL8N8gUjBZqm1H",
-  };
-
-  return addresses[cryptoType as keyof typeof addresses] || addresses.BTC;
-}
-
-// Generate payment instructions based on method
+// Generate payment instructions for non-crypto payments
 function getPaymentInstructions(
   paymentMethod: string,
   cryptoType?: string,
@@ -144,24 +200,6 @@ function getPaymentInstructions(
   currency?: string
 ) {
   switch (paymentMethod) {
-    case "crypto":
-      return {
-        type: "crypto",
-        address: generateCryptoAddress(cryptoType || "BTC"),
-        cryptoType: cryptoType || "BTC",
-        amount: amount,
-        network:
-          cryptoType === "ETH" || cryptoType === "USDT"
-            ? "Ethereum"
-            : "Bitcoin",
-        instructions: [
-          `Send exactly ${amount} ${cryptoType || "BTC"} to the address above`,
-          "Include the exact amount to avoid processing delays",
-          "Transaction will be confirmed within 30 minutes",
-          "Contact support if you have any issues",
-        ],
-      };
-
     case "credit_card":
       return {
         type: "credit_card",
