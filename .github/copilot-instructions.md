@@ -326,23 +326,26 @@ If you discover:
 **ABSOLUTE REQUIREMENTS:**
 
 1. **Single Admin Only**
+
    - Create ONLY ONE admin user from environment variables
    - Check if admin exists before creating (idempotent)
    - Exit gracefully if admin already exists
 
 2. **Zero Balance Start**
+
    - Admin portfolio MUST start with `balance: 0`
    - Admin assets MUST be empty array: `assets: []`
    - NO sample crypto holdings
    - NO fake money
 
 3. **Environment Variables Only**
+
    ```typescript
    // REQUIRED: ALL three env vars
    ORIGIN_ADMIN_EMAIL="admin@yourdomain.com"
    ORIGIN_ADMIN_PASSWORD="secure-password"
    ORIGIN_ADMIN_NAME="Admin Name"
-   
+
    // FORBIDDEN: Any hardcoded values
    ❌ email: "admin@anything.com"
    ❌ password: "password123"
@@ -361,6 +364,7 @@ If you discover:
 **MANDATORY for ALL API routes:**
 
 1. **Environment Variable Validation**
+
    ```typescript
    // ✅ ALWAYS validate before use
    const apiKey = process.env.SOME_API_KEY;
@@ -373,6 +377,7 @@ If you discover:
    ```
 
 2. **Authentication Required**
+
    - Check user session for protected routes
    - Verify admin role for admin-only endpoints
    - Return 401 Unauthorized if not authenticated
@@ -387,12 +392,13 @@ If you discover:
 ### Real Data Sources - NO EXCEPTIONS
 
 **Crypto Prices:**
+
 ```typescript
 // ✅ CORRECT - Real Binance WebSocket
-const ws = new WebSocket('wss://stream.binance.com:9443/stream');
+const ws = new WebSocket("wss://stream.binance.com:9443/stream");
 
 // ✅ CORRECT - Real Binance REST API
-const response = await fetch('https://api.binance.com/api/v3/ticker/24hr');
+const response = await fetch("https://api.binance.com/api/v3/ticker/24hr");
 
 // ❌ FORBIDDEN - ANY simulation
 const price = 50000 + Math.random() * 1000; // NEVER
@@ -400,15 +406,17 @@ const mockData = { price: 50000, change: 2.5 }; // NEVER
 ```
 
 **Forex Rates:**
+
 ```typescript
 // ✅ CORRECT - Real Frankfurter API
-const response = await fetch('https://api.frankfurter.app/latest');
+const response = await fetch("https://api.frankfurter.app/latest");
 
 // ❌ FORBIDDEN - ANY hardcoded rates
 const rates = { EUR: 1.1, GBP: 1.3 }; // NEVER
 ```
 
 **Crypto Deposits:**
+
 ```typescript
 // ✅ CORRECT - Real NowPayments API
 const payment = await createNowPayment(amount, currency);
@@ -422,18 +430,21 @@ const address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"; // NEVER
 **ZERO TOLERANCE for hardcoded credentials:**
 
 1. **Email Addresses**
+
    - ❌ NEVER: `"admin@m4capital.com"`
    - ❌ NEVER: `"user@test.com"`
    - ❌ NEVER: `"test@example.com"` in actual logic
    - ✅ ALWAYS: `process.env.ORIGIN_ADMIN_EMAIL`
 
 2. **Passwords**
+
    - ❌ NEVER: `"password123"`
    - ❌ NEVER: `"admin123"`
    - ❌ NEVER: Any hardcoded password value
    - ✅ ALWAYS: `process.env.ORIGIN_ADMIN_PASSWORD`
 
 3. **API Keys**
+
    - ❌ NEVER: `"sk-hardcoded-key"`
    - ❌ NEVER: Any string that looks like an API key
    - ✅ ALWAYS: `process.env.OPENAI_API_KEY`
@@ -493,6 +504,7 @@ if (isDemoMode) { ... } // Remove demo modes entirely
 ### File-Specific Rules
 
 **`prisma/seed.ts`:**
+
 - ONLY create admin from env vars
 - Check if admin exists first
 - Zero balance, empty assets
@@ -500,12 +512,14 @@ if (isDemoMode) { ... } // Remove demo modes entirely
 - Exit with error if env vars missing
 
 **`scripts/fix-admin.ts`:**
+
 - ONLY use env vars
 - Import `dotenv` to load `.env`
 - Validate env vars before use
 - NO hardcoded credentials
 
-**`src/app/api/**/route.ts`:**
+**`src/app/api/**/route.ts`:\*\*
+
 - Validate env vars at top of handler
 - Return 500 if env vars missing
 - Authenticate user session
@@ -513,6 +527,7 @@ if (isDemoMode) { ... } // Remove demo modes entirely
 - Use Prisma client from `@/lib/prisma`
 
 **`src/components/client/*`:**
+
 - Fetch data from real APIs
 - NO Math.random() for prices
 - NO hardcoded market data
@@ -546,6 +561,7 @@ NODE_ENV="production"
 ```
 
 **FORBIDDEN in `.env.example`:**
+
 - Real passwords
 - Real API keys
 - Real email addresses (use `admin@yourdomain.com` placeholder)
@@ -558,18 +574,21 @@ NODE_ENV="production"
 **Before deploying to production:**
 
 1. **Environment Variables**
+
    - [ ] All required env vars set in hosting platform
    - [ ] No placeholder values in production
    - [ ] Credentials rotated from development
    - [ ] NEXTAUTH_SECRET is random and secure
 
 2. **Database**
+
    - [ ] Migrations run successfully
    - [ ] Seed script executed ONCE
    - [ ] Admin user created from env vars
    - [ ] No test data in database
 
 3. **Security**
+
    - [ ] No hardcoded credentials in code
    - [ ] All API keys from environment
    - [ ] `.env` file not in git
@@ -588,11 +607,13 @@ NODE_ENV="production"
 **If production breaks due to missing env vars:**
 
 1. **Identify the issue**
+
    - Check application logs
    - Look for "env var not set" errors
    - Verify which variable is missing
 
 2. **Fix immediately**
+
    - Add missing env var to hosting platform
    - Restart application
    - Verify functionality restored
@@ -606,12 +627,14 @@ NODE_ENV="production"
 **If hardcoded credentials discovered:**
 
 1. **Immediate action**
+
    - Remove from code
    - Replace with env vars
    - Rotate exposed credentials
    - Deploy fix urgently
 
 2. **Audit**
+
    - Search entire codebase
    - Check git history
    - Review all similar files
