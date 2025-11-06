@@ -485,10 +485,9 @@ Response:
   "message": "Origin admin created/updated",
   "admin": {
     "id": "admin_id",
-    "email": "admin@m4capital.com",
+    "email": "admin@yourdomain.com", // From ORIGIN_ADMIN_EMAIL env var
     "role": "ADMIN"
-  },
-  "tempPassword": "..." // Only for this endpoint
+  }
 }
 ```
 

@@ -1441,13 +1441,13 @@ const AdminDashboard = () => {
               {[
                 {
                   action: "User login",
-                  user: "admin@m4capital.com",
+                  user: "admin@example.com",
                   time: "2 mins ago",
                   type: "success",
                 },
                 {
                   action: "Balance updated",
-                  user: "user@m4capital.com",
+                  user: "user@example.com",
                   time: "5 mins ago",
                   type: "info",
                 },

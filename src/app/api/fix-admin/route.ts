@@ -4,23 +4,52 @@ import bcrypt from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   try {
-    // Update the existing user to ADMIN role
-    const updatedUser = await prisma.user.update({
-      where: { email: "admin@m4capital.com" },
-      data: { role: "ADMIN" },
+    // Get admin credentials from environment variables
+    const adminEmail = process.env.ORIGIN_ADMIN_EMAIL;
+    const adminPasswordRaw = process.env.ORIGIN_ADMIN_PASSWORD;
+
+    if (!adminEmail || !adminPasswordRaw) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: "ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD must be set in environment variables" 
+        },
+        { status: 500 }
+      );
+    }
+
+    // Check if admin user already exists
+    const existingAdmin = await prisma.user.findUnique({
+      where: { email: adminEmail },
     });
 
-    // Also create the admin@m4capital user if needed
-    const adminPassword = await bcrypt.hash("password123", 10);
+    if (existingAdmin) {
+      // Update existing user to ADMIN role
+      const updatedUser = await prisma.user.update({
+        where: { email: adminEmail },
+        data: { 
+          role: "ADMIN",
+          isEmailVerified: true,
+        },
+      });
 
-    try {
+      return NextResponse.json({
+        success: true,
+        message: "Updated existing user to ADMIN role",
+        user: { email: updatedUser.email, role: updatedUser.role },
+      });
+    } else {
+      // Create new admin user from environment variables
+      const adminPassword = await bcrypt.hash(adminPasswordRaw, 10);
+
       const newAdminUser = await prisma.user.create({
         data: {
           name: "Admin User",
-          email: "admin@m4capital",
+          email: adminEmail,
           password: adminPassword,
           role: "ADMIN",
           accountType: "INVESTOR",
+          isEmailVerified: true,
           portfolio: {
             create: {
               balance: 1000000.0,
@@ -35,16 +64,8 @@ export async function POST(req: NextRequest) {
 
       return NextResponse.json({
         success: true,
-        message: "Fixed admin roles successfully",
-        updatedUser: updatedUser,
-        newAdminUser: newAdminUser,
-      });
-    } catch (createError) {
-      // User might already exist, that's ok
-      return NextResponse.json({
-        success: true,
-        message: "Updated existing admin role successfully",
-        updatedUser: updatedUser,
+        message: "Created new admin user successfully",
+        user: { email: newAdminUser.email, role: newAdminUser.role },
       });
     }
   } catch (error) {

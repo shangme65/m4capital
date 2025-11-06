@@ -6,14 +6,25 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Start seeding...");
 
-  // Create a sample admin user
-  const adminPassword = await bcrypt.hash("password123", 10);
+  // Get admin credentials from environment variables
+  const adminEmail = process.env.ORIGIN_ADMIN_EMAIL;
+  const adminPasswordRaw = process.env.ORIGIN_ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPasswordRaw) {
+    console.error("❌ ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD must be set in .env");
+    process.exit(1);
+  }
+
+  // Create admin user from environment variables
+  const adminPassword = await bcrypt.hash(adminPasswordRaw, 10);
   const adminUser = await prisma.user.create({
     data: {
       name: "Admin User",
-      email: "admin@m4capital.com",
+      email: adminEmail,
       password: adminPassword,
       role: "ADMIN",
+      isEmailVerified: true,
+      accountType: "INVESTOR",
       portfolio: {
         create: {
           balance: 1000000.0,
