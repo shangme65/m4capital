@@ -49,6 +49,8 @@ import {
   CryptoPriceTicker,
 } from "@/components/client/CryptoPriceTicker";
 import TradingCalculators from "@/components/client/TradingCalculators";
+import RealTimeTradingChart from "@/components/client/RealTimeTradingChart";
+import ChartGrid from "@/components/client/ChartGrid";
 import ErrorBoundary from "@/components/client/ErrorBoundary";
 
 function TradingInterface() {
@@ -78,6 +80,13 @@ function TradingInterface() {
   const [historyFilter, setHistoryFilter] = useState("All Positions");
   const [showMoreItems, setShowMoreItems] = useState(false);
   const [showCalculators, setShowCalculators] = useState(false);
+  const [isBalanceDropdownOpen, setIsBalanceDropdownOpen] = useState(false);
+  const [selectedAccountType, setSelectedAccountType] = useState<
+    "real" | "practice"
+  >("real"); // Default to real account
+  const [realAccountBalance, setRealAccountBalance] = useState(0);
+  const practiceAccountBalance = 785440.0; // Practice account default balance
+  const [forexRates, setForexRates] = useState<any>({});
 
   // Get trading context for history data
   const { tradeHistory, openPositions } = useTradingContext();
@@ -89,40 +98,55 @@ function TradingInterface() {
     isConnected: cryptoConnected,
   } = useCryptoMarket();
 
+  // Helper function to get forex rate
+  const getForexRate = (pair: string) => {
+    return forexRates[pair] || null;
+  };
+
   const symbols = [
     {
       symbol: "USD/CAD",
-      price: "1.35742",
-      change: "+0.0015",
-      percentage: "+0.11%",
+      price: getForexRate("CAD")?.price || "1.35742",
+      change: getForexRate("CAD")?.change || "+0.0015",
+      percentage: `${getForexRate("CAD")?.changePercent >= 0 ? "+" : ""}${
+        getForexRate("CAD")?.changePercent || "0.11"
+      }%`,
       flag: "🇺🇸🇨🇦",
     },
     {
       symbol: "EUR/USD",
-      price: "1.08532",
-      change: "-0.0023",
-      percentage: "-0.21%",
+      price: getForexRate("EUR")?.price || "1.08532",
+      change: getForexRate("EUR")?.change || "-0.0023",
+      percentage: `${getForexRate("EUR")?.changePercent >= 0 ? "+" : ""}${
+        getForexRate("EUR")?.changePercent || "-0.21"
+      }%`,
       flag: "🇪🇺🇺🇸",
     },
     {
       symbol: "GBP/USD",
-      price: "1.27854",
-      change: "+0.0045",
-      percentage: "+0.35%",
+      price: getForexRate("GBP")?.price || "1.27854",
+      change: getForexRate("GBP")?.change || "+0.0045",
+      percentage: `${getForexRate("GBP")?.changePercent >= 0 ? "+" : ""}${
+        getForexRate("GBP")?.changePercent || "0.35"
+      }%`,
       flag: "🇬🇧🇺🇸",
     },
     {
       symbol: "USD/JPY",
-      price: "149.235",
-      change: "+0.125",
-      percentage: "+0.08%",
+      price: getForexRate("JPY")?.price || "149.235",
+      change: getForexRate("JPY")?.change || "+0.125",
+      percentage: `${getForexRate("JPY")?.changePercent >= 0 ? "+" : ""}${
+        getForexRate("JPY")?.changePercent || "0.08"
+      }%`,
       flag: "🇺🇸🇯🇵",
     },
     {
       symbol: "AUD/USD",
-      price: "0.67321",
-      change: "-0.0012",
-      percentage: "-0.18%",
+      price: getForexRate("AUD")?.price || "0.67321",
+      change: getForexRate("AUD")?.change || "-0.0012",
+      percentage: `${getForexRate("AUD")?.changePercent >= 0 ? "+" : ""}${
+        getForexRate("AUD")?.changePercent || "-0.18"
+      }%`,
       flag: "🇦🇺🇺🇸",
     },
     {
@@ -237,8 +261,79 @@ function TradingInterface() {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
-    return () => clearInterval(timer);
+
+    // Fetch user balance
+    const fetchBalance = async () => {
+      try {
+        const response = await fetch("/api/user/balance");
+        if (response.ok) {
+          const data = await response.json();
+          setRealAccountBalance(data.realBalance);
+          console.log(
+            `✅ User balance loaded: Real=$${data.realBalance}, Practice=$${data.practiceBalance}`
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch user balance:", error);
+      }
+    };
+
+    // Fetch forex rates
+    const fetchForexRates = async () => {
+      try {
+        const response = await fetch(
+          "/api/forex/rates?symbols=CAD,EUR,GBP,JPY,AUD,CHF,NZD"
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setForexRates(data);
+          console.log(
+            `✅ Forex rates loaded:`,
+            Object.keys(data).length,
+            "pairs"
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch forex rates:", error);
+      }
+    };
+
+    fetchBalance();
+    fetchForexRates();
+
+    // Refresh forex rates every 60 seconds
+    const forexInterval = setInterval(fetchForexRates, 60000);
+
+    // Load selected account type from localStorage (but default to real)
+    const savedAccountType = localStorage.getItem("selectedAccountType") as
+      | "real"
+      | "practice"
+      | null;
+    if (savedAccountType) {
+      setSelectedAccountType(savedAccountType);
+    }
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(forexInterval);
+    };
   }, []);
+
+  // Close balance dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (isBalanceDropdownOpen && !target.closest(".relative")) {
+        setIsBalanceDropdownOpen(false);
+      }
+    };
+
+    if (isBalanceDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [isBalanceDropdownOpen]);
 
   const executeTrade = async (direction: "higher" | "lower") => {
     setIsExecutingTrade(true);
@@ -476,7 +571,7 @@ function TradingInterface() {
                       ({tab.symbol.includes("USD") ? "OTC" : "Binary"})
                     </span>
                     {openTabs.length > 1 && (
-                      <button
+                      <span
                         onClick={(e) => {
                           e.stopPropagation();
                           const newTabs = openTabs.filter(
@@ -488,14 +583,14 @@ function TradingInterface() {
                             setSelectedSymbol(newTabs[0].symbol);
                           }
                         }}
-                        className="ml-2 hover:bg-black/20 rounded transition-all w-4 h-4 flex items-center justify-center"
+                        className="ml-2 hover:bg-black/20 rounded transition-all w-4 h-4 flex items-center justify-center cursor-pointer"
                         style={{
                           color: activeTab === index ? "#ffffff" : "#666666",
                           fontSize: "14px",
                         }}
                       >
                         ×
-                      </button>
+                      </span>
                     )}
                   </button>
                 ))}
@@ -525,20 +620,252 @@ function TradingInterface() {
               <button className="p-2 hover:opacity-75 transition-opacity">
                 <Settings className="w-5 h-5" style={{ color: "#afadac" }} />
               </button>
-              <div
-                className="px-4 py-2 rounded-lg flex items-center space-x-2"
-                style={{ backgroundColor: "#38312e" }}
-              >
-                <span
-                  style={{
-                    color: "#5ddf38",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                  }}
+              <div className="relative">
+                <button
+                  onClick={() =>
+                    setIsBalanceDropdownOpen(!isBalanceDropdownOpen)
+                  }
+                  className="px-4 py-2 rounded-lg flex items-center space-x-2 hover:opacity-90 transition-opacity"
+                  style={{ backgroundColor: "#38312e" }}
                 >
-                  $50,000.00
-                </span>
-                <ChevronDown className="w-4 h-4" style={{ color: "#afadac" }} />
+                  <span
+                    style={{
+                      color:
+                        selectedAccountType === "real" ? "#5ddf38" : "#ff8516",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    $
+                    {(selectedAccountType === "real"
+                      ? realAccountBalance
+                      : practiceAccountBalance
+                    ).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                  <ChevronDown
+                    className="w-4 h-4"
+                    style={{ color: "#afadac" }}
+                  />
+                </button>
+
+                {/* Balance Dropdown */}
+                {isBalanceDropdownOpen && (
+                  <div
+                    className="absolute top-full right-0 mt-2 w-[380px] rounded-lg shadow-2xl border z-50"
+                    style={{
+                      backgroundColor: "#2a2624",
+                      borderColor: "#38312e",
+                    }}
+                  >
+                    {/* Real Account Section */}
+                    <button
+                      onClick={() => {
+                        setSelectedAccountType("real");
+                        setIsBalanceDropdownOpen(false);
+                        localStorage.setItem("selectedAccountType", "real");
+                      }}
+                      className="w-full p-4 border-b transition-all duration-200 hover:bg-opacity-50"
+                      style={{
+                        borderColor: "#38312e",
+                        backgroundColor:
+                          selectedAccountType === "real"
+                            ? "#38312e"
+                            : "transparent",
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-left">
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className="text-xs"
+                              style={{ color: "#9e9aa7" }}
+                            >
+                              REAL ACCOUNT
+                            </div>
+                            {selectedAccountType === "real" && (
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: "#5ddf38" }}
+                              />
+                            )}
+                          </div>
+                          <div
+                            className="text-2xl font-semibold"
+                            style={{ color: "#5ddf38" }}
+                          >
+                            $ {realAccountBalance.toFixed(2)}
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Handle deposit
+                          }}
+                          className="px-4 py-2 rounded text-sm font-medium transition-all duration-200"
+                          style={{
+                            backgroundColor: "#38312e",
+                            color: "#9e9aa7",
+                          }}
+                        >
+                          Deposit
+                        </button>
+                      </div>
+
+                      <div className="space-y-2 mt-3">
+                        <div className="flex justify-between items-center">
+                          <span
+                            className="text-sm"
+                            style={{ color: "#9e9aa7" }}
+                          >
+                            Available
+                          </span>
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: "#ffffff" }}
+                          >
+                            $ {realAccountBalance.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span
+                            className="text-sm"
+                            style={{ color: "#9e9aa7" }}
+                          >
+                            Investment
+                          </span>
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: "#ffffff" }}
+                          >
+                            $ 0.00
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        className="mt-3 pt-3 border-t"
+                        style={{ borderColor: "#38312e" }}
+                      >
+                        <div
+                          className="flex items-center space-x-1 text-xs"
+                          style={{ color: "#9e9aa7" }}
+                        >
+                          <CircleHelp className="w-3 h-3" />
+                          <span>Click to switch to Real Account</span>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Practice Account Section */}
+                    <button
+                      onClick={() => {
+                        setSelectedAccountType("practice");
+                        setIsBalanceDropdownOpen(false);
+                        localStorage.setItem("selectedAccountType", "practice");
+                      }}
+                      className="w-full p-4 transition-all duration-200 hover:bg-opacity-50"
+                      style={{
+                        backgroundColor:
+                          selectedAccountType === "practice"
+                            ? "#38312e"
+                            : "transparent",
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-left">
+                          <div className="flex items-center space-x-2">
+                            <div
+                              className="text-xs"
+                              style={{ color: "#9e9aa7" }}
+                            >
+                              PRACTICE ACCOUNT
+                            </div>
+                            {selectedAccountType === "practice" && (
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{ backgroundColor: "#ff8516" }}
+                              />
+                            )}
+                          </div>
+                          <div
+                            className="text-2xl font-semibold"
+                            style={{ color: "#ff8516" }}
+                          >
+                            ${" "}
+                            {practiceAccountBalance.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </div>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Handle top up
+                          }}
+                          className="px-4 py-2 rounded text-sm font-medium transition-all duration-200"
+                          style={{
+                            backgroundColor: "#38312e",
+                            color: "#9e9aa7",
+                          }}
+                        >
+                          Top Up
+                        </button>
+                      </div>
+
+                      <div className="space-y-2 mt-3">
+                        <div className="flex justify-between items-center">
+                          <span
+                            className="text-sm"
+                            style={{ color: "#9e9aa7" }}
+                          >
+                            Available
+                          </span>
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: "#ffffff" }}
+                          >
+                            ${" "}
+                            {practiceAccountBalance.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span
+                            className="text-sm"
+                            style={{ color: "#9e9aa7" }}
+                          >
+                            Investment
+                          </span>
+                          <span
+                            className="text-sm font-medium"
+                            style={{ color: "#ffffff" }}
+                          >
+                            $ 0.00
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        className="mt-3 pt-3 border-t"
+                        style={{ borderColor: "#38312e" }}
+                      >
+                        <div
+                          className="flex items-center space-x-1 text-xs"
+                          style={{ color: "#9e9aa7" }}
+                        >
+                          <CircleHelp className="w-3 h-3" />
+                          <span>Click to switch to Practice Account</span>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                )}
               </div>
               <button
                 className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
@@ -1000,28 +1327,17 @@ function TradingInterface() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
-                className="w-96 flex-col border-r z-10 overflow-hidden"
+                className="w-96 flex-col border-r z-10 overflow-hidden relative"
                 style={{ backgroundColor: "#26211f", borderColor: "#38312e" }}
               >
-                {/* Header */}
-                <div
-                  className="flex items-center justify-between p-4 border-b"
-                  style={{ borderColor: "#38312e" }}
+                {/* Close Button - Top Right */}
+                <button
+                  onClick={() => setShowCalculators(false)}
+                  className="absolute top-4 right-4 z-20 hover:opacity-75 transition-opacity bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center"
+                  style={{ color: "#afadac" }}
                 >
-                  <h3
-                    className="font-semibold text-lg"
-                    style={{ color: "#eceae9" }}
-                  >
-                    Trading Calculators
-                  </h3>
-                  <button
-                    onClick={() => setShowCalculators(false)}
-                    className="hover:opacity-75 transition-opacity"
-                    style={{ color: "#afadac", fontSize: "20px" }}
-                  >
-                    ✕
-                  </button>
-                </div>
+                  ✕
+                </button>
 
                 {/* Calculators Content */}
                 <div className="flex-1 overflow-y-auto">
@@ -2367,19 +2683,35 @@ function TradingInterface() {
               )}
             </AnimatePresence>
 
-            {/* Chart Area */}
+            {/* Chart Area with World Map Background */}
             <div
               className="flex-1 flex items-center justify-center relative"
               style={{
                 backgroundColor: "#1b1817",
-                backgroundImage: "url(/traderoom/backgrounds/m4capital1.svg)",
+                backgroundImage: 'url("/traderoom/backgrounds/m4capital1.svg")',
                 backgroundSize: "cover",
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
                 minHeight: "500px",
-                opacity: 0.15,
               }}
-            ></div>
+            >
+              <ChartGrid
+                gridType={selectedChartGrid}
+                defaultSymbol={selectedSymbol}
+                availableSymbols={[
+                  "BTC",
+                  "ETH",
+                  "BNB",
+                  "SOL",
+                  "ADA",
+                  "DOGE",
+                  "XRP",
+                  "DOT",
+                  "MATIC",
+                  "LINK",
+                ]}
+              />
+            </div>
           </div>
 
           {/* Trade Details Panel */}
@@ -2421,18 +2753,14 @@ function TradingInterface() {
                 style={{
                   backgroundColor: "#1b1817",
                   borderColor: "#38312e",
-                  backgroundImage: "url(/traderoom/backgrounds/world-map.webp)",
-                  backgroundSize: "contain",
-                  backgroundPosition: "center",
-                  backgroundRepeat: "no-repeat",
                 }}
               >
-                {/* World map overlay for opacity control */}
+                {/* Background overlay */}
                 <div
                   className="absolute inset-0"
                   style={{
                     backgroundColor: "#1b1817",
-                    opacity: 0.9,
+                    opacity: 0.95,
                   }}
                 />
                 <div className="text-center relative z-10">
@@ -2589,81 +2917,115 @@ function TradingInterface() {
             style={{
               backgroundColor: "transparent",
               overflow: "hidden",
-              width: "130px",
+              width: "165px",
             }}
           >
             <div className="p-3 space-y-2 h-full overflow-hidden">
               {/* Amount Section */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs" style={{ color: "#9e9aa7" }}>
+                <div
+                  className="flex items-center justify-between px-3 py-2 rounded"
+                  style={{ backgroundColor: "#3d3c4f" }}
+                >
+                  <span
+                    className="text-xs mr-2 whitespace-nowrap"
+                    style={{ color: "#9e9aa7" }}
+                  >
                     Amount
+                  </span>
+                  <span
+                    className="text-base font-semibold flex-1 text-right mr-2"
+                    style={{ color: "#ffffff" }}
+                  >
+                    $ {amount.toLocaleString()}
                   </span>
                   <div className="flex items-center space-x-1">
                     <button
                       className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
+                      style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
                     >
                       ?
                     </button>
                     <button
+                      onClick={() => setAmount(Math.min(amount + 1000, 100000))}
                       className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
+                      style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
                     >
                       +
                     </button>
                     <button
+                      onClick={() => setAmount(Math.max(amount - 1000, 1))}
                       className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                      style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
+                      style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
                     >
                       -
                     </button>
                   </div>
                 </div>
-                <div
-                  className="flex items-center px-3 py-2 rounded"
-                  style={{ backgroundColor: "#3d3c4f" }}
-                >
-                  <span
-                    className="text-lg font-semibold"
-                    style={{ color: "#ffffff" }}
-                  >
-                    $ {amount.toLocaleString()}
-                  </span>
-                </div>
               </div>
 
               {/* Expiration Section */}
               <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs" style={{ color: "#9e9aa7" }}>
-                    Expiration
-                  </span>
-                  <button
-                    className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                    style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
-                  >
-                    ?
-                  </button>
-                </div>
                 <div
-                  className="flex items-center px-3 py-2 rounded"
+                  className="flex items-center justify-between px-3 py-2 rounded"
                   style={{ backgroundColor: "#3d3c4f" }}
                 >
-                  <Clock
-                    className="w-3 h-3 mr-2"
-                    style={{ color: "#9e9aa7" }}
-                  />
                   <span
-                    className="text-sm font-medium"
-                    style={{ color: "#ffffff" }}
+                    className="text-xs mr-2 whitespace-nowrap"
+                    style={{ color: "#9e9aa7" }}
                   >
-                    {expirationSeconds < 60
-                      ? `${expirationSeconds} sec`
-                      : expirationSeconds < 3600
-                      ? `${expirationSeconds / 60} min`
-                      : `${expirationSeconds / 3600} hr`}
+                    Expiration
                   </span>
+                  <div className="flex items-center flex-1 justify-end mr-2">
+                    <Clock
+                      className="w-3 h-3 mr-1"
+                      style={{ color: "#9e9aa7" }}
+                    />
+                    <span
+                      className="text-base font-medium whitespace-nowrap"
+                      style={{ color: "#ffffff" }}
+                    >
+                      {expirationSeconds < 60
+                        ? `${expirationSeconds} sec`
+                        : expirationSeconds < 3600
+                        ? `${expirationSeconds / 60} min`
+                        : `${expirationSeconds / 3600} hr`}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <button
+                      className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
+                    >
+                      ?
+                    </button>
+                    <button
+                      onClick={() => {
+                        const options = [30, 60, 300, 900, 1800, 3600];
+                        const currentIndex = options.indexOf(expirationSeconds);
+                        if (currentIndex < options.length - 1) {
+                          setExpirationSeconds(options[currentIndex + 1]);
+                        }
+                      }}
+                      className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => {
+                        const options = [30, 60, 300, 900, 1800, 3600];
+                        const currentIndex = options.indexOf(expirationSeconds);
+                        if (currentIndex > 0) {
+                          setExpirationSeconds(options[currentIndex - 1]);
+                        }
+                      }}
+                      className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
+                    >
+                      -
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -2681,13 +3043,13 @@ function TradingInterface() {
                   </button>
                 </div>
                 <div
-                  className="text-3xl font-bold mb-1 text-center"
+                  className="text-3xl mb-1 text-center"
                   style={{ color: "#22c55e" }}
                 >
                   +86%
                 </div>
                 <div
-                  className="text-lg font-semibold text-center"
+                  className="text-lg text-center"
                   style={{ color: "#22c55e" }}
                 >
                   +${" "}
@@ -2698,7 +3060,7 @@ function TradingInterface() {
               </div>
 
               {/* Trading Buttons */}
-              <div className="space-y-2">
+              <div className="space-y-2 mt-8">
                 {/* Higher Button */}
                 <motion.button
                   onClick={() => executeTrade("higher")}

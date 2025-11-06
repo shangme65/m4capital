@@ -191,20 +191,39 @@ const InternalTradingProvider: React.FC<TradingProviderProps> = ({
 
   // Load historical data for subscribed symbols
   useEffect(() => {
-    subscribedSymbols.forEach(async (symbol) => {
-      try {
-        const historicalData = await marketDataContext.getHistoricalData(
-          symbol,
-          "1m"
-        );
+    const loadHistoricalData = async () => {
+      const promises = Array.from(subscribedSymbols).map(async (symbol) => {
+        try {
+          const historicalData = await marketDataContext.getHistoricalData(
+            symbol,
+            "1m"
+          );
+          return { symbol, data: historicalData };
+        } catch (error) {
+          console.error(`Failed to load historical data for ${symbol}:`, error);
+          return null;
+        }
+      });
+
+      const results = await Promise.all(promises);
+      const newData: Record<string, any[]> = {};
+      results.forEach((result) => {
+        if (result) {
+          newData[result.symbol] = result.data;
+        }
+      });
+
+      if (Object.keys(newData).length > 0) {
         setCandlestickData((prev) => ({
           ...prev,
-          [symbol]: historicalData,
+          ...newData,
         }));
-      } catch (error) {
-        console.error(`Failed to load historical data for ${symbol}:`, error);
       }
-    });
+    };
+
+    if (subscribedSymbols.size > 0) {
+      loadHistoricalData();
+    }
   }, [subscribedSymbols, marketDataContext]);
 
   const calculatePnL = (position: Position, currentPrice: number): number => {

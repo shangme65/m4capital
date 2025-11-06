@@ -233,7 +233,6 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
-      setIsConnected(false);
 
       // Only log in development
       if (process.env.NODE_ENV === "development") {

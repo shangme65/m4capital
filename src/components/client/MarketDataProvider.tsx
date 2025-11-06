@@ -160,11 +160,17 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
         id: subscriptionId,
         symbols,
         onTick: (tick: MarketTick) => {
-          // Update global prices state
-          setPrices((prev) => ({
-            ...prev,
-            [tick.symbol]: tick,
-          }));
+          // Update global prices state using a ref check to prevent excessive updates
+          setPrices((prev) => {
+            // Only update if price actually changed
+            if (prev[tick.symbol]?.price === tick.price) {
+              return prev;
+            }
+            return {
+              ...prev,
+              [tick.symbol]: tick,
+            };
+          });
 
           // Track updates
           updateCountRef.current++;
