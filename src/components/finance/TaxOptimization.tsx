@@ -90,6 +90,13 @@ export default function TaxOptimization() {
     (sum, opp) => sum + opp.taxSavings,
     0
   );
+
+  // TODO: REPLACE WITH REAL TAX DATA FROM USER TRANSACTIONS
+  // These mock values need to be calculated from actual trading history:
+  // - yearToDateGains: Sum of all realized gains from Prisma transactions
+  // - yearToDateLosses: Sum of all realized losses from Prisma transactions
+  // - Calculate from: await prisma.trade.findMany({ where: { userId, status: 'closed' } })
+  // - NEVER use these hardcoded values in production
   const yearToDateGains = 12450.0; // Mock data
   const yearToDateLosses = 3200.0;
   const netTaxableGains = yearToDateGains - yearToDateLosses;

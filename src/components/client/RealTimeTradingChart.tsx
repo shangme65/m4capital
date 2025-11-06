@@ -89,7 +89,9 @@ export default function RealTimeTradingChart({
 
         const binanceInterval = normalizeInterval(currentInterval);
 
-        console.log(`Fetching chart data for ${binanceSymbol} at ${binanceInterval} interval...`);
+        console.log(
+          `Fetching chart data for ${binanceSymbol} at ${binanceInterval} interval...`
+        );
 
         // Fetch 100 most recent candles
         const klineData = await fetchKlineData(
@@ -100,7 +102,9 @@ export default function RealTimeTradingChart({
 
         if (!isMounted || !chartRef.current) return;
 
-        console.log(`Successfully loaded ${klineData.length} candles for ${binanceSymbol}`);
+        console.log(
+          `Successfully loaded ${klineData.length} candles for ${binanceSymbol}`
+        );
 
         // Apply data to chart
         chartRef.current.applyNewData(klineData);
@@ -119,22 +123,19 @@ export default function RealTimeTradingChart({
           );
           console.log(`WebSocket subscribed for ${binanceSymbol}`);
         } catch (wsError) {
-          console.warn('WebSocket subscription failed, chart will not update in real-time:', wsError);
+          console.warn(
+            "WebSocket subscription failed, chart will not update in real-time:",
+            wsError
+          );
         }
 
         setIsLoading(false);
       } catch (err) {
         console.error("Failed to load chart data:", err);
         if (isMounted) {
-          console.log('Using demo data as fallback...');
-          
-          // Fallback to mock data if API fails
-          const mockData = generateMockData();
-          if (chartRef.current) {
-            chartRef.current.applyNewData(mockData);
-          }
-          
-          setError(null); // Don't show error, just use demo data silently
+          setError(
+            "Failed to load chart data. Please check your internet connection and try again."
+          );
           setIsLoading(false);
         }
       }
@@ -156,33 +157,6 @@ export default function RealTimeTradingChart({
       }
     };
   }, [symbol, currentInterval]);
-
-  // Generate mock data as fallback
-  const generateMockData = (): KlineData[] => {
-    const now = Date.now();
-    const data: KlineData[] = [];
-    let lastClose = 50000;
-
-    for (let i = 100; i >= 0; i--) {
-      const timestamp = now - i * 60000;
-      const open = lastClose;
-      const change = (Math.random() - 0.5) * 1000;
-      const close = open + change;
-      const high = Math.max(open, close) + Math.random() * 500;
-      const low = Math.min(open, close) - Math.random() * 500;
-      data.push({
-        timestamp,
-        open,
-        high,
-        low,
-        close,
-        volume: Math.random() * 1000000,
-      });
-      lastClose = close;
-    }
-
-    return data;
-  };
 
   const addIndicator = (type: string) => {
     if (!chartRef.current) return;

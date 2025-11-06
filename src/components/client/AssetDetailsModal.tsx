@@ -102,7 +102,12 @@ const assetInfo: AssetInfo = {
   },
 };
 
-// Mock transaction history for each asset
+// TODO: REPLACE WITH REAL TRANSACTION HISTORY FROM DATABASE
+// This mock data needs to be replaced with actual user transaction history:
+// - Fetch from Prisma: await prisma.transaction.findMany({ where: { userId, symbol } })
+// - Include: buy/sell history, amounts, prices, dates, status
+// - Calculate real gains/losses from actual trades
+// - NEVER use this mock data in production
 const mockTransactionHistory = {
   BTC: [
     {

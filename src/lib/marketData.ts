@@ -363,41 +363,9 @@ export class MarketDataService {
   }
 
   public getMarketNews(): Promise<NewsItem[]> {
-    // Simulate market news - in production, integrate with news APIs
-    const newsItems: NewsItem[] = [
-      {
-        id: "1",
-        title: "Fed Signals Potential Rate Cut in Next Meeting",
-        summary:
-          "Federal Reserve officials hint at monetary policy easing amid economic concerns",
-        source: "Reuters",
-        timestamp: Date.now() - 1800000, // 30 minutes ago
-        sentiment: "positive",
-        symbols: ["EURUSD", "GBPUSD", "SPX"],
-      },
-      {
-        id: "2",
-        title: "Bitcoin Reaches New Monthly High",
-        summary:
-          "Cryptocurrency markets surge as institutional adoption continues",
-        source: "Bloomberg",
-        timestamp: Date.now() - 3600000, // 1 hour ago
-        sentiment: "positive",
-        symbols: ["BTCUSD", "ETHUSD"],
-      },
-      {
-        id: "3",
-        title: "Tech Stocks Rally on AI Optimism",
-        summary:
-          "Major technology companies see gains as AI investments show promise",
-        source: "CNBC",
-        timestamp: Date.now() - 7200000, // 2 hours ago
-        sentiment: "positive",
-        symbols: ["AAPL", "GOOGL", "MSFT", "NVDA"],
-      },
-    ];
-
-    return Promise.resolve(newsItems);
+    // TODO: Integrate with real news API (e.g., NewsAPI, Alpha Vantage News)
+    // For now, return empty array until real news feed is implemented
+    return Promise.resolve([]);
   }
 
   public disconnect(): void {

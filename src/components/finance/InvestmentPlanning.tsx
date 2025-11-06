@@ -51,7 +51,12 @@ export default function InvestmentPlanning() {
     const total = futureValueCurrent + futureValueContributions;
     setProjectedValue(total);
 
-    // Mock Monte Carlo simulation
+    // TODO: REPLACE WITH REAL MONTE CARLO SIMULATION
+    // This mock simulation needs to be replaced with:
+    // - Proper Monte Carlo algorithm using real market volatility
+    // - Historical returns data for accurate modeling
+    // - Statistical distribution calculations (not fixed percentiles)
+    // - NEVER use these hardcoded multipliers in production
     const results: MonteCarloResult[] = [
       { percentile: 10, value: total * 0.6 },
       { percentile: 25, value: total * 0.8 },

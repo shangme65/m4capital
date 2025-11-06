@@ -58,6 +58,11 @@ interface ReportTemplate {
   estimatedTime: string;
 }
 
+// TODO: REPLACE WITH REAL REPORT GENERATION FROM DATABASE
+// This mock data needs to be replaced with actual report generation:
+// - Generate from real user transactions and portfolio data
+// - Create PDF/CSV exports from actual trading history
+// - NEVER use this mock data in production
 const mockReports: Report[] = [
   {
     id: "1",

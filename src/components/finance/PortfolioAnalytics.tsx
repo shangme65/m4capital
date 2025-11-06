@@ -73,6 +73,12 @@ interface AllocationData {
   icon: React.ReactNode;
 }
 
+// TODO: REPLACE WITH REAL USER PORTFOLIO FROM DATABASE
+// This mock data needs to be replaced with actual user portfolio data:
+// - Fetch from Prisma: await prisma.portfolio.findMany({ where: { userId } })
+// - Include: assets, transactions, historical performance
+// - Calculate real-time values using current market prices
+// - NEVER use this mock data in production
 const mockAssets: Asset[] = [
   {
     symbol: "AAPL",

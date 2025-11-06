@@ -92,6 +92,12 @@ interface CashFlowProjection {
   cumulativeBalance: number;
 }
 
+// TODO: REPLACE WITH REAL USER BUDGET DATA FROM DATABASE
+// This mock data needs to be replaced with actual user budget data:
+// - Fetch from Prisma: await prisma.budget.findMany({ where: { userId } })
+// - Include: categories, subcategories, actual spending from transactions
+// - Calculate real-time budget vs actual spending
+// - NEVER use this mock data in production
 const mockBudgetCategories: BudgetCategory[] = [
   {
     id: "housing",
@@ -179,6 +185,11 @@ const mockBudgetCategories: BudgetCategory[] = [
   },
 ];
 
+// TODO: REPLACE WITH REAL USER SAVINGS GOALS FROM DATABASE
+// This mock data needs to be replaced with actual user savings goals:
+// - Fetch from Prisma: await prisma.savingsGoal.findMany({ where: { userId } })
+// - Track real contributions and progress
+// - NEVER use this mock data in production
 const mockSavingsGoals: SavingsGoal[] = [
   {
     id: "vacation",
@@ -215,6 +226,11 @@ const mockSavingsGoals: SavingsGoal[] = [
   },
 ];
 
+// TODO: REPLACE WITH REAL CASH FLOW PROJECTIONS FROM DATABASE
+// This mock data needs to be replaced with actual cash flow calculations:
+// - Calculate from real income, expenses, and savings patterns
+// - Use historical transaction data for projections
+// - NEVER use this mock data in production
 const mockCashFlow: CashFlowProjection[] = [
   {
     month: "Jan 2024",

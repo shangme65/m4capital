@@ -1,5 +1,19 @@
 "use client";
 
+// TODO: CRITICAL - ENTIRE NEWS PAGE GENERATES FAKE ARTICLES
+// This page creates completely simulated news with:
+// - Random article generation from templates
+// - Fake sources, timestamps, and content
+// - Math.random() for all data attributes
+//
+// MUST BE REPLACED WITH:
+// - Real news API integration (NewsAPI, Benzinga, Alpha Vantage News, etc.)
+// - Actual market news fetched from legitimate sources
+// - Real timestamps and verified content
+// - NEVER use this fake news generator in production
+//
+// See generateRealTimeNews() function below - entirely fake!
+
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";

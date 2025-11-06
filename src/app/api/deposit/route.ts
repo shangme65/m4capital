@@ -119,7 +119,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Generate mock crypto addresses (in production, use a proper wallet service)
+// TODO: REPLACE WITH REAL CRYPTO WALLET SERVICE INTEGRATION
+// This function generates FAKE addresses and must be replaced with:
+// - Integration with NowPayments, Coinbase Commerce, or similar payment gateway
+// - Real wallet address generation per user/transaction
+// - Proper transaction tracking and confirmations
+// - NEVER use these hardcoded addresses in production
 function generateCryptoAddress(cryptoType: string): string {
   const addresses = {
     BTC: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",

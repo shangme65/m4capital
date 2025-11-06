@@ -53,17 +53,36 @@ export async function GET(request: Request) {
       throw new Error("Failed to fetch forex rates");
     }
 
-    // Format the response
+    // Fetch yesterday's data for real historical comparison
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split("T")[0];
+
+    const historicalUrl = `https://api.frankfurter.app/${yesterdayStr}?from=${BASE_CURRENCY}&to=${symbolsParam}`;
+
+    let previousData: any = null;
+    try {
+      const historicalResponse = await fetch(historicalUrl, {
+        next: { revalidate: 86400 }, // Cache for 24 hours
+      });
+      if (historicalResponse.ok) {
+        previousData = await historicalResponse.json();
+      }
+    } catch (error) {
+      console.warn("Failed to fetch historical forex data:", error);
+    }
+
+    // Format the response with real historical data
     const rates: any = {};
     const timestamp = new Date(data.date).getTime();
 
     symbols.forEach((symbol) => {
       const rate = data.rates[symbol];
       if (rate) {
-        // Calculate previous rate (simulate with small random change)
-        const changePercent = (Math.random() - 0.5) * 0.5; // Random change between -0.25% and +0.25%
-        const previousRate = rate / (1 + changePercent / 100);
+        const previousRate = previousData?.rates?.[symbol] || rate; // Use real previous rate if available
         const change = rate - previousRate;
+        const changePercent =
+          previousRate !== 0 ? (change / previousRate) * 100 : 0;
 
         rates[symbol] = {
           symbol: `USD/${symbol}`,
@@ -76,15 +95,17 @@ export async function GET(request: Request) {
       }
     });
 
-    // Also add inverse pairs (e.g., EUR/USD)
+    // Also add inverse pairs (e.g., EUR/USD) with real historical data
     const inversePairs: any = {};
     symbols.forEach((symbol) => {
       const rate = data.rates[symbol];
       if (rate) {
         const inverseRate = 1 / rate;
-        const changePercent = (Math.random() - 0.5) * 0.5;
-        const previousInverseRate = inverseRate / (1 + changePercent / 100);
+        const previousRate = previousData?.rates?.[symbol] || rate;
+        const previousInverseRate = 1 / previousRate;
         const change = inverseRate - previousInverseRate;
+        const changePercent =
+          previousInverseRate !== 0 ? (change / previousInverseRate) * 100 : 0;
 
         inversePairs[symbol] = {
           symbol: `${symbol}/USD`,
@@ -117,53 +138,9 @@ export async function GET(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching forex rates:", error);
-
-    // Return mock data as fallback
-    const mockRates = {
-      CAD: {
-        symbol: "USD/CAD",
-        price: "1.35742",
-        previousPrice: "1.35592",
-        change: "0.00150",
-        changePercent: "0.11",
-        timestamp: Date.now(),
-      },
-      EUR: {
-        symbol: "USD/EUR",
-        price: "0.92158",
-        previousPrice: "0.92351",
-        change: "-0.00193",
-        changePercent: "-0.21",
-        timestamp: Date.now(),
-      },
-      GBP: {
-        symbol: "USD/GBP",
-        price: "0.78215",
-        previousPrice: "0.78947",
-        change: "0.00732",
-        changePercent: "0.35",
-        timestamp: Date.now(),
-      },
-      JPY: {
-        symbol: "USD/JPY",
-        price: "149.23500",
-        previousPrice: "149.11000",
-        change: "0.12500",
-        changePercent: "0.08",
-        timestamp: Date.now(),
-      },
-      AUD: {
-        symbol: "USD/AUD",
-        price: "1.48591",
-        previousPrice: "1.48858",
-        change: "-0.00267",
-        changePercent: "-0.18",
-        timestamp: Date.now(),
-      },
-      lastUpdate: Date.now(),
-      nextUpdate: Date.now() + 60000,
-    };
-
-    return NextResponse.json(mockRates);
+    return NextResponse.json(
+      { error: "Failed to fetch forex rates. Please try again later." },
+      { status: 500 }
+    );
   }
 }
