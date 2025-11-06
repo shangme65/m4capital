@@ -137,7 +137,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   ) => {
     const newNotification: Notification = {
       ...notificationData,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
       timestamp: new Date(),
       read: false,
     };
@@ -148,7 +148,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const addTransaction = (transactionData: Omit<Transaction, "id">) => {
     const newTransaction: Transaction = {
       ...transactionData,
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+      id: crypto.randomUUID(),
     };
 
     setRecentActivity((prev) => [newTransaction, ...prev.slice(0, 9)]); // Keep only last 10 transactions

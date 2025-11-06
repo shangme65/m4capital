@@ -57,7 +57,7 @@ async function fixAdmin() {
 
       const newAdminUser = await prisma.user.create({
         data: {
-          name: "Admin User",
+          name: process.env.ORIGIN_ADMIN_NAME || "Admin",
           email: adminEmail,
           password: adminPassword,
           role: "ADMIN",
@@ -65,11 +65,8 @@ async function fixAdmin() {
           isEmailVerified: true,
           portfolio: {
             create: {
-              balance: 1000000.0,
-              assets: [
-                { symbol: "BTC", amount: 5 },
-                { symbol: "ETH", amount: 50 },
-              ],
+              balance: 0,
+              assets: [],
             },
           },
         },

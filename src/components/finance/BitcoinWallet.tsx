@@ -51,9 +51,9 @@ export default function BitcoinWallet() {
   const handleDeposit = async (amount: number) => {
     // In production, this would integrate with a real Bitcoin payment processor
     const newDeposit: BitcoinDeposit = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       amount,
-      txHash: `bc1q${Math.random().toString(36).substring(2, 15)}...`,
+      txHash: "", // Will be populated by real payment processor
       status: "PENDING",
       createdAt: new Date().toISOString(),
     };
@@ -61,6 +61,7 @@ export default function BitcoinWallet() {
     setDeposits((prev) => [newDeposit, ...prev]);
     setShowDepositModal(false);
 
+    // TODO: Replace with real NowPayments integration
     // Simulate confirmation after 3 seconds
     setTimeout(() => {
       setDeposits((prev) =>

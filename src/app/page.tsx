@@ -304,23 +304,17 @@ function Hero() {
     const interval = setInterval(() => {
       const nextIndex = (contentIndex + 1) % heroContent.length;
 
-      // Start title change
+      // Start title change - cycle through variants deterministically
       setTimeout(() => {
-        let newTitleVariantName =
-          variantNames[Math.floor(Math.random() * variantNames.length)];
-        setTitleAnimation(newTitleVariantName);
+        const titleVariantIndex = nextIndex % variantNames.length;
+        setTitleAnimation(variantNames[titleVariantIndex]);
         setTitle(heroContent[nextIndex].title);
       }, 0);
 
-      // Start description change after a delay
+      // Start description change after a delay - use different variant
       setTimeout(() => {
-        let newDescVariantName =
-          variantNames[Math.floor(Math.random() * variantNames.length)];
-        while (newDescVariantName === titleAnimation) {
-          newDescVariantName =
-            variantNames[Math.floor(Math.random() * variantNames.length)];
-        }
-        setDescAnimation(newDescVariantName);
+        const descVariantIndex = (nextIndex + 1) % variantNames.length;
+        setDescAnimation(variantNames[descVariantIndex]);
         setDescription(heroContent[nextIndex].description);
       }, 1500); // 1.5s delay for description
 
