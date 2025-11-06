@@ -418,9 +418,11 @@ This file prevents future introduction of simulated data by:
 - ✅ Trading charts: Real candlesticks, no fallbacks
 - ✅ AI predictions: Real HuggingFace API
 - ✅ News feed: Empty array with TODO (no fake articles shown)
-- ✅ Deposit API: Real NowPayments integration
+- ✅ Bitcoin payments: NowPayments integration via `/api/payment/create-bitcoin`
 
 **Total: 8 components fully production-ready**
+
+**Note**: Removed duplicate `/api/deposit` endpoint - only `/api/payment/create-bitcoin` is used
 
 ### Marked with TODO (Requires DB Integration)
 
