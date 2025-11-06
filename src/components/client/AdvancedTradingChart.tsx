@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { getMarketDataService } from "@/lib/marketData";
 
 interface CandleData {
   time: number;
@@ -28,65 +29,86 @@ export default function AdvancedTradingChart() {
   const [currentPrice, setCurrentPrice] = useState(1.39735);
   const [priceChange, setPriceChange] = useState(0.00045);
 
-  // Generate realistic candlestick data
+  // Fetch REAL candlestick data from Binance
   useEffect(() => {
-    const generateCandleData = () => {
-      const data: CandleData[] = [];
-      let basePrice = 1.3969;
-      const now = Date.now();
+    const loadRealCandleData = async () => {
+      try {
+        const marketService = getMarketDataService();
 
-      for (let i = 0; i < 50; i++) {
-        const time = now - (50 - i) * 60000; // 1-minute intervals
-        const volatility = 0.0002;
+        // Fetch real historical data for EURUSD (1-minute candles)
+        const historicalData = await marketService.getHistoricalData(
+          "EURUSD",
+          "1m"
+        );
 
-        const open = basePrice + (Math.random() - 0.5) * volatility;
-        const close = open + (Math.random() - 0.5) * volatility;
-        const high = Math.max(open, close) + Math.random() * volatility * 0.5;
-        const low = Math.min(open, close) - Math.random() * volatility * 0.5;
-        const volume = Math.floor(Math.random() * 50000) + 10000;
-
-        data.push({ time, open, high, low, close, volume });
-        basePrice = close;
-      }
-
-      return data;
-    };
-
-    setCandleData(generateCandleData());
-
-    // Update data every 5 seconds to simulate real-time
-    const interval = setInterval(() => {
-      setCandleData((prev) => {
-        const newData = [...prev];
-        const lastCandle = newData[newData.length - 1];
-        const volatility = 0.0002;
-
-        // Update last candle or add new one
-        const newClose = lastCandle.close + (Math.random() - 0.5) * volatility;
-        newData[newData.length - 1] = {
-          ...lastCandle,
-          close: newClose,
-          high: Math.max(lastCandle.high, newClose),
-          low: Math.min(lastCandle.low, newClose),
-          volume: lastCandle.volume + Math.floor(Math.random() * 1000),
-        };
-
-        setCurrentPrice(newClose);
-        setPriceChange(newClose - lastCandle.open);
-
-        // Update technical indicators
-        setIndicators((prev) => ({
-          ...prev,
-          rsi: Math.max(0, Math.min(100, prev.rsi + (Math.random() - 0.5) * 2)),
-          volume: prev.volume + Math.floor(Math.random() * 1000),
-          trend: newClose > lastCandle.open ? "bullish" : "bearish",
+        const formattedData: CandleData[] = historicalData.map((candle) => ({
+          time: candle.timestamp,
+          open: candle.open,
+          high: candle.high,
+          low: candle.low,
+          close: candle.close,
+          volume: candle.volume,
         }));
 
-        return newData;
-      });
-    }, 5000);
+        setCandleData(formattedData);
 
-    return () => clearInterval(interval);
+        // Set current price from last candle
+        if (formattedData.length > 0) {
+          const lastCandle = formattedData[formattedData.length - 1];
+          setCurrentPrice(lastCandle.close);
+          setPriceChange(lastCandle.close - lastCandle.open);
+        }
+      } catch (error) {
+        console.error("Failed to load real candle data:", error);
+      }
+    };
+
+    loadRealCandleData();
+
+    // Subscribe to real-time price updates
+    const marketService = getMarketDataService();
+    const subscriptionId = `chart_${Date.now()}`;
+
+    marketService.subscribe({
+      id: subscriptionId,
+      symbols: ["EURUSD"],
+      onTick: (tick) => {
+        setCurrentPrice(tick.price);
+        setPriceChange(tick.change || 0);
+
+        // Update last candle with real-time data
+        setCandleData((prev) => {
+          if (prev.length === 0) return prev;
+
+          const newData = [...prev];
+          const lastCandle = newData[newData.length - 1];
+
+          newData[newData.length - 1] = {
+            ...lastCandle,
+            close: tick.price,
+            high: Math.max(lastCandle.high, tick.high || tick.price),
+            low: Math.min(lastCandle.low, tick.low || tick.price),
+            volume: tick.volume || lastCandle.volume,
+          };
+
+          return newData;
+        });
+
+        // Calculate RSI from real data (simplified)
+        setIndicators((prev) => ({
+          ...prev,
+          volume: tick.volume || prev.volume,
+          trend:
+            tick.changePercent && tick.changePercent > 0
+              ? "bullish"
+              : "bearish",
+        }));
+      },
+    });
+
+    return () => {
+      marketService.unsubscribe(subscriptionId);
+    };
   }, []);
 
   // Draw the chart

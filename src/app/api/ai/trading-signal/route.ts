@@ -42,12 +42,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Generate price history (simulate with some variance)
-    // In production, you'd fetch from database or cache
-    const priceHistory = generatePriceHistory(
-      priceData.price,
-      priceData.change || 0
-    );
+    // Fetch REAL historical price data from Binance
+    const historicalData = await marketService.getHistoricalData(symbol, "1H");
+    const priceHistory = historicalData.map((candle) => candle.close);
 
     // Optional: Get news context for sentiment analysis
     const newsContext = searchParams.get("news");
@@ -97,30 +94,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-/**
- * Generate simulated price history
- * In production, fetch actual historical data
- */
-function generatePriceHistory(
-  currentPrice: number,
-  change24h: number
-): number[] {
-  const history: number[] = [];
-  const volatility = Math.abs(change24h) * 0.01;
-
-  // Generate 100 data points
-  let price = currentPrice * (1 - change24h / 100);
-
-  for (let i = 0; i < 100; i++) {
-    const randomChange = (Math.random() - 0.5) * volatility * price;
-    price += randomChange;
-    history.push(price);
-  }
-
-  // Ensure last price matches current
-  history.push(currentPrice);
-
-  return history;
 }

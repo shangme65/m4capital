@@ -33,52 +33,68 @@ export default function AIPricePrediction({
   // Calculate volatility based on current price (2% of price)
   const volatility = currentPrice * 0.02;
 
-  // Generate predictions using simple technical analysis
-  // In production, you would use TensorFlow.js for ML-based predictions
-  const generatePredictions = () => {
+  // Generate predictions using REAL AI trading signals
+  const generatePredictions = async () => {
     setIsLoading(true);
 
-    // Simulate prediction calculation
-    setTimeout(() => {
-      const basePrice = currentPrice;
+    try {
+      // Call the real AI trading signal API
+      const response = await fetch(`/api/ai/trading-signal?symbol=${symbol}`);
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch AI prediction");
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Failed to generate prediction");
+      }
 
       const timeframes = {
-        "1h": { hours: 1, intervals: 12 }, // Every 5 minutes
-        "4h": { hours: 4, intervals: 16 }, // Every 15 minutes
-        "24h": { hours: 24, intervals: 24 }, // Every hour
+        "1h": { hours: 1, intervals: 12 },
+        "4h": { hours: 4, intervals: 16 },
+        "24h": { hours: 24, intervals: 24 },
       };
 
       const { hours, intervals } = timeframes[timeframe];
       const intervalMs = (hours * 60 * 60 * 1000) / intervals;
 
+      // Use AI signal to generate directional predictions
+      const targetPrice = data.signal.targetPrice;
+      const confidence = data.signal.confidence;
+      const direction =
+        data.signal.action === "BUY"
+          ? "up"
+          : data.signal.action === "SELL"
+          ? "down"
+          : "neutral";
+
       const newPredictions: Prediction[] = [];
-      let lastPrice = basePrice;
+      const priceRange = targetPrice - currentPrice;
 
       for (let i = 1; i <= intervals; i++) {
-        // Simple random walk with slight upward bias
-        const randomChange = (Math.random() - 0.45) * volatility;
-        const predictedPrice = lastPrice + randomChange;
-        const changePercent = ((predictedPrice - basePrice) / basePrice) * 100;
+        // Interpolate between current and target price based on AI signal
+        const progress = i / intervals;
+        const predictedPrice = currentPrice + priceRange * progress;
+        const changePercent =
+          ((predictedPrice - currentPrice) / currentPrice) * 100;
 
         newPredictions.push({
           timestamp: Date.now() + i * intervalMs,
           predictedPrice,
-          confidence: Math.max(0.5, 1 - (i / intervals) * 0.3), // Confidence decreases over time
-          direction:
-            predictedPrice > basePrice
-              ? "up"
-              : predictedPrice < basePrice
-              ? "down"
-              : "neutral",
+          confidence: confidence * (1 - progress * 0.2), // Confidence decreases over time
+          direction,
           changePercent,
         });
-
-        lastPrice = predictedPrice;
       }
 
       setPredictions(newPredictions);
+    } catch (error) {
+      console.error("Failed to generate AI predictions:", error);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   useEffect(() => {
