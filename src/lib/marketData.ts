@@ -1,6 +1,6 @@
 /**
- * Market Data Service - Real-time market data integration
- * Supports multiple data sources: Alpha Vantage, Finnhub, Polygon.io, and WebSocket feeds
+ * Market Data Service - Real-time WebSocket market data
+ * Uses Binance WebSocket for crypto, Frankfurter API for forex
  */
 
 export interface MarketTick {
@@ -43,35 +43,63 @@ export interface MarketDataSubscriber {
   onError?: (error: Error) => void;
 }
 
+// Binance WebSocket stream data
+interface BinanceTickerData {
+  e: string; // Event type
+  E: number; // Event time
+  s: string; // Symbol
+  c: string; // Close price
+  o: string; // Open price
+  h: string; // High price
+  l: string; // Low price
+  v: string; // Volume
+  p: string; // Price change
+  P: string; // Price change percent
+  b: string; // Best bid
+  a: string; // Best ask
+}
+
 export class MarketDataService {
   private static instance: MarketDataService;
   private subscribers: Map<string, MarketDataSubscriber> = new Map();
   private priceCache: Map<string, MarketTick> = new Map();
   private websockets: Map<string, WebSocket> = new Map();
-  private intervals: Map<string, NodeJS.Timeout> = new Map();
+  private reconnectTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private forexCache: Map<string, { rate: number; timestamp: number }> =
+    new Map();
+  private forexInterval: NodeJS.Timeout | null = null;
 
-  // Free API keys - replace with your own for production
-  private readonly API_KEYS = {
-    alphaVantage: "demo", // Replace with real API key
-    finnhub: "demo", // Replace with real API key
-    polygon: "demo", // Replace with real API key
-  };
+  // Binance crypto pairs (using USDT as base)
+  private readonly CRYPTO_PAIRS = [
+    "btcusdt",
+    "ethusdt",
+    "bnbusdt",
+    "solusdt",
+    "adausdt",
+    "xrpusdt",
+    "dogeusdt",
+    "dotusdt",
+    "maticusdt",
+    "linkusdt",
+    "avaxusdt",
+    "uniusdt",
+    "atomusdt",
+    "ltcusdt",
+    "etcusdt",
+  ];
 
-  // Major trading symbols
-  private readonly SYMBOLS = {
-    forex: [
-      "EURUSD",
-      "GBPUSD",
-      "USDJPY",
-      "USDCHF",
-      "AUDUSD",
-      "USDCAD",
-      "NZDUSD",
-    ],
-    crypto: ["BTCUSD", "ETHUSD", "ADAUSD", "DOTUSD", "LINKUSD", "SOLUSD"],
-    stocks: ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META"],
-    indices: ["SPX", "NDX", "DJI", "RUT", "VIX"],
-  };
+  // Forex pairs supported by Frankfurter API
+  private readonly FOREX_PAIRS = [
+    "EURUSD",
+    "GBPUSD",
+    "USDJPY",
+    "USDCHF",
+    "AUDUSD",
+    "USDCAD",
+    "NZDUSD",
+    "EURJPY",
+    "GBPJPY",
+  ];
 
   private constructor() {
     this.initializeDataFeeds();
@@ -85,146 +113,158 @@ export class MarketDataService {
   }
 
   private initializeDataFeeds() {
-    // Initialize simulated real-time data for demo
-    this.startSimulatedFeeds();
+    // Initialize Binance WebSocket for crypto
+    this.initializeBinanceWebSocket();
 
-    // In production, you would initialize real data sources here
-    // this.initializeAlphaVantage();
-    // this.initializeFinnhub();
-    // this.initializePolygon();
+    // Initialize Frankfurter API polling for forex (no WebSocket available)
+    this.initializeForexPolling();
   }
 
-  private startSimulatedFeeds() {
-    // Simulate real-time price feeds for demonstration
-    const allSymbols = [
-      ...this.SYMBOLS.forex,
-      ...this.SYMBOLS.crypto,
-      ...this.SYMBOLS.stocks,
-      ...this.SYMBOLS.indices,
-    ];
+  private initializeBinanceWebSocket() {
+    // Create combined stream for all crypto pairs
+    const streams = this.CRYPTO_PAIRS.map((pair) => `${pair}@ticker`).join("/");
+    const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
 
-    // Initialize base prices
-    const basePrices: Record<string, number> = {
-      // Forex
-      EURUSD: 1.0851,
-      GBPUSD: 1.2731,
-      USDJPY: 149.25,
-      USDCHF: 0.8987,
-      AUDUSD: 0.6654,
-      USDCAD: 1.3621,
-      NZDUSD: 0.6101,
+    console.log("🚀 Connecting to Binance WebSocket...");
 
-      // Crypto
-      BTCUSD: 43250.0,
-      ETHUSD: 2587.5,
-      ADAUSD: 0.3821,
-      DOTUSD: 4.123,
-      LINKUSD: 11.47,
-      SOLUSD: 98.76,
+    try {
+      const ws = new WebSocket(wsUrl);
 
-      // Stocks
-      AAPL: 178.25,
-      GOOGL: 138.45,
-      MSFT: 378.91,
-      AMZN: 144.78,
-      TSLA: 251.82,
-      NVDA: 456.12,
-      META: 325.67,
+      ws.onopen = () => {
+        console.log("✅ Binance WebSocket connected - Real-time crypto data");
+        this.websockets.set("binance", ws);
+      };
 
-      // Indices
-      SPX: 4372.85,
-      NDX: 15289.43,
-      DJI: 33745.69,
-      RUT: 1895.23,
-      VIX: 18.45,
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.data) {
+            this.handleBinanceTickerUpdate(message.data);
+          }
+        } catch (error) {
+          console.error("❌ Error parsing Binance message:", error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("❌ Binance WebSocket error:", error);
+      };
+
+      ws.onclose = () => {
+        console.log("🔌 Binance WebSocket closed, reconnecting in 5s...");
+        this.websockets.delete("binance");
+
+        const timeout = setTimeout(() => {
+          this.initializeBinanceWebSocket();
+        }, 5000);
+
+        this.reconnectTimeouts.set("binance", timeout);
+      };
+    } catch (error) {
+      console.error("❌ Failed to create Binance WebSocket:", error);
+    }
+  }
+
+  private handleBinanceTickerUpdate(data: BinanceTickerData) {
+    // Convert Binance symbol (BTCUSDT) to our format (BTCUSD)
+    const symbol = data.s.replace("USDT", "USD");
+
+    const tick: MarketTick = {
+      symbol,
+      price: parseFloat(data.c),
+      bid: parseFloat(data.b),
+      ask: parseFloat(data.a),
+      volume: parseFloat(data.v),
+      timestamp: data.E,
+      change: parseFloat(data.p),
+      changePercent: parseFloat(data.P),
+      high: parseFloat(data.h),
+      low: parseFloat(data.l),
+      open: parseFloat(data.o),
     };
 
-    allSymbols.forEach((symbol) => {
-      const basePrice = basePrices[symbol] || 100;
-      let currentPrice = basePrice;
-      let lastChange = 0;
+    this.updatePrice(tick);
+  }
 
-      const interval = setInterval(() => {
-        // Simulate realistic price movements
-        const volatility = this.getVolatility(symbol);
-        const randomChange = (Math.random() - 0.5) * volatility * currentPrice;
-        currentPrice += randomChange;
+  private async initializeForexPolling() {
+    // Fetch forex rates every 60 seconds (Frankfurter API limit)
+    const fetchForexRates = async () => {
+      try {
+        const response = await fetch(
+          "https://api.frankfurter.app/latest?from=USD"
+        );
+        const data = await response.json();
 
-        // Ensure price doesn't go negative
-        currentPrice = Math.max(currentPrice, basePrice * 0.01);
+        if (data.rates) {
+          const timestamp = Date.now();
 
-        const change = currentPrice - basePrice;
-        const changePercent = (change / basePrice) * 100;
+          // Store all rates
+          Object.entries(data.rates).forEach(([currency, rate]) => {
+            this.forexCache.set(currency, {
+              rate: rate as number,
+              timestamp,
+            });
+          });
 
-        const tick: MarketTick = {
-          symbol,
-          price: parseFloat(
-            currentPrice.toFixed(this.getDecimalPlaces(symbol))
-          ),
-          bid: parseFloat(
-            (currentPrice - this.getSpread(symbol) / 2).toFixed(
-              this.getDecimalPlaces(symbol)
-            )
-          ),
-          ask: parseFloat(
-            (currentPrice + this.getSpread(symbol) / 2).toFixed(
-              this.getDecimalPlaces(symbol)
-            )
-          ),
-          volume: Math.floor(Math.random() * 1000000),
-          timestamp: Date.now(),
-          change: parseFloat(change.toFixed(this.getDecimalPlaces(symbol))),
-          changePercent: parseFloat(changePercent.toFixed(2)),
-          high: parseFloat(
-            (currentPrice * (1 + Math.random() * 0.02)).toFixed(
-              this.getDecimalPlaces(symbol)
-            )
-          ),
-          low: parseFloat(
-            (currentPrice * (1 - Math.random() * 0.02)).toFixed(
-              this.getDecimalPlaces(symbol)
-            )
-          ),
-          open: basePrice,
-        };
+          // Update our tracked forex pairs
+          this.updateForexPrices(data.rates, timestamp);
+        }
+      } catch (error) {
+        console.error("❌ Error fetching forex rates:", error);
+      }
+    };
 
-        this.updatePrice(tick);
-        lastChange = change;
-      }, this.getUpdateInterval(symbol));
+    // Initial fetch
+    await fetchForexRates();
+    console.log("✅ Forex rates initialized - Updates every 60s");
 
-      this.intervals.set(symbol, interval);
+    // Poll every 60 seconds
+    this.forexInterval = setInterval(fetchForexRates, 60000);
+  }
+
+  private updateForexPrices(rates: Record<string, number>, timestamp: number) {
+    // Map Frankfurter rates to our forex pairs
+    const forexMap: Record<string, () => number> = {
+      EURUSD: () => rates.EUR || 0,
+      GBPUSD: () => rates.GBP || 0,
+      USDJPY: () => 1 / (rates.JPY || 1),
+      USDCHF: () => 1 / (rates.CHF || 1),
+      AUDUSD: () => rates.AUD || 0,
+      USDCAD: () => 1 / (rates.CAD || 1),
+      NZDUSD: () => rates.NZD || 0,
+      EURJPY: () => (rates.EUR && rates.JPY ? rates.EUR / rates.JPY : 0),
+      GBPJPY: () => (rates.GBP && rates.JPY ? rates.GBP / rates.JPY : 0),
+    };
+
+    this.FOREX_PAIRS.forEach((pair) => {
+      const priceCalc = forexMap[pair];
+      if (!priceCalc) return;
+
+      const price = priceCalc();
+      if (!price) return;
+
+      // Calculate 24h change
+      const cached = this.priceCache.get(pair);
+      const change = cached ? price - cached.price : 0;
+      const changePercent =
+        cached && cached.price ? (change / cached.price) * 100 : 0;
+
+      const tick: MarketTick = {
+        symbol: pair,
+        price: parseFloat(price.toFixed(5)),
+        bid: parseFloat((price - 0.0001).toFixed(5)),
+        ask: parseFloat((price + 0.0001).toFixed(5)),
+        volume: 0, // Frankfurter doesn't provide volume
+        timestamp,
+        change: parseFloat(change.toFixed(5)),
+        changePercent: parseFloat(changePercent.toFixed(2)),
+        high: parseFloat((price * 1.001).toFixed(5)),
+        low: parseFloat((price * 0.999).toFixed(5)),
+        open: cached?.open || price,
+      };
+
+      this.updatePrice(tick);
     });
-  }
-
-  private getVolatility(symbol: string): number {
-    if (this.SYMBOLS.crypto.includes(symbol)) return 0.03; // 3% max change
-    if (this.SYMBOLS.forex.includes(symbol)) return 0.005; // 0.5% max change
-    if (this.SYMBOLS.stocks.includes(symbol)) return 0.02; // 2% max change
-    if (this.SYMBOLS.indices.includes(symbol)) return 0.01; // 1% max change
-    return 0.01;
-  }
-
-  private getSpread(symbol: string): number {
-    if (this.SYMBOLS.crypto.includes(symbol)) return 0.01;
-    if (this.SYMBOLS.forex.includes(symbol)) return 0.00005;
-    if (this.SYMBOLS.stocks.includes(symbol)) return 0.01;
-    if (this.SYMBOLS.indices.includes(symbol)) return 0.1;
-    return 0.01;
-  }
-
-  private getDecimalPlaces(symbol: string): number {
-    if (this.SYMBOLS.forex.includes(symbol)) return 5;
-    if (this.SYMBOLS.crypto.includes(symbol)) return 2;
-    if (this.SYMBOLS.stocks.includes(symbol)) return 2;
-    if (this.SYMBOLS.indices.includes(symbol)) return 2;
-    return 2;
-  }
-
-  private getUpdateInterval(symbol: string): number {
-    if (this.SYMBOLS.crypto.includes(symbol)) return 1000; // 1 second
-    if (this.SYMBOLS.forex.includes(symbol)) return 500; // 0.5 seconds
-    if (this.SYMBOLS.stocks.includes(symbol)) return 2000; // 2 seconds
-    return 1000;
   }
 
   private updatePrice(tick: MarketTick) {
@@ -271,56 +311,55 @@ export class MarketDataService {
     symbol: string,
     timeframe: string = "1D"
   ): Promise<CandlestickData[]> {
-    // Simulate historical data generation
-    return new Promise((resolve) => {
-      const data: CandlestickData[] = [];
-      const now = Date.now();
-      const interval = this.getTimeframeInterval(timeframe);
-      const count = 100; // Generate 100 candles
+    // Fetch real historical data from Binance API
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Convert symbol to Binance format (BTCUSD -> BTCUSDT)
+        const binanceSymbol = symbol.replace("USD", "USDT").toUpperCase();
 
-      let currentPrice = this.priceCache.get(symbol)?.price || 100;
+        // Map timeframes to Binance intervals
+        const intervalMap: Record<string, string> = {
+          "1m": "1m",
+          "5m": "5m",
+          "15m": "15m",
+          "1H": "1h",
+          "4H": "4h",
+          "1D": "1d",
+          "1W": "1w",
+        };
 
-      for (let i = count; i >= 0; i--) {
-        const timestamp = now - i * interval;
-        const volatility = this.getVolatility(symbol);
+        const binanceInterval = intervalMap[timeframe] || "1d";
+        const limit = 100; // Get 100 candlesticks
 
-        const open = currentPrice;
-        const change = (Math.random() - 0.5) * volatility * currentPrice;
-        const close = open + change;
-        const high =
-          Math.max(open, close) +
-          Math.random() * volatility * currentPrice * 0.5;
-        const low =
-          Math.min(open, close) -
-          Math.random() * volatility * currentPrice * 0.5;
+        const url = `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${binanceInterval}&limit=${limit}`;
 
-        data.push({
-          timestamp,
-          open: parseFloat(open.toFixed(this.getDecimalPlaces(symbol))),
-          high: parseFloat(high.toFixed(this.getDecimalPlaces(symbol))),
-          low: parseFloat(low.toFixed(this.getDecimalPlaces(symbol))),
-          close: parseFloat(close.toFixed(this.getDecimalPlaces(symbol))),
-          volume: Math.floor(Math.random() * 1000000),
-        });
+        const response = await fetch(url);
 
-        currentPrice = close;
+        if (!response.ok) {
+          throw new Error(`Binance API error: ${response.statusText}`);
+        }
+
+        const rawData = await response.json();
+
+        // Convert Binance kline format to our CandlestickData format
+        const data: CandlestickData[] = rawData.map((kline: any[]) => ({
+          timestamp: kline[0], // Open time
+          open: parseFloat(kline[1]),
+          high: parseFloat(kline[2]),
+          low: parseFloat(kline[3]),
+          close: parseFloat(kline[4]),
+          volume: parseFloat(kline[5]),
+        }));
+
+        resolve(data);
+      } catch (error) {
+        console.error(
+          `❌ Error fetching historical data for ${symbol}:`,
+          error
+        );
+        reject(error);
       }
-
-      setTimeout(() => resolve(data), 100); // Simulate API delay
     });
-  }
-
-  private getTimeframeInterval(timeframe: string): number {
-    const intervals: Record<string, number> = {
-      "1m": 60 * 1000,
-      "5m": 5 * 60 * 1000,
-      "15m": 15 * 60 * 1000,
-      "1H": 60 * 60 * 1000,
-      "4H": 4 * 60 * 60 * 1000,
-      "1D": 24 * 60 * 60 * 1000,
-      "1W": 7 * 24 * 60 * 60 * 1000,
-    };
-    return intervals[timeframe] || intervals["1D"];
   }
 
   public getMarketNews(): Promise<NewsItem[]> {
@@ -362,32 +401,29 @@ export class MarketDataService {
   }
 
   public disconnect(): void {
-    // Clean up all intervals and websockets
-    this.intervals.forEach((interval) => clearInterval(interval));
-    this.intervals.clear();
-
+    // Clean up WebSocket connections
     this.websockets.forEach((ws) => ws.close());
     this.websockets.clear();
 
+    // Clear reconnect timeouts
+    this.reconnectTimeouts.forEach((timeout) => clearTimeout(timeout));
+    this.reconnectTimeouts.clear();
+
+    // Clear forex polling interval
+    if (this.forexInterval) {
+      clearInterval(this.forexInterval);
+      this.forexInterval = null;
+    }
+
     this.subscribers.clear();
     this.priceCache.clear();
+    this.forexCache.clear();
   }
+}
 
-  // Real API integration methods (for production use)
-  private initializeAlphaVantage() {
-    // Initialize Alpha Vantage WebSocket or polling
-    // Implementation depends on their API structure
-  }
-
-  private initializeFinnhub() {
-    // Initialize Finnhub WebSocket
-    // const ws = new WebSocket(`wss://ws.finnhub.io?token=${this.API_KEYS.finnhub}`);
-  }
-
-  private initializePolygon() {
-    // Initialize Polygon.io WebSocket
-    // const ws = new WebSocket(`wss://socket.polygon.io/stocks`);
-  }
+// Singleton instance getter
+export function getMarketDataService(): MarketDataService {
+  return MarketDataService.getInstance();
 }
 
 export default MarketDataService;

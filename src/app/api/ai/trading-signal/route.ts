@@ -10,7 +10,7 @@ import {
   generateTradingSignal,
   analyzeMarketSentiment,
 } from "@/lib/ai/huggingface";
-import { getCachedPrice } from "@/lib/websocket/priceService";
+import { getMarketDataService } from "@/lib/marketData";
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,8 +31,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get current price data
-    const priceData = getCachedPrice(symbol);
+    // Get current price data from MarketDataService
+    const marketService = getMarketDataService();
+    const priceData = marketService.getPrice(symbol);
+
     if (!priceData) {
       return NextResponse.json(
         { error: "Price data not available for this symbol" },
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
     // In production, you'd fetch from database or cache
     const priceHistory = generatePriceHistory(
       priceData.price,
-      priceData.change24h
+      priceData.change || 0
     );
 
     // Optional: Get news context for sentiment analysis
@@ -68,7 +70,7 @@ export async function GET(request: NextRequest) {
       success: true,
       symbol,
       currentPrice: priceData.price,
-      change24h: priceData.change24h,
+      change24h: priceData.change || 0,
       signal: {
         action: signal.action,
         confidence: signal.confidence,

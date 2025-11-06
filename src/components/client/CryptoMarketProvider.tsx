@@ -9,6 +9,29 @@ import React, {
   useRef,
 } from "react";
 
+// Binance WebSocket ticker data structure
+interface BinanceTickerData {
+  e: string; // Event type
+  E: number; // Event time
+  s: string; // Symbol (e.g., "BTCUSDT")
+  c: string; // Current price
+  p: string; // Price change
+  P: string; // Price change percent
+  w: string; // Weighted average price
+  x: string; // Previous close price
+  h: string; // High price
+  l: string; // Low price
+  v: string; // Total traded base asset volume
+  q: string; // Total traded quote asset volume
+  o: string; // Open price
+  O: number; // Statistics open time
+  C: number; // Statistics close time
+  b: string; // Best bid price
+  B: string; // Best bid quantity
+  a: string; // Best ask price
+  A: string; // Best ask quantity
+}
+
 // Enhanced crypto price interface
 export interface CryptoPrice {
   symbol: string;
@@ -68,13 +91,11 @@ const CryptoMarketContext = createContext<CryptoMarketContextType | null>(null);
 
 interface CryptoMarketProviderProps {
   children: React.ReactNode;
-  updateInterval?: number; // in milliseconds
   autoStart?: boolean;
 }
 
 export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
   children,
-  updateInterval = 30000, // 30 seconds default
   autoStart = true,
 }) => {
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, CryptoPrice>>(
@@ -96,22 +117,49 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
       }
     >
   >(new Map());
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const isUpdatingRef = useRef(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Crypto symbol mapping (our format -> Binance format)
+  const cryptoSymbolMap: Record<string, string> = {
+    BTC: "btcusdt",
+    ETH: "ethusdt",
+    BNB: "bnbusdt",
+    SOL: "solusdt",
+    ADA: "adausdt",
+    XRP: "xrpusdt",
+    DOGE: "dogeusdt",
+    DOT: "dotusdt",
+    MATIC: "maticusdt",
+    LINK: "linkusdt",
+    AVAX: "avaxusdt",
+    UNI: "uniusdt",
+    ATOM: "atomusdt",
+    LTC: "ltcusdt",
+    ETC: "etcusdt",
+  };
 
   // Supported cryptocurrencies
-  const supportedCryptos = [
-    "BTC",
-    "ETH",
-    "ADA",
-    "DOT",
-    "LINK",
-    "LTC",
-    "BCH",
-    "XLM",
-    "DOGE",
-    "XRP",
-  ];
+  const supportedCryptos = Object.keys(cryptoSymbolMap);
+
+  // Crypto name mapping
+  const cryptoNames: Record<string, string> = {
+    BTC: "Bitcoin",
+    ETH: "Ethereum",
+    BNB: "Binance Coin",
+    SOL: "Solana",
+    ADA: "Cardano",
+    XRP: "Ripple",
+    DOGE: "Dogecoin",
+    DOT: "Polkadot",
+    MATIC: "Polygon",
+    LINK: "Chainlink",
+    AVAX: "Avalanche",
+    UNI: "Uniswap",
+    ATOM: "Cosmos",
+    LTC: "Litecoin",
+    ETC: "Ethereum Classic",
+  };
 
   // Convert crypto price to market tick for compatibility
   const convertToMarketTick = useCallback(
@@ -128,13 +176,123 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
     []
   );
 
-  // Fetch crypto prices from our API
+  // Handle Binance ticker update
+  const handleBinanceTicker = useCallback(
+    (data: BinanceTickerData) => {
+      // Convert Binance symbol (BTCUSDT) to our format (BTC)
+      const binanceSymbol = data.s.toLowerCase();
+      const ourSymbol = Object.keys(cryptoSymbolMap).find(
+        (key) => cryptoSymbolMap[key] === binanceSymbol
+      );
+
+      if (!ourSymbol) return;
+
+      const price = parseFloat(data.c);
+      const change24h = parseFloat(data.p);
+      const changePercent24h = parseFloat(data.P);
+      const high24h = parseFloat(data.h);
+      const low24h = parseFloat(data.l);
+      const volume24h = parseFloat(data.v);
+
+      const cryptoPrice: CryptoPrice = {
+        symbol: ourSymbol,
+        name: cryptoNames[ourSymbol] || ourSymbol,
+        price,
+        change24h,
+        changePercent24h,
+        volume24h,
+        timestamp: data.E,
+        high24h,
+        low24h,
+      };
+
+      const marketTick = convertToMarketTick(cryptoPrice);
+
+      setCryptoPrices((prev) => ({
+        ...prev,
+        [ourSymbol]: cryptoPrice,
+      }));
+
+      setMarketTicks((prev) => ({
+        ...prev,
+        [ourSymbol]: marketTick,
+      }));
+
+      setLastUpdate(data.E);
+
+      // Notify subscribers
+      subscriptionsRef.current.forEach((subscription) => {
+        if (subscription.symbols.includes(ourSymbol)) {
+          subscription.onUpdate(cryptoPrice);
+        }
+      });
+    },
+    [convertToMarketTick, cryptoSymbolMap, cryptoNames]
+  );
+
+  // Connect to Binance WebSocket
+  const connectWebSocket = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      return;
+    }
+
+    try {
+      // Create combined stream for all crypto pairs
+      const streams = Object.values(cryptoSymbolMap)
+        .map((symbol) => `${symbol}@ticker`)
+        .join("/");
+
+      const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
+
+      console.log("🚀 Connecting to Binance WebSocket...");
+
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        console.log("✅ Binance WebSocket connected - Real-time crypto data");
+        setIsConnected(true);
+        setError(null);
+        wsRef.current = ws;
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          if (message.data) {
+            handleBinanceTicker(message.data);
+          }
+        } catch (error) {
+          console.error("❌ Error parsing Binance message:", error);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("❌ Binance WebSocket error:", error);
+        setError("WebSocket connection error");
+        setIsConnected(false);
+      };
+
+      ws.onclose = () => {
+        console.log("🔌 Binance WebSocket closed, reconnecting in 5s...");
+        setIsConnected(false);
+        wsRef.current = null;
+
+        // Attempt to reconnect after 5 seconds
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectWebSocket();
+        }, 5000);
+      };
+    } catch (error) {
+      console.error("❌ Failed to create Binance WebSocket:", error);
+      setError("Failed to connect to WebSocket");
+      setIsConnected(false);
+    }
+  }, [handleBinanceTicker, cryptoSymbolMap]);
+
+  // Fetch crypto prices (fallback REST API method)
   const fetchCryptoPrices = useCallback(
     async (symbols?: string[]) => {
-      if (isUpdatingRef.current) return;
-
       try {
-        isUpdatingRef.current = true;
         setError(null);
 
         const symbolsParam = symbols?.join(",") || supportedCryptos.join(",");
@@ -150,10 +308,6 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
 
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        if (!response.ok) {
-          throw new Error(`Failed to fetch prices: ${response.status}`);
         }
 
         const data = await response.json();
@@ -173,7 +327,6 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
         setCryptoPrices((prev) => ({ ...prev, ...newCryptoPrices }));
         setMarketTicks((prev) => ({ ...prev, ...newMarketTicks }));
         setLastUpdate(Date.now());
-        setIsConnected(true);
 
         // Notify subscribers
         subscriptionsRef.current.forEach((subscription) => {
@@ -201,45 +354,29 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
         if (process.env.NODE_ENV === "development") {
           console.error("Failed to fetch crypto prices:", errorMessage);
         }
-      } finally {
-        isUpdatingRef.current = false;
       }
     },
     [supportedCryptos, convertToMarketTick]
   );
 
-  // Start automatic price updates
-  const startUpdates = useCallback(() => {
-    if (intervalRef.current) return;
-
-    // Initial fetch
-    fetchCryptoPrices();
-
-    // Set up interval
-    intervalRef.current = setInterval(() => {
-      fetchCryptoPrices();
-    }, updateInterval);
-
-    // Only log in development
-    if (process.env.NODE_ENV === "development") {
-      console.log(
-        `Started crypto price updates every ${updateInterval / 1000} seconds`
-      );
+  // Initialize WebSocket connection on mount
+  useEffect(() => {
+    if (autoStart) {
+      connectWebSocket();
     }
-  }, [fetchCryptoPrices, updateInterval]);
 
-  // Stop automatic price updates
-  const stopUpdates = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-
-      // Only log in development
-      if (process.env.NODE_ENV === "development") {
-        console.log("Stopped crypto price updates");
+    return () => {
+      // Cleanup on unmount
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
       }
-    }
-  }, []);
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+    };
+  }, [autoStart, connectWebSocket]);
 
   // Subscription management
   const subscribeToCrypto = useCallback(
@@ -253,11 +390,13 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
         onUpdate,
       });
 
-      // If we don't have prices for these symbols, fetch them
-      const missingSymbols = symbols.filter((symbol) => !cryptoPrices[symbol]);
-      if (missingSymbols.length > 0) {
-        fetchCryptoPrices(missingSymbols);
-      }
+      // Send current prices if available
+      symbols.forEach((symbol) => {
+        const currentPrice = cryptoPrices[symbol];
+        if (currentPrice) {
+          onUpdate(currentPrice);
+        }
+      });
 
       // Only log in development
       if (process.env.NODE_ENV === "development") {
@@ -269,13 +408,11 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
   );
 
   const unsubscribeFromCrypto = useCallback((subscriptionId: string) => {
-    if (subscriptionsRef.current.has(subscriptionId)) {
-      subscriptionsRef.current.delete(subscriptionId);
+    subscriptionsRef.current.delete(subscriptionId);
 
-      // Only log in development
-      if (process.env.NODE_ENV === "development") {
-        console.log(`Unsubscribed from crypto prices: ${subscriptionId}`);
-      }
+    // Only log in development
+    if (process.env.NODE_ENV === "development") {
+      console.log(`Unsubscribed from crypto prices: ${subscriptionId}`);
     }
   }, []);
 
@@ -294,29 +431,10 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
     [marketTicks]
   );
 
-  // Manual refresh
+  // Manual refresh (uses REST API as fallback)
   const refreshPrices = useCallback(async () => {
     await fetchCryptoPrices();
   }, [fetchCryptoPrices]);
-
-  // Auto-start effect
-  useEffect(() => {
-    if (autoStart) {
-      startUpdates();
-    }
-
-    return () => {
-      stopUpdates();
-    };
-  }, [autoStart, startUpdates, stopUpdates]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopUpdates();
-      subscriptionsRef.current.clear();
-    };
-  }, [stopUpdates]);
 
   const contextValue: CryptoMarketContextType = {
     cryptoPrices,
