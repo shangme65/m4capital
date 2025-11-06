@@ -575,17 +575,17 @@ Response:
 
 ## 🔄 Deposit Management
 
-### Create Deposit
+### Create Bitcoin Deposit
 
 ```http
-POST /api/deposit
+POST /api/payment/create-bitcoin
 Authorization: Required (Session)
 Content-Type: application/json
 
 {
   "amount": 100,
   "currency": "USD",
-  "method": "CRYPTO"
+  "useInvoice": false  // Optional: use invoice API instead of payment API
 }
 
 Response:
@@ -595,7 +595,10 @@ Response:
     "id": "deposit_id",
     "amount": 100,
     "currency": "USD",
-    "status": "PENDING"
+    "status": "PENDING",
+    "paymentAddress": "bc1q...",  // Real NowPayments address
+    "paymentAmount": 0.0015,      // Amount in BTC
+    "paymentId": "nowpayments_id"
   }
 }
 ```

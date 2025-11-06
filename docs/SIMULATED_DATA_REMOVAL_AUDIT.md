@@ -282,26 +282,6 @@ These components still contain mock data but are clearly marked with comprehensi
 
 ---
 
-### 13. Deposit API (src/app/api/deposit/route.ts)
-
-**Status**: ✅ FIXED - Uses NowPayments
-
-**Removed**:
-
-- `generateCryptoAddress()` - Hardcoded crypto addresses deleted
-- Fake BTC, ETH, USDT, LTC addresses removed
-- Mock payment instructions removed
-
-**Now Uses**:
-
-- NowPayments API integration (`nowPayments.createPayment()`)
-- Real wallet addresses generated per transaction
-- Proper payment tracking with `paymentId`
-- Webhook integration for confirmations
-- Database storage of payment details
-
-**Commit**: 73b455e - "Fix /api/deposit to use NowPayments instead of hardcoded addresses"
-
 ---
 
 ### 14. Tax Optimization (src/components/finance/TaxOptimization.tsx)
@@ -461,10 +441,12 @@ This file prevents future introduction of simulated data by:
 
 ### For Production:
 
-1. **Core Trading**: 100% real data ✅
+1. **Core Trading & Payments**: 100% real data ✅
 
    - Prices, charts, market data all real
    - No simulated values in trading engine
+   - Crypto deposits via NowPayments (real addresses)
+   - Webhook integration for payment confirmations
 
 2. **Finance Dashboard**: Clearly marked as demo 🟡
 
