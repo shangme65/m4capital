@@ -27,7 +27,9 @@ async function fixAdmin() {
     const adminPasswordRaw = process.env.ORIGIN_ADMIN_PASSWORD;
 
     if (!adminEmail || !adminPasswordRaw) {
-      console.error("❌ ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD must be set in .env");
+      console.error(
+        "❌ ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD must be set in .env"
+      );
       process.exit(1);
     }
 
@@ -40,13 +42,15 @@ async function fixAdmin() {
       // Update existing user to ADMIN role
       const updatedUser = await prisma.user.update({
         where: { email: adminEmail },
-        data: { 
+        data: {
           role: "ADMIN",
           isEmailVerified: true,
         },
       });
 
-      console.log(`✓ Updated ${updatedUser.email} to ADMIN role (ID: ${updatedUser.id})`);
+      console.log(
+        `✓ Updated ${updatedUser.email} to ADMIN role (ID: ${updatedUser.id})`
+      );
     } else {
       // Create new admin user from environment variables
       const adminPassword = await bcrypt.hash(adminPasswordRaw, 10);
@@ -71,7 +75,9 @@ async function fixAdmin() {
         },
       });
 
-      console.log(`✓ Created new admin user: ${newAdminUser.email} (ID: ${newAdminUser.id})`);
+      console.log(
+        `✓ Created new admin user: ${newAdminUser.email} (ID: ${newAdminUser.id})`
+      );
     }
 
     console.log("\n✅ Admin fix completed successfully!");
@@ -81,7 +87,9 @@ async function fixAdmin() {
   } catch (error: any) {
     console.error("❌ Fix admin error:", error.message);
     if (error.code === "P2025") {
-      console.error("\nUser not found. Please check ORIGIN_ADMIN_EMAIL in .env");
+      console.error(
+        "\nUser not found. Please check ORIGIN_ADMIN_EMAIL in .env"
+      );
     }
     process.exit(1);
   } finally {

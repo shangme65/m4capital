@@ -10,9 +10,10 @@ export async function POST(req: NextRequest) {
 
     if (!adminEmail || !adminPasswordRaw) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD must be set in environment variables" 
+        {
+          success: false,
+          error:
+            "ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD must be set in environment variables",
         },
         { status: 500 }
       );
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
       // Update existing user to ADMIN role
       const updatedUser = await prisma.user.update({
         where: { email: adminEmail },
-        data: { 
+        data: {
           role: "ADMIN",
           isEmailVerified: true,
         },

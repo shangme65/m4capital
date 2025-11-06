@@ -11,7 +11,9 @@ async function main() {
   const adminPasswordRaw = process.env.ORIGIN_ADMIN_PASSWORD;
 
   if (!adminEmail || !adminPasswordRaw) {
-    console.error("❌ ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD must be set in .env");
+    console.error(
+      "❌ ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD must be set in .env"
+    );
     process.exit(1);
   }
 
@@ -37,43 +39,49 @@ async function main() {
     },
   });
 
-  // Create a sample regular user
-  const userPassword = await bcrypt.hash("password123", 10);
-  const regularUser = await prisma.user.create({
-    data: {
-      name: "Test User",
-      email: "user@m4capital.com",
-      password: userPassword,
-      role: "USER",
-      portfolio: {
-        create: {
-          balance: 5000.0,
-          assets: [{ symbol: "ADA", amount: 5000 }],
+  // Create a sample test user (optional - only in development)
+  if (process.env.NODE_ENV !== "production") {
+    const testPassword = process.env.TEST_USER_PASSWORD || "test-password-change-me";
+    const userPassword = await bcrypt.hash(testPassword, 10);
+    const regularUser = await prisma.user.create({
+      data: {
+        name: "Test User",
+        email: "testuser@example.com",
+        password: userPassword,
+        role: "USER",
+        accountType: "INVESTOR",
+        isEmailVerified: true,
+        portfolio: {
+          create: {
+            balance: 5000.0,
+            assets: [{ symbol: "ADA", amount: 5000 }],
+          },
         },
       },
-    },
-  });
+    });
 
-  // Create sample deposits for the regular user
-  await prisma.deposit.createMany({
-    data: [
-      {
-        portfolioId: regularUser.id,
-        amount: 2000.0,
-        currency: "USD",
-        status: "COMPLETED",
-      },
-      {
-        portfolioId: regularUser.id,
-        amount: 3000.0,
-        currency: "USD",
-        status: "COMPLETED",
-      },
-    ],
-  });
+    // Create sample deposits for the test user
+    await prisma.deposit.createMany({
+      data: [
+        {
+          portfolioId: regularUser.id,
+          amount: 2000.0,
+          currency: "USD",
+          status: "COMPLETED",
+        },
+        {
+          portfolioId: regularUser.id,
+          amount: 3000.0,
+          currency: "USD",
+          status: "COMPLETED",
+        },
+      ],
+    });
+
+    console.log(`Created test user: ${regularUser.email}`);
+  }
 
   console.log(`Created admin user: ${adminUser.email}`);
-  console.log(`Created regular user: ${regularUser.email}`);
   console.log("Seeding finished.");
 }
 
