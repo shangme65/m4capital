@@ -6,6 +6,7 @@ import { ModalProvider } from "@/contexts/ModalContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { DashboardModalWrapper } from "@/components/layout/DashboardModalWrapper";
 import AIChatbot from "@/components/client/AIChatbot";
+import { MarketDataProvider } from "@/components/client/MarketDataProvider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -26,16 +27,18 @@ export default async function DashboardLayout({
       <SidebarProvider>
         <ModalProvider>
           <NotificationProvider>
-            <div className="flex h-screen bg-gray-900 relative">
-              <Sidebar />
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <DashboardHeaderWrapper />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-4 sm:p-8">
-                  <DashboardModalWrapper>{children}</DashboardModalWrapper>
-                </main>
+            <MarketDataProvider>
+              <div className="flex h-screen bg-gray-900 relative">
+                <Sidebar />
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <DashboardHeaderWrapper />
+                  <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-4 sm:p-8">
+                    <DashboardModalWrapper>{children}</DashboardModalWrapper>
+                  </main>
+                </div>
+                <AIChatbot />
               </div>
-              <AIChatbot />
-            </div>
+            </MarketDataProvider>
           </NotificationProvider>
         </ModalProvider>
       </SidebarProvider>
