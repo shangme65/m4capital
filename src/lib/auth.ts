@@ -59,27 +59,29 @@ export const authOptions: AuthOptions = {
     }),
   ],
   session: {
-    strategy: "jwt",
+    strategy: "database", // Using database sessions with Neon (persistent sessions)
     maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 60 * 60, // Update session every hour (reduced from 24h)
+    updateAge: 24 * 60 * 60, // Update session every 24 hours
   },
   cookies: {
     sessionToken: {
-      name:
-        process.env.NODE_ENV === "production"
-          ? `__Secure-next-auth.session-token`
-          : `next-auth.session-token`,
+      name: `next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 30 * 24 * 60 * 60, // 30 days
+        secure: false, // Set to false for localhost, true for production
+        domain: undefined, // Don't set domain for localhost
       },
     },
   },
   callbacks: {
     async signIn({ user, account, profile }) {
+      console.log("🔐 SignIn callback triggered:", {
+        provider: account?.provider,
+        userEmail: user.email,
+      });
+
       // PrismaAdapter handles creating users automatically for OAuth providers
       // We just need to set default values when the user is first created
       if (account?.provider === "facebook" || account?.provider === "google") {
@@ -99,11 +101,13 @@ export const authOptions: AuthOptions = {
           });
         }
       }
+      console.log("✅ SignIn successful");
       return true;
     },
-    async jwt({ token, user, trigger }) {
+    async jwt({ token, user, trigger, session }) {
       // On initial sign in or when user object is available
       if (user) {
+        console.log("🎫 Creating JWT token for user:", user.email);
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
@@ -115,37 +119,47 @@ export const authOptions: AuthOptions = {
         // Add timestamp for cache tracking
         token.lastUpdated = Date.now();
       } else if (token.id) {
-        // Refresh user data from DB periodically (every 5 minutes)
-        const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+        // Refresh user data from DB periodically (every 24 hours to reduce DB calls)
+        const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
         const shouldRefresh =
           !token.lastUpdated ||
           Date.now() - (token.lastUpdated as number) > CACHE_DURATION;
 
         if (shouldRefresh || trigger === "update") {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.id as string },
-            select: {
-              accountType: true,
-              role: true,
-              email: true,
-              name: true,
-              isEmailVerified: true,
-            },
-          });
-          if (dbUser) {
-            token.email = dbUser.email;
-            token.name = dbUser.name;
-            token.accountType = dbUser.accountType;
-            token.role = dbUser.role;
-            token.isEmailVerified = dbUser.isEmailVerified;
-            token.lastUpdated = Date.now();
+          console.log("🔄 Refreshing JWT token from database");
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { id: token.id as string },
+              select: {
+                id: true,
+                accountType: true,
+                role: true,
+                email: true,
+                name: true,
+                isEmailVerified: true,
+              },
+            });
+            if (dbUser) {
+              token.id = dbUser.id;
+              token.email = dbUser.email;
+              token.name = dbUser.name;
+              token.accountType = dbUser.accountType;
+              token.role = dbUser.role;
+              token.isEmailVerified = dbUser.isEmailVerified;
+              token.lastUpdated = Date.now();
+            }
+          } catch (error) {
+            console.error("⚠️ Failed to refresh token from DB:", error);
+            // Continue with cached token data if DB is unreachable
           }
         }
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      console.log("📋 Creating session for token:", token.email);
+      // Add user data from token to session
+      if (session.user && token) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;

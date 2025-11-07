@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Account {
@@ -65,6 +67,11 @@ model User {
   strategyComments       StrategyComment[]
   strategyLikes          StrategyLike[]
   courseProgress         CourseProgress[]
+  cryptoWatchlist        CryptoWatchlist[]
+  priceAlerts            PriceAlert[]
+  userStatistics         UserStatistics[]
+  scheduledMessages      ScheduledMessage[]
+  fileStorage            FileStorage[]
 }
 
 model VerificationToken {
@@ -316,6 +323,168 @@ model CourseProgress {
   @@unique([userId, courseId, lessonId])
   @@index([userId])
   @@index([courseId])
+}
+
+// Telegram Bot Integration
+model TelegramUser {
+  id                  String    @id @default(cuid())
+  telegramId          BigInt    @unique
+  username            String?
+  firstName           String?
+  lastName            String?
+  languageCode        String    @default("en")
+  isBot               Boolean   @default(false)
+  isPremium           Boolean   @default(false)
+  preferredLanguage   String    @default("en")
+  timezone            String?
+  notifications       Boolean   @default(true)
+  warningCount        Int       @default(0)
+  isBanned            Boolean   @default(false)
+  bannedAt            DateTime?
+  bannedReason        String?
+  messageCount        Int       @default(0)
+  lastMessageAt       DateTime?
+  joinedAt            DateTime  @default(now())
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([telegramId])
+  @@index([username])
+}
+
+model CryptoWatchlist {
+  id          String   @id @default(cuid())
+  userId      String
+  symbol      String
+  displayName String
+  addedAt     DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, symbol])
+  @@index([userId])
+}
+
+model PriceAlert {
+  id          String    @id @default(cuid())
+  userId      String
+  symbol      String
+  targetPrice Decimal
+  condition   String    // "above" or "below"
+  isActive    Boolean   @default(true)
+  triggered   Boolean   @default(false)
+  triggeredAt DateTime?
+  chatId      BigInt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([symbol, isActive])
+}
+
+model UserStatistics {
+  id                 String   @id @default(cuid())
+  userId             String
+  date               DateTime @default(now())
+  messagesCount      Int      @default(0)
+  imagesGenerated    Int      @default(0)
+  cryptoQueriesCount Int      @default(0)
+  commandsUsed       Json     @default("{}")
+  
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
+model ScheduledMessage {
+  id            String    @id @default(cuid())
+  userId        String
+  chatId        BigInt
+  message       String
+  scheduledFor  DateTime
+  sent          Boolean   @default(false)
+  sentAt        DateTime?
+  recurring     Boolean   @default(false)
+  recurringType String?   // "daily", "weekly", "monthly"
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledFor, sent])
+  @@index([userId])
+}
+
+model FileStorage {
+  id            String   @id @default(cuid())
+  userId        String
+  fileId        String
+  fileType      String
+  fileName      String?
+  fileSize      Int?
+  mimeType      String?
+  extractedText String?
+  metadata      Json?    @default("{}")
+  uploadedAt    DateTime @default(now())
+  
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ModerationRule {
+  id            String   @id @default(cuid())
+  keyword       String
+  action        String   // "warn", "delete", "ban"
+  severity      String   // "low", "medium", "high"
+  isActive      Boolean  @default(true)
+  caseSensitive Boolean  @default(false)
+  isRegex       Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TradingSignal {
+  id          String    @id @default(cuid())
+  symbol      String
+  action      String    // "BUY", "SELL", "HOLD"
+  price       Decimal
+  targetPrice Decimal?
+  stopLoss    Decimal?
+  confidence  Decimal   // 0.0 to 1.0
+  analysis    String    @db.Text
+  indicators  Json      @default("{}")
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Quiz {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  questions   Json     // Array of questions with options
+  chatId      BigInt?
+  messageId   BigInt?
+  isActive    Boolean  @default(true)
+  responses   Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model NewsArticle {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  url         String
+  source      String
+  category    String
+  publishedAt DateTime
+  sentiment   String?  // "positive", "negative", "neutral"
+  createdAt   DateTime @default(now())
 }
 
 enum UserRole {

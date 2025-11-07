@@ -82,53 +82,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     },
   ]);
 
-  const [recentActivity, setRecentActivity] = useState<Transaction[]>([
-    {
-      id: "1",
-      type: "buy",
-      asset: "BTC",
-      amount: 0.1234,
-      value: 7856.32,
-      timestamp: "2 hours ago",
-      status: "completed",
-    },
-    {
-      id: "2",
-      type: "sell",
-      asset: "ETH",
-      amount: 2.5,
-      value: 6234.78,
-      timestamp: "5 hours ago",
-      status: "completed",
-    },
-    {
-      id: "3",
-      type: "deposit",
-      asset: "USD",
-      amount: 10000,
-      value: 10000,
-      timestamp: "1 day ago",
-      status: "completed",
-    },
-    {
-      id: "4",
-      type: "convert",
-      asset: "ADA → SOL",
-      amount: 1000,
-      value: 425.67,
-      timestamp: "2 days ago",
-      status: "completed",
-    },
-    {
-      id: "5",
-      type: "withdraw",
-      asset: "USD",
-      amount: 2500,
-      value: 2500,
-      timestamp: "3 days ago",
-      status: "pending",
-    },
-  ]);
+  const [recentActivity, setRecentActivity] = useState<Transaction[]>([]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

@@ -52,6 +52,7 @@ function DashboardContent() {
   const [showAssetDetails, setShowAssetDetails] = useState(false);
   const [showAllAssets, setShowAllAssets] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
+  const [activeView, setActiveView] = useState<"crypto" | "history">("crypto");
 
   const handleTransactionClick = (transaction: Transaction) => {
     // Enhance transaction with additional details for the modal
@@ -84,20 +85,7 @@ function DashboardContent() {
   const availableBalance = portfolio?.portfolio.balance || 0;
 
   // Dynamic user assets with real-time Bitcoin prices
-  // If a user has no portfolio assets yet, don't show demo asset values.
-  // Show only the available (fiat) balance (usually 0 until deposit).
-  const defaultAssets = [
-    {
-      symbol: "USDT",
-      name: "Tether",
-      amount: availableBalance || 0,
-      value: availableBalance || 0,
-      change: 0,
-      icon: "₮",
-    },
-  ];
-
-  // Use portfolio assets if available, otherwise use default
+  // Only show actual portfolio assets - no mock/default data
   const userAssets =
     portfolio?.portfolio.assets && portfolio.portfolio.assets.length > 0
       ? portfolio.portfolio.assets.map((asset: any) => ({
@@ -113,7 +101,7 @@ function DashboardContent() {
           icon:
             asset.symbol === "BTC" ? "₿" : asset.symbol === "ETH" ? "Ξ" : "○",
         }))
-      : defaultAssets;
+      : [];
 
   // Calculate dynamic portfolio value based on real-time prices
   const portfolioValue = portfolioLoading
@@ -131,10 +119,18 @@ function DashboardContent() {
 
   // Period labels for display
   const periodLabels: Record<string, string> = {
-    all: "All Time",
+    "1yr": "1YR",
     today: "Today",
-    "7d": "7 Days",
-    "30d": "30 Days",
+    "7d": "7D",
+    "30d": "30D",
+  };
+
+  // Tooltip labels for periods
+  const periodTooltips: Record<string, string> = {
+    "1yr": "1 year",
+    today: "Today",
+    "7d": "7 days",
+    "30d": "30 days",
   };
 
   useEffect(() => {
@@ -176,6 +172,10 @@ function DashboardContent() {
 
   const handleViewAllAssets = () => {
     setShowAllAssets(true);
+  };
+
+  const handleAddCrypto = () => {
+    openBuyModal();
   };
 
   const handleViewAllActivity = () => {
@@ -382,10 +382,11 @@ function DashboardContent() {
 
           {/* Period Selector */}
           <div className="flex items-center gap-1 mb-3">
-            {["today", "7d", "30d", "all"].map((period) => (
+            {["today", "7d", "30d", "1yr"].map((period) => (
               <button
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
+                title={periodTooltips[period]}
                 className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
                   selectedPeriod === period
                     ? "bg-orange-500 text-white"
@@ -588,134 +589,93 @@ function DashboardContent() {
         </button>
       </div>
 
-      {/* User Assets and Recent Activity */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* User Assets */}
-        <div className="xl:col-span-2">
-          <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Your Assets</h2>
+      {/* Crypto and History Toggle View */}
+      <div className="grid grid-cols-1 gap-8">
+        <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+          {/* Header with Toggle and Add Button */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              {/* Crypto Tab */}
               <button
-                onClick={handleViewAllAssets}
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+                onClick={() => setActiveView("crypto")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                  activeView === "crypto"
+                    ? "text-white border-b-2 border-blue-500"
+                    : "text-gray-400 hover:text-white"
+                }`}
               >
-                View All
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Crypto
+              </button>
+
+              {/* History Tab */}
+              <button
+                onClick={() => setActiveView("history")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                  activeView === "history"
+                    ? "text-white border-b-2 border-blue-500"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                History
               </button>
             </div>
 
-            <div className="space-y-4">
-              {userAssets.map((asset) => (
-                <div
-                  key={asset.symbol}
-                  onClick={() => handleAssetClick(asset)}
-                  className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl border border-gray-700/30 cursor-pointer hover:bg-gray-900/70 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-white">
-                      {asset.icon}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-white font-semibold">
-                          {asset.symbol}
-                        </span>
-                        <span
-                          className={`text-[10px] font-medium ${
-                            asset.change >= 0
-                              ? "text-green-400"
-                              : "text-red-400"
-                          }`}
-                        >
-                          {asset.change >= 0 ? "+" : ""}
-                          {asset.change}%
-                        </span>
-                      </div>
-                      <div className="text-gray-400 text-sm">{asset.name}</div>
-                    </div>
-                  </div>
-
-                  <div className="text-right">
-                    <div className="text-white font-semibold">
-                      $
-                      {(asset.value || 0).toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </div>
-                    <div className="text-sm text-gray-400">
-                      {(asset.amount || 0).toLocaleString("en-US", {
-                        minimumFractionDigits: 4,
-                        maximumFractionDigits: 4,
-                      })}{" "}
-                      {asset.symbol}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* Add Crypto Button */}
+            <button
+              onClick={handleAddCrypto}
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Add Crypto
+            </button>
           </div>
-        </div>
 
-        {/* Recent Activity */}
-        <div className="xl:col-span-1">
-          <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold text-white">Recent Activity</h2>
-              <button
-                onClick={handleViewAllActivity}
-                className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
-              >
-                View All
-              </button>
-            </div>
-
+          {/* Crypto View */}
+          {activeView === "crypto" && (
             <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div
-                  key={activity.id}
-                  onClick={() => handleTransactionClick(activity)}
-                  className="flex items-center gap-4 p-3 bg-gray-900/30 rounded-lg border border-gray-700/20 hover:bg-gray-800/50 cursor-pointer transition-all duration-200 hover:border-orange-500/30"
-                >
-                  {getActivityIcon(activity.type)}
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <div className="text-white font-medium capitalize truncate">
-                        {activity.type} {activity.asset}
-                      </div>
-                      <div
-                        className={`px-2 py-1 rounded text-xs font-medium ${
-                          activity.status === "completed"
-                            ? "bg-green-900/50 text-green-400"
-                            : "bg-yellow-900/50 text-yellow-400"
-                        }`}
-                      >
-                        {activity.status}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-1">
-                      <div className="text-gray-400 text-sm">
-                        {activity.type === "deposit" ||
-                        activity.type === "withdraw"
-                          ? `$${(activity.amount || 0).toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}`
-                          : `${activity.amount || 0} ${
-                              activity.asset?.split(" ")[0] || ""
-                            }`}
-                      </div>
-                      <div className="text-gray-500 text-xs">
-                        {activity.timestamp}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Click indicator */}
-                  <div className="text-gray-500 hover:text-orange-400 transition-colors">
+              {userAssets.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg
-                      className="w-5 h-5"
+                      className="w-8 h-8 text-gray-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -724,21 +684,162 @@ function DashboardContent() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M9 5l7 7-7 7"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
                   </div>
+                  <p className="text-gray-400 mb-4">No crypto assets yet</p>
+                  <button
+                    onClick={handleAddCrypto}
+                    className="text-blue-400 hover:text-blue-300 font-medium"
+                  >
+                    Add your first crypto →
+                  </button>
                 </div>
-              ))}
-            </div>
+              ) : (
+                userAssets.map((asset) => (
+                  <div
+                    key={asset.symbol}
+                    onClick={() => handleAssetClick(asset)}
+                    className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl border border-gray-700/30 cursor-pointer hover:bg-gray-900/70 transition-colors"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-white">
+                        {asset.icon}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-white font-semibold">
+                            {asset.symbol}
+                          </span>
+                          <span
+                            className={`text-[10px] font-medium ${
+                              asset.change >= 0
+                                ? "text-green-400"
+                                : "text-red-400"
+                            }`}
+                          >
+                            {asset.change >= 0 ? "+" : ""}
+                            {asset.change}%
+                          </span>
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          {asset.name}
+                        </div>
+                      </div>
+                    </div>
 
-            <button
-              onClick={handleViewAllActivity}
-              className="w-full mt-6 py-3 bg-gray-700/50 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors border border-gray-600"
-            >
-              View Transaction History
-            </button>
-          </div>
+                    <div className="text-right">
+                      <div className="text-white font-semibold">
+                        $
+                        {(asset.value || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        {(asset.amount || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 4,
+                          maximumFractionDigits: 4,
+                        })}{" "}
+                        {asset.symbol}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* History View */}
+          {activeView === "history" && (
+            <div className="space-y-4">
+              {recentActivity.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg
+                      className="w-8 h-8 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <p className="text-gray-400">No transaction history yet</p>
+                </div>
+              ) : (
+                recentActivity.map((activity) => (
+                  <div
+                    key={activity.id}
+                    onClick={() => handleTransactionClick(activity)}
+                    className="flex items-center gap-4 p-3 bg-gray-900/30 rounded-lg border border-gray-700/20 hover:bg-gray-800/50 cursor-pointer transition-all duration-200 hover:border-orange-500/30"
+                  >
+                    {getActivityIcon(activity.type)}
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <div className="text-white font-medium capitalize truncate">
+                          {activity.type} {activity.asset}
+                        </div>
+                        <div
+                          className={`px-2 py-1 rounded text-xs font-medium ${
+                            activity.status === "completed"
+                              ? "bg-green-900/50 text-green-400"
+                              : "bg-yellow-900/50 text-yellow-400"
+                          }`}
+                        >
+                          {activity.status}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between mt-1">
+                        <div className="text-gray-400 text-sm">
+                          {activity.type === "deposit" ||
+                          activity.type === "withdraw"
+                            ? `$${(activity.amount || 0).toLocaleString(
+                                "en-US",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }
+                              )}`
+                            : `${activity.amount || 0} ${
+                                activity.asset?.split(" ")[0] || ""
+                              }`}
+                        </div>
+                        <div className="text-gray-500 text-xs">
+                          {activity.timestamp}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Click indicator */}
+                    <div className="text-gray-500 hover:text-orange-400 transition-colors">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </div>
 
