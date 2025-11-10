@@ -102,7 +102,10 @@ export class MarketDataService {
   ];
 
   private constructor() {
-    this.initializeDataFeeds();
+    // Only initialize in browser environment
+    if (typeof window !== "undefined") {
+      this.initializeDataFeeds();
+    }
   }
 
   public static getInstance(): MarketDataService {
@@ -113,6 +116,12 @@ export class MarketDataService {
   }
 
   private initializeDataFeeds() {
+    // Double-check we're in browser
+    if (typeof window === "undefined") {
+      console.warn("⚠️ Market data feeds can only be initialized in browser");
+      return;
+    }
+
     // Initialize Binance WebSocket for crypto
     this.initializeBinanceWebSocket();
 
@@ -121,6 +130,12 @@ export class MarketDataService {
   }
 
   private initializeBinanceWebSocket() {
+    // Only run in browser
+    if (typeof window === "undefined") {
+      console.warn("⚠️ Cannot initialize WebSocket on server-side");
+      return;
+    }
+
     // Create combined stream for all crypto pairs
     const streams = this.CRYPTO_PAIRS.map((pair) => `${pair}@ticker`).join("/");
     const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
@@ -187,6 +202,12 @@ export class MarketDataService {
   }
 
   private async initializeForexPolling() {
+    // Only run in browser
+    if (typeof window === "undefined") {
+      console.warn("⚠️ Cannot initialize forex polling on server-side");
+      return;
+    }
+
     // Fetch forex rates every 60 seconds (Frankfurter API limit)
     const fetchForexRates = async () => {
       try {

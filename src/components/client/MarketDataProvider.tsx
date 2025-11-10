@@ -57,8 +57,8 @@ interface MarketDataProviderProps {
 
 export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
   children,
-  autoConnect = true,
-  enableNews = true,
+  autoConnect = true, // Re-enabled with CoinGecko
+  enableNews = false,
 }) => {
   const [prices, setPrices] = useState<Record<string, MarketTick>>({});
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -102,36 +102,84 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
   }, []);
 
   const connect = useCallback(() => {
-    if (!marketDataService.current) {
-      marketDataService.current = MarketDataService.getInstance();
-      setIsConnected(true);
-      setConnectionQuality("excellent");
+    // Using CoinGecko API instead of Binance WebSocket
+    console.log("🚀 Connecting to CoinGecko market data service...");
+    setIsConnected(true);
+    setConnectionQuality("excellent");
 
-      // Load initial prices
-      const initialPrices = marketDataService.current.getAllPrices();
-      const pricesMap: Record<string, MarketTick> = {};
-      initialPrices.forEach((tick) => {
-        pricesMap[tick.symbol] = tick;
-      });
-      setPrices(pricesMap);
-      setTotalSymbols(initialPrices.length);
+    // Fetch initial prices from CoinGecko
+    const fetchCoinGeckoPrices = async () => {
+      try {
+        const response = await fetch(
+          "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,solana,cardano,ripple,dogecoin,polkadot,polygon,chainlink,avalanche-2,uniswap,cosmos,litecoin,ethereum-classic&vs_currencies=usd&include_24hr_change=true"
+        );
+        const data = await response.json();
 
-      // Load news if enabled
-      if (enableNews) {
-        loadNews();
+        const pricesMap: Record<string, MarketTick> = {};
+        const symbolMap: Record<string, string> = {
+          bitcoin: "BTCUSD",
+          ethereum: "ETHUSD",
+          binancecoin: "BNBUSD",
+          solana: "SOLUSD",
+          cardano: "ADAUSD",
+          ripple: "XRPUSD",
+          dogecoin: "DOGEUSD",
+          polkadot: "DOTUSD",
+          polygon: "MATICUSD",
+          chainlink: "LINKUSD",
+          "avalanche-2": "AVAXUSD",
+          uniswap: "UNIUSD",
+          cosmos: "ATOMUSD",
+          litecoin: "LTCUSD",
+          "ethereum-classic": "ETCUSD",
+        };
+
+        Object.entries(data).forEach(([coinId, priceData]: [string, any]) => {
+          const symbol = symbolMap[coinId];
+          if (symbol) {
+            pricesMap[symbol] = {
+              symbol,
+              price: priceData.usd,
+              timestamp: Date.now(),
+              changePercent: priceData.usd_24h_change || 0,
+            };
+          }
+        });
+
+        setPrices(pricesMap);
+        setTotalSymbols(Object.keys(pricesMap).length);
+        console.log(
+          `✅ Loaded ${
+            Object.keys(pricesMap).length
+          } crypto prices from CoinGecko`
+        );
+      } catch (error) {
+        console.error("❌ Failed to fetch CoinGecko prices:", error);
+        setConnectionQuality("poor");
       }
-    }
+    };
+
+    fetchCoinGeckoPrices();
+
+    // Poll CoinGecko API every 30 seconds (free tier limit)
+    const intervalId = setInterval(fetchCoinGeckoPrices, 30000);
+
+    // Store interval ID for cleanup
+    (window as any).__coinGeckoInterval = intervalId;
   }, [enableNews]);
 
   const disconnect = useCallback(() => {
-    if (marketDataService.current) {
-      marketDataService.current.disconnect();
-      marketDataService.current = undefined;
-      setIsConnected(false);
-      setConnectionQuality("disconnected");
-      setPrices({});
-      subscriptionsRef.current.clear();
+    // Clear CoinGecko polling interval
+    if ((window as any).__coinGeckoInterval) {
+      clearInterval((window as any).__coinGeckoInterval);
+      (window as any).__coinGeckoInterval = null;
     }
+
+    setIsConnected(false);
+    setConnectionQuality("disconnected");
+    setPrices({});
+    subscriptionsRef.current.clear();
+    console.log("🔌 Disconnected from CoinGecko market data");
   }, []);
 
   const loadNews = useCallback(async () => {

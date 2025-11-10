@@ -17,12 +17,14 @@ import Image from "next/image";
 import { useSidebar } from "./SidebarContext";
 import { signOut } from "next-auth/react";
 import { useState, useEffect } from "react";
+import LogoutConfirmationModal from "./LogoutConfirmationModal";
 
 const Sidebar = () => {
   const { data: session } = useSession();
   const { isSidebarOpen, closeSidebar } = useSidebar();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [baseUrl, setBaseUrl] = useState("");
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     // Set the base URL on the client side
@@ -46,12 +48,27 @@ const Sidebar = () => {
     href: "/admin",
   };
 
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleLogoutConfirm = () => {
+    setShowLogoutModal(false);
+    closeSidebar();
+    signOut({ callbackUrl: "/" });
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false);
+  };
+
   return (
     <AnimatePresence>
       {isSidebarOpen && (
         <>
           {/* Backdrop */}
           <motion.div
+            key="sidebar-backdrop"
             className="fixed inset-0 bg-black bg-opacity-50 z-40"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -61,6 +78,7 @@ const Sidebar = () => {
 
           {/* Sidebar */}
           <motion.div
+            key="sidebar-content"
             className="fixed left-0 top-0 h-full bg-gray-800 text-white w-60 sm:w-72 p-4 sm:p-6 flex flex-col z-50"
             initial={{ x: "-100%" }}
             animate={{ x: 0 }}
@@ -535,10 +553,7 @@ const Sidebar = () => {
                 }}
               >
                 <motion.button
-                  onClick={() => {
-                    closeSidebar();
-                    signOut({ callbackUrl: "/" });
-                  }}
+                  onClick={handleLogoutClick}
                   className="w-full flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 text-left group"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -637,6 +652,13 @@ const Sidebar = () => {
           </motion.div>
         </>
       )}
+
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={handleLogoutCancel}
+        onConfirm={handleLogoutConfirm}
+      />
     </AnimatePresence>
   );
 };

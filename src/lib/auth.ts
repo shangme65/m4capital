@@ -2,13 +2,13 @@ import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
 import { User } from "@prisma/client";
 
 export const authOptions: AuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Remove adapter when using JWT strategy
+  // adapter: PrismaAdapter(prisma),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -59,7 +59,7 @@ export const authOptions: AuthOptions = {
     }),
   ],
   session: {
-    strategy: "database", // Using database sessions with Neon (persistent sessions)
+    strategy: "jwt", // Using JWT for reliable session management
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // Update session every 24 hours
   },
@@ -70,8 +70,8 @@ export const authOptions: AuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: false, // Set to false for localhost, true for production
-        domain: undefined, // Don't set domain for localhost
+        secure: process.env.NODE_ENV === "production", // Secure in production
+        domain: undefined,
       },
     },
   },
@@ -82,42 +82,77 @@ export const authOptions: AuthOptions = {
         userEmail: user.email,
       });
 
-      // PrismaAdapter handles creating users automatically for OAuth providers
-      // We just need to set default values when the user is first created
+      // For OAuth providers (Google, Facebook), ensure user exists in database
       if (account?.provider === "facebook" || account?.provider === "google") {
-        const existingUser = await prisma.user.findUnique({
-          where: { email: user.email! },
-        });
-
-        // Only update if user was just created by PrismaAdapter (no role/accountType set)
-        if (existingUser && !existingUser.role) {
-          await prisma.user.update({
+        try {
+          const existingUser = await prisma.user.findUnique({
             where: { email: user.email! },
-            data: {
-              role: "USER",
-              accountType: "INVESTOR",
-              isEmailVerified: true, // Auto-verify OAuth users
-            } as any,
           });
+
+          if (!existingUser) {
+            // Create new user for OAuth login
+            await prisma.user.create({
+              data: {
+                email: user.email!,
+                name: user.name || "User",
+                role: "USER",
+                accountType: "INVESTOR",
+                isEmailVerified: true, // Auto-verify OAuth users
+                image: user.image,
+              } as any,
+            });
+            console.log("✅ New OAuth user created:", user.email);
+          } else if (!existingUser.role) {
+            // Update existing user without role
+            await prisma.user.update({
+              where: { email: user.email! },
+              data: {
+                role: "USER",
+                accountType: "INVESTOR",
+                isEmailVerified: true,
+              } as any,
+            });
+            console.log("✅ OAuth user updated:", user.email);
+          }
+        } catch (error) {
+          console.error("❌ Error handling OAuth user:", error);
+          return false;
         }
       }
+
       console.log("✅ SignIn successful");
       return true;
     },
     async jwt({ token, user, trigger, session }) {
-      // On initial sign in or when user object is available
+      // On initial sign in (when user object is available from authorize)
       if (user) {
         console.log("🎫 Creating JWT token for user:", user.email);
-        token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.role = (user as User).role;
-        token.accountType = (
-          user as User & { accountType?: string }
-        ).accountType;
-        token.isEmailVerified = (user as any).isEmailVerified;
-        // Add timestamp for cache tracking
-        token.lastUpdated = Date.now();
+
+        // Fetch full user data from database
+        const dbUser = await prisma.user.findUnique({
+          where: { email: user.email! },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            role: true,
+            accountType: true,
+            isEmailVerified: true,
+            image: true,
+          },
+        });
+
+        if (dbUser) {
+          token.id = dbUser.id;
+          token.email = dbUser.email;
+          token.name = dbUser.name;
+          token.role = dbUser.role;
+          token.accountType = dbUser.accountType;
+          token.isEmailVerified = dbUser.isEmailVerified;
+          token.image = dbUser.image;
+          token.lastUpdated = Date.now();
+          console.log("✅ JWT token created with role:", dbUser.role);
+        }
       } else if (token.id) {
         // Refresh user data from DB periodically (every 24 hours to reduce DB calls)
         const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
@@ -137,6 +172,7 @@ export const authOptions: AuthOptions = {
                 email: true,
                 name: true,
                 isEmailVerified: true,
+                image: true,
               },
             });
             if (dbUser) {
@@ -146,6 +182,7 @@ export const authOptions: AuthOptions = {
               token.accountType = dbUser.accountType;
               token.role = dbUser.role;
               token.isEmailVerified = dbUser.isEmailVerified;
+              token.image = dbUser.image;
               token.lastUpdated = Date.now();
             }
           } catch (error) {
@@ -157,7 +194,7 @@ export const authOptions: AuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log("📋 Creating session for token:", token.email);
+      console.log("📋 Creating session for user:", token.email);
       // Add user data from token to session
       if (session.user && token) {
         session.user.id = token.id as string;
@@ -167,6 +204,10 @@ export const authOptions: AuthOptions = {
         session.user.accountType = token.accountType as string | undefined;
         session.user.isEmailVerified = token.isEmailVerified as boolean;
       }
+      console.log("✅ Session created successfully:", {
+        email: session.user?.email,
+        role: session.user?.role,
+      });
       return session;
     },
   },

@@ -180,23 +180,27 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
-        className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
-        style={{ touchAction: "none" }}
-      />
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
-        className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto"
-        onClick={(e) => e.stopPropagation()}
-        style={{ touchAction: "auto" }}
-      >
+      {isOpen && (
+        <>
+          <motion.div
+            key="buy-modal-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
+            style={{ touchAction: "none" }}
+          />
+          <motion.div
+            key="buy-modal-content"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+            style={{ touchAction: "auto" }}
+          >
         <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
           <button
             onClick={onClose}
@@ -482,6 +486,8 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
           </div>
         </div>
       </motion.div>
+        </>
+      )}
     </AnimatePresence>
   );
 }

@@ -29,8 +29,38 @@ export default function AdvancedTradingChart() {
   const [currentPrice, setCurrentPrice] = useState(1.39735);
   const [priceChange, setPriceChange] = useState(0.00045);
 
-  // Fetch REAL candlestick data from Binance
+  // Fetch REAL candlestick data from Binance - DISABLED
   useEffect(() => {
+    // Market data service disabled - no external integrations
+    console.log("⚠️ Market data service disabled - using mock data");
+
+    // Use mock data instead
+    const mockData: CandleData[] = [
+      {
+        time: Date.now() - 60000,
+        open: 1.085,
+        high: 1.0865,
+        low: 1.0845,
+        close: 1.086,
+        volume: 1000,
+      },
+      {
+        time: Date.now(),
+        open: 1.086,
+        high: 1.0875,
+        low: 1.0855,
+        close: 1.087,
+        volume: 1200,
+      },
+    ];
+
+    setCandleData(mockData);
+    setCurrentPrice(1.087);
+    setPriceChange(0.002);
+
+    return; // Exit early - no subscriptions
+
+    /* Original code commented out
     const loadRealCandleData = async () => {
       try {
         const marketService = getMarketDataService();
@@ -109,6 +139,7 @@ export default function AdvancedTradingChart() {
     return () => {
       marketService.unsubscribe(subscriptionId);
     };
+    */
   }, []);
 
   // Draw the chart
