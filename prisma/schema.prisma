@@ -166,12 +166,12 @@ model Withdrawal {
   userId        String?
   amount        Decimal
   currency      String
-  status        String    @default("PENDING")
+  status        String    @default("PENDING")  // PENDING, PENDING_PAYMENT, PROCESSING, COMPLETED, FAILED, CANCELLED
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  metadata      Json?     @default("{}")
+  metadata      Json?     @default("{}")  // Stores fees, payment info, destination details
   transactionId String?
-  type          String?
+  type          String?  // CRYPTO_BTC, CRYPTO_ETH, BANK_TRANSFER, WIRE_TRANSFER
   portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
   user          User?     @relation(fields: [userId], references: [id])
 }

@@ -13,11 +13,14 @@ import {
 interface RealTimeTradingChartProps {
   symbol: string;
   interval?: string;
+  // number of candles to fetch for the selected interval (Binance limit up to 1000)
+  limit?: number;
 }
 
 export default function RealTimeTradingChart({
   symbol,
   interval = "1m",
+  limit = 100,
 }: RealTimeTradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -47,22 +50,25 @@ export default function RealTimeTradingChart({
 
     const chart = init(chartContainerRef.current, {
       styles: {
+        // Make candles thicker and use clearer colors for up/down movements
         candle: {
           type: "candle_solid" as any,
           bar: {
-            upColor: "#5ddf38",
-            downColor: "#ff4747",
-            upBorderColor: "#5ddf38",
-            downBorderColor: "#ff4747",
-            upWickColor: "#5ddf38",
-            downWickColor: "#ff4747",
+            upColor: "#16a34a", // green
+            downColor: "#ef4444", // red
+            upBorderColor: "#16a34a",
+            downBorderColor: "#ef4444",
+            upWickColor: "#16a34a",
+            downWickColor: "#ef4444",
           },
         },
+        // Light, subtle grid to match screenshot
         grid: {
-          horizontal: { color: "#2a252280" },
-          vertical: { color: "#2a252280" },
+          horizontal: { color: "#eef0f2" },
+          vertical: { color: "transparent" },
         },
       },
+      // Keep layout default; parent container determines card background
     });
 
     chartRef.current = chart;
@@ -93,11 +99,11 @@ export default function RealTimeTradingChart({
           `Fetching chart data for ${binanceSymbol} at ${binanceInterval} interval...`
         );
 
-        // Fetch 100 most recent candles
+        // Fetch most recent candles (limit adjustable)
         const klineData = await fetchKlineData(
           binanceSymbol,
           binanceInterval,
-          100
+          limit
         );
 
         if (!isMounted || !chartRef.current) return;
@@ -191,7 +197,13 @@ export default function RealTimeTradingChart({
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <div ref={chartContainerRef} className="w-full h-full" />
+      {/* Pale card container so chart appears on a soft background like the screenshot */}
+      <div className="bg-gray-50/80 rounded-2xl p-3 h-full w-full">
+        <div
+          ref={chartContainerRef}
+          className="w-full h-full rounded-lg overflow-hidden"
+        />
+      </div>
 
       {/* Loading indicator */}
       {isLoading && (
@@ -294,8 +306,8 @@ export default function RealTimeTradingChart({
       </div>
 
       <div className="absolute top-4 right-4 bg-[#1b1817]/80 backdrop-blur-sm px-4 py-2 rounded-lg border border-[#38312e]">
-        <div className="text-xs text-[#9e9aa7]">{symbol}</div>
-        <div className="text-lg font-semibold text-white">
+        <div className="text-sm text-[#9e9aa7]">{symbol}</div>
+        <div className="text-2xl font-semibold text-white">
           $
           {(() => {
             const price = cryptoPrices[symbol];

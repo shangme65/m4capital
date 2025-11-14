@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, Star } from "lucide-react";
+import RealTimeTradingChart from "@/components/client/RealTimeTradingChart";
 
 interface Asset {
   symbol: string;
@@ -34,70 +35,29 @@ interface AssetInfo {
   };
 }
 
+// Asset info is fetched live where possible. Keep a small fallback info map for descriptions/links.
 const assetInfo: AssetInfo = {
   BTC: {
-    price: 111659.18,
-    marketCap: "$2,225,678,960,743.18",
-    circulatingSupply: "19,932,790 BTC",
-    totalSupply: "19,932,790 BTC",
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
     description:
-      "Bitcoin is a cryptocurrency and worldwide payment system. It is the first decentralized digital currency, as the system works without a central bank or single administrator.",
+      "Bitcoin is a cryptocurrency and worldwide payment system. It is the first decentralized digital currency.",
     links: {
       website: "https://bitcoin.org",
       explorer: "https://blockchair.com/bitcoin",
-      github: "https://github.com/bitcoin/bitcoin",
     },
   },
   ETH: {
-    price: 2468.45,
-    marketCap: "$296,789,123,456.78",
-    circulatingSupply: "120,280,790 ETH",
-    totalSupply: "120,280,790 ETH",
-    description:
-      "Ethereum is a decentralized platform that runs smart contracts: applications that run exactly as programmed without any possibility of downtime, censorship, fraud or third-party interference.",
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description: "Ethereum is a decentralized platform for smart contracts.",
     links: {
       website: "https://ethereum.org",
       explorer: "https://etherscan.io",
-      github: "https://github.com/ethereum/go-ethereum",
-    },
-  },
-  ADA: {
-    price: 0.338,
-    marketCap: "$11,789,123,456.78",
-    circulatingSupply: "35,045,020,830 ADA",
-    totalSupply: "45,000,000,000 ADA",
-    description:
-      "Cardano is a proof-of-stake blockchain platform that aims to allow changemakers, innovators and visionaries to bring about positive global change.",
-    links: {
-      website: "https://cardano.org",
-      explorer: "https://cardanoscan.io",
-      github: "https://github.com/input-output-hk/cardano-node",
-    },
-  },
-  SOL: {
-    price: 150.12,
-    marketCap: "$70,456,789,123.45",
-    circulatingSupply: "469,320,000 SOL",
-    totalSupply: "588,650,000 SOL",
-    description:
-      "Solana is a high-performance blockchain supporting builders around the world creating crypto apps that scale today.",
-    links: {
-      website: "https://solana.com",
-      explorer: "https://explorer.solana.com",
-      github: "https://github.com/solana-labs/solana",
-    },
-  },
-  USDT: {
-    price: 1.0,
-    marketCap: "$120,789,123,456.78",
-    circulatingSupply: "120,789,123,456 USDT",
-    totalSupply: "120,789,123,456 USDT",
-    description:
-      "Tether gives you the joint benefits of open blockchain technology and traditional currency by converting your cash into a stable digital currency equivalent.",
-    links: {
-      website: "https://tether.to",
-      explorer:
-        "https://etherscan.io/token/0xdac17f958d2ee523a2206206994597c13d831ec7",
     },
   },
 };
@@ -270,15 +230,80 @@ export default function AssetDetailsModal({
     setShowSellModal(false);
   };
 
+  // Live price and history state
+  const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [liveChangePercent, setLiveChangePercent] = useState<number | null>(
+    null
+  );
+  const [txHistory, setTxHistory] = useState<any[]>([]);
+  // Chart period state (UI: 1H,1D,1W,1M,1Y,All)
+  const [selectedPeriod, setSelectedPeriod] = useState<
+    "1H" | "1D" | "1W" | "1M" | "1Y" | "All"
+  >("1D");
+
+  // Fetch live price for asset.symbol from our prices API
+  useEffect(() => {
+    let mounted = true;
+    let interval: any = null;
+    const fetchPrice = async () => {
+      if (!asset?.symbol) return;
+      try {
+        const res = await fetch(`/api/crypto/prices?symbols=${asset.symbol}`);
+        const data = await res.json();
+        const priceObj = Array.isArray(data.prices) ? data.prices[0] : null;
+        if (mounted && priceObj) {
+          setLivePrice(priceObj.price ?? null);
+          setLiveChangePercent(priceObj.changePercent24h ?? null);
+        }
+      } catch (e) {
+        console.error("Failed to fetch live price", e);
+      }
+    };
+
+    // initial fetch
+    fetchPrice();
+    // poll every 30s
+    interval = setInterval(fetchPrice, 30000);
+
+    return () => {
+      mounted = false;
+      if (interval) clearInterval(interval);
+    };
+  }, [asset?.symbol]);
+
+  // Fetch transaction history for this asset (deposits/trades/withdrawals)
+  useEffect(() => {
+    let mounted = true;
+    const fetchHistory = async () => {
+      if (!asset?.symbol) return;
+      try {
+        const res = await fetch(
+          `/api/transactions/by-symbol?symbol=${asset.symbol}`
+        );
+        const data = await res.json();
+        if (mounted)
+          setTxHistory(Array.isArray(data.history) ? data.history : []);
+      } catch (e) {
+        console.error("Failed to fetch history", e);
+        if (mounted) setTxHistory([]);
+      }
+    };
+    fetchHistory();
+    return () => {
+      mounted = false;
+    };
+  }, [asset?.symbol]);
+
   if (!isOpen || !asset) return null;
 
-  const info = assetInfo[asset.symbol];
-  const history =
-    mockTransactionHistory[
-      asset.symbol as keyof typeof mockTransactionHistory
-    ] || [];
-  const currentPrice = info?.price || 0;
-  const priceChange = asset.change;
+  const info = assetInfo[asset.symbol] || null;
+  const history = txHistory.length
+    ? txHistory
+    : mockTransactionHistory[
+        asset.symbol as keyof typeof mockTransactionHistory
+      ] || [];
+  const currentPrice = livePrice ?? info?.price ?? 0;
+  const priceChange = liveChangePercent ?? asset.change ?? 0;
 
   const quickBuyAmounts = [15, 25, 50, 100]; // USD amounts
 
@@ -342,7 +367,7 @@ export default function AssetDetailsModal({
                 </div>
 
                 <div className="text-center mb-6">
-                  <div className="text-3xl font-bold text-gray-900 mb-2">
+                  <div className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
                     $
                     {currentPrice.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
@@ -361,19 +386,48 @@ export default function AssetDetailsModal({
                   </div>
                 </div>
 
-                {/* Chart Placeholder */}
-                <div className="h-32 bg-gray-50 rounded-lg mb-6 flex items-center justify-center">
-                  <span className="text-gray-400">Chart Placeholder</span>
+                {/* Real-time chart */}
+                <div className="h-80 md:h-[420px] mb-4">
+                  <RealTimeTradingChart
+                    symbol={asset.symbol}
+                    // map selectedPeriod to an interval + limit
+                    {...(() => {
+                      const map: Record<
+                        string,
+                        { interval: string; limit: number }
+                      > = {
+                        "1H": { interval: "1m", limit: 60 },
+                        "1D": { interval: "15m", limit: 96 },
+                        "1W": { interval: "1h", limit: 168 },
+                        "1M": { interval: "4h", limit: 180 },
+                        "1Y": { interval: "1d", limit: 365 },
+                        All: { interval: "1d", limit: 1000 },
+                      };
+                      return map[selectedPeriod] || map["1D"];
+                    })()}
+                  />
                 </div>
 
                 {/* Time Period Buttons */}
                 <div className="flex justify-around mb-6">
-                  {["1H", "1D", "1W", "1M", "1Y", "All"].map((period) => (
+                  {[
+                    { label: "1H", key: "1H" },
+                    { label: "1D", key: "1D" },
+                    { label: "1W", key: "1W" },
+                    { label: "1M", key: "1M" },
+                    { label: "1Y", key: "1Y" },
+                    { label: "All", key: "All" },
+                  ].map((period) => (
                     <button
-                      key={period}
-                      className="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                      key={period.key}
+                      onClick={() => setSelectedPeriod(period.key as any)}
+                      className={`px-3 py-1 text-sm transition-colors rounded ${
+                        selectedPeriod === period.key
+                          ? "bg-gray-900 text-white"
+                          : "text-gray-600 hover:text-gray-900"
+                      }`}
                     >
-                      {period}
+                      {period.label}
                     </button>
                   ))}
                 </div>

@@ -11,6 +11,7 @@ import {
 import { usePortfolio } from "@/lib/usePortfolio";
 import TransactionDetailsModal from "@/components/client/TransactionDetailsModal";
 import AssetDetailsModal from "@/components/client/AssetDetailsModal";
+import AddCryptoModal from "@/components/client/AddCryptoModal";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -53,6 +54,7 @@ function DashboardContent() {
   const [showAllAssets, setShowAllAssets] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
   const [activeView, setActiveView] = useState<"crypto" | "history">("crypto");
+  const [showAddCryptoModal, setShowAddCryptoModal] = useState(false);
 
   const handleTransactionClick = (transaction: Transaction) => {
     // Enhance transaction with additional details for the modal
@@ -84,23 +86,104 @@ function DashboardContent() {
   // Get available balance from portfolio
   const availableBalance = portfolio?.portfolio.balance || 0;
 
+  // Cryptocurrency metadata helper
+  const getCryptoMetadata = (symbol: string) => {
+    const cryptoData: Record<
+      string,
+      { name: string; icon: string; color: string; network?: string }
+    > = {
+      BTC: {
+        name: "Bitcoin",
+        icon: "₿",
+        color: "from-orange-500 to-orange-600",
+      },
+      ETH: {
+        name: "Ethereum",
+        icon: "Ξ",
+        color: "from-blue-500 to-purple-600",
+      },
+      USDT: {
+        name: "Tether",
+        icon: "₮",
+        color: "from-green-500 to-teal-600",
+        network: "Ethereum",
+      },
+      BNB: {
+        name: "Binance Coin",
+        icon: "◈",
+        color: "from-yellow-500 to-yellow-600",
+      },
+      SOL: { name: "Solana", icon: "◎", color: "from-purple-500 to-pink-600" },
+      XRP: { name: "Ripple", icon: "✕", color: "from-blue-600 to-blue-700" },
+      USDC: { name: "USD Coin", icon: "$", color: "from-blue-500 to-blue-600" },
+      ADA: { name: "Cardano", icon: "₳", color: "from-blue-600 to-indigo-700" },
+      AVAX: { name: "Avalanche", icon: "▲", color: "from-red-500 to-red-600" },
+      DOGE: {
+        name: "Dogecoin",
+        icon: "Ð",
+        color: "from-yellow-600 to-yellow-700",
+      },
+      DOT: { name: "Polkadot", icon: "●", color: "from-pink-500 to-pink-600" },
+      MATIC: {
+        name: "Polygon",
+        icon: "⬡",
+        color: "from-purple-600 to-purple-700",
+      },
+      LINK: {
+        name: "Chainlink",
+        icon: "⬢",
+        color: "from-blue-500 to-blue-600",
+      },
+      UNI: { name: "Uniswap", icon: "🦄", color: "from-pink-500 to-pink-600" },
+      LTC: { name: "Litecoin", icon: "Ł", color: "from-gray-400 to-gray-500" },
+      ATOM: {
+        name: "Cosmos",
+        icon: "⚛",
+        color: "from-indigo-600 to-purple-700",
+      },
+      XLM: { name: "Stellar", icon: "✱", color: "from-gray-700 to-gray-800" },
+      ALGO: { name: "Algorand", icon: "△", color: "from-gray-700 to-gray-800" },
+      VET: { name: "VeChain", icon: "⚡", color: "from-blue-600 to-cyan-700" },
+      TRX: { name: "TRON", icon: "Ⓣ", color: "from-red-600 to-red-700" },
+    };
+    return (
+      cryptoData[symbol] || {
+        name: symbol,
+        icon: "○",
+        color: "from-gray-600 to-gray-700",
+      }
+    );
+  };
+
   // Dynamic user assets with real-time Bitcoin prices
   // Only show actual portfolio assets - no mock/default data
   const userAssets =
     portfolio?.portfolio.assets && portfolio.portfolio.assets.length > 0
-      ? portfolio.portfolio.assets.map((asset: any) => ({
-          symbol: asset.symbol,
-          name: asset.symbol,
-          amount: asset.amount,
-          value:
+      ? portfolio.portfolio.assets.map((asset: any) => {
+          const metadata = getCryptoMetadata(asset.symbol);
+          const currentPrice =
             asset.symbol === "BTC" && btcPrice
-              ? btcPrice.price * asset.amount
-              : asset.amount * asset.averagePrice,
-          change:
-            asset.symbol === "BTC" && btcPrice ? btcPrice.changePercent24h : 0,
-          icon:
-            asset.symbol === "BTC" ? "₿" : asset.symbol === "ETH" ? "Ξ" : "○",
-        }))
+              ? btcPrice.price
+              : asset.averagePrice || 0;
+
+          return {
+            symbol: asset.symbol,
+            name: metadata.name,
+            network: metadata.network,
+            amount: asset.amount,
+            currentPrice: currentPrice,
+            value:
+              asset.symbol === "BTC" && btcPrice
+                ? btcPrice.price * asset.amount
+                : asset.amount * asset.averagePrice,
+            change:
+              asset.symbol === "BTC" && btcPrice
+                ? btcPrice.changePercent24h
+                : 0,
+            icon: metadata.icon,
+            color: metadata.color,
+          };
+        })
       : [];
 
   // Calculate dynamic portfolio value based on real-time prices
@@ -175,7 +258,38 @@ function DashboardContent() {
   };
 
   const handleAddCrypto = () => {
-    openBuyModal();
+    setShowAddCryptoModal(true);
+  };
+
+  const handleAddCryptoAsset = async (symbol: string, name: string) => {
+    try {
+      const response = await fetch("/api/portfolio/add-asset", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ symbol, name }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Failed to add cryptocurrency");
+        return;
+      }
+
+      // Refresh portfolio data
+      await refetch();
+
+      // Close modal
+      setShowAddCryptoModal(false);
+
+      // Show success message
+      alert(`${name} (${symbol}) added successfully!`);
+    } catch (error) {
+      console.error("Error adding crypto:", error);
+      alert("Failed to add cryptocurrency. Please try again.");
+    }
   };
 
   const handleViewAllActivity = () => {
@@ -591,21 +705,21 @@ function DashboardContent() {
 
       {/* Crypto and History Toggle View */}
       <div className="grid grid-cols-1 gap-8">
-        <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700/50">
+        <div className="bg-gray-800/50 rounded-2xl p-4 sm:p-6 border border-gray-700/50">
           {/* Header with Toggle and Add Button */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between gap-2 mb-6">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
               {/* Crypto Tab */}
               <button
                 onClick={() => setActiveView("crypto")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${
                   activeView === "crypto"
                     ? "text-white border-b-2 border-blue-500"
                     : "text-gray-400 hover:text-white"
                 }`}
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -623,14 +737,14 @@ function DashboardContent() {
               {/* History Tab */}
               <button
                 onClick={() => setActiveView("history")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all ${
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${
                   activeView === "history"
                     ? "text-white border-b-2 border-blue-500"
                     : "text-gray-400 hover:text-white"
                 }`}
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-4 h-4 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -649,10 +763,10 @@ function DashboardContent() {
             {/* Add Crypto Button */}
             <button
               onClick={handleAddCrypto}
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm"
+              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm whitespace-nowrap flex-shrink-0"
             >
               <svg
-                className="w-4 h-4"
+                className="w-4 h-4 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -664,7 +778,7 @@ function DashboardContent() {
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Add Crypto
+              Add
             </button>
           </div>
 
@@ -701,48 +815,60 @@ function DashboardContent() {
                   <div
                     key={asset.symbol}
                     onClick={() => handleAssetClick(asset)}
-                    className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl border border-gray-700/30 cursor-pointer hover:bg-gray-900/70 transition-colors"
+                    className="flex items-center justify-between p-4 bg-transparent hover:bg-gray-900/30 transition-colors cursor-pointer rounded-lg"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-white">
+                    {/* Left side: Icon and Info */}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-12 h-12 bg-gradient-to-br ${asset.color} rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg`}
+                      >
                         {asset.icon}
                       </div>
-                      <div>
-                        <div className="flex items-center gap-1">
-                          <span className="text-white font-semibold">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="text-white font-bold text-base">
                             {asset.symbol}
                           </span>
+                          <span className="text-gray-400 text-sm">
+                            {asset.name}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-white font-medium text-sm">
+                            $
+                            {(asset.currentPrice || 0).toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
                           <span
-                            className={`text-[10px] font-medium ${
+                            className={`text-sm font-medium ${
                               asset.change >= 0
                                 ? "text-green-400"
                                 : "text-red-400"
                             }`}
                           >
                             {asset.change >= 0 ? "+" : ""}
-                            {asset.change}%
+                            {asset.change.toFixed(2)}%
                           </span>
-                        </div>
-                        <div className="text-gray-400 text-sm">
-                          {asset.name}
                         </div>
                       </div>
                     </div>
 
+                    {/* Right side: Holdings */}
                     <div className="text-right">
-                      <div className="text-white font-semibold">
+                      <div className="text-white font-bold text-base">
+                        {(asset.amount || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 8,
+                        })}
+                      </div>
+                      <div className="text-gray-400 text-sm mt-0.5">
                         $
                         {(asset.value || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
-                      </div>
-                      <div className="text-sm text-gray-400">
-                        {(asset.amount || 0).toLocaleString("en-US", {
-                          minimumFractionDigits: 4,
-                          maximumFractionDigits: 4,
-                        })}{" "}
-                        {asset.symbol}
                       </div>
                     </div>
                   </div>
@@ -855,6 +981,14 @@ function DashboardContent() {
         isOpen={showAssetDetails}
         onClose={() => setShowAssetDetails(false)}
         asset={selectedAsset}
+      />
+
+      {/* Add Crypto Modal */}
+      <AddCryptoModal
+        isOpen={showAddCryptoModal}
+        onClose={() => setShowAddCryptoModal(false)}
+        onAdd={handleAddCryptoAsset}
+        existingAssets={userAssets.map((asset) => asset.symbol)}
       />
 
       {/* All Assets Modal */}
