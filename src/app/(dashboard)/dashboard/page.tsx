@@ -292,6 +292,34 @@ function DashboardContent() {
     }
   };
 
+  const handleRemoveCryptoAsset = async (symbol: string) => {
+    try {
+      const response = await fetch("/api/portfolio/remove-asset", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ symbol }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Failed to remove cryptocurrency");
+        return;
+      }
+
+      // Refresh portfolio data
+      await refetch();
+
+      // Show success message
+      alert(`${symbol} removed successfully!`);
+    } catch (error) {
+      console.error("Error removing crypto:", error);
+      alert("Failed to remove cryptocurrency. Please try again.");
+    }
+  };
+
   const handleViewAllActivity = () => {
     setShowAllActivity(true);
   };
@@ -996,7 +1024,11 @@ function DashboardContent() {
         isOpen={showAddCryptoModal}
         onClose={() => setShowAddCryptoModal(false)}
         onAdd={handleAddCryptoAsset}
-        existingAssets={userAssets.map((asset) => asset.symbol)}
+        onRemove={handleRemoveCryptoAsset}
+        existingAssets={userAssets.map((asset) => ({
+          symbol: asset.symbol,
+          amount: asset.amount,
+        }))}
       />
 
       {/* All Assets Modal */}

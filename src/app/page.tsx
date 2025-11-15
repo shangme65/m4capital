@@ -35,6 +35,14 @@ function Hero() {
   const router = useRouter();
   const images = ["/hero-bg-1.jpg", "/hero-bg-2.jpg", "/hero-bg-3.jpg"];
 
+  const handleTryDemo = () => {
+    // Set practice mode in localStorage before navigation
+    if (typeof window !== "undefined") {
+      localStorage.setItem("selectedAccountType", "practice");
+    }
+    router.push("/traderoom");
+  };
+
   const heroContent = [
     {
       title: (
@@ -361,9 +369,15 @@ function Hero() {
         </div>
         <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 mt-12 items-center justify-center px-4">
           {session ? (
-            // Logged in - Show "Go to Traderoom" button
+            // Logged in - Show "Go to Traderoom" button (defaults to real account)
             <button
-              onClick={() => router.push("/dashboard/traderoom")}
+              onClick={() => {
+                // Ensure real account is selected when logged in user clicks
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("selectedAccountType", "real");
+                }
+                router.push("/traderoom");
+              }}
               className="w-full xs:w-auto bg-orange-500 hover:bg-orange-600 text-white px-8 xs:px-10 py-3 xs:py-4 rounded-lg font-semibold text-base xs:text-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               Go to Traderoom
@@ -378,7 +392,7 @@ function Hero() {
                 Get Started
               </button>
               <button
-                onClick={openLoginModal}
+                onClick={handleTryDemo}
                 className="w-full xs:w-auto bg-gray-700 hover:bg-gray-600 text-white px-6 xs:px-8 py-3 rounded-lg font-semibold text-base xs:text-lg transition-all duration-200 transform hover:scale-105 border border-gray-600"
               >
                 Try Free Demo

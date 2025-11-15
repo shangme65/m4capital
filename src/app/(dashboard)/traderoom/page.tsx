@@ -52,8 +52,10 @@ import TradingCalculators from "@/components/client/TradingCalculators";
 import RealTimeTradingChart from "@/components/client/RealTimeTradingChart";
 import ChartGrid from "@/components/client/ChartGrid";
 import ErrorBoundary from "@/components/client/ErrorBoundary";
+import { useSession } from "next-auth/react";
 
 function TradingInterface() {
+  const { data: session, status } = useSession();
   const [amount, setAmount] = useState(10000);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState("USD/CAD");
@@ -87,6 +89,7 @@ function TradingInterface() {
   const [realAccountBalance, setRealAccountBalance] = useState(0);
   const practiceAccountBalance = 785440.0; // Practice account default balance
   const [forexRates, setForexRates] = useState<any>({});
+  const isLoggedIn = status === "authenticated" && session?.user;
 
   // Get trading context for history data
   const { tradeHistory, openPositions } = useTradingContext();
@@ -304,20 +307,30 @@ function TradingInterface() {
     // Refresh forex rates every 60 seconds
     const forexInterval = setInterval(fetchForexRates, 60000);
 
-    // Load selected account type from localStorage (but default to real)
+    // Load selected account type from localStorage
     const savedAccountType = localStorage.getItem("selectedAccountType") as
       | "real"
       | "practice"
       | null;
-    if (savedAccountType) {
+
+    // If not logged in, force practice mode
+    if (!isLoggedIn) {
+      setSelectedAccountType("practice");
+      localStorage.setItem("selectedAccountType", "practice");
+    } else if (savedAccountType) {
+      // Logged in users can use saved preference
       setSelectedAccountType(savedAccountType);
+    } else {
+      // Logged in users default to real account
+      setSelectedAccountType("real");
+      localStorage.setItem("selectedAccountType", "real");
     }
 
     return () => {
       clearInterval(timer);
       clearInterval(forexInterval);
     };
-  }, []);
+  }, [isLoggedIn]);
 
   // Close balance dropdown when clicking outside
   useEffect(() => {
@@ -663,11 +676,20 @@ function TradingInterface() {
                     {/* Real Account Section */}
                     <button
                       onClick={() => {
+                        if (!isLoggedIn) {
+                          alert("Please log in to access your real account");
+                          return;
+                        }
                         setSelectedAccountType("real");
                         setIsBalanceDropdownOpen(false);
                         localStorage.setItem("selectedAccountType", "real");
                       }}
-                      className="w-full p-4 border-b transition-all duration-200 hover:bg-opacity-50"
+                      disabled={!isLoggedIn}
+                      className={`w-full p-4 border-b transition-all duration-200 ${
+                        isLoggedIn
+                          ? "hover:bg-opacity-50 cursor-pointer"
+                          : "opacity-50 cursor-not-allowed"
+                      }`}
                       style={{
                         borderColor: "#38312e",
                         backgroundColor:
@@ -683,7 +705,7 @@ function TradingInterface() {
                               className="text-xs"
                               style={{ color: "#9e9aa7" }}
                             >
-                              REAL ACCOUNT
+                              REAL ACCOUNT {!isLoggedIn && "(Login Required)"}
                             </div>
                             {selectedAccountType === "real" && (
                               <div

@@ -36,29 +36,46 @@ interface AddCryptoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAdd: (symbol: string, name: string) => void;
-  existingAssets: string[];
+  onRemove: (symbol: string) => void;
+  existingAssets: Array<{ symbol: string; amount: number }>;
 }
 
 export default function AddCryptoModal({
   isOpen,
   onClose,
   onAdd,
+  onRemove,
   existingAssets,
 }: AddCryptoModalProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAdding, setIsAdding] = useState(false);
+  const [isRemoving, setIsRemoving] = useState<string | null>(null);
+
+  const existingSymbols = existingAssets.map((a) => a.symbol);
 
   const filteredCryptos = POPULAR_CRYPTOCURRENCIES.filter(
     (crypto) =>
-      (crypto.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        crypto.symbol.toLowerCase().includes(searchQuery.toLowerCase())) &&
-      !existingAssets.includes(crypto.symbol)
+      crypto.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      crypto.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleAdd = async (crypto: Cryptocurrency) => {
     setIsAdding(true);
     await onAdd(crypto.symbol, crypto.name);
     setIsAdding(false);
+  };
+
+  const handleRemove = async (symbol: string) => {
+    const asset = existingAssets.find((a) => a.symbol === symbol);
+    if (asset && asset.amount > 0) {
+      alert(
+        `Cannot remove ${symbol} because you have a balance of ${asset.amount}. Please sell or transfer your holdings first.`
+      );
+      return;
+    }
+    setIsRemoving(symbol);
+    await onRemove(symbol);
+    setIsRemoving(null);
   };
 
   return (
@@ -151,49 +168,94 @@ export default function AddCryptoModal({
                       />
                     </svg>
                   </div>
-                  <p className="text-gray-400">
-                    {searchQuery
-                      ? "No cryptocurrencies found"
-                      : "All available cryptocurrencies are already in your portfolio"}
-                  </p>
+                  <p className="text-gray-400">No cryptocurrencies found</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {filteredCryptos.map((crypto) => (
-                    <button
-                      key={crypto.symbol}
-                      onClick={() => handleAdd(crypto)}
-                      disabled={isAdding}
-                      className="w-full flex items-center justify-between p-4 bg-gray-900/50 hover:bg-gray-900 rounded-xl border border-gray-700/50 hover:border-gray-600 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-lg font-bold text-white group-hover:bg-gray-600 transition-colors">
-                          {crypto.icon}
-                        </div>
-                        <div className="text-left">
-                          <div className="text-white font-semibold">
-                            {crypto.symbol}
-                          </div>
-                          <div className="text-gray-400 text-sm">
-                            {crypto.name}
-                          </div>
-                        </div>
-                      </div>
-                      <svg
-                        className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                  {filteredCryptos.map((crypto) => {
+                    const isInPortfolio = existingSymbols.includes(
+                      crypto.symbol
+                    );
+                    const asset = existingAssets.find(
+                      (a) => a.symbol === crypto.symbol
+                    );
+                    const hasBalance = asset && asset.amount > 0;
+
+                    return (
+                      <button
+                        key={crypto.symbol}
+                        onClick={() =>
+                          isInPortfolio
+                            ? handleRemove(crypto.symbol)
+                            : handleAdd(crypto)
+                        }
+                        disabled={
+                          isAdding ||
+                          isRemoving === crypto.symbol ||
+                          (isInPortfolio && hasBalance)
+                        }
+                        className="w-full flex items-center justify-between p-4 bg-gray-900/50 hover:bg-gray-900 rounded-xl border border-gray-700/50 hover:border-gray-600 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 4v16m8-8H4"
-                        />
-                      </svg>
-                    </button>
-                  ))}
+                        <div className="flex items-center gap-4">
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold text-white group-hover:bg-gray-600 transition-colors ${
+                              isInPortfolio
+                                ? "bg-green-600 group-hover:bg-green-700"
+                                : "bg-gray-700"
+                            }`}
+                          >
+                            {crypto.icon}
+                          </div>
+                          <div className="text-left">
+                            <div className="text-white font-semibold flex items-center gap-2">
+                              {crypto.symbol}
+                              {isInPortfolio && hasBalance && (
+                                <span className="text-xs text-orange-400">
+                                  (has balance)
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-gray-400 text-sm">
+                              {crypto.name}
+                            </div>
+                          </div>
+                        </div>
+                        {isInPortfolio ? (
+                          <svg
+                            className={`w-5 h-5 transition-colors ${
+                              hasBalance
+                                ? "text-gray-600"
+                                : "text-gray-400 group-hover:text-red-400"
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 12H4"
+                            />
+                          </svg>
+                        ) : (
+                          <svg
+                            className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 4v16m8-8H4"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </div>
