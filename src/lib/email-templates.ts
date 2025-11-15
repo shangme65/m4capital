@@ -439,6 +439,64 @@ export const telegramLinkSuccessTemplate = (
   </div>
 `);
 
+export const telegramUnlinkTemplate = (
+  name: string,
+  telegramUsername: string
+) =>
+  emailTemplate(`
+  <div style="text-align: center;">
+    <h1 style="color: #333333; margin-bottom: 10px;">🔓 Telegram Account Disconnected</h1>
+    <p style="font-size: 16px; color: #666666; margin-bottom: 30px;">
+      ${name}, your Telegram account has been successfully unlinked from your M4 Capital account.
+    </p>
+  </div>
+
+  <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 10px; padding: 30px; margin: 30px 0; text-align: center;">
+    <h2 style="color: #ffffff; margin: 0 0 15px 0; font-size: 24px;">✅ Disconnection Complete</h2>
+    <p style="color: #ffffff; opacity: 0.9; margin: 0;">
+      Unlinked from: <strong>@${telegramUsername}</strong>
+    </p>
+  </div>
+
+  <div style="margin: 30px 0;">
+    <h3 style="color: #333333; font-size: 18px; margin-bottom: 15px;">What This Means:</h3>
+    <ul style="list-style: none; padding: 0; margin: 0;">
+      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+        <span style="color: #f5576c; margin-right: 10px;">🚫</span>
+        <span style="color: #666666;">You will no longer receive Telegram notifications</span>
+      </li>
+      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+        <span style="color: #f5576c; margin-right: 10px;">📱</span>
+        <span style="color: #666666;">Telegram commands (/balance, /portfolio) are now disabled</span>
+      </li>
+      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+        <span style="color: #f5576c; margin-right: 10px;">🔒</span>
+        <span style="color: #666666;">Your account security remains intact</span>
+      </li>
+      <li style="padding: 12px 0;">
+        <span style="color: #f5576c; margin-right: 10px;">🔄</span>
+        <span style="color: #666666;">You can reconnect anytime from your settings</span>
+      </li>
+    </ul>
+  </div>
+
+  <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 15px; margin: 20px 0; border-radius: 4px;">
+    <p style="font-size: 14px; color: #856404; margin: 0;">
+      <strong>⚠️ Important:</strong> If you didn't authorize this disconnection, please secure your account immediately and contact support.
+    </p>
+  </div>
+
+  <div style="margin-top: 30px; text-align: center;">
+    <a href="${process.env.NEXTAUTH_URL}/settings" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: 600;">Reconnect Telegram</a>
+  </div>
+
+  <div style="border-top: 1px solid #eeeeee; margin-top: 30px; padding-top: 20px;">
+    <p style="font-size: 12px; color: #999999; margin: 5px 0;">
+      <strong>Need Help?</strong> Visit our support center or contact us at support@m4capital.com
+    </p>
+  </div>
+`);
+
 // Password Reset Email Template
 export const passwordResetTemplate = (name: string, resetUrl: string) => `
 <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">

@@ -3,7 +3,10 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
-import { telegramLinkSuccessTemplate } from "@/lib/email-templates";
+import {
+  telegramLinkSuccessTemplate,
+  telegramUnlinkTemplate,
+} from "@/lib/email-templates";
 
 export const dynamic = "force-dynamic";
 
@@ -241,6 +244,23 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Get current user data with Telegram info
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        name: true,
+        email: true,
+        linkedTelegramUsername: true,
+        securityNotifications: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const telegramUsername = user.linkedTelegramUsername || "Unknown";
+
     // Unlink Telegram account
     await prisma.user.update({
       where: { id: session.user.id },
@@ -249,6 +269,38 @@ export async function DELETE(request: NextRequest) {
         linkedTelegramUsername: null,
       },
     });
+
+    // Create in-app notification
+    console.log("📬 Creating in-app notification for Telegram unlink");
+    await prisma.notification.create({
+      data: {
+        userId: session.user.id,
+        type: "INFO",
+        title: "Telegram Account Disconnected",
+        message: `Your Telegram account @${telegramUsername} has been successfully unlinked from your M4 Capital account.`,
+      },
+    });
+    console.log("✅ In-app notification created successfully");
+
+    // Send email notification if user has email notifications enabled
+    if (user.securityNotifications !== false && user.email) {
+      console.log("📧 Sending Telegram unlink email notification");
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "🔓 Telegram Account Disconnected - M4 Capital",
+          html: telegramUnlinkTemplate(user.name || "User", telegramUsername),
+        });
+        console.log("✅ Telegram unlink email sent successfully");
+      } catch (emailError) {
+        console.error("❌ Failed to send unlink email:", emailError);
+        // Don't fail the entire operation if email fails
+      }
+    } else {
+      console.log(
+        "⏭️ Skipping email notification (user has security notifications disabled or no email)"
+      );
+    }
 
     return NextResponse.json({
       success: true,

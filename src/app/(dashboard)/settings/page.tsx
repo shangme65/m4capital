@@ -801,7 +801,7 @@ export default function SettingsPage() {
                           })
                         }
                         className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                        placeholder="e.g., United States, Nigeria, etc."
+                        placeholder="e.g., United States, Canada, United Kingdom, etc."
                       />
                     </div>
                     <div>
@@ -908,7 +908,7 @@ export default function SettingsPage() {
                             setKycData({ ...kycData, city: e.target.value })
                           }
                           className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                          placeholder="e.g., Lagos, New York, London"
+                          placeholder="e.g., New York, London, Toronto"
                         />
                       </div>
                       <div>
