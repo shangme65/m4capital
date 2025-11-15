@@ -29,7 +29,14 @@ export async function GET(request: NextRequest) {
     const timeframe = searchParams.get("timeframe") || "1Y"; // 1D, 1W, 1M, 3M, 6M, 1Y, ALL
     const period = searchParams.get("period") || "all"; // Legacy support
 
-    console.log("🔍 Looking up user:", session.user.email, "| Timeframe:", timeframe, "| Period:", period);
+    console.log(
+      "🔍 Looking up user:",
+      session.user.email,
+      "| Timeframe:",
+      timeframe,
+      "| Period:",
+      period
+    );
 
     // Calculate period start date based on timeframe
     let periodStart: Date | undefined;
@@ -74,15 +81,16 @@ export async function GET(request: NextRequest) {
             );
             break;
           case "7d":
-        periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case "30d":
-        periodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        break;
-      case "all":
-      default:
-        periodStart = undefined; // No filter
-        break;
+            periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            break;
+          case "30d":
+            periodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            break;
+          case "all":
+          default:
+            periodStart = undefined; // No filter
+            break;
+        }
     }
 
     // Find user and their portfolio

@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
                 <strong>⏳ Please wait:</strong> Your deposit will be credited after 6 network confirmations. This typically takes 15-20 minutes.
               </p>
               ${adminNote ? `<p><strong>Note:</strong> ${adminNote}</p>` : ""}
-              <p>You'll receive another notification when your deposit is confirmed and credited.</p>
+              <p>You'll be notified once your deposit is confirmed.</p>
               <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
                 This is an automated message. Please do not reply to this email.
               </p>
@@ -199,7 +199,14 @@ export async function POST(req: NextRequest) {
 
     // Trigger confirmation simulation (completes in ~20 mins)
     // This runs in the background
-    startConfirmationSimulation(deposit.id, user.id, depositType, cryptoAsset, amount, portfolio.id);
+    startConfirmationSimulation(
+      deposit.id,
+      user.id,
+      depositType,
+      cryptoAsset,
+      amount,
+      portfolio.id
+    );
 
     return NextResponse.json({
       message: "Deposit initiated successfully. Confirmations in progress.",
@@ -241,11 +248,16 @@ async function startConfirmationSimulation(
     try {
       // Confirmation intervals: 6 confirmations over 20 minutes = ~3.33 minutes each
       const intervals = [3.33, 6.66, 10, 13.33, 16.66, 20]; // minutes
-      
+
       for (let i = 1; i <= 6; i++) {
         // Wait for the interval
-        await new Promise(resolve => setTimeout(resolve, (intervals[i-1] - (i > 1 ? intervals[i-2] : 0)) * 60 * 1000));
-        
+        await new Promise((resolve) =>
+          setTimeout(
+            resolve,
+            (intervals[i - 1] - (i > 1 ? intervals[i - 2] : 0)) * 60 * 1000
+          )
+        );
+
         // Update confirmation count
         await prisma.deposit.update({
           where: { id: depositId },
@@ -273,7 +285,14 @@ async function startConfirmationSimulation(
       }
 
       // After 6 confirmations, complete the deposit
-      await completeDeposit(depositId, userId, depositType, cryptoAsset, amount, portfolioId);
+      await completeDeposit(
+        depositId,
+        userId,
+        depositType,
+        cryptoAsset,
+        amount,
+        portfolioId
+      );
     } catch (error) {
       console.error("Confirmation simulation error:", error);
     }
@@ -293,7 +312,7 @@ async function completeDeposit(
     // Update deposit status
     await prisma.deposit.update({
       where: { id: depositId },
-      data: { 
+      data: {
         status: "COMPLETED",
         confirmations: 6,
       },
@@ -341,7 +360,7 @@ async function completeDeposit(
 
     // Send completion notification
     const user = await prisma.user.findUnique({ where: { id: userId } });
-    
+
     await prisma.notification.create({
       data: {
         userId: userId,
@@ -394,4 +413,3 @@ async function completeDeposit(
     console.error("Error completing deposit:", error);
   }
 }
-

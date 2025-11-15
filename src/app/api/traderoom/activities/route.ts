@@ -19,14 +19,11 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Fetch real traderoom trading activities from transactions
+    // Fetch real traderoom trading activities from Trade model
     // This retrieves actual BUY/SELL trades made in the traderoom
-    const activities = await prisma.transaction.findMany({
+    const activities = await prisma.trade.findMany({
       where: {
         userId: user.id,
-        type: {
-          in: ["BUY", "SELL"],
-        },
       },
       orderBy: {
         createdAt: "desc",
@@ -34,11 +31,14 @@ export async function GET() {
       take: 50, // Last 50 activities
       select: {
         id: true,
-        type: true,
-        amount: true,
-        currency: true,
+        side: true,
+        symbol: true,
+        quantity: true,
+        entryPrice: true,
+        profit: true,
         status: true,
         createdAt: true,
+        openedAt: true,
         metadata: true,
       },
     });
@@ -46,13 +46,16 @@ export async function GET() {
     // Format activities for frontend
     const formattedActivities = activities.map((activity) => {
       const metadata = activity.metadata as any;
+      const quantity = parseFloat(activity.quantity.toString());
+      const entryPrice = parseFloat(activity.entryPrice.toString());
+
       return {
         id: activity.id,
-        type: activity.type,
-        symbol: metadata?.symbol || activity.currency,
-        amount: activity.amount,
-        quantity: metadata?.quantity || 0,
-        price: metadata?.price || 0,
+        type: activity.side, // BUY or SELL
+        symbol: activity.symbol,
+        amount: quantity * entryPrice,
+        quantity: quantity,
+        price: entryPrice,
         timestamp: activity.createdAt,
         status: activity.status,
       };
