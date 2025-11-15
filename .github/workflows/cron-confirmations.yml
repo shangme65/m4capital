@@ -1,0 +1,35 @@
+name: Process Bitcoin Confirmations
+
+on:
+  schedule:
+    # Runs every 3 minutes
+    - cron: '*/3 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Trigger Confirmation Processing
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X GET \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://m4capital-ezof7c87t-brenda-darroughs-projects.vercel.app/api/cron/process-confirmations)
+          
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | sed '$d')
+          
+          echo "Response Body: $BODY"
+          echo "HTTP Status: $HTTP_CODE"
+          
+          if [ "$HTTP_CODE" -ne 200 ]; then
+            echo "Error: API returned status $HTTP_CODE"
+            exit 1
+          fi
+          
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "⚠️ Bitcoin confirmation processing failed!"
+          echo "Please check the API endpoint and CRON_SECRET"
