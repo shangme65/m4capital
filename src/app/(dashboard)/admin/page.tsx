@@ -383,18 +383,23 @@ const AdminDashboard = () => {
       return;
     }
 
-    // Check if user has the crypto asset if depositing crypto
-    if (depositType === "crypto" && (selectedUser as any).portfolio) {
-      const assets = Array.isArray((selectedUser as any).portfolio.assets)
-        ? (selectedUser as any).portfolio.assets
-        : [];
-      const hasAsset = assets.some((a: any) => a.symbol === cryptoAsset);
-
-      if (!hasAsset) {
-        setAssetWarningMessage(
-          `User doesn't have ${cryptoAsset} in their portfolio yet. This will create a new ${cryptoAsset} position for them. Continue?`
-        );
-        setShowAssetWarning(true);
+    // For Bitcoin crypto deposits, check if user has BTC asset
+    if (depositType === "crypto" && cryptoAsset === "BTC") {
+      try {
+        // Fetch user's portfolio to check for BTC asset
+        const portfolioRes = await fetch(`/api/admin/check-user-asset?userId=${selectedUser.id}&asset=BTC`);
+        const portfolioData = await portfolioRes.json();
+        
+        if (!portfolioData.hasAsset) {
+          setAssetWarningMessage(
+            `⚠️ User doesn't have Bitcoin (BTC) in their portfolio yet.\n\nIf you continue, we will:\n• Create a pending deposit transaction\n• Generate transaction hash and calculate fees automatically\n• Send user a notification about incoming deposit\n• Start confirmation process (0/6 → 6/6 over 20 minutes)\n• Credit their account when confirmations complete\n\nContinue?`
+          );
+          setShowAssetWarning(true);
+          return;
+        }
+      } catch (error) {
+        console.error("Error checking user asset:", error);
+        showPopupNotification("Failed to verify user's assets. Please try again.", "error");
         return;
       }
     }
@@ -408,20 +413,39 @@ const AdminDashboard = () => {
     setShowAssetWarning(false);
 
     try {
+      // For Bitcoin payments, generate transaction hash and fee automatically
+      let generatedHash = "";
+      let calculatedFee = 0;
+      
+      if (selectedPaymentMethod.id === "crypto_bitcoin" && depositType === "crypto") {
+        // Generate realistic-looking Bitcoin transaction hash
+        generatedHash = Array.from({length: 64}, () => 
+          Math.floor(Math.random() * 16).toString(16)
+        ).join('');
+        
+        // Calculate fee (typical Bitcoin fee is 0.0001 to 0.001 BTC)
+        calculatedFee = 0.0001 + (Math.random() * 0.0009);
+      }
+
       // Prepare the payment details for the transaction
       const transactionData = {
         userId: selectedUser!.id,
         amount: amountNum,
         paymentMethod: selectedPaymentMethod.name,
-        paymentDetails,
+        paymentDetails: {
+          ...paymentDetails,
+          transactionHash: generatedHash || paymentDetails["Transaction Hash"],
+          networkFee: calculatedFee || paymentDetails["Network Fee"],
+        },
         adminNote:
           notificationMessage ||
           `Manual ${
             depositType === "crypto" ? `${cryptoAsset} crypto` : "balance"
-          } top-up via ${selectedPaymentMethod.name}`,
+          } deposit via ${selectedPaymentMethod.name}`,
         processedBy: session?.user?.email,
         depositType,
         cryptoAsset: depositType === "crypto" ? cryptoAsset : null,
+        isAdminManual: true, // Flag to indicate this is admin manual payment
       };
 
       const res = await fetch("/api/admin/top-up", {
@@ -433,30 +457,40 @@ const AdminDashboard = () => {
       if (res.ok) {
         const data = await res.json();
         showPopupNotification(
-          `Successfully initiated ${
+          `✅ Successfully initiated ${
             depositType === "crypto"
               ? `${amountNum} ${cryptoAsset}`
               : `$${amountNum}`
-          } deposit for ${selectedUser!.email}. Confirmations: 0/6`,
+          } deposit for ${selectedUser!.email}.\n\n` +
+          `📊 Status: PENDING\n` +
+          `⏱️ Confirmations: 0/6 (≈20 minutes)\n` +
+          `🔗 Hash: ${generatedHash.substring(0, 16)}...${generatedHash.substring(48)}\n` +
+          `💰 Fee: ${calculatedFee.toFixed(8)} BTC\n\n` +
+          `User will receive:\n` +
+          `• Email notification about incoming deposit\n` +
+          `• Push notification (if enabled)\n` +
+          `• Real-time confirmation updates\n` +
+          `• Success notification when complete`,
           "success"
         );
         setAmount("");
         setPaymentDetails({});
         setNotificationMessage("");
 
-        // Send notification to user
+        // Send immediate notification to user about incoming deposit
         await sendUserNotification(selectedUser!.id, {
-          type: "deposit_initiated",
-          title: `Incoming ${
-            depositType === "crypto" ? cryptoAsset : "USD"
-          } Deposit`,
+          type: "deposit_pending",
+          title: `Incoming ${depositType === "crypto" ? cryptoAsset : "USD"} Deposit`,
           message: `Your deposit of ${
             depositType === "crypto"
               ? `${amountNum} ${cryptoAsset}`
               : `$${amountNum}`
-          } is being processed. Confirmations: 0/6`,
+          } is being processed. Confirmations: 0/6 (≈20 minutes remaining)`,
           amount: amountNum,
           asset: depositType === "crypto" ? cryptoAsset : "USD",
+          transactionHash: generatedHash,
+          confirmations: 0,
+          maxConfirmations: 6,
         });
       } else {
         const error = await res.json();
@@ -1336,12 +1370,24 @@ const AdminDashboard = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">Amount:</span>
-                        <span>
+                        <span className="font-semibold">
                           {depositType === "crypto"
                             ? `${amount || "0"} ${cryptoAsset}`
                             : `$${amount || "0"}`}
                         </span>
                       </div>
+                      {selectedPaymentMethod.id === "crypto_bitcoin" && depositType === "crypto" && amount && parseFloat(amount) > 0 && (
+                        <>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Network Fee:</span>
+                            <span className="text-orange-400">~0.0001 BTC</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Tx Hash:</span>
+                            <span className="text-green-400 text-xs">Auto-generated</span>
+                          </div>
+                        </>
+                      )}
                       <div className="flex justify-between">
                         <span className="text-gray-400">User:</span>
                         <span className="truncate max-w-[180px]">
@@ -1358,9 +1404,11 @@ const AdminDashboard = () => {
                   <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
                     <p className="text-xs text-blue-300">
                       ℹ️{" "}
-                      {depositType === "crypto"
+                      {depositType === "crypto" && selectedPaymentMethod.id === "crypto_bitcoin"
+                        ? `This will create a pending Bitcoin deposit with auto-generated transaction hash and fee. User will receive notifications and see confirmation progress (1/6 → 6/6 over 20 minutes).`
+                        : depositType === "crypto"
                         ? `This will add ${cryptoAsset} to the user's crypto portfolio. Network fees and transaction hash will be auto-generated.`
-                        : "This will add funds to the user's available USD balance for trading."}
+                        : "This will add funds to the user's available USD balance for trading immediately."}
                     </p>
                   </div>
 

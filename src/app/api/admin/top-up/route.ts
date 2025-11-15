@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       processedBy,
       depositType, // "balance" or "crypto"
       cryptoAsset, // e.g., "BTC", "ETH"
+      isAdminManual, // Flag to indicate admin manual payment
     } = await req.json();
 
     if (!userId || !amount || amount <= 0) {
@@ -66,52 +67,18 @@ export async function POST(req: NextRequest) {
       portfolio = await prisma.portfolio.create({
         data: {
           userId: userId,
-          balance: depositType === "balance" ? amount : 0,
-          assets:
-            depositType === "crypto"
-              ? [{ symbol: cryptoAsset, amount: parseFloat(amount.toString()) }]
-              : [],
+          balance: 0, // Don't credit yet - wait for confirmations
+          assets: [],
         },
       });
-    } else {
-      // Update portfolio based on deposit type
-      if (depositType === "balance") {
-        // Update USD balance
-        portfolio = await prisma.portfolio.update({
-          where: { userId: userId },
-          data: {
-            balance: {
-              increment: amount,
-            },
-          },
-        });
-      } else if (depositType === "crypto") {
-        // Update crypto asset
-        const assets = Array.isArray(portfolio.assets) ? portfolio.assets : [];
-        const existingAssetIndex = assets.findIndex(
-          (a: any) => a.symbol === cryptoAsset
-        );
-
-        if (existingAssetIndex >= 0 && assets[existingAssetIndex]) {
-          // Update existing asset
-          const asset = assets[existingAssetIndex] as any;
-          asset.amount += parseFloat(amount.toString());
-        } else {
-          // Add new asset
-          assets.push({
-            symbol: cryptoAsset,
-            amount: parseFloat(amount.toString()),
-          });
-        }
-
-        portfolio = await prisma.portfolio.update({
-          where: { userId: userId },
-          data: { assets },
-        });
-      }
     }
 
-    // Generate realistic transaction hash
+    // For admin manual payments, DO NOT credit immediately
+    // Create PENDING transaction and let confirmation system handle it
+    // For admin manual payments, DO NOT credit immediately
+    // Create PENDING transaction and let confirmation system handle it
+
+    // Generate realistic transaction hash (64-character hex)
     const generateTxHash = () => {
       const chars = "0123456789abcdef";
       let hash = "";
@@ -121,25 +88,11 @@ export async function POST(req: NextRequest) {
       return hash;
     };
 
-    // Calculate realistic fee (0.1-0.5% for manual, ~$2-5 for BTC)
+    // Extract or generate hash and fee
+    const txHash = paymentDetails?.transactionHash || generateTxHash();
+    const fee = paymentDetails?.networkFee || 0;
 
-    // Calculate realistic fee (0.1-0.5% for manual, ~$2-5 for BTC)
-    const calculateFee = () => {
-      if (depositType === "crypto") {
-        // Fixed BTC network fee between $2-5
-        return parseFloat((2 + Math.random() * 3).toFixed(2));
-      } else {
-        // 0.1-0.5% for balance deposits
-        return parseFloat(
-          (amount * (0.001 + Math.random() * 0.004)).toFixed(2)
-        );
-      }
-    };
-
-    const txHash = generateTxHash();
-    const fee = calculateFee();
-
-    // Create deposit transaction record
+    // Create deposit transaction record as PENDING
     const deposit = await prisma.deposit.create({
       data: {
         portfolioId: portfolio.id,
@@ -147,9 +100,9 @@ export async function POST(req: NextRequest) {
         amount: amount,
         currency: depositType === "crypto" ? cryptoAsset : "USD",
         status: "PENDING", // Start as PENDING for confirmation simulation
-        method: paymentMethod || "ADMIN_TOPUP",
+        method: paymentMethod || "ADMIN_MANUAL",
         type:
-          depositType === "crypto" ? `CRYPTO_${cryptoAsset}` : "ADMIN_TOPUP",
+          depositType === "crypto" ? `CRYPTO_${cryptoAsset}` : "ADMIN_BALANCE",
         transactionId: `ADMIN-${Date.now()}`,
         transactionHash: txHash,
         fee: fee,
@@ -161,6 +114,8 @@ export async function POST(req: NextRequest) {
           processedBy: processedBy || session.user.email,
           processedAt: new Date().toISOString(),
           depositType,
+          isAdminManual: true,
+          confirmationStartTime: new Date().toISOString(),
         },
       },
     });
@@ -175,7 +130,7 @@ export async function POST(req: NextRequest) {
         } Deposit`,
         message: `Your deposit of ${
           depositType === "crypto" ? `${amount} ${cryptoAsset}` : `$${amount}`
-        } is being processed. Confirmations: 0/6`,
+        } is being processed. Confirmations: 0/6 (≈20 minutes)`,
         amount: amount,
         asset: depositType === "crypto" ? cryptoAsset : "USD",
         metadata: {
@@ -217,9 +172,9 @@ export async function POST(req: NextRequest) {
                 }</p>
                 <p style="margin: 5px 0;"><strong>Status:</strong> Pending (0/6 confirmations)</p>
                 <p style="margin: 5px 0;"><strong>Transaction Hash:</strong> <code style="font-size: 11px;">${txHash}</code></p>
-                <p style="margin: 5px 0;"><strong>Network Fee:</strong> $${fee.toFixed(
-                  2
-                )}</p>
+                <p style="margin: 5px 0;"><strong>Network Fee:</strong> ${
+                  depositType === "crypto" ? `${fee} BTC` : `$${fee.toFixed(2)}`
+                }</p>
                 <p style="margin: 5px 0;"><strong>Transaction ID:</strong> ${
                   deposit.transactionId
                 }</p>
@@ -242,9 +197,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Start confirmation simulation in the background (completes in ~20 mins)
-    // This will be handled by a separate cron job or background task
-    // For now, we'll return the deposit details
+    // Trigger confirmation simulation (completes in ~20 mins)
+    // This runs in the background
+    startConfirmationSimulation(deposit.id, user.id, depositType, cryptoAsset, amount, portfolio.id);
 
     return NextResponse.json({
       message: "Deposit initiated successfully. Confirmations in progress.",
@@ -271,3 +226,172 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+// Background function to simulate confirmations over 20 minutes
+async function startConfirmationSimulation(
+  depositId: string,
+  userId: string,
+  depositType: string,
+  cryptoAsset: string | null,
+  amount: number,
+  portfolioId: string
+) {
+  // Don't await this - let it run in background
+  setTimeout(async () => {
+    try {
+      // Confirmation intervals: 6 confirmations over 20 minutes = ~3.33 minutes each
+      const intervals = [3.33, 6.66, 10, 13.33, 16.66, 20]; // minutes
+      
+      for (let i = 1; i <= 6; i++) {
+        // Wait for the interval
+        await new Promise(resolve => setTimeout(resolve, (intervals[i-1] - (i > 1 ? intervals[i-2] : 0)) * 60 * 1000));
+        
+        // Update confirmation count
+        await prisma.deposit.update({
+          where: { id: depositId },
+          data: { confirmations: i },
+        });
+
+        // Send notification for progress
+        if (i < 6) {
+          await prisma.notification.create({
+            data: {
+              userId: userId,
+              type: "DEPOSIT",
+              title: "Deposit Confirmation Progress",
+              message: `Your deposit confirmation is in progress: ${i}/6 confirmations received.`,
+              amount: amount,
+              asset: depositType === "crypto" ? cryptoAsset! : "USD",
+              metadata: {
+                depositId,
+                confirmations: i,
+                targetConfirmations: 6,
+              },
+            },
+          });
+        }
+      }
+
+      // After 6 confirmations, complete the deposit
+      await completeDeposit(depositId, userId, depositType, cryptoAsset, amount, portfolioId);
+    } catch (error) {
+      console.error("Confirmation simulation error:", error);
+    }
+  }, 0);
+}
+
+// Complete the deposit after confirmations
+async function completeDeposit(
+  depositId: string,
+  userId: string,
+  depositType: string,
+  cryptoAsset: string | null,
+  amount: number,
+  portfolioId: string
+) {
+  try {
+    // Update deposit status
+    await prisma.deposit.update({
+      where: { id: depositId },
+      data: { 
+        status: "COMPLETED",
+        confirmations: 6,
+      },
+    });
+
+    // Credit the account
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { id: portfolioId },
+    });
+
+    if (!portfolio) return;
+
+    if (depositType === "balance") {
+      // Credit USD balance
+      await prisma.portfolio.update({
+        where: { id: portfolioId },
+        data: {
+          balance: {
+            increment: amount,
+          },
+        },
+      });
+    } else if (depositType === "crypto" && cryptoAsset) {
+      // Credit crypto asset
+      const assets = Array.isArray(portfolio.assets) ? portfolio.assets : [];
+      const existingAssetIndex = assets.findIndex(
+        (a: any) => a.symbol === cryptoAsset
+      );
+
+      if (existingAssetIndex >= 0 && assets[existingAssetIndex]) {
+        const asset = assets[existingAssetIndex] as any;
+        asset.amount = (asset.amount || 0) + parseFloat(amount.toString());
+      } else {
+        assets.push({
+          symbol: cryptoAsset,
+          amount: parseFloat(amount.toString()),
+        });
+      }
+
+      await prisma.portfolio.update({
+        where: { id: portfolioId },
+        data: { assets },
+      });
+    }
+
+    // Send completion notification
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    
+    await prisma.notification.create({
+      data: {
+        userId: userId,
+        type: "DEPOSIT",
+        title: "Deposit Completed!",
+        message: `Your deposit of ${
+          depositType === "crypto" ? `${amount} ${cryptoAsset}` : `$${amount}`
+        } has been confirmed and credited to your account.`,
+        amount: amount,
+        asset: depositType === "crypto" ? cryptoAsset! : "USD",
+        metadata: {
+          depositId,
+          confirmations: 6,
+          status: "COMPLETED",
+        },
+      },
+    });
+
+    // Send completion email
+    if (user?.email && user.isEmailVerified) {
+      await sendEmail({
+        to: user.email,
+        subject: "Deposit Confirmed & Credited",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #10b981;">✅ Deposit Successfully Completed!</h2>
+            <p>Hello ${user.name || "User"},</p>
+            <p>Great news! Your deposit has been fully confirmed and credited to your account.</p>
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Amount:</strong> ${
+                depositType === "crypto"
+                  ? `${amount} ${cryptoAsset}`
+                  : `$${amount}`
+              }</p>
+              <p style="margin: 5px 0;"><strong>Confirmations:</strong> 6/6 ✅</p>
+              <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #10b981;">COMPLETED</span></p>
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+            </div>
+            <p style="background-color: #d1fae5; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0;">
+              <strong>✅ Your funds are now available!</strong> You can start trading immediately.
+            </p>
+            <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+              This is an automated message. Please do not reply to this email.
+            </p>
+          </div>
+        `,
+      });
+    }
+  } catch (error) {
+    console.error("Error completing deposit:", error);
+  }
+}
+
