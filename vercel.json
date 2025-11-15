@@ -6,11 +6,5 @@
       "master": true,
       "develop": true
     }
-  },
-  "crons": [
-    {
-      "path": "/api/cron/process-confirmations",
-      "schedule": "0 0 * * *"
-    }
-  ]
+  }
 }
