@@ -376,6 +376,69 @@ export const welcomeEmailTemplate = (name: string) => `
 </div>
 `;
 
+// Telegram Linking Success Template
+export const telegramLinkSuccessTemplate = (
+  name: string,
+  telegramUsername: string
+) =>
+  emailTemplate(`
+  <div style="text-align: center;">
+    <h1 style="color: #333333; margin-bottom: 10px;">🔗 Telegram Account Connected!</h1>
+    <p style="font-size: 16px; color: #666666; margin-bottom: 30px;">
+      Great news, ${name}! Your Telegram account has been successfully linked to your M4 Capital account.
+    </p>
+  </div>
+
+  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 30px; margin: 30px 0; text-align: center;">
+    <h2 style="color: #ffffff; margin: 0 0 15px 0; font-size: 24px;">✅ Connection Successful</h2>
+    <p style="color: #ffffff; opacity: 0.9; margin: 0;">
+      Connected to: <strong>@${telegramUsername}</strong>
+    </p>
+  </div>
+
+  <div style="margin: 30px 0;">
+    <h3 style="color: #333333; font-size: 18px; margin-bottom: 15px;">What You Can Do Now:</h3>
+    <ul style="list-style: none; padding: 0; margin: 0;">
+      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+        <span style="color: #667eea; margin-right: 10px;">💰</span>
+        <span style="color: #666666;">Check your balance with /balance command</span>
+      </li>
+      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+        <span style="color: #667eea; margin-right: 10px;">📊</span>
+        <span style="color: #666666;">View your portfolio with /portfolio command</span>
+      </li>
+      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+        <span style="color: #667eea; margin-right: 10px;">🔔</span>
+        <span style="color: #666666;">Receive instant notifications for deposits & withdrawals</span>
+      </li>
+      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
+        <span style="color: #667eea; margin-right: 10px;">📈</span>
+        <span style="color: #666666;">Get real-time crypto price updates</span>
+      </li>
+      <li style="padding: 12px 0;">
+        <span style="color: #667eea; margin-right: 10px;">⚡</span>
+        <span style="color: #666666;">Set custom price alerts</span>
+      </li>
+    </ul>
+  </div>
+
+  <div style="background: #d1ecf1; border-left: 4px solid #0c5460; padding: 15px; margin: 20px 0; border-radius: 4px;">
+    <p style="font-size: 14px; color: #0c5460; margin: 0;">
+      <strong>💡 Pro Tip:</strong> Use the /help command in Telegram to see all available commands and features.
+    </p>
+  </div>
+
+  <div style="margin-top: 30px; text-align: center;">
+    <a href="${process.env.NEXTAUTH_URL}/settings" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: 600;">View Settings</a>
+  </div>
+
+  <div style="border-top: 1px solid #eeeeee; margin-top: 30px; padding-top: 20px;">
+    <p style="font-size: 12px; color: #999999; margin: 5px 0;">
+      <strong>Security Notice:</strong> If you didn't authorize this connection, please unlink the account immediately and change your password.
+    </p>
+  </div>
+`);
+
 // Password Reset Email Template
 export const passwordResetTemplate = (name: string, resetUrl: string) => `
 <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/email";
+import { telegramLinkSuccessTemplate } from "@/lib/email-templates";
 
 export const dynamic = "force-dynamic";
 
@@ -112,6 +114,16 @@ export async function PUT(request: NextRequest) {
       );
     }
 
+    // Get user details for email
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        name: true,
+        email: true,
+        securityNotifications: true,
+      },
+    });
+
     // Link the Telegram account to the user
     await prisma.user.update({
       where: { id: session.user.id },
@@ -129,6 +141,41 @@ export async function PUT(request: NextRequest) {
         linkCodeExpiresAt: null,
       },
     });
+
+    // Create in-app notification
+    await prisma.notification.create({
+      data: {
+        userId: session.user.id,
+        type: "SUCCESS",
+        title: "Telegram Account Connected",
+        message: `Your Telegram account @${
+          telegramUser.username || "Unknown"
+        } has been successfully linked to your M4 Capital account.`,
+        metadata: {
+          telegramId: telegramUser.telegramId.toString(),
+          telegramUsername: telegramUser.username,
+          linkedAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    // Send email notification if user has security notifications enabled
+    if (user?.email && user.securityNotifications) {
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: "🔗 Telegram Account Connected - M4 Capital",
+          html: telegramLinkSuccessTemplate(
+            user.name || "User",
+            telegramUser.username || "Unknown"
+          ),
+        });
+        console.log("📧 Email notification sent to:", user.email);
+      } catch (emailError) {
+        console.error("❌ Failed to send email notification:", emailError);
+        // Don't fail the request if email fails
+      }
+    }
 
     console.log("✅ Telegram account linked successfully");
 
