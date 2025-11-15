@@ -7,6 +7,7 @@ Since Vercel Hobby plan only allows daily cron jobs, we use external free cron s
 ### Option 1: cron-job.org (Recommended)
 
 **Free Features:**
+
 - Up to 3 cron jobs
 - Minimum interval: 1 minute
 - Email notifications on failures
@@ -26,17 +27,18 @@ Since Vercel Hobby plan only allows daily cron jobs, we use external free cron s
      Authorization: Bearer YOUR_CRON_SECRET
      ```
      (Use the CRON_SECRET from your .env file)
-   
 4. Save and enable the job
 
 ### Option 2: EasyCron
 
 **Free Features:**
+
 - Up to 10 cron jobs
 - Minimum interval: Every hour (free tier)
 - For every 3 minutes, requires paid plan ($3.99/month)
 
 **Setup:**
+
 1. Go to https://www.easycron.com/
 2. Sign up and create a cron job with your API endpoint
 
@@ -50,7 +52,7 @@ name: Process Bitcoin Confirmations
 on:
   schedule:
     # Runs every 3 minutes
-    - cron: '*/3 * * * *'
+    - cron: "*/3 * * * *"
   workflow_dispatch: # Allows manual trigger
 
 jobs:
@@ -65,6 +67,7 @@ jobs:
 ```
 
 **Setup:**
+
 1. Add the above file to your repository
 2. Go to GitHub repository Settings > Secrets and variables > Actions
 3. Add secret: `CRON_SECRET` with value from your .env
@@ -74,11 +77,13 @@ jobs:
 ### Option 4: UptimeRobot (Monitoring + Cron)
 
 **Free Features:**
+
 - 50 monitors
 - Check interval: Every 5 minutes minimum
 - Email alerts
 
 **Setup:**
+
 1. Go to https://uptimerobot.com/
 2. Sign up and create HTTP(s) monitor
 3. Set interval to 5 minutes
@@ -90,11 +95,11 @@ jobs:
 
 ```typescript
 // In your API route
-const authHeader = request.headers.get('authorization');
-const token = authHeader?.replace('Bearer ', '');
+const authHeader = request.headers.get("authorization");
+const token = authHeader?.replace("Bearer ", "");
 
 if (token !== process.env.CRON_SECRET) {
-  return new Response('Unauthorized', { status: 401 });
+  return new Response("Unauthorized", { status: 401 });
 }
 ```
 
@@ -103,6 +108,7 @@ This is already implemented in your cron route.
 ## Recommended Solution
 
 For every 3 minutes processing:
+
 1. **Best for free:** GitHub Actions (unlimited, reliable)
 2. **Best for simplicity:** cron-job.org (easy setup, 3 jobs free)
 3. **Best for monitoring:** UptimeRobot (5min minimum, includes uptime monitoring)
