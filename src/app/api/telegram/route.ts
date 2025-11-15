@@ -208,6 +208,119 @@ async function sendTypingAction(chatId: number) {
   });
 }
 
+// Helper function to send invoice for Telegram Stars payment
+async function sendStarsInvoice(
+  chatId: number,
+  amount: number,
+  description: string
+) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return false;
+
+  const url = `https://api.telegram.org/bot${botToken}/sendInvoice`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        title: "M4Capital Deposit",
+        description: description,
+        payload: `deposit_${Date.now()}`,
+        provider_token: "", // Empty for Telegram Stars
+        currency: "XTR", // Telegram Stars currency code
+        prices: [{ label: "Deposit", amount: amount }],
+      }),
+    });
+
+    const data = await response.json();
+    return data.ok;
+  } catch (error) {
+    console.error("Error sending stars invoice:", error);
+    return false;
+  }
+}
+
+// Helper function to create NowPayments invoice for Bitcoin
+async function createBitcoinInvoice(amount: number, userEmail?: string) {
+  const apiKey = process.env.NOWPAYMENTS_API_KEY;
+  if (!apiKey) {
+    throw new Error("NowPayments API key not configured");
+  }
+
+  try {
+    const response = await fetch("https://api.nowpayments.io/v1/invoice", {
+      method: "POST",
+      headers: {
+        "x-api-key": apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        price_amount: amount,
+        price_currency: "usd",
+        pay_currency: "btc",
+        order_id: `telegram_deposit_${Date.now()}`,
+        order_description: "M4Capital Deposit via Telegram",
+        ipn_callback_url: `${process.env.NEXTAUTH_URL}/api/payment/webhook`,
+        success_url: `${process.env.NEXTAUTH_URL}/dashboard`,
+        cancel_url: `${process.env.NEXTAUTH_URL}/dashboard`,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to create Bitcoin invoice");
+    }
+
+    const data = await response.json();
+    return {
+      success: true,
+      invoiceUrl: data.invoice_url,
+      invoiceId: data.id,
+    };
+  } catch (error) {
+    console.error("Error creating Bitcoin invoice:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Helper function to send inline keyboard
+async function sendInlineKeyboard(
+  chatId: number,
+  text: string,
+  buttons: Array<Array<{ text: string; callback_data?: string; url?: string }>>
+) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return;
+
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: buttons,
+        },
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.ok) {
+      console.error("Telegram inline keyboard error:", data);
+    }
+  } catch (error) {
+    console.error("Error sending inline keyboard:", error);
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Verify secret token if configured
@@ -221,6 +334,160 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     console.log("Webhook received:", JSON.stringify(body));
+
+    // Handle callback queries (button clicks)
+    if (body.callback_query) {
+      const callbackQuery = body.callback_query;
+      const callbackData = callbackQuery.data;
+      const chatId = callbackQuery.message.chat.id;
+      const messageId = callbackQuery.message.message_id;
+
+      // Answer callback query to remove loading state
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (botToken) {
+        await fetch(
+          `https://api.telegram.org/bot${botToken}/answerCallbackQuery`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              callback_query_id: callbackQuery.id,
+            }),
+          }
+        );
+      }
+
+      // Handle payment method selection
+      if (callbackData.startsWith("pay_stars_")) {
+        const amount = parseFloat(callbackData.replace("pay_stars_", ""));
+        // Telegram Stars: 1 Star ≈ $0.01, so multiply by 100
+        const starsAmount = Math.round(amount * 100);
+
+        const success = await sendStarsInvoice(
+          chatId,
+          starsAmount,
+          `Deposit $${amount.toFixed(2)} to M4Capital`
+        );
+
+        if (!success) {
+          await sendTelegramMessage(
+            chatId,
+            "❌ Failed to create payment invoice. Please try again or contact support."
+          );
+        }
+      } else if (callbackData.startsWith("pay_bitcoin_")) {
+        const amount = parseFloat(callbackData.replace("pay_bitcoin_", ""));
+
+        await sendTelegramMessage(
+          chatId,
+          "⏳ Creating Bitcoin payment invoice..."
+        );
+
+        const invoice = await createBitcoinInvoice(amount);
+
+        if (invoice.success && invoice.invoiceUrl) {
+          await sendInlineKeyboard(
+            chatId,
+            `₿ **Bitcoin Payment**\n\nAmount: $${amount.toFixed(
+              2
+            )}\n\nClick the button below to complete your payment:`,
+            [[{ text: "Pay with Bitcoin", url: invoice.invoiceUrl }]]
+          );
+        } else {
+          await sendTelegramMessage(
+            chatId,
+            `❌ Failed to create Bitcoin invoice: ${invoice.error}\n\nPlease try again or contact support.`
+          );
+        }
+      }
+
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle pre-checkout query (Telegram Stars payment verification)
+    if (body.pre_checkout_query) {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (botToken) {
+        await fetch(
+          `https://api.telegram.org/bot${botToken}/answerPreCheckoutQuery`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pre_checkout_query_id: body.pre_checkout_query.id,
+              ok: true,
+            }),
+          }
+        );
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle successful payment (Telegram Stars)
+    if (body.message?.successful_payment) {
+      const payment = body.message.successful_payment;
+      const chatId = body.message.chat.id;
+      const userId = body.message.from.id;
+      const amountStars = payment.total_amount;
+      const amountUSD = amountStars / 100; // Convert stars back to USD
+
+      // Store the deposit in database
+      try {
+        const { PrismaClient } = await import("@prisma/client");
+        const prisma = new PrismaClient();
+
+        // Find user by linked Telegram ID
+        const user = await prisma.user.findFirst({
+          where: { linkedTelegramId: BigInt(userId) },
+          include: { portfolio: true },
+        });
+
+        if (user && user.portfolio) {
+          // Create deposit transaction
+          await prisma.deposit.create({
+            data: {
+              userId: user.id,
+              portfolioId: user.portfolio.id,
+              amount: amountUSD,
+              currency: "USD",
+              status: "COMPLETED",
+              method: "TELEGRAM_STARS",
+              transactionId: payment.telegram_payment_charge_id,
+            },
+          });
+
+          // Update user balance
+          await prisma.portfolio.update({
+            where: { userId: user.id },
+            data: { balance: { increment: amountUSD } },
+          });
+
+          await sendTelegramMessage(
+            chatId,
+            `✅ **Payment Successful!**\n\nAmount: $${amountUSD.toFixed(
+              2
+            )}\nMethod: Telegram Stars\n\nYour balance has been updated. Check your dashboard for details!`
+          );
+        } else {
+          await sendTelegramMessage(
+            chatId,
+            `✅ Payment received ($${amountUSD.toFixed(
+              2
+            )})!\n\n⚠️ Please link your Telegram account to your M4Capital account using /link to credit your balance.`
+          );
+        }
+
+        await prisma.$disconnect();
+      } catch (error) {
+        console.error("Error processing payment:", error);
+        await sendTelegramMessage(
+          chatId,
+          "✅ Payment received! However, there was an issue crediting your account. Please contact support with your transaction ID."
+        );
+      }
+
+      return NextResponse.json({ ok: true });
+    }
 
     // Check if message exists
     if (!body.message || !body.message.text) {
@@ -239,7 +506,7 @@ export async function POST(req: NextRequest) {
     if (text === "/start") {
       await sendTelegramMessage(
         chatId,
-        `Welcome to M4Capital\n\nI am your personal assistant and can help you with:\n\n💰 **Crypto Prices** - Ask about any of the top 320 cryptocurrencies\n🎨 **Image Generation** - Ask me to create, generate, or imagine images\n💬 **AI Chat** - Ask me anything!\n🔗 **Account Linking** - Link your M4Capital account\n\n**Commands:**\n/link - Get code to link your account\n/clear - Reset conversation\n\n**Examples:**\n• "What's the price of Bitcoin?"\n• "Show me Ethereum and Solana prices"\n• "Generate an image of a futuristic city"\n• "Create a logo for a tech startup"`
+        `Welcome to M4Capital\n\nI am your personal assistant and can help you with:\n\n💰 **Crypto Prices** - Ask about any of the top 320 cryptocurrencies\n🎨 **Image Generation** - Ask me to create, generate, or imagine images\n💬 **AI Chat** - Ask me anything!\n🔗 **Account Linking** - Link your M4Capital account\n💳 **Deposits** - Fund your account with crypto or Telegram Stars\n\n**Commands:**\n/link - Get code to link your account\n/deposit - Make a deposit\n/clear - Reset conversation\n\n**Examples:**\n• "What's the price of Bitcoin?"\n• "Show me Ethereum and Solana prices"\n• "Generate an image of a futuristic city"\n• "Create a logo for a tech startup"`
       );
       return NextResponse.json({ ok: true });
     }
@@ -310,6 +577,45 @@ export async function POST(req: NextRequest) {
         );
         return NextResponse.json({ ok: true });
       }
+    }
+
+    // Handle /deposit command - Show payment options
+    if (text === "/deposit" || text.startsWith("/deposit ")) {
+      const parts = text.split(" ");
+      const amount = parts.length > 1 ? parseFloat(parts[1]) : null;
+
+      if (!amount || amount <= 0) {
+        // Show payment options with buttons
+        await sendInlineKeyboard(
+          chatId,
+          "💳 **Make a Deposit**\n\nChoose your preferred payment method:\n\n⭐ **Telegram Stars** - Quick and easy payment using Telegram Stars\n₿ **Bitcoin** - Pay with Bitcoin via NowPayments\n\n*Please enter amount:* `/deposit <amount>`\nExample: `/deposit 100` (for $100)",
+          []
+        );
+        return NextResponse.json({ ok: true });
+      }
+
+      // Show payment method selection
+      await sendInlineKeyboard(
+        chatId,
+        `💰 **Deposit Amount:** $${amount.toFixed(
+          2
+        )}\n\nSelect your payment method:`,
+        [
+          [
+            {
+              text: "⭐ Pay with Telegram Stars",
+              callback_data: `pay_stars_${amount}`,
+            },
+          ],
+          [
+            {
+              text: "₿ Pay with Bitcoin",
+              callback_data: `pay_bitcoin_${amount}`,
+            },
+          ],
+        ]
+      );
+      return NextResponse.json({ ok: true });
     }
 
     // Get or initialize conversation history

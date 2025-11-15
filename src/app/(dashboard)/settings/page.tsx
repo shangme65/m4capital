@@ -26,7 +26,7 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const [saving, setSaving] = useState(false);
   const router = useRouter();
-  
+
   // Modal state
   const [activeModal, setActiveModal] = useState<string | null>(null);
 
@@ -339,9 +339,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Content */}
-          <div className="max-w-4xl mx-auto px-6 py-8">
-            {children}
-          </div>
+          <div className="max-w-4xl mx-auto px-6 py-8">{children}</div>
         </div>
       </div>
     );
@@ -590,17 +588,19 @@ export default function SettingsPage() {
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </form>
-      </AccordionSection>
+      </SettingsModal>
 
-      {/* Accordion: Security */}
-      <AccordionSection id="security" title="Security">
+      {/* Security Modal */}
+      <SettingsModal
+        isOpen={activeModal === "security"}
+        onClose={() => setActiveModal(null)}
+        title="Security"
+      >
         <ul className="space-y-3 text-sm text-gray-300">
           <li>• Password change (coming soon)</li>
           <li>• Two-factor authentication (planned)</li>
           <li>• Active sessions / device management (planned)</li>
         </ul>
-      </AccordionSection>
-
       </SettingsModal>
 
       {/* KYC Modal */}
