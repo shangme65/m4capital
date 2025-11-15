@@ -1,7 +1,7 @@
 "use client";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Upload,
   CheckCircle,
@@ -307,43 +307,50 @@ export default function SettingsPage() {
   };
 
   // Modal component for full-screen settings sections
-  const SettingsModal = ({
-    isOpen,
-    onClose,
-    title,
-    children,
-  }: {
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-    children: React.ReactNode;
-  }) => {
-    if (!isOpen) return null;
+  const SettingsModal = useMemo(
+    () =>
+      ({
+        isOpen,
+        onClose,
+        title,
+        children,
+      }: {
+        isOpen: boolean;
+        onClose: () => void;
+        title: string;
+        children: React.ReactNode;
+      }) => {
+        if (!isOpen) return null;
 
-    return (
-      <div className="fixed inset-0 z-50 bg-gray-900">
-        <div className="h-full overflow-y-auto">
-          {/* Header */}
-          <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700">
-            <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-                <h2 className="text-xl font-bold text-white">{title}</h2>
+        return (
+          <div className="fixed inset-0 z-50 bg-gray-900">
+            <div className="h-full overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700">
+                <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={onClose}
+                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                    <h2 className="text-xl font-bold text-white">{title}</h2>
+                  </div>
+                </div>
               </div>
+
+              {/* Content */}
+              <div className="max-w-4xl mx-auto px-6 py-8">{children}</div>
             </div>
           </div>
+        );
+      },
+    []
+  );
 
-          {/* Content */}
-          <div className="max-w-4xl mx-auto px-6 py-8">{children}</div>
-        </div>
-      </div>
-    );
-  };
+  // Memoize close modal callback
+  const closeModal = useCallback(() => setActiveModal(null), []);
 
   // Settings menu items
   const settingsItems = [
@@ -452,7 +459,7 @@ export default function SettingsPage() {
       {/* Profile Modal */}
       <SettingsModal
         isOpen={activeModal === "profile"}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         title="Profile"
       >
         <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
@@ -516,7 +523,7 @@ export default function SettingsPage() {
       {/* Security Modal */}
       <SettingsModal
         isOpen={activeModal === "security"}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         title="Security"
       >
         <ul className="space-y-3 text-sm text-gray-300">
@@ -529,7 +536,7 @@ export default function SettingsPage() {
       {/* KYC Modal */}
       <SettingsModal
         isOpen={activeModal === "kyc"}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         title="KYC Verification"
       >
         <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
@@ -593,7 +600,7 @@ export default function SettingsPage() {
       {/* Security Modal */}
       <SettingsModal
         isOpen={activeModal === "security"}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         title="Security"
       >
         <ul className="space-y-3 text-sm text-gray-300">
@@ -606,7 +613,7 @@ export default function SettingsPage() {
       {/* KYC Modal */}
       <SettingsModal
         isOpen={activeModal === "kyc"}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         title="KYC Verification"
       >
         <div className="space-y-6">
@@ -999,7 +1006,7 @@ export default function SettingsPage() {
       {/* Email Notifications Modal */}
       <SettingsModal
         isOpen={activeModal === "notifications"}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         title="Email Notifications"
       >
         {loadingEmailPrefs ? (
@@ -1146,7 +1153,7 @@ export default function SettingsPage() {
       {/* Telegram Integration Modal */}
       <SettingsModal
         isOpen={activeModal === "telegram"}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         title="Telegram Integration"
       >
         {loadingTelegram ? (
@@ -1324,7 +1331,7 @@ export default function SettingsPage() {
       {/* Preferences Modal */}
       <SettingsModal
         isOpen={activeModal === "preferences"}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         title="Preferences"
       >
         <ul className="space-y-3 text-sm text-gray-300">
@@ -1338,7 +1345,7 @@ export default function SettingsPage() {
       {/* Data & Privacy Modal */}
       <SettingsModal
         isOpen={activeModal === "data-privacy"}
-        onClose={() => setActiveModal(null)}
+        onClose={closeModal}
         title="Data & Privacy"
       >
         <ul className="space-y-3 text-sm text-gray-300">
