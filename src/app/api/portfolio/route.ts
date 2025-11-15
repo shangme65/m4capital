@@ -24,30 +24,56 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get period parameter from query string (default: 'all')
+    // Get timeframe parameter from query string (default: '1Y')
     const { searchParams } = new URL(request.url);
-    const period = searchParams.get("period") || "all"; // all, today, 7d, 30d
+    const timeframe = searchParams.get("timeframe") || "1Y"; // 1D, 1W, 1M, 3M, 6M, 1Y, ALL
+    const period = searchParams.get("period") || "all"; // Legacy support
 
-    console.log("🔍 Looking up user:", session.user.email, "| Period:", period);
+    console.log("🔍 Looking up user:", session.user.email, "| Timeframe:", timeframe, "| Period:", period);
 
-    // Calculate period start date
+    // Calculate period start date based on timeframe
     let periodStart: Date | undefined;
     let periodEnd: Date;
     const now = new Date();
     periodEnd = now; // End period is always now
 
-    switch (period) {
-      case "today":
-        periodStart = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate(),
-          0,
-          0,
-          0
-        );
+    // Map timeframe to period start
+    switch (timeframe) {
+      case "1D":
+        periodStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         break;
-      case "7d":
+      case "1W":
+        periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case "1M":
+        periodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        break;
+      case "3M":
+        periodStart = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+        break;
+      case "6M":
+        periodStart = new Date(now.getTime() - 180 * 24 * 60 * 60 * 1000);
+        break;
+      case "1Y":
+        periodStart = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+        break;
+      case "ALL":
+        periodStart = undefined; // No start date = all time
+        break;
+      default:
+        // Legacy period support
+        switch (period) {
+          case "today":
+            periodStart = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              0,
+              0,
+              0
+            );
+            break;
+          case "7d":
         periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case "30d":

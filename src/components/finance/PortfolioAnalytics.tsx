@@ -342,25 +342,68 @@ export function PortfolioAnalytics() {
     "value"
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [portfolioData, setPortfolioData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const timeframes = ["1D", "1W", "1M", "3M", "6M", "1Y", "ALL"];
 
-  const sortedAssets = [...mockAssets].sort((a, b) => {
-    const multiplier = sortOrder === "desc" ? -1 : 1;
-    if (sortBy === "value") return (a.value - b.value) * multiplier;
-    if (sortBy === "change")
-      return (a.changePercent - b.changePercent) * multiplier;
-    if (sortBy === "allocation")
-      return (a.allocation - b.allocation) * multiplier;
-    return 0;
-  });
+  // Fetch real user portfolio data
+  useEffect(() => {
+    const fetchPortfolio = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch(
+          `/api/portfolio?timeframe=${selectedTimeframe}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setPortfolioData(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch portfolio data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const totalValue = mockAssets.reduce((sum, asset) => sum + asset.value, 0);
-  const totalChange = mockAssets.reduce(
-    (sum, asset) => sum + (asset.value * asset.changePercent) / 100,
-    0
+    fetchPortfolio();
+  }, [selectedTimeframe]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-4 border-orange-500 border-t-transparent rounded-full"
+        />
+      </div>
+    );
+  }
+
+  const sortedAssets = [...(portfolioData?.assets || mockAssets)].sort(
+    (a, b) => {
+      const multiplier = sortOrder === "desc" ? -1 : 1;
+      if (sortBy === "value") return (a.value - b.value) * multiplier;
+      if (sortBy === "change")
+        return (a.changePercent - b.changePercent) * multiplier;
+      if (sortBy === "allocation")
+        return (a.allocation - b.allocation) * multiplier;
+      return 0;
+    }
   );
-  const totalChangePercent = (totalChange / totalValue) * 100;
+
+  const totalValue =
+    portfolioData?.totalValue ||
+    mockAssets.reduce((sum, asset) => sum + asset.value, 0);
+  const totalChange =
+    portfolioData?.totalChange ||
+    mockAssets.reduce(
+      (sum, asset) => sum + (asset.value * asset.changePercent) / 100,
+      0
+    );
+  const totalChangePercent =
+    portfolioData?.totalChangePercent || (totalChange / totalValue) * 100;
 
   return (
     <div className="space-y-6">

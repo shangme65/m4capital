@@ -420,6 +420,28 @@ function OverviewTab({
 }) {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
+  const [showAllActivities, setShowAllActivities] = useState(false);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const { data: session } = useSession();
+
+  // Fetch real traderoom activities
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        const response = await fetch("/api/traderoom/activities");
+        if (response.ok) {
+          const data = await response.json();
+          setRecentActivities(data.activities || []);
+        }
+      } catch (error) {
+        console.error("Failed to fetch activities:", error);
+      }
+    };
+
+    if (session) {
+      fetchActivities();
+    }
+  }, [session]);
 
   // Function to handle Export Report
   const handleExportReport = () => {
@@ -512,16 +534,18 @@ function OverviewTab({
             className="bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30 rounded-lg p-3"
           >
             <div className="flex items-center justify-between mb-2">
-              <div className="p-1.5 bg-green-500/20 rounded">
-                <TrendingUp className="w-4 h-4 text-green-400" />
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-green-500/20 rounded">
+                  <TrendingUp className="w-4 h-4 text-green-400" />
+                </div>
+                <p className="text-xs text-white font-bold">Total Portfolio</p>
               </div>
               <span className="text-xs text-green-400 font-medium">
                 {portfolioData.todayChangePercent >= 0 ? "+" : ""}
                 {portfolioData.todayChangePercent.toFixed(2)}%
               </span>
             </div>
-            <div>
-              <p className="text-xs text-gray-400 mb-0.5">Total Portfolio</p>
+            <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-white">
                 $
                 {portfolioData.totalValue.toLocaleString("en-US", {
@@ -546,15 +570,17 @@ function OverviewTab({
             className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 rounded-lg p-3"
           >
             <div className="flex items-center justify-between mb-2">
-              <div className="p-1.5 bg-blue-500/20 rounded">
-                <Wallet className="w-4 h-4 text-blue-400" />
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-blue-500/20 rounded">
+                  <Wallet className="w-4 h-4 text-blue-400" />
+                </div>
+                <p className="text-xs text-white font-bold">Cash Balance</p>
               </div>
               <span className="text-xs text-blue-400 font-medium">
                 Available
               </span>
             </div>
-            <div>
-              <p className="text-xs text-gray-400 mb-0.5">Cash Balance</p>
+            <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-white">
                 $
                 {portfolioData.availableCash.toLocaleString("en-US", {
@@ -572,15 +598,17 @@ function OverviewTab({
             className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30 rounded-lg p-3"
           >
             <div className="flex items-center justify-between mb-2">
-              <div className="p-1.5 bg-purple-500/20 rounded">
-                <Briefcase className="w-4 h-4 text-purple-400" />
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-purple-500/20 rounded">
+                  <Briefcase className="w-4 h-4 text-purple-400" />
+                </div>
+                <p className="text-xs text-white font-bold">Total Invested</p>
               </div>
               <span className="text-xs text-purple-400 font-medium">
                 Deployed
               </span>
             </div>
-            <div>
-              <p className="text-xs text-gray-400 mb-0.5">Total Invested</p>
+            <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-white">
                 $
                 {portfolioData.totalInvested.toLocaleString("en-US", {
@@ -598,15 +626,17 @@ function OverviewTab({
             className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30 rounded-lg p-3"
           >
             <div className="flex items-center justify-between mb-2">
-              <div className="p-1.5 bg-orange-500/20 rounded">
-                <DollarSign className="w-4 h-4 text-orange-400" />
+              <div className="flex items-center space-x-2">
+                <div className="p-1.5 bg-orange-500/20 rounded">
+                  <DollarSign className="w-4 h-4 text-orange-400" />
+                </div>
+                <p className="text-xs text-white font-bold">Total Return</p>
               </div>
               <span className="text-xs text-orange-400 font-medium">
                 Profit
               </span>
             </div>
-            <div>
-              <p className="text-xs text-gray-400 mb-0.5">Total Return</p>
+            <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-white">
                 $
                 {portfolioData.totalReturn.toLocaleString("en-US", {
@@ -674,59 +704,58 @@ function OverviewTab({
         <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-bold text-white">Recent Activity</h3>
-            <button className="text-orange-400 hover:text-orange-300 transition-colors text-xs font-medium">
+            <button
+              onClick={() => setShowAllActivities(true)}
+              className="text-orange-400 hover:text-orange-300 transition-colors text-xs font-medium"
+            >
               View All
             </button>
           </div>
           <div className="space-y-2">
-            {[
-              {
-                type: "buy",
-                asset: "AAPL",
-                amount: "$2,500",
-                time: "2 hours ago",
-                color: "green",
-              },
-              {
-                type: "sell",
-                asset: "TSLA",
-                amount: "$1,200",
-                time: "1 day ago",
-                color: "red",
-              },
-              {
-                type: "dividend",
-                asset: "VOO",
-                amount: "$85.50",
-                time: "3 days ago",
-                color: "blue",
-              },
-            ].map((activity, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-2.5 bg-gray-700/50 rounded-md"
-              >
-                <div className="flex items-center space-x-2.5">
-                  <div
-                    className={`w-2.5 h-2.5 rounded-full bg-${activity.color}-400`}
-                  />
-                  <div>
-                    <p className="text-white font-medium text-sm">
-                      {activity.asset}
-                    </p>
-                    <p className="text-gray-400 text-xs capitalize">
-                      {activity.type}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-white font-medium text-sm">
-                    {activity.amount}
-                  </p>
-                  <p className="text-gray-400 text-xs">{activity.time}</p>
-                </div>
+            {recentActivities.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                <Activity className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>No traderoom activities yet</p>
+                <p className="text-xs mt-1">
+                  Start trading to see your activity here
+                </p>
               </div>
-            ))}
+            ) : (
+              recentActivities
+                .slice(0, 3)
+                .map((activity: any, index: number) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-2.5 bg-gray-700/50 rounded-md"
+                  >
+                    <div className="flex items-center space-x-2.5">
+                      <div
+                        className={`w-2.5 h-2.5 rounded-full ${
+                          activity.type === "BUY"
+                            ? "bg-green-400"
+                            : "bg-red-400"
+                        }`}
+                      />
+                      <div>
+                        <p className="text-white font-medium text-sm">
+                          {activity.symbol}
+                        </p>
+                        <p className="text-gray-400 text-xs capitalize">
+                          {activity.type.toLowerCase()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white font-medium text-sm">
+                        ${activity.amount?.toLocaleString()}
+                      </p>
+                      <p className="text-gray-400 text-xs">
+                        {new Date(activity.timestamp).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ))
+            )}
           </div>
         </div>
       </div>
@@ -855,6 +884,119 @@ function OverviewTab({
                 </button>
               </div>
             </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* View All Activities Modal */}
+      {showAllActivities && (
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-gray-800 rounded-lg w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+          >
+            <div className="p-6 border-b border-gray-700">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-white">
+                  All Traderoom Activities
+                </h3>
+                <button
+                  onClick={() => setShowAllActivities(false)}
+                  className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <svg
+                    className="w-6 h-6 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {recentActivities.length === 0 ? (
+                <div className="text-center py-16 text-gray-400">
+                  <Activity className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                  <p className="text-lg mb-2">No traderoom activities yet</p>
+                  <p className="text-sm">
+                    Start trading in the traderoom to see your activity history
+                    here
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {recentActivities.map((activity: any, index: number) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="bg-gray-700/50 rounded-lg p-4 hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div
+                            className={`p-3 rounded-full ${
+                              activity.type === "BUY"
+                                ? "bg-green-500/20"
+                                : "bg-red-500/20"
+                            }`}
+                          >
+                            {activity.type === "BUY" ? (
+                              <ArrowUp className="w-5 h-5 text-green-400" />
+                            ) : (
+                              <ArrowDown className="w-5 h-5 text-red-400" />
+                            )}
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <p className="text-white font-bold text-lg">
+                                {activity.symbol}
+                              </p>
+                              <span
+                                className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                  activity.type === "BUY"
+                                    ? "bg-green-500/20 text-green-400"
+                                    : "bg-red-500/20 text-red-400"
+                                }`}
+                              >
+                                {activity.type}
+                              </span>
+                            </div>
+                            <p className="text-gray-400 text-sm">
+                              {activity.quantity} shares @ $
+                              {activity.price?.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-white font-bold text-lg">
+                            $
+                            {activity.amount?.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {new Date(activity.timestamp).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </div>
           </motion.div>
         </div>
       )}
