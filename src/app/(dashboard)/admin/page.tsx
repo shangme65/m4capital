@@ -728,6 +728,13 @@ const AdminDashboard = () => {
                   KYC Verification
                 </button>
                 <button
+                  onClick={() => (window.location.href = "/admin/analytics")}
+                  className="w-full bg-cyan-500/20 border border-cyan-500/30 hover:bg-cyan-500/30 text-cyan-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                >
+                  <BarChart3 size={16} />
+                  <span>Analytics Dashboard</span>
+                </button>
+                <button
                   onClick={() => setActiveTab("notifications")}
                   className="w-full bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 text-purple-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
                 >

@@ -76,6 +76,7 @@ model User {
   telegramLinkCode       TelegramLinkCode?
   linkedTelegramId       BigInt?           @unique
   linkedTelegramUsername String?
+  activities             UserActivity[]
 }
 
 model VerificationToken {
@@ -543,4 +544,40 @@ enum UserRole {
 enum AccountType {
   INVESTOR
   TRADER
+}
+
+model UserActivity {
+  id             String       @id @default(cuid())
+  userId         String?
+  sessionId      String?
+  activityType   ActivityType
+  page           String?
+  action         String?
+  metadata       Json?        @default("{}")
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime     @default(now())
+  
+  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+  @@index([activityType, createdAt])
+  @@index([sessionId])
+}
+
+enum ActivityType {
+  PAGE_VIEW
+  BUTTON_CLICK
+  API_CALL
+  TELEGRAM_COMMAND
+  TELEGRAM_MESSAGE
+  LOGIN
+  LOGOUT
+  SIGNUP
+  DEPOSIT
+  WITHDRAWAL
+  TRADE
+  KYC_SUBMISSION
+  SETTINGS_UPDATE
+  ERROR
 }

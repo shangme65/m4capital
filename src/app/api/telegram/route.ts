@@ -506,7 +506,7 @@ export async function POST(req: NextRequest) {
     if (text === "/start") {
       await sendTelegramMessage(
         chatId,
-        `Welcome to M4Capital\n\nI am your personal assistant and can help you with:\n\n💰 **Crypto Prices** - Ask about any of the top 320 cryptocurrencies\n🎨 **Image Generation** - Ask me to create, generate, or imagine images\n💬 **AI Chat** - Ask me anything!\n🔗 **Account Linking** - Link your M4Capital account\n💳 **Deposits** - Fund your account with crypto or Telegram Stars\n\n**Commands:**\n/link - Get code to link your account\n/deposit - Make a deposit\n/clear - Reset conversation\n\n**Examples:**\n• "What's the price of Bitcoin?"\n• "Show me Ethereum and Solana prices"\n• "Generate an image of a futuristic city"\n• "Create a logo for a tech startup"`
+        `Welcome to M4Capital! 🚀\n\nI am your personal assistant and can help you with:\n\n💰 **Crypto Prices** - Ask about any of the top 320 cryptocurrencies\n🎨 **Image Generation** - Ask me to create, generate, or imagine images\n💬 **AI Chat** - Ask me anything!\n🔗 **Account Linking** - Link your M4Capital account\n💳 **Deposits** - Fund your account with crypto or Telegram Stars\n💼 **Portfolio** - View your balance and assets\n\n**Commands:**\n/link - Get code to link your account\n/balance - View your account balance\n/portfolio - View detailed portfolio\n/deposit - Make a deposit\n/clear - Reset conversation\n\n**Examples:**\n• "What's the price of Bitcoin?"\n• "Show me Ethereum and Solana prices"\n• "Generate an image of a futuristic city"\n• "Create a logo for a tech startup"`
       );
       return NextResponse.json({ ok: true });
     }
@@ -574,6 +574,185 @@ export async function POST(req: NextRequest) {
         await sendTelegramMessage(
           chatId,
           "❌ Failed to generate linking code. Please try again."
+        );
+        return NextResponse.json({ ok: true });
+      }
+    }
+
+    // Handle /balance command - Show account balance
+    if (text === "/balance") {
+      try {
+        const { PrismaClient } = await import("@prisma/client");
+        const prisma = new PrismaClient();
+
+        // Find user by linked Telegram ID
+        const user = await prisma.user.findFirst({
+          where: { linkedTelegramId: BigInt(userId) },
+          include: { portfolio: true },
+        });
+
+        if (!user) {
+          await sendTelegramMessage(
+            chatId,
+            "⚠️ **Account Not Linked**\n\nPlease link your M4Capital account first using the `/link` command."
+          );
+          await prisma.$disconnect();
+          return NextResponse.json({ ok: true });
+        }
+
+        if (!user.portfolio) {
+          await sendTelegramMessage(
+            chatId,
+            "⚠️ **No Portfolio Found**\n\nYour portfolio hasn't been created yet. Please contact support."
+          );
+          await prisma.$disconnect();
+          return NextResponse.json({ ok: true });
+        }
+
+        const balance = Number(user.portfolio.balance);
+        const assets = user.portfolio.assets as any[];
+
+        // Calculate total portfolio value
+        let totalValue = balance;
+        if (assets && assets.length > 0) {
+          for (const asset of assets) {
+            const assetValue =
+              Number(asset.amount || 0) * Number(asset.price || 0);
+            totalValue += assetValue;
+          }
+        }
+
+        const responseMessage =
+          `💼 **Account Balance**\n\n` +
+          `👤 **Account:** ${user.name || user.email}\n` +
+          `💵 **Cash Balance:** $${balance.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}\n` +
+          `📊 **Total Portfolio Value:** $${totalValue.toLocaleString(
+            undefined,
+            { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+          )}\n\n` +
+          `Use /portfolio to view detailed holdings.`;
+
+        await sendTelegramMessage(chatId, responseMessage);
+
+        // Track activity
+        await prisma.userActivity.create({
+          data: {
+            userId: user.id,
+            activityType: "TELEGRAM_COMMAND",
+            action: "/balance",
+            metadata: {
+              telegramId: userId.toString(),
+              username: message.from.username || null,
+            },
+          },
+        });
+
+        await prisma.$disconnect();
+        return NextResponse.json({ ok: true });
+      } catch (error) {
+        console.error("Error fetching balance:", error);
+        await sendTelegramMessage(
+          chatId,
+          "❌ Failed to fetch balance. Please try again."
+        );
+        return NextResponse.json({ ok: true });
+      }
+    }
+
+    // Handle /portfolio command - Show detailed portfolio
+    if (text === "/portfolio") {
+      try {
+        const { PrismaClient } = await import("@prisma/client");
+        const prisma = new PrismaClient();
+
+        // Find user by linked Telegram ID
+        const user = await prisma.user.findFirst({
+          where: { linkedTelegramId: BigInt(userId) },
+          include: { portfolio: true },
+        });
+
+        if (!user) {
+          await sendTelegramMessage(
+            chatId,
+            "⚠️ **Account Not Linked**\n\nPlease link your M4Capital account first using the `/link` command."
+          );
+          await prisma.$disconnect();
+          return NextResponse.json({ ok: true });
+        }
+
+        if (!user.portfolio) {
+          await sendTelegramMessage(
+            chatId,
+            "⚠️ **No Portfolio Found**\n\nYour portfolio hasn't been created yet. Please contact support."
+          );
+          await prisma.$disconnect();
+          return NextResponse.json({ ok: true });
+        }
+
+        const balance = Number(user.portfolio.balance);
+        const assets = user.portfolio.assets as any[];
+
+        let responseMessage = `📊 **Your Portfolio**\n\n`;
+        responseMessage += `👤 **Account:** ${user.name || user.email}\n`;
+        responseMessage += `💵 **Cash Balance:** $${balance.toLocaleString(
+          undefined,
+          { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+        )}\n\n`;
+
+        if (!assets || assets.length === 0) {
+          responseMessage += `📭 **No Assets**\n\nYou don't have any crypto assets yet. Start investing today!\n\n`;
+        } else {
+          responseMessage += `💎 **Assets:**\n\n`;
+
+          let totalAssetValue = 0;
+          for (const asset of assets) {
+            const amount = Number(asset.amount || 0);
+            const price = Number(asset.price || 0);
+            const value = amount * price;
+            totalAssetValue += value;
+
+            responseMessage += `**${asset.symbol}**\n`;
+            responseMessage += `  Amount: ${amount.toFixed(8)}\n`;
+            responseMessage += `  Price: $${price.toLocaleString()}\n`;
+            responseMessage += `  Value: $${value.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}\n\n`;
+          }
+
+          const totalValue = balance + totalAssetValue;
+          responseMessage += `━━━━━━━━━━━━━━━━\n`;
+          responseMessage += `**Total Portfolio Value:** $${totalValue.toLocaleString(
+            undefined,
+            { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+          )}`;
+        }
+
+        await sendTelegramMessage(chatId, responseMessage);
+
+        // Track activity
+        await prisma.userActivity.create({
+          data: {
+            userId: user.id,
+            activityType: "TELEGRAM_COMMAND",
+            action: "/portfolio",
+            metadata: {
+              telegramId: userId.toString(),
+              username: message.from.username || null,
+            },
+          },
+        });
+
+        await prisma.$disconnect();
+        return NextResponse.json({ ok: true });
+      } catch (error) {
+        console.error("Error fetching portfolio:", error);
+        await sendTelegramMessage(
+          chatId,
+          "❌ Failed to fetch portfolio. Please try again."
         );
         return NextResponse.json({ ok: true });
       }
