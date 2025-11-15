@@ -98,12 +98,36 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Poll for new notifications every 30 seconds
+  // Fetch transactions from API
+  const fetchTransactions = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      const response = await fetch("/api/transactions");
+      if (response.ok) {
+        const data = await response.json();
+        setRecentActivity(
+          data.transactions.map((t: any) => ({
+            ...t,
+            date: new Date(t.date),
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+    }
+  };
+
+  // Poll for new notifications and transactions every 30 seconds
   useEffect(() => {
     if (status === "authenticated" && session?.user?.id) {
       fetchNotifications();
+      fetchTransactions();
 
-      const interval = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
+      const interval = setInterval(() => {
+        fetchNotifications();
+        fetchTransactions();
+      }, 30000); // Poll every 30 seconds
       return () => clearInterval(interval);
     }
   }, [session?.user?.id, status]);

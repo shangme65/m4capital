@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 interface SidebarContextType {
   isSidebarOpen: boolean;
@@ -11,7 +17,21 @@ interface SidebarContextType {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  // Initialize sidebar state from sessionStorage or default to false
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedState = sessionStorage.getItem("sidebarOpen");
+      return savedState === "true";
+    }
+    return false;
+  });
+
+  // Persist sidebar state to sessionStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("sidebarOpen", String(isSidebarOpen));
+    }
+  }, [isSidebarOpen]);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);

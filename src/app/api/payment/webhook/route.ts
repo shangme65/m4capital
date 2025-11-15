@@ -72,9 +72,55 @@ export async function POST(request: NextRequest) {
     switch (payment_status) {
       case "waiting":
         newStatus = "PENDING";
+        // Create initial notification when payment is detected
+        if (deposit.status !== "PENDING" && deposit.user) {
+          await prisma.notification.create({
+            data: {
+              userId: deposit.user.id,
+              type: "DEPOSIT",
+              title: `Incoming ${deposit.cryptoCurrency || "BTC"} Deposit`,
+              message: `Your deposit of ${actually_paid || pay_amount} ${
+                deposit.cryptoCurrency || "BTC"
+              } ($${price_amount}) has been detected and is awaiting confirmations.`,
+              amount: price_amount,
+              asset: deposit.cryptoCurrency || "BTC",
+              metadata: {
+                depositId: deposit.id,
+                paymentId: payment_id,
+                status: "waiting",
+                confirmations: 0,
+              },
+            },
+          });
+        }
         break;
       case "confirming":
         newStatus = "PROCESSING";
+        // Update notification
+        if (deposit.user) {
+          const existingNotif = await prisma.notification.findFirst({
+            where: {
+              userId: deposit.user.id,
+              metadata: {
+                path: ["depositId"],
+                equals: deposit.id,
+              },
+            },
+            orderBy: { createdAt: "desc" },
+          });
+          if (existingNotif) {
+            await prisma.notification.update({
+              where: { id: existingNotif.id },
+              data: {
+                message: `Your deposit is being confirmed on the blockchain. Almost there!`,
+                metadata: {
+                  ...((existingNotif.metadata as any) || {}),
+                  status: "confirming",
+                },
+              },
+            });
+          }
+        }
         break;
       case "confirmed":
       case "finished":

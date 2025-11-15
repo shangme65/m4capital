@@ -505,7 +505,7 @@ function OverviewTab({
     <>
       <div className="space-y-4">
         {/* Compact Portfolio Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           {/* Portfolio Value */}
           <motion.div
             whileHover={{ scale: 1.02 }}
@@ -516,13 +516,27 @@ function OverviewTab({
                 <TrendingUp className="w-4 h-4 text-green-400" />
               </div>
               <span className="text-xs text-green-400 font-medium">
-                +13.54%
+                {portfolioData.todayChangePercent >= 0 ? "+" : ""}
+                {portfolioData.todayChangePercent.toFixed(2)}%
               </span>
             </div>
             <div>
               <p className="text-xs text-gray-400 mb-0.5">Total Portfolio</p>
-              <p className="text-lg font-bold text-white">$124,891.42</p>
-              <p className="text-xs text-green-400">+$2,847.63 today</p>
+              <p className="text-lg font-bold text-white">
+                $
+                {portfolioData.totalValue.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+              <p className="text-xs text-green-400">
+                {portfolioData.todayChange >= 0 ? "+" : ""}$
+                {Math.abs(portfolioData.todayChange).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}{" "}
+                today
+              </p>
             </div>
           </motion.div>
 
@@ -541,7 +555,13 @@ function OverviewTab({
             </div>
             <div>
               <p className="text-xs text-gray-400 mb-0.5">Cash Balance</p>
-              <p className="text-lg font-bold text-white">$15,420.5</p>
+              <p className="text-lg font-bold text-white">
+                $
+                {portfolioData.availableCash.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
               <p className="text-xs text-blue-400">Ready to invest</p>
             </div>
           </motion.div>
@@ -561,8 +581,14 @@ function OverviewTab({
             </div>
             <div>
               <p className="text-xs text-gray-400 mb-0.5">Total Invested</p>
-              <p className="text-lg font-bold text-white">$110,000.00</p>
-              <p className="text-xs text-purple-400">Across 12 assets</p>
+              <p className="text-lg font-bold text-white">
+                $
+                {portfolioData.totalInvested.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+              <p className="text-xs text-purple-400">Across your assets</p>
             </div>
           </motion.div>
 
@@ -581,8 +607,17 @@ function OverviewTab({
             </div>
             <div>
               <p className="text-xs text-gray-400 mb-0.5">Total Return</p>
-              <p className="text-lg font-bold text-white">$14,891.42</p>
-              <p className="text-xs text-orange-400">+13.54% return</p>
+              <p className="text-lg font-bold text-white">
+                $
+                {portfolioData.totalReturn.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </p>
+              <p className="text-xs text-orange-400">
+                {portfolioData.totalReturnPercent >= 0 ? "+" : ""}
+                {portfolioData.totalReturnPercent.toFixed(2)}% return
+              </p>
             </div>
           </motion.div>
         </div>

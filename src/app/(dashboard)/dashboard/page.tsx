@@ -83,9 +83,6 @@ function DashboardContent() {
     setShowTransactionDetails(true);
   };
 
-  // Get available balance from portfolio
-  const availableBalance = portfolio?.portfolio.balance || 0;
-
   // Cryptocurrency metadata helper
   const getCryptoMetadata = (symbol: string) => {
     const cryptoData: Record<
@@ -187,9 +184,16 @@ function DashboardContent() {
       : [];
 
   // Calculate dynamic portfolio value based on real-time prices
-  const portfolioValue = portfolioLoading
+  // Include both crypto assets AND available balance
+  const cryptoAssetsValue = portfolioLoading
     ? 0
     : userAssets.reduce((total, asset) => total + asset.value, 0);
+
+  const availableBalance = portfolio?.portfolio?.balance
+    ? parseFloat(portfolio.portfolio.balance.toString())
+    : 0;
+
+  const portfolioValue = cryptoAssetsValue + availableBalance;
 
   // Income percent: measure change of user's money (deposits + received + earnings)
   // Use server-provided periodIncomePercent when available for selected period
@@ -979,6 +983,31 @@ function DashboardContent() {
                           {activity.timestamp}
                         </div>
                       </div>
+
+                      {/* Show confirmation progress for pending deposits */}
+                      {activity.status === "pending" &&
+                        activity.type === "deposit" &&
+                        activity.confirmations !== undefined && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 bg-gray-700 rounded-full h-1.5">
+                              <div
+                                className="bg-orange-500 h-1.5 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    (activity.confirmations /
+                                      (activity.maxConfirmations || 6)) *
+                                      100
+                                  )}%`,
+                                }}
+                              ></div>
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {activity.confirmations}/
+                              {activity.maxConfirmations || 6}
+                            </span>
+                          </div>
+                        )}
                     </div>
 
                     {/* Click indicator */}
@@ -1223,6 +1252,31 @@ function DashboardContent() {
                           {activity.timestamp}
                         </span>
                       </div>
+
+                      {/* Show confirmation progress for pending deposits */}
+                      {activity.status === "pending" &&
+                        activity.type === "deposit" &&
+                        activity.confirmations !== undefined && (
+                          <div className="mt-2 flex items-center gap-2">
+                            <div className="flex-1 bg-gray-700 rounded-full h-1.5">
+                              <div
+                                className="bg-orange-500 h-1.5 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    (activity.confirmations /
+                                      (activity.maxConfirmations || 6)) *
+                                      100
+                                  )}%`,
+                                }}
+                              ></div>
+                            </div>
+                            <span className="text-xs text-gray-400">
+                              {activity.confirmations}/
+                              {activity.maxConfirmations || 6}
+                            </span>
+                          </div>
+                        )}
                     </div>
                   </div>
                 ))}

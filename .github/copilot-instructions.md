@@ -645,3 +645,161 @@ NODE_ENV="production"
    - Enable secret scanning
    - Team training on security
    - Regular security audits
+
+---
+
+## 11. Build Error Reporting Protocol
+
+**CRITICAL INSTRUCTION FOR BUILD FAILURES:**
+
+When a build fails (`npm run build`, `npm run lint`, or similar), you MUST:
+
+### Step-by-Step Process:
+
+1. **STOP and ANALYZE** the error output first
+
+   - Read the complete error message
+   - Identify ALL files and line numbers with errors
+   - Note the type of each error (syntax, type, import, etc.)
+
+2. **EXPLAIN to the user** what is causing the build to fail:
+
+   ```
+   **Build Error Found:**
+   The build is failing in `src/app/api/example/route.ts` at line 42 because
+   TypeScript is reporting "Property 'name' does not exist on type 'User'".
+   This occurs because we're trying to access a property that isn't defined
+   in the User type definition.
+   ```
+
+3. **ONLY AFTER explaining**, proceed to fix the error
+
+   - Fix all related errors in one batch if possible
+   - Use `multi_replace_string_in_file` for multiple independent fixes
+
+4. **Then run the build again** to verify the fix worked
+
+### What to Report:
+
+- **File path and line number** where error occurs
+- **Type of error**: Syntax error, type error, import error, null check, etc.
+- **Root cause**: What the code is trying to do that's invalid
+- **Impact**: Why this is breaking the build
+
+### Example:
+
+**CORRECT:**
+
+```
+**Build Error Analysis:**
+The build is failing because of a TypeScript null safety check in
+`src/app/api/cron/process-confirmations/route.ts` at line 119.
+
+Error: "Object is possibly 'null'"
+
+Cause: We're accessing `assets[existingAssetIndex].amount` without checking
+if the array element exists. TypeScript's strict null checking requires we
+verify the element isn't null before accessing its properties.
+
+Fix: Add a null check: `if (existingAssetIndex >= 0 && assets[existingAssetIndex])`
+```
+
+**INCORRECT:**
+
+```
+[Immediately runs fix without explaining]
+```
+
+### Never:
+
+- Immediately fix errors without explanation
+- Run multiple build attempts without diagnosing the issue first
+- Ignore warning messages that might become errors
+- Fix errors one at a time when they could be batched
+- Skip explaining the root cause to the user
+
+### Build Warnings:
+
+- Always report warnings even if build succeeds
+- Explain which warnings are safe to ignore vs which need fixing
+- Prioritize fixing import warnings (often become errors in production)
+
+---
+
+## 11. Build Error Reporting Protocol
+
+**CRITICAL INSTRUCTION FOR BUILD FAILURES:**
+
+When a build fails (`npm run build`, `npm run lint`, or similar), you MUST:
+
+### Step-by-Step Process:
+
+1. **STOP and ANALYZE** the error output first
+
+   - Read the complete error message
+   - Identify ALL files and line numbers with errors
+   - Note the type of each error (syntax, type, import, etc.)
+
+2. **EXPLAIN to the user** what is causing the build to fail:
+
+   ```
+   **Build Error Found:**
+   The build is failing in `src/app/api/example/route.ts` at line 42 because
+   TypeScript is reporting "Property 'name' does not exist on type 'User'".
+   This occurs because we're trying to access a property that isn't defined
+   in the User type definition.
+   ```
+
+3. **ONLY AFTER explaining**, proceed to fix the error
+
+   - Fix all related errors in one batch if possible
+   - Use `multi_replace_string_in_file` for multiple independent fixes
+
+4. **Then run the build again** to verify the fix worked
+
+### What to Report:
+
+- **File path and line number** where error occurs
+- **Type of error**: Syntax error, type error, import error, null check, etc.
+- **Root cause**: What the code is trying to do that's invalid
+- **Impact**: Why this is breaking the build
+
+### Example:
+
+**CORRECT:**
+
+```
+**Build Error Analysis:**
+The build is failing because of a TypeScript null safety check in
+`src/app/api/cron/process-confirmations/route.ts` at line 119.
+
+Error: "Object is possibly 'null'"
+
+Cause: We're accessing `assets[existingAssetIndex].amount` without checking
+if the array element exists. TypeScript's strict null checking requires we
+verify the element isn't null before accessing its properties.
+
+Fix: Add a null check: `if (existingAssetIndex >= 0 && assets[existingAssetIndex])`
+```
+
+**INCORRECT:**
+
+```
+[Immediately runs fix without explaining]
+```
+
+### Never:
+
+- Immediately fix errors without explanation
+- Run multiple build attempts without diagnosing the issue first
+- Ignore warning messages that might become errors
+- Fix errors one at a time when they could be batched
+- Skip explaining the root cause to the user
+
+### Build Warnings:
+
+- Always report warnings even if build succeeds
+- Explain which warnings are safe to ignore vs which need fixing
+- Prioritize fixing import warnings (often become errors in production)
+
+---

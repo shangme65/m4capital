@@ -12,6 +12,8 @@ import {
   TrendingUp,
   Info,
   AlertTriangle,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { useNotifications, Notification } from "@/contexts/NotificationContext";
 
@@ -31,6 +33,22 @@ export default function NotificationsPanel({
     markAllAsRead,
     clearNotifications,
   } = useNotifications();
+
+  const [expandedNotifications, setExpandedNotifications] = useState<
+    Set<string>
+  >(new Set());
+
+  const toggleExpanded = (notificationId: string) => {
+    setExpandedNotifications((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(notificationId)) {
+        newSet.delete(notificationId);
+      } else {
+        newSet.add(notificationId);
+      }
+      return newSet;
+    });
+  };
 
   const getNotificationIcon = (type: Notification["type"]) => {
     switch (type) {
@@ -137,56 +155,99 @@ export default function NotificationsPanel({
                 </div>
               ) : (
                 <div className="space-y-1">
-                  {notifications.map((notification) => (
-                    <motion.div
-                      key={notification.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`p-4 border-b border-gray-800 cursor-pointer transition-colors hover:bg-gray-800 ${
-                        !notification.read
-                          ? "bg-gray-800/50 border-l-4 border-l-orange-500"
-                          : ""
-                      }`}
-                      onClick={() => markNotificationAsRead(notification.id)}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0 mt-1">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between">
-                            <p
-                              className={`text-sm font-medium ${
-                                !notification.read
-                                  ? "text-white"
-                                  : "text-gray-300"
-                              }`}
-                            >
-                              {notification.title}
-                            </p>
-                            <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
-                              {formatTimeAgo(notification.timestamp)}
-                            </span>
+                  {notifications.map((notification) => {
+                    const isExpanded = expandedNotifications.has(
+                      notification.id
+                    );
+                    return (
+                      <motion.div
+                        key={notification.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className={`p-4 border-b border-gray-800 transition-colors hover:bg-gray-800 ${
+                          !notification.read
+                            ? "bg-gray-800/50 border-l-4 border-l-orange-500"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0 mt-1">
+                            {getNotificationIcon(notification.type)}
                           </div>
-                          <p className="text-sm text-gray-400 mt-1">
-                            {notification.message}
-                          </p>
-                          {notification.amount && notification.asset && (
-                            <div className="mt-2 text-xs text-orange-500 font-medium">
-                              {notification.type === "deposit" ? "+" : "-"}$
-                              {notification.amount.toLocaleString()}{" "}
-                              {notification.asset}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between">
+                              <p
+                                className={`text-sm font-medium ${
+                                  !notification.read
+                                    ? "text-white"
+                                    : "text-gray-300"
+                                }`}
+                              >
+                                {notification.title}
+                              </p>
+                              <span className="text-xs text-gray-500 ml-2 flex-shrink-0">
+                                {formatTimeAgo(notification.timestamp)}
+                              </span>
                             </div>
-                          )}
-                          {!notification.read && (
-                            <div className="mt-2">
-                              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-                            </div>
-                          )}
+
+                            {/* Expandable Message */}
+                            {notification.message && (
+                              <div className="mt-1">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleExpanded(notification.id);
+                                    if (!notification.read) {
+                                      markNotificationAsRead(notification.id);
+                                    }
+                                  }}
+                                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-300 transition-colors"
+                                >
+                                  {isExpanded ? (
+                                    <>
+                                      <ChevronDown className="w-4 h-4" />
+                                      <span>Hide details</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ChevronRight className="w-4 h-4" />
+                                      <span>Show details</span>
+                                    </>
+                                  )}
+                                </button>
+                                <AnimatePresence>
+                                  {isExpanded && (
+                                    <motion.p
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: "auto" }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="text-sm text-gray-400 mt-2 overflow-hidden"
+                                    >
+                                      {notification.message}
+                                    </motion.p>
+                                  )}
+                                </AnimatePresence>
+                              </div>
+                            )}
+
+                            {notification.amount && notification.asset && (
+                              <div className="mt-2 text-xs text-orange-500 font-medium">
+                                {notification.type === "deposit" ? "+" : "-"}$
+                                {notification.amount.toLocaleString()}{" "}
+                                {notification.asset}
+                              </div>
+                            )}
+                            {!notification.read && (
+                              <div className="mt-2">
+                                <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    </motion.div>
-                  ))}
+                      </motion.div>
+                    );
+                  })}
                 </div>
               )}
             </div>

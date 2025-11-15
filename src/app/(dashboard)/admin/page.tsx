@@ -28,6 +28,7 @@ import {
   Mail,
   ArrowLeft,
   Trash2,
+  AlertCircle,
 } from "lucide-react";
 
 // Force dynamic rendering for this page
@@ -262,7 +263,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [amount, setAmount] = useState(0);
+  const [amount, setAmount] = useState<string>(""); // Changed to string for placeholder
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -280,6 +281,16 @@ const AdminDashboard = () => {
   );
   const [showAdminMode, setShowAdminMode] = useState(true);
   const [pendingKycCount, setPendingKycCount] = useState(0);
+
+  // New states for deposit type selection
+  const [depositType, setDepositType] = useState<"balance" | "crypto">(
+    "balance"
+  );
+  const [cryptoAsset, setCryptoAsset] = useState<string>("BTC");
+  const [showAssetWarning, setShowAssetWarning] = useState(false);
+  const [assetWarningMessage, setAssetWarningMessage] = useState("");
+
+  const cryptoAssets = ["BTC", "ETH", "USDT", "SOL", "XRP"];
 
   // Show popup notification
   const showPopupNotification = (
@@ -362,7 +373,9 @@ const AdminDashboard = () => {
   };
 
   const handleTopUp = async () => {
-    if (!selectedUser || amount <= 0) {
+    const amountNum = parseFloat(amount);
+
+    if (!selectedUser || !amount || amountNum <= 0 || isNaN(amountNum)) {
       showPopupNotification(
         "Please select a user and enter a valid amount.",
         "error"
@@ -370,19 +383,45 @@ const AdminDashboard = () => {
       return;
     }
 
+    // Check if user has the crypto asset if depositing crypto
+    if (depositType === "crypto" && (selectedUser as any).portfolio) {
+      const assets = Array.isArray((selectedUser as any).portfolio.assets)
+        ? (selectedUser as any).portfolio.assets
+        : [];
+      const hasAsset = assets.some((a: any) => a.symbol === cryptoAsset);
+
+      if (!hasAsset) {
+        setAssetWarningMessage(
+          `User doesn't have ${cryptoAsset} in their portfolio yet. This will create a new ${cryptoAsset} position for them. Continue?`
+        );
+        setShowAssetWarning(true);
+        return;
+      }
+    }
+
+    await processTopUp();
+  };
+
+  const processTopUp = async () => {
+    const amountNum = parseFloat(amount);
     setLoading(true);
+    setShowAssetWarning(false);
 
     try {
       // Prepare the payment details for the transaction
       const transactionData = {
-        userId: selectedUser.id,
-        amount,
+        userId: selectedUser!.id,
+        amount: amountNum,
         paymentMethod: selectedPaymentMethod.name,
         paymentDetails,
         adminNote:
           notificationMessage ||
-          `Manual top-up via ${selectedPaymentMethod.name}`,
+          `Manual ${
+            depositType === "crypto" ? `${cryptoAsset} crypto` : "balance"
+          } top-up via ${selectedPaymentMethod.name}`,
         processedBy: session?.user?.email,
+        depositType,
+        cryptoAsset: depositType === "crypto" ? cryptoAsset : null,
       };
 
       const res = await fetch("/api/admin/top-up", {
@@ -392,30 +431,44 @@ const AdminDashboard = () => {
       });
 
       if (res.ok) {
+        const data = await res.json();
         showPopupNotification(
-          `Successfully topped up ${selectedUser.email} with $${amount} via ${selectedPaymentMethod.name}.`,
+          `Successfully initiated ${
+            depositType === "crypto"
+              ? `${amountNum} ${cryptoAsset}`
+              : `$${amountNum}`
+          } deposit for ${selectedUser!.email}. Confirmations: 0/6`,
           "success"
         );
-        setAmount(0);
+        setAmount("");
         setPaymentDetails({});
         setNotificationMessage("");
 
         // Send notification to user
-        await sendUserNotification(selectedUser.id, {
-          type: "balance_update",
-          title: "Balance Updated",
-          message: `Your account has been credited with $${amount} via ${selectedPaymentMethod.name}`,
-          amount,
-          paymentMethod: selectedPaymentMethod.name,
+        await sendUserNotification(selectedUser!.id, {
+          type: "deposit_initiated",
+          title: `Incoming ${
+            depositType === "crypto" ? cryptoAsset : "USD"
+          } Deposit`,
+          message: `Your deposit of ${
+            depositType === "crypto"
+              ? `${amountNum} ${cryptoAsset}`
+              : `$${amountNum}`
+          } is being processed. Confirmations: 0/6`,
+          amount: amountNum,
+          asset: depositType === "crypto" ? cryptoAsset : "USD",
         });
       } else {
         const error = await res.json();
-        showPopupNotification(`Failed to top up: ${error.error}`, "error");
+        showPopupNotification(
+          `Failed to process deposit: ${error.error}`,
+          "error"
+        );
       }
     } catch (error) {
       console.error("Top-up error:", error);
       showPopupNotification(
-        "Failed to process top-up. Please try again.",
+        "Failed to process deposit. Please try again.",
         "error"
       );
     }
@@ -1174,7 +1227,7 @@ const AdminDashboard = () => {
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
               <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
                 <Wallet className="text-green-400" size={24} />
-                <span>Manual Balance Top-up</span>
+                <span>Manual Payment Processing</span>
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -1184,16 +1237,71 @@ const AdminDashboard = () => {
                       {selectedUser.email}
                     </p>
                   </div>
+
+                  {/* Deposit Type Selection */}
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">
-                      Amount ($)
+                      Deposit Type
+                    </label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => setDepositType("balance")}
+                        className={`p-3 rounded-lg border transition-all ${
+                          depositType === "balance"
+                            ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                            : "bg-gray-700/50 border-gray-600/50 text-gray-400 hover:border-gray-500"
+                        }`}
+                      >
+                        <DollarSign className="w-5 h-5 mx-auto mb-1" />
+                        <span className="text-xs block">Available Balance</span>
+                      </button>
+                      <button
+                        onClick={() => setDepositType("crypto")}
+                        className={`p-3 rounded-lg border transition-all ${
+                          depositType === "crypto"
+                            ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                            : "bg-gray-700/50 border-gray-600/50 text-gray-400 hover:border-gray-500"
+                        }`}
+                      >
+                        <Wallet className="w-5 h-5 mx-auto mb-1" />
+                        <span className="text-xs block">Crypto Asset</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Crypto Asset Selection */}
+                  {depositType === "crypto" && (
+                    <div>
+                      <label className="block text-sm text-gray-400 mb-2">
+                        Cryptocurrency
+                      </label>
+                      <select
+                        value={cryptoAsset}
+                        onChange={(e) => setCryptoAsset(e.target.value)}
+                        className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                      >
+                        {cryptoAssets.map((asset) => (
+                          <option key={asset} value={asset}>
+                            {asset}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">
+                      Amount{" "}
+                      {depositType === "crypto" ? `(${cryptoAsset})` : "($)"}
                     </label>
                     <input
-                      type="number"
+                      type="text"
                       value={amount}
-                      onChange={(e) => setAmount(Number(e.target.value))}
+                      onChange={(e) => setAmount(e.target.value)}
                       className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                      placeholder="Enter amount"
+                      placeholder={
+                        depositType === "crypto" ? "0.00000000" : "0.00"
+                      }
                       disabled={loading}
                     />
                   </div>
@@ -1205,7 +1313,7 @@ const AdminDashboard = () => {
                       value={notificationMessage}
                       onChange={(e) => setNotificationMessage(e.target.value)}
                       className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                      placeholder="Message to send to user..."
+                      placeholder="Optional note for the user..."
                       rows={3}
                     />
                   </div>
@@ -1219,22 +1327,77 @@ const AdminDashboard = () => {
                         <span>{selectedPaymentMethod.name}</span>
                       </div>
                       <div className="flex justify-between">
+                        <span className="text-gray-400">Type:</span>
+                        <span className="capitalize">
+                          {depositType === "crypto"
+                            ? `Crypto (${cryptoAsset})`
+                            : "USD Balance"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-gray-400">Amount:</span>
-                        <span>${amount}</span>
+                        <span>
+                          {depositType === "crypto"
+                            ? `${amount || "0"} ${cryptoAsset}`
+                            : `$${amount || "0"}`}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-400">User:</span>
-                        <span>{selectedUser.email}</span>
+                        <span className="truncate max-w-[180px]">
+                          {selectedUser.email}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs mt-2 pt-2 border-t border-gray-600">
+                        <span className="text-gray-500">Confirmations:</span>
+                        <span className="text-orange-400">0/6 (≈20 min)</span>
                       </div>
                     </div>
                   </div>
+
+                  <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
+                    <p className="text-xs text-blue-300">
+                      ℹ️{" "}
+                      {depositType === "crypto"
+                        ? `This will add ${cryptoAsset} to the user's crypto portfolio. Network fees and transaction hash will be auto-generated.`
+                        : "This will add funds to the user's available USD balance for trading."}
+                    </p>
+                  </div>
+
                   <button
                     onClick={handleTopUp}
-                    disabled={loading || amount <= 0}
+                    disabled={loading || !amount || parseFloat(amount) <= 0}
                     className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
                   >
                     <DollarSign size={20} />
                     <span>{loading ? "Processing..." : "Process Payment"}</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Asset Warning Modal */}
+          {showAssetWarning && (
+            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+              <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full border border-yellow-500/30">
+                <h3 className="text-xl font-bold text-yellow-400 mb-3 flex items-center gap-2">
+                  <AlertCircle size={24} />
+                  Asset Not Found
+                </h3>
+                <p className="text-gray-300 mb-4">{assetWarningMessage}</p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowAssetWarning(false)}
+                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={processTopUp}
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors"
+                  >
+                    Continue
                   </button>
                 </div>
               </div>

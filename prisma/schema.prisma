@@ -52,6 +52,9 @@ model User {
   tradingNotifications   Boolean           @default(true)
   securityNotifications  Boolean           @default(true)
   kycNotifications       Boolean           @default(true)
+  twoFactorEnabled       Boolean           @default(false)
+  twoFactorSecret        String?
+  twoFactorMethod        TwoFactorMethod?
   createdAt              DateTime          @default(now())
   updatedAt              DateTime          @updatedAt
   accounts               Account[]
@@ -150,7 +153,11 @@ model Deposit {
   updatedAt       DateTime  @updatedAt
   metadata        Json?     @default("{}")
   transactionId   String?
+  transactionHash String?   // Blockchain transaction hash
   type            String?
+  fee             Decimal?  // Transaction fee
+  confirmations   Int       @default(0) // Number of confirmations (0-6 for BTC)
+  targetAsset     String?   // Asset to credit (BTC, ETH, or null for USD balance)
   
   // NOWPayments fields
   paymentId       String?   @unique // NOWPayments payment_id
@@ -177,6 +184,8 @@ model Withdrawal {
   metadata      Json?     @default("{}")  // Stores fees, payment info, destination details
   transactionId String?
   type          String?  // CRYPTO_BTC, CRYPTO_ETH, BANK_TRANSFER, WIRE_TRANSFER
+  method        String?   // Payment method used
+  fee           Decimal?  // Withdrawal fee
   portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
   user          User?     @relation(fields: [userId], references: [id])
 }
@@ -544,6 +553,11 @@ enum UserRole {
 enum AccountType {
   INVESTOR
   TRADER
+}
+
+enum TwoFactorMethod {
+  APP
+  EMAIL
 }
 
 model UserActivity {

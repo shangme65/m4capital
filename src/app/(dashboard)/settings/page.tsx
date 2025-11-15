@@ -2,6 +2,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import ConfirmModal from "@/components/client/ConfirmModal";
 import {
   Upload,
   CheckCircle,
@@ -20,6 +21,10 @@ import {
   FileCheck,
   Settings as SettingsIcon,
   Database,
+  Eye,
+  EyeOff,
+  Key,
+  Smartphone,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -29,6 +34,15 @@ export default function SettingsPage() {
 
   // Modal state
   const [activeModal, setActiveModal] = useState<string | null>(null);
+
+  // Confirm modal state
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmModalConfig, setConfirmModalConfig] = useState({
+    title: "",
+    message: "",
+    onConfirm: () => {},
+    variant: "warning" as "danger" | "warning" | "info",
+  });
 
   // Email notification preferences state
   const [emailPreferences, setEmailPreferences] = useState({
@@ -48,6 +62,31 @@ export default function SettingsPage() {
   const [linkError, setLinkError] = useState<string | null>(null);
   const [linkSuccess, setLinkSuccess] = useState(false);
   const [loadingTelegram, setLoadingTelegram] = useState(true);
+
+  // Password change state
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // 2FA state
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [twoFactorMethod, setTwoFactorMethod] = useState<string | null>(null);
+  const [settingUp2FA, setSettingUp2FA] = useState(false);
+  const [twoFactorQRCode, setTwoFactorQRCode] = useState<string | null>(null);
+  const [twoFactorSecret, setTwoFactorSecret] = useState<string | null>(null);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verifying2FA, setVerifying2FA] = useState(false);
+  const [twoFactorError, setTwoFactorError] = useState<string | null>(null);
+  const [show2FASetup, setShow2FASetup] = useState(false);
+  const [disabling2FA, setDisabling2FA] = useState(false);
+  const [disable2FAPassword, setDisable2FAPassword] = useState("");
+  const [showDisable2FA, setShowDisable2FA] = useState(false);
 
   // KYC state
   const [kycStatus, setKycStatus] = useState<
@@ -145,6 +184,23 @@ export default function SettingsPage() {
     fetchTelegramStatus();
   }, []);
 
+  // Fetch 2FA status on mount
+  useEffect(() => {
+    const fetch2FAStatus = async () => {
+      try {
+        const response = await fetch("/api/user/profile");
+        if (response.ok) {
+          const data = await response.json();
+          setTwoFactorEnabled(data.twoFactorEnabled || false);
+          setTwoFactorMethod(data.twoFactorMethod || null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch 2FA status:", error);
+      }
+    };
+    fetch2FAStatus();
+  }, []);
+
   // Placeholder handlers (extend later)
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -231,24 +287,205 @@ export default function SettingsPage() {
 
   // Handle unlinking Telegram
   const handleTelegramUnlink = async () => {
-    if (!confirm("Are you sure you want to unlink your Telegram account?")) {
+    setConfirmModalConfig({
+      title: "Unlink Telegram Account",
+      message:
+        "Are you sure you want to unlink your Telegram account? You will no longer receive notifications via Telegram.",
+      variant: "warning",
+      onConfirm: async () => {
+        try {
+          const response = await fetch("/api/telegram/link", {
+            method: "DELETE",
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to unlink Telegram account");
+          }
+
+          setTelegramLinked(false);
+          setTelegramUsername(null);
+        } catch (error: any) {
+          setLinkError(error.message || "Failed to unlink Telegram account");
+        }
+      },
+    });
+    setShowConfirmModal(true);
+  };
+
+  // Handle password change
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError("All fields are required");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError("New password must be at least 8 characters long");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError("New passwords do not match");
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      const response = await fetch("/api/user/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to change password");
+      }
+
+      setPasswordSuccess(true);
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+
+      // Hide success message after 5 seconds
+      setTimeout(() => setPasswordSuccess(false), 5000);
+    } catch (error: any) {
+      setPasswordError(error.message || "Failed to change password");
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  // Handle forgot password
+  const handleForgotPassword = async () => {
+    if (!session?.user?.email) {
       return;
     }
 
     try {
-      const response = await fetch("/api/telegram/link", {
-        method: "DELETE",
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: session.user.email }),
       });
 
+      if (response.ok) {
+        alert(
+          "Password reset instructions have been sent to your email address."
+        );
+      } else {
+        alert("Failed to send password reset email. Please try again.");
+      }
+    } catch (error) {
+      alert("An error occurred. Please try again.");
+    }
+  };
+
+  // Handle 2FA setup
+  const handle2FASetup = async (method: "APP" | "EMAIL") => {
+    setTwoFactorError(null);
+    setSettingUp2FA(true);
+
+    try {
+      const response = await fetch("/api/user/2fa/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ method }),
+      });
+
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Failed to unlink Telegram account");
+        throw new Error(data.error || "Failed to setup 2FA");
       }
 
-      setTelegramLinked(false);
-      setTelegramUsername(null);
-      alert("Telegram account unlinked successfully");
+      if (method === "APP") {
+        setTwoFactorQRCode(data.qrCode);
+        setTwoFactorSecret(data.secret);
+        setShow2FASetup(true);
+      } else {
+        setTwoFactorMethod("EMAIL");
+        setTwoFactorEnabled(true);
+        alert(data.message);
+      }
     } catch (error: any) {
-      alert(error.message || "Failed to unlink Telegram account");
+      setTwoFactorError(error.message || "Failed to setup 2FA");
+    } finally {
+      setSettingUp2FA(false);
+    }
+  };
+
+  // Handle 2FA verification
+  const handle2FAVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTwoFactorError(null);
+    setVerifying2FA(true);
+
+    try {
+      const response = await fetch("/api/user/2fa/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: verificationCode }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to verify code");
+      }
+
+      setTwoFactorEnabled(true);
+      setTwoFactorMethod("APP");
+      setShow2FASetup(false);
+      setVerificationCode("");
+      setTwoFactorQRCode(null);
+      setTwoFactorSecret(null);
+      alert("Two-factor authentication enabled successfully!");
+    } catch (error: any) {
+      setTwoFactorError(error.message || "Failed to verify code");
+    } finally {
+      setVerifying2FA(false);
+    }
+  };
+
+  // Handle 2FA disable
+  const handle2FADisable = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTwoFactorError(null);
+    setDisabling2FA(true);
+
+    try {
+      const response = await fetch("/api/user/2fa/disable", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: disable2FAPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to disable 2FA");
+      }
+
+      setTwoFactorEnabled(false);
+      setTwoFactorMethod(null);
+      setShowDisable2FA(false);
+      setDisable2FAPassword("");
+      alert("Two-factor authentication disabled successfully!");
+    } catch (error: any) {
+      setTwoFactorError(error.message || "Failed to disable 2FA");
+    } finally {
+      setDisabling2FA(false);
     }
   };
 
@@ -401,18 +638,6 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
-      {/* Back button */}
-      <div className="mb-2">
-        <button
-          onClick={() => router.back()}
-          aria-label="Go back"
-          className="inline-flex items-center gap-2 text-sm text-gray-300 hover:text-white px-3 py-1.5 rounded-lg bg-gray-800/60 border border-gray-700"
-        >
-          <span aria-hidden>←</span>
-          <span>Back</span>
-        </button>
-      </div>
-
       <header>
         <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
         <p className="text-gray-400 text-sm">
@@ -446,16 +671,6 @@ export default function SettingsPage() {
           );
         })}
       </div>
-
-      {/* Logout */}
-      <section className="flex justify-end pt-4">
-        <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="text-sm text-red-400 hover:text-red-300 font-medium"
-        >
-          Log out
-        </button>
-      </section>
 
       {/* Profile Modal */}
       <SettingsModal
@@ -527,11 +742,362 @@ export default function SettingsPage() {
         onClose={closeModal}
         title="Security"
       >
-        <ul className="space-y-3 text-sm text-gray-300">
-          <li>• Password change (coming soon)</li>
-          <li>• Two-factor authentication (planned)</li>
-          <li>• Active sessions / device management (planned)</li>
-        </ul>
+        <div className="space-y-6 max-w-2xl">
+          {/* Password Change Section */}
+          <div className="border-b border-gray-700 pb-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Key className="w-5 h-5 text-orange-500" />
+              <h3 className="text-lg font-semibold text-white">
+                Change Password
+              </h3>
+            </div>
+
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              {/* Current Password */}
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1 text-gray-300"
+                  htmlFor="currentPassword"
+                >
+                  Current Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="currentPassword"
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="w-full bg-gray-700 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                    placeholder="Enter current password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    {showCurrentPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* New Password */}
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1 text-gray-300"
+                  htmlFor="newPassword"
+                >
+                  New Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="newPassword"
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full bg-gray-700 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                    placeholder="Enter new password (min 8 characters)"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label
+                  className="block text-sm font-medium mb-1 text-gray-300"
+                  htmlFor="confirmPassword"
+                >
+                  Confirm New Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full bg-gray-700 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                    placeholder="Confirm new password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Error/Success Messages */}
+              {passwordError && (
+                <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
+                  <p className="text-sm text-red-400">{passwordError}</p>
+                </div>
+              )}
+
+              {passwordSuccess && (
+                <div className="bg-green-900/20 border border-green-700 rounded-lg p-3">
+                  <p className="text-sm text-green-400">
+                    Password changed successfully!
+                  </p>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
+                <button
+                  type="submit"
+                  disabled={changingPassword}
+                  className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                >
+                  {changingPassword ? "Changing..." : "Change Password"}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  Forgot Password?
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Two-Factor Authentication Section */}
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="w-5 h-5 text-orange-500" />
+              <h3 className="text-lg font-semibold text-white">
+                Two-Factor Authentication
+              </h3>
+            </div>
+
+            {!twoFactorEnabled ? (
+              !show2FASetup ? (
+                /* 2FA Not Enabled - Show Options */
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-300">
+                    Add an extra layer of security to your account by enabling
+                    two-factor authentication.
+                  </p>
+
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => handle2FASetup("APP")}
+                      disabled={settingUp2FA}
+                      className="w-full flex items-center gap-3 bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors text-left"
+                    >
+                      <Smartphone className="w-5 h-5 text-orange-500" />
+                      <div>
+                        <p className="font-medium text-white">
+                          Authenticator App
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          Use Google Authenticator, Authy, or similar apps
+                        </p>
+                      </div>
+                    </button>
+
+                    <button
+                      onClick={() => handle2FASetup("EMAIL")}
+                      disabled={settingUp2FA}
+                      className="w-full flex items-center gap-3 bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors text-left"
+                    >
+                      <Mail className="w-5 h-5 text-orange-500" />
+                      <div>
+                        <p className="font-medium text-white">Email</p>
+                        <p className="text-xs text-gray-400">
+                          Receive verification codes via email
+                        </p>
+                      </div>
+                    </button>
+                  </div>
+
+                  {twoFactorError && (
+                    <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
+                      <p className="text-sm text-red-400">{twoFactorError}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* 2FA Setup in Progress (APP method) */
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-300">
+                    Scan this QR code with your authenticator app:
+                  </p>
+
+                  {twoFactorQRCode && (
+                    <div className="flex justify-center bg-white p-4 rounded-lg">
+                      <img
+                        src={twoFactorQRCode}
+                        alt="2FA QR Code"
+                        className="w-48 h-48"
+                      />
+                    </div>
+                  )}
+
+                  {twoFactorSecret && (
+                    <div className="bg-gray-700 p-3 rounded-lg">
+                      <p className="text-xs text-gray-400 mb-1">
+                        Or enter this code manually:
+                      </p>
+                      <p className="text-sm font-mono text-white break-all">
+                        {twoFactorSecret}
+                      </p>
+                    </div>
+                  )}
+
+                  <form onSubmit={handle2FAVerification} className="space-y-4">
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1 text-gray-300"
+                        htmlFor="verificationCode"
+                      >
+                        Verification Code
+                      </label>
+                      <input
+                        id="verificationCode"
+                        type="text"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg tracking-widest"
+                        placeholder="000000"
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                      />
+                    </div>
+
+                    {twoFactorError && (
+                      <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
+                        <p className="text-sm text-red-400">{twoFactorError}</p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="submit"
+                        disabled={verifying2FA || verificationCode.length !== 6}
+                        className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                      >
+                        {verifying2FA ? "Verifying..." : "Enable 2FA"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShow2FASetup(false);
+                          setTwoFactorQRCode(null);
+                          setTwoFactorSecret(null);
+                          setVerificationCode("");
+                          setTwoFactorError(null);
+                        }}
+                        className="text-sm text-gray-400 hover:text-white transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )
+            ) : /* 2FA Enabled */
+            !showDisable2FA ? (
+              <div className="space-y-4">
+                <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                    <p className="text-sm text-green-400 font-medium">
+                      Two-Factor Authentication is Enabled
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Method:{" "}
+                    {twoFactorMethod === "APP" ? "Authenticator App" : "Email"}
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setShowDisable2FA(true)}
+                  className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                >
+                  Disable 2FA
+                </button>
+              </div>
+            ) : (
+              /* Disable 2FA Form */
+              <div className="space-y-4">
+                <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4">
+                  <p className="text-sm text-yellow-400">
+                    Warning: Disabling two-factor authentication will make your
+                    account less secure.
+                  </p>
+                </div>
+
+                <form onSubmit={handle2FADisable} className="space-y-4">
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-1 text-gray-300"
+                      htmlFor="disable2FAPassword"
+                    >
+                      Confirm Password
+                    </label>
+                    <input
+                      id="disable2FAPassword"
+                      type="password"
+                      value={disable2FAPassword}
+                      onChange={(e) => setDisable2FAPassword(e.target.value)}
+                      className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                      placeholder="Enter your password"
+                    />
+                  </div>
+
+                  {twoFactorError && (
+                    <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
+                      <p className="text-sm text-red-400">{twoFactorError}</p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="submit"
+                      disabled={disabling2FA}
+                      className="bg-red-600 hover:bg-red-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                    >
+                      {disabling2FA ? "Disabling..." : "Confirm Disable"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowDisable2FA(false);
+                        setDisable2FAPassword("");
+                        setTwoFactorError(null);
+                      }}
+                      className="text-sm text-gray-400 hover:text-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
       </SettingsModal>
 
       {/* KYC Modal */}
@@ -596,19 +1162,6 @@ export default function SettingsPage() {
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </form>
-      </SettingsModal>
-
-      {/* Security Modal */}
-      <SettingsModal
-        isOpen={activeModal === "security"}
-        onClose={closeModal}
-        title="Security"
-      >
-        <ul className="space-y-3 text-sm text-gray-300">
-          <li>• Password change (coming soon)</li>
-          <li>• Two-factor authentication (planned)</li>
-          <li>• Active sessions / device management (planned)</li>
-        </ul>
       </SettingsModal>
 
       {/* KYC Modal */}
@@ -1499,6 +2052,16 @@ export default function SettingsPage() {
           <li>• Consent & regulatory disclosures</li>
         </ul>
       </SettingsModal>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={confirmModalConfig.onConfirm}
+        title={confirmModalConfig.title}
+        message={confirmModalConfig.message}
+        variant={confirmModalConfig.variant}
+      />
     </div>
   );
 }
