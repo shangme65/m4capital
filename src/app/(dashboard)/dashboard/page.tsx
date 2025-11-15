@@ -612,10 +612,18 @@ function DashboardContent() {
           </span>
         </div>
 
-        {/* Progress bar */}
+        {/* Progress bar - Dynamic based on actual balance */}
         <div className="mt-3">
           <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
-            <div className="h-full bg-blue-500 rounded-full transition-all duration-300 w-[22%]" />
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
+              style={{
+                width: `${Math.min(
+                  Math.max((availableBalance / 10000) * 100, 0),
+                  100
+                )}%`,
+              }}
+            />
           </div>
         </div>
       </div>

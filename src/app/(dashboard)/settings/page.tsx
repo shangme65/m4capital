@@ -53,6 +53,7 @@ export default function SettingsPage() {
   const [kycStatus, setKycStatus] = useState<
     "NOT_STARTED" | "PENDING" | "APPROVED" | "REJECTED"
   >("NOT_STARTED");
+  const [kycStage, setKycStage] = useState(1); // 1: Personal Info, 2: Address Info, 3: Documents
   const [documents, setDocuments] = useState({
     idDocument: null as File | null,
     proofOfAddress: null as File | null,
@@ -667,323 +668,429 @@ export default function SettingsPage() {
           {/* KYC Form (only show if not approved) */}
           {kycStatus !== "APPROVED" && (
             <form onSubmit={handleKycSubmit} className="space-y-6">
-              {/* Personal Information */}
-              <div>
-                <h4 className="text-base font-semibold text-white mb-4">
-                  Personal Information
-                </h4>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="firstName"
-                    >
-                      First Name *
-                    </label>
-                    <input
-                      id="firstName"
-                      type="text"
-                      required
-                      value={kycData.firstName}
-                      onChange={(e) =>
-                        setKycData({ ...kycData, firstName: e.target.value })
-                      }
-                      className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="John"
-                    />
+              {/* Stage Indicator */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                      kycStage >= 1
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-600 text-gray-400"
+                    }`}
+                  >
+                    {kycStage > 1 ? "✓" : "1"}
                   </div>
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="lastName"
-                    >
-                      Last Name *
-                    </label>
-                    <input
-                      id="lastName"
-                      type="text"
-                      required
-                      value={kycData.lastName}
-                      onChange={(e) =>
-                        setKycData({ ...kycData, lastName: e.target.value })
-                      }
-                      className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="Doe"
-                    />
+                  <div
+                    className={`h-1 w-16 ${
+                      kycStage >= 2 ? "bg-orange-500" : "bg-gray-600"
+                    }`}
+                  />
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                      kycStage >= 2
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-600 text-gray-400"
+                    }`}
+                  >
+                    {kycStage > 2 ? "✓" : "2"}
                   </div>
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="dateOfBirth"
-                    >
-                      Date of Birth *
-                    </label>
-                    <input
-                      id="dateOfBirth"
-                      type="date"
-                      required
-                      value={kycData.dateOfBirth}
-                      onChange={(e) =>
-                        setKycData({ ...kycData, dateOfBirth: e.target.value })
-                      }
-                      className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="nationality"
-                    >
-                      Nationality *
-                    </label>
-                    <input
-                      id="nationality"
-                      type="text"
-                      required
-                      value={kycData.nationality}
-                      onChange={(e) =>
-                        setKycData({ ...kycData, nationality: e.target.value })
-                      }
-                      className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="United States"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="phoneNumber"
-                    >
-                      Phone Number *
-                    </label>
-                    <input
-                      id="phoneNumber"
-                      type="tel"
-                      required
-                      value={kycData.phoneNumber}
-                      onChange={(e) =>
-                        setKycData({ ...kycData, phoneNumber: e.target.value })
-                      }
-                      className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="+1 234 567 8900"
-                    />
+                  <div
+                    className={`h-1 w-16 ${
+                      kycStage >= 3 ? "bg-orange-500" : "bg-gray-600"
+                    }`}
+                  />
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                      kycStage >= 3
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-600 text-gray-400"
+                    }`}
+                  >
+                    3
                   </div>
                 </div>
+                <p className="text-sm text-gray-400">
+                  {kycStage === 1 && "Step 1 of 3: Personal Information"}
+                  {kycStage === 2 && "Step 2 of 3: Address Information"}
+                  {kycStage === 3 && "Step 3 of 3: Document Upload"}
+                </p>
               </div>
 
-              {/* Address Information */}
-              <div>
-                <h4 className="text-base font-semibold text-white mb-4">
-                  Address Information
-                </h4>
-                <div className="space-y-4">
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-1"
-                      htmlFor="address"
-                    >
-                      Street Address *
-                    </label>
-                    <input
-                      id="address"
-                      type="text"
-                      required
-                      value={kycData.address}
-                      onChange={(e) =>
-                        setKycData({ ...kycData, address: e.target.value })
-                      }
-                      className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                      placeholder="123 Main Street"
-                    />
-                  </div>
+              {/* Stage 1: Personal Information */}
+              {kycStage === 1 && (
+                <div>
+                  <h4 className="text-base font-semibold text-white mb-4">
+                    Personal Information
+                  </h4>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <label
                         className="block text-sm font-medium mb-1"
-                        htmlFor="city"
+                        htmlFor="firstName"
                       >
-                        City *
+                        First Name *
                       </label>
                       <input
-                        id="city"
+                        id="firstName"
                         type="text"
                         required
-                        value={kycData.city}
+                        value={kycData.firstName}
                         onChange={(e) =>
-                          setKycData({ ...kycData, city: e.target.value })
+                          setKycData({ ...kycData, firstName: e.target.value })
                         }
                         className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        placeholder="New York"
+                        placeholder="John"
                       />
                     </div>
                     <div>
                       <label
                         className="block text-sm font-medium mb-1"
-                        htmlFor="postalCode"
+                        htmlFor="lastName"
                       >
-                        Postal Code *
+                        Last Name *
                       </label>
                       <input
-                        id="postalCode"
+                        id="lastName"
                         type="text"
                         required
-                        value={kycData.postalCode}
+                        value={kycData.lastName}
                         onChange={(e) =>
-                          setKycData({ ...kycData, postalCode: e.target.value })
+                          setKycData({ ...kycData, lastName: e.target.value })
                         }
                         className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        placeholder="10001"
+                        placeholder="Doe"
                       />
                     </div>
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1"
+                        htmlFor="dateOfBirth"
+                      >
+                        Date of Birth *
+                      </label>
+                      <input
+                        id="dateOfBirth"
+                        type="date"
+                        required
+                        value={kycData.dateOfBirth}
+                        onChange={(e) =>
+                          setKycData({
+                            ...kycData,
+                            dateOfBirth: e.target.value,
+                          })
+                        }
+                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1"
+                        htmlFor="nationality"
+                      >
+                        Nationality *
+                      </label>
+                      <input
+                        id="nationality"
+                        type="text"
+                        required
+                        value={kycData.nationality}
+                        onChange={(e) =>
+                          setKycData({
+                            ...kycData,
+                            nationality: e.target.value,
+                          })
+                        }
+                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="United States"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1"
+                        htmlFor="phoneNumber"
+                      >
+                        Phone Number *
+                      </label>
+                      <input
+                        id="phoneNumber"
+                        type="tel"
+                        required
+                        value={kycData.phoneNumber}
+                        onChange={(e) =>
+                          setKycData({
+                            ...kycData,
+                            phoneNumber: e.target.value,
+                          })
+                        }
+                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="+1 234 567 8900"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Navigation Buttons */}
+                  <div className="flex justify-end mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setKycStage(2)}
+                      className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Document Upload */}
-              <div>
-                <h4 className="text-base font-semibold text-white mb-4">
-                  Document Upload
-                </h4>
-                <div className="space-y-4">
-                  {/* ID Document */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Government-Issued ID * (Passport, Driver's License, or
-                      National ID)
-                    </label>
-                    <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={(e) =>
-                          handleFileChange(
-                            "idDocument",
-                            e.target.files?.[0] || null
-                          )
-                        }
-                        className="hidden"
-                        id="idDocument"
-                        required
-                      />
-                      <label htmlFor="idDocument" className="cursor-pointer">
-                        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm text-gray-300">
-                          {documents.idDocument
-                            ? documents.idDocument.name
-                            : "Click to upload or drag and drop"}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          PNG, JPG or PDF (max 10MB)
-                        </p>
+              {/* Stage 2: Address Information */}
+              {kycStage === 2 && (
+                <div>
+                  <h4 className="text-base font-semibold text-white mb-4">
+                    Address Information
+                  </h4>
+                  <div className="space-y-4">
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1"
+                        htmlFor="address"
+                      >
+                        Street Address *
                       </label>
+                      <input
+                        id="address"
+                        type="text"
+                        required
+                        value={kycData.address}
+                        onChange={(e) =>
+                          setKycData({ ...kycData, address: e.target.value })
+                        }
+                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        placeholder="123 Main Street"
+                      />
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label
+                          className="block text-sm font-medium mb-1"
+                          htmlFor="city"
+                        >
+                          City *
+                        </label>
+                        <input
+                          id="city"
+                          type="text"
+                          required
+                          value={kycData.city}
+                          onChange={(e) =>
+                            setKycData({ ...kycData, city: e.target.value })
+                          }
+                          className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="New York"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="block text-sm font-medium mb-1"
+                          htmlFor="postalCode"
+                        >
+                          Postal Code *
+                        </label>
+                        <input
+                          id="postalCode"
+                          type="text"
+                          required
+                          value={kycData.postalCode}
+                          onChange={(e) =>
+                            setKycData({
+                              ...kycData,
+                              postalCode: e.target.value,
+                            })
+                          }
+                          className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                          placeholder="10001"
+                        />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Proof of Address */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Proof of Address * (Utility Bill, Bank Statement - less
-                      than 3 months old)
-                    </label>
-                    <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
+                  {/* Navigation Buttons */}
+                  <div className="flex justify-between mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setKycStage(1)}
+                      className="bg-gray-700 hover:bg-gray-600 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                    >
+                      <ChevronRight className="w-4 h-4 rotate-180" />
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setKycStage(3)}
+                      className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                    >
+                      Next
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Stage 3: Document Upload */}
+              {kycStage === 3 && (
+                <div>
+                  <h4 className="text-base font-semibold text-white mb-4">
+                    Document Upload
+                  </h4>
+                  <div className="space-y-4">
+                    {/* ID Document */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Government-Issued ID * (Passport, Driver's License, or
+                        National ID)
+                      </label>
+                      <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) =>
+                            handleFileChange(
+                              "idDocument",
+                              e.target.files?.[0] || null
+                            )
+                          }
+                          className="hidden"
+                          id="idDocument"
+                          required
+                        />
+                        <label htmlFor="idDocument" className="cursor-pointer">
+                          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm text-gray-300">
+                            {documents.idDocument
+                              ? documents.idDocument.name
+                              : "Click to upload or drag and drop"}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            PNG, JPG or PDF (max 10MB)
+                          </p>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Proof of Address */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Proof of Address * (Utility Bill, Bank Statement - less
+                        than 3 months old)
+                      </label>
+                      <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*,.pdf"
+                          onChange={(e) =>
+                            handleFileChange(
+                              "proofOfAddress",
+                              e.target.files?.[0] || null
+                            )
+                          }
+                          className="hidden"
+                          id="proofOfAddress"
+                          required
+                        />
+                        <label
+                          htmlFor="proofOfAddress"
+                          className="cursor-pointer"
+                        >
+                          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm text-gray-300">
+                            {documents.proofOfAddress
+                              ? documents.proofOfAddress.name
+                              : "Click to upload or drag and drop"}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            PNG, JPG or PDF (max 10MB)
+                          </p>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Selfie */}
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Selfie with ID * (Hold your ID next to your face)
+                      </label>
+                      <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) =>
+                            handleFileChange(
+                              "selfie",
+                              e.target.files?.[0] || null
+                            )
+                          }
+                          className="hidden"
+                          id="selfie"
+                          required
+                        />
+                        <label htmlFor="selfie" className="cursor-pointer">
+                          <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                          <p className="text-sm text-gray-300">
+                            {documents.selfie
+                              ? documents.selfie.name
+                              : "Click to upload or drag and drop"}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            PNG or JPG (max 10MB)
+                          </p>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Terms & Conditions */}
+                  <div className="bg-gray-700/30 rounded-lg p-4 mt-6">
+                    <div className="flex items-start gap-3">
                       <input
-                        type="file"
-                        accept="image/*,.pdf"
-                        onChange={(e) =>
-                          handleFileChange(
-                            "proofOfAddress",
-                            e.target.files?.[0] || null
-                          )
-                        }
-                        className="hidden"
-                        id="proofOfAddress"
+                        type="checkbox"
+                        id="kycTerms"
                         required
+                        className="mt-1 w-4 h-4 rounded border-gray-600 bg-gray-700 focus:ring-2 focus:ring-orange-500"
                       />
                       <label
-                        htmlFor="proofOfAddress"
-                        className="cursor-pointer"
+                        htmlFor="kycTerms"
+                        className="text-sm text-gray-300 flex-1"
                       >
-                        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm text-gray-300">
-                          {documents.proofOfAddress
-                            ? documents.proofOfAddress.name
-                            : "Click to upload or drag and drop"}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          PNG, JPG or PDF (max 10MB)
-                        </p>
+                        I certify that all information provided is accurate and
+                        complete. I understand that providing false information
+                        may result in account suspension or legal action.
                       </label>
                     </div>
                   </div>
 
-                  {/* Selfie */}
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Selfie with ID * (Hold your ID next to your face)
-                    </label>
-                    <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) =>
-                          handleFileChange(
-                            "selfie",
-                            e.target.files?.[0] || null
-                          )
-                        }
-                        className="hidden"
-                        id="selfie"
-                        required
-                      />
-                      <label htmlFor="selfie" className="cursor-pointer">
-                        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm text-gray-300">
-                          {documents.selfie
-                            ? documents.selfie.name
-                            : "Click to upload or drag and drop"}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          PNG or JPG (max 10MB)
-                        </p>
-                      </label>
-                    </div>
+                  {/* Navigation Buttons with Submit */}
+                  <div className="flex justify-between mt-6">
+                    <button
+                      type="button"
+                      onClick={() => setKycStage(2)}
+                      className="bg-gray-700 hover:bg-gray-600 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                    >
+                      <ChevronRight className="w-4 h-4 rotate-180" />
+                      Previous
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={submittingKyc || kycStatus === "PENDING"}
+                      className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      {submittingKyc
+                        ? "Submitting..."
+                        : kycStatus === "PENDING"
+                        ? "Under Review"
+                        : "Submit for Verification"}
+                    </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Terms & Conditions */}
-              <div className="bg-gray-700/30 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <input
-                    type="checkbox"
-                    id="kycTerms"
-                    required
-                    className="mt-1 w-4 h-4 rounded border-gray-600 bg-gray-700 focus:ring-2 focus:ring-orange-500"
-                  />
-                  <label
-                    htmlFor="kycTerms"
-                    className="text-sm text-gray-300 flex-1"
-                  >
-                    I certify that all information provided is accurate and
-                    complete. I understand that providing false information may
-                    result in account suspension or legal action.
-                  </label>
-                </div>
-              </div>
-
-              {/* Submit Button */}
-              <div className="flex justify-end">
-                <button
-                  type="submit"
-                  disabled={submittingKyc || kycStatus === "PENDING"}
-                  className="bg-orange-600 hover:bg-orange-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
-                >
-                  {submittingKyc
-                    ? "Submitting..."
-                    : kycStatus === "PENDING"
-                    ? "Under Review"
-                    : "Submit for Verification"}
-                </button>
-              </div>
+              )}
             </form>
           )}
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { User as PrismaUser } from "@prisma/client";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   DollarSign,
@@ -257,6 +258,7 @@ const paymentMethods: PaymentMethod[] = [
 
 const AdminDashboard = () => {
   const { data: session } = useSession();
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -728,7 +730,7 @@ const AdminDashboard = () => {
                   KYC Verification
                 </button>
                 <button
-                  onClick={() => (window.location.href = "/admin/analytics")}
+                  onClick={() => router.push("/admin/analytics")}
                   className="w-full bg-cyan-500/20 border border-cyan-500/30 hover:bg-cyan-500/30 text-cyan-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
                 >
                   <BarChart3 size={16} />
