@@ -17,7 +17,10 @@ export async function GET(request: NextRequest) {
     });
 
     if (admin?.role !== "ADMIN") {
-      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Admin access required" },
+        { status: 403 }
+      );
     }
 
     const { searchParams } = new URL(request.url);
