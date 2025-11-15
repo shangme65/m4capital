@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Next.js
+.next
+
+# Testing
+coverage
+.nyc_output
+
+# Misc
+.DS_Store
+*.pem
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+
+# Temp files
+temp_migration.sql
