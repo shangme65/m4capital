@@ -329,7 +329,7 @@ function Hero() {
       <BackgroundSlider images={images} />
       <div className="absolute inset-0 bg-black bg-opacity-50" />
 
-      <div className="relative z-10 text-center text-white p-4 overflow-hidden">
+      <div className="relative z-10 text-center text-white px-4 sm:px-6 md:px-8 overflow-hidden max-w-7xl mx-auto">
         <AnimatePresence mode="wait">
           <motion.h1
             key={`title-${contentIndex}`}
@@ -338,13 +338,13 @@ function Hero() {
             animate="animate"
             exit="exit"
             transition={{ duration: 0.7, ease: "circOut" }}
-            className="text-4xl md:text-6xl font-extrabold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400"
+            className="text-3xl xs:text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 xs:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 leading-tight"
             style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.5)" }}
           >
             {title}
           </motion.h1>
         </AnimatePresence>
-        <div className="h-28 flex items-center justify-center mb-8">
+        <div className="h-20 xs:h-24 sm:h-28 md:h-32 flex items-center justify-center mb-6 xs:mb-8">
           <AnimatePresence mode="wait">
             <motion.p
               key={`desc-${contentIndex}`}
@@ -353,18 +353,18 @@ function Hero() {
               animate="animate"
               exit="exit"
               transition={{ duration: 0.7, ease: "circOut" }}
-              className="text-xl md:text-2xl drop-shadow-md max-w-3xl mx-auto"
+              className="text-base xs:text-lg sm:text-xl md:text-2xl drop-shadow-md max-w-xs xs:max-w-md sm:max-w-2xl md:max-w-3xl mx-auto px-2"
             >
               {description}
             </motion.p>
           </AnimatePresence>
         </div>
-        <div className="space-x-4 mt-12">
+        <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 mt-12 items-center justify-center px-4">
           {session ? (
             // Logged in - Show "Go to Traderoom" button
             <button
               onClick={() => router.push("/dashboard/traderoom")}
-              className="bg-orange-500 hover:bg-orange-600 text-white px-10 py-4 rounded-lg font-semibold text-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+              className="w-full xs:w-auto bg-orange-500 hover:bg-orange-600 text-white px-8 xs:px-10 py-3 xs:py-4 rounded-lg font-semibold text-base xs:text-lg transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
             >
               Go to Traderoom
             </button>
@@ -373,13 +373,13 @@ function Hero() {
             <>
               <button
                 onClick={openSignupModal}
-                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
+                className="w-full xs:w-auto bg-orange-500 hover:bg-orange-600 text-white px-6 xs:px-8 py-3 rounded-lg font-semibold text-base xs:text-lg transition-all duration-200 transform hover:scale-105"
               >
                 Get Started
               </button>
               <button
                 onClick={openLoginModal}
-                className="bg-gray-700 hover:bg-gray-600 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 border border-gray-600"
+                className="w-full xs:w-auto bg-gray-700 hover:bg-gray-600 text-white px-6 xs:px-8 py-3 rounded-lg font-semibold text-base xs:text-lg transition-all duration-200 transform hover:scale-105 border border-gray-600"
               >
                 Try Free Demo
               </button>
