@@ -725,7 +725,7 @@ export default function SettingsPage() {
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
                       <label
-                        className="block text-sm font-medium mb-1"
+                        className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                         htmlFor="firstName"
                       >
                         First Name *
@@ -738,16 +738,16 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           setKycData({ ...kycData, firstName: e.target.value })
                         }
-                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        placeholder="John"
+                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                        placeholder="Enter your first name"
                       />
                     </div>
                     <div>
                       <label
-                        className="block text-sm font-medium mb-1"
+                        className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                         htmlFor="lastName"
                       >
-                        Last Name *
+                        Last Name (Surname) *
                       </label>
                       <input
                         id="lastName"
@@ -757,13 +757,13 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           setKycData({ ...kycData, lastName: e.target.value })
                         }
-                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        placeholder="Doe"
+                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                        placeholder="Enter your surname"
                       />
                     </div>
                     <div>
                       <label
-                        className="block text-sm font-medium mb-1"
+                        className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                         htmlFor="dateOfBirth"
                       >
                         Date of Birth *
@@ -779,12 +779,12 @@ export default function SettingsPage() {
                             dateOfBirth: e.target.value,
                           })
                         }
-                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
                       />
                     </div>
                     <div>
                       <label
-                        className="block text-sm font-medium mb-1"
+                        className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                         htmlFor="nationality"
                       >
                         Nationality *
@@ -800,13 +800,13 @@ export default function SettingsPage() {
                             nationality: e.target.value,
                           })
                         }
-                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        placeholder="United States"
+                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                        placeholder="e.g., United States, Nigeria, etc."
                       />
                     </div>
                     <div>
                       <label
-                        className="block text-sm font-medium mb-1"
+                        className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                         htmlFor="phoneNumber"
                       >
                         Phone Number *
@@ -822,7 +822,7 @@ export default function SettingsPage() {
                             phoneNumber: e.target.value,
                           })
                         }
-                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
                         placeholder="+1 234 567 8900"
                       />
                     </div>
@@ -832,7 +832,30 @@ export default function SettingsPage() {
                   <div className="flex justify-end mt-6">
                     <button
                       type="button"
-                      onClick={() => setKycStage(2)}
+                      onClick={() => {
+                        // Validate all required fields
+                        if (!kycData.firstName.trim()) {
+                          alert("Please enter your First Name");
+                          return;
+                        }
+                        if (!kycData.lastName.trim()) {
+                          alert("Please enter your Last Name (Surname)");
+                          return;
+                        }
+                        if (!kycData.dateOfBirth) {
+                          alert("Please select your Date of Birth");
+                          return;
+                        }
+                        if (!kycData.nationality.trim()) {
+                          alert("Please enter your Nationality");
+                          return;
+                        }
+                        if (!kycData.phoneNumber.trim()) {
+                          alert("Please enter your Phone Number");
+                          return;
+                        }
+                        setKycStage(2);
+                      }}
                       className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                     >
                       Next
@@ -851,7 +874,7 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div>
                       <label
-                        className="block text-sm font-medium mb-1"
+                        className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                         htmlFor="address"
                       >
                         Street Address *
@@ -864,14 +887,14 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           setKycData({ ...kycData, address: e.target.value })
                         }
-                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                        placeholder="123 Main Street"
+                        className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                        placeholder="e.g., 123 Main Street, Apt 4B"
                       />
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1"
+                          className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                           htmlFor="city"
                         >
                           City *
@@ -884,13 +907,13 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             setKycData({ ...kycData, city: e.target.value })
                           }
-                          className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                          placeholder="New York"
+                          className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                          placeholder="e.g., Lagos, New York, London"
                         />
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1"
+                          className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
                           htmlFor="postalCode"
                         >
                           Postal Code *
@@ -906,8 +929,8 @@ export default function SettingsPage() {
                               postalCode: e.target.value,
                             })
                           }
-                          className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                          placeholder="10001"
+                          className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
+                          placeholder="e.g., 10001, 100001, SW1A 1AA"
                         />
                       </div>
                     </div>
@@ -925,7 +948,22 @@ export default function SettingsPage() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setKycStage(3)}
+                      onClick={() => {
+                        // Validate all required address fields
+                        if (!kycData.address.trim()) {
+                          alert("Please enter your Street Address");
+                          return;
+                        }
+                        if (!kycData.city.trim()) {
+                          alert("Please enter your City");
+                          return;
+                        }
+                        if (!kycData.postalCode.trim()) {
+                          alert("Please enter your Postal Code");
+                          return;
+                        }
+                        setKycStage(3);
+                      }}
                       className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                     >
                       Next
@@ -944,7 +982,7 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     {/* ID Document */}
                     <div>
-                      <label className="block text-sm font-medium mb-2">
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                         Government-Issued ID * (Passport, Driver's License, or
                         National ID)
                       </label>
@@ -978,7 +1016,7 @@ export default function SettingsPage() {
 
                     {/* Proof of Address */}
                     <div>
-                      <label className="block text-sm font-medium mb-2">
+                      <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                         Proof of Address * (Utility Bill, Bank Statement - less
                         than 3 months old)
                       </label>
@@ -1015,7 +1053,7 @@ export default function SettingsPage() {
 
                     {/* Selfie */}
                     <div>
-                      <label className="block text-sm font-medium mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Selfie with ID * (Hold your ID next to your face)
                       </label>
                       <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
