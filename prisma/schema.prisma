@@ -72,6 +72,10 @@ model User {
   userStatistics         UserStatistics[]
   scheduledMessages      ScheduledMessage[]
   fileStorage            FileStorage[]
+  notifications          Notification[]
+  telegramLinkCode       TelegramLinkCode?
+  linkedTelegramId       BigInt?           @unique
+  linkedTelegramUsername String?
 }
 
 model VerificationToken {
@@ -344,12 +348,15 @@ model TelegramUser {
   bannedReason        String?
   messageCount        Int       @default(0)
   lastMessageAt       DateTime?
+  linkCode            String?
+  linkCodeExpiresAt   DateTime?
   joinedAt            DateTime  @default(now())
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
   @@index([telegramId])
   @@index([username])
+  @@index([linkCode])
 }
 
 model CryptoWatchlist {
@@ -485,6 +492,47 @@ model NewsArticle {
   publishedAt DateTime
   sentiment   String?  // "positive", "negative", "neutral"
   createdAt   DateTime @default(now())
+}
+
+model TelegramLinkCode {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  code      String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([code])
+  @@index([expiresAt])
+}
+
+model Notification {
+  id         String             @id @default(cuid())
+  userId     String
+  type       NotificationType
+  title      String
+  message    String
+  read       Boolean            @default(false)
+  amount     Decimal?
+  asset      String?
+  metadata   Json?              @default("{}")
+  createdAt  DateTime           @default(now())
+  
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, read])
+}
+
+enum NotificationType {
+  DEPOSIT
+  WITHDRAW
+  TRADE
+  INFO
+  WARNING
+  SUCCESS
+  TRANSACTION
 }
 
 enum UserRole {

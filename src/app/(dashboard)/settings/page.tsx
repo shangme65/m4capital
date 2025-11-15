@@ -10,6 +10,9 @@ import {
   AlertCircle,
   Bell,
   Mail,
+  MessageCircle,
+  Copy,
+  Check,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -26,6 +29,15 @@ export default function SettingsPage() {
   });
   const [loadingEmailPrefs, setLoadingEmailPrefs] = useState(true);
   const [savingEmailPrefs, setSavingEmailPrefs] = useState(false);
+
+  // Telegram linking state
+  const [telegramLinked, setTelegramLinked] = useState(false);
+  const [telegramUsername, setTelegramUsername] = useState<string | null>(null);
+  const [linkCode, setLinkCode] = useState("");
+  const [linkingTelegram, setLinkingTelegram] = useState(false);
+  const [linkError, setLinkError] = useState<string | null>(null);
+  const [linkSuccess, setLinkSuccess] = useState(false);
+  const [loadingTelegram, setLoadingTelegram] = useState(true);
 
   // KYC state
   const [kycStatus, setKycStatus] = useState<
@@ -101,6 +113,27 @@ export default function SettingsPage() {
     fetchKycStatus();
   }, []);
 
+  // Fetch Telegram linking status on mount
+  useEffect(() => {
+    const fetchTelegramStatus = async () => {
+      try {
+        const response = await fetch("/api/telegram/link");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.linked) {
+            setTelegramLinked(true);
+            setTelegramUsername(data.telegramUsername);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch Telegram status:", error);
+      } finally {
+        setLoadingTelegram(false);
+      }
+    };
+    fetchTelegramStatus();
+  }, []);
+
   // Placeholder handlers (extend later)
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,6 +181,63 @@ export default function SettingsPage() {
       alert("Failed to update email preferences. Please try again.");
     } finally {
       setSavingEmailPrefs(false);
+    }
+  };
+
+  // Handle Telegram linking with code
+  const handleTelegramLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLinkingTelegram(true);
+    setLinkError(null);
+    setLinkSuccess(false);
+
+    try {
+      const response = await fetch("/api/telegram/link", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: linkCode }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to link Telegram account");
+      }
+
+      setTelegramLinked(true);
+      setTelegramUsername(data.telegramUsername);
+      setLinkSuccess(true);
+      setLinkCode("");
+
+      // Hide success message after 5 seconds
+      setTimeout(() => setLinkSuccess(false), 5000);
+    } catch (error: any) {
+      setLinkError(error.message || "Failed to link Telegram account");
+    } finally {
+      setLinkingTelegram(false);
+    }
+  };
+
+  // Handle unlinking Telegram
+  const handleTelegramUnlink = async () => {
+    if (!confirm("Are you sure you want to unlink your Telegram account?")) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/telegram/link", {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to unlink Telegram account");
+      }
+
+      setTelegramLinked(false);
+      setTelegramUsername(null);
+      alert("Telegram account unlinked successfully");
+    } catch (error: any) {
+      alert(error.message || "Failed to unlink Telegram account");
     }
   };
 
@@ -873,6 +963,180 @@ export default function SettingsPage() {
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
                 Saving preferences...
               </div>
+            )}
+          </div>
+        )}
+      </AccordionSection>
+
+      {/* Accordion: Telegram Integration */}
+      <AccordionSection id="telegram" title="Telegram Integration">
+        {loadingTelegram ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <div className="flex items-start gap-3">
+              <MessageCircle className="w-5 h-5 text-blue-400 mt-1" />
+              <div className="flex-1">
+                <h3 className="font-medium text-white mb-2">
+                  Connect your Telegram account
+                </h3>
+                <p className="text-sm text-gray-400 mb-4">
+                  Link your M4 Capital account to Telegram to receive instant
+                  notifications, view your portfolio, and get real-time price
+                  alerts directly in Telegram.
+                </p>
+              </div>
+            </div>
+
+            {!telegramLinked ? (
+              <>
+                {/* Linking Instructions */}
+                <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
+                  <h4 className="font-medium text-white mb-3">How to link:</h4>
+                  <ol className="space-y-2 text-sm text-gray-300">
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-blue-400">1.</span>
+                      <span>
+                        Open Telegram and search for{" "}
+                        <span className="font-mono bg-gray-800 px-2 py-0.5 rounded">
+                          @M4CapitalBot
+                        </span>
+                      </span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-blue-400">2.</span>
+                      <span>
+                        Send the command{" "}
+                        <span className="font-mono bg-gray-800 px-2 py-0.5 rounded">
+                          /link
+                        </span>
+                      </span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-blue-400">3.</span>
+                      <span>Copy the 6-digit code you receive</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="font-semibold text-blue-400">4.</span>
+                      <span>Enter the code below</span>
+                    </li>
+                  </ol>
+                </div>
+
+                {/* Code Input Form */}
+                <form onSubmit={handleTelegramLink} className="space-y-4">
+                  <div>
+                    <label
+                      htmlFor="linkCode"
+                      className="block text-sm font-medium mb-2"
+                    >
+                      Enter your 6-digit linking code
+                    </label>
+                    <div className="flex gap-3">
+                      <input
+                        id="linkCode"
+                        type="text"
+                        value={linkCode}
+                        onChange={(e) => setLinkCode(e.target.value)}
+                        placeholder="123456"
+                        maxLength={6}
+                        pattern="[0-9]{6}"
+                        required
+                        className="flex-1 bg-gray-700 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg tracking-wider"
+                        disabled={linkingTelegram}
+                      />
+                      <button
+                        type="submit"
+                        disabled={linkingTelegram || linkCode.length !== 6}
+                        className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                      >
+                        {linkingTelegram ? "Linking..." : "Link Account"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Error Message */}
+                  {linkError && (
+                    <div className="bg-red-900/20 border border-red-700 rounded-lg p-3 flex items-start gap-2">
+                      <XCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-red-300">{linkError}</p>
+                    </div>
+                  )}
+
+                  {/* Success Message */}
+                  {linkSuccess && (
+                    <div className="bg-green-900/20 border border-green-700 rounded-lg p-3 flex items-start gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-green-300">
+                        Telegram account linked successfully!
+                      </p>
+                    </div>
+                  )}
+                </form>
+              </>
+            ) : (
+              <>
+                {/* Linked Status */}
+                <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-white mb-1">
+                        Telegram Connected
+                      </h3>
+                      <p className="text-sm text-gray-300">
+                        Your account is linked to{" "}
+                        {telegramUsername ? (
+                          <span className="font-mono bg-gray-800 px-2 py-0.5 rounded">
+                            @{telegramUsername}
+                          </span>
+                        ) : (
+                          "Telegram"
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Features Available */}
+                <div className="bg-gray-700/30 rounded-lg p-4">
+                  <h4 className="font-medium text-white mb-3">
+                    What you can do in Telegram:
+                  </h4>
+                  <ul className="space-y-2 text-sm text-gray-300">
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-400" />
+                      <span>View your portfolio balance and holdings</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-400" />
+                      <span>
+                        Receive instant deposit & withdrawal notifications
+                      </span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-400" />
+                      <span>Get real-time crypto price updates</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Check className="w-4 h-4 text-green-400" />
+                      <span>Set custom price alerts</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Unlink Button */}
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleTelegramUnlink}
+                    className="text-sm text-red-400 hover:text-red-300 font-medium"
+                  >
+                    Unlink Telegram Account
+                  </button>
+                </div>
+              </>
             )}
           </div>
         )}

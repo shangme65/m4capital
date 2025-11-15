@@ -46,6 +46,17 @@ export async function POST(req: Request) {
       },
     });
 
+    // Create welcome notification
+    await prisma.notification.create({
+      data: {
+        userId: user.id,
+        type: "INFO",
+        title: "Welcome to M4Capital",
+        message:
+          "Your account has been successfully created. Start trading now!",
+      },
+    });
+
     // Generate and send verification code
     try {
       const verificationCode = await createVerificationToken(normalizedEmail);

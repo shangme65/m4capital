@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
     if (text === "/start") {
       await sendTelegramMessage(
         chatId,
-        `Welcome to M4Capital\n\nI am your personal assistant and can help you with:\n\n💰 **Crypto Prices** - Ask about any of the top 320 cryptocurrencies\n🎨 **Image Generation** - Ask me to create, generate, or imagine images\n💬 **AI Chat** - Ask me anything!\n\n**Commands:**\n/clear - Reset conversation\n\n**Examples:**\n• "What's the price of Bitcoin?"\n• "Show me Ethereum and Solana prices"\n• "Generate an image of a futuristic city"\n• "Create a logo for a tech startup"`
+        `Welcome to M4Capital\n\nI am your personal assistant and can help you with:\n\n💰 **Crypto Prices** - Ask about any of the top 320 cryptocurrencies\n🎨 **Image Generation** - Ask me to create, generate, or imagine images\n💬 **AI Chat** - Ask me anything!\n🔗 **Account Linking** - Link your M4Capital account\n\n**Commands:**\n/link - Get code to link your account\n/clear - Reset conversation\n\n**Examples:**\n• "What's the price of Bitcoin?"\n• "Show me Ethereum and Solana prices"\n• "Generate an image of a futuristic city"\n• "Create a logo for a tech startup"`
       );
       return NextResponse.json({ ok: true });
     }
@@ -252,6 +252,64 @@ export async function POST(req: NextRequest) {
         "Conversation cleared! Starting fresh. 🔄"
       );
       return NextResponse.json({ ok: true });
+    }
+
+    // Handle /link command - Generate linking code
+    if (text === "/link") {
+      try {
+        // Generate a 6-digit linking code
+        const linkCode = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+        // Store the linking code with Telegram user info
+        const { PrismaClient } = await import("@prisma/client");
+        const prisma = new PrismaClient();
+
+        await prisma.telegramUser.upsert({
+          where: { telegramId: BigInt(userId) },
+          update: {
+            username: message.from.username || null,
+            firstName: message.from.first_name || null,
+            lastName: message.from.last_name || null,
+            linkCode: linkCode,
+            linkCodeExpiresAt: expiresAt,
+          },
+          create: {
+            telegramId: BigInt(userId),
+            username: message.from.username || null,
+            firstName: message.from.first_name || null,
+            lastName: message.from.last_name || null,
+            linkCode: linkCode,
+            linkCodeExpiresAt: expiresAt,
+          },
+        });
+
+        await prisma.$disconnect();
+
+        const responseMessage =
+          `🔗 **Account Linking Code**\n\n` +
+          `Your linking code is: \`${linkCode}\`\n\n` +
+          `⏱️ This code expires in 10 minutes.\n\n` +
+          `**To link your account:**\n` +
+          `1. Go to your M4Capital dashboard\n` +
+          `2. Navigate to Settings → Telegram\n` +
+          `3. Enter this code\n\n` +
+          `After linking, you'll be able to:\n` +
+          `• View your portfolio in Telegram\n` +
+          `• Receive real-time notifications\n` +
+          `• Get instant price alerts\n` +
+          `• Access your balance and transactions`;
+
+        await sendTelegramMessage(chatId, responseMessage);
+        return NextResponse.json({ ok: true });
+      } catch (error) {
+        console.error("Error generating link code:", error);
+        await sendTelegramMessage(
+          chatId,
+          "❌ Failed to generate linking code. Please try again."
+        );
+        return NextResponse.json({ ok: true });
+      }
     }
 
     // Get or initialize conversation history

@@ -112,6 +112,26 @@ export async function POST(request: NextRequest) {
           },
         },
       }),
+
+      // Create notification
+      prisma.notification.create({
+        data: {
+          userId: user.id,
+          type: "WITHDRAW",
+          title: "Withdrawal Processing",
+          message: `Your withdrawal of $${withdrawAmount.toLocaleString()} is being processed. Fees of $${totalFees.toFixed(
+            2
+          )} have been deducted.`,
+          amount: withdrawal.amount,
+          asset: withdrawal.currency,
+          metadata: {
+            withdrawalId: withdrawal.id,
+            fees: totalFees,
+            method: withdrawal.type,
+            estimatedCompletion: "1-3 business days",
+          },
+        },
+      }),
     ]);
 
     return NextResponse.json({

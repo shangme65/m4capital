@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { useSession } from "next-auth/react";
 
 export interface Notification {
   id: string;
@@ -62,29 +69,44 @@ const NotificationContext = createContext<NotificationContextType | undefined>(
 );
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [notifications, setNotifications] = useState<Notification[]>([
-    {
-      id: "1",
-      type: "info",
-      title: "Welcome to M4Capital",
-      message: "Your account has been successfully created. Start trading now!",
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      read: false,
-    },
-    {
-      id: "2",
-      type: "success",
-      title: "Account Verified",
-      message:
-        "Your account has been successfully verified. You can now access all features.",
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-      read: true,
-    },
-  ]);
-
+  const { data: session, status } = useSession();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [recentActivity, setRecentActivity] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  // Fetch notifications from API
+  const fetchNotifications = async () => {
+    if (!session?.user?.id) return;
+
+    try {
+      const response = await fetch("/api/notifications");
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(
+          data.notifications.map((n: any) => ({
+            ...n,
+            timestamp: new Date(n.timestamp),
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Poll for new notifications every 30 seconds
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.id) {
+      fetchNotifications();
+
+      const interval = setInterval(fetchNotifications, 30000); // Poll every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [session?.user?.id, status]);
 
   const addNotification = (
     notificationData: Omit<Notification, "id" | "timestamp" | "read">
@@ -108,22 +130,56 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setRecentActivity((prev) => [newTransaction, ...prev.slice(0, 9)]); // Keep only last 10 transactions
   };
 
-  const markNotificationAsRead = (id: string) => {
+  const markNotificationAsRead = async (id: string) => {
+    // Optimistically update UI
     setNotifications((prev) =>
       prev.map((notification) =>
         notification.id === id ? { ...notification, read: true } : notification
       )
     );
+
+    // Update on server
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId: id }),
+      });
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
   };
 
-  const markAllAsRead = () => {
+  const markAllAsRead = async () => {
+    // Optimistically update UI
     setNotifications((prev) =>
       prev.map((notification) => ({ ...notification, read: true }))
     );
+
+    // Update on server
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markAllAsRead: true }),
+      });
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
   };
 
-  const clearNotifications = () => {
+  const clearNotifications = async () => {
+    // Optimistically update UI
     setNotifications([]);
+
+    // Delete on server
+    try {
+      await fetch("/api/notifications", {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Failed to clear notifications:", error);
+    }
   };
 
   return (

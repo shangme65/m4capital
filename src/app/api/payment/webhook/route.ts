@@ -143,6 +143,25 @@ export async function POST(request: NextRequest) {
       );
       console.log(`New balance: ${newBalance}`);
 
+      // Create notification for successful deposit
+      await prisma.notification.create({
+        data: {
+          userId: deposit.user.id,
+          type: "DEPOSIT",
+          title: "Deposit Completed",
+          message: `Your deposit of $${deposit.amount} has been successfully credited to your account.`,
+          amount: deposit.amount,
+          asset: deposit.currency,
+          metadata: {
+            depositId: deposit.id,
+            transactionId: payment_id,
+            method: deposit.method,
+          },
+        },
+      });
+
+      console.log("✅ Notification created for deposit");
+
       // TODO: Send email notification to user
       // TODO: Send Telegram notification if enabled
     }
