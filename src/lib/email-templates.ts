@@ -24,10 +24,13 @@ export const emailTemplate = (content: string) => `
       text-align: center;
     }
     .logo-img {
-      max-width: 200px;
+      max-width: 180px;
       height: auto;
       display: block;
       margin: 0 auto;
+      background-color: white;
+      padding: 10px;
+      border-radius: 8px;
     }
     .content {
       padding: 40px 30px;
@@ -83,10 +86,9 @@ export const emailTemplate = (content: string) => `
     <div class="header">
       <img src="${
         process.env.NEXTAUTH_URL || "https://m4capital.online"
-      }/m4capitallogo1.png" alt="M4 Capital" class="logo-img" />
+      }/m4capitallogo2.png" alt="M4 Capital" class="logo-img" />
     </div>
-    <div class="content">
-      ${content}
+    <div class="content">${content}
     </div>
     <div class="footer">
       <p>© 2025 M4 Capital. All rights reserved.</p>

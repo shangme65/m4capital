@@ -204,26 +204,43 @@ async function completeDeposit(deposit: any, metadata: any) {
           to: user.email,
           subject: "Deposit Confirmed & Credited",
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #10b981;">✅ Deposit Successfully Completed!</h2>
-              <p>Hello ${user.name || "User"},</p>
-              <p>Great news! Your deposit has been confirmed and credited to your account.</p>
-              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="margin: 5px 0;"><strong>Amount:</strong> ${
-                  depositType === "crypto"
-                    ? `${amount} ${cryptoAsset}`
-                    : `$${amount}`
-                }</p>
-                <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #10b981;">COMPLETED</span></p>
-                <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; background-color: #f5f5f5;">
+              <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
+                  <img src="${
+                    process.env.NEXTAUTH_URL || "https://m4capital.online"
+                  }/m4capitallogo2.png" alt="M4 Capital" style="max-width: 180px; height: auto; display: block; margin: 0 auto; background-color: white; padding: 10px; border-radius: 8px;" />
+                </div>
+                <div style="padding: 40px 30px;">
+                  <h2 style="color: #10b981;">✅ Deposit Successfully Completed!</h2>
+                  <p>Hello ${user.name || "User"},</p>
+                  <p>Great news! Your deposit has been confirmed and credited to your account.</p>
+                  <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Amount:</strong> ${
+                      depositType === "crypto"
+                        ? `${amount} ${cryptoAsset}`
+                        : `$${amount}`
+                    }</p>
+                    <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #10b981;">COMPLETED</span></p>
+                    <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+                  </div>
+                  <p style="background-color: #d1fae5; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0;">
+                    <strong>✅ Your funds are now available!</strong> You can start trading immediately.
+                  </p>
+                </div>
+                <div style="padding: 30px; text-align: center; color: #999999; font-size: 14px; border-top: 1px solid #eeeeee;">
+                  <p>© 2025 M4 Capital. All rights reserved.</p>
+                  <p>This is an automated message. Please do not reply to this email.</p>
+                </div>
               </div>
-              <p style="background-color: #d1fae5; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0;">
-                <strong>✅ Your funds are now available!</strong> You can start trading immediately.
-              </p>
-              <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
-                This is an automated message. Please do not reply to this email.
-              </p>
-            </div>
+            </body>
+            </html>
           `,
         });
       }
