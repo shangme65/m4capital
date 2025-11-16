@@ -333,7 +333,21 @@ const regionAllocations: AllocationData[] = [
   },
 ];
 
-export function PortfolioAnalytics() {
+interface PortfolioAnalyticsProps {
+  portfolioData?: {
+    totalValue: number;
+    todayChange: number;
+    todayChangePercent: number;
+    availableCash: number;
+    totalInvested: number;
+    totalReturn: number;
+    totalReturnPercent: number;
+  };
+}
+
+export function PortfolioAnalytics({
+  portfolioData: propPortfolioData,
+}: PortfolioAnalyticsProps = {}) {
   const [selectedTimeframe, setSelectedTimeframe] = useState("1Y");
   const [showDetails, setShowDetails] = useState<string | null>(null);
   const [selectedMetric, setSelectedMetric] = useState(0);
@@ -342,13 +356,21 @@ export function PortfolioAnalytics() {
     "value"
   );
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [portfolioData, setPortfolioData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [portfolioData, setPortfolioData] = useState<any>(
+    propPortfolioData || null
+  );
+  const [isLoading, setIsLoading] = useState(!propPortfolioData);
 
   const timeframes = ["1D", "1W", "1M", "3M", "6M", "1Y", "ALL"];
 
-  // Fetch real user portfolio data
+  // Fetch real user portfolio data only if not provided via props
   useEffect(() => {
+    if (propPortfolioData) {
+      setPortfolioData(propPortfolioData);
+      setIsLoading(false);
+      return;
+    }
+
     const fetchPortfolio = async () => {
       setIsLoading(true);
       try {
@@ -367,7 +389,7 @@ export function PortfolioAnalytics() {
     };
 
     fetchPortfolio();
-  }, [selectedTimeframe]);
+  }, [selectedTimeframe, propPortfolioData]);
 
   if (isLoading) {
     return (
@@ -393,17 +415,73 @@ export function PortfolioAnalytics() {
     }
   );
 
+  // Use real portfolio data if available, otherwise use mock data
   const totalValue =
-    portfolioData?.totalValue ||
+    portfolioData?.totalValue ??
+    propPortfolioData?.totalValue ??
     mockAssets.reduce((sum, asset) => sum + asset.value, 0);
+
   const totalChange =
-    portfolioData?.totalChange ||
+    portfolioData?.todayChange ??
+    propPortfolioData?.todayChange ??
     mockAssets.reduce(
       (sum, asset) => sum + (asset.value * asset.changePercent) / 100,
       0
     );
+
   const totalChangePercent =
-    portfolioData?.totalChangePercent || (totalChange / totalValue) * 100;
+    portfolioData?.todayChangePercent ??
+    propPortfolioData?.todayChangePercent ??
+    (totalValue > 0 ? (totalChange / totalValue) * 100 : 0);
+
+  const totalReturn =
+    propPortfolioData?.totalReturn ??
+    totalValue - (propPortfolioData?.totalInvested ?? 0);
+
+  const totalReturnPercent =
+    propPortfolioData?.totalReturnPercent ??
+    (propPortfolioData?.totalInvested && propPortfolioData.totalInvested > 0
+      ? ((totalValue - propPortfolioData.totalInvested) /
+          propPortfolioData.totalInvested) *
+        100
+      : 0);
+
+  // Create performance metrics with real data
+  const performanceMetrics: PerformanceMetric[] = [
+    {
+      label: "Total Return",
+      value: `${totalReturnPercent >= 0 ? "+" : ""}${totalReturnPercent.toFixed(
+        2
+      )}%`,
+      change:
+        totalChangePercent >= 0
+          ? `+${totalChangePercent.toFixed(1)}%`
+          : `${totalChangePercent.toFixed(1)}%`,
+      isPositive: totalChangePercent >= 0,
+      description: "Overall portfolio performance since inception",
+    },
+    {
+      label: "Available Cash",
+      value: `$${(propPortfolioData?.availableCash ?? 0).toLocaleString()}`,
+      description: "Cash available for investment",
+    },
+    {
+      label: "Total Invested",
+      value: `$${(propPortfolioData?.totalInvested ?? 0).toLocaleString()}`,
+      description: "Total capital deployed",
+    },
+    {
+      label: "Today's P&L",
+      value: `${totalChange >= 0 ? "+" : ""}$${Math.abs(
+        totalChange
+      ).toLocaleString()}`,
+      change: `${
+        totalChangePercent >= 0 ? "+" : ""
+      }${totalChangePercent.toFixed(1)}%`,
+      isPositive: totalChange >= 0,
+      description: "Today's profit or loss",
+    },
+  ];
 
   return (
     <div className="space-y-6">

@@ -385,7 +385,7 @@ function renderTabContent(
         />
       );
     case "analytics":
-      return <AnalyticsTab />;
+      return <AnalyticsTab portfolioData={portfolioData} />;
     case "reports":
       return <ReportsTab />;
     case "budgeting":
@@ -1005,8 +1005,8 @@ function OverviewTab({
 }
 
 // Placeholder components for other tabs (to be implemented)
-function AnalyticsTab() {
-  return <PortfolioAnalytics />;
+function AnalyticsTab({ portfolioData }: { portfolioData: any }) {
+  return <PortfolioAnalytics portfolioData={portfolioData} />;
 }
 
 function ReportsTab() {
