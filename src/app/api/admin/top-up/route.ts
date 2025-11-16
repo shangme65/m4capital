@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
         } Deposit`,
         message: `Your deposit of ${
           depositType === "crypto" ? `${amount} ${cryptoAsset}` : `$${amount}`
-        } is being processed. Confirmations: 0/6 (≈20 minutes)`,
+        } is being processed.`,
         amount: amount,
         asset: depositType === "crypto" ? cryptoAsset : "USD",
         metadata: {
@@ -407,42 +407,8 @@ async function startConfirmationSimulation(
       // Shorter intervals for serverless: 6 confirmations over 60 seconds
       const intervals = [10, 20, 30, 40, 50, 60]; // seconds
 
-      for (let i = 1; i <= 6; i++) {
-        // Wait for the interval
-        await new Promise((resolve) =>
-          setTimeout(
-            resolve,
-            (intervals[i - 1] - (i > 1 ? intervals[i - 2] : 0)) * 1000 // milliseconds
-          )
-        );
-
-        // Update confirmation count
-        await prisma.deposit.update({
-          where: { id: depositId },
-          data: { confirmations: i },
-        });
-
-        console.log(`✅ Deposit ${depositId}: ${i}/6 confirmations`);
-
-        // Send notification for progress
-        if (i < 6) {
-          await prisma.notification.create({
-            data: {
-              userId: userId,
-              type: "DEPOSIT",
-              title: "Deposit Confirmation Progress",
-              message: `Your deposit confirmation is in progress: ${i}/6 confirmations received.`,
-              amount: amount,
-              asset: depositType === "crypto" ? cryptoAsset! : "USD",
-              metadata: {
-                depositId,
-                confirmations: i,
-                targetConfirmations: 6,
-              },
-            },
-          });
-        }
-      }
+      // Note: Confirmations are now handled by /api/admin/process-single-deposit
+      // which sends only ONE progress notification at 1/6
 
       // After 6 confirmations, complete the deposit
       await completeDeposit(

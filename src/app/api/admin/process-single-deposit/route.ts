@@ -60,20 +60,20 @@ export async function POST(req: NextRequest) {
         `✅ Deposit ${depositId}: Updated to ${targetConfirmation}/6 confirmations`
       );
 
-      // Send progress notification
-      if (targetConfirmation < 6 && deposit.portfolio?.user) {
+      // Send progress notification ONLY at 1/6
+      if (targetConfirmation === 1 && deposit.portfolio?.user) {
         await prisma.notification.create({
           data: {
             userId: deposit.portfolio.user.id,
             type: "DEPOSIT",
             title: "Deposit Confirmation Progress",
-            message: `Your deposit confirmation is in progress: ${targetConfirmation}/6 confirmations received.`,
+            message: `Your deposit confirmation is in progress: 1/6 confirmations received.`,
             amount: Number(deposit.amount),
             asset:
               metadata.depositType === "crypto" ? metadata.cryptoAsset : "USD",
             metadata: {
               depositId,
-              confirmations: targetConfirmation,
+              confirmations: 1,
               targetConfirmations: 6,
             },
           },

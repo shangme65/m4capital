@@ -12,8 +12,6 @@ import {
   TrendingUp,
   Info,
   AlertTriangle,
-  ChevronDown,
-  ChevronRight,
 } from "lucide-react";
 import { useNotifications, Notification } from "@/contexts/NotificationContext";
 
@@ -164,7 +162,13 @@ export default function NotificationsPanel({
                         key={notification.id}
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className={`p-4 border-b border-gray-800 transition-colors hover:bg-gray-800 ${
+                        onClick={() => {
+                          toggleExpanded(notification.id);
+                          if (!notification.read) {
+                            markNotificationAsRead(notification.id);
+                          }
+                        }}
+                        className={`p-4 border-b border-gray-800 transition-colors hover:bg-gray-800 cursor-pointer ${
                           !notification.read
                             ? "bg-gray-800/50 border-l-4 border-l-orange-500"
                             : ""
@@ -190,51 +194,26 @@ export default function NotificationsPanel({
                               </span>
                             </div>
 
-                            {/* Expandable Message */}
+                            {/* Expandable Message - Click anywhere to expand */}
                             {notification.message && (
-                              <div className="mt-1">
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    toggleExpanded(notification.id);
-                                    if (!notification.read) {
-                                      markNotificationAsRead(notification.id);
-                                    }
-                                  }}
-                                  className="flex items-center gap-1 text-sm text-gray-400 hover:text-gray-300 transition-colors"
-                                >
-                                  {isExpanded ? (
-                                    <>
-                                      <ChevronDown className="w-4 h-4" />
-                                      <span>Hide details</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ChevronRight className="w-4 h-4" />
-                                      <span>Show details</span>
-                                    </>
-                                  )}
-                                </button>
-                                <AnimatePresence>
-                                  {isExpanded && (
-                                    <motion.p
-                                      initial={{ opacity: 0, height: 0 }}
-                                      animate={{ opacity: 1, height: "auto" }}
-                                      exit={{ opacity: 0, height: 0 }}
-                                      transition={{ duration: 0.2 }}
-                                      className="text-sm text-gray-400 mt-2 overflow-hidden"
-                                    >
-                                      {notification.message}
-                                    </motion.p>
-                                  )}
-                                </AnimatePresence>
-                              </div>
+                              <AnimatePresence>
+                                {isExpanded && (
+                                  <motion.p
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="text-sm text-gray-400 mt-2 overflow-hidden"
+                                  >
+                                    {notification.message}
+                                  </motion.p>
+                                )}
+                              </AnimatePresence>
                             )}
 
                             {notification.amount && notification.asset && (
-                              <div className="mt-2 text-xs text-orange-500 font-medium">
-                                {notification.type === "deposit" ? "+" : "-"}$
-                                {notification.amount.toLocaleString()}{" "}
+                              <div className="mt-2 text-xs text-green-500 font-medium">
+                                +${notification.amount.toLocaleString()}{" "}
                                 {notification.asset}
                               </div>
                             )}

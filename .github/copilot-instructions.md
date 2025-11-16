@@ -41,6 +41,7 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 **CRITICAL RULE:** Never run git commands (commit, push, checkout, merge) automatically without explicit user request.
 
 **FORBIDDEN actions:**
+
 - ❌ `git commit` without user asking to commit
 - ❌ `git push` without user asking to push
 - ❌ `git checkout` without user asking to switch branches
@@ -48,12 +49,14 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 - ❌ Any git operation in response to file changes or edits
 
 **ONLY perform git operations when user explicitly says:**
+
 - ✅ "push to github"
 - ✅ "commit these changes"
 - ✅ "merge to master"
 - ✅ "push to both branches"
 
 **When making code changes:**
+
 - Make the edits ONLY
 - DO NOT commit automatically
 - DO NOT push automatically
