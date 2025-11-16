@@ -36,6 +36,29 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 - Commit `.env` files to git (only `.env.example` with fake placeholders)
 - Create default/test accounts in production seeding
 
+### 🚫 NEVER PERFORM AUTOMATIC GIT OPERATIONS
+
+**CRITICAL RULE:** Never run git commands (commit, push, checkout, merge) automatically without explicit user request.
+
+**FORBIDDEN actions:**
+- ❌ `git commit` without user asking to commit
+- ❌ `git push` without user asking to push
+- ❌ `git checkout` without user asking to switch branches
+- ❌ `git merge` without user asking to merge
+- ❌ Any git operation in response to file changes or edits
+
+**ONLY perform git operations when user explicitly says:**
+- ✅ "push to github"
+- ✅ "commit these changes"
+- ✅ "merge to master"
+- ✅ "push to both branches"
+
+**When making code changes:**
+- Make the edits ONLY
+- DO NOT commit automatically
+- DO NOT push automatically
+- Wait for user to explicitly request git operations
+
 ### 📋 Code Review Checklist
 
 Before making any changes, verify:
@@ -47,6 +70,7 @@ Before making any changes, verify:
 - [ ] No test users or sample data in seed scripts
 - [ ] Database schema uses proper foreign keys and relations
 - [ ] All sensitive data is properly encrypted (bcrypt for passwords)
+- [ ] NOT performing automatic git operations without user request
 
 ## 1. The Big Picture: Architecture & Stack
 
