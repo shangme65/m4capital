@@ -342,6 +342,10 @@ interface PortfolioAnalyticsProps {
     totalInvested: number;
     totalReturn: number;
     totalReturnPercent: number;
+    assets?: any[];
+    portfolio?: {
+      assets?: any[];
+    };
   };
 }
 
@@ -403,17 +407,40 @@ export function PortfolioAnalytics({
     );
   }
 
-  const sortedAssets = [...(portfolioData?.assets || mockAssets)].sort(
-    (a, b) => {
-      const multiplier = sortOrder === "desc" ? -1 : 1;
-      if (sortBy === "value") return (a.value - b.value) * multiplier;
-      if (sortBy === "change")
-        return (a.changePercent - b.changePercent) * multiplier;
-      if (sortBy === "allocation")
-        return (a.allocation - b.allocation) * multiplier;
-      return 0;
-    }
-  );
+  // Convert user crypto assets to Asset format for display
+  const userCryptoAssets: Asset[] = (
+    portfolioData?.portfolio?.assets ||
+    propPortfolioData?.assets ||
+    []
+  ).map((asset: any) => ({
+    symbol: asset.symbol || asset.asset,
+    name: asset.name || asset.symbol,
+    value: asset.value || asset.amount * asset.price || 0,
+    shares: asset.amount || asset.quantity || 0,
+    price: asset.price || asset.currentPrice || 0,
+    change: 0,
+    changePercent: 0,
+    allocation: 0,
+    sector: "Cryptocurrency",
+    country: "Global",
+    marketCap: "N/A",
+    dayHigh: asset.price || 0,
+    dayLow: asset.price || 0,
+    volume: 0,
+    avgVolume: 0,
+  }));
+
+  const sortedAssets = [
+    ...(userCryptoAssets.length > 0 ? userCryptoAssets : mockAssets),
+  ].sort((a, b) => {
+    const multiplier = sortOrder === "desc" ? -1 : 1;
+    if (sortBy === "value") return (a.value - b.value) * multiplier;
+    if (sortBy === "change")
+      return (a.changePercent - b.changePercent) * multiplier;
+    if (sortBy === "allocation")
+      return (a.allocation - b.allocation) * multiplier;
+    return 0;
+  });
 
   // Use real portfolio data if available, otherwise use mock data
   const totalValue =

@@ -53,8 +53,23 @@ function DashboardContent() {
   const [showAssetDetails, setShowAssetDetails] = useState(false);
   const [showAllAssets, setShowAllAssets] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
-  const [activeView, setActiveView] = useState<"crypto" | "history">("crypto");
+  const [activeView, setActiveView] = useState<"crypto" | "history">(() => {
+    if (typeof window !== "undefined") {
+      return (
+        (localStorage.getItem("dashboardActiveView") as "crypto" | "history") ||
+        "crypto"
+      );
+    }
+    return "crypto";
+  });
   const [showAddCryptoModal, setShowAddCryptoModal] = useState(false);
+
+  // Persist activeView to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("dashboardActiveView", activeView);
+    }
+  }, [activeView]);
 
   const handleTransactionClick = (transaction: Transaction) => {
     // Enhance transaction with additional details for the modal
@@ -65,7 +80,8 @@ function DashboardContent() {
         transaction.type === "deposit" ? transaction.value * 0.02 : undefined,
       method: transaction.type === "deposit" ? "Bitcoin (BTC)" : undefined,
       description: `${transaction.type} transaction for ${transaction.asset}`,
-      confirmations: transaction.status === "pending" ? 3 : 6,
+      confirmations:
+        transaction.status === "pending" ? transaction.confirmations || 0 : 6,
       maxConfirmations: 6,
       hash:
         transaction.status !== "failed"
@@ -628,7 +644,9 @@ function DashboardContent() {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-gray-400 text-base sm:text-lg">Available</span>
+          <span className="text-gray-400 text-base sm:text-lg">
+            USD Balance
+          </span>
           <span className="text-white text-lg sm:text-xl font-medium">
             {portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>

@@ -168,23 +168,33 @@ export async function POST(req: NextRequest) {
                 <p style="margin: 5px 0;"><strong>Type:</strong> ${
                   depositType === "crypto"
                     ? `Cryptocurrency (${cryptoAsset})`
-                    : "Available Balance"
+                    : "USD Balance"
                 }</p>
-                <p style="margin: 5px 0;"><strong>Status:</strong> Pending (0/6 confirmations)</p>
+                <p style="margin: 5px 0;"><strong>Status:</strong> Processing...</p>
                 <p style="margin: 5px 0;"><strong>Transaction Hash:</strong> <code style="font-size: 11px;">${txHash}</code></p>
                 <p style="margin: 5px 0;"><strong>Network Fee:</strong> ${
-                  depositType === "crypto" ? `${fee} BTC` : `$${fee.toFixed(2)}`
+                  depositType === "crypto"
+                    ? `${fee.toFixed(2)} ${cryptoAsset}`
+                    : `$${fee.toFixed(2)}`
                 }</p>
-                <p style="margin: 5px 0;"><strong>Transaction ID:</strong> ${
-                  deposit.transactionId
-                }</p>
+                <p style="margin: 5px 0;"><strong>Transaction ID:</strong> ${(
+                  deposit.transactionId || ""
+                ).replace("ADMIN-", "")}</p>
                 <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>
               </div>
               <p style="background-color: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0;">
-                <strong>⏳ Please wait:</strong> Your deposit will be credited after 6 network confirmations. This typically takes 15-20 minutes.
+                <strong>⚡ Fast Processing:</strong> Your deposit is being processed and will be credited within seconds.
               </p>
-              ${adminNote ? `<p><strong>Note:</strong> ${adminNote}</p>` : ""}
-              <p>You'll be notified once your deposit is confirmed.</p>
+              <p><strong>Note:</strong> ${
+                depositType === "crypto"
+                  ? `Crypto deposit via ${cryptoAsset}`
+                  : "USD deposit via Bitcoin"
+              }</p>
+              ${
+                adminNote
+                  ? `<p><strong>Admin Note:</strong> ${adminNote}</p>`
+                  : ""
+              }
               <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
                 This is an automated message. Please do not reply to this email.
               </p>
@@ -197,19 +207,34 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Trigger confirmation simulation (completes in ~20 mins)
-    // This runs in the background
-    startConfirmationSimulation(
-      deposit.id,
-      user.id,
-      depositType,
-      cryptoAsset,
-      amount,
-      portfolio.id
-    );
+    // Store deposit start time for progressive confirmation
+    // The /api/cron/process-confirmations endpoint will handle updates
+    await prisma.deposit.update({
+      where: { id: deposit.id },
+      data: {
+        metadata: {
+          startTime: new Date().toISOString(),
+          depositType,
+          cryptoAsset,
+        },
+      },
+    });
+
+    // Trigger initial confirmation update (non-blocking)
+    fetch(
+      `${
+        process.env.NEXTAUTH_URL || "http://localhost:3000"
+      }/api/admin/process-single-deposit`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ depositId: deposit.id }),
+      }
+    ).catch((err) => console.error("Failed to trigger confirmation:", err));
 
     return NextResponse.json({
-      message: "Deposit initiated successfully. Confirmations in progress.",
+      message:
+        "Deposit initiated. Confirmations will complete within 1-2 minutes.",
       deposit: {
         id: deposit.id,
         amount: deposit.amount,
@@ -234,7 +259,127 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Background function to simulate confirmations over 20 minutes
+// Complete deposit immediately for admin manual deposits
+async function completeDepositImmediately(
+  depositId: string,
+  userId: string,
+  depositType: string,
+  cryptoAsset: string | null,
+  amount: number,
+  portfolioId: string,
+  user: any
+) {
+  try {
+    // Update deposit status to completed with all confirmations
+    await prisma.deposit.update({
+      where: { id: depositId },
+      data: {
+        status: "COMPLETED",
+        confirmations: 6,
+      },
+    });
+
+    // Credit the account
+    const portfolio = await prisma.portfolio.findUnique({
+      where: { id: portfolioId },
+    });
+
+    if (!portfolio) {
+      console.error("Portfolio not found for immediate completion");
+      return;
+    }
+
+    if (depositType === "balance") {
+      // Credit USD balance
+      await prisma.portfolio.update({
+        where: { id: portfolioId },
+        data: {
+          balance: {
+            increment: amount,
+          },
+        },
+      });
+    } else if (depositType === "crypto" && cryptoAsset) {
+      // Credit crypto asset
+      const assets = Array.isArray(portfolio.assets) ? portfolio.assets : [];
+      const existingAssetIndex = assets.findIndex(
+        (a: any) => a.symbol === cryptoAsset
+      );
+
+      if (existingAssetIndex >= 0 && assets[existingAssetIndex]) {
+        const asset = assets[existingAssetIndex] as any;
+        asset.amount = (asset.amount || 0) + parseFloat(amount.toString());
+      } else {
+        assets.push({
+          symbol: cryptoAsset,
+          amount: parseFloat(amount.toString()),
+        });
+      }
+
+      await prisma.portfolio.update({
+        where: { id: portfolioId },
+        data: { assets },
+      });
+    }
+
+    // Send completion notification
+    await prisma.notification.create({
+      data: {
+        userId: userId,
+        type: "DEPOSIT",
+        title: "Deposit Completed!",
+        message: `Your deposit of ${
+          depositType === "crypto" ? `${amount} ${cryptoAsset}` : `$${amount}`
+        } has been confirmed and credited to your account.`,
+        amount: amount,
+        asset: depositType === "crypto" ? cryptoAsset! : "USD",
+        metadata: {
+          depositId,
+          confirmations: 6,
+          status: "COMPLETED",
+        },
+      },
+    });
+
+    // Send completion email
+    if (user?.email && user.isEmailVerified) {
+      await sendEmail({
+        to: user.email,
+        subject: "Deposit Confirmed & Credited",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #10b981;">✅ Deposit Successfully Completed!</h2>
+            <p>Hello ${user.name || "User"},</p>
+            <p>Great news! Your deposit has been confirmed and credited to your account.</p>
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Amount:</strong> ${
+                depositType === "crypto"
+                  ? `${amount} ${cryptoAsset}`
+                  : `$${amount}`
+              }</p>
+              <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #10b981;">COMPLETED</span></p>
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+            </div>
+            <p style="background-color: #d1fae5; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0;">
+              <strong>✅ Your funds are now available!</strong> You can start trading immediately.
+            </p>
+            <p style="color: #6b7280; font-size: 12px; margin-top: 30px;">
+              This is an automated message. Please do not reply to this email.
+            </p>
+          </div>
+        `,
+      });
+    }
+
+    console.log(`✅ Deposit ${depositId} completed successfully`);
+  } catch (error) {
+    console.error("Error completing deposit immediately:", error);
+  }
+}
+
+// Background function to simulate confirmations over a short period
+// NOTE: This function is deprecated in favor of immediate completion
+// Kept for reference but not used in current implementation
 async function startConfirmationSimulation(
   depositId: string,
   userId: string,
@@ -243,18 +388,19 @@ async function startConfirmationSimulation(
   amount: number,
   portfolioId: string
 ) {
-  // Don't await this - let it run in background
-  setTimeout(async () => {
+  // Use setImmediate or process.nextTick to run asynchronously without blocking
+  // For serverless environments, we'll complete confirmations quickly
+  (async () => {
     try {
-      // Confirmation intervals: 6 confirmations over 20 minutes = ~3.33 minutes each
-      const intervals = [3.33, 6.66, 10, 13.33, 16.66, 20]; // minutes
+      // Shorter intervals for serverless: 6 confirmations over 60 seconds
+      const intervals = [10, 20, 30, 40, 50, 60]; // seconds
 
       for (let i = 1; i <= 6; i++) {
         // Wait for the interval
         await new Promise((resolve) =>
           setTimeout(
             resolve,
-            (intervals[i - 1] - (i > 1 ? intervals[i - 2] : 0)) * 60 * 1000
+            (intervals[i - 1] - (i > 1 ? intervals[i - 2] : 0)) * 1000 // milliseconds
           )
         );
 
@@ -263,6 +409,8 @@ async function startConfirmationSimulation(
           where: { id: depositId },
           data: { confirmations: i },
         });
+
+        console.log(`✅ Deposit ${depositId}: ${i}/6 confirmations`);
 
         // Send notification for progress
         if (i < 6) {
@@ -293,10 +441,12 @@ async function startConfirmationSimulation(
         amount,
         portfolioId
       );
+
+      console.log(`🎉 Deposit ${depositId} completed successfully`);
     } catch (error) {
       console.error("Confirmation simulation error:", error);
     }
-  }, 0);
+  })();
 }
 
 // Complete the deposit after confirmations
