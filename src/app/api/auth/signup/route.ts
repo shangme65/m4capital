@@ -10,25 +10,25 @@ export const dynamic = "force-dynamic";
 
 // Map countries to their currencies
 const COUNTRY_CURRENCY_MAP: Record<string, string> = {
-  "Nigeria": "NGN",
+  Nigeria: "NGN",
   "United States": "USD",
   "United Kingdom": "GBP",
-  "Canada": "CAD",
-  "Germany": "EUR",
-  "France": "EUR",
-  "Australia": "AUD",
-  "Japan": "JPY",
+  Canada: "CAD",
+  Germany: "EUR",
+  France: "EUR",
+  Australia: "AUD",
+  Japan: "JPY",
   "South Africa": "ZAR",
-  "Brazil": "BRL",
-  "India": "INR",
-  "China": "CNY",
-  "Mexico": "MXN",
-  "Spain": "EUR",
-  "Italy": "EUR",
-  "Netherlands": "EUR",
+  Brazil: "BRL",
+  India: "INR",
+  China: "CNY",
+  Mexico: "MXN",
+  Spain: "EUR",
+  Italy: "EUR",
+  Netherlands: "EUR",
   "South Korea": "KRW",
-  "Singapore": "SGD",
-  "UAE": "AED",
+  Singapore: "SGD",
+  UAE: "AED",
   "Saudi Arabia": "SAR",
 };
 
@@ -84,9 +84,10 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Determine preferred currency based on country
-    const preferredCurrency = country && COUNTRY_CURRENCY_MAP[country] 
-      ? COUNTRY_CURRENCY_MAP[country] 
-      : "USD";
+    const preferredCurrency =
+      country && COUNTRY_CURRENCY_MAP[country]
+        ? COUNTRY_CURRENCY_MAP[country]
+        : "USD";
 
     const user = await prisma.user.create({
       data: {

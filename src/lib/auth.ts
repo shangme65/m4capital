@@ -217,7 +217,9 @@ export const authOptions: AuthOptions = {
         session.user.role = token.role as string;
         session.user.accountType = token.accountType as string | undefined;
         session.user.isEmailVerified = token.isEmailVerified as boolean;
-        session.user.preferredCurrency = token.preferredCurrency as string | undefined;
+        session.user.preferredCurrency = token.preferredCurrency as
+          | string
+          | undefined;
         session.user.country = token.country as string | undefined;
       }
       console.log("✅ Session created successfully:", {
