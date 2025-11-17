@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
     const kycVerifications = await prisma.kycVerification.findMany({
       where,
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,
@@ -52,8 +52,8 @@ export async function GET(req: NextRequest) {
       kycVerifications: kycVerifications.map((kyc) => ({
         id: kyc.id,
         userId: kyc.userId,
-        userName: kyc.user.name,
-        userEmail: kyc.user.email,
+        userName: kyc.User.name,
+        userEmail: kyc.User.email,
         firstName: kyc.firstName,
         lastName: kyc.lastName,
         dateOfBirth: kyc.dateOfBirth,

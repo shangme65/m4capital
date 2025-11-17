@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -15,8 +16,8 @@ export async function GET() {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       include: {
-        portfolio: true,
-        paperPortfolio: true,
+        Portfolio: true,
+        PaperPortfolio: true,
       },
     });
 
@@ -29,6 +30,7 @@ export async function GET() {
     if (!user.Portfolio) {
       const newPortfolio = await prisma.portfolio.create({
         data: {
+          id: generateId(),
           userId: user.id,
           balance: 0,
           assets: [],
@@ -41,17 +43,19 @@ export async function GET() {
 
     // If user doesn't have a paper portfolio, create one
     let practiceBalance = 785440.0;
-    if (!user.paperPortfolio) {
+    if (!user.PaperPortfolio) {
       const newPaperPortfolio = await prisma.paperPortfolio.create({
         data: {
+          id: generateId(),
           userId: user.id,
           balance: 785440.0,
           assets: [],
+          updatedAt: new Date(),
         },
       });
       practiceBalance = 785440.0;
     } else {
-      practiceBalance = Number(user.paperPortfolio.balance);
+      practiceBalance = Number(user.PaperPortfolio.balance);
     }
 
     return NextResponse.json({

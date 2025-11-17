@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       include: {
-        kycVerification: {
+        KycVerification: {
           select: {
             id: true,
             status: true,
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
     }
 
     return NextResponse.json({
-      kycVerification: user.kycVerification,
+      kycVerification: user.KycVerification,
     });
   } catch (error) {
     console.error("KYC status error:", error);

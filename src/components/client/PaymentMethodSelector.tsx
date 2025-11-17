@@ -100,69 +100,6 @@ export default function PaymentMethodSelector({
       enabled: userBalance >= usdValue,
       type: "balance",
     },
-    {
-      id: "moonpay",
-      name: "MoonPay",
-      description: "Credit/Debit Card",
-      fee: "~3-5% fee",
-      icon: <CreditCard className="w-6 h-6" />,
-      enabled: true,
-      type: "provider",
-    },
-    {
-      id: "banxa",
-      name: "Banxa",
-      description: "Credit/Debit Card",
-      fee: "~3-4% fee",
-      icon: <CreditCard className="w-6 h-6" />,
-      enabled: true,
-      type: "provider",
-    },
-    {
-      id: "transak",
-      name: "Transak",
-      description: "Credit/Debit Card",
-      fee: "~3-4% fee",
-      icon: <CreditCard className="w-6 h-6" />,
-      enabled: true,
-      type: "provider",
-    },
-    {
-      id: "alchemypay",
-      name: "AlchemyPay",
-      description: "Credit/Debit Card",
-      fee: "~3-4% fee",
-      icon: <CreditCard className="w-6 h-6" />,
-      enabled: true,
-      type: "provider",
-    },
-    {
-      id: "simplex",
-      name: "Simplex",
-      description: "Credit/Debit Card",
-      fee: "~4-5% fee",
-      icon: <CreditCard className="w-6 h-6" />,
-      enabled: true,
-      type: "provider",
-    },
-    {
-      id: "nowpayments",
-      name: "NOWPayments",
-      description: "Crypto Deposit",
-      fee: "~1-2% fee",
-      icon: <Wallet className="w-6 h-6" />,
-      enabled: true,
-      type: "provider",
-    },
-    {
-      id: "custom-wallet",
-      name: "Bitcoin Wallet",
-      description: "Send directly to our wallet",
-      fee: "No fees",
-      icon: <Wallet className="w-6 h-6" />,
-      enabled: asset === "BTC" || asset === "Bitcoin",
-      type: "wallet",
-    },
   ];
 
   const cryptoProviders = [
@@ -304,11 +241,6 @@ export default function PaymentMethodSelector({
                         >
                           {method.description}
                         </div>
-                        {method.type === "provider" && method.fee && (
-                          <div className="text-xs text-green-400 mt-1">
-                            {method.fee}
-                          </div>
-                        )}
                       </div>
                     </div>
                     {method.enabled && (

@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -134,6 +135,7 @@ export async function POST(request: NextRequest) {
               // Create deposit record in portfolio
               await tx.deposit.create({
                 data: {
+                  id: generateId(),
                   portfolioId: portfolio.id,
                   userId: user.id,
                   amount: amountUSD,
@@ -142,6 +144,7 @@ export async function POST(request: NextRequest) {
                   method: "BITCOIN_WALLET",
                   transactionHash: latestTx.hash,
                   confirmations: confirmations,
+                  updatedAt: new Date(),
                   metadata: {
                     btcAmount: amountBTC,
                     btcPrice: btcPriceUSD,

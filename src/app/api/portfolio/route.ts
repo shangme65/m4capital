@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -114,6 +115,7 @@ export async function GET(request: NextRequest) {
       console.log("📝 Creating new portfolio for user:", user.id);
       portfolio = await prisma.portfolio.create({
         data: {
+          id: generateId(),
           userId: user.id,
           balance: 0.0,
           assets: [],

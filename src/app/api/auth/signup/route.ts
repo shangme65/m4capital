@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -73,6 +74,7 @@ export async function POST(req: Request) {
 
     const user = await prisma.user.create({
       data: {
+        id: generateId(),
         name,
         email: normalizedEmail,
         password: hashedPassword,
@@ -80,8 +82,11 @@ export async function POST(req: Request) {
         country: country || undefined,
         preferredCurrency,
         isEmailVerified: false,
-        portfolio: {
-          create: {},
+        updatedAt: new Date(),
+        Portfolio: {
+          create: {
+            id: generateId(),
+          },
         },
       },
     });
@@ -89,6 +94,7 @@ export async function POST(req: Request) {
     // Create welcome notification
     await prisma.notification.create({
       data: {
+        id: generateId(),
         userId: user.id,
         type: "INFO",
         title: "Welcome to M4Capital",

@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
     if (!portfolio) {
       portfolio = await prisma.portfolio.create({
         data: {
+          id: generateId(),
           userId: user.id,
           balance: 0,
           assets: [],
@@ -65,12 +67,14 @@ export async function POST(request: NextRequest) {
     // Create deposit record in database first
     const deposit = await prisma.deposit.create({
       data: {
+        id: generateId(),
         portfolioId: portfolio.id,
         userId: user.id,
         amount: parseFloat(amount),
         currency: currency,
         status: "PENDING",
         method: "NOWPAYMENTS_BTC",
+        updatedAt: new Date(),
       },
     });
 

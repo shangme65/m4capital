@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     // Find user with portfolio
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { portfolio: true },
+      include: { Portfolio: true },
     });
 
     if (!user) {
@@ -66,6 +67,7 @@ export async function POST(req: NextRequest) {
     if (!portfolio) {
       portfolio = await prisma.portfolio.create({
         data: {
+          id: generateId(),
           userId: userId,
           balance: 0, // Don't credit yet - wait for confirmations
           assets: [],
@@ -95,6 +97,7 @@ export async function POST(req: NextRequest) {
     // Create deposit transaction record as PENDING
     const deposit = await prisma.deposit.create({
       data: {
+        id: generateId(),
         portfolioId: portfolio.id,
         userId: user.id,
         amount: amount,
@@ -108,6 +111,7 @@ export async function POST(req: NextRequest) {
         fee: fee,
         confirmations: 0,
         targetAsset: depositType === "crypto" ? cryptoAsset : null,
+        updatedAt: new Date(),
         metadata: {
           paymentDetails: paymentDetails || {},
           adminNote: adminNote || `Manual top-up by ${processedBy}`,
@@ -123,6 +127,7 @@ export async function POST(req: NextRequest) {
     // Create in-app notification for PENDING deposit (incoming)
     await prisma.notification.create({
       data: {
+        id: generateId(),
         userId: user.id,
         type: "DEPOSIT",
         title: `Incoming ${
@@ -340,6 +345,7 @@ async function completeDepositImmediately(
     // Send completion notification
     await prisma.notification.create({
       data: {
+        id: generateId(),
         userId: userId,
         type: "DEPOSIT",
         title: "Deposit Completed!",
@@ -494,6 +500,7 @@ async function completeDeposit(
 
     await prisma.notification.create({
       data: {
+        id: generateId(),
         userId: userId,
         type: "DEPOSIT",
         title: "Deposit Completed!",

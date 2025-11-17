@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import speakeasy from "speakeasy";
@@ -84,6 +85,7 @@ export async function POST(req: NextRequest) {
     // Create notification
     await prisma.notification.create({
       data: {
+            id: generateId(),
         userId: user.id,
         type: "INFO",
         title: "Two-Factor Authentication Enabled",

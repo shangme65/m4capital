@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -72,6 +73,7 @@ export async function POST(request: NextRequest) {
     if (!portfolio) {
       portfolio = await prisma.portfolio.create({
         data: {
+          id: generateId(),
           userId: user.id,
           balance: 0.0,
           assets: [],
@@ -91,6 +93,7 @@ export async function POST(request: NextRequest) {
     const [trade, updatedPortfolio] = await prisma.$transaction([
       prisma.trade.create({
         data: {
+          id: generateId(),
           userId: user.id,
           symbol,
           side,
@@ -102,6 +105,7 @@ export async function POST(request: NextRequest) {
           leverage: leverage,
           status: "CLOSED",
           closedAt: closedAt ? new Date(closedAt) : new Date(),
+          updatedAt: new Date(),
         },
       }),
       prisma.portfolio.update({

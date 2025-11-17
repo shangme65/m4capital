@@ -12,7 +12,18 @@ interface ChartGridProps {
 export default function ChartGrid({
   gridType,
   defaultSymbol,
-  availableSymbols = ["BTC", "ETH", "BNB", "SOL", "ADA", "DOGE", "XRP", "DOT"],
+  availableSymbols = [
+    "BTC",
+    "ETH",
+    "XRP",
+    "TRX",
+    "TON",
+    "LTC",
+    "BCH",
+    "ETC",
+    "USDC",
+    "USDT",
+  ],
 }: ChartGridProps) {
   // Initialize chart symbols based on grid type
   const getInitialSymbols = () => {
@@ -25,30 +36,30 @@ export default function ChartGrid({
         return [
           defaultSymbol,
           availableSymbols[1] || "ETH",
-          availableSymbols[2] || "BNB",
-          availableSymbols[3] || "SOL",
+          availableSymbols[2] || "XRP",
+          availableSymbols[3] || "TRX",
         ];
       case 3:
         return [
           defaultSymbol,
           availableSymbols[1] || "ETH",
-          availableSymbols[2] || "BNB",
+          availableSymbols[2] || "XRP",
         ];
       case 4:
         return [
           defaultSymbol,
           availableSymbols[1] || "ETH",
-          availableSymbols[2] || "BNB",
-          availableSymbols[3] || "SOL",
+          availableSymbols[2] || "XRP",
+          availableSymbols[3] || "TRX",
         ];
       case 6:
         return [
           defaultSymbol,
           availableSymbols[1] || "ETH",
-          availableSymbols[2] || "BNB",
-          availableSymbols[3] || "SOL",
-          availableSymbols[4] || "ADA",
-          availableSymbols[5] || "DOGE",
+          availableSymbols[2] || "XRP",
+          availableSymbols[3] || "TRX",
+          availableSymbols[4] || "TON",
+          availableSymbols[5] || "LTC",
         ];
       default:
         return [defaultSymbol];

@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
@@ -107,6 +108,7 @@ export async function GET(request: Request) {
       if (!existingKyc) {
         await prisma.kycVerification.create({
           data: {
+            id: generateId(),
             userId: existingAdmin.id,
             firstName: name.split(" ")[0] || "Admin",
             lastName: name.split(" ").slice(1).join(" ") || "User",
@@ -123,6 +125,7 @@ export async function GET(request: Request) {
             status: "APPROVED",
             reviewedBy: "System",
             reviewedAt: new Date(),
+            updatedAt: new Date(),
           },
         });
       } else if (existingKyc.status !== "APPROVED") {
@@ -147,6 +150,7 @@ export async function GET(request: Request) {
       // Create new admin
       const newAdmin = await prisma.user.create({
         data: {
+          id: generateId(),
           email,
           password: hashedPassword,
           name,
@@ -157,14 +161,17 @@ export async function GET(request: Request) {
           isOriginAdmin: true, // Mark as the current origin admin
           country,
           preferredCurrency: currency,
-          portfolio: {
+          updatedAt: new Date(),
+          Portfolio: {
             create: {
+              id: generateId(),
               balance: 0,
               assets: [],
             },
           },
-          kycVerification: {
+          KycVerification: {
             create: {
+              id: generateId(),
               firstName: name.split(" ")[0] || "Admin",
               lastName: name.split(" ").slice(1).join(" ") || "User",
               dateOfBirth: "1990-01-01",
@@ -180,6 +187,7 @@ export async function GET(request: Request) {
               status: "APPROVED",
               reviewedBy: "System",
               reviewedAt: new Date(),
+              updatedAt: new Date(),
             },
           },
         },

@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -92,10 +93,10 @@ async function getTopCryptos(limit: number = 10): Promise<string[]> {
       return data.map((coin: any) => coin.id);
     }
 
-    return ["bitcoin", "ethereum", "binancecoin", "cardano", "solana"];
+    return ["bitcoin", "ethereum", "ripple", "tron", "the-open-network"];
   } catch (error) {
     console.error("Error fetching top cryptos:", error);
-    return ["bitcoin", "ethereum", "binancecoin", "cardano", "solana"];
+    return ["bitcoin", "ethereum", "ripple", "tron", "the-open-network"];
   }
 }
 
@@ -446,6 +447,7 @@ export async function POST(req: NextRequest) {
           // Create deposit transaction
           await prisma.deposit.create({
             data: {
+              id: generateId(),
               userId: user.id,
               portfolioId: user.Portfolio.id,
               amount: amountUSD,
@@ -453,6 +455,7 @@ export async function POST(req: NextRequest) {
               status: "COMPLETED",
               method: "TELEGRAM_STARS",
               transactionId: payment.telegram_payment_charge_id,
+              updatedAt: new Date(),
             },
           });
 
@@ -542,12 +545,14 @@ export async function POST(req: NextRequest) {
             linkCodeExpiresAt: expiresAt,
           },
           create: {
+            id: generateId(),
             telegramId: BigInt(userId),
             username: message.from.username || null,
             firstName: message.from.first_name || null,
             lastName: message.from.last_name || null,
             linkCode: linkCode,
             linkCodeExpiresAt: expiresAt,
+            updatedAt: new Date(),
           },
         });
 
@@ -640,6 +645,7 @@ export async function POST(req: NextRequest) {
         // Track activity
         await prisma.userActivity.create({
           data: {
+            id: generateId(),
             userId: user.id,
             activityType: "TELEGRAM_COMMAND",
             action: "/balance",
@@ -736,6 +742,7 @@ export async function POST(req: NextRequest) {
         // Track activity
         await prisma.userActivity.create({
           data: {
+            id: generateId(),
             userId: user.id,
             activityType: "TELEGRAM_COMMAND",
             action: "/portfolio",

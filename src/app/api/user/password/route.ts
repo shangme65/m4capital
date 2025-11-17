@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import bcrypt from "bcryptjs";
@@ -71,6 +72,7 @@ export async function PUT(req: NextRequest) {
     // Create notification
     await prisma.notification.create({
       data: {
+            id: generateId(),
         userId: user.id,
         type: "INFO",
         title: "Password Changed",

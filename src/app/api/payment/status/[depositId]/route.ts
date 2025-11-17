@@ -29,7 +29,7 @@ export async function GET(
     // Find deposit
     const deposit = await prisma.deposit.findUnique({
       where: { id: depositId },
-      include: { user: true },
+      include: { User: true },
     });
 
     if (!deposit) {
@@ -37,7 +37,7 @@ export async function GET(
     }
 
     // Verify user owns this deposit
-    if (deposit.user?.email !== session.user.email) {
+    if (deposit.User?.email !== session.user.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 

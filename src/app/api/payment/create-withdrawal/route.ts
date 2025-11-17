@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { generateId } from "@/lib/generate-id";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
     // Create withdrawal record
     const withdrawal = await prisma.withdrawal.create({
       data: {
+        id: generateId(),
         portfolioId: user.Portfolio.id,
         userId: user.id,
         amount: withdrawAmount,
@@ -92,6 +94,7 @@ export async function POST(request: NextRequest) {
           requestedAt: new Date().toISOString(),
           requiresPayment: true,
         },
+        updatedAt: new Date(),
       },
     });
 

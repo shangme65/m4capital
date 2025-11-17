@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
     // Get KYC verification
     const kycVerification = await prisma.kycVerification.findUnique({
       where: { id: kycId },
-      include: { user: true },
+      include: { User: true },
     });
 
     if (!kycVerification) {
@@ -76,13 +76,13 @@ export async function POST(req: NextRequest) {
     // Send email notification to user
     if (action === "APPROVE") {
       await sendKycApprovedEmail(
-        kycVerification.user.email!,
-        kycVerification.user.name || "User"
+        kycVerification.User.email!,
+        kycVerification.User.name || "User"
       );
     } else {
       await sendKycRejectedEmail(
-        kycVerification.user.email!,
-        kycVerification.user.name || "User",
+        kycVerification.User.email!,
+        kycVerification.User.name || "User",
         rejectionReason
       );
     }

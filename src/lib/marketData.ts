@@ -73,19 +73,14 @@ export class MarketDataService {
   private readonly CRYPTO_PAIRS = [
     "btcusdt",
     "ethusdt",
-    "bnbusdt",
-    "solusdt",
-    "adausdt",
     "xrpusdt",
-    "dogeusdt",
-    "dotusdt",
-    "maticusdt",
-    "linkusdt",
-    "avaxusdt",
-    "uniusdt",
-    "atomusdt",
+    "trxusdt",
+    "tonusdt",
     "ltcusdt",
+    "bchusdt",
     "etcusdt",
+    "usdcusdt",
+    "usdtusdt",
   ];
 
   // Forex pairs supported by Frankfurter API
