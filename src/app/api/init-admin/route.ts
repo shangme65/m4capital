@@ -24,6 +24,8 @@ export async function GET(request: Request) {
   const email = process.env.ORIGIN_ADMIN_EMAIL;
   const password = process.env.ORIGIN_ADMIN_PASSWORD;
   const name = process.env.ORIGIN_ADMIN_NAME || "Super Admin";
+  const country = process.env.ORIGIN_ADMIN_COUNTRY || "United States";
+  const currency = process.env.ORIGIN_ADMIN_CURRENCY || "USD";
 
   // Validate environment variables
   if (!email || !password) {
@@ -84,6 +86,8 @@ export async function GET(request: Request) {
           isEmailVerified: true, // Custom verification field
           isDeleted: false, // Ensure not deleted
           isOriginAdmin: true, // Mark as the current origin admin
+          country,
+          preferredCurrency: currency,
         },
         select: {
           id: true,
@@ -151,6 +155,8 @@ export async function GET(request: Request) {
           isEmailVerified: true, // Custom verification field
           accountType: "INVESTOR",
           isOriginAdmin: true, // Mark as the current origin admin
+          country,
+          preferredCurrency: currency,
           portfolio: {
             create: {
               balance: 0,

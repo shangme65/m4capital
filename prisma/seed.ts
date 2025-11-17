@@ -9,6 +9,8 @@ async function main() {
   // Get admin credentials from environment variables
   const adminEmail = process.env.ORIGIN_ADMIN_EMAIL;
   const adminPasswordRaw = process.env.ORIGIN_ADMIN_PASSWORD;
+  const adminCountry = process.env.ORIGIN_ADMIN_COUNTRY || "United States";
+  const adminCurrency = process.env.ORIGIN_ADMIN_CURRENCY || "USD";
 
   if (!adminEmail || !adminPasswordRaw) {
     console.error(
@@ -38,6 +40,8 @@ async function main() {
       role: "ADMIN",
       isEmailVerified: true,
       accountType: "INVESTOR",
+      country: adminCountry,
+      preferredCurrency: adminCurrency,
       portfolio: {
         create: {
           balance: 0, // Production starts with zero balance
