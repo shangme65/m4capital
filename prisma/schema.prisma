@@ -6,7 +6,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
 }
 
 model Account {
@@ -80,6 +79,7 @@ model User {
   linkedTelegramId       BigInt?           @unique
   linkedTelegramUsername String?
   activities             UserActivity[]
+  bitcoinDeposits        BitcoinDeposit[]
 }
 
 model VerificationToken {
@@ -594,4 +594,25 @@ enum ActivityType {
   KYC_SUBMISSION
   SETTINGS_UPDATE
   ERROR
+}
+
+model BitcoinDeposit {
+  id            String    @id @default(cuid())
+  userId        String
+  address       String    // Bitcoin address generated for user
+  amountBtc     Decimal?  // Amount in BTC received
+  amountUsd     Decimal?  // Amount in USD equivalent
+  status        String    @default("pending") // pending, completed, cancelled
+  txHash        String?   // Bitcoin transaction hash
+  confirmations Int       @default(0) // Number of confirmations
+  confirmedAt   DateTime? // When the deposit was confirmed
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  metadata      Json?     @default("{}") // Additional data (method, addressType, etc.)
+  
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([address])
+  @@index([status])
 }

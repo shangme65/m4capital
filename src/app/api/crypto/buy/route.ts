@@ -90,8 +90,8 @@ export async function POST(request: NextRequest) {
       updatedAssets = [...assets, { symbol, amount }];
     }
 
-    // Use transaction to atomically update portfolio and create transaction record
-    const [updatedPortfolio, transaction] = await prisma.$transaction([
+    // Use transaction to atomically update portfolio and create trade record
+    const [updatedPortfolio, trade] = await prisma.$transaction([
       prisma.portfolio.update({
         where: { id: portfolio.id },
         data: {
@@ -101,19 +101,25 @@ export async function POST(request: NextRequest) {
           assets: updatedAssets,
         },
       }),
-      prisma.transaction.create({
+      prisma.trade.create({
         data: {
           userId: user.id,
-          type: "PURCHASE",
-          method: "USD_BALANCE",
           symbol: symbol,
-          amount: new Decimal(totalCost),
-          status: "COMPLETED",
+          side: "BUY",
+          entryPrice: new Decimal(price),
+          quantity: new Decimal(amount),
+          profit: new Decimal(0),
+          commission: new Decimal(0),
+          status: "CLOSED",
+          openedAt: new Date(),
+          closedAt: new Date(),
           metadata: {
+            method: "USD_BALANCE",
             cryptoSymbol: symbol,
             cryptoAmount: amount,
             pricePerUnit: price,
             totalCost: totalCost,
+            purchaseType: "SPOT",
           },
         },
       }),
@@ -127,11 +133,13 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      transaction: {
-        id: transaction.id,
-        symbol: transaction.symbol,
-        amount: parseFloat(transaction.amount.toString()),
-        status: transaction.status,
+      trade: {
+        id: trade.id,
+        symbol,
+        amount,
+        price,
+        totalCost,
+        status: trade.status,
       },
       portfolio: {
         balance: parseFloat(updatedPortfolio.balance.toString()),

@@ -289,8 +289,17 @@ const AdminDashboard = () => {
   const [cryptoAsset, setCryptoAsset] = useState<string>("BTC");
   const [showAssetWarning, setShowAssetWarning] = useState(false);
   const [assetWarningMessage, setAssetWarningMessage] = useState("");
+  const [amountInputType, setAmountInputType] = useState<"usd" | "crypto">(
+    "usd"
+  );
 
   const cryptoAssets = ["BTC", "ETH", "USDT", "SOL", "XRP"];
+  const depositTypes = [
+    "Bank Transfer",
+    "Credit/Debit Card",
+    "PayPal",
+    "Wire Transfer",
+  ];
 
   // Show popup notification
   const showPopupNotification = (
@@ -298,6 +307,16 @@ const AdminDashboard = () => {
     type: "success" | "error" = "success"
   ) => {
     setNotificationMessage(message);
+
+    // Auto-hide admin mode notification after 3 seconds
+    useEffect(() => {
+      if (showAdminMode) {
+        const timer = setTimeout(() => {
+          setShowAdminMode(false);
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
+    }, [showAdminMode]);
     setNotificationType(type);
     setShowNotification(true);
     setTimeout(() => {
@@ -387,9 +406,11 @@ const AdminDashboard = () => {
     if (depositType === "crypto" && cryptoAsset === "BTC") {
       try {
         // Fetch user's portfolio to check for BTC asset
-        const portfolioRes = await fetch(`/api/admin/check-user-asset?userId=${selectedUser.id}&asset=BTC`);
+        const portfolioRes = await fetch(
+          `/api/admin/check-user-asset?userId=${selectedUser.id}&asset=BTC`
+        );
         const portfolioData = await portfolioRes.json();
-        
+
         if (!portfolioData.hasAsset) {
           setAssetWarningMessage(
             `⚠️ User doesn't have Bitcoin (BTC) in their portfolio yet.\n\nIf you continue, we will:\n• Create a pending deposit transaction\n• Generate transaction hash and calculate fees automatically\n• Send user a notification about incoming deposit\n• Start confirmation process (0/6 → 6/6 over 20 minutes)\n• Credit their account when confirmations complete\n\nContinue?`
@@ -399,7 +420,10 @@ const AdminDashboard = () => {
         }
       } catch (error) {
         console.error("Error checking user asset:", error);
-        showPopupNotification("Failed to verify user's assets. Please try again.", "error");
+        showPopupNotification(
+          "Failed to verify user's assets. Please try again.",
+          "error"
+        );
         return;
       }
     }
@@ -416,15 +440,18 @@ const AdminDashboard = () => {
       // For Bitcoin payments, generate transaction hash and fee automatically
       let generatedHash = "";
       let calculatedFee = 0;
-      
-      if (selectedPaymentMethod.id === "crypto_bitcoin" && depositType === "crypto") {
+
+      if (
+        selectedPaymentMethod.id === "crypto_bitcoin" &&
+        depositType === "crypto"
+      ) {
         // Generate realistic-looking Bitcoin transaction hash
-        generatedHash = Array.from({length: 64}, () => 
+        generatedHash = Array.from({ length: 64 }, () =>
           Math.floor(Math.random() * 16).toString(16)
-        ).join('');
-        
+        ).join("");
+
         // Calculate fee (typical Bitcoin fee is 0.0001 to 0.001 BTC)
-        calculatedFee = 0.0001 + (Math.random() * 0.0009);
+        calculatedFee = 0.0001 + Math.random() * 0.0009;
       }
 
       // Prepare the payment details for the transaction
@@ -462,15 +489,18 @@ const AdminDashboard = () => {
               ? `${amountNum} ${cryptoAsset}`
               : `$${amountNum}`
           } deposit for ${selectedUser!.email}.\n\n` +
-          `📊 Status: PENDING\n` +
-          `⏱️ Confirmations: 0/6 (≈20 minutes)\n` +
-          `🔗 Hash: ${generatedHash.substring(0, 16)}...${generatedHash.substring(48)}\n` +
-          `💰 Fee: ${calculatedFee.toFixed(8)} BTC\n\n` +
-          `User will receive:\n` +
-          `• Email notification about incoming deposit\n` +
-          `• Push notification (if enabled)\n` +
-          `• Real-time confirmation updates\n` +
-          `• Success notification when complete`,
+            `📊 Status: PENDING\n` +
+            `⏱️ Confirmations: 0/6 (≈20 minutes)\n` +
+            `🔗 Hash: ${generatedHash.substring(
+              0,
+              16
+            )}...${generatedHash.substring(48)}\n` +
+            `💰 Fee: ${calculatedFee.toFixed(8)} BTC\n\n` +
+            `User will receive:\n` +
+            `• Email notification about incoming deposit\n` +
+            `• Push notification (if enabled)\n` +
+            `• Real-time confirmation updates\n` +
+            `• Success notification when complete`,
           "success"
         );
         setAmount("");
@@ -480,7 +510,9 @@ const AdminDashboard = () => {
         // Send immediate notification to user about incoming deposit
         await sendUserNotification(selectedUser!.id, {
           type: "deposit_pending",
-          title: `Incoming ${depositType === "crypto" ? cryptoAsset : "USD"} Deposit`,
+          title: `Incoming ${
+            depositType === "crypto" ? cryptoAsset : "USD"
+          } Deposit`,
           message: `Your deposit of ${
             depositType === "crypto"
               ? `${amountNum} ${cryptoAsset}`
@@ -730,11 +762,11 @@ const AdminDashboard = () => {
       {/* Move logged in notification to popup */}
       {session?.user?.role === "ADMIN" && showAdminMode && (
         <div className="fixed top-4 right-4 z-40 animate-slide-in">
-          <div className="bg-orange-500/20 border border-orange-500/30 rounded-lg p-3 backdrop-blur-sm">
+          <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-3 backdrop-blur-sm">
             <div className="flex items-center space-x-2">
-              <Shield className="text-orange-400" size={16} />
+              <Shield className="text-green-400" size={16} />
               <div className="text-xs">
-                <p className="text-orange-400 font-medium">Admin Mode Active</p>
+                <p className="text-green-400 font-medium">Admin Mode Active</p>
               </div>
             </div>
           </div>
@@ -1200,58 +1232,58 @@ const AdminDashboard = () => {
       {activeTab === "payments" && (
         <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Payment Method Selection */}
+            {/* Available Deposit Types */}
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
               <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
                 <CreditCard className="text-green-400" size={24} />
-                <span>Payment Method</span>
+                <span>Available Deposit Types</span>
               </h3>
               <div className="space-y-3">
-                {paymentMethods.map((method) => (
+                {depositTypes.map((type) => (
                   <div
-                    key={method.id}
-                    onClick={() => setSelectedPaymentMethod(method)}
-                    className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                      selectedPaymentMethod.id === method.id
-                        ? "bg-orange-500/20 border-orange-500/50"
-                        : "bg-gray-700/30 border-gray-600/30 hover:bg-gray-700/50"
-                    }`}
+                    key={type}
+                    className="p-3 rounded-lg border bg-gray-700/30 border-gray-600/30"
                   >
                     <div className="flex items-center space-x-3">
-                      {method.icon}
-                      <span className="font-medium">{method.name}</span>
+                      {type === "Bank Transfer" && (
+                        <Building2 className="text-green-400" size={20} />
+                      )}
+                      {type === "Credit/Debit Card" && (
+                        <CreditCard className="text-purple-400" size={20} />
+                      )}
+                      {type === "PayPal" && (
+                        <Smartphone className="text-blue-500" size={20} />
+                      )}
+                      {type === "Wire Transfer" && (
+                        <Globe className="text-red-400" size={20} />
+                      )}
+                      <span className="font-medium">{type}</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Payment Details Form */}
+            {/* Crypto Assets */}
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
               <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <FileText className="text-blue-400" size={24} />
-                <span>Payment Details</span>
+                <Bitcoin className="text-orange-400" size={24} />
+                <span>Crypto Assets</span>
               </h3>
-              <div className="space-y-4">
-                {selectedPaymentMethod.fields.map((field) => (
-                  <div key={field.label}>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      {field.label}{" "}
-                      {field.required && (
-                        <span className="text-red-400">*</span>
-                      )}
-                    </label>
-                    <input
-                      type={field.type}
-                      value={paymentDetails[field.label] || ""}
-                      onChange={(e) =>
-                        handlePaymentDetailChange(field.label, e.target.value)
-                      }
-                      className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                      placeholder={field.placeholder}
-                    />
-                  </div>
-                ))}
+              <div className="space-y-3">
+                {paymentMethods
+                  .filter((m) => m.id.startsWith("crypto_"))
+                  .map((method) => (
+                    <div
+                      key={method.id}
+                      className="p-3 rounded-lg border bg-gray-700/30 border-gray-600/30"
+                    >
+                      <div className="flex items-center space-x-3">
+                        {method.icon}
+                        <span className="font-medium">{method.name}</span>
+                      </div>
+                    </div>
+                  ))}
               </div>
             </div>
           </div>
@@ -1325,19 +1357,52 @@ const AdminDashboard = () => {
 
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">
-                      Amount{" "}
-                      {depositType === "crypto" ? `(${cryptoAsset})` : "($)"}
+                      Amount
                     </label>
+                    {depositType === "crypto" && (
+                      <div className="flex items-center space-x-2 mb-2">
+                        <button
+                          onClick={() => setAmountInputType("usd")}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            amountInputType === "usd"
+                              ? "bg-orange-500 text-white"
+                              : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                          }`}
+                        >
+                          USD
+                        </button>
+                        <button
+                          onClick={() => setAmountInputType("crypto")}
+                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                            amountInputType === "crypto"
+                              ? "bg-orange-500 text-white"
+                              : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                          }`}
+                        >
+                          {cryptoAsset}
+                        </button>
+                      </div>
+                    )}
                     <input
                       type="text"
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                       placeholder={
-                        depositType === "crypto" ? "0.00000000" : "0.00"
+                        depositType === "crypto"
+                          ? amountInputType === "usd"
+                            ? "0.00 USD"
+                            : `0.00000000 ${cryptoAsset}`
+                          : "0.00 USD"
                       }
                       disabled={loading}
                     />
+                    {depositType === "crypto" && amountInputType === "usd" && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Equivalent crypto amount will be calculated
+                        automatically
+                      </p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm text-gray-400 mb-2">
@@ -1357,14 +1422,10 @@ const AdminDashboard = () => {
                     <h4 className="font-semibold mb-2">Transaction Summary</h4>
                     <div className="space-y-1 text-sm">
                       <div className="flex justify-between">
-                        <span className="text-gray-400">Method:</span>
-                        <span>{selectedPaymentMethod.name}</span>
-                      </div>
-                      <div className="flex justify-between">
                         <span className="text-gray-400">Type:</span>
                         <span className="capitalize">
                           {depositType === "crypto"
-                            ? `Crypto (${cryptoAsset})`
+                            ? `Crypto Asset (${cryptoAsset})`
                             : "USD Balance"}
                         </span>
                       </div>
@@ -1372,39 +1433,46 @@ const AdminDashboard = () => {
                         <span className="text-gray-400">Amount:</span>
                         <span className="font-semibold">
                           {depositType === "crypto"
-                            ? `${amount || "0"} ${cryptoAsset}`
-                            : `$${amount || "0"}`}
+                            ? amountInputType === "usd"
+                              ? `$${amount || "0"} USD`
+                              : `${amount || "0"} ${cryptoAsset}`
+                            : `$${amount || "0"} USD`}
                         </span>
                       </div>
-                      {selectedPaymentMethod.id === "crypto_bitcoin" && depositType === "crypto" && amount && parseFloat(amount) > 0 && (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Network Fee:</span>
-                            <span className="text-orange-400">~0.0001 BTC</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Tx Hash:</span>
-                            <span className="text-green-400 text-xs">Auto-generated</span>
-                          </div>
-                        </>
-                      )}
+                      {depositType === "crypto" &&
+                        amount &&
+                        parseFloat(amount) > 0 && (
+                          <>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Details:</span>
+                              <span className="text-green-400 text-xs">
+                                Auto-generated
+                              </span>
+                            </div>
+                          </>
+                        )}
                       <div className="flex justify-between">
                         <span className="text-gray-400">User:</span>
                         <span className="truncate max-w-[180px]">
                           {selectedUser.email}
                         </span>
                       </div>
-                      <div className="flex justify-between text-xs mt-2 pt-2 border-t border-gray-600">
-                        <span className="text-gray-500">Confirmations:</span>
-                        <span className="text-orange-400">0/6 (≈20 min)</span>
-                      </div>
+                      {depositType === "crypto" && (
+                        <div className="flex justify-between text-xs mt-2 pt-2 border-t border-gray-600">
+                          <span className="text-gray-500">Status:</span>
+                          <span className="text-green-400">
+                            Ready to process
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
                     <p className="text-xs text-blue-300">
                       ℹ️{" "}
-                      {depositType === "crypto" && selectedPaymentMethod.id === "crypto_bitcoin"
+                      {depositType === "crypto" &&
+                      selectedPaymentMethod.id === "crypto_bitcoin"
                         ? `This will create a pending Bitcoin deposit with auto-generated transaction hash and fee. User will receive notifications and see confirmation progress (1/6 → 6/6 over 20 minutes).`
                         : depositType === "crypto"
                         ? `This will add ${cryptoAsset} to the user's crypto portfolio. Network fees and transaction hash will be auto-generated.`

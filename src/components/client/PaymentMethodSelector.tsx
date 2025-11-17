@@ -5,6 +5,7 @@ import { X, CreditCard, Wallet, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/contexts/ToastContext";
+import CustomWalletDeposit from "./CustomWalletDeposit";
 
 interface PaymentMethodSelectorProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export default function PaymentMethodSelector({
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showCustomWallet, setShowCustomWallet] = useState(false);
   const { showInfo, showSuccess, showError } = useToast();
 
   const handlePurchase = async () => {
@@ -63,6 +65,10 @@ export default function PaymentMethodSelector({
         setTimeout(() => {
           window.location.reload();
         }, 1000);
+      } else if (selectedMethod === "custom-wallet") {
+        // Open custom wallet deposit modal
+        setShowCustomWallet(true);
+        onClose();
       } else {
         // Handle payment provider methods (moonpay, banxa, etc.)
         showInfo(`Redirecting to ${selectedMethod}...`);
@@ -142,6 +148,15 @@ export default function PaymentMethodSelector({
       icon: <Wallet className="w-6 h-6" />,
       enabled: true,
       type: "provider",
+    },
+    {
+      id: "custom-wallet",
+      name: "Bitcoin Wallet",
+      description: "Send directly to our wallet",
+      fee: "No fees",
+      icon: <Wallet className="w-6 h-6" />,
+      enabled: asset === "BTC" || asset === "Bitcoin",
+      type: "wallet",
     },
   ];
 
@@ -436,6 +451,15 @@ export default function PaymentMethodSelector({
           </div>
         )}
       </motion.div>
+
+      {/* Custom Wallet Deposit Modal */}
+      <CustomWalletDeposit
+        isOpen={showCustomWallet}
+        onClose={() => setShowCustomWallet(false)}
+        asset={asset}
+        amount={amount}
+        usdValue={usdValue}
+      />
     </motion.div>
   );
 }
