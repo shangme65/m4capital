@@ -439,15 +439,15 @@ export async function POST(req: NextRequest) {
         // Find user by linked Telegram ID
         const user = await prisma.user.findFirst({
           where: { linkedTelegramId: BigInt(userId) },
-          include: { portfolio: true },
+          include: { Portfolio: true },
         });
 
-        if (user && user.portfolio) {
+        if (user && user.Portfolio) {
           // Create deposit transaction
           await prisma.deposit.create({
             data: {
               userId: user.id,
-              portfolioId: user.portfolio.id,
+              portfolioId: user.Portfolio.id,
               amount: amountUSD,
               currency: "USD",
               status: "COMPLETED",
@@ -588,7 +588,7 @@ export async function POST(req: NextRequest) {
         // Find user by linked Telegram ID
         const user = await prisma.user.findFirst({
           where: { linkedTelegramId: BigInt(userId) },
-          include: { portfolio: true },
+          include: { Portfolio: true },
         });
 
         if (!user) {
@@ -600,7 +600,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ ok: true });
         }
 
-        if (!user.portfolio) {
+        if (!user.Portfolio) {
           await sendTelegramMessage(
             chatId,
             "⚠️ **No Portfolio Found**\n\nYour portfolio hasn't been created yet. Please contact support."
@@ -609,8 +609,8 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ ok: true });
         }
 
-        const balance = Number(user.portfolio.balance);
-        const assets = user.portfolio.assets as any[];
+        const balance = Number(user.Portfolio.balance);
+        const assets = user.Portfolio.assets as any[];
 
         // Calculate total portfolio value
         let totalValue = balance;
@@ -671,7 +671,7 @@ export async function POST(req: NextRequest) {
         // Find user by linked Telegram ID
         const user = await prisma.user.findFirst({
           where: { linkedTelegramId: BigInt(userId) },
-          include: { portfolio: true },
+          include: { Portfolio: true },
         });
 
         if (!user) {
@@ -683,7 +683,7 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ ok: true });
         }
 
-        if (!user.portfolio) {
+        if (!user.Portfolio) {
           await sendTelegramMessage(
             chatId,
             "⚠️ **No Portfolio Found**\n\nYour portfolio hasn't been created yet. Please contact support."
@@ -692,8 +692,8 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ ok: true });
         }
 
-        const balance = Number(user.portfolio.balance);
-        const assets = user.portfolio.assets as any[];
+        const balance = Number(user.Portfolio.balance);
+        const assets = user.Portfolio.assets as any[];
 
         let responseMessage = `📊 **Your Portfolio**\n\n`;
         responseMessage += `👤 **Account:** ${user.name || user.email}\n`;

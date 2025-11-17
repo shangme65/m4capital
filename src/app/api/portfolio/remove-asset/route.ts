@@ -29,10 +29,10 @@ export async function DELETE(request: NextRequest) {
     // Find user and their portfolio
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      include: { portfolio: true },
+      include: { Portfolio: true },
     });
 
-    if (!user || !user.portfolio) {
+    if (!user || !user.Portfolio) {
       return NextResponse.json(
         { error: "Portfolio not found" },
         { status: 404 }
@@ -40,8 +40,8 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Get current assets
-    const currentAssets = Array.isArray(user.portfolio.assets)
-      ? user.portfolio.assets
+    const currentAssets = Array.isArray(user.Portfolio.assets)
+      ? user.Portfolio.assets
       : [];
 
     // Find the asset
@@ -71,7 +71,7 @@ export async function DELETE(request: NextRequest) {
 
     // Update portfolio
     await prisma.portfolio.update({
-      where: { id: user.portfolio.id },
+      where: { id: user.Portfolio.id },
       data: { assets: updatedAssets },
     });
 

@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     // Find user
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      include: { portfolio: true },
+      include: { Portfolio: true },
     });
 
     if (!user) {
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create portfolio if it doesn't exist
-    let portfolio = user.portfolio;
+    let portfolio = user.Portfolio;
     if (!portfolio) {
       portfolio = await prisma.portfolio.create({
         data: {

@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["driverAdapters"]
 }
 
@@ -8,8 +8,9 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Account {
-  id                String  @id @default(cuid())
+  id                String  @id
   userId            String
   type              String
   provider          String
@@ -21,424 +22,95 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
 
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
-model User {
-  id                     String            @id @default(cuid())
-  name                   String?
-  email                  String?           @unique
-  emailVerified          DateTime?
-  image                  String?
-  password               String?
-  role                   UserRole          @default(USER)
-  accountType            AccountType       @default(INVESTOR)
-  country                String?
-  isEmailVerified        Boolean           @default(false)
-  isDeleted              Boolean           @default(false)
-  isOriginAdmin          Boolean           @default(false)
-  emailNotifications     Boolean           @default(true)
-  tradingNotifications   Boolean           @default(true)
-  securityNotifications  Boolean           @default(true)
-  kycNotifications       Boolean           @default(true)
-  twoFactorEnabled       Boolean           @default(false)
-  twoFactorSecret        String?
-  twoFactorMethod        TwoFactorMethod?
-  preferredCurrency      String            @default("USD")
-  createdAt              DateTime          @default(now())
-  updatedAt              DateTime          @updatedAt
-  accounts               Account[]
-  portfolio              Portfolio?
-  paperPortfolio         PaperPortfolio?
-  sessions               Session[]
-  kycVerification        KycVerification?
-  deposits               Deposit[]
-  withdrawals            Withdrawal[]
-  trades                 Trade[]
-  paperTrades            PaperTrade[]
-  strategies             Strategy[]
-  strategyComments       StrategyComment[]
-  strategyLikes          StrategyLike[]
-  courseProgress         CourseProgress[]
-  cryptoWatchlist        CryptoWatchlist[]
-  priceAlerts            PriceAlert[]
-  userStatistics         UserStatistics[]
-  scheduledMessages      ScheduledMessage[]
-  fileStorage            FileStorage[]
-  notifications          Notification[]
-  telegramLinkCode       TelegramLinkCode?
-  linkedTelegramId       BigInt?           @unique
-  linkedTelegramUsername String?
-  activities             UserActivity[]
-  bitcoinDeposits        BitcoinDeposit[]
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-}
-
-model KycVerification {
-  id                String        @id @default(cuid())
-  userId            String        @unique
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Personal Information
-  firstName         String
-  lastName          String
-  dateOfBirth       String
-  nationality       String
-  phoneNumber       String
-  
-  // Address Information
-  address           String
-  city              String
-  postalCode        String
-  country           String
-  
-  // Document URLs
-  idDocumentUrl     String
-  proofOfAddressUrl String
-  selfieUrl         String
-  
-  // Verification Status
-  status            KycStatus     @default(PENDING)
-  reviewedBy        String?
-  reviewedAt        DateTime?
-  rejectionReason   String?
-  
-  // Timestamps
-  submittedAt       DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
-}
-
-enum KycStatus {
-  PENDING
-  UNDER_REVIEW
-  APPROVED
-  REJECTED
-}
-
-model Portfolio {
-  id          String       @id @default(cuid())
-  userId      String       @unique
-  balance     Decimal      @default(0.00)
-  assets      Json         @default("[]")
-  deposits    Deposit[]
-  user        User         @relation(fields: [userId], references: [id])
-  withdrawals Withdrawal[]
-}
-
-model Deposit {
-  id              String    @id @default(cuid())
-  portfolioId     String
-  userId          String?
-  amount          Decimal
-  currency        String
-  status          String    @default("PENDING")
-  method          String?   // NOWPAYMENTS_BTC, BANK_TRANSFER, etc.
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  metadata        Json?     @default("{}")
-  transactionId   String?
-  transactionHash String?   // Blockchain transaction hash
-  type            String?
-  fee             Decimal?  // Transaction fee
-  confirmations   Int       @default(0) // Number of confirmations (0-6 for BTC)
-  targetAsset     String?   // Asset to credit (BTC, ETH, or null for USD balance)
-  
-  // NOWPayments fields
-  paymentId       String?   @unique // NOWPayments payment_id
-  paymentAddress  String?   // Bitcoin address to send to
-  paymentAmount   Decimal?  // Amount in BTC
-  paymentStatus   String?   // NOWPayments status (waiting, confirming, confirmed, etc.)
-  cryptoAmount    Decimal?  // Estimated crypto amount
-  cryptoCurrency  String?   // BTC, ETH, etc.
-  invoiceUrl      String?   // NOWPayments invoice URL (for invoice API method)
-  
-  portfolio       Portfolio @relation(fields: [portfolioId], references: [id])
-  user            User?     @relation(fields: [userId], references: [id])
-}
-
-model Withdrawal {
-  id            String    @id @default(cuid())
-  portfolioId   String
-  userId        String?
-  amount        Decimal
-  currency      String
-  status        String    @default("PENDING")  // PENDING, PENDING_PAYMENT, PROCESSING, COMPLETED, FAILED, CANCELLED
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model BitcoinDeposit {
+  id            String    @id
+  userId        String
+  address       String
+  amountBtc     Decimal?
+  amountUsd     Decimal?
+  status        String    @default("pending")
+  txHash        String?
+  confirmations Int       @default(0)
+  confirmedAt   DateTime?
   createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  metadata      Json?     @default("{}")  // Stores fees, payment info, destination details
-  transactionId String?
-  type          String?  // CRYPTO_BTC, CRYPTO_ETH, BANK_TRANSFER, WIRE_TRANSFER
-  method        String?   // Payment method used
-  fee           Decimal?  // Withdrawal fee
-  portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
-  user          User?     @relation(fields: [userId], references: [id])
-}
+  updatedAt     DateTime
+  metadata      Json?     @default("{}")
+  User          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-model Trade {
-  id            String      @id @default(cuid())
-  userId        String
-  symbol        String      // Trading pair (e.g., BTC/USD, ETH/USD)
-  side          TradeType   // BUY or SELL
-  entryPrice    Decimal     // Entry price
-  exitPrice     Decimal?    // Exit price (null if still open)
-  quantity      Decimal     // Quantity traded
-  profit        Decimal     @default(0.00) // Profit or loss from the trade
-  commission    Decimal     @default(0.00) // Trading commission
-  leverage      Int         @default(1) // Leverage multiplier
-  status        TradeStatus @default(OPEN)
-  openedAt      DateTime    @default(now())
-  closedAt      DateTime?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  metadata      Json?       @default("{}")
-  
-  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([createdAt])
-}
-
-enum TradeType {
-  BUY
-  SELL
-}
-
-enum TradeStatus {
-  OPEN
-  CLOSED
-  CANCELLED
-}
-
-// Paper Trading Portfolio for practice trading
-model PaperPortfolio {
-  id          String       @id @default(cuid())
-  userId      String       @unique
-  balance     Decimal      @default(100000.00) // Start with $100k virtual money
-  assets      Json         @default("[]")
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trades      PaperTrade[]
-}
-
-// Paper Trades for practice
-model PaperTrade {
-  id               String           @id @default(cuid())
-  userId           String
-  paperPortfolioId String
-  symbol           String           // Trading pair
-  side             TradeType        // BUY or SELL
-  entryPrice       Decimal          // Entry price
-  exitPrice        Decimal?         // Exit price (null if still open)
-  quantity         Decimal          // Quantity traded
-  profit           Decimal          @default(0.00)
-  commission       Decimal          @default(0.00)
-  leverage         Int              @default(1)
-  status           TradeStatus      @default(OPEN)
-  openedAt         DateTime         @default(now())
-  closedAt         DateTime?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  metadata         Json?            @default("{}")
-  
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  paperPortfolio   PaperPortfolio   @relation(fields: [paperPortfolioId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([paperPortfolioId])
-  @@index([createdAt])
-}
-
-// Community: Strategy Sharing
-model Strategy {
-  id            String            @id @default(cuid())
-  userId        String
-  title         String
-  description   String
-  category      String            // e.g., "Day Trading", "Swing Trading", "Scalping"
-  difficulty    String            // "Beginner", "Intermediate", "Advanced"
-  content       String            @db.Text // Full strategy content
-  isPremium     Boolean           @default(false)
-  isPublished   Boolean           @default(true)
-  viewCount     Int               @default(0)
-  likeCount     Int               @default(0)
-  commentCount  Int               @default(0)
-  createdAt     DateTime          @default(now())
-  updatedAt     DateTime          @updatedAt
-  
-  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  comments      StrategyComment[]
-  likes         StrategyLike[]
-
-  @@index([userId])
-  @@index([category])
-  @@index([createdAt])
-}
-
-model StrategyComment {
-  id         String   @id @default(cuid())
-  strategyId String
-  userId     String
-  content    String   @db.Text
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  strategy   Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([strategyId])
+  @@index([address])
+  @@index([status])
   @@index([userId])
 }
 
-model StrategyLike {
-  id         String   @id @default(cuid())
-  strategyId String
-  userId     String
-  createdAt  DateTime @default(now())
-  
-  strategy   Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([strategyId, userId])
-  @@index([strategyId])
-  @@index([userId])
-}
-
-// Educational Progress Tracking
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CourseProgress {
-  id         String   @id @default(cuid())
-  userId     String
-  courseId   String   // Course identifier
-  lessonId   String   // Lesson identifier
-  completed  Boolean  @default(false)
-  progress   Int      @default(0) // 0-100
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id
+  userId    String
+  courseId  String
+  lessonId  String
+  completed Boolean  @default(false)
+  progress  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, courseId, lessonId])
-  @@index([userId])
   @@index([courseId])
+  @@index([userId])
 }
 
-// Telegram Bot Integration
-model TelegramUser {
-  id                  String    @id @default(cuid())
-  telegramId          BigInt    @unique
-  username            String?
-  firstName           String?
-  lastName            String?
-  languageCode        String    @default("en")
-  isBot               Boolean   @default(false)
-  isPremium           Boolean   @default(false)
-  preferredLanguage   String    @default("en")
-  timezone            String?
-  notifications       Boolean   @default(true)
-  warningCount        Int       @default(0)
-  isBanned            Boolean   @default(false)
-  bannedAt            DateTime?
-  bannedReason        String?
-  messageCount        Int       @default(0)
-  lastMessageAt       DateTime?
-  linkCode            String?
-  linkCodeExpiresAt   DateTime?
-  joinedAt            DateTime  @default(now())
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  @@index([telegramId])
-  @@index([username])
-  @@index([linkCode])
-}
-
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CryptoWatchlist {
-  id          String   @id @default(cuid())
+  id          String   @id
   userId      String
   symbol      String
   displayName String
   addedAt     DateTime @default(now())
-  
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, symbol])
   @@index([userId])
 }
 
-model PriceAlert {
-  id          String    @id @default(cuid())
-  userId      String
-  symbol      String
-  targetPrice Decimal
-  condition   String    // "above" or "below"
-  isActive    Boolean   @default(true)
-  triggered   Boolean   @default(false)
-  triggeredAt DateTime?
-  chatId      BigInt
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([symbol, isActive])
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Deposit {
+  id              String    @id
+  portfolioId     String
+  amount          Decimal
+  currency        String
+  status          String    @default("PENDING")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime
+  metadata        Json?     @default("{}")
+  transactionId   String?
+  type            String?
+  userId          String?
+  method          String?
+  paymentId       String?   @unique
+  paymentAddress  String?
+  paymentAmount   Decimal?
+  paymentStatus   String?
+  cryptoAmount    Decimal?
+  cryptoCurrency  String?
+  invoiceUrl      String?
+  confirmations   Int       @default(0)
+  fee             Decimal?
+  targetAsset     String?
+  transactionHash String?
+  Portfolio       Portfolio @relation(fields: [portfolioId], references: [id])
+  User            User?     @relation(fields: [userId], references: [id])
 }
 
-model UserStatistics {
-  id                 String   @id @default(cuid())
-  userId             String
-  date               DateTime @default(now())
-  messagesCount      Int      @default(0)
-  imagesGenerated    Int      @default(0)
-  cryptoQueriesCount Int      @default(0)
-  commandsUsed       Json     @default("{}")
-  
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, date])
-  @@index([userId])
-  @@index([date])
-}
-
-model ScheduledMessage {
-  id            String    @id @default(cuid())
-  userId        String
-  chatId        BigInt
-  message       String
-  scheduledFor  DateTime
-  sent          Boolean   @default(false)
-  sentAt        DateTime?
-  recurring     Boolean   @default(false)
-  recurringType String?   // "daily", "weekly", "monthly"
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([scheduledFor, sent])
-  @@index([userId])
-}
-
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model FileStorage {
-  id            String   @id @default(cuid())
+  id            String   @id
   userId        String
   fileId        String
   fileType      String
@@ -448,136 +120,443 @@ model FileStorage {
   extractedText String?
   metadata      Json?    @default("{}")
   uploadedAt    DateTime @default(now())
-  
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  User          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model KycVerification {
+  id                String    @id
+  userId            String    @unique
+  firstName         String
+  lastName          String
+  dateOfBirth       String
+  nationality       String
+  phoneNumber       String
+  address           String
+  city              String
+  postalCode        String
+  country           String
+  idDocumentUrl     String
+  proofOfAddressUrl String
+  selfieUrl         String
+  status            KycStatus @default(PENDING)
+  submittedAt       DateTime  @default(now())
+  reviewedAt        DateTime?
+  reviewedBy        String?
+  rejectionReason   String?
+  updatedAt         DateTime
+  User              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model ModerationRule {
-  id            String   @id @default(cuid())
+  id            String   @id
   keyword       String
-  action        String   // "warn", "delete", "ban"
-  severity      String   // "low", "medium", "high"
+  action        String
+  severity      String
   isActive      Boolean  @default(true)
   caseSensitive Boolean  @default(false)
   isRegex       Boolean  @default(false)
   createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  updatedAt     DateTime
 }
 
-model TradingSignal {
-  id          String    @id @default(cuid())
-  symbol      String
-  action      String    // "BUY", "SELL", "HOLD"
-  price       Decimal
-  targetPrice Decimal?
-  stopLoss    Decimal?
-  confidence  Decimal   // 0.0 to 1.0
-  analysis    String    @db.Text
-  indicators  Json      @default("{}")
-  isActive    Boolean   @default(true)
-  expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-}
-
-model Quiz {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  questions   Json     // Array of questions with options
-  chatId      BigInt?
-  messageId   BigInt?
-  isActive    Boolean  @default(true)
-  responses   Json     @default("[]")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model NewsArticle {
-  id          String   @id @default(cuid())
+  id          String   @id
   title       String
   description String?
   url         String
   source      String
   category    String
   publishedAt DateTime
-  sentiment   String?  // "positive", "negative", "neutral"
+  sentiment   String?
   createdAt   DateTime @default(now())
 }
 
-model TelegramLinkCode {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  code      String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([code])
-  @@index([expiresAt])
-}
-
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Notification {
-  id         String             @id @default(cuid())
-  userId     String
-  type       NotificationType
-  title      String
-  message    String
-  read       Boolean            @default(false)
-  amount     Decimal?
-  asset      String?
-  metadata   Json?              @default("{}")
-  createdAt  DateTime           @default(now())
-  
-  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String           @id
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  read      Boolean          @default(false)
+  amount    Decimal?
+  asset     String?
+  metadata  Json?            @default("{}")
+  createdAt DateTime         @default(now())
+  User      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@index([userId, read])
 }
 
-enum NotificationType {
-  DEPOSIT
-  WITHDRAW
-  TRADE
-  INFO
-  WARNING
-  SUCCESS
-  TRANSACTION
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PaperPortfolio {
+  id         String       @id
+  userId     String       @unique
+  balance    Decimal      @default(100000.00)
+  assets     Json         @default("[]")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime
+  User       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  PaperTrade PaperTrade[]
 }
 
-enum UserRole {
-  USER
-  ADMIN
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PaperTrade {
+  id               String         @id
+  userId           String
+  paperPortfolioId String
+  symbol           String
+  side             TradeType
+  entryPrice       Decimal
+  exitPrice        Decimal?
+  quantity         Decimal
+  profit           Decimal        @default(0.00)
+  commission       Decimal        @default(0.00)
+  leverage         Int            @default(1)
+  status           TradeStatus    @default(OPEN)
+  openedAt         DateTime       @default(now())
+  closedAt         DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime
+  metadata         Json?          @default("{}")
+  PaperPortfolio   PaperPortfolio @relation(fields: [paperPortfolioId], references: [id], onDelete: Cascade)
+  User             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([paperPortfolioId])
+  @@index([userId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Portfolio {
+  id         String       @id
+  userId     String       @unique
+  balance    Decimal      @default(0.00)
+  assets     Json         @default("[]")
+  Deposit    Deposit[]
+  User       User         @relation(fields: [userId], references: [id])
+  Withdrawal Withdrawal[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model PriceAlert {
+  id          String    @id
+  userId      String
+  symbol      String
+  targetPrice Decimal
+  condition   String
+  isActive    Boolean   @default(true)
+  triggered   Boolean   @default(false)
+  triggeredAt DateTime?
+  chatId      BigInt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+  User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([symbol, isActive])
+  @@index([userId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Quiz {
+  id          String   @id
+  title       String
+  description String?
+  questions   Json
+  chatId      BigInt?
+  messageId   BigInt?
+  isActive    Boolean  @default(true)
+  responses   Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model ScheduledMessage {
+  id            String    @id
+  userId        String
+  chatId        BigInt
+  message       String
+  scheduledFor  DateTime
+  sent          Boolean   @default(false)
+  sentAt        DateTime?
+  recurring     Boolean   @default(false)
+  recurringType String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+  User          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledFor, sent])
+  @@index([userId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Session {
+  id           String   @id
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  User         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Strategy {
+  id              String            @id
+  userId          String
+  title           String
+  description     String
+  category        String
+  difficulty      String
+  content         String
+  isPremium       Boolean           @default(false)
+  isPublished     Boolean           @default(true)
+  viewCount       Int               @default(0)
+  likeCount       Int               @default(0)
+  commentCount    Int               @default(0)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime
+  User            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  StrategyComment StrategyComment[]
+  StrategyLike    StrategyLike[]
+
+  @@index([category])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model StrategyComment {
+  id         String   @id
+  strategyId String
+  userId     String
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Strategy   Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([strategyId])
+  @@index([userId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model StrategyLike {
+  id         String   @id
+  strategyId String
+  userId     String
+  createdAt  DateTime @default(now())
+  Strategy   Strategy @relation(fields: [strategyId], references: [id], onDelete: Cascade)
+  User       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([strategyId, userId])
+  @@index([strategyId])
+  @@index([userId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model TelegramLinkCode {
+  id        String   @id
+  userId    String   @unique
+  code      String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([code])
+  @@index([expiresAt])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model TelegramUser {
+  id                String    @id
+  telegramId        BigInt    @unique
+  username          String?
+  firstName         String?
+  lastName          String?
+  languageCode      String    @default("en")
+  isBot             Boolean   @default(false)
+  isPremium         Boolean   @default(false)
+  preferredLanguage String    @default("en")
+  timezone          String?
+  notifications     Boolean   @default(true)
+  warningCount      Int       @default(0)
+  isBanned          Boolean   @default(false)
+  bannedAt          DateTime?
+  bannedReason      String?
+  messageCount      Int       @default(0)
+  lastMessageAt     DateTime?
+  joinedAt          DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime
+  linkCode          String?
+  linkCodeExpiresAt DateTime?
+
+  @@index([linkCode])
+  @@index([telegramId])
+  @@index([username])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Trade {
+  id         String      @id
+  userId     String
+  symbol     String
+  side       TradeType
+  entryPrice Decimal
+  exitPrice  Decimal?
+  quantity   Decimal
+  profit     Decimal     @default(0.00)
+  commission Decimal     @default(0.00)
+  leverage   Int         @default(1)
+  status     TradeStatus @default(OPEN)
+  openedAt   DateTime    @default(now())
+  closedAt   DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime
+  metadata   Json?       @default("{}")
+  User       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model TradingSignal {
+  id          String    @id
+  symbol      String
+  action      String
+  price       Decimal
+  targetPrice Decimal?
+  stopLoss    Decimal?
+  confidence  Decimal
+  analysis    String
+  indicators  Json      @default("{}")
+  isActive    Boolean   @default(true)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model User {
+  id                     String             @id
+  name                   String?
+  email                  String?            @unique
+  emailVerified          DateTime?
+  image                  String?
+  password               String?
+  role                   UserRole           @default(USER)
+  accountType            AccountType        @default(INVESTOR)
+  country                String?
+  preferredCurrency      String             @default("USD")
+  isEmailVerified        Boolean            @default(false)
+  isDeleted              Boolean            @default(false)
+  emailNotifications     Boolean            @default(true)
+  tradingNotifications   Boolean            @default(true)
+  securityNotifications  Boolean            @default(true)
+  kycNotifications       Boolean            @default(true)
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime
+  isOriginAdmin          Boolean            @default(false)
+  linkedTelegramId       BigInt?            @unique
+  linkedTelegramUsername String?
+  twoFactorEnabled       Boolean            @default(false)
+  twoFactorMethod        TwoFactorMethod?
+  twoFactorSecret        String?
+  Account                Account[]
+  BitcoinDeposit         BitcoinDeposit[]
+  CourseProgress         CourseProgress[]
+  CryptoWatchlist        CryptoWatchlist[]
+  Deposit                Deposit[]
+  FileStorage            FileStorage[]
+  KycVerification        KycVerification?
+  Notification           Notification[]
+  PaperPortfolio         PaperPortfolio?
+  PaperTrade             PaperTrade[]
+  Portfolio              Portfolio?
+  PriceAlert             PriceAlert[]
+  ScheduledMessage       ScheduledMessage[]
+  Session                Session[]
+  Strategy               Strategy[]
+  StrategyComment        StrategyComment[]
+  StrategyLike           StrategyLike[]
+  TelegramLinkCode       TelegramLinkCode?
+  Trade                  Trade[]
+  UserActivity           UserActivity[]
+  UserStatistics         UserStatistics[]
+  Withdrawal             Withdrawal[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model UserActivity {
+  id           String       @id
+  userId       String?
+  sessionId    String?
+  activityType ActivityType
+  page         String?
+  action       String?
+  metadata     Json?        @default("{}")
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime     @default(now())
+  User         User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([activityType, createdAt])
+  @@index([sessionId])
+  @@index([userId, createdAt])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model UserStatistics {
+  id                 String   @id
+  userId             String
+  date               DateTime @default(now())
+  messagesCount      Int      @default(0)
+  imagesGenerated    Int      @default(0)
+  cryptoQueriesCount Int      @default(0)
+  commandsUsed       Json     @default("{}")
+  User               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([date])
+  @@index([userId])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model Withdrawal {
+  id            String    @id
+  portfolioId   String
+  amount        Decimal
+  currency      String
+  status        String    @default("PENDING")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime
+  metadata      Json?     @default("{}")
+  transactionId String?
+  type          String?
+  userId        String?
+  method        String?
+  fee           Decimal?
+  Portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
+  User          User?     @relation(fields: [userId], references: [id])
 }
 
 enum AccountType {
   INVESTOR
   TRADER
-}
-
-enum TwoFactorMethod {
-  APP
-  EMAIL
-}
-
-model UserActivity {
-  id             String       @id @default(cuid())
-  userId         String?
-  sessionId      String?
-  activityType   ActivityType
-  page           String?
-  action         String?
-  metadata       Json?        @default("{}")
-  ipAddress      String?
-  userAgent      String?
-  createdAt      DateTime     @default(now())
-  
-  user           User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([userId, createdAt])
-  @@index([activityType, createdAt])
-  @@index([sessionId])
 }
 
 enum ActivityType {
@@ -597,23 +576,40 @@ enum ActivityType {
   ERROR
 }
 
-model BitcoinDeposit {
-  id            String    @id @default(cuid())
-  userId        String
-  address       String    // Bitcoin address generated for user
-  amountBtc     Decimal?  // Amount in BTC received
-  amountUsd     Decimal?  // Amount in USD equivalent
-  status        String    @default("pending") // pending, completed, cancelled
-  txHash        String?   // Bitcoin transaction hash
-  confirmations Int       @default(0) // Number of confirmations
-  confirmedAt   DateTime? // When the deposit was confirmed
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  metadata      Json?     @default("{}") // Additional data (method, addressType, etc.)
-  
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([userId])
-  @@index([address])
-  @@index([status])
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  UNDER_REVIEW
+}
+
+enum NotificationType {
+  DEPOSIT
+  WITHDRAW
+  TRADE
+  INFO
+  WARNING
+  SUCCESS
+  TRANSACTION
+}
+
+enum TradeStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+enum TradeType {
+  BUY
+  SELL
+}
+
+enum TwoFactorMethod {
+  APP
+  EMAIL
+}
+
+enum UserRole {
+  USER
+  ADMIN
 }
