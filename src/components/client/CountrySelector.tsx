@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { countriesSorted } from "@/lib/countries";
 
 interface Country {
   name: string;
@@ -9,28 +10,21 @@ interface Country {
   code: string;
 }
 
-const COUNTRIES: Country[] = [
-  { name: "Nigeria", flag: "🇳🇬", code: "NG" },
-  { name: "United States", flag: "🇺🇸", code: "US" },
-  { name: "United Kingdom", flag: "🇬🇧", code: "GB" },
-  { name: "Canada", flag: "🇨🇦", code: "CA" },
-  { name: "Germany", flag: "🇩🇪", code: "DE" },
-  { name: "France", flag: "🇫🇷", code: "FR" },
-  { name: "Australia", flag: "🇦🇺", code: "AU" },
-  { name: "Japan", flag: "🇯🇵", code: "JP" },
-  { name: "South Africa", flag: "🇿🇦", code: "ZA" },
-  { name: "Brazil", flag: "🇧🇷", code: "BR" },
-  { name: "India", flag: "🇮🇳", code: "IN" },
-  { name: "China", flag: "🇨🇳", code: "CN" },
-  { name: "Mexico", flag: "🇲🇽", code: "MX" },
-  { name: "Spain", flag: "🇪🇸", code: "ES" },
-  { name: "Italy", flag: "🇮🇹", code: "IT" },
-  { name: "Netherlands", flag: "🇳🇱", code: "NL" },
-  { name: "South Korea", flag: "🇰🇷", code: "KR" },
-  { name: "Singapore", flag: "🇸🇬", code: "SG" },
-  { name: "UAE", flag: "🇦🇪", code: "AE" },
-  { name: "Saudi Arabia", flag: "🇸🇦", code: "SA" },
-];
+// Convert country code to flag emoji
+function getFlagEmoji(countryCode: string): string {
+  const codePoints = countryCode
+    .toUpperCase()
+    .split("")
+    .map((char) => 127397 + char.charCodeAt(0));
+  return String.fromCodePoint(...codePoints);
+}
+
+// Transform the countries from countries.ts to include flag emojis
+const COUNTRIES: Country[] = countriesSorted.map((country) => ({
+  name: country.name,
+  code: country.code,
+  flag: getFlagEmoji(country.code),
+}));
 
 interface CountrySelectorProps {
   value: string;
