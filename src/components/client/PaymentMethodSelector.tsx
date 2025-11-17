@@ -25,7 +25,60 @@ export default function PaymentMethodSelector({
 }: PaymentMethodSelectorProps) {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
-  const { showInfo } = useToast();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { showInfo, showSuccess, showError } = useToast();
+
+  const handlePurchase = async () => {
+    if (!selectedMethod) return;
+
+    setIsProcessing(true);
+
+    try {
+      if (selectedMethod === "usd-balance") {
+        // Call the buy crypto API
+        const response = await fetch("/api/crypto/buy", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            symbol: asset,
+            amount: amount,
+            price: usdValue / amount, // Calculate price per unit
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to purchase crypto");
+        }
+
+        showSuccess(
+          `Successfully purchased ${amount} ${asset} for $${usdValue.toLocaleString()}`
+        );
+        onClose();
+
+        // Refresh the page to update balances
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        // Handle payment provider methods (moonpay, banxa, etc.)
+        showInfo(`Redirecting to ${selectedMethod}...`);
+        // Here you would integrate with the actual payment provider
+        // For now, just show info and close
+        onClose();
+      }
+    } catch (error) {
+      console.error("Purchase error:", error);
+      showError(
+        error instanceof Error ? error.message : "Failed to process purchase"
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const paymentMethods = [
     {
@@ -34,13 +87,61 @@ export default function PaymentMethodSelector({
       description: `Available: $${userBalance.toLocaleString()}`,
       icon: <Wallet className="w-6 h-6" />,
       enabled: userBalance >= usdValue,
+      type: "balance",
     },
     {
-      id: "card",
-      name: "Credit/Debit Card",
-      description: "Visa, Mastercard",
+      id: "moonpay",
+      name: "MoonPay",
+      description: "Credit/Debit Card",
+      fee: "~3-5% fee",
       icon: <CreditCard className="w-6 h-6" />,
       enabled: true,
+      type: "provider",
+    },
+    {
+      id: "banxa",
+      name: "Banxa",
+      description: "Credit/Debit Card",
+      fee: "~3-4% fee",
+      icon: <CreditCard className="w-6 h-6" />,
+      enabled: true,
+      type: "provider",
+    },
+    {
+      id: "transak",
+      name: "Transak",
+      description: "Credit/Debit Card",
+      fee: "~3-4% fee",
+      icon: <CreditCard className="w-6 h-6" />,
+      enabled: true,
+      type: "provider",
+    },
+    {
+      id: "alchemypay",
+      name: "AlchemyPay",
+      description: "Credit/Debit Card",
+      fee: "~3-4% fee",
+      icon: <CreditCard className="w-6 h-6" />,
+      enabled: true,
+      type: "provider",
+    },
+    {
+      id: "simplex",
+      name: "Simplex",
+      description: "Credit/Debit Card",
+      fee: "~4-5% fee",
+      icon: <CreditCard className="w-6 h-6" />,
+      enabled: true,
+      type: "provider",
+    },
+    {
+      id: "nowpayments",
+      name: "NOWPayments",
+      description: "Crypto Deposit",
+      fee: "~1-2% fee",
+      icon: <Wallet className="w-6 h-6" />,
+      enabled: true,
+      type: "provider",
     },
   ];
 
@@ -115,9 +216,7 @@ export default function PaymentMethodSelector({
               </button>
             )}
             <h2 className="text-2xl font-bold text-white flex-1 text-center">
-              {selectedMethod === "card"
-                ? "Select Provider"
-                : selectedMethod === "usd-balance"
+              {selectedMethod === "usd-balance"
                 ? "Confirm Purchase"
                 : "Select Payment Method"}
             </h2>
@@ -185,6 +284,11 @@ export default function PaymentMethodSelector({
                         >
                           {method.description}
                         </div>
+                        {method.type === "provider" && method.fee && (
+                          <div className="text-xs text-green-400 mt-1">
+                            {method.fee}
+                          </div>
+                        )}
                       </div>
                     </div>
                     {method.enabled && (
@@ -195,6 +299,38 @@ export default function PaymentMethodSelector({
               ))}
             </div>
           )}
+
+          {selectedMethod &&
+            selectedMethod !== "usd-balance" &&
+            selectedMethod !== "card" && (
+              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <CreditCard className="w-8 h-8 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    {paymentMethods.find((m) => m.id === selectedMethod)?.name}
+                  </h3>
+                  <p className="text-gray-400 mb-4">
+                    You will be redirected to complete your purchase
+                  </p>
+                  <div className="bg-gray-900 rounded-lg p-4">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span className="text-gray-400">Amount:</span>
+                      <span className="text-white font-medium">
+                        {amount} {asset}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-400">Total:</span>
+                      <span className="text-white font-medium">
+                        ${usdValue.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
           {selectedMethod === "card" && (
             <div className="space-y-3">
@@ -287,26 +423,15 @@ export default function PaymentMethodSelector({
         {selectedMethod && (
           <div className="p-6 border-t border-gray-800">
             <button
-              onClick={() => {
-                // Handle payment processing
-                const methodName =
-                  selectedMethod === "card"
-                    ? selectedProvider
-                    : selectedMethod === "usd-balance"
-                    ? "USD Balance"
-                    : selectedMethod;
-
-                showInfo(`Processing payment via ${methodName}`);
-                onClose();
-              }}
-              disabled={selectedMethod === "card" && !selectedProvider}
+              onClick={handlePurchase}
+              disabled={isProcessing}
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
             >
-              {selectedMethod === "card"
-                ? selectedProvider
-                  ? "Proceed to Payment"
-                  : "Select a Provider"
-                : "Confirm Purchase"}
+              {isProcessing
+                ? "Processing..."
+                : selectedMethod === "usd-balance"
+                ? "Confirm Purchase"
+                : "Proceed to Payment"}
             </button>
           </div>
         )}

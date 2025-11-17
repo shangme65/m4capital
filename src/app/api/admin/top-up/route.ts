@@ -221,14 +221,17 @@ export async function POST(req: NextRequest) {
 
     // Store deposit start time for progressive confirmation
     // The /api/cron/process-confirmations endpoint will handle updates
+    const depositMetadata = {
+      ...((deposit.metadata as object) || {}),
+      startTime: new Date().toISOString(),
+      depositType,
+      cryptoAsset,
+    };
+
     await prisma.deposit.update({
       where: { id: deposit.id },
       data: {
-        metadata: {
-          startTime: new Date().toISOString(),
-          depositType,
-          cryptoAsset,
-        },
+        metadata: depositMetadata,
       },
     });
 
