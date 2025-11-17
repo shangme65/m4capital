@@ -21,7 +21,6 @@ export const dynamic = "force-dynamic";
 function DashboardContent() {
   const { data: session, status } = useSession();
   const btcPrice = useBitcoinPrice();
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("all");
 
   // Debug logging for session
   console.log("🎯 Dashboard Component Rendered");
@@ -36,7 +35,7 @@ function DashboardContent() {
     isLoading: portfolioLoading,
     error: portfolioError,
     refetch,
-  } = usePortfolio(selectedPeriod);
+  } = usePortfolio("all");
   const {
     openDepositModal,
     openWithdrawModal,
@@ -48,6 +47,7 @@ function DashboardContent() {
   const { recentActivity } = useNotifications();
   const { showSuccess, showError } = useToast();
   const [lastUpdated, setLastUpdated] = useState("Just now");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
@@ -222,22 +222,6 @@ function DashboardContent() {
       ? portfolio.portfolio.periodIncomePercent
       : 0;
 
-  // Period labels for display
-  const periodLabels: Record<string, string> = {
-    "1yr": "1YR",
-    today: "Today",
-    "7d": "7D",
-    "30d": "30D",
-  };
-
-  // Tooltip labels for periods
-  const periodTooltips: Record<string, string> = {
-    "1yr": "1 year",
-    today: "Today",
-    "7d": "7 days",
-    "30d": "30 days",
-  };
-
   useEffect(() => {
     const timer = setInterval(() => {
       setLastUpdated("Just now");
@@ -245,6 +229,19 @@ function DashboardContent() {
 
     return () => clearInterval(timer);
   }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+      setLastUpdated("Just now");
+      showSuccess("Portfolio data refreshed");
+    } catch (error) {
+      showError("Failed to refresh data");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const handleDeposit = () => {
     openDepositModal();
@@ -502,30 +499,11 @@ function DashboardContent() {
           <h1 className="text-xl sm:text-2xl font-bold text-white">
             Portfolio Value
           </h1>
-          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-400">
+          <div className="text-xs sm:text-sm text-gray-400">
             <span className="hidden sm:inline">
               Last updated: {lastUpdated}
             </span>
             <span className="sm:hidden">{lastUpdated}</span>
-            <button
-              onClick={() => setLastUpdated("Just now")}
-              className="text-gray-400 hover:text-white transition-colors"
-              title="Refresh data"
-            >
-              <svg
-                className="w-3 h-3 sm:w-4 sm:h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </button>
           </div>
         </div>
 
@@ -544,24 +522,6 @@ function DashboardContent() {
             )}
           </div>
 
-          {/* Period Selector */}
-          <div className="flex items-center gap-1 mb-3">
-            {["today", "7d", "30d", "1yr"].map((period) => (
-              <button
-                key={period}
-                onClick={() => setSelectedPeriod(period)}
-                title={periodTooltips[period]}
-                className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors ${
-                  selectedPeriod === period
-                    ? "bg-orange-500 text-white"
-                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                }`}
-              >
-                {periodLabels[period]}
-              </button>
-            ))}
-          </div>
-
           <div className="flex items-center gap-2">
             {portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-24 rounded"></div>
@@ -576,7 +536,7 @@ function DashboardContent() {
                   {incomePercent.toFixed(2)}%
                 </span>
                 <span className="text-gray-400 text-sm sm:text-base">
-                  {periodLabels[selectedPeriod]}
+                  24hrs
                 </span>
                 {/* Info icon for tooltip */}
                 <div className="group relative">

@@ -194,6 +194,12 @@ export const authOptions: AuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      // Don't create session if token is invalid or missing required data
+      if (!token || !token.id || !token.email) {
+        console.log("⚠️ Invalid token, not creating session");
+        return session;
+      }
+
       console.log("📋 Creating session for user:", token.email);
       // Add user data from token to session
       if (session.user && token) {
@@ -211,8 +217,14 @@ export const authOptions: AuthOptions = {
       return session;
     },
   },
+  events: {
+    async signOut({ token, session }) {
+      console.log("🚪 User signed out:", token?.email || session?.user?.email);
+    },
+  },
   pages: {
     signIn: "/",
+    signOut: "/", // Redirect directly to homepage on signout, no confirmation page
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
