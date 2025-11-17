@@ -38,22 +38,22 @@ export async function POST(request: NextRequest) {
 
     // Get user with portfolio
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { portfolio: true },
+      where: { email: session.user?.email },
+      include: { Portfolio: true },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    if (!user.portfolio) {
+    if (!user.Portfolio) {
       return NextResponse.json(
         { error: "Portfolio not found" },
         { status: 404 }
       );
     }
 
-    const currentBalance = parseFloat(user.portfolio.balance.toString());
+    const currentBalance = parseFloat(user.Portfolio.balance.toString());
 
     // Calculate fees based on withdrawal method
     const fees = calculateWithdrawalFees(withdrawAmount, withdrawalMethod);
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     // Create withdrawal record
     const withdrawal = await prisma.withdrawal.create({
       data: {
-        portfolioId: user.portfolio.id,
+        portfolioId: user.Portfolio.id,
         userId: user.id,
         amount: withdrawAmount,
         currency: currency,

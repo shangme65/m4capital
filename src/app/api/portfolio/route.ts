@@ -97,19 +97,19 @@ export async function GET(request: NextRequest) {
     const user = await prisma.user.findUnique({
       where: { email: session.user?.email! },
       include: {
-        portfolio: true,
+        Portfolio: true,
       },
     });
 
     console.log("👤 User found:", user ? `ID: ${user.id}` : "Not found");
-    console.log("💼 Portfolio exists:", user?.portfolio ? "Yes" : "No");
+    console.log("💼 Portfolio exists:", user?.Portfolio ? "Yes" : "No");
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Create portfolio if it doesn't exist
-    let portfolio = user.portfolio;
+    let portfolio = user.Portfolio;
     if (!portfolio) {
       console.log("📝 Creating new portfolio for user:", user.id);
       portfolio = await prisma.portfolio.create({

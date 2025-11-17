@@ -86,8 +86,8 @@ export async function POST(req: NextRequest) {
       }
 
       // If completed, credit the portfolio
-      if (isComplete && deposit.user && deposit.user.portfolio) {
-        const portfolio = deposit.user.portfolio;
+      if (isComplete && deposit.user && deposit.user.Portfolio) {
+        const portfolio = deposit.user.Portfolio;
         const depositType = (deposit.metadata as any)?.depositType;
 
         if (depositType === "crypto" && deposit.targetAsset) {

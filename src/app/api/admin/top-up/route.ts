@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create portfolio if it doesn't exist
-    let portfolio = user.portfolio;
+    let portfolio = user.Portfolio;
     if (!portfolio) {
       portfolio = await prisma.portfolio.create({
         data: {

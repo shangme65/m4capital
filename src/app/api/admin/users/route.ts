@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
     // Transform the data to include balance at the user level for easier frontend consumption
     const usersWithBalance = users.map((user) => ({
       ...user,
-      balance: user.portfolio?.balance || 0,
+      balance: user.Portfolio?.balance || 0,
       portfolio: undefined, // Remove nested portfolio object
     }));
 

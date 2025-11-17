@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Find deposit by ID
     const deposit = await prisma.deposit.findUnique({
       where: { id: order_id },
-      include: { user: { include: { portfolio: true } } },
+      include: { user: { include: { Portfolio: true } } },
     });
 
     if (!deposit) {
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Get or create portfolio
-      let portfolio = deposit.user.portfolio;
+      let portfolio = deposit.user.Portfolio;
       if (!portfolio) {
         portfolio = await prisma.portfolio.create({
           data: {

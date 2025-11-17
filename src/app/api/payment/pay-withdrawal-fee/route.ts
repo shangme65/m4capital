@@ -29,11 +29,11 @@ export async function POST(request: NextRequest) {
 
     // Get user with portfolio
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { portfolio: true },
+      where: { email: session.user?.email },
+      include: { Portfolio: true },
     });
 
-    if (!user || !user.portfolio) {
+    if (!user || !user.Portfolio) {
       return NextResponse.json(
         { error: "User or portfolio not found" },
         { status: 404 }
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     const withdrawAmount = parseFloat(withdrawal.amount.toString());
     const totalRequired = withdrawAmount + totalFees;
 
-    const currentBalance = parseFloat(user.portfolio.balance.toString());
+    const currentBalance = parseFloat(user.Portfolio.balance.toString());
 
     // Verify user still has sufficient balance
     if (currentBalance < totalRequired) {
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     await prisma.$transaction([
       // Update portfolio balance
       prisma.portfolio.update({
-        where: { id: user.portfolio.id },
+        where: { id: user.Portfolio.id },
         data: { balance: newBalance },
       }),
 
