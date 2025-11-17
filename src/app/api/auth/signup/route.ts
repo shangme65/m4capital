@@ -5,12 +5,36 @@ import { createVerificationToken } from "@/lib/verification";
 import { sendEmail } from "@/lib/email";
 import { emailTemplate, verificationCodeTemplate } from "@/lib/email-templates";
 
+// Force dynamic to ensure fresh data on each request
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   try {
     const { name, email, password, accountType, country } = await req.json();
 
+    // Validation
     if (!name || !email || !password) {
-      return new NextResponse("Missing fields", { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid email format" },
+        { status: 400 }
+      );
+    }
+
+    // Validate password strength
+    if (password.length < 6) {
+      return NextResponse.json(
+        { success: false, message: "Password must be at least 6 characters" },
+        { status: 400 }
+      );
     }
 
     const normalizedAccountType =
@@ -27,7 +51,10 @@ export async function POST(req: Request) {
     });
 
     if (exist) {
-      return new NextResponse("Email already exists", { status: 400 });
+      return NextResponse.json(
+        { success: false, message: "Email already exists" },
+        { status: 400 }
+      );
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -83,6 +110,12 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("SIGNUP_ERROR", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json(
+      {
+        success: false,
+        message: "An error occurred during registration. Please try again.",
+      },
+      { status: 500 }
+    );
   }
 }

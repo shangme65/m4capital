@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import VerifyEmailModal from "./VerifyEmailModal";
+import CountrySelector from "./CountrySelector";
 
 interface EmailSignupModalProps {
   isOpen: boolean;
@@ -77,7 +78,10 @@ export default function EmailSignupModal({
         setError(data.message || "Failed to create account. Please try again.");
       }
     } catch (error) {
-      setError("Network error. Please try again.");
+      console.error("Signup error:", error);
+      setError(
+        "Unable to connect to the server. Please check your internet connection and try again."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -213,35 +217,7 @@ export default function EmailSignupModal({
                       <label className="block text-gray-400 text-sm mb-2">
                         Country of residence
                       </label>
-                      <div className="relative">
-                        <select
-                          value={country}
-                          onChange={(e) => setCountry(e.target.value)}
-                          title="Select your country of residence"
-                          className="w-full px-4 py-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white focus:outline-none focus:border-orange-400 appearance-none"
-                        >
-                          <option value="" disabled>
-                            Select country
-                          </option>
-                          <option value="Nigeria">🇳🇬 Nigeria</option>
-                          <option value="United States">
-                            🇺🇸 United States
-                          </option>
-                          <option value="United Kingdom">
-                            🇬🇧 United Kingdom
-                          </option>
-                          <option value="Canada">🇨🇦 Canada</option>
-                          <option value="Germany">🇩🇪 Germany</option>
-                          <option value="France">🇫🇷 France</option>
-                          <option value="Australia">🇦🇺 Australia</option>
-                          <option value="Japan">🇯🇵 Japan</option>
-                          <option value="South Africa">🇿🇦 South Africa</option>
-                          <option value="Brazil">🇧🇷 Brazil</option>
-                        </select>
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-orange-500 pointer-events-none">
-                          ▼
-                        </div>
-                      </div>
+                      <CountrySelector value={country} onChange={setCountry} />
                     </div>
 
                     {/* Email */}
