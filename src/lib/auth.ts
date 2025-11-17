@@ -139,6 +139,8 @@ export const authOptions: AuthOptions = {
             accountType: true,
             isEmailVerified: true,
             image: true,
+            preferredCurrency: true,
+            country: true,
           },
         });
 
@@ -150,6 +152,8 @@ export const authOptions: AuthOptions = {
           token.accountType = dbUser.accountType;
           token.isEmailVerified = dbUser.isEmailVerified;
           token.image = dbUser.image;
+          token.preferredCurrency = dbUser.preferredCurrency;
+          token.country = dbUser.country;
           token.lastUpdated = Date.now();
           console.log("✅ JWT token created with role:", dbUser.role);
         }
@@ -166,6 +170,8 @@ export const authOptions: AuthOptions = {
             const dbUser = await prisma.user.findUnique({
               where: { id: token.id as string },
               select: {
+                preferredCurrency: true,
+                country: true,
                 id: true,
                 accountType: true,
                 role: true,
@@ -183,6 +189,8 @@ export const authOptions: AuthOptions = {
               token.role = dbUser.role;
               token.isEmailVerified = dbUser.isEmailVerified;
               token.image = dbUser.image;
+              token.preferredCurrency = dbUser.preferredCurrency;
+              token.country = dbUser.country;
               token.lastUpdated = Date.now();
             }
           } catch (error) {
@@ -209,6 +217,8 @@ export const authOptions: AuthOptions = {
         session.user.role = token.role as string;
         session.user.accountType = token.accountType as string | undefined;
         session.user.isEmailVerified = token.isEmailVerified as boolean;
+        session.user.preferredCurrency = token.preferredCurrency as string | undefined;
+        session.user.country = token.country as string | undefined;
       }
       console.log("✅ Session created successfully:", {
         email: session.user?.email,

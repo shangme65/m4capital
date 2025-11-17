@@ -607,10 +607,9 @@ function DashboardContent() {
 
         <div className="flex items-center justify-between">
           <span className="text-gray-400 text-base sm:text-lg">
-            USD Balance
+            {session?.user?.preferredCurrency || "USD"} Balance
           </span>
-          <span className="text-white text-lg sm:text-xl font-medium">
-            {portfolioLoading ? (
+          <span className="text-white text-lg sm:text-xl font-medium">{portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
             ) : (
               <>

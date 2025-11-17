@@ -8,6 +8,30 @@ import { emailTemplate, verificationCodeTemplate } from "@/lib/email-templates";
 // Force dynamic to ensure fresh data on each request
 export const dynamic = "force-dynamic";
 
+// Map countries to their currencies
+const COUNTRY_CURRENCY_MAP: Record<string, string> = {
+  "Nigeria": "NGN",
+  "United States": "USD",
+  "United Kingdom": "GBP",
+  "Canada": "CAD",
+  "Germany": "EUR",
+  "France": "EUR",
+  "Australia": "AUD",
+  "Japan": "JPY",
+  "South Africa": "ZAR",
+  "Brazil": "BRL",
+  "India": "INR",
+  "China": "CNY",
+  "Mexico": "MXN",
+  "Spain": "EUR",
+  "Italy": "EUR",
+  "Netherlands": "EUR",
+  "South Korea": "KRW",
+  "Singapore": "SGD",
+  "UAE": "AED",
+  "Saudi Arabia": "SAR",
+};
+
 export async function POST(req: Request) {
   try {
     const { name, email, password, accountType, country } = await req.json();
@@ -59,6 +83,11 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Determine preferred currency based on country
+    const preferredCurrency = country && COUNTRY_CURRENCY_MAP[country] 
+      ? COUNTRY_CURRENCY_MAP[country] 
+      : "USD";
+
     const user = await prisma.user.create({
       data: {
         name,
@@ -66,6 +95,7 @@ export async function POST(req: Request) {
         password: hashedPassword,
         accountType: normalizedAccountType,
         country: country || undefined,
+        preferredCurrency,
         isEmailVerified: false,
         portfolio: {
           create: {},
