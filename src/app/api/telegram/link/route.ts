@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -148,6 +149,7 @@ export async function PUT(request: NextRequest) {
     // Create in-app notification
     await prisma.notification.create({
       data: {
+            id: generateId(),
         userId: session.user.id,
         type: "SUCCESS",
         title: "Telegram Account Connected",
@@ -274,6 +276,7 @@ export async function DELETE(request: NextRequest) {
     console.log("📬 Creating in-app notification for Telegram unlink");
     await prisma.notification.create({
       data: {
+            id: generateId(),
         userId: session.user.id,
         type: "INFO",
         title: "Telegram Account Disconnected",

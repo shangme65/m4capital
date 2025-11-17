@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
     // Get user from database
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      include: { kycVerification: true },
+      include: { KycVerification: true },
     });
 
     if (!user) {
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if already verified
-    if (user.kycVerification?.status === "APPROVED") {
+    if (user.KycVerification?.status === "APPROVED") {
       return NextResponse.json(
         { error: "KYC already approved" },
         { status: 400 }
@@ -121,7 +122,7 @@ export async function POST(req: NextRequest) {
     };
 
     let kycVerification;
-    if (user.kycVerification) {
+    if (user.KycVerification) {
       // Update existing KYC
       kycVerification = await prisma.kycVerification.update({
         where: { userId: user.id },
@@ -131,8 +132,10 @@ export async function POST(req: NextRequest) {
       // Create new KYC
       kycVerification = await prisma.kycVerification.create({
         data: {
+          id: generateId(),
           ...kycData,
           userId: user.id,
+          updatedAt: new Date(),
         },
       });
     }

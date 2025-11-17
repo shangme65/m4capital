@@ -55,7 +55,7 @@ export async function POST(
       // Delete user's deposits and withdrawals
       await tx.deposit.deleteMany({
         where: {
-          portfolio: {
+          Portfolio: {
             userId: userId,
           },
         },
@@ -63,7 +63,7 @@ export async function POST(
 
       await tx.withdrawal.deleteMany({
         where: {
-          portfolio: {
+          Portfolio: {
             userId: userId,
           },
         },

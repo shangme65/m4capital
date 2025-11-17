@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -19,9 +20,9 @@ export async function POST(req: NextRequest) {
         },
       },
       include: {
-        user: {
+        User: {
           include: {
-            portfolio: true,
+            Portfolio: true,
           },
         },
       },
@@ -86,8 +87,8 @@ export async function POST(req: NextRequest) {
       }
 
       // If completed, credit the portfolio
-      if (isComplete && deposit.user && deposit.user.Portfolio) {
-        const portfolio = deposit.user.Portfolio;
+      if (isComplete && deposit.User && deposit.User.Portfolio) {
+        const portfolio = deposit.User.Portfolio;
         const depositType = (deposit.metadata as any)?.depositType;
 
         if (depositType === "crypto" && deposit.targetAsset) {
@@ -115,7 +116,7 @@ export async function POST(req: NextRequest) {
           });
 
           console.log(
-            `✅ Credited ${deposit.amount} ${deposit.targetAsset} to user ${deposit.user.email}`
+            `✅ Credited ${deposit.amount} ${deposit.targetAsset} to user ${deposit.User.email}`
           );
         } else {
           // Update USD balance
@@ -129,14 +130,15 @@ export async function POST(req: NextRequest) {
           });
 
           console.log(
-            `✅ Credited $${deposit.amount} to user ${deposit.user.email} balance`
+            `✅ Credited $${deposit.amount} to user ${deposit.User.email} balance`
           );
         }
 
         // Create completion notification
         await prisma.notification.create({
           data: {
-            userId: deposit.user.id,
+            id: generateId(),
+            userId: deposit.User.id,
             type: "SUCCESS",
             title: "Deposit Completed!",
             message: `Your deposit of ${

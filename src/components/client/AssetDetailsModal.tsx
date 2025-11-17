@@ -244,6 +244,8 @@ export default function AssetDetailsModal({
   const [selectedPeriod, setSelectedPeriod] = useState<
     "1H" | "1D" | "1W" | "1M" | "1Y" | "All"
   >("1D");
+  // Buy amount state
+  const [selectedBuyAmount, setSelectedBuyAmount] = useState<number>(30);
 
   // Fetch live price for asset.symbol from our prices API
   useEffect(() => {
@@ -375,6 +377,7 @@ export default function AssetDetailsModal({
                     $
                     {currentPrice.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
                     })}
                   </div>
                   <div
@@ -382,10 +385,13 @@ export default function AssetDetailsModal({
                       priceChange >= 0 ? "text-green-500" : "text-red-500"
                     }`}
                   >
-                    <span className="text-lg">↑</span>
+                    <span className="text-lg">
+                      {priceChange >= 0 ? "↑" : "↓"}
+                    </span>
                     <span className="text-lg font-medium">
-                      $775.38 ({priceChange >= 0 ? "+" : ""}
-                      {priceChange}%)
+                      ${Math.abs((currentPrice * priceChange) / 100).toFixed(2)}{" "}
+                      ({priceChange >= 0 ? "+" : ""}
+                      {priceChange.toFixed(2)}%)
                     </span>
                   </div>
                 </div>
@@ -444,26 +450,35 @@ export default function AssetDetailsModal({
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <div className="text-2xl font-bold text-gray-900">
-                        $30.00 <span className="text-gray-500">USD</span>
+                        ${selectedBuyAmount.toFixed(2)}{" "}
+                        <span className="text-gray-500">USD</span>
                       </div>
                       <div className="flex gap-2 mt-2">
                         {quickBuyAmounts.map((amount) => (
                           <button
                             key={amount}
-                            className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm hover:bg-blue-200 transition-colors"
+                            onClick={() => setSelectedBuyAmount(amount)}
+                            className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                              selectedBuyAmount === amount
+                                ? "bg-blue-600 text-white"
+                                : "bg-blue-100 text-blue-600 hover:bg-blue-200"
+                            }`}
                           >
                             ${amount}
                           </button>
                         ))}
                       </div>
                     </div>
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors">
+                    <button
+                      onClick={handleBuy}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors"
+                    >
                       Buy
                     </button>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Buying {(43900 / currentPrice).toFixed(8)} {asset.symbol} •
-                    Bank transfer • Onramp Money
+                    Buying {(selectedBuyAmount / currentPrice).toFixed(5)}{" "}
+                    {asset.symbol} • Bank transfer • Onramp Money
                   </p>
                 </div>
               </div>

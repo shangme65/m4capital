@@ -293,7 +293,18 @@ const AdminDashboard = () => {
     "usd"
   );
 
-  const cryptoAssets = ["BTC", "ETH", "USDT", "SOL", "XRP"];
+  const cryptoAssets = [
+    "BTC",
+    "ETH",
+    "XRP",
+    "TRX",
+    "TON",
+    "LTC",
+    "BCH",
+    "ETC",
+    "USDC",
+    "USDT",
+  ];
   const depositTypes = [
     "Bank Transfer",
     "Credit/Debit Card",
@@ -1231,63 +1242,6 @@ const AdminDashboard = () => {
 
       {activeTab === "payments" && (
         <div className="space-y-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Available Deposit Types */}
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <CreditCard className="text-green-400" size={24} />
-                <span>Available Deposit Types</span>
-              </h3>
-              <div className="space-y-3">
-                {depositTypes.map((type) => (
-                  <div
-                    key={type}
-                    className="p-3 rounded-lg border bg-gray-700/30 border-gray-600/30"
-                  >
-                    <div className="flex items-center space-x-3">
-                      {type === "Bank Transfer" && (
-                        <Building2 className="text-green-400" size={20} />
-                      )}
-                      {type === "Credit/Debit Card" && (
-                        <CreditCard className="text-purple-400" size={20} />
-                      )}
-                      {type === "PayPal" && (
-                        <Smartphone className="text-blue-500" size={20} />
-                      )}
-                      {type === "Wire Transfer" && (
-                        <Globe className="text-red-400" size={20} />
-                      )}
-                      <span className="font-medium">{type}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Crypto Assets */}
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <Bitcoin className="text-orange-400" size={24} />
-                <span>Crypto Assets</span>
-              </h3>
-              <div className="space-y-3">
-                {paymentMethods
-                  .filter((m) => m.id.startsWith("crypto_"))
-                  .map((method) => (
-                    <div
-                      key={method.id}
-                      className="p-3 rounded-lg border bg-gray-700/30 border-gray-600/30"
-                    >
-                      <div className="flex items-center space-x-3">
-                        {method.icon}
-                        <span className="font-medium">{method.name}</span>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-
           {/* Manual Top-up Section */}
           {selectedUser && (
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">

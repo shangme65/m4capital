@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { generateId } from "../src/lib/generate-id";
 
 const prisma = new PrismaClient();
 
@@ -34,6 +35,7 @@ async function main() {
   const adminPassword = await bcrypt.hash(adminPasswordRaw, 10);
   const adminUser = await prisma.user.create({
     data: {
+      id: generateId(),
       name: process.env.ORIGIN_ADMIN_NAME || "Admin",
       email: adminEmail,
       password: adminPassword,
@@ -42,14 +44,15 @@ async function main() {
       accountType: "INVESTOR",
       country: adminCountry,
       preferredCurrency: adminCurrency,
-      portfolio: {
+      updatedAt: new Date(),
+      Portfolio: {
         create: {
-          balance: 0, // Production starts with zero balance
-          assets: [], // No sample assets
+          id: generateId(),
         },
       },
-      kycVerification: {
+      KycVerification: {
         create: {
+          id: generateId(),
           firstName: process.env.ORIGIN_ADMIN_NAME?.split(" ")[0] || "Admin",
           lastName:
             process.env.ORIGIN_ADMIN_NAME?.split(" ").slice(1).join(" ") ||
@@ -67,6 +70,7 @@ async function main() {
           status: "APPROVED",
           reviewedBy: "System",
           reviewedAt: new Date(),
+          updatedAt: new Date(),
         },
       },
     },

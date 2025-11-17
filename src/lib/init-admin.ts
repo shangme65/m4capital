@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { generateId } from "@/lib/generate-id";
 
 /**
  * Initialize or update the origin admin user from environment variables
@@ -46,6 +47,7 @@ export async function initializeOriginAdmin() {
       // Create new admin
       await prisma.user.create({
         data: {
+          id: generateId(),
           email,
           password: hashedPassword,
           name,
@@ -53,6 +55,7 @@ export async function initializeOriginAdmin() {
           emailVerified: new Date(), // NextAuth field
           isEmailVerified: true, // Custom verification field
           accountType: "INVESTOR",
+          updatedAt: new Date(),
         },
       });
       console.log("✅ Origin admin created:", email);

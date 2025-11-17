@@ -31,12 +31,12 @@ export async function GET(req: Request) {
         country: true,
         isDeleted: true,
         createdAt: true,
-        kycVerification: {
+        KycVerification: {
           select: {
             status: true,
           },
         },
-        portfolio: {
+        Portfolio: {
           select: {
             balance: true,
           },

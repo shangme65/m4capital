@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -24,6 +25,7 @@ export async function POST(req: NextRequest) {
     // Create activity log
     await prisma.userActivity.create({
       data: {
+        id: generateId(),
         userId: session?.user?.id || null,
         sessionId: session?.user?.id || null,
         activityType,

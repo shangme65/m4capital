@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
     const activities = await prisma.userActivity.findMany({
       where,
       include: {
-        user: {
+        User: {
           select: {
             id: true,
             name: true,

@@ -34,15 +34,15 @@ export async function GET(req: Request) {
         updatedAt: true,
         _count: {
           select: {
-            sessions: true,
+            Session: true,
           },
         },
-        kycVerification: {
+        KycVerification: {
           select: {
             status: true,
           },
         },
-        portfolio: {
+        Portfolio: {
           select: {
             balance: true,
           },

@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
@@ -21,9 +22,9 @@ export async function POST(req: NextRequest) {
     const deposit = await prisma.deposit.findUnique({
       where: { id: depositId },
       include: {
-        portfolio: {
+        Portfolio: {
           include: {
-            user: true,
+            User: true,
           },
         },
       },
@@ -61,10 +62,11 @@ export async function POST(req: NextRequest) {
       );
 
       // Send progress notification ONLY at 1/6
-      if (targetConfirmation === 1 && deposit.portfolio?.user) {
+      if (targetConfirmation === 1 && deposit.Portfolio?.User) {
         await prisma.notification.create({
           data: {
-            userId: deposit.portfolio.user.id,
+            id: generateId(),
+            userId: deposit.Portfolio.User.id,
             type: "DEPOSIT",
             title: "Deposit Confirmation Progress",
             message: `Your deposit confirmation is in progress: 1/6 confirmations received.`,
@@ -120,7 +122,7 @@ export async function POST(req: NextRequest) {
 
 async function completeDeposit(deposit: any, metadata: any) {
   try {
-    const user = deposit.portfolio?.user;
+    const user = deposit.Portfolio?.User;
     const portfolioId = deposit.portfolioId;
     const depositType = metadata.depositType;
     const cryptoAsset = metadata.cryptoAsset;
@@ -182,6 +184,7 @@ async function completeDeposit(deposit: any, metadata: any) {
     if (user) {
       await prisma.notification.create({
         data: {
+          id: generateId(),
           userId: user.id,
           type: "DEPOSIT",
           title: "Deposit Completed!",

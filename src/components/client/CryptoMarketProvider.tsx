@@ -100,19 +100,14 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
   const cryptoSymbolMap: Record<string, string> = {
     BTC: "btcusdt",
     ETH: "ethusdt",
-    BNB: "bnbusdt",
-    SOL: "solusdt",
-    ADA: "adausdt",
     XRP: "xrpusdt",
-    DOGE: "dogeusdt",
-    DOT: "dotusdt",
-    MATIC: "maticusdt",
-    LINK: "linkusdt",
-    AVAX: "avaxusdt",
-    UNI: "uniusdt",
-    ATOM: "atomusdt",
+    TRX: "trxusdt",
+    TON: "tonusdt",
     LTC: "ltcusdt",
+    BCH: "bchusdt",
     ETC: "etcusdt",
+    USDC: "usdcusdt",
+    USDT: "usdtusdt",
   };
 
   // Supported cryptocurrencies
@@ -122,19 +117,14 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
   const cryptoNames: Record<string, string> = {
     BTC: "Bitcoin",
     ETH: "Ethereum",
-    BNB: "Binance Coin",
-    SOL: "Solana",
-    ADA: "Cardano",
     XRP: "Ripple",
-    DOGE: "Dogecoin",
-    DOT: "Polkadot",
-    MATIC: "Polygon",
-    LINK: "Chainlink",
-    AVAX: "Avalanche",
-    UNI: "Uniswap",
-    ATOM: "Cosmos",
+    TRX: "Tron",
+    TON: "Toncoin",
     LTC: "Litecoin",
+    BCH: "Bitcoin Cash",
     ETC: "Ethereum Classic",
+    USDC: "USD Coin",
+    USDT: "Tether",
   };
 
   // Convert crypto price to market tick for compatibility

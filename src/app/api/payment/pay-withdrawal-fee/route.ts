@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -116,6 +117,7 @@ export async function POST(request: NextRequest) {
       // Create notification
       prisma.notification.create({
         data: {
+            id: generateId(),
           userId: user.id,
           type: "WITHDRAW",
           title: "Withdrawal Processing",

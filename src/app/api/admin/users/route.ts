@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
         accountType: true,
         country: true,
         isOriginAdmin: true,
-        portfolio: {
+        Portfolio: {
           select: {
             balance: true,
           },

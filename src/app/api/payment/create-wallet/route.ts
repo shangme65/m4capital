@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -68,10 +69,12 @@ export async function POST(request: NextRequest) {
     // Create a new deposit record
     const deposit = await prisma.bitcoinDeposit.create({
       data: {
+        id: generateId(),
         userId: user.id,
         address: address,
         status: "pending",
         amountUsd: 0,
+        updatedAt: new Date(),
         metadata: {
           generatedAt: new Date().toISOString(),
           method: "blockchain_api",

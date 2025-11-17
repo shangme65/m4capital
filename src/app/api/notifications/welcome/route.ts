@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -21,6 +22,7 @@ export async function POST(request: NextRequest) {
     // Create welcome notification
     await prisma.notification.create({
       data: {
+            id: generateId(),
         userId,
         type: "INFO",
         title: "Welcome to M4Capital",

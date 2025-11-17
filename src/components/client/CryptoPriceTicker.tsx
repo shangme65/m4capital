@@ -220,7 +220,18 @@ const CryptoPriceCard: React.FC<{
 
 // Main ticker component
 export const CryptoPriceTicker: React.FC<CryptoPriceTickerProps> = ({
-  symbols = ["BTC", "ETH", "XRP", "TRX", "TON", "LTC", "BCH", "ETC", "USDC", "USDT"],
+  symbols = [
+    "BTC",
+    "ETH",
+    "XRP",
+    "TRX",
+    "TON",
+    "LTC",
+    "BCH",
+    "ETC",
+    "USDC",
+    "USDT",
+  ],
   showDetails = true,
   compact = false,
   className = "",

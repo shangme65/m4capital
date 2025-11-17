@@ -1,3 +1,4 @@
+import { generateId } from "@/lib/generate-id";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { nowPayments } from "@/lib/nowpayments";
@@ -51,7 +52,7 @@ export async function POST(request: NextRequest) {
     // Find deposit by ID
     const deposit = await prisma.deposit.findUnique({
       where: { id: order_id },
-      include: { user: { include: { Portfolio: true } } },
+      include: { User: { include: { Portfolio: true } } },
     });
 
     if (!deposit) {
@@ -73,10 +74,11 @@ export async function POST(request: NextRequest) {
       case "waiting":
         newStatus = "PENDING";
         // Create initial notification when payment is detected
-        if (deposit.status !== "PENDING" && deposit.user) {
+        if (deposit.status !== "PENDING" && deposit.User) {
           await prisma.notification.create({
             data: {
-              userId: deposit.user.id,
+            id: generateId(),
+              userId: deposit.User.id,
               type: "DEPOSIT",
               title: `Incoming ${deposit.cryptoCurrency || "BTC"} Deposit`,
               message: `Your deposit of ${actually_paid || pay_amount} ${
@@ -97,10 +99,10 @@ export async function POST(request: NextRequest) {
       case "confirming":
         newStatus = "PROCESSING";
         // Update notification
-        if (deposit.user) {
+        if (deposit.User) {
           const existingNotif = await prisma.notification.findFirst({
             where: {
-              userId: deposit.user.id,
+              userId: deposit.User.id,
               metadata: {
                 path: ["depositId"],
                 equals: deposit.id,
@@ -152,7 +154,7 @@ export async function POST(request: NextRequest) {
       console.log("✅ Payment completed! Crediting user portfolio...");
 
       // Check if user exists
-      if (!deposit.user) {
+      if (!deposit.User) {
         console.error("❌ Deposit has no associated user!");
         return NextResponse.json(
           { success: false, error: "User not found" },
@@ -161,11 +163,12 @@ export async function POST(request: NextRequest) {
       }
 
       // Get or create portfolio
-      let portfolio = deposit.user.Portfolio;
+      let portfolio = deposit.User.Portfolio;
       if (!portfolio) {
         portfolio = await prisma.portfolio.create({
           data: {
-            userId: deposit.user.id,
+          id: generateId(),
+            userId: deposit.User.id,
             balance: 0,
             assets: [],
           },
@@ -185,14 +188,15 @@ export async function POST(request: NextRequest) {
       });
 
       console.log(
-        `💵 Credited ${deposit.amount} ${deposit.currency} to user ${deposit.user.email}`
+        `💵 Credited ${deposit.amount} ${deposit.currency} to user ${deposit.User.email}`
       );
       console.log(`New balance: ${newBalance}`);
 
       // Create notification for successful deposit
       await prisma.notification.create({
         data: {
-          userId: deposit.user.id,
+            id: generateId(),
+          userId: deposit.User.id,
           type: "DEPOSIT",
           title: "Deposit Completed",
           message: `Your deposit of $${deposit.amount} has been successfully credited to your account.`,

@@ -166,7 +166,18 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
 
   if (!isOpen) return null;
 
-  const assets = ["BTC", "ETH", "ADA", "SOL"];
+  const assets = [
+    "BTC",
+    "ETH",
+    "XRP",
+    "TRX",
+    "TON",
+    "LTC",
+    "BCH",
+    "ETC",
+    "USDC",
+    "USDT",
+  ];
 
   return (
     <AnimatePresence>
@@ -271,9 +282,21 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
                               ? "Bitcoin (BTC)"
                               : asset === "ETH"
                               ? "Ethereum (ETH)"
-                              : asset === "ADA"
-                              ? "Cardano (ADA)"
-                              : "Solana (SOL)"}
+                              : asset === "XRP"
+                              ? "Ripple (XRP)"
+                              : asset === "TRX"
+                              ? "Tron (TRX)"
+                              : asset === "TON"
+                              ? "Toncoin (TON)"
+                              : asset === "LTC"
+                              ? "Litecoin (LTC)"
+                              : asset === "BCH"
+                              ? "Bitcoin Cash (BCH)"
+                              : asset === "ETC"
+                              ? "Ethereum Classic (ETC)"
+                              : asset === "USDC"
+                              ? "USD Coin (USDC)"
+                              : "Tether (USDT)"}
                           </option>
                         ))}
                       </select>
@@ -381,9 +404,21 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
                               ? "Bitcoin (BTC)"
                               : asset === "ETH"
                               ? "Ethereum (ETH)"
-                              : asset === "ADA"
-                              ? "Cardano (ADA)"
-                              : "Solana (SOL)"}
+                              : asset === "XRP"
+                              ? "Ripple (XRP)"
+                              : asset === "TRX"
+                              ? "Tron (TRX)"
+                              : asset === "TON"
+                              ? "Toncoin (TON)"
+                              : asset === "LTC"
+                              ? "Litecoin (LTC)"
+                              : asset === "BCH"
+                              ? "Bitcoin Cash (BCH)"
+                              : asset === "ETC"
+                              ? "Ethereum Classic (ETC)"
+                              : asset === "USDC"
+                              ? "USD Coin (USDC)"
+                              : "Tether (USDT)"}
                           </option>
                         ))}
                       </select>
