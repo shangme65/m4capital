@@ -7,6 +7,8 @@ export async function POST(req: NextRequest) {
     // Get admin credentials from environment variables
     const adminEmail = process.env.ORIGIN_ADMIN_EMAIL;
     const adminPasswordRaw = process.env.ORIGIN_ADMIN_PASSWORD;
+    const adminCountry = process.env.ORIGIN_ADMIN_COUNTRY || "United States";
+    const adminCurrency = process.env.ORIGIN_ADMIN_CURRENCY || "USD";
 
     if (!adminEmail || !adminPasswordRaw) {
       return NextResponse.json(
@@ -31,6 +33,8 @@ export async function POST(req: NextRequest) {
         data: {
           role: "ADMIN",
           isEmailVerified: true,
+          country: adminCountry,
+          preferredCurrency: adminCurrency,
         },
       });
 
@@ -51,6 +55,8 @@ export async function POST(req: NextRequest) {
           role: "ADMIN",
           accountType: "INVESTOR",
           isEmailVerified: true,
+          country: adminCountry,
+          preferredCurrency: adminCurrency,
           portfolio: {
             create: {
               balance: 0,
