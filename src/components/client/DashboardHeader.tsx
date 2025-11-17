@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Bell, ChevronDown } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -9,11 +9,19 @@ import NotificationsPanel from "./NotificationsPanel";
 import Image from "next/image";
 
 const DashboardHeader = () => {
-  const { data: session } = useSession();
+  const { data: session, status, update } = useSession();
   const { toggleSidebar } = useSidebar();
   const { unreadCount } = useNotifications();
   const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] =
     useState(false);
+
+  // Force session update on mount and when status changes
+  useEffect(() => {
+    if (status === "authenticated") {
+      // Update session to ensure we have the latest data
+      update();
+    }
+  }, [status, update]);
 
   // Derive the secondary label (Investor / Trader, etc.)
   const secondaryLabel = (() => {

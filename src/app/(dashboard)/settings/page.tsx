@@ -2,6 +2,7 @@
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useToast } from "@/contexts/ToastContext";
 import ConfirmModal from "@/components/client/ConfirmModal";
 import {
   Upload,
@@ -31,6 +32,7 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const { showSuccess, showError, showWarning, showInfo } = useToast();
 
   // Modal state
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -245,7 +247,7 @@ export default function SettingsPage() {
       console.error("Error updating email preferences:", error);
       // Revert on error
       setEmailPreferences(emailPreferences);
-      alert("Failed to update email preferences. Please try again.");
+      showError("Failed to update email preferences. Please try again.");
     } finally {
       setSavingEmailPrefs(false);
     }
@@ -380,14 +382,14 @@ export default function SettingsPage() {
       });
 
       if (response.ok) {
-        alert(
+        showSuccess(
           "Password reset instructions have been sent to your email address."
         );
       } else {
-        alert("Failed to send password reset email. Please try again.");
+        showError("Failed to send password reset email. Please try again.");
       }
     } catch (error) {
-      alert("An error occurred. Please try again.");
+      showError("An error occurred. Please try again.");
     }
   };
 
@@ -416,7 +418,7 @@ export default function SettingsPage() {
       } else {
         setTwoFactorMethod("EMAIL");
         setTwoFactorEnabled(true);
-        alert(data.message);
+        showSuccess(data.message);
       }
     } catch (error: any) {
       setTwoFactorError(error.message || "Failed to setup 2FA");
@@ -450,7 +452,7 @@ export default function SettingsPage() {
       setVerificationCode("");
       setTwoFactorQRCode(null);
       setTwoFactorSecret(null);
-      alert("Two-factor authentication enabled successfully!");
+      showSuccess("Two-factor authentication enabled successfully!");
     } catch (error: any) {
       setTwoFactorError(error.message || "Failed to verify code");
     } finally {
@@ -481,7 +483,7 @@ export default function SettingsPage() {
       setTwoFactorMethod(null);
       setShowDisable2FA(false);
       setDisable2FAPassword("");
-      alert("Two-factor authentication disabled successfully!");
+      showSuccess("Two-factor authentication disabled successfully!");
     } catch (error: any) {
       setTwoFactorError(error.message || "Failed to disable 2FA");
     } finally {
@@ -530,15 +532,15 @@ export default function SettingsPage() {
 
       if (response.ok) {
         setKycStatus("PENDING");
-        alert(
+        showSuccess(
           "KYC verification submitted successfully! We'll review your documents within 24-48 hours."
         );
       } else {
-        alert(data.error || "Failed to submit KYC verification");
+        showError(data.error || "Failed to submit KYC verification");
       }
     } catch (error) {
       console.error("KYC submission error:", error);
-      alert("Failed to submit KYC verification. Please try again.");
+      showError("Failed to submit KYC verification. Please try again.");
     } finally {
       setSubmittingKyc(false);
     }
@@ -1388,23 +1390,23 @@ export default function SettingsPage() {
                       onClick={() => {
                         // Validate all required fields
                         if (!kycData.firstName.trim()) {
-                          alert("Please enter your First Name");
+                          showWarning("Please enter your First Name");
                           return;
                         }
                         if (!kycData.lastName.trim()) {
-                          alert("Please enter your Last Name (Surname)");
+                          showWarning("Please enter your Last Name (Surname)");
                           return;
                         }
                         if (!kycData.dateOfBirth) {
-                          alert("Please select your Date of Birth");
+                          showWarning("Please select your Date of Birth");
                           return;
                         }
                         if (!kycData.nationality.trim()) {
-                          alert("Please enter your Nationality");
+                          showWarning("Please enter your Nationality");
                           return;
                         }
                         if (!kycData.phoneNumber.trim()) {
-                          alert("Please enter your Phone Number");
+                          showWarning("Please enter your Phone Number");
                           return;
                         }
                         setKycStage(2);
@@ -1504,15 +1506,15 @@ export default function SettingsPage() {
                       onClick={() => {
                         // Validate all required address fields
                         if (!kycData.address.trim()) {
-                          alert("Please enter your Street Address");
+                          showWarning("Please enter your Street Address");
                           return;
                         }
                         if (!kycData.city.trim()) {
-                          alert("Please enter your City");
+                          showWarning("Please enter your City");
                           return;
                         }
                         if (!kycData.postalCode.trim()) {
-                          alert("Please enter your Postal Code");
+                          showWarning("Please enter your Postal Code");
                           return;
                         }
                         setKycStage(3);

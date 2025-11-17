@@ -20,7 +20,7 @@ import { useState, useEffect } from "react";
 import LogoutConfirmationModal from "./LogoutConfirmationModal";
 
 const Sidebar = () => {
-  const { data: session } = useSession();
+  const { data: session, status, update } = useSession();
   const { isSidebarOpen, closeSidebar } = useSidebar();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [baseUrl, setBaseUrl] = useState("");
@@ -32,6 +32,13 @@ const Sidebar = () => {
       setBaseUrl(window.location.origin);
     }
   }, []);
+
+  // Force session update on mount and when status changes to ensure fresh data
+  useEffect(() => {
+    if (status === "authenticated") {
+      update();
+    }
+  }, [status, update]);
 
   const navItems = [
     { icon: <Home size={24} />, name: "Homepage", href: "/" },

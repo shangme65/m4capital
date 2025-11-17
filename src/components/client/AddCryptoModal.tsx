@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/contexts/ToastContext";
 
 interface Cryptocurrency {
   symbol: string;
@@ -47,16 +48,17 @@ export default function AddCryptoModal({
   onRemove,
   existingAssets,
 }: AddCryptoModalProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [isAdding, setIsAdding] = useState(false);
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
+  const { showWarning } = useToast();
 
   const existingSymbols = existingAssets.map((a) => a.symbol);
 
   const filteredCryptos = POPULAR_CRYPTOCURRENCIES.filter(
     (crypto) =>
-      crypto.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      crypto.symbol.toLowerCase().includes(searchQuery.toLowerCase())
+      crypto.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      crypto.symbol.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAdd = async (crypto: Cryptocurrency) => {
@@ -68,7 +70,7 @@ export default function AddCryptoModal({
   const handleRemove = async (symbol: string) => {
     const asset = existingAssets.find((a) => a.symbol === symbol);
     if (asset && asset.amount > 0) {
-      alert(
+      showWarning(
         `Cannot remove ${symbol} because you have a balance of ${asset.amount}. Please sell or transfer your holdings first.`
       );
       return;
@@ -122,7 +124,6 @@ export default function AddCryptoModal({
                 </svg>
               </button>
             </div>
-
             {/* Search */}
             <div className="p-4 sm:p-6 border-b border-gray-700">
               <div className="relative">
@@ -142,13 +143,12 @@ export default function AddCryptoModal({
                 <input
                   type="text"
                   placeholder="Search cryptocurrency..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
                 />
               </div>
-            </div>
-
+            </div>{" "}
             {/* List */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               {filteredCryptos.length === 0 ? (

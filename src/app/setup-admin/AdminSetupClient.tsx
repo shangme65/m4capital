@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { useToast } from "@/contexts/ToastContext";
+import ConfirmDialog from "@/components/client/ConfirmDialog";
 
 interface AdminSetupClientProps {
   adminExists: boolean;
@@ -19,6 +21,7 @@ export default function AdminSetupClient({
   const [removeLoading, setRemoveLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const router = useRouter();
 
   const initializeAdmin = async () => {
@@ -70,10 +73,6 @@ export default function AdminSetupClient({
   };
 
   const removeOtherAdmins = async () => {
-    if (!confirm("This will remove the origin admin account. Continue?")) {
-      return;
-    }
-
     setRemoveLoading(true);
     setError(null);
 
@@ -178,7 +177,7 @@ export default function AdminSetupClient({
               </span>
             </p>
             <button
-              onClick={removeOtherAdmins}
+              onClick={() => setShowConfirmDialog(true)}
               disabled={removeLoading}
               className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
             >
@@ -248,6 +247,18 @@ export default function AdminSetupClient({
           </div>
         </div>
       </div>
+
+      {showConfirmDialog && (
+        <ConfirmDialog
+          title="Remove Origin Admin"
+          message="This will remove the origin admin account. Continue?"
+          confirmText="Remove Admin"
+          cancelText="Cancel"
+          variant="danger"
+          onConfirm={removeOtherAdmins}
+          onCancel={() => setShowConfirmDialog(false)}
+        />
+      )}
     </div>
   );
 }

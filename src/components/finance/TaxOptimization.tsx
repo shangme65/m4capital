@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useToast } from "@/contexts/ToastContext";
 import {
   FileText,
   CreditCard,
@@ -41,6 +42,7 @@ export default function TaxOptimization() {
   const [selectedTaxYear, setSelectedTaxYear] = useState(2024);
   const [taxBracket, setTaxBracket] = useState(22); // 22% bracket
   const [showHarvestModal, setShowHarvestModal] = useState(false);
+  const { showSuccess, showInfo } = useToast();
 
   const taxLossOpportunities: TaxLossOpportunity[] = [
     {
@@ -104,13 +106,13 @@ export default function TaxOptimization() {
   const handleHarvestLoss = (opportunityId: string) => {
     // In production, this would execute the tax-loss harvesting
     console.log(`Harvesting loss for opportunity ${opportunityId}`);
-    alert("Tax-loss harvesting executed successfully!");
+    showSuccess("Tax-loss harvesting executed successfully!");
   };
 
   const downloadDocument = (doc: TaxDocument) => {
     // Mock download functionality
     console.log(`Downloading ${doc.type} for ${doc.year}`);
-    alert(`Downloading ${doc.type} for ${doc.year}`);
+    showInfo(`Downloading ${doc.type} for ${doc.year}`);
   };
 
   return (
@@ -428,7 +430,9 @@ export default function TaxOptimization() {
               <button
                 onClick={() => {
                   // Execute harvest logic here
-                  alert("Tax-loss harvesting executed for all positions!");
+                  showSuccess(
+                    "Tax-loss harvesting executed for all positions!"
+                  );
                   setShowHarvestModal(false);
                 }}
                 className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"

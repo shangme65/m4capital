@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { X, CreditCard, Wallet, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
+import { useToast } from "@/contexts/ToastContext";
 
 interface PaymentMethodSelectorProps {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export default function PaymentMethodSelector({
 }: PaymentMethodSelectorProps) {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+  const { showInfo } = useToast();
 
   const paymentMethods = [
     {
@@ -287,13 +289,14 @@ export default function PaymentMethodSelector({
             <button
               onClick={() => {
                 // Handle payment processing
-                alert(
-                  `Processing payment via ${
-                    selectedMethod === "card"
-                      ? selectedProvider
-                      : selectedMethod
-                  }`
-                );
+                const methodName =
+                  selectedMethod === "card"
+                    ? selectedProvider
+                    : selectedMethod === "usd-balance"
+                    ? "USD Balance"
+                    : selectedMethod;
+
+                showInfo(`Processing payment via ${methodName}`);
                 onClose();
               }}
               disabled={selectedMethod === "card" && !selectedProvider}

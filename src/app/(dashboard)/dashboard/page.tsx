@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
+import { useToast } from "@/contexts/ToastContext";
 import {
   CryptoMarketProvider,
   useBitcoinPrice,
@@ -45,6 +46,7 @@ function DashboardContent() {
     openSellModal,
   } = useModal();
   const { recentActivity } = useNotifications();
+  const { showSuccess, showError } = useToast();
   const [lastUpdated, setLastUpdated] = useState("Just now");
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
@@ -294,7 +296,7 @@ function DashboardContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || "Failed to add cryptocurrency");
+        showError(data.error || "Failed to add cryptocurrency");
         return;
       }
 
@@ -305,10 +307,10 @@ function DashboardContent() {
       setShowAddCryptoModal(false);
 
       // Show success message
-      alert(`${name} (${symbol}) added successfully!`);
+      showSuccess(`${name} (${symbol}) added successfully!`);
     } catch (error) {
       console.error("Error adding crypto:", error);
-      alert("Failed to add cryptocurrency. Please try again.");
+      showError("Failed to add cryptocurrency. Please try again.");
     }
   };
 
@@ -325,7 +327,7 @@ function DashboardContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.error || "Failed to remove cryptocurrency");
+        showError(data.error || "Failed to remove cryptocurrency");
         return;
       }
 
@@ -333,10 +335,10 @@ function DashboardContent() {
       await refetch();
 
       // Show success message
-      alert(`${symbol} removed successfully!`);
+      showSuccess(`${symbol} removed successfully!`);
     } catch (error) {
       console.error("Error removing crypto:", error);
-      alert("Failed to remove cryptocurrency. Please try again.");
+      showError("Failed to remove cryptocurrency. Please try again.");
     }
   };
 
