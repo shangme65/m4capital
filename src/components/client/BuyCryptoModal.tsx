@@ -24,9 +24,22 @@ export default function BuyCryptoModal({
 }: BuyCryptoModalProps) {
   const [amount, setAmount] = useState("");
   const [showPaymentSelector, setShowPaymentSelector] = useState(false);
+  const [inputMode, setInputMode] = useState<"crypto" | "usd">("crypto");
 
-  const cryptoAmount = amount ? parseFloat(amount) : 0;
-  const usdValue = cryptoAmount * asset.price;
+  const cryptoAmount =
+    inputMode === "crypto"
+      ? amount
+        ? parseFloat(amount)
+        : 0
+      : amount
+      ? parseFloat(amount) / asset.price
+      : 0;
+  const usdValue =
+    inputMode === "usd"
+      ? amount
+        ? parseFloat(amount)
+        : 0
+      : cryptoAmount * asset.price;
 
   const handleProceedToPayment = () => {
     if (cryptoAmount > 0) {
@@ -79,23 +92,60 @@ export default function BuyCryptoModal({
             </div>
           </div>
 
+          {/* Toggle Switch */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <button
+              onClick={() => {
+                setInputMode("crypto");
+                setAmount("");
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                inputMode === "crypto"
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+              }`}
+            >
+              {asset.symbol}
+            </button>
+            <button
+              onClick={() => {
+                setInputMode("usd");
+                setAmount("");
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                inputMode === "usd"
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+              }`}
+            >
+              USD
+            </button>
+          </div>
+
           {/* Amount Input */}
           <div className="mb-6">
             <label className="text-gray-400 text-sm mb-2 block">
-              Amount ({asset.symbol})
+              Amount ({inputMode === "crypto" ? asset.symbol : "USD"})
             </label>
             <input
               type="number"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder={`0.00 ${asset.symbol}`}
+              placeholder={
+                inputMode === "crypto" ? `0.00 ${asset.symbol}` : "$0.00"
+              }
               className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white text-lg focus:outline-none focus:border-purple-500 transition-colors"
             />
-            {cryptoAmount > 0 && (
+            {amount && parseFloat(amount) > 0 && (
               <div className="mt-2 text-right">
                 <span className="text-gray-400 text-sm">≈ </span>
                 <span className="text-white font-medium">
-                  ${usdValue.toLocaleString()}
+                  {inputMode === "crypto"
+                    ? `$${usdValue.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}`
+                    : `${cryptoAmount.toFixed(8)} ${asset.symbol}`}
                 </span>
               </div>
             )}
@@ -106,7 +156,13 @@ export default function BuyCryptoModal({
             {[100, 250, 500, 1000].map((value) => (
               <button
                 key={value}
-                onClick={() => setAmount((value / asset.price).toFixed(6))}
+                onClick={() =>
+                  setAmount(
+                    inputMode === "crypto"
+                      ? (value / asset.price).toFixed(8)
+                      : value.toString()
+                  )
+                }
                 className="bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-lg text-sm font-medium transition-colors"
               >
                 ${value}

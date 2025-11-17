@@ -375,6 +375,7 @@ export default function AssetDetailsModal({
                     $
                     {currentPrice.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
                     })}
                   </div>
                   <div
@@ -384,56 +385,11 @@ export default function AssetDetailsModal({
                   >
                     <span className="text-lg">↑</span>
                     <span className="text-lg font-medium">
-                      $775.38 ({priceChange >= 0 ? "+" : ""}
-                      {priceChange}%)
+                      ${Math.abs(currentPrice * (priceChange / 100)).toFixed(3)}{" "}
+                      ({priceChange >= 0 ? "+" : ""}
+                      {priceChange.toFixed(3)}%)
                     </span>
                   </div>
-                </div>
-
-                {/* Real-time chart */}
-                <div className="h-80 md:h-[420px] mb-4">
-                  <RealTimeTradingChart
-                    symbol={asset.symbol}
-                    // map selectedPeriod to an interval + limit
-                    {...(() => {
-                      const map: Record<
-                        string,
-                        { interval: string; limit: number }
-                      > = {
-                        "1H": { interval: "1m", limit: 60 },
-                        "1D": { interval: "15m", limit: 96 },
-                        "1W": { interval: "1h", limit: 168 },
-                        "1M": { interval: "4h", limit: 180 },
-                        "1Y": { interval: "1d", limit: 365 },
-                        All: { interval: "1d", limit: 1000 },
-                      };
-                      return map[selectedPeriod] || map["1D"];
-                    })()}
-                  />
-                </div>
-
-                {/* Time Period Buttons */}
-                <div className="flex justify-around mb-6">
-                  {[
-                    { label: "1H", key: "1H" },
-                    { label: "1D", key: "1D" },
-                    { label: "1W", key: "1W" },
-                    { label: "1M", key: "1M" },
-                    { label: "1Y", key: "1Y" },
-                    { label: "All", key: "All" },
-                  ].map((period) => (
-                    <button
-                      key={period.key}
-                      onClick={() => setSelectedPeriod(period.key as any)}
-                      className={`px-3 py-1 text-sm transition-colors rounded ${
-                        selectedPeriod === period.key
-                          ? "bg-gray-900 text-white"
-                          : "text-gray-600 hover:text-gray-900"
-                      }`}
-                    >
-                      {period.label}
-                    </button>
-                  ))}
                 </div>
 
                 {/* Buy Now Section */}
@@ -509,23 +465,26 @@ export default function AssetDetailsModal({
                           <div className="font-semibold text-gray-900">
                             {asset.name}
                           </div>
-                          <div className="text-gray-600">
-                            {asset.amount.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 8,
-                            })}{" "}
+                          <div className="text-gray-600 text-sm">
                             {asset.symbol}
                           </div>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="font-semibold text-gray-900">
+                          {asset.amount.toLocaleString("en-US", {
+                            minimumFractionDigits: 6,
+                            maximumFractionDigits: 8,
+                          })}{" "}
+                          {asset.symbol}
+                        </div>
+                        <div className="text-gray-600">
                           $
                           {asset.value.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
                           })}
                         </div>
-                        <div className="text-gray-500">-</div>
                       </div>
                     </div>
                   </div>

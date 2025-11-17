@@ -28,7 +28,8 @@ export default function PaymentMethodSelector({
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [showCustomWallet, setShowCustomWallet] = useState(false);
-  const { showInfo, showSuccess, showError } = useToast();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const { showInfo, showSuccess: showToast, showError } = useToast();
 
   const handlePurchase = async () => {
     if (!selectedMethod) return;
@@ -37,6 +38,9 @@ export default function PaymentMethodSelector({
 
     try {
       if (selectedMethod === "usd-balance") {
+        // Show processing for 3 seconds
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
         // Call the buy crypto API
         const response = await fetch("/api/crypto/buy", {
           method: "POST",
@@ -56,15 +60,16 @@ export default function PaymentMethodSelector({
           throw new Error(data.error || "Failed to purchase crypto");
         }
 
-        showSuccess(
-          `Successfully purchased ${amount} ${asset} for $${usdValue.toLocaleString()}`
-        );
-        onClose();
+        // Show success modal
+        setIsProcessing(false);
+        setShowSuccess(true);
 
-        // Refresh the page to update balances
+        // Close after 3 seconds and refresh
         setTimeout(() => {
+          setShowSuccess(false);
+          onClose();
           window.location.reload();
-        }, 1000);
+        }, 3000);
       } else if (selectedMethod === "custom-wallet") {
         // Open custom wallet deposit modal
         setShowCustomWallet(true);
@@ -460,6 +465,81 @@ export default function PaymentMethodSelector({
         amount={amount}
         usdValue={usdValue}
       />
+
+      {/* Success Modal */}
+      {showSuccess && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[110]"
+        >
+          <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gray-900 rounded-2xl p-8 max-w-md w-full mx-4"
+          >
+            <div className="text-center">
+              {/* Green Checkmark Animation */}
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 200,
+                  damping: 15,
+                  delay: 0.2,
+                }}
+                className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
+              >
+                <motion.svg
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.5, delay: 0.5 }}
+                  className="w-12 h-12 text-white"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={3}
+                >
+                  <motion.path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M5 13l4 4L19 7"
+                  />
+                </motion.svg>
+              </motion.div>
+
+              {/* Success Message */}
+              <h3 className="text-2xl font-bold text-white mb-2">
+                Purchase Successful!
+              </h3>
+              <p className="text-gray-400 mb-6">
+                You've successfully purchased {amount} {asset}
+              </p>
+
+              {/* Transaction Details */}
+              <div className="bg-gray-800 rounded-lg p-4 mb-4">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-400">Amount:</span>
+                  <span className="text-white font-medium">
+                    {amount} {asset}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Total Paid:</span>
+                  <span className="text-green-400 font-bold">
+                    ${usdValue.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-gray-500 text-sm">
+                Redirecting to dashboard...
+              </p>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

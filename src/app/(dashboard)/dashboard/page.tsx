@@ -499,12 +499,6 @@ function DashboardContent() {
           <h1 className="text-xl sm:text-2xl font-bold text-white">
             Portfolio Value
           </h1>
-          <div className="text-xs sm:text-sm text-gray-400">
-            <span className="hidden sm:inline">
-              Last updated: {lastUpdated}
-            </span>
-            <span className="sm:hidden">{lastUpdated}</span>
-          </div>
         </div>
 
         <div className="mb-6 sm:mb-8">
