@@ -19,10 +19,33 @@ export default async function AdminSetupPage() {
   // Get current session
   const session = await getServerSession(authOptions);
 
-  // If admin exists, check authentication
+  // SECURITY: If admin exists, ONLY allow current admin to access
   if (adminExists) {
+    // Not logged in - deny access completely
+    if (!session) {
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-2xl p-8 text-center">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">
+              Access Denied
+            </h1>
+            <p className="text-gray-600 mb-6">
+              Admin already exists. You must be logged in as an admin to access
+              this page.
+            </p>
+            <a
+              href="/"
+              className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold"
+            >
+              Go to Home
+            </a>
+          </div>
+        </div>
+      );
+    }
+
     // Logged in but not an admin - deny access
-    if (session && session.user.role !== "ADMIN") {
+    if (session.user.role !== "ADMIN") {
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
           <div className="max-w-md w-full bg-white rounded-lg shadow-2xl p-8 text-center">
@@ -42,12 +65,9 @@ export default async function AdminSetupPage() {
         </div>
       );
     }
-
-    // Not logged in - show page with login prompt
-    // (they can still use the Initialize Admin button if needed)
   }
 
-  // Allow access: no admin exists (first-time setup), user is admin, or not logged in (for admin setup)
+  // Allow access ONLY if: no admin exists (first-time setup) OR user is logged in as admin
   return (
     <AdminSetupClient
       adminExists={!!adminExists}

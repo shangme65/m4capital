@@ -13,10 +13,13 @@ interface Asset {
   icon: string;
 }
 
+import BuyCryptoModal from "./BuyCryptoModal";
+
 interface AssetDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   asset: Asset | null;
+  userBalance: number;
 }
 
 interface AssetInfo {
@@ -173,6 +176,7 @@ export default function AssetDetailsModal({
   isOpen,
   onClose,
   asset,
+  userBalance,
 }: AssetDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<"holdings" | "history" | "about">(
     "holdings"
@@ -806,41 +810,16 @@ export default function AssetDetailsModal({
             </motion.div>
           )}
 
-          {showBuyModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              onClick={closeAllActionModals}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-2xl p-6 max-w-sm w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">⚡</span>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-2">
-                    Buy {asset?.symbol}
-                  </h2>
-                  <p className="text-gray-600 mb-6">
-                    Purchase more {asset?.symbol} with fiat currency
-                  </p>
-                  <button
-                    onClick={closeAllActionModals}
-                    className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-semibold transition-colors"
-                  >
-                    Coming Soon
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
+          <BuyCryptoModal
+            isOpen={showBuyModal}
+            onClose={closeAllActionModals}
+            asset={{
+              symbol: asset?.symbol || "",
+              name: asset?.name || "",
+              price: currentPrice,
+            }}
+            userBalance={userBalance}
+          />
 
           {showSellModal && (
             <motion.div

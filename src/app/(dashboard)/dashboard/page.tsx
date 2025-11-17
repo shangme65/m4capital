@@ -1064,6 +1064,11 @@ function DashboardContent() {
         isOpen={showAssetDetails}
         onClose={() => setShowAssetDetails(false)}
         asset={selectedAsset}
+        userBalance={
+          portfolio?.portfolio?.balance
+            ? parseFloat(portfolio.portfolio.balance.toString())
+            : 0
+        }
       />
 
       {/* Add Crypto Modal */}

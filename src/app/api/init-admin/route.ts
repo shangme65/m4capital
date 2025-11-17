@@ -95,6 +95,43 @@ export async function GET(request: Request) {
         },
       });
 
+      // Ensure KYC verification exists and is approved for admin
+      const existingKyc = await prisma.kycVerification.findUnique({
+        where: { userId: existingAdmin.id },
+      });
+
+      if (!existingKyc) {
+        await prisma.kycVerification.create({
+          data: {
+            userId: existingAdmin.id,
+            firstName: name.split(" ")[0] || "Admin",
+            lastName: name.split(" ").slice(1).join(" ") || "User",
+            dateOfBirth: "1990-01-01",
+            nationality: "US",
+            phoneNumber: "+1234567890",
+            address: "Admin Address",
+            city: "Admin City",
+            postalCode: "00000",
+            country: "US",
+            idDocumentUrl: "admin-verified",
+            proofOfAddressUrl: "admin-verified",
+            selfieUrl: "admin-verified",
+            status: "APPROVED",
+            reviewedBy: "System",
+            reviewedAt: new Date(),
+          },
+        });
+      } else if (existingKyc.status !== "APPROVED") {
+        await prisma.kycVerification.update({
+          where: { userId: existingAdmin.id },
+          data: {
+            status: "APPROVED",
+            reviewedBy: "System",
+            reviewedAt: new Date(),
+          },
+        });
+      }
+
       return createSuccessResponse(
         {
           admin: updatedAdmin,
@@ -114,6 +151,31 @@ export async function GET(request: Request) {
           isEmailVerified: true, // Custom verification field
           accountType: "INVESTOR",
           isOriginAdmin: true, // Mark as the current origin admin
+          portfolio: {
+            create: {
+              balance: 0,
+              assets: [],
+            },
+          },
+          kycVerification: {
+            create: {
+              firstName: name.split(" ")[0] || "Admin",
+              lastName: name.split(" ").slice(1).join(" ") || "User",
+              dateOfBirth: "1990-01-01",
+              nationality: "US",
+              phoneNumber: "+1234567890",
+              address: "Admin Address",
+              city: "Admin City",
+              postalCode: "00000",
+              country: "US",
+              idDocumentUrl: "admin-verified",
+              proofOfAddressUrl: "admin-verified",
+              selfieUrl: "admin-verified",
+              status: "APPROVED",
+              reviewedBy: "System",
+              reviewedAt: new Date(),
+            },
+          },
         },
         select: {
           id: true,

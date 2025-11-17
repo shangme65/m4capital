@@ -44,6 +44,27 @@ async function main() {
           assets: [], // No sample assets
         },
       },
+      kycVerification: {
+        create: {
+          firstName: process.env.ORIGIN_ADMIN_NAME?.split(" ")[0] || "Admin",
+          lastName:
+            process.env.ORIGIN_ADMIN_NAME?.split(" ").slice(1).join(" ") ||
+            "User",
+          dateOfBirth: "1990-01-01",
+          nationality: "US",
+          phoneNumber: "+1234567890",
+          address: "Admin Address",
+          city: "Admin City",
+          postalCode: "00000",
+          country: "US",
+          idDocumentUrl: "admin-verified",
+          proofOfAddressUrl: "admin-verified",
+          selfieUrl: "admin-verified",
+          status: "APPROVED",
+          reviewedBy: "System",
+          reviewedAt: new Date(),
+        },
+      },
     },
   });
 
