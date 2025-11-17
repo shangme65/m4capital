@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   TrendingUp,
   DollarSign,
@@ -111,6 +112,7 @@ const financeTabs: FinanceTab[] = [
 
 export default function FinancePage() {
   const { data: session } = useSession();
+  const { formatAmount, preferredCurrency } = useCurrency();
   const [activeTab, setActiveTab] = useState("overview");
   const [isLoading, setIsLoading] = useState(true);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -197,7 +199,7 @@ export default function FinancePage() {
               <div className="bg-gray-800/50 rounded-md px-3 py-2 min-w-0 flex-1 lg:flex-none lg:min-w-[120px]">
                 <p className="text-xs text-gray-400">Portfolio</p>
                 <p className="text-sm font-bold text-green-400 truncate">
-                  ${portfolioData.totalValue.toLocaleString()}
+                  {formatAmount(portfolioData.totalValue)}
                 </p>
               </div>
               <div className="bg-gray-800/50 rounded-md px-3 py-2 min-w-0 flex-1 lg:flex-none lg:min-w-[100px]">
@@ -237,14 +239,14 @@ export default function FinancePage() {
                       : "text-red-400"
                   }`}
                 >
-                  {portfolioData.todayChange >= 0 ? "+" : ""}$
-                  {Math.abs(portfolioData.todayChange).toLocaleString()}
+                  {portfolioData.todayChange >= 0 ? "+" : ""}
+                  {formatAmount(Math.abs(portfolioData.todayChange))}
                 </p>
               </div>
               <div className="bg-gray-800/50 rounded-md px-3 py-2 min-w-0 flex-1 lg:flex-none lg:min-w-[100px]">
                 <p className="text-xs text-gray-400">Cash</p>
                 <p className="text-sm font-bold text-blue-400 truncate">
-                  ${portfolioData.availableCash.toLocaleString()}
+                  {formatAmount(portfolioData.availableCash)}
                 </p>
               </div>
             </div>
@@ -418,6 +420,7 @@ function OverviewTab({
   setActiveTab: (tab: string) => void;
   portfolioData: any;
 }) {
+  const { formatAmount } = useCurrency();
   const [showExportModal, setShowExportModal] = useState(false);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
   const [showAllActivities, setShowAllActivities] = useState(false);
@@ -547,19 +550,11 @@ function OverviewTab({
             </div>
             <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-white">
-                $
-                {portfolioData.totalValue.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {formatAmount(portfolioData.totalValue)}
               </p>
               <p className="text-xs text-green-400">
-                {portfolioData.todayChange >= 0 ? "+" : ""}$
-                {Math.abs(portfolioData.todayChange).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}{" "}
-                today
+                {portfolioData.todayChange >= 0 ? "+" : ""}
+                {formatAmount(Math.abs(portfolioData.todayChange))} today
               </p>
             </div>
           </motion.div>
@@ -582,11 +577,7 @@ function OverviewTab({
             </div>
             <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-white">
-                $
-                {portfolioData.availableCash.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {formatAmount(portfolioData.availableCash)}
               </p>
               <p className="text-xs text-blue-400">Ready to invest</p>
             </div>
@@ -610,11 +601,7 @@ function OverviewTab({
             </div>
             <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-white">
-                $
-                {portfolioData.totalInvested.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {formatAmount(portfolioData.totalInvested)}
               </p>
               <p className="text-xs text-purple-400">Across your assets</p>
             </div>
@@ -638,11 +625,7 @@ function OverviewTab({
             </div>
             <div className="flex items-center justify-between">
               <p className="text-lg font-bold text-white">
-                $
-                {portfolioData.totalReturn.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {formatAmount(portfolioData.totalReturn)}
               </p>
               <p className="text-xs text-orange-400">
                 {portfolioData.totalReturnPercent >= 0 ? "+" : ""}
@@ -747,7 +730,7 @@ function OverviewTab({
                     </div>
                     <div className="text-right">
                       <p className="text-white font-medium text-sm">
-                        ${activity.amount?.toLocaleString()}
+                        {formatAmount(activity.amount || 0)}
                       </p>
                       <p className="text-gray-400 text-xs">
                         {new Date(activity.timestamp).toLocaleString()}
@@ -981,11 +964,7 @@ function OverviewTab({
                         </div>
                         <div className="text-right">
                           <p className="text-white font-bold text-lg">
-                            $
-                            {activity.amount?.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                            {formatAmount(activity.amount || 0)}
                           </p>
                           <p className="text-gray-400 text-sm">
                             {new Date(activity.timestamp).toLocaleString()}

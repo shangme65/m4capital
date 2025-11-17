@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import { createVerificationToken } from "@/lib/verification";
 import { sendEmail } from "@/lib/email";
 import { emailTemplate, verificationCodeTemplate } from "@/lib/email-templates";
+import { getDefaultCurrencyForCountry } from "@/lib/currencies";
 
 export async function POST(req: Request) {
   try {
@@ -32,6 +33,11 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Determine default currency based on country
+    const defaultCurrency = country
+      ? getDefaultCurrencyForCountry(country)
+      : "USD";
+
     const user = await prisma.user.create({
       data: {
         name,
@@ -39,6 +45,7 @@ export async function POST(req: Request) {
         password: hashedPassword,
         accountType: normalizedAccountType,
         country: country || undefined,
+        preferredCurrency: defaultCurrency,
         isEmailVerified: false,
         portfolio: {
           create: {},

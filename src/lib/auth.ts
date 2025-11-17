@@ -49,8 +49,16 @@ export const authOptions: AuthOptions = {
           return null;
         }
 
-        // Check if email is verified (skip for admin users)
-        if ((user as any).role !== "ADMIN" && !(user as any).isEmailVerified) {
+        // Check if email is verified (skip for admin users and users created before verification was implemented)
+        // Only enforce for users created after email verification feature was added
+        const userCreatedAt = (user as any).createdAt;
+        const emailVerificationStartDate = new Date("2025-11-01"); // Adjust this date as needed
+
+        if (
+          (user as any).role !== "ADMIN" &&
+          !(user as any).isEmailVerified &&
+          userCreatedAt >= emailVerificationStartDate
+        ) {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
@@ -151,17 +159,15 @@ export const authOptions: AuthOptions = {
           token.isEmailVerified = dbUser.isEmailVerified;
           token.image = dbUser.image;
           token.lastUpdated = Date.now();
-          console.log("✅ JWT token created with role:", dbUser.role);
         }
       } else if (token.id) {
-        // Refresh user data from DB periodically (every 24 hours to reduce DB calls)
-        const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+        // Refresh user data from DB periodically (every 7 days to reduce DB calls)
+        const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
         const shouldRefresh =
           !token.lastUpdated ||
           Date.now() - (token.lastUpdated as number) > CACHE_DURATION;
 
         if (shouldRefresh || trigger === "update") {
-          console.log("🔄 Refreshing JWT token from database");
           try {
             const dbUser = await prisma.user.findUnique({
               where: { id: token.id as string },
@@ -186,7 +192,6 @@ export const authOptions: AuthOptions = {
               token.lastUpdated = Date.now();
             }
           } catch (error) {
-            console.error("⚠️ Failed to refresh token from DB:", error);
             // Continue with cached token data if DB is unreachable
           }
         }
@@ -196,11 +201,9 @@ export const authOptions: AuthOptions = {
     async session({ session, token }) {
       // Don't create session if token is invalid or missing required data
       if (!token || !token.id || !token.email) {
-        console.log("⚠️ Invalid token, not creating session");
         return session;
       }
 
-      console.log("📋 Creating session for user:", token.email);
       // Add user data from token to session
       if (session.user && token) {
         session.user.id = token.id as string;
@@ -210,10 +213,6 @@ export const authOptions: AuthOptions = {
         session.user.accountType = token.accountType as string | undefined;
         session.user.isEmailVerified = token.isEmailVerified as boolean;
       }
-      console.log("✅ Session created successfully:", {
-        email: session.user?.email,
-        role: session.user?.role,
-      });
       return session;
     },
   },

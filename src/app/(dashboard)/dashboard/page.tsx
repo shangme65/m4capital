@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   CryptoMarketProvider,
   useBitcoinPrice,
@@ -21,6 +22,11 @@ export const dynamic = "force-dynamic";
 function DashboardContent() {
   const { data: session, status } = useSession();
   const btcPrice = useBitcoinPrice();
+  const {
+    formatAmount,
+    preferredCurrency,
+    isLoading: currencyLoading,
+  } = useCurrency();
 
   // Debug logging for session
   console.log("🎯 Dashboard Component Rendered");
@@ -503,16 +509,10 @@ function DashboardContent() {
 
         <div className="mb-6 sm:mb-8">
           <div className="text-3xl sm:text-5xl font-bold text-white mb-2">
-            {portfolioLoading ? (
+            {portfolioLoading || currencyLoading ? (
               <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
             ) : (
-              <>
-                $
-                {(portfolioValue || 0).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </>
+              <>{formatAmount(portfolioValue || 0)}</>
             )}
           </div>
 
@@ -601,19 +601,13 @@ function DashboardContent() {
 
         <div className="flex items-center justify-between">
           <span className="text-gray-400 text-base sm:text-lg">
-            USD Balance
+            {preferredCurrency} Balance
           </span>
           <span className="text-white text-lg sm:text-xl font-medium">
-            {portfolioLoading ? (
+            {portfolioLoading || currencyLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
             ) : (
-              <>
-                $
-                {(availableBalance || 0).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </>
+              <>{formatAmount(availableBalance || 0)}</>
             )}
           </span>
         </div>
@@ -849,11 +843,7 @@ function DashboardContent() {
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-white font-medium text-sm">
-                            $
-                            {(asset.currentPrice || 0).toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                            {formatAmount(asset.currentPrice || 0)}
                           </span>
                           <span
                             className={`text-sm font-medium ${
@@ -878,11 +868,7 @@ function DashboardContent() {
                         })}
                       </div>
                       <div className="text-gray-400 text-sm mt-0.5">
-                        $
-                        {(asset.value || 0).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {formatAmount(asset.value || 0)}
                       </div>
                     </div>
                   </div>
@@ -942,13 +928,7 @@ function DashboardContent() {
                         <div className="text-gray-400 text-sm">
                           {activity.type === "deposit" ||
                           activity.type === "withdraw"
-                            ? `$${(activity.amount || 0).toLocaleString(
-                                "en-US",
-                                {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }
-                              )}`
+                            ? formatAmount(activity.amount || 0)
                             : `${activity.amount || 0} ${
                                 activity.asset?.split(" ")[0] || ""
                               }`}

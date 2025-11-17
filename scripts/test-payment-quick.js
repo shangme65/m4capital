@@ -8,10 +8,16 @@
 const { PrismaClient } = require("@prisma/client");
 const crypto = require("crypto");
 const http = require("http");
+require("dotenv").config();
 
 const prisma = new PrismaClient();
 
-const IPN_SECRET = "wLsFwNdB4ImHMZGbRekRr9WxhCXOln77"; // From your .env
+const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET;
+
+if (!IPN_SECRET) {
+  console.error("❌ Error: NOWPAYMENTS_IPN_SECRET not found in .env file");
+  process.exit(1);
+}
 
 async function main() {
   console.log("\n🔍 Finding latest deposit...\n");
