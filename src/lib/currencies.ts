@@ -181,3 +181,58 @@ export function getCurrencySymbol(code: string): string {
   const currency = CURRENCIES.find((c) => c.code === code);
   return currency?.symbol || code;
 }
+
+/**
+ * Fetch exchange rates from an external API
+ * Returns rates with USD as base currency
+ */
+export async function getExchangeRates(): Promise<Record<string, number>> {
+  try {
+    // Use Frankfurter API for forex rates
+    const response = await fetch("https://api.frankfurter.app/latest?from=USD");
+    if (!response.ok) {
+      throw new Error("Failed to fetch exchange rates");
+    }
+    const data = await response.json();
+    return { USD: 1, ...data.rates };
+  } catch (error) {
+    console.error("Error fetching exchange rates:", error);
+    // Return default rates if fetch fails
+    return { USD: 1 };
+  }
+}
+
+/**
+ * Convert an amount from USD to another currency
+ */
+export function convertCurrency(
+  amountUSD: number,
+  targetCurrency: string,
+  exchangeRates: Record<string, number>
+): number {
+  const rate = exchangeRates[targetCurrency] || 1;
+  return amountUSD * rate;
+}
+
+/**
+ * Format a currency amount with the appropriate symbol and decimals
+ */
+export function formatCurrency(
+  amount: number,
+  currencyCode: string,
+  decimals: number = 2
+): string {
+  const symbol = getCurrencySymbol(currencyCode);
+  const formattedAmount = amount.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+
+  // For currencies with symbols that typically go before the amount
+  const symbolBeforeAmount = ["$", "£", "€", "¥", "₹", "₦", "₱", "₩", "₪"];
+  if (symbolBeforeAmount.includes(symbol)) {
+    return `${symbol}${formattedAmount}`;
+  }
+
+  return `${formattedAmount} ${symbol}`;
+}
