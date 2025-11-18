@@ -7,6 +7,7 @@ import { sendEmail } from "@/lib/email";
 import { emailTemplate, verificationCodeTemplate } from "@/lib/email-templates";
 import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
 import { countries } from "@/lib/countries";
+import { generateAccountNumber } from "@/lib/p2p-transfer-utils";
 
 // Force dynamic to ensure fresh data on each request
 export const dynamic = "force-dynamic";
@@ -81,6 +82,7 @@ export async function POST(req: Request) {
         accountType: normalizedAccountType,
         country: country || undefined,
         preferredCurrency,
+        accountNumber: generateAccountNumber(),
         isEmailVerified: false,
         updatedAt: new Date(),
         Portfolio: {

@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import ConfirmModal from "@/components/client/ConfirmModal";
-import { CURRENCIES, getCurrencyName } from "@/lib/currencies";
+import CurrencySelector from "@/components/client/CurrencySelector";
 import {
   Upload,
   CheckCircle,
@@ -27,7 +27,6 @@ import {
   EyeOff,
   Key,
   Smartphone,
-  DollarSign,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -119,8 +118,6 @@ export default function SettingsPage() {
   const [preferredCurrency, setPreferredCurrency] = useState("USD");
   const [loadingCurrency, setLoadingCurrency] = useState(true);
   const [savingCurrency, setSavingCurrency] = useState(false);
-  const [currencySearch, setCurrencySearch] = useState("");
-  const [showCurrencySelector, setShowCurrencySelector] = useState(false);
 
   // Fetch email preferences on mount
   useEffect(() => {
@@ -214,12 +211,12 @@ export default function SettingsPage() {
 
   // Fetch currency preference on mount
   useEffect(() => {
-    const fetchCurrency = async () => {
+    const fetchCurrencyPreference = async () => {
       try {
-        const response = await fetch("/api/user/currency");
+        const response = await fetch("/api/user/preferences");
         if (response.ok) {
           const data = await response.json();
-          setPreferredCurrency(data.currency || "USD");
+          setPreferredCurrency(data.preferredCurrency || "USD");
         }
       } catch (error) {
         console.error("Failed to fetch currency preference:", error);
@@ -227,7 +224,7 @@ export default function SettingsPage() {
         setLoadingCurrency(false);
       }
     };
-    fetchCurrency();
+    fetchCurrencyPreference();
   }, []);
 
   // Placeholder handlers (extend later)
@@ -277,6 +274,41 @@ export default function SettingsPage() {
       showError("Failed to update email preferences. Please try again.");
     } finally {
       setSavingEmailPrefs(false);
+    }
+  };
+
+  // Currency preference handler
+  const handleCurrencyChange = async (currency: string) => {
+    setSavingCurrency(true);
+    const previousCurrency = preferredCurrency;
+
+    // Optimistically update UI
+    setPreferredCurrency(currency);
+
+    try {
+      const response = await fetch("/api/user/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferredCurrency: currency }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update currency preference");
+      }
+
+      showSuccess(`Currency preference updated to ${currency}`);
+
+      // Reload the page to update all currency displays
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error("Error updating currency preference:", error);
+      // Revert on error
+      setPreferredCurrency(previousCurrency);
+      showError("Failed to update currency preference. Please try again.");
+    } finally {
+      setSavingCurrency(false);
     }
   };
 
@@ -417,42 +449,6 @@ export default function SettingsPage() {
       }
     } catch (error) {
       showError("An error occurred. Please try again.");
-    }
-  };
-
-  // Handle currency change
-  const handleCurrencyChange = async (newCurrency: string) => {
-    setSavingCurrency(true);
-    setPreferredCurrency(newCurrency);
-
-    try {
-      const response = await fetch("/api/user/currency", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ currency: newCurrency }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update currency preference");
-      }
-
-      showSuccess(`Currency changed to ${newCurrency}`);
-
-      // Refresh the page to update all currency displays
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
-    } catch (error) {
-      console.error("Error updating currency:", error);
-      showError("Failed to update currency preference. Please try again.");
-      // Revert on error
-      const response = await fetch("/api/user/currency");
-      if (response.ok) {
-        const data = await response.json();
-        setPreferredCurrency(data.currency || "USD");
-      }
-    } finally {
-      setSavingCurrency(false);
     }
   };
 
@@ -2097,140 +2093,39 @@ export default function SettingsPage() {
         onClose={closeModal}
         title="Preferences"
       >
-        {!showCurrencySelector ? (
-          /* Preferences Menu */
-          <div className="space-y-3">
-            {/* Currency Option */}
-            <button
-              onClick={() => setShowCurrencySelector(true)}
-              className="w-full flex items-center justify-between p-4 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-colors group"
-            >
-              <div className="flex items-center gap-3">
-                <DollarSign className="w-5 h-5 text-orange-500" />
-                <div className="text-left">
-                  <h3 className="text-base font-semibold text-white">
-                    Preferred Currency
-                  </h3>
-                  <p className="text-sm text-gray-400">
-                    {preferredCurrency} - {getCurrencyName(preferredCurrency)}
-                  </p>
-                </div>
-              </div>
-              <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white" />
-            </button>
-
-            {/* Coming Soon Options */}
-            <div className="border-t border-gray-700 pt-4 mt-6">
-              <h4 className="text-sm font-medium text-gray-400 mb-3">
-                Coming Soon
-              </h4>
-              <div className="space-y-2">
-                <div className="flex items-center gap-3 p-4 bg-gray-800/30 rounded-lg opacity-50 cursor-not-allowed">
-                  <SettingsIcon className="w-5 h-5 text-gray-500" />
-                  <div className="text-left">
-                    <h3 className="text-base font-medium text-gray-400">
-                      Theme Settings
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Light/dark/auto mode
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 p-4 bg-gray-800/30 rounded-lg opacity-50 cursor-not-allowed">
-                  <Database className="w-5 h-5 text-gray-500" />
-                  <div className="text-left">
-                    <h3 className="text-base font-medium text-gray-400">
-                      Dashboard Layout
-                    </h3>
-                    <p className="text-sm text-gray-500">Customize your view</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Currency Selector */
-          <div className="space-y-4">
-            {/* Back button */}
-            <button
-              onClick={() => {
-                setShowCurrencySelector(false);
-                setCurrencySearch("");
-              }}
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
-            >
-              <ChevronRight className="w-4 h-4 rotate-180" />
-              <span className="text-sm">Back to Preferences</span>
-            </button>
-
-            <div className="flex items-center gap-2 mb-2">
-              <DollarSign className="w-5 h-5 text-orange-500" />
-              <h3 className="text-lg font-semibold text-white">
-                Preferred Currency
-              </h3>
-            </div>
-
-            <p className="text-sm text-gray-300 mb-4">
-              Choose your preferred currency for displaying portfolio values,
-              asset prices, and transaction amounts.
-            </p>
-
+        <div className="space-y-6">
+          {/* Currency Preference */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-3">
+              Preferred Currency
+            </label>
             {loadingCurrency ? (
-              <div className="animate-pulse bg-gray-700 h-12 rounded-lg"></div>
+              <div className="animate-pulse bg-gray-700 h-10 rounded-lg"></div>
             ) : (
-              <div className="space-y-3">
-                {/* Search bar */}
-                <input
-                  type="text"
-                  placeholder="Search currency..."
-                  value={currencySearch}
-                  onChange={(e) => setCurrencySearch(e.target.value)}
-                  className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500"
-                />
-
-                {/* Currency selector - LARGER */}
-                <div className="bg-gray-700 rounded-lg overflow-hidden">
-                  <select
-                    value={preferredCurrency}
-                    onChange={(e) => handleCurrencyChange(e.target.value)}
-                    disabled={savingCurrency}
-                    size={12}
-                    className="w-full text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed bg-transparent"
-                    style={{ height: "400px" }}
-                  >
-                    {CURRENCIES.filter(
-                      (currency) =>
-                        currency.name
-                          .toLowerCase()
-                          .includes(currencySearch.toLowerCase()) ||
-                        currency.code
-                          .toLowerCase()
-                          .includes(currencySearch.toLowerCase())
-                    ).map((currency) => (
-                      <option
-                        key={currency.code}
-                        value={currency.code}
-                        className="py-2 px-2 hover:bg-gray-600"
-                      >
-                        {currency.code} - {currency.name} ({currency.symbol})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                {savingCurrency && (
-                  <p className="text-sm text-gray-400">Updating currency...</p>
-                )}
-              </div>
+              <CurrencySelector
+                value={preferredCurrency}
+                onChange={handleCurrencyChange}
+                disabled={savingCurrency}
+              />
             )}
-
-            <div className="mt-4 p-3 bg-blue-900/20 border border-blue-700 rounded-lg">
-              <p className="text-sm text-blue-300">
-                <strong>Note:</strong> Exchange rates are updated hourly. Your
-                actual balance is stored in USD and converted for display only.
-              </p>
-            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              This will be used for displaying balances and portfolio values
+              throughout the platform.
+            </p>
           </div>
-        )}
+
+          {/* Coming Soon Features */}
+          <div className="border-t border-gray-700 pt-4">
+            <h4 className="text-sm font-medium text-gray-400 mb-3">
+              Coming Soon
+            </h4>
+            <ul className="space-y-2 text-sm text-gray-500">
+              <li>• Theme customization (light/dark/auto)</li>
+              <li>• Default dashboard layout</li>
+              <li>• Data refresh interval</li>
+            </ul>
+          </div>
+        </div>
       </SettingsModal>
 
       {/* Data & Privacy Modal */}

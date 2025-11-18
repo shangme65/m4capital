@@ -1,441 +1,183 @@
 /**
- * Currency utilities for M4Capital
+ * Comprehensive list of currencies with ISO 4217 codes and names
+ * Extracted from COUNTRY_CURRENCY_MAP and sorted alphabetically by code
  */
 
-// Currencies array sorted alphabetically by country name (matching countries.ts structure)
-const CURRENCIES_UNSORTED = [
-  { code: "AFN", symbol: "؋", name: "Afghan Afghani", country: "Afghanistan" },
-  { code: "ALL", symbol: "L", name: "Albanian Lek", country: "Albania" },
-  { code: "DZD", symbol: "د.ج", name: "Algerian Dinar", country: "Algeria" },
-  { code: "AOA", symbol: "Kz", name: "Angolan Kwanza", country: "Angola" },
-  { code: "ARS", symbol: "AR$", name: "Argentine Peso", country: "Argentina" },
-  { code: "AMD", symbol: "֏", name: "Armenian Dram", country: "Armenia" },
-  {
-    code: "AUD",
-    symbol: "A$",
-    name: "Australian Dollar",
-    country: "Australia",
-  },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Austria" },
-  {
-    code: "AZN",
-    symbol: "₼",
-    name: "Azerbaijani Manat",
-    country: "Azerbaijan",
-  },
-  { code: "BHD", symbol: ".د.ب", name: "Bahraini Dinar", country: "Bahrain" },
-  { code: "BDT", symbol: "৳", name: "Bangladeshi Taka", country: "Bangladesh" },
-  {
-    code: "BBD",
-    symbol: "Bds$",
-    name: "Barbadian Dollar",
-    country: "Barbados",
-  },
-  { code: "BYN", symbol: "Br", name: "Belarusian Ruble", country: "Belarus" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Belgium" },
-  {
-    code: "BOB",
-    symbol: "Bs.",
-    name: "Bolivian Boliviano",
-    country: "Bolivia",
-  },
-  {
-    code: "BAM",
-    symbol: "KM",
-    name: "Bosnia-Herzegovina Mark",
-    country: "Bosnia and Herzegovina",
-  },
-  { code: "BWP", symbol: "P", name: "Botswana Pula", country: "Botswana" },
-  { code: "BRL", symbol: "R$", name: "Brazilian Real", country: "Brazil" },
-  { code: "BGN", symbol: "лв", name: "Bulgarian Lev", country: "Bulgaria" },
-  { code: "BIF", symbol: "FBu", name: "Burundian Franc", country: "Burundi" },
-  { code: "KHR", symbol: "៛", name: "Cambodian Riel", country: "Cambodia" },
-  { code: "CAD", symbol: "C$", name: "Canadian Dollar", country: "Canada" },
-  {
-    code: "XAF",
-    symbol: "FCFA",
-    name: "Central African CFA Franc",
-    country: "Central African Republic",
-  },
-  { code: "CLP", symbol: "CL$", name: "Chilean Peso", country: "Chile" },
-  { code: "CNY", symbol: "¥", name: "Chinese Yuan", country: "China" },
-  { code: "COP", symbol: "COL$", name: "Colombian Peso", country: "Colombia" },
-  {
-    code: "CRC",
-    symbol: "₡",
-    name: "Costa Rican Colón",
-    country: "Costa Rica",
-  },
-  { code: "HRK", symbol: "kn", name: "Croatian Kuna", country: "Croatia" },
-  { code: "CZK", symbol: "Kč", name: "Czech Koruna", country: "Czechia" },
-  { code: "DKK", symbol: "kr", name: "Danish Krone", country: "Denmark" },
-  { code: "DJF", symbol: "Fdj", name: "Djiboutian Franc", country: "Djibouti" },
-  {
-    code: "DOP",
-    symbol: "RD$",
-    name: "Dominican Peso",
-    country: "Dominican Republic",
-  },
-  { code: "EGP", symbol: "£", name: "Egyptian Pound", country: "Egypt" },
-  { code: "ETB", symbol: "Br", name: "Ethiopian Birr", country: "Ethiopia" },
-  { code: "FJD", symbol: "$", name: "Fijian Dollar", country: "Fiji" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Finland" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "France" },
-  { code: "GEL", symbol: "₾", name: "Georgian Lari", country: "Georgia" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Germany" },
-  { code: "GHS", symbol: "₵", name: "Ghanaian Cedi", country: "Ghana" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Greece" },
-  {
-    code: "GTQ",
-    symbol: "Q",
-    name: "Guatemalan Quetzal",
-    country: "Guatemala",
-  },
-  { code: "HNL", symbol: "L", name: "Honduran Lempira", country: "Honduras" },
-  {
-    code: "HKD",
-    symbol: "HK$",
-    name: "Hong Kong Dollar",
-    country: "Hong Kong",
-  },
-  { code: "HUF", symbol: "Ft", name: "Hungarian Forint", country: "Hungary" },
-  { code: "ISK", symbol: "kr", name: "Icelandic Króna", country: "Iceland" },
-  { code: "INR", symbol: "₹", name: "Indian Rupee", country: "India" },
-  {
-    code: "IDR",
-    symbol: "Rp",
-    name: "Indonesian Rupiah",
-    country: "Indonesia",
-  },
-  { code: "IRR", symbol: "﷼", name: "Iranian Rial", country: "Iran" },
-  { code: "IQD", symbol: "ع.د", name: "Iraqi Dinar", country: "Iraq" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Ireland" },
-  { code: "ILS", symbol: "₪", name: "Israeli Shekel", country: "Israel" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Italy" },
-  { code: "JMD", symbol: "J$", name: "Jamaican Dollar", country: "Jamaica" },
-  { code: "JPY", symbol: "¥", name: "Japanese Yen", country: "Japan" },
-  { code: "JOD", symbol: "د.ا", name: "Jordanian Dinar", country: "Jordan" },
-  {
-    code: "KZT",
-    symbol: "₸",
-    name: "Kazakhstani Tenge",
-    country: "Kazakhstan",
-  },
-  { code: "KES", symbol: "KSh", name: "Kenyan Shilling", country: "Kenya" },
-  {
-    code: "KRW",
-    symbol: "₩",
-    name: "South Korean Won",
-    country: "Korea (South)",
-  },
-  { code: "KWD", symbol: "د.ك", name: "Kuwaiti Dinar", country: "Kuwait" },
-  {
-    code: "LAK",
-    symbol: "₭",
-    name: "Lao Kip",
-    country: "Lao People's Democratic Republic",
-  },
-  { code: "LBP", symbol: "ل.ل", name: "Lebanese Pound", country: "Lebanon" },
-  { code: "LYD", symbol: "ل.د", name: "Libyan Dinar", country: "Libya" },
-  { code: "MWK", symbol: "MK", name: "Malawian Kwacha", country: "Malawi" },
-  { code: "MYR", symbol: "RM", name: "Malaysian Ringgit", country: "Malaysia" },
-  { code: "MUR", symbol: "₨", name: "Mauritian Rupee", country: "Mauritius" },
-  { code: "MXN", symbol: "MX$", name: "Mexican Peso", country: "Mexico" },
-  { code: "MDL", symbol: "L", name: "Moldovan Leu", country: "Moldova" },
-  { code: "MAD", symbol: "د.م.", name: "Moroccan Dirham", country: "Morocco" },
-  {
-    code: "MZN",
-    symbol: "MT",
-    name: "Mozambican Metical",
-    country: "Mozambique",
-  },
-  { code: "MMK", symbol: "K", name: "Myanmar Kyat", country: "Myanmar" },
-  { code: "NAD", symbol: "$", name: "Namibian Dollar", country: "Namibia" },
-  { code: "NPR", symbol: "Rs", name: "Nepalese Rupee", country: "Nepal" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Netherlands" },
-  {
-    code: "NZD",
-    symbol: "NZ$",
-    name: "New Zealand Dollar",
-    country: "New Zealand",
-  },
-  {
-    code: "NIO",
-    symbol: "C$",
-    name: "Nicaraguan Córdoba",
-    country: "Nicaragua",
-  },
-  { code: "NGN", symbol: "₦", name: "Nigerian Naira", country: "Nigeria" },
-  {
-    code: "MKD",
-    symbol: "ден",
-    name: "Macedonian Denar",
-    country: "North Macedonia",
-  },
-  { code: "NOK", symbol: "kr", name: "Norwegian Krone", country: "Norway" },
-  { code: "OMR", symbol: "﷼", name: "Omani Rial", country: "Oman" },
-  { code: "PKR", symbol: "₨", name: "Pakistani Rupee", country: "Pakistan" },
-  { code: "PAB", symbol: "B/.", name: "Panamanian Balboa", country: "Panama" },
-  {
-    code: "PGK",
-    symbol: "K",
-    name: "Papua New Guinean Kina",
-    country: "Papua New Guinea",
-  },
-  { code: "PYG", symbol: "₲", name: "Paraguayan Guaraní", country: "Paraguay" },
-  { code: "PEN", symbol: "S/", name: "Peruvian Sol", country: "Peru" },
-  { code: "PHP", symbol: "₱", name: "Philippine Peso", country: "Philippines" },
-  { code: "PLN", symbol: "zł", name: "Polish Zloty", country: "Poland" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Portugal" },
-  { code: "QAR", symbol: "﷼", name: "Qatari Riyal", country: "Qatar" },
-  { code: "RON", symbol: "lei", name: "Romanian Leu", country: "Romania" },
-  {
-    code: "RUB",
-    symbol: "₽",
-    name: "Russian Ruble",
-    country: "Russian Federation",
-  },
-  { code: "RWF", symbol: "FRw", name: "Rwandan Franc", country: "Rwanda" },
-  { code: "SAR", symbol: "﷼", name: "Saudi Riyal", country: "Saudi Arabia" },
-  { code: "RSD", symbol: "дин", name: "Serbian Dinar", country: "Serbia" },
-  { code: "SGD", symbol: "S$", name: "Singapore Dollar", country: "Singapore" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Slovakia" },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Slovenia" },
-  {
-    code: "SBD",
-    symbol: "$",
-    name: "Solomon Islands Dollar",
-    country: "Solomon Islands",
-  },
-  { code: "SOS", symbol: "S", name: "Somali Shilling", country: "Somalia" },
-  {
-    code: "ZAR",
-    symbol: "R",
-    name: "South African Rand",
-    country: "South Africa",
-  },
-  { code: "EUR", symbol: "€", name: "Euro", country: "Spain" },
-  { code: "LKR", symbol: "Rs", name: "Sri Lankan Rupee", country: "Sri Lanka" },
-  { code: "SDG", symbol: "ج.س.", name: "Sudanese Pound", country: "Sudan" },
-  { code: "SEK", symbol: "kr", name: "Swedish Krona", country: "Sweden" },
-  { code: "CHF", symbol: "CHF", name: "Swiss Franc", country: "Switzerland" },
-  {
-    code: "SYP",
-    symbol: "£",
-    name: "Syrian Pound",
-    country: "Syrian Arab Republic",
-  },
-  { code: "TWD", symbol: "NT$", name: "Taiwan Dollar", country: "Taiwan" },
-  {
-    code: "TZS",
-    symbol: "TSh",
-    name: "Tanzanian Shilling",
-    country: "Tanzania",
-  },
-  { code: "THB", symbol: "฿", name: "Thai Baht", country: "Thailand" },
-  { code: "TOP", symbol: "T$", name: "Tongan Paʻanga", country: "Tonga" },
-  {
-    code: "TTD",
-    symbol: "TT$",
-    name: "Trinidad & Tobago Dollar",
-    country: "Trinidad and Tobago",
-  },
-  { code: "TND", symbol: "د.ت", name: "Tunisian Dinar", country: "Tunisia" },
-  { code: "TRY", symbol: "₺", name: "Turkish Lira", country: "Türkiye" },
-  { code: "UGX", symbol: "USh", name: "Ugandan Shilling", country: "Uganda" },
-  { code: "UAH", symbol: "₴", name: "Ukrainian Hryvnia", country: "Ukraine" },
-  {
-    code: "AED",
-    symbol: "د.إ",
-    name: "UAE Dirham",
-    country: "United Arab Emirates",
-  },
-  {
-    code: "GBP",
-    symbol: "£",
-    name: "British Pound",
-    country: "United Kingdom",
-  },
-  { code: "USD", symbol: "$", name: "US Dollar", country: "United States" },
-  { code: "UYU", symbol: "$U", name: "Uruguayan Peso", country: "Uruguay" },
-  {
-    code: "UZS",
-    symbol: "so'm",
-    name: "Uzbekistani Som",
-    country: "Uzbekistan",
-  },
-  { code: "VUV", symbol: "VT", name: "Vanuatu Vatu", country: "Vanuatu" },
-  {
-    code: "VES",
-    symbol: "Bs.",
-    name: "Venezuelan Bolívar",
-    country: "Venezuela",
-  },
-  { code: "VND", symbol: "₫", name: "Vietnamese Dong", country: "Viet Nam" },
-  {
-    code: "XOF",
-    symbol: "CFA",
-    name: "West African CFA Franc",
-    country: "West Africa",
-  },
-  { code: "WST", symbol: "WS$", name: "Samoan Tālā", country: "Samoa" },
-  { code: "YER", symbol: "﷼", name: "Yemeni Rial", country: "Yemen" },
-  { code: "ZMW", symbol: "ZK", name: "Zambian Kwacha", country: "Zambia" },
+export interface Currency {
+  code: string;
+  name: string;
+  symbol?: string;
+}
+
+export const CURRENCIES: Currency[] = [
+  { code: "AED", name: "UAE Dirham", symbol: "د.إ" },
+  { code: "AFN", name: "Afghan Afghani", symbol: "؋" },
+  { code: "ALL", name: "Albanian Lek", symbol: "L" },
+  { code: "AMD", name: "Armenian Dram", symbol: "֏" },
+  { code: "ANG", name: "Netherlands Antillean Guilder", symbol: "ƒ" },
+  { code: "AOA", name: "Angolan Kwanza", symbol: "Kz" },
+  { code: "ARS", name: "Argentine Peso", symbol: "$" },
+  { code: "AUD", name: "Australian Dollar", symbol: "$" },
+  { code: "AWG", name: "Aruban Florin", symbol: "ƒ" },
+  { code: "AZN", name: "Azerbaijani Manat", symbol: "₼" },
+  { code: "BAM", name: "Bosnia-Herzegovina Convertible Mark", symbol: "KM" },
+  { code: "BBD", name: "Barbadian Dollar", symbol: "$" },
+  { code: "BDT", name: "Bangladeshi Taka", symbol: "৳" },
+  { code: "BGN", name: "Bulgarian Lev", symbol: "лв" },
+  { code: "BHD", name: "Bahraini Dinar", symbol: ".د.ب" },
+  { code: "BIF", name: "Burundian Franc", symbol: "Fr" },
+  { code: "BMD", name: "Bermudian Dollar", symbol: "$" },
+  { code: "BND", name: "Brunei Dollar", symbol: "$" },
+  { code: "BOB", name: "Bolivian Boliviano", symbol: "Bs." },
+  { code: "BRL", name: "Brazilian Real", symbol: "R$" },
+  { code: "BSD", name: "Bahamian Dollar", symbol: "$" },
+  { code: "BTN", name: "Bhutanese Ngultrum", symbol: "Nu." },
+  { code: "BWP", name: "Botswanan Pula", symbol: "P" },
+  { code: "BYN", name: "Belarusian Ruble", symbol: "Br" },
+  { code: "BZD", name: "Belize Dollar", symbol: "$" },
+  { code: "CAD", name: "Canadian Dollar", symbol: "$" },
+  { code: "CDF", name: "Congolese Franc", symbol: "Fr" },
+  { code: "CHF", name: "Swiss Franc", symbol: "Fr" },
+  { code: "CLP", name: "Chilean Peso", symbol: "$" },
+  { code: "CNY", name: "Chinese Yuan", symbol: "¥" },
+  { code: "COP", name: "Colombian Peso", symbol: "$" },
+  { code: "CRC", name: "Costa Rican Colón", symbol: "₡" },
+  { code: "CUP", name: "Cuban Peso", symbol: "$" },
+  { code: "CVE", name: "Cape Verdean Escudo", symbol: "$" },
+  { code: "CZK", name: "Czech Koruna", symbol: "Kč" },
+  { code: "DJF", name: "Djiboutian Franc", symbol: "Fr" },
+  { code: "DKK", name: "Danish Krone", symbol: "kr" },
+  { code: "DOP", name: "Dominican Peso", symbol: "$" },
+  { code: "DZD", name: "Algerian Dinar", symbol: "د.ج" },
+  { code: "EGP", name: "Egyptian Pound", symbol: "£" },
+  { code: "ERN", name: "Eritrean Nakfa", symbol: "Nfk" },
+  { code: "ETB", name: "Ethiopian Birr", symbol: "Br" },
+  { code: "EUR", name: "Euro", symbol: "€" },
+  { code: "FJD", name: "Fijian Dollar", symbol: "$" },
+  { code: "FKP", name: "Falkland Islands Pound", symbol: "£" },
+  { code: "GBP", name: "British Pound", symbol: "£" },
+  { code: "GEL", name: "Georgian Lari", symbol: "₾" },
+  { code: "GHS", name: "Ghanaian Cedi", symbol: "₵" },
+  { code: "GIP", name: "Gibraltar Pound", symbol: "£" },
+  { code: "GMD", name: "Gambian Dalasi", symbol: "D" },
+  { code: "GNF", name: "Guinean Franc", symbol: "Fr" },
+  { code: "GTQ", name: "Guatemalan Quetzal", symbol: "Q" },
+  { code: "GYD", name: "Guyanese Dollar", symbol: "$" },
+  { code: "HKD", name: "Hong Kong Dollar", symbol: "$" },
+  { code: "HNL", name: "Honduran Lempira", symbol: "L" },
+  { code: "HTG", name: "Haitian Gourde", symbol: "G" },
+  { code: "HUF", name: "Hungarian Forint", symbol: "Ft" },
+  { code: "IDR", name: "Indonesian Rupiah", symbol: "Rp" },
+  { code: "ILS", name: "Israeli New Shekel", symbol: "₪" },
+  { code: "INR", name: "Indian Rupee", symbol: "₹" },
+  { code: "IQD", name: "Iraqi Dinar", symbol: "ع.د" },
+  { code: "IRR", name: "Iranian Rial", symbol: "﷼" },
+  { code: "ISK", name: "Icelandic Króna", symbol: "kr" },
+  { code: "JMD", name: "Jamaican Dollar", symbol: "$" },
+  { code: "JOD", name: "Jordanian Dinar", symbol: "د.ا" },
+  { code: "JPY", name: "Japanese Yen", symbol: "¥" },
+  { code: "KES", name: "Kenyan Shilling", symbol: "Sh" },
+  { code: "KGS", name: "Kyrgyzstani Som", symbol: "с" },
+  { code: "KHR", name: "Cambodian Riel", symbol: "៛" },
+  { code: "KMF", name: "Comorian Franc", symbol: "Fr" },
+  { code: "KPW", name: "North Korean Won", symbol: "₩" },
+  { code: "KRW", name: "South Korean Won", symbol: "₩" },
+  { code: "KWD", name: "Kuwaiti Dinar", symbol: "د.ك" },
+  { code: "KYD", name: "Cayman Islands Dollar", symbol: "$" },
+  { code: "KZT", name: "Kazakhstani Tenge", symbol: "₸" },
+  { code: "LAK", name: "Lao Kip", symbol: "₭" },
+  { code: "LBP", name: "Lebanese Pound", symbol: "ل.ل" },
+  { code: "LKR", name: "Sri Lankan Rupee", symbol: "Rs" },
+  { code: "LRD", name: "Liberian Dollar", symbol: "$" },
+  { code: "LSL", name: "Lesotho Loti", symbol: "L" },
+  { code: "LYD", name: "Libyan Dinar", symbol: "ل.د" },
+  { code: "MAD", name: "Moroccan Dirham", symbol: "د.م." },
+  { code: "MDL", name: "Moldovan Leu", symbol: "L" },
+  { code: "MGA", name: "Malagasy Ariary", symbol: "Ar" },
+  { code: "MKD", name: "Macedonian Denar", symbol: "ден" },
+  { code: "MMK", name: "Myanmar Kyat", symbol: "K" },
+  { code: "MNT", name: "Mongolian Tugrik", symbol: "₮" },
+  { code: "MOP", name: "Macanese Pataca", symbol: "P" },
+  { code: "MRU", name: "Mauritanian Ouguiya", symbol: "UM" },
+  { code: "MUR", name: "Mauritian Rupee", symbol: "₨" },
+  { code: "MVR", name: "Maldivian Rufiyaa", symbol: "ރ." },
+  { code: "MWK", name: "Malawian Kwacha", symbol: "MK" },
+  { code: "MXN", name: "Mexican Peso", symbol: "$" },
+  { code: "MYR", name: "Malaysian Ringgit", symbol: "RM" },
+  { code: "MZN", name: "Mozambican Metical", symbol: "MT" },
+  { code: "NAD", name: "Namibian Dollar", symbol: "$" },
+  { code: "NGN", name: "Nigerian Naira", symbol: "₦" },
+  { code: "NIO", name: "Nicaraguan Córdoba", symbol: "C$" },
+  { code: "NOK", name: "Norwegian Krone", symbol: "kr" },
+  { code: "NPR", name: "Nepalese Rupee", symbol: "₨" },
+  { code: "NZD", name: "New Zealand Dollar", symbol: "$" },
+  { code: "OMR", name: "Omani Rial", symbol: "ر.ع." },
+  { code: "PAB", name: "Panamanian Balboa", symbol: "B/." },
+  { code: "PEN", name: "Peruvian Sol", symbol: "S/" },
+  { code: "PGK", name: "Papua New Guinean Kina", symbol: "K" },
+  { code: "PHP", name: "Philippine Peso", symbol: "₱" },
+  { code: "PKR", name: "Pakistani Rupee", symbol: "₨" },
+  { code: "PLN", name: "Polish Zloty", symbol: "zł" },
+  { code: "PYG", name: "Paraguayan Guarani", symbol: "₲" },
+  { code: "QAR", name: "Qatari Riyal", symbol: "ر.ق" },
+  { code: "RON", name: "Romanian Leu", symbol: "lei" },
+  { code: "RSD", name: "Serbian Dinar", symbol: "дин." },
+  { code: "RUB", name: "Russian Ruble", symbol: "₽" },
+  { code: "RWF", name: "Rwandan Franc", symbol: "Fr" },
+  { code: "SAR", name: "Saudi Riyal", symbol: "ر.س" },
+  { code: "SBD", name: "Solomon Islands Dollar", symbol: "$" },
+  { code: "SCR", name: "Seychellois Rupee", symbol: "₨" },
+  { code: "SDG", name: "Sudanese Pound", symbol: "ج.س." },
+  { code: "SEK", name: "Swedish Krona", symbol: "kr" },
+  { code: "SGD", name: "Singapore Dollar", symbol: "$" },
+  { code: "SHP", name: "Saint Helena Pound", symbol: "£" },
+  { code: "SLL", name: "Sierra Leonean Leone", symbol: "Le" },
+  { code: "SOS", name: "Somali Shilling", symbol: "Sh" },
+  { code: "SRD", name: "Surinamese Dollar", symbol: "$" },
+  { code: "SSP", name: "South Sudanese Pound", symbol: "£" },
+  { code: "STN", name: "São Tomé and Príncipe Dobra", symbol: "Db" },
+  { code: "SYP", name: "Syrian Pound", symbol: "£" },
+  { code: "SZL", name: "Swazi Lilangeni", symbol: "L" },
+  { code: "THB", name: "Thai Baht", symbol: "฿" },
+  { code: "TJS", name: "Tajikistani Somoni", symbol: "ЅМ" },
+  { code: "TMT", name: "Turkmenistani Manat", symbol: "m" },
+  { code: "TND", name: "Tunisian Dinar", symbol: "د.ت" },
+  { code: "TOP", name: "Tongan Paʻanga", symbol: "T$" },
+  { code: "TRY", name: "Turkish Lira", symbol: "₺" },
+  { code: "TTD", name: "Trinidad and Tobago Dollar", symbol: "$" },
+  { code: "TWD", name: "New Taiwan Dollar", symbol: "$" },
+  { code: "TZS", name: "Tanzanian Shilling", symbol: "Sh" },
+  { code: "UAH", name: "Ukrainian Hryvnia", symbol: "₴" },
+  { code: "UGX", name: "Ugandan Shilling", symbol: "Sh" },
+  { code: "USD", name: "US Dollar", symbol: "$" },
+  { code: "UYU", name: "Uruguayan Peso", symbol: "$" },
+  { code: "UZS", name: "Uzbekistani Som", symbol: "so'm" },
+  { code: "VES", name: "Venezuelan Bolívar", symbol: "Bs." },
+  { code: "VND", name: "Vietnamese Dong", symbol: "₫" },
+  { code: "VUV", name: "Vanuatu Vatu", symbol: "Vt" },
+  { code: "WST", name: "Samoan Tala", symbol: "T" },
+  { code: "XAF", name: "Central African CFA Franc", symbol: "Fr" },
+  { code: "XCD", name: "East Caribbean Dollar", symbol: "$" },
+  { code: "XOF", name: "West African CFA Franc", symbol: "Fr" },
+  { code: "XPF", name: "CFP Franc", symbol: "₣" },
+  { code: "YER", name: "Yemeni Rial", symbol: "﷼" },
+  { code: "ZAR", name: "South African Rand", symbol: "R" },
+  { code: "ZMW", name: "Zambian Kwacha", symbol: "ZK" },
+  { code: "ZWL", name: "Zimbabwean Dollar", symbol: "$" },
 ];
 
-// Export sorted by currency name alphabetically
-export const CURRENCIES = [...CURRENCIES_UNSORTED].sort((a, b) =>
-  a.name.localeCompare(b.name)
-);
-
-// Export sorted by country name for matching countries.ts
-export const CURRENCIES_BY_COUNTRY = [...CURRENCIES_UNSORTED].sort((a, b) =>
-  a.country.localeCompare(b.country)
-);
-
-export function getCurrencySymbol(code: string): string {
-  const currency = CURRENCIES.find((c) => c.code === code);
-  return currency?.symbol || "$";
-}
-
+/**
+ * Get currency name by code
+ */
 export function getCurrencyName(code: string): string {
   const currency = CURRENCIES.find((c) => c.code === code);
-  return currency?.name || "US Dollar";
-}
-
-// Cache for exchange rates (1 hour)
-let exchangeRatesCache: {
-  rates: Record<string, number>;
-  timestamp: number;
-} | null = null;
-const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
-
-/**
- * Fetch exchange rates from Frankfurter API
- * Base currency is always USD
- */
-export async function getExchangeRates(): Promise<Record<string, number>> {
-  // Check cache first
-  if (
-    exchangeRatesCache &&
-    Date.now() - exchangeRatesCache.timestamp < CACHE_DURATION
-  ) {
-    return exchangeRatesCache.rates;
-  }
-
-  try {
-    const response = await fetch("https://api.frankfurter.app/latest?from=USD");
-    const data = await response.json();
-
-    const rates: Record<string, number> = {
-      USD: 1, // Base currency
-      ...data.rates,
-    };
-
-    // Update cache
-    exchangeRatesCache = {
-      rates,
-      timestamp: Date.now(),
-    };
-
-    return rates;
-  } catch (error) {
-    console.error("Failed to fetch exchange rates:", error);
-    // Return default rates if API fails
-    return { USD: 1 };
-  }
+  return currency ? currency.name : code;
 }
 
 /**
- * Convert USD amount to target currency
+ * Get currency symbol by code
  */
-export function convertCurrency(
-  amountUSD: number,
-  targetCurrency: string,
-  rates: Record<string, number>
-): number {
-  if (targetCurrency === "USD") return amountUSD;
-  const rate = rates[targetCurrency];
-  if (!rate) return amountUSD;
-  return amountUSD * rate;
-}
-
-/**
- * Format amount with currency symbol
- */
-export function formatCurrency(
-  amount: number,
-  currencyCode: string,
-  decimals: number = 2
-): string {
-  const symbol = getCurrencySymbol(currencyCode);
-  const formatted = amount.toLocaleString("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
-
-  // For some currencies, symbol goes after the amount
-  const symbolAfter = ["SEK", "NOK", "DKK", "CZK", "PLN", "HUF", "RON"];
-  if (symbolAfter.includes(currencyCode)) {
-    return `${formatted} ${symbol}`;
-  }
-
-  return `${symbol}${formatted}`;
-}
-
-/**
- * Get default currency code for a country
- * Maps country names from countries.ts to currency codes
- */
-export function getDefaultCurrencyForCountry(countryName: string): string {
-  // Normalize country name for matching
-  const normalized = countryName.trim();
-
-  // Find currency by exact country match
-  const currency = CURRENCIES_UNSORTED.find(
-    (c) => c.country.toLowerCase() === normalized.toLowerCase()
-  );
-
-  if (currency) return currency.code;
-
-  // Special cases and alternative names
-  const specialCases: Record<string, string> = {
-    "United States of America": "USD",
-    USA: "USD",
-    UK: "GBP",
-    England: "GBP",
-    Scotland: "GBP",
-    Wales: "GBP",
-    "Northern Ireland": "GBP",
-    Korea: "KRW",
-    "South Korea": "KRW",
-    "North Korea": "KRW",
-    "Republic of Korea": "KRW",
-    Vietnam: "VND",
-    "Viet Nam": "VND",
-    Turkey: "TRY",
-    Türkiye: "TRY",
-    "Czech Republic": "CZK",
-    Czechia: "CZK",
-    Macedonia: "MKD",
-    "North Macedonia": "MKD",
-    Bosnia: "BAM",
-    "Bosnia and Herzegovina": "BAM",
-    Russia: "RUB",
-    "Russian Federation": "RUB",
-    "Iran (Islamic Republic of)": "IRR",
-    "Bolivia (Plurinational State of)": "BOB",
-    "Venezuela (Bolivarian Republic of)": "VES",
-    "Tanzania, United Republic of": "TZS",
-    "Congo (Democratic Republic of the)": "XAF",
-    "Côte d'Ivoire": "XOF",
-    "Ivory Coast": "XOF",
-  };
-
-  if (specialCases[normalized]) {
-    return specialCases[normalized];
-  }
-
-  // Default to USD if no match found
-  return "USD";
+export function getCurrencySymbol(code: string): string {
+  const currency = CURRENCIES.find((c) => c.code === code);
+  return currency?.symbol || code;
 }
