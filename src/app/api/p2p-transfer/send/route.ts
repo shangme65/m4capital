@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import {
   generateTransactionReference,
@@ -155,11 +155,12 @@ export async function POST(request: Request) {
           status: "COMPLETED",
           description: description || null,
           senderAccountNumber: sender.accountNumber!,
-          receiverAccountNumber: receiver.accountNumber,
+          receiverAccountNumber: receiver.accountNumber!,
           receiverEmail: receiver.email!,
           receiverName: receiver.name || "Unknown",
           transactionReference,
           processedAt: new Date(),
+          updatedAt: new Date(),
         },
       });
 
@@ -174,7 +175,7 @@ export async function POST(request: Request) {
             message: `You sent ${transferAmount.toFixed(2)} ${
               sender.preferredCurrency || "USD"
             } to ${receiver.name || receiver.email}`,
-            isRead: false,
+            read: false,
           },
           {
             id: `notif-receiver-${transactionReference}`,
@@ -184,7 +185,7 @@ export async function POST(request: Request) {
             message: `You received ${transferAmount.toFixed(2)} ${
               sender.preferredCurrency || "USD"
             } from ${sender.name || sender.email}`,
-            isRead: false,
+            read: false,
           },
         ],
       });
