@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/contexts/ToastContext";
+import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 
 interface Cryptocurrency {
   symbol: string;
@@ -42,6 +43,10 @@ export default function AddCryptoModal({
   const [isAdding, setIsAdding] = useState(false);
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const { showWarning } = useToast();
+
+  // Get real-time prices for all cryptocurrencies
+  const allSymbols = POPULAR_CRYPTOCURRENCIES.map((c) => c.symbol);
+  const cryptoPrices = useCryptoPrices(allSymbols);
 
   const existingSymbols = existingAssets.map((a) => a.symbol);
 
@@ -208,6 +213,40 @@ export default function AddCryptoModal({
                             <div className="text-gray-400 text-sm">
                               {crypto.name}
                             </div>
+                            {/* Real-time price display */}
+                            {cryptoPrices[crypto.symbol] && (
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-white text-xs font-medium">
+                                  $
+                                  {cryptoPrices[
+                                    crypto.symbol
+                                  ].price.toLocaleString("en-US", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits:
+                                      cryptoPrices[crypto.symbol].price < 1
+                                        ? 6
+                                        : 2,
+                                  })}
+                                </span>
+                                <span
+                                  className={`text-xs font-medium ${
+                                    cryptoPrices[crypto.symbol]
+                                      .changePercent24h >= 0
+                                      ? "text-green-400"
+                                      : "text-red-400"
+                                  }`}
+                                >
+                                  {cryptoPrices[crypto.symbol]
+                                    .changePercent24h >= 0
+                                    ? "+"
+                                    : ""}
+                                  {cryptoPrices[
+                                    crypto.symbol
+                                  ].changePercent24h.toFixed(2)}
+                                  %
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         {isInPortfolio ? (
