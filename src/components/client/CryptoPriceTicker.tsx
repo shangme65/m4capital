@@ -63,13 +63,10 @@ const CryptoPriceCard: React.FC<{
 
   const isPositive = price.changePercent24h >= 0;
   const formatPrice = (price: number) => {
-    if (price >= 1000) {
-      return `$${price.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
-    }
-    return `$${price.toFixed(price < 1 ? 6 : 4)}`;
+    return `$${price.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
 
   const formatChange = (change: number) => {
@@ -90,15 +87,15 @@ const CryptoPriceCard: React.FC<{
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`${
-        compact ? "p-1" : "p-4"
-      } rounded-lg border transition-all duration-300 hover:border-opacity-75`}
+        compact
+          ? "p-2 h-full flex items-center justify-center"
+          : "p-4 min-w-[200px]"
+      } transition-all duration-300`}
       style={{
-        backgroundColor: "#252320",
-        borderColor: isPositive ? "#10b981" : "#ef4444",
-        borderWidth: "1px",
+        backgroundColor: "transparent",
       }}
     >
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-center w-full">
         <div className="flex items-center space-x-1.5">
           {/* Crypto Icon */}
           <div
@@ -119,13 +116,13 @@ const CryptoPriceCard: React.FC<{
           </div>
 
           <div>
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <h3
                 className={`font-semibold text-white ${
                   compact ? "text-xs" : ""
                 }`}
               >
-                {price.name}
+                {symbol}
               </h3>
               {/* Change Percentage next to name */}
               <span
@@ -134,7 +131,6 @@ const CryptoPriceCard: React.FC<{
                 } font-medium ${
                   isPositive ? "text-green-400" : "text-red-400"
                 }`}
-                style={{ marginLeft: 0, paddingLeft: 0 }}
               >
                 {formatChange(price.changePercent24h)}
               </span>
@@ -257,8 +253,8 @@ export const CryptoPriceTicker: React.FC<CryptoPriceTickerProps> = ({
           {[...symbols, ...symbols, ...symbols].map((symbol, index) => (
             <div
               key={`${symbol}-${index}`}
-              className="flex-shrink-0 px-2 py-2 border-r"
-              style={{ borderColor: "#38312e", width: "145px" }}
+              className="flex-shrink-0 border-r"
+              style={{ borderColor: "#38312e", width: "140px" }}
             >
               <CryptoPriceCard
                 symbol={symbol}

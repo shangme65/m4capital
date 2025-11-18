@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import ConfirmModal from "@/components/client/ConfirmModal";
+import CurrencySelector from "@/components/client/CurrencySelector";
 import {
   Upload,
   CheckCircle,
@@ -113,6 +114,11 @@ export default function SettingsPage() {
   const [submittingKyc, setSubmittingKyc] = useState(false);
   const [loadingKyc, setLoadingKyc] = useState(true);
 
+  // Currency preference state
+  const [preferredCurrency, setPreferredCurrency] = useState("USD");
+  const [loadingCurrency, setLoadingCurrency] = useState(true);
+  const [savingCurrency, setSavingCurrency] = useState(false);
+
   // Fetch email preferences on mount
   useEffect(() => {
     const fetchEmailPrefs = async () => {
@@ -203,6 +209,24 @@ export default function SettingsPage() {
     fetch2FAStatus();
   }, []);
 
+  // Fetch currency preference on mount
+  useEffect(() => {
+    const fetchCurrencyPreference = async () => {
+      try {
+        const response = await fetch("/api/user/preferences");
+        if (response.ok) {
+          const data = await response.json();
+          setPreferredCurrency(data.preferredCurrency || "USD");
+        }
+      } catch (error) {
+        console.error("Failed to fetch currency preference:", error);
+      } finally {
+        setLoadingCurrency(false);
+      }
+    };
+    fetchCurrencyPreference();
+  }, []);
+
   // Placeholder handlers (extend later)
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -250,6 +274,41 @@ export default function SettingsPage() {
       showError("Failed to update email preferences. Please try again.");
     } finally {
       setSavingEmailPrefs(false);
+    }
+  };
+
+  // Currency preference handler
+  const handleCurrencyChange = async (currency: string) => {
+    setSavingCurrency(true);
+    const previousCurrency = preferredCurrency;
+
+    // Optimistically update UI
+    setPreferredCurrency(currency);
+
+    try {
+      const response = await fetch("/api/user/preferences", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferredCurrency: currency }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update currency preference");
+      }
+
+      showSuccess(`Currency preference updated to ${currency}`);
+
+      // Reload the page to update all currency displays
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error("Error updating currency preference:", error);
+      // Revert on error
+      setPreferredCurrency(previousCurrency);
+      showError("Failed to update currency preference. Please try again.");
+    } finally {
+      setSavingCurrency(false);
     }
   };
 
@@ -2034,12 +2093,39 @@ export default function SettingsPage() {
         onClose={closeModal}
         title="Preferences"
       >
-        <ul className="space-y-3 text-sm text-gray-300">
-          <li>• Theme (light/dark/auto)</li>
-          <li>• Default dashboard layout</li>
-          <li>• Data refresh interval</li>
-          <li>• Currency & locale formatting</li>
-        </ul>
+        <div className="space-y-6">
+          {/* Currency Preference */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-3">
+              Preferred Currency
+            </label>
+            {loadingCurrency ? (
+              <div className="animate-pulse bg-gray-700 h-10 rounded-lg"></div>
+            ) : (
+              <CurrencySelector
+                value={preferredCurrency}
+                onChange={handleCurrencyChange}
+                disabled={savingCurrency}
+              />
+            )}
+            <p className="text-xs text-gray-400 mt-2">
+              This will be used for displaying balances and portfolio values
+              throughout the platform.
+            </p>
+          </div>
+
+          {/* Coming Soon Features */}
+          <div className="border-t border-gray-700 pt-4">
+            <h4 className="text-sm font-medium text-gray-400 mb-3">
+              Coming Soon
+            </h4>
+            <ul className="space-y-2 text-sm text-gray-500">
+              <li>• Theme customization (light/dark/auto)</li>
+              <li>• Default dashboard layout</li>
+              <li>• Data refresh interval</li>
+            </ul>
+          </div>
+        </div>
       </SettingsModal>
 
       {/* Data & Privacy Modal */}

@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { generateId } from "../src/lib/generate-id";
+import { generateAccountNumber } from "../src/lib/p2p-transfer-utils";
 
 const prisma = new PrismaClient();
 
@@ -33,6 +34,7 @@ async function main() {
 
   // Create admin user from environment variables
   const adminPassword = await bcrypt.hash(adminPasswordRaw, 10);
+  const adminAccountNumber = generateAccountNumber();
   const adminUser = await prisma.user.create({
     data: {
       id: generateId(),
@@ -44,6 +46,7 @@ async function main() {
       accountType: "INVESTOR",
       country: adminCountry,
       preferredCurrency: adminCurrency,
+      accountNumber: adminAccountNumber,
       updatedAt: new Date(),
       Portfolio: {
         create: {
