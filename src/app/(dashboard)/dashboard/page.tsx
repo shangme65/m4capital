@@ -8,6 +8,7 @@ import { useToast } from "@/contexts/ToastContext";
 import {
   CryptoMarketProvider,
   useBitcoinPrice,
+  useCryptoPrices,
 } from "@/components/client/CryptoMarketProvider";
 import { usePortfolio } from "@/lib/usePortfolio";
 import TransactionDetailsModal from "@/components/client/TransactionDetailsModal";
@@ -22,6 +23,19 @@ function DashboardContent() {
   const { data: session, status } = useSession();
   const btcPrice = useBitcoinPrice();
 
+  // Get portfolio first to know which symbols to fetch
+  const {
+    portfolio,
+    isLoading: portfolioLoading,
+    error: portfolioError,
+    refetch,
+  } = usePortfolio("all");
+
+  // Get real-time prices for all portfolio assets
+  const portfolioSymbols =
+    portfolio?.portfolio?.assets?.map((a: any) => a.symbol) || [];
+  const cryptoPrices = useCryptoPrices(portfolioSymbols);
+
   // Debug logging for session
   console.log("🎯 Dashboard Component Rendered");
   console.log("🔐 Session Status:", status);
@@ -30,12 +44,6 @@ function DashboardContent() {
     session ? { user: session.user } : "No session"
   );
 
-  const {
-    portfolio,
-    isLoading: portfolioLoading,
-    error: portfolioError,
-    refetch,
-  } = usePortfolio("all");
   const {
     openDepositModal,
     openWithdrawModal,
@@ -148,16 +156,17 @@ function DashboardContent() {
     );
   };
 
-  // Dynamic user assets with real-time Bitcoin prices
+  // Dynamic user assets with real-time prices for ALL cryptocurrencies
   // Only show actual portfolio assets - no mock/default data
   const userAssets =
     portfolio?.portfolio.assets && portfolio.portfolio.assets.length > 0
       ? portfolio.portfolio.assets.map((asset: any) => {
           const metadata = getCryptoMetadata(asset.symbol);
-          const currentPrice =
-            asset.symbol === "BTC" && btcPrice
-              ? btcPrice.price
-              : asset.averagePrice || 0;
+
+          // Get real-time price from CryptoMarketProvider
+          const realtimePrice = cryptoPrices[asset.symbol];
+          const currentPrice = realtimePrice?.price || asset.averagePrice || 0;
+          const priceChange = realtimePrice?.changePercent24h || 0;
 
           return {
             symbol: asset.symbol,
@@ -165,14 +174,8 @@ function DashboardContent() {
             network: metadata.network,
             amount: asset.amount,
             currentPrice: currentPrice,
-            value:
-              asset.symbol === "BTC" && btcPrice
-                ? btcPrice.price * asset.amount
-                : asset.amount * asset.averagePrice,
-            change:
-              asset.symbol === "BTC" && btcPrice
-                ? btcPrice.changePercent24h
-                : 0,
+            value: currentPrice * asset.amount,
+            change: priceChange,
             icon: metadata.icon,
             color: metadata.color,
           };
