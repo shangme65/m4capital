@@ -100,6 +100,22 @@ export async function GET(request: Request) {
         },
       });
 
+      // Ensure portfolio exists for admin
+      const existingPortfolio = await prisma.portfolio.findUnique({
+        where: { userId: existingAdmin.id },
+      });
+
+      if (!existingPortfolio) {
+        await prisma.portfolio.create({
+          data: {
+            id: generateId(),
+            userId: existingAdmin.id,
+            balance: 0,
+            assets: [],
+          },
+        });
+      }
+
       // Ensure KYC verification exists and is approved for admin
       const existingKyc = await prisma.kycVerification.findUnique({
         where: { userId: existingAdmin.id },

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/contexts/ToastContext";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface Cryptocurrency {
   symbol: string;
@@ -192,26 +193,15 @@ export default function AddCryptoModal({
                         className="w-full flex items-center justify-between p-4 bg-gray-900/50 hover:bg-gray-900 rounded-xl border border-gray-700/50 hover:border-gray-600 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <div className="flex items-center gap-4">
-                          <div
-                            className={`w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold text-white group-hover:bg-gray-600 transition-colors ${
-                              isInPortfolio
-                                ? "bg-green-600 group-hover:bg-green-700"
-                                : "bg-gray-700"
-                            }`}
-                          >
-                            {crypto.icon}
-                          </div>
+                          <CryptoIcon symbol={crypto.symbol} size="md" />
                           <div className="text-left">
                             <div className="text-white font-semibold flex items-center gap-2">
-                              {crypto.symbol}
+                              {crypto.symbol} {crypto.name}
                               {isInPortfolio && hasBalance && (
                                 <span className="text-xs text-orange-400">
                                   (has balance)
                                 </span>
                               )}
-                            </div>
-                            <div className="text-gray-400 text-sm">
-                              {crypto.name}
                             </div>
                             {/* Real-time price display */}
                             {cryptoPrices[crypto.symbol] && (
