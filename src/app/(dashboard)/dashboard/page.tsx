@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   CryptoMarketProvider,
   useBitcoinPrice,
@@ -23,6 +24,7 @@ export const dynamic = "force-dynamic";
 function DashboardContent() {
   const { data: session, status } = useSession();
   const btcPrice = useBitcoinPrice();
+  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
 
   // Get portfolio first to know which symbols to fetch
   const {
@@ -498,11 +500,20 @@ function DashboardContent() {
               <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
             ) : (
               <>
-                $
-                {(portfolioValue || 0).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {preferredCurrency === "USD"
+                  ? "$"
+                  : preferredCurrency === "EUR"
+                  ? "€"
+                  : preferredCurrency === "GBP"
+                  ? "£"
+                  : preferredCurrency}
+                {(convertAmount(portfolioValue || 0) || 0).toLocaleString(
+                  "en-US",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}
               </>
             )}
           </div>
@@ -592,18 +603,27 @@ function DashboardContent() {
 
         <div className="flex items-center justify-between">
           <span className="text-gray-400 text-base sm:text-lg">
-            {session?.user?.preferredCurrency || "USD"} Balance
+            {preferredCurrency} Balance
           </span>
           <span className="text-white text-lg sm:text-xl font-medium">
             {portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
             ) : (
               <>
-                $
-                {(availableBalance || 0).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+                {preferredCurrency === "USD"
+                  ? "$"
+                  : preferredCurrency === "EUR"
+                  ? "€"
+                  : preferredCurrency === "GBP"
+                  ? "£"
+                  : preferredCurrency}
+                {(convertAmount(availableBalance || 0) || 0).toLocaleString(
+                  "en-US",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}
               </>
             )}
           </span>
@@ -616,7 +636,10 @@ function DashboardContent() {
               className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
               style={{
                 width: `${Math.min(
-                  Math.max((availableBalance / 10000) * 100, 0),
+                  Math.max(
+                    (convertAmount(availableBalance || 0) / 10000) * 100,
+                    0
+                  ),
                   100
                 )}%`,
               }}
@@ -865,11 +888,20 @@ function DashboardContent() {
                         })}
                       </div>
                       <div className="text-gray-400 text-sm mt-0.5">
-                        $
-                        {(asset.value || 0).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        {preferredCurrency === "USD"
+                          ? "$"
+                          : preferredCurrency === "EUR"
+                          ? "€"
+                          : preferredCurrency === "GBP"
+                          ? "£"
+                          : preferredCurrency}
+                        {(convertAmount(asset.value || 0) || 0).toLocaleString(
+                          "en-US",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1100,10 +1132,19 @@ function DashboardContent() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-white">
-                        $
-                        {(asset.value || 0).toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                        })}
+                        {preferredCurrency === "USD"
+                          ? "$"
+                          : preferredCurrency === "EUR"
+                          ? "€"
+                          : preferredCurrency === "GBP"
+                          ? "£"
+                          : preferredCurrency}
+                        {(convertAmount(asset.value || 0) || 0).toLocaleString(
+                          "en-US",
+                          {
+                            minimumFractionDigits: 2,
+                          }
+                        )}
                       </p>
                       <p className="text-gray-400 text-sm">
                         {(asset.amount || 0).toLocaleString("en-US", {

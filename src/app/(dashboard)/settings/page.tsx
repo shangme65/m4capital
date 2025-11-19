@@ -298,10 +298,16 @@ export default function SettingsPage() {
 
       showSuccess(`Currency preference updated to ${currency}`);
 
-      // Reload the page to update all currency displays
+      // Dispatch event to notify all components of currency change
+      window.dispatchEvent(
+        new CustomEvent("currencyChanged", { detail: { currency } })
+      );
+
+      // Optionally reload after a short delay to ensure all state is updated
+      // Remove the reload if you want instant updates without page refresh
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, 500);
     } catch (error) {
       console.error("Error updating currency preference:", error);
       // Revert on error

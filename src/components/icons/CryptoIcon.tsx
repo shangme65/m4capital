@@ -26,7 +26,7 @@ export function CryptoIcon({
 }: CryptoIconProps) {
   const iconSize = sizeMap[size];
   const normalizedSymbol = symbol.toLowerCase();
-  const iconPath = `/${normalizedSymbol}.svg`;
+  const iconPath = `/crypto/${normalizedSymbol}.svg`;
 
   return (
     <img
@@ -37,7 +37,7 @@ export function CryptoIcon({
       className={`inline-block ${className}`}
       onError={(e) => {
         // Fallback to generic icon if specific icon not found
-        (e.currentTarget as HTMLImageElement).src = "/generic.svg";
+        (e.currentTarget as HTMLImageElement).src = "/crypto/generic.svg";
       }}
       style={{
         width: `${iconSize}px`,

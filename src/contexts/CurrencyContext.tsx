@@ -1,5 +1,11 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { useSession } from "next-auth/react";
 import {
   getExchangeRates,
@@ -14,6 +20,7 @@ interface CurrencyContextType {
   convertAmount: (amountUSD: number) => number;
   formatAmount: (amountUSD: number, decimals?: number) => string;
   refreshRates: () => Promise<void>;
+  refreshCurrency: () => Promise<void>;
 }
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(
@@ -29,22 +36,34 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   // Fetch user's preferred currency
-  useEffect(() => {
-    const fetchPreferredCurrency = async () => {
-      if (session?.user?.email) {
-        try {
-          const response = await fetch("/api/user/currency");
-          if (response.ok) {
-            const data = await response.json();
-            setPreferredCurrency(data.currency || "USD");
-          }
-        } catch (error) {
-          console.error("Failed to fetch preferred currency:", error);
+  const fetchPreferredCurrency = useCallback(async () => {
+    if (session?.user?.email) {
+      try {
+        const response = await fetch("/api/user/currency");
+        if (response.ok) {
+          const data = await response.json();
+          setPreferredCurrency(data.currency || "USD");
         }
+      } catch (error) {
+        console.error("Failed to fetch preferred currency:", error);
       }
-    };
+    }
+  }, [session?.user?.email]);
+
+  useEffect(() => {
     fetchPreferredCurrency();
-  }, [session]);
+  }, [fetchPreferredCurrency]);
+
+  // Listen for currency change events from other tabs/components
+  useEffect(() => {
+    const handleCurrencyChange = () => {
+      fetchPreferredCurrency();
+    };
+
+    window.addEventListener("currencyChanged", handleCurrencyChange);
+    return () =>
+      window.removeEventListener("currencyChanged", handleCurrencyChange);
+  }, [fetchPreferredCurrency]);
 
   // Fetch exchange rates
   const refreshRates = async () => {
@@ -74,6 +93,11 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     return formatCurrencyUtil(converted, preferredCurrency, decimals);
   };
 
+  // Expose function to refresh currency (can be called after settings change)
+  const refreshCurrency = async () => {
+    await fetchPreferredCurrency();
+  };
+
   return (
     <CurrencyContext.Provider
       value={{
@@ -83,6 +107,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
         convertAmount,
         formatAmount,
         refreshRates,
+        refreshCurrency,
       }}
     >
       {children}
