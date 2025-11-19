@@ -98,11 +98,11 @@ const CryptoPriceCard: React.FC<{
     >
       <div className="flex items-center justify-center w-full">
         <div className="flex items-center space-x-1.5">
-          {/* Crypto Icon */}
+          {/* Crypto Icon - Use actual logo */}
           <CryptoIcon
             symbol={symbol}
             size={compact ? "sm" : "md"}
-            alt={`${symbol} icon`}
+            className="inline-block"
           />
 
           <div>
@@ -309,7 +309,7 @@ export const BitcoinPriceWidget: React.FC<{
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <CryptoIcon symbol="BTC" size="lg" alt="Bitcoin icon" />
+          <CryptoIcon symbol="BTC" size="lg" className="inline-block" />
 
           <div>
             <h3 className="text-2xl font-bold text-white">Bitcoin</h3>

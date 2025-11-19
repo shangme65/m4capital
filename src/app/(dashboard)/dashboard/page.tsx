@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import { useToast } from "@/contexts/ToastContext";
-import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   CryptoMarketProvider,
   useBitcoinPrice,
@@ -24,7 +23,6 @@ export const dynamic = "force-dynamic";
 function DashboardContent() {
   const { data: session, status } = useSession();
   const btcPrice = useBitcoinPrice();
-  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
 
   // Get portfolio first to know which symbols to fetch
   const {
@@ -185,7 +183,7 @@ function DashboardContent() {
               color: metadata.color,
             };
           })
-          .sort((a: any, b: any) => (b.value || 0) - (a.value || 0)) // Sort by value (USD/currency) highest first
+          .sort((a: any, b: any) => b.value - a.value) // Sort by asset value highest first
       : [];
 
   // Calculate dynamic portfolio value based on real-time prices
@@ -486,6 +484,12 @@ function DashboardContent() {
           <h1 className="text-xl sm:text-2xl font-bold text-white">
             Portfolio Value
           </h1>
+          <div className="text-xs sm:text-sm text-gray-400">
+            <span className="hidden sm:inline">
+              Last updated: {lastUpdated}
+            </span>
+            <span className="sm:hidden">{lastUpdated}</span>
+          </div>
         </div>
 
         <div className="mb-6 sm:mb-8">
@@ -494,20 +498,11 @@ function DashboardContent() {
               <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
             ) : (
               <>
-                {preferredCurrency === "USD"
-                  ? "$"
-                  : preferredCurrency === "EUR"
-                  ? "€"
-                  : preferredCurrency === "GBP"
-                  ? "£"
-                  : preferredCurrency}
-                {(convertAmount(portfolioValue || 0) || 0).toLocaleString(
-                  "en-US",
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                )}
+                $
+                {(portfolioValue || 0).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </>
             )}
           </div>
@@ -597,27 +592,18 @@ function DashboardContent() {
 
         <div className="flex items-center justify-between">
           <span className="text-gray-400 text-base sm:text-lg">
-            {preferredCurrency} Balance
+            {session?.user?.preferredCurrency || "USD"} Balance
           </span>
           <span className="text-white text-lg sm:text-xl font-medium">
             {portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
             ) : (
               <>
-                {preferredCurrency === "USD"
-                  ? "$"
-                  : preferredCurrency === "EUR"
-                  ? "€"
-                  : preferredCurrency === "GBP"
-                  ? "£"
-                  : preferredCurrency}
-                {(convertAmount(availableBalance || 0) || 0).toLocaleString(
-                  "en-US",
-                  {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }
-                )}
+                $
+                {(availableBalance || 0).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </>
             )}
           </span>
@@ -630,10 +616,7 @@ function DashboardContent() {
               className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
               style={{
                 width: `${Math.min(
-                  Math.max(
-                    (convertAmount(availableBalance || 0) / 10000) * 100,
-                    0
-                  ),
+                  Math.max((availableBalance / 10000) * 100, 0),
                   100
                 )}%`,
               }}
@@ -882,20 +865,11 @@ function DashboardContent() {
                         })}
                       </div>
                       <div className="text-gray-400 text-sm mt-0.5">
-                        {preferredCurrency === "USD"
-                          ? "$"
-                          : preferredCurrency === "EUR"
-                          ? "€"
-                          : preferredCurrency === "GBP"
-                          ? "£"
-                          : preferredCurrency}
-                        {(convertAmount(asset.value || 0) || 0).toLocaleString(
-                          "en-US",
-                          {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }
-                        )}
+                        $
+                        {(asset.value || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </div>
                     </div>
                   </div>
@@ -1126,19 +1100,10 @@ function DashboardContent() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-white">
-                        {preferredCurrency === "USD"
-                          ? "$"
-                          : preferredCurrency === "EUR"
-                          ? "€"
-                          : preferredCurrency === "GBP"
-                          ? "£"
-                          : preferredCurrency}
-                        {(convertAmount(asset.value || 0) || 0).toLocaleString(
-                          "en-US",
-                          {
-                            minimumFractionDigits: 2,
-                          }
-                        )}
+                        $
+                        {(asset.value || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                        })}
                       </p>
                       <p className="text-gray-400 text-sm">
                         {(asset.amount || 0).toLocaleString("en-US", {
