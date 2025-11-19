@@ -80,32 +80,45 @@ export default function Features() {
             tools, speed, and security required for modern Forex trading.
           </p>
         </motion.div>
-        <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-4xl">
-          <motion.dl
+        <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-5xl">
+          <motion.div
             className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16"
             variants={containerVariants}
           >
             {features.map((feature) => (
               <motion.div
                 key={feature.name}
-                className="relative pl-16"
+                className="group relative rounded-2xl p-8 bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 hover:border-indigo-500 transition-all duration-300 overflow-hidden"
                 variants={itemVariants}
+                whileHover={{ 
+                  y: -8,
+                  boxShadow: "0 20px 50px rgba(99, 102, 241, 0.2)"
+                }}
               >
-                <dt className="text-base font-semibold leading-7 text-gray-900 dark:text-white">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600">
+                {/* 3D Background Effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                {/* Content */}
+                <div className="relative z-10">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 group-hover:scale-110 transition-transform duration-300 shadow-lg">
                     <feature.icon
-                      className="h-6 w-6 text-white"
+                      className="h-7 w-7 text-white"
                       aria-hidden="true"
                     />
                   </div>
-                  {feature.name}
-                </dt>
-                <dd className="mt-2 text-base leading-7 text-gray-600 dark:text-gray-300">
-                  {feature.description}
-                </dd>
+                  <dt className="mt-6 text-lg font-semibold leading-7 text-white">
+                    {feature.name}
+                  </dt>
+                  <dd className="mt-3 text-base leading-7 text-gray-400 group-hover:text-gray-300 transition-colors duration-300">
+                    {feature.description}
+                  </dd>
+                </div>
+
+                {/* Glow Effect */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-transparent to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl -z-10"></div>
               </motion.div>
             ))}
-          </motion.dl>
+          </motion.div>
         </div>
       </div>
     </motion.div>
