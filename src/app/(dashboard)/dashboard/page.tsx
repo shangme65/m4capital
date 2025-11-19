@@ -15,6 +15,7 @@ import TransactionDetailsModal from "@/components/client/TransactionDetailsModal
 import AssetDetailsModal from "@/components/client/AssetDetailsModal";
 import AddCryptoModal from "@/components/client/AddCryptoModal";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export const dynamic = "force-dynamic";
 function DashboardContent() {
   const { data: session, status } = useSession();
   const btcPrice = useBitcoinPrice();
+  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
 
   // Get portfolio first to know which symbols to fetch
   const {
@@ -497,13 +499,7 @@ function DashboardContent() {
             {portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
             ) : (
-              <>
-                $
-                {(portfolioValue || 0).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </>
+              formatAmount(portfolioValue || 0, 2)
             )}
           </div>
 
@@ -592,19 +588,13 @@ function DashboardContent() {
 
         <div className="flex items-center justify-between">
           <span className="text-gray-400 text-base sm:text-lg">
-            {session?.user?.preferredCurrency || "USD"} Balance
+            {preferredCurrency} Balance
           </span>
           <span className="text-white text-lg sm:text-xl font-medium">
             {portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
             ) : (
-              <>
-                $
-                {(availableBalance || 0).toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </>
+              formatAmount(availableBalance || 0, 2)
             )}
           </span>
         </div>
