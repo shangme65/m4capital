@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { usePortfolio } from "@/lib/usePortfolio";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -12,9 +13,9 @@ interface TransferModalProps {
 
 export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [transferData, setTransferData] = useState({
-    asset: "BTC",
+    asset: "USD",
     amount: "",
-    walletAddress: "",
+    destination: "",
     memo: "",
   });
   const { portfolio } = usePortfolio();
@@ -28,11 +29,34 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
   >([]);
   const [transferFee] = useState(0.0001);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [receiverName, setReceiverName] = useState<string | null>(null);
+  const [lookupLoading, setLookupLoading] = useState(false);
   const { addTransaction, addNotification } = useNotifications();
+
+  // Get supported assets - USD balance first, then crypto assets sorted by amount
+  const supportedAssets = (() => {
+    const assets = [
+      {
+        symbol: "USD",
+        name: "USD Balance",
+        amount: portfolio?.portfolio?.balance || 0,
+      },
+    ];
+
+    const cryptoAssets = (portfolio?.portfolio?.assets || [])
+      .sort((a: any, b: any) => (b.amount || 0) - (a.amount || 0))
+      .map((asset: any) => ({
+        symbol: asset.symbol,
+        name: asset.symbol,
+        amount: asset.amount || 0,
+      }));
+
+    return [...assets, ...cryptoAssets];
+  })();
 
   // Calculate available balances from portfolio assets
   const availableBalances =
-    portfolio?.portfolio?.assets?.reduce((acc: any, asset: any) => {
+    supportedAssets.reduce((acc: any, asset: any) => {
       acc[asset.symbol] = asset.amount || 0;
       return acc;
     }, {} as Record<string, number>) || {};
@@ -45,6 +69,15 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
     } else {
       document.body.style.overflow = "unset";
       document.body.style.paddingRight = "0px";
+      // Reset state when modal closes
+      setTransferData({
+        asset: "USD",
+        amount: "",
+        destination: "",
+        memo: "",
+      });
+      setReceiverName(null);
+      setErrors({});
     }
 
     return () => {
@@ -52,6 +85,34 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       document.body.style.paddingRight = "0px";
     };
   }, [isOpen]);
+
+  // Lookup receiver by email or account number
+  const lookupReceiver = async (identifier: string) => {
+    if (!identifier.trim()) {
+      setReceiverName(null);
+      return;
+    }
+
+    setLookupLoading(true);
+    try {
+      const res = await fetch(
+        `/api/p2p-transfer/lookup-receiver?identifier=${encodeURIComponent(
+          identifier
+        )}`
+      );
+      const data = await res.json();
+      if (res.ok && data.receiver) {
+        setReceiverName(data.receiver.name);
+      } else {
+        setReceiverName(null);
+      }
+    } catch (error) {
+      console.error("Error looking up receiver:", error);
+      setReceiverName(null);
+    } finally {
+      setLookupLoading(false);
+    }
+  };
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
@@ -67,13 +128,21 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       newErrors.amount = "Insufficient balance";
     }
 
-    if (!transferData.walletAddress.trim()) {
-      newErrors.walletAddress = "Wallet address is required";
+    if (!transferData.destination.trim()) {
+      newErrors.destination = "Destination is required";
     }
 
-    // Basic wallet address validation (check for minimum length and alphanumeric characters)
-    if (transferData.walletAddress && transferData.walletAddress.length < 26) {
-      newErrors.walletAddress = "Please enter a valid wallet address";
+    // Validate destination - accept email or account number only
+    const dest = transferData.destination.trim();
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(dest);
+    const isAccountNumber = /^\d{8,}$/.test(dest); // 8+ digits
+
+    if (!isEmail && !isAccountNumber) {
+      newErrors.destination = "Enter a valid email or account number";
+    }
+
+    if (!receiverName) {
+      newErrors.destination = "User not found";
     }
 
     setErrors(newErrors);
@@ -89,14 +158,14 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
         // Add to recent addresses after successful transfer
         const newAddress = {
           id: Date.now(),
-          address: transferData.walletAddress,
+          address: transferData.destination,
           asset: transferData.asset,
           lastUsed: new Date().toLocaleDateString(),
         };
 
         setRecentAddresses((prev) => {
           const filtered = prev.filter(
-            (addr) => addr.address !== transferData.walletAddress
+            (addr) => addr.address !== transferData.destination
           );
           return [newAddress, ...filtered].slice(0, 3); // Keep only 3 most recent
         });
@@ -120,10 +189,10 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
           method: "External Transfer",
           description: `Transfer ${amount} ${
             transferData.asset
-          } to ${transferData.walletAddress.slice(
+          } to ${transferData.destination.slice(
             0,
             6
-          )}...${transferData.walletAddress.slice(-4)}`,
+          )}...${transferData.destination.slice(-4)}`,
           memo: transferData.memo,
         };
 
@@ -138,9 +207,9 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
         // Reset form and close modal
         setTransferData({
-          asset: "BTC",
+          asset: "USD",
           amount: "",
-          walletAddress: "",
+          destination: "",
           memo: "",
         });
         setErrors({});
@@ -218,9 +287,11 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-white">
-                      Transfer Crypto
+                      Transfer to M4 User
                     </h2>
-                    <p className="text-gray-400">Send to external wallet</p>
+                    <p className="text-gray-400">
+                      Send to another M4Capital user
+                    </p>
                   </div>
                 </div>
 
@@ -228,24 +299,28 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   {/* Asset Selection */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Select Asset
+                      Send From
                     </label>
-                    <select
-                      value={transferData.asset}
-                      onChange={(e) =>
-                        setTransferData((prev) => ({
-                          ...prev,
-                          asset: e.target.value,
-                        }))
-                      }
-                      className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0"
-                      aria-label="Select asset to transfer"
-                    >
-                      <option value="BTC">Bitcoin (BTC)</option>
-                      <option value="ETH">Ethereum (ETH)</option>
-                      <option value="ADA">Cardano (ADA)</option>
-                      <option value="SOL">Solana (SOL)</option>
-                    </select>
+                    <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-3">
+                      <CryptoIcon symbol={transferData.asset} size="sm" />
+                      <select
+                        value={transferData.asset}
+                        onChange={(e) =>
+                          setTransferData((prev) => ({
+                            ...prev,
+                            asset: e.target.value,
+                          }))
+                        }
+                        className="flex-1 bg-transparent text-white focus:outline-none border-0"
+                        aria-label="Select asset to transfer"
+                      >
+                        {supportedAssets.map((asset) => (
+                          <option key={asset.symbol} value={asset.symbol}>
+                            {asset.name} ({asset.symbol})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
                   {/* Available Balance */}
@@ -253,11 +328,9 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Available Balance:</span>
                       <span className="text-white font-medium">
-                        {
-                          availableBalances[
-                            transferData.asset as keyof typeof availableBalances
-                          ]
-                        }{" "}
+                        {availableBalances[
+                          transferData.asset as keyof typeof availableBalances
+                        ].toFixed(2)}{" "}
                         {transferData.asset}
                       </span>
                     </div>
@@ -309,26 +382,37 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     </button>
                   </div>
 
-                  {/* Destination Wallet Address */}
+                  {/* Destination */}
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Destination Wallet Address
+                      Recipient (Email or Account Number)
                     </label>
                     <input
                       type="text"
-                      value={transferData.walletAddress}
-                      onChange={(e) =>
+                      value={transferData.destination}
+                      onChange={(e) => {
                         setTransferData((prev) => ({
                           ...prev,
-                          walletAddress: e.target.value,
-                        }))
-                      }
+                          destination: e.target.value,
+                        }));
+                        lookupReceiver(e.target.value);
+                      }}
                       className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0"
-                      placeholder="Enter destination wallet address"
+                      placeholder="user@example.com or 12345678"
                     />
-                    {errors.walletAddress && (
+                    {lookupLoading && (
+                      <p className="text-blue-400 text-sm mt-1">
+                        Looking up user...
+                      </p>
+                    )}
+                    {receiverName && !lookupLoading && (
+                      <p className="text-green-400 text-sm mt-1">
+                        ✓ Found: {receiverName}
+                      </p>
+                    )}
+                    {errors.destination && (
                       <p className="text-red-400 text-sm mt-1">
-                        {errors.walletAddress}
+                        {errors.destination}
                       </p>
                     )}
                   </div>
@@ -346,7 +430,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                             onClick={() =>
                               setTransferData((prev) => ({
                                 ...prev,
-                                walletAddress: addressData.address,
+                                destination: addressData.address,
                               }))
                             }
                             className="w-full text-left bg-gray-800/50 hover:bg-gray-700/50 rounded-lg p-3 transition-colors"
@@ -410,7 +494,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   </div>
 
                   {/* Transfer Summary */}
-                  {transferData.amount && transferData.walletAddress && (
+                  {transferData.amount && transferData.destination && (
                     <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
                       <h3 className="text-orange-400 font-medium mb-2">
                         Transfer Summary
@@ -419,7 +503,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         <div className="flex justify-between">
                           <span className="text-gray-400">To:</span>
                           <span className="text-white">
-                            {transferData.walletAddress}
+                            {receiverName || transferData.destination}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -441,7 +525,9 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   <button
                     onClick={handleTransfer}
                     disabled={
-                      !transferData.amount || !transferData.walletAddress
+                      !transferData.amount ||
+                      !transferData.destination ||
+                      !receiverName
                     }
                     className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
                   >

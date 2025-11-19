@@ -212,7 +212,7 @@ export default function NotificationsPanel({
                             )}
 
                             {notification.amount && notification.asset && (
-                              <div className="mt-2 text-xs text-green-500 font-medium">
+                              <div className="mt-3 text-lg text-green-500 font-bold">
                                 +${notification.amount.toLocaleString()}{" "}
                                 {notification.asset}
                               </div>

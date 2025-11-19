@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { usePortfolio } from "@/lib/usePortfolio";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface BuyModalProps {
   isOpen: boolean;
@@ -150,15 +151,35 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
         addTransaction(transaction);
 
-        // Create notification
+        // Create notification with amount
+        const notificationMessage = `Successfully ${
+          orderType === "market" ? "purchased" : "placed buy order for"
+        } ${assetAmount.toFixed(8)} ${buyData.asset}`;
+
         addNotification({
           type: "transaction",
           title:
             orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
-          message: `Successfully ${
-            orderType === "market" ? "purchased" : "placed buy order for"
-          } ${assetAmount.toFixed(8)} ${buyData.asset}`,
+          message: notificationMessage,
+          amount: usdAmount,
+          asset: buyData.asset,
         });
+
+        // Send email notification
+        sendNotificationEmail(
+          orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
+          notificationMessage,
+          usdAmount,
+          buyData.asset
+        );
+
+        // Send push notification
+        sendPushNotification(
+          orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
+          notificationMessage,
+          usdAmount,
+          buyData.asset
+        );
 
         // Reset form and close modal
         setBuyData({
@@ -173,6 +194,67 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       } catch (error) {
         console.error("Error processing buy order:", error);
       }
+    }
+  };
+
+  const sendNotificationEmail = async (
+    title: string,
+    message: string,
+    amount: number,
+    asset: string
+  ) => {
+    try {
+      await fetch("/api/notifications/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "crypto_purchase",
+          title,
+          message,
+          amount,
+          asset,
+        }),
+      });
+    } catch (error) {
+      console.error("Error sending email notification:", error);
+    }
+  };
+
+  const sendPushNotification = async (
+    title: string,
+    message: string,
+    amount: number,
+    asset: string
+  ) => {
+    try {
+      // Send via API endpoint
+      await fetch("/api/notifications/send-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "crypto_purchase",
+          title,
+          message,
+          amount,
+          asset,
+        }),
+      });
+
+      // Also attempt browser push notification if service worker is registered
+      if ("serviceWorker" in navigator && "Notification" in window) {
+        if (Notification.permission === "granted") {
+          const registration = await navigator.serviceWorker.ready;
+          registration.showNotification(title, {
+            body: message,
+            icon: "/icons/crypto.png",
+            badge: "/icons/badge.png",
+            tag: "crypto-purchase",
+            requireInteraction: false,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error sending push notification:", error);
     }
   };
 
@@ -284,28 +366,31 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <label className="block text-sm font-medium text-gray-300 mb-2">
                       Select Asset
                     </label>
-                    <select
-                      value={buyData.asset}
-                      onChange={(e) =>
-                        setBuyData((prev) => ({
-                          ...prev,
-                          asset: e.target.value,
-                        }))
-                      }
-                      className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0"
-                      aria-label="Select asset to buy"
-                    >
-                      <option value="BTC">Bitcoin (BTC)</option>
-                      <option value="ETH">Ethereum (ETH)</option>
-                      <option value="XRP">Ripple (XRP)</option>
-                      <option value="TRX">Tron (TRX)</option>
-                      <option value="TON">Toncoin (TON)</option>
-                      <option value="LTC">Litecoin (LTC)</option>
-                      <option value="BCH">Bitcoin Cash (BCH)</option>
-                      <option value="ETC">Ethereum Classic (ETC)</option>
-                      <option value="USDC">USD Coin (USDC)</option>
-                      <option value="USDT">Tether (USDT)</option>
-                    </select>
+                    <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-3">
+                      <CryptoIcon symbol={buyData.asset} size="sm" />
+                      <select
+                        value={buyData.asset}
+                        onChange={(e) =>
+                          setBuyData((prev) => ({
+                            ...prev,
+                            asset: e.target.value,
+                          }))
+                        }
+                        className="flex-1 bg-transparent text-white focus:outline-none border-0"
+                        aria-label="Select asset to buy"
+                      >
+                        <option value="BTC">Bitcoin (BTC)</option>
+                        <option value="ETH">Ethereum (ETH)</option>
+                        <option value="XRP">Ripple (XRP)</option>
+                        <option value="TRX">Tron (TRX)</option>
+                        <option value="TON">Toncoin (TON)</option>
+                        <option value="LTC">Litecoin (LTC)</option>
+                        <option value="BCH">Bitcoin Cash (BCH)</option>
+                        <option value="ETC">Ethereum Classic (ETC)</option>
+                        <option value="USDC">USD Coin (USDC)</option>
+                        <option value="USDT">Tether (USDT)</option>
+                      </select>
+                    </div>
                   </div>
 
                   {/* Current Price */}

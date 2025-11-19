@@ -14,6 +14,7 @@ import { usePortfolio } from "@/lib/usePortfolio";
 import TransactionDetailsModal from "@/components/client/TransactionDetailsModal";
 import AssetDetailsModal from "@/components/client/AssetDetailsModal";
 import AddCryptoModal from "@/components/client/AddCryptoModal";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -160,26 +161,29 @@ function DashboardContent() {
   // Only show actual portfolio assets - no mock/default data
   const userAssets =
     portfolio?.portfolio.assets && portfolio.portfolio.assets.length > 0
-      ? portfolio.portfolio.assets.map((asset: any) => {
-          const metadata = getCryptoMetadata(asset.symbol);
+      ? portfolio.portfolio.assets
+          .sort((a: any, b: any) => (b.amount || 0) - (a.amount || 0)) // Sort by amount highest first
+          .map((asset: any) => {
+            const metadata = getCryptoMetadata(asset.symbol);
 
-          // Get real-time price from CryptoMarketProvider
-          const realtimePrice = cryptoPrices[asset.symbol];
-          const currentPrice = realtimePrice?.price || asset.averagePrice || 0;
-          const priceChange = realtimePrice?.changePercent24h || 0;
+            // Get real-time price from CryptoMarketProvider
+            const realtimePrice = cryptoPrices[asset.symbol];
+            const currentPrice =
+              realtimePrice?.price || asset.averagePrice || 0;
+            const priceChange = realtimePrice?.changePercent24h || 0;
 
-          return {
-            symbol: asset.symbol,
-            name: metadata.name,
-            network: metadata.network,
-            amount: asset.amount,
-            currentPrice: currentPrice,
-            value: currentPrice * asset.amount,
-            change: priceChange,
-            icon: metadata.icon,
-            color: metadata.color,
-          };
-        })
+            return {
+              symbol: asset.symbol,
+              name: metadata.name,
+              network: metadata.network,
+              amount: asset.amount,
+              currentPrice: currentPrice,
+              value: currentPrice * asset.amount,
+              change: priceChange,
+              icon: metadata.icon,
+              color: metadata.color,
+            };
+          })
       : [];
 
   // Calculate dynamic portfolio value based on real-time prices
@@ -820,11 +824,7 @@ function DashboardContent() {
                   >
                     {/* Left side: Icon and Info */}
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`w-12 h-12 bg-gradient-to-br ${asset.color} rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-lg`}
-                      >
-                        {asset.icon}
-                      </div>
+                      <CryptoIcon symbol={asset.symbol} size="md" />
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
                           <span className="text-white font-bold text-base">

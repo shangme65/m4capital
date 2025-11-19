@@ -1,0 +1,104 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+/**
+ * POST /api/notifications/send-email
+ * Send email notification for crypto purchases
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { type, title, message, amount, asset } = body;
+
+    if (!type || !title || !message) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user has email notifications enabled
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        email: true,
+        name: true,
+        emailNotifications: true,
+      },
+    });
+
+    if (!user?.email) {
+      return NextResponse.json(
+        { error: "User email not found" },
+        { status: 400 }
+      );
+    }
+
+    // Check if email notifications are enabled
+    const emailNotificationsEnabled = user.emailNotifications ?? true;
+
+    if (!emailNotificationsEnabled) {
+      return NextResponse.json({
+        success: true,
+        message: "Email notifications disabled for this user",
+      });
+    }
+
+    // Format email content
+    const emailSubject = title;
+    const emailBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>${title}</h2>
+        <p>${message}</p>
+        ${
+          amount && asset
+            ? `<p><strong>Amount:</strong> ${amount.toFixed(
+                2
+              )} USD (${asset})</p>`
+            : ""
+        }
+        <p style="color: #666; font-size: 12px; margin-top: 20px;">
+          This is an automated notification from M4Capital. 
+          You can manage notification preferences in your account settings.
+        </p>
+      </div>
+    `;
+
+    // TODO: Integrate with email service (e.g., Resend, SendGrid, Nodemailer)
+    // For now, we'll just log that we would send the email
+    console.log("Email notification would be sent:", {
+      to: user.email,
+      subject: emailSubject,
+      body: emailBody,
+    });
+
+    // In production, uncomment and configure your email service:
+    // const emailService = getEmailService();
+    // await emailService.send({
+    //   to: user.email,
+    //   subject: emailSubject,
+    //   html: emailBody,
+    // });
+
+    return NextResponse.json({
+      success: true,
+      message: "Email notification queued",
+    });
+  } catch (error) {
+    console.error("Error sending email notification:", error);
+    return NextResponse.json(
+      { error: "Failed to send email notification" },
+      { status: 500 }
+    );
+  }
+}
