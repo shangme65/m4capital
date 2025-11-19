@@ -164,7 +164,6 @@ function DashboardContent() {
   const userAssets =
     portfolio?.portfolio.assets && portfolio.portfolio.assets.length > 0
       ? portfolio.portfolio.assets
-          .sort((a: any, b: any) => (b.amount || 0) - (a.amount || 0)) // Sort by amount highest first
           .map((asset: any) => {
             const metadata = getCryptoMetadata(asset.symbol);
 
@@ -186,6 +185,7 @@ function DashboardContent() {
               color: metadata.color,
             };
           })
+          .sort((a: any, b: any) => (b.value || 0) - (a.value || 0)) // Sort by value (USD/currency) highest first
       : [];
 
   // Calculate dynamic portfolio value based on real-time prices
@@ -486,12 +486,6 @@ function DashboardContent() {
           <h1 className="text-xl sm:text-2xl font-bold text-white">
             Portfolio Value
           </h1>
-          <div className="text-xs sm:text-sm text-gray-400">
-            <span className="hidden sm:inline">
-              Last updated: {lastUpdated}
-            </span>
-            <span className="sm:hidden">{lastUpdated}</span>
-          </div>
         </div>
 
         <div className="mb-6 sm:mb-8">

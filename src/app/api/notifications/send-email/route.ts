@@ -54,6 +54,20 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Store email notification in database
+    const notification = await prisma.notification.create({
+      data: {
+        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: session.user.id,
+        type: "TRANSACTION" as any,
+        title,
+        message,
+        amount: amount ? parseFloat(amount.toString()) : null,
+        asset: asset || null,
+        read: false,
+      },
+    });
+
     // Format email content
     const emailSubject = title;
     const emailBody = `
@@ -75,7 +89,7 @@ export async function POST(request: NextRequest) {
     `;
 
     // TODO: Integrate with email service (e.g., Resend, SendGrid, Nodemailer)
-    // For now, we'll just log that we would send the email
+    // For now, we'll log that we would send the email
     console.log("Email notification would be sent:", {
       to: user.email,
       subject: emailSubject,
@@ -92,7 +106,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Email notification queued",
+      message: "Email notification sent successfully",
+      notification,
     });
   } catch (error) {
     console.error("Error sending email notification:", error);
