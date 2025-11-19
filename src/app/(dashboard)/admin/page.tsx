@@ -318,16 +318,6 @@ const AdminDashboard = () => {
     type: "success" | "error" = "success"
   ) => {
     setNotificationMessage(message);
-
-    // Auto-hide admin mode notification after 3 seconds
-    useEffect(() => {
-      if (showAdminMode) {
-        const timer = setTimeout(() => {
-          setShowAdminMode(false);
-        }, 3000);
-        return () => clearTimeout(timer);
-      }
-    }, [showAdminMode]);
     setNotificationType(type);
     setShowNotification(true);
     setTimeout(() => {
@@ -335,12 +325,12 @@ const AdminDashboard = () => {
     }, 3000); // Hide after 3 seconds
   };
 
-  // Auto-hide admin mode notification after 5 seconds
+  // Auto-hide admin mode notification after 2 seconds
   useEffect(() => {
     if (session?.user?.role === "ADMIN" && showAdminMode) {
       const timer = setTimeout(() => {
         setShowAdminMode(false);
-      }, 5000); // Hide after 5 seconds
+      }, 2000); // Hide after 2 seconds
 
       return () => clearTimeout(timer);
     }
@@ -537,15 +527,18 @@ const AdminDashboard = () => {
         });
       } else {
         const error = await res.json();
+        console.error("API Error Response:", error);
         showPopupNotification(
-          `Failed to process deposit: ${error.error}`,
+          `Failed to process deposit: ${error.error || "Unknown error"}`,
           "error"
         );
       }
     } catch (error) {
       console.error("Top-up error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       showPopupNotification(
-        "Failed to process deposit. Please try again.",
+        `Failed to process deposit: ${errorMessage}`,
         "error"
       );
     }
