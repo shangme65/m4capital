@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface SellModalProps {
   isOpen: boolean;
@@ -11,187 +13,219 @@ interface SellModalProps {
 }
 
 export default function SellModal({ isOpen, onClose }: SellModalProps) {
-  const [sellData, setSellData] = useState({
-    asset: "BTC",
-    amount: "",
-    sellType: "all", // "all" or "partial"
-  });
-  const [orderType, setOrderType] = useState<"market" | "limit">("market");
-  const [limitPrice, setLimitPrice] = useState("");
   const { portfolio } = usePortfolio();
-  const [assetPrices] = useState({
-    BTC: 65000,
-    ETH: 2500,
-    ADA: 0.35,
-    SOL: 150,
+  const { preferredCurrency, convertAmount } = useCurrency();
+  const { addTransaction, addNotification } = useNotifications();
+  const [sellData, setSellData] = useState({
+    asset: "",
+    amount: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [showAmountInUSD, setShowAmountInUSD] = useState(false);
-  const { addTransaction, addNotification } = useNotifications();
+  const [assetPrices, setAssetPrices] = useState<
+    Record<string, { price: number }>
+  >({});
 
-  // Calculate available balances from portfolio assets
-  const availableBalances =
-    portfolio?.portfolio?.assets?.reduce((acc: any, asset: any) => {
-      acc[asset.symbol] = asset.amount || 0;
-      return acc;
-    }, {} as Record<string, number>) || {};
+  // Get list of assets user actually owns
+  const userAssets = portfolio?.portfolio?.assets || [];
+  const availableAssets = userAssets.filter((a: any) => (a.amount || 0) > 0);
+
+  // Initialize first asset on load
+  useEffect(() => {
+    if (availableAssets.length > 0 && !sellData.asset) {
+      setSellData((prev) => ({
+        ...prev,
+        asset: availableAssets[0].symbol,
+      }));
+    }
+  }, [availableAssets, sellData.asset]);
+
+  // Fetch real-time prices
+  useEffect(() => {
+    if (availableAssets.length === 0) return;
+
+    const fetchPrices = async () => {
+      try {
+        const symbols = availableAssets.map((a: any) => a.symbol).join(",");
+        const response = await fetch(`/api/crypto/prices?symbols=${symbols}`);
+        const data = await response.json();
+        const priceMap: Record<string, { price: number }> = {};
+        if (data.prices) {
+          Object.entries(data.prices).forEach(([symbol, priceData]: any) => {
+            priceMap[symbol] = { price: priceData.price };
+          });
+        }
+        setAssetPrices(priceMap);
+      } catch (error) {
+        console.error("Error fetching crypto prices:", error);
+      }
+    };
+
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 5000); // Update every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [availableAssets]);
+
+  // Get current asset data
+  const currentAsset = availableAssets.find(
+    (a: any) => a.symbol === sellData.asset
+  );
+  const currentPrice = assetPrices[sellData.asset]?.price || 0;
 
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
-      document.body.style.paddingRight = "0px";
     } else {
       document.body.style.overflow = "unset";
-      document.body.style.paddingRight = "0px";
     }
 
     return () => {
       document.body.style.overflow = "unset";
-      document.body.style.paddingRight = "0px";
     };
   }, [isOpen]);
 
-  const getCurrentPrice = () => {
-    return orderType === "limit" && limitPrice
-      ? parseFloat(limitPrice)
-      : assetPrices[sellData.asset as keyof typeof assetPrices];
-  };
-
   const getAmountToSell = () => {
-    if (sellData.sellType === "all") {
-      return availableBalances[
-        sellData.asset as keyof typeof availableBalances
-      ];
-    }
-    return parseFloat(sellData.amount) || 0;
+    const amount = parseFloat(sellData.amount) || 0;
+    return amount > 0 ? amount : currentAsset?.amount || 0;
   };
 
   const getEstimatedValue = () => {
-    const amount = getAmountToSell();
-    const price = getCurrentPrice();
-    return amount * price;
-  };
-
-  const toggleSellCurrency = () => {
-    const currentAmount = parseFloat(sellData.amount) || 0;
-    const price = getCurrentPrice();
-
-    if (showAmountInUSD) {
-      // Convert from USD to crypto
-      const cryptoAmount = currentAmount / price;
-      setSellData((prev) => ({
-        ...prev,
-        amount: cryptoAmount.toString(),
-      }));
-    } else {
-      // Convert from crypto to USD
-      const usdAmount = currentAmount * price;
-      setSellData((prev) => ({
-        ...prev,
-        amount: usdAmount.toFixed(2),
-      }));
-    }
-
-    setShowAmountInUSD(!showAmountInUSD);
-  };
-
-  const getSellCurrencySymbol = () => {
-    return showAmountInUSD ? "USD" : sellData.asset;
-  };
-
-  const getSellAmountLabel = () => {
-    return showAmountInUSD ? "Amount (USD)" : `Amount (${sellData.asset})`;
-  };
-
-  const getSellAmountPlaceholder = () => {
-    return showAmountInUSD ? "0.00" : "Enter amount";
-  };
-
-  const getSellAmountStep = () => {
-    return showAmountInUSD ? "0.01" : "0.00000001";
+    return getAmountToSell() * currentPrice;
   };
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (sellData.sellType === "partial") {
-      if (!sellData.amount || parseFloat(sellData.amount) <= 0) {
+    if (!sellData.asset) {
+      newErrors.asset = "Please select an asset to sell";
+    }
+
+    if (sellData.amount) {
+      const amount = parseFloat(sellData.amount);
+      if (amount <= 0) {
         newErrors.amount = "Please enter a valid amount";
       }
 
-      if (
-        parseFloat(sellData.amount) >
-        availableBalances[sellData.asset as keyof typeof availableBalances]
-      ) {
+      if (amount > (currentAsset?.amount || 0)) {
         newErrors.amount = "Insufficient balance";
       }
-    }
-
-    const balance =
-      availableBalances[sellData.asset as keyof typeof availableBalances];
-    if (balance <= 0) {
-      newErrors.general = "You don't have any " + sellData.asset + " to sell";
-    }
-
-    if (orderType === "limit" && (!limitPrice || parseFloat(limitPrice) <= 0)) {
-      newErrors.limitPrice = "Please enter a valid limit price";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
+  const sendNotificationEmail = async (
+    title: string,
+    message: string,
+    amount: number,
+    asset: string
+  ) => {
+    try {
+      await fetch("/api/notifications/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "crypto_sale",
+          title,
+          message,
+          amount,
+          asset,
+        }),
+      });
+    } catch (error) {
+      console.error("Error sending email notification:", error);
+    }
+  };
+
+  const sendPushNotification = async (
+    title: string,
+    message: string,
+    amount: number,
+    asset: string
+  ) => {
+    try {
+      await fetch("/api/notifications/send-push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "crypto_sale",
+          title,
+          message,
+          amount,
+          asset,
+        }),
+      });
+    } catch (error) {
+      console.error("Error sending push notification:", error);
+    }
+  };
+
   const handleSell = () => {
     if (validateForm()) {
       try {
-        const price = getCurrentPrice();
         const assetAmount = getAmountToSell();
-        const usdValue = assetAmount * price;
-        const fee = usdValue * 0.015; // 1.5% fee
+        const usdValue = assetAmount * currentPrice;
+        const fee = usdValue * 0.015;
         const netReceived = usdValue - fee;
+        const netReceivedConverted = convertAmount(netReceived);
 
         // Create transaction
         const transaction = {
+          id: `sell_${Date.now()}`,
           type: "sell" as const,
           asset: sellData.asset,
           amount: assetAmount,
           value: usdValue,
           timestamp: new Date().toLocaleString(),
-          status:
-            orderType === "market"
-              ? ("completed" as const)
-              : ("pending" as const),
+          status: "completed" as const,
           fee: fee,
-          method: "USD Balance",
-          description: `${
-            orderType === "market" ? "Market" : "Limit"
-          } sell order for ${sellData.asset}`,
-          rate: price,
+          method: `${preferredCurrency} Balance`,
+          description: `Sold ${assetAmount.toFixed(8)} ${
+            sellData.asset
+          } for ${preferredCurrency}`,
+          rate: currentPrice,
         };
 
         addTransaction(transaction);
 
         // Create notification
+        const notificationMessage = `Successfully sold ${assetAmount.toFixed(
+          8
+        )} ${
+          sellData.asset
+        } for ${preferredCurrency} ${netReceivedConverted.toFixed(2)}`;
+
         addNotification({
           type: "transaction",
-          title:
-            orderType === "market" ? "Sale Completed" : "Sell Order Placed",
-          message: `Successfully ${
-            orderType === "market" ? "sold" : "placed sell order for"
-          } ${assetAmount.toFixed(8)} ${
-            sellData.asset
-          } for $${netReceived.toFixed(2)}`,
+          title: "Sale Completed",
+          message: notificationMessage,
+          amount: usdValue,
+          asset: sellData.asset,
         });
+
+        // Send email notification
+        sendNotificationEmail(
+          "Sale Completed",
+          notificationMessage,
+          usdValue,
+          sellData.asset
+        );
+
+        // Send push notification
+        sendPushNotification(
+          "Sale Completed",
+          notificationMessage,
+          usdValue,
+          sellData.asset
+        );
 
         // Reset form and close modal
         setSellData({
-          asset: "BTC",
+          asset: "",
           amount: "",
-          sellType: "all",
         });
-        setOrderType("market");
-        setLimitPrice("");
         setErrors({});
         onClose();
       } catch (error) {
@@ -270,7 +304,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       Sell Crypto
                     </h2>
                     <p className="text-gray-400">
-                      Convert cryptocurrency to USD
+                      Convert cryptocurrency to {preferredCurrency}
                     </p>
                   </div>
                 </div>
@@ -282,253 +316,207 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                 )}
 
                 <div className="space-y-6">
-                  {/* Order Type */}
+                  {/* Asset Selection - Web UI Dropdown */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Order Type
-                    </label>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setOrderType("market")}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                          orderType === "market"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        Market
-                      </button>
-                      <button
-                        onClick={() => setOrderType("limit")}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                          orderType === "limit"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        Limit
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Asset Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label className="block text-sm font-medium text-gray-300 mb-3">
                       Select Asset to Sell
                     </label>
-                    <select
-                      value={sellData.asset}
-                      onChange={(e) =>
-                        setSellData((prev) => ({
-                          ...prev,
-                          asset: e.target.value,
-                        }))
-                      }
-                      className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0"
-                      aria-label="Select asset to sell"
-                    >
-                      <option value="BTC">Bitcoin (BTC)</option>
-                      <option value="ETH">Ethereum (ETH)</option>
-                      <option value="ADA">Cardano (ADA)</option>
-                      <option value="SOL">Solana (SOL)</option>
-                    </select>
-                  </div>
-
-                  {/* Available Balance */}
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Available Balance:</span>
-                      <span className="text-white font-medium">
-                        {
-                          availableBalances[
-                            sellData.asset as keyof typeof availableBalances
-                          ]
-                        }{" "}
-                        {sellData.asset}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Current Price */}
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Current Price:</span>
-                      <span className="text-white font-medium">
-                        $
-                        {assetPrices[
-                          sellData.asset as keyof typeof assetPrices
-                        ].toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Limit Price (if limit order) */}
-                  {orderType === "limit" && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Limit Price (USD)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={limitPrice}
-                        onChange={(e) => setLimitPrice(e.target.value)}
-                        className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        placeholder="Enter limit price"
-                      />
-                      {errors.limitPrice && (
-                        <p className="text-red-400 text-sm mt-1">
-                          {errors.limitPrice}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Sell Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Amount to Sell
-                    </label>
-                    <div className="flex space-x-2 mb-3">
-                      <button
-                        onClick={() =>
-                          setSellData((prev) => ({
-                            ...prev,
-                            sellType: "all",
-                            amount: "",
-                          }))
-                        }
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                          sellData.sellType === "all"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        Sell All
-                      </button>
-                      <button
-                        onClick={() =>
-                          setSellData((prev) => ({
-                            ...prev,
-                            sellType: "partial",
-                          }))
-                        }
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                          sellData.sellType === "partial"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        Partial Sale
-                      </button>
-                    </div>
-
-                    {sellData.sellType === "partial" && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                          {getSellAmountLabel()}
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            step={getSellAmountStep()}
-                            value={sellData.amount}
-                            onChange={(e) =>
+                    <div className="grid grid-cols-1 gap-2">
+                      {availableAssets.length === 0 ? (
+                        <div className="text-center py-6">
+                          <p className="text-gray-400">No assets to sell</p>
+                        </div>
+                      ) : (
+                        availableAssets.map((asset: any) => (
+                          <button
+                            key={asset.symbol}
+                            onClick={() =>
                               setSellData((prev) => ({
                                 ...prev,
-                                amount: e.target.value,
+                                asset: asset.symbol,
                               }))
                             }
-                            className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                            placeholder={getSellAmountPlaceholder()}
-                          />
-                          <button
-                            type="button"
-                            onClick={toggleSellCurrency}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                            className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                              sellData.asset === asset.symbol
+                                ? "bg-orange-500/20 border border-orange-500/50"
+                                : "bg-gray-800/50 border border-gray-700/50 hover:border-gray-600"
+                            }`}
                           >
-                            {getSellCurrencySymbol()}
+                            <CryptoIcon symbol={asset.symbol} size="sm" />
+                            <div className="flex-1 text-left">
+                              <div className="text-white font-medium">
+                                {asset.symbol}
+                              </div>
+                              <div className="text-gray-400 text-sm">
+                                {(asset.amount || 0).toFixed(8)} available
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-white font-medium">
+                                {preferredCurrency === "USD"
+                                  ? "$"
+                                  : preferredCurrency === "EUR"
+                                  ? "€"
+                                  : preferredCurrency === "GBP"
+                                  ? "£"
+                                  : preferredCurrency}
+                                {(
+                                  convertAmount(
+                                    (asset.amount || 0) *
+                                      (assetPrices[asset.symbol]?.price || 0)
+                                  ) || 0
+                                ).toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </div>
+                            </div>
                           </button>
-                        </div>
-                      </div>
-                    )}
-                    {errors.amount && (
+                        ))
+                      )}
+                    </div>
+                    {errors.asset && (
                       <p className="text-red-400 text-sm mt-1">
-                        {errors.amount}
+                        {errors.asset}
                       </p>
                     )}
                   </div>
 
-                  {/* Estimated Value */}
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">You will sell:</span>
-                      <span className="text-white font-medium">
-                        {getAmountToSell().toFixed(8)} {sellData.asset}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Fee Information */}
-                  {getAmountToSell() > 0 && (
-                    <div className="bg-gray-800/50 rounded-lg p-4 space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Gross Value:</span>
-                        <span className="text-white">
-                          ${getEstimatedValue().toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Fee (1.5%):</span>
-                        <span className="text-white">
-                          ${(getEstimatedValue() * 0.015).toFixed(2)}
-                        </span>
-                      </div>
-                      <hr className="border-gray-600" />
-                      <div className="flex justify-between items-center font-medium">
-                        <span className="text-gray-300">You will receive:</span>
-                        <span className="text-white">
-                          ${(getEstimatedValue() * 0.985).toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  <button
-                    onClick={handleSell}
-                    disabled={getAmountToSell() <= 0}
-                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
-                  >
-                    {orderType === "market" ? "Sell Now" : "Place Sell Order"}
-                  </button>
-
-                  {orderType === "limit" && (
-                    <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-                      <div className="flex">
-                        <svg
-                          className="w-5 h-5 text-blue-400 mt-0.5 mr-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <div>
-                          <p className="text-blue-400 text-sm font-medium">
-                            Limit Order
-                          </p>
-                          <p className="text-blue-300 text-sm mt-1">
-                            Your order will execute when the price reaches your
-                            specified limit.
-                          </p>
+                  {currentAsset && (
+                    <>
+                      {/* Current Price - Real-time */}
+                      <div className="bg-gray-800/50 rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Current Price:</span>
+                          <span className="text-white font-medium">
+                            {preferredCurrency === "USD"
+                              ? "$"
+                              : preferredCurrency === "EUR"
+                              ? "€"
+                              : preferredCurrency === "GBP"
+                              ? "£"
+                              : preferredCurrency}
+                            {convertAmount(currentPrice).toLocaleString(
+                              "en-US",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }
+                            )}
+                          </span>
                         </div>
                       </div>
-                    </div>
+
+                      {/* Amount to Sell */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Amount to Sell ({sellData.asset})
+                        </label>
+                        <input
+                          type="number"
+                          step="0.00000001"
+                          max={currentAsset.amount}
+                          value={sellData.amount}
+                          onChange={(e) =>
+                            setSellData((prev) => ({
+                              ...prev,
+                              amount: e.target.value,
+                            }))
+                          }
+                          className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder={`Max: ${(
+                            currentAsset.amount || 0
+                          ).toFixed(8)}`}
+                        />
+                        {errors.amount && (
+                          <p className="text-red-400 text-sm mt-1">
+                            {errors.amount}
+                          </p>
+                        )}
+                        <button
+                          onClick={() =>
+                            setSellData((prev) => ({
+                              ...prev,
+                              amount: currentAsset.amount.toString(),
+                            }))
+                          }
+                          className="text-blue-400 hover:text-blue-300 text-xs font-medium mt-2"
+                        >
+                          Sell All
+                        </button>
+                      </div>
+
+                      {/* Fee Information */}
+                      {getAmountToSell() > 0 && (
+                        <div className="bg-gray-800/50 rounded-lg p-4 space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">Gross Value:</span>
+                            <span className="text-white">
+                              {preferredCurrency === "USD"
+                                ? "$"
+                                : preferredCurrency === "EUR"
+                                ? "€"
+                                : preferredCurrency === "GBP"
+                                ? "£"
+                                : preferredCurrency}
+                              {convertAmount(
+                                getEstimatedValue()
+                              ).toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-gray-400">Fee (1.5%):</span>
+                            <span className="text-white">
+                              {preferredCurrency === "USD"
+                                ? "$"
+                                : preferredCurrency === "EUR"
+                                ? "€"
+                                : preferredCurrency === "GBP"
+                                ? "£"
+                                : preferredCurrency}
+                              {convertAmount(
+                                getEstimatedValue() * 0.015
+                              ).toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          </div>
+                          <hr className="border-gray-600" />
+                          <div className="flex justify-between items-center font-medium">
+                            <span className="text-gray-300">
+                              You will receive:
+                            </span>
+                            <span className="text-white">
+                              {preferredCurrency === "USD"
+                                ? "$"
+                                : preferredCurrency === "EUR"
+                                ? "€"
+                                : preferredCurrency === "GBP"
+                                ? "£"
+                                : preferredCurrency}
+                              {convertAmount(
+                                getEstimatedValue() * 0.985
+                              ).toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleSell}
+                        disabled={getAmountToSell() <= 0}
+                        className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                      >
+                        Sell Now
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

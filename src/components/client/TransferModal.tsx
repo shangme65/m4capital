@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
@@ -19,6 +20,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
     memo: "",
   });
   const { portfolio } = usePortfolio();
+  const { preferredCurrency, convertAmount } = useCurrency();
   const [recentAddresses, setRecentAddresses] = useState<
     Array<{
       id: number;
@@ -328,9 +330,25 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Available Balance:</span>
                       <span className="text-white font-medium">
-                        {availableBalances[
-                          transferData.asset as keyof typeof availableBalances
-                        ].toFixed(2)}{" "}
+                        {transferData.asset === "USD"
+                          ? preferredCurrency === "USD"
+                            ? "$"
+                            : preferredCurrency === "EUR"
+                            ? "€"
+                            : preferredCurrency === "GBP"
+                            ? "£"
+                            : preferredCurrency
+                          : ""}
+                        {(transferData.asset === "USD"
+                          ? convertAmount(
+                              availableBalances[
+                                transferData.asset as keyof typeof availableBalances
+                              ] || 0
+                            )
+                          : availableBalances[
+                              transferData.asset as keyof typeof availableBalances
+                            ] || 0
+                        ).toFixed(transferData.asset === "USD" ? 2 : 8)}{" "}
                         {transferData.asset}
                       </span>
                     </div>

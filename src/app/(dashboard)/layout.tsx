@@ -5,6 +5,7 @@ import { SidebarProvider } from "@/components/client/SidebarContext";
 import { ModalProvider } from "@/contexts/ModalContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ToastProvider } from "@/contexts/ToastContext";
+import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { DashboardModalWrapper } from "@/components/layout/DashboardModalWrapper";
 import { MarketDataProvider } from "@/components/client/MarketDataProvider";
 import { getServerSession } from "next-auth";
@@ -28,17 +29,21 @@ export default async function DashboardLayout({
         <ModalProvider>
           <NotificationProvider>
             <ToastProvider>
-              <MarketDataProvider>
-                <div className="flex h-screen bg-gray-900 relative">
-                  <Sidebar />
-                  <div className="flex-1 flex flex-col overflow-hidden">
-                    <DashboardHeaderWrapper />
-                    <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-4 sm:p-8">
-                      <DashboardModalWrapper>{children}</DashboardModalWrapper>
-                    </main>
+              <CurrencyProvider>
+                <MarketDataProvider>
+                  <div className="flex h-screen bg-gray-900 relative">
+                    <Sidebar />
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                      <DashboardHeaderWrapper />
+                      <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-4 sm:p-8">
+                        <DashboardModalWrapper>
+                          {children}
+                        </DashboardModalWrapper>
+                      </main>
+                    </div>
                   </div>
-                </div>
-              </MarketDataProvider>
+                </MarketDataProvider>
+              </CurrencyProvider>
             </ToastProvider>
           </NotificationProvider>
         </ModalProvider>

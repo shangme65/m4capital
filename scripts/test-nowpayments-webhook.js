@@ -13,6 +13,7 @@
 
 const crypto = require("crypto");
 const https = require("https");
+require("dotenv").config();
 
 // Get deposit ID from command line
 const depositId = process.argv[2];
@@ -28,8 +29,12 @@ if (!depositId) {
 }
 
 // Your IPN secret from .env
-const IPN_SECRET =
-  process.env.NOWPAYMENTS_IPN_SECRET || "wLsFwNdB4ImHMZGbRekRr9WxhCXOln77";
+const IPN_SECRET = process.env.NOWPAYMENTS_IPN_SECRET;
+
+if (!IPN_SECRET) {
+  console.error("❌ Error: NOWPAYMENTS_IPN_SECRET not found in .env file");
+  process.exit(1);
+}
 
 // Test webhook payload - simulates a successful payment
 const payload = {

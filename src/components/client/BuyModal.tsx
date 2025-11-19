@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
@@ -20,6 +21,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   const [orderType, setOrderType] = useState<"market" | "limit">("market");
   const [limitPrice, setLimitPrice] = useState("");
   const { portfolio } = usePortfolio();
+  const { preferredCurrency, convertAmount } = useCurrency();
   const availableBalance = portfolio?.portfolio?.balance
     ? parseFloat(portfolio.portfolio.balance.toString())
     : 0;
@@ -511,10 +513,19 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <div className="flex justify-between items-center">
                       <span className="text-gray-400">Available Balance:</span>
                       <span className="text-white font-medium">
-                        $
-                        {availableBalance.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                        })}
+                        {preferredCurrency === "USD"
+                          ? "$"
+                          : preferredCurrency === "EUR"
+                          ? "€"
+                          : preferredCurrency === "GBP"
+                          ? "£"
+                          : preferredCurrency}
+                        {(convertAmount(availableBalance) || 0).toLocaleString(
+                          "en-US",
+                          {
+                            minimumFractionDigits: 2,
+                          }
+                        )}
                       </span>
                     </div>
                   </div>
@@ -525,7 +536,14 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Amount:</span>
                         <span className="text-white">
-                          ${parseFloat(buyData.amount).toFixed(2)}
+                          {preferredCurrency === "USD"
+                            ? "$"
+                            : preferredCurrency === "EUR"
+                            ? "€"
+                            : preferredCurrency === "GBP"
+                            ? "£"
+                            : preferredCurrency}
+                          {parseFloat(buyData.amount).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
