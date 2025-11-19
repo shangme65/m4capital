@@ -10,6 +10,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useBitcoinPrice, useCryptoPrices } from "./CryptoMarketProvider";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface CryptoPriceTickerProps {
   symbols?: string[];
@@ -97,23 +98,12 @@ const CryptoPriceCard: React.FC<{
     >
       <div className="flex items-center justify-center w-full">
         <div className="flex items-center space-x-1.5">
-          {/* Crypto Icon */}
-          <div
-            className={`${
-              compact ? "w-5 h-5 text-[9px]" : "w-8 h-8 text-xs"
-            } rounded-full flex items-center justify-center font-bold`}
-            style={{
-              backgroundColor:
-                symbol === "BTC"
-                  ? "#f7931a"
-                  : symbol === "ETH"
-                  ? "#627eea"
-                  : "#6b7280",
-              color: "#ffffff",
-            }}
-          >
-            {symbol}
-          </div>
+          {/* Crypto Icon - Use actual logo */}
+          <CryptoIcon
+            symbol={symbol}
+            size={compact ? "sm" : "md"}
+            className="inline-block"
+          />
 
           <div>
             <div className="flex items-center gap-2">
@@ -319,12 +309,7 @@ export const BitcoinPriceWidget: React.FC<{
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg"
-            style={{ backgroundColor: "#f7931a" }}
-          >
-            ₿
-          </div>
+          <CryptoIcon symbol="BTC" size="lg" className="inline-block" />
 
           <div>
             <h3 className="text-2xl font-bold text-white">Bitcoin</h3>
