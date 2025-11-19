@@ -88,21 +88,21 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
-    // TODO: Integrate with email service (e.g., Resend, SendGrid, Nodemailer)
-    // For now, we'll log that we would send the email
-    console.log("Email notification would be sent:", {
+    // Send actual email using Nodemailer
+    const { sendEmail } = await import("@/lib/email");
+    const emailResult = await sendEmail({
       to: user.email,
       subject: emailSubject,
-      body: emailBody,
+      html: emailBody,
+      text: message,
     });
 
-    // In production, uncomment and configure your email service:
-    // const emailService = getEmailService();
-    // await emailService.send({
-    //   to: user.email,
-    //   subject: emailSubject,
-    //   html: emailBody,
-    // });
+    if (!emailResult.success) {
+      console.error("Failed to send email:", emailResult.error);
+      // Don't fail the request if email fails, just log it
+    } else {
+      console.log("Email notification sent successfully to:", user.email);
+    }
 
     return NextResponse.json({
       success: true,

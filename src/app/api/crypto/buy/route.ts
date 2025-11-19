@@ -129,11 +129,77 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
+    const newBalance = parseFloat(updatedPortfolio.balance.toString());
+
     console.log(
       `✅ Crypto purchase: ${amount} ${symbol} for $${totalCost.toFixed(
         2
-      )} | New balance: $${parseFloat(updatedPortfolio.balance.toString())}`
+      )} | New balance: $${newBalance}`
     );
+
+    // Send email notification
+    try {
+      const { sendEmail } = await import("@/lib/email");
+      const { cryptoPurchaseTemplate, cryptoPurchaseTextTemplate } =
+        await import("@/lib/email-templates");
+
+      // Check if user has email notifications enabled
+      const userWithPrefs = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { emailNotifications: true, email: true, name: true },
+      });
+
+      if (userWithPrefs?.emailNotifications && userWithPrefs.email) {
+        await sendEmail({
+          to: userWithPrefs.email,
+          subject: `✅ Crypto Purchase Successful - ${amount.toFixed(
+            8
+          )} ${symbol}`,
+          html: cryptoPurchaseTemplate(
+            userWithPrefs.name || "User",
+            symbol,
+            amount,
+            price,
+            totalCost,
+            newBalance
+          ),
+          text: cryptoPurchaseTextTemplate(
+            userWithPrefs.name || "User",
+            symbol,
+            amount,
+            price,
+            totalCost,
+            newBalance
+          ),
+        });
+        console.log(`📧 Email notification sent to ${userWithPrefs.email}`);
+      }
+    } catch (emailError) {
+      console.error("Failed to send email notification:", emailError);
+      // Don't fail the transaction if email fails
+    }
+
+    // Send push notification
+    try {
+      await prisma.notification.create({
+        data: {
+          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: user.id,
+          type: "TRANSACTION" as any,
+          title: `Crypto Purchase Successful`,
+          message: `You successfully purchased ${amount.toFixed(
+            8
+          )} ${symbol} for $${totalCost.toFixed(2)}`,
+          amount: totalCost,
+          asset: symbol,
+          read: false,
+        },
+      });
+      console.log(`🔔 Push notification created for user ${user.id}`);
+    } catch (notifError) {
+      console.error("Failed to create push notification:", notifError);
+      // Don't fail the transaction if notification fails
+    }
 
     return NextResponse.json({
       success: true,
@@ -146,7 +212,7 @@ export async function POST(request: NextRequest) {
         status: trade.status,
       },
       portfolio: {
-        balance: parseFloat(updatedPortfolio.balance.toString()),
+        balance: newBalance,
         assets: updatedPortfolio.assets,
       },
     });
