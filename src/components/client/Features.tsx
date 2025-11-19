@@ -90,14 +90,14 @@ export default function Features() {
                 key={feature.name}
                 className="group relative rounded-2xl p-8 bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 hover:border-indigo-500 transition-all duration-300 overflow-hidden"
                 variants={itemVariants}
-                whileHover={{ 
+                whileHover={{
                   y: -8,
-                  boxShadow: "0 20px 50px rgba(99, 102, 241, 0.2)"
+                  boxShadow: "0 20px 50px rgba(99, 102, 241, 0.2)",
                 }}
               >
                 {/* 3D Background Effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                
+
                 {/* Content */}
                 <div className="relative z-10">
                   <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 group-hover:scale-110 transition-transform duration-300 shadow-lg">
