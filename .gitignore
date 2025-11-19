@@ -47,5 +47,8 @@ setup.sh
 /public/uploads/kyc/*
 !/public/uploads/kyc/.gitkeep
 
+# Scripts directory (local utilities)
+/scripts
+
 # emscripten toolchain
 /emsdk
