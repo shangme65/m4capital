@@ -558,3 +558,115 @@ export const passwordResetTemplate = (name: string, resetUrl: string) => `
   </div>
 </div>
 `;
+
+// Crypto Purchase Confirmation Template
+export const cryptoPurchaseTemplate = (
+  userName: string,
+  asset: string,
+  amount: number,
+  price: number,
+  totalCost: number,
+  newBalance: number
+) =>
+  emailTemplate(`
+  <h2>🎉 Crypto Purchase Successful!</h2>
+  
+  <p>Hi ${userName},</p>
+  
+  <p>Your cryptocurrency purchase has been completed successfully.</p>
+  
+  <div class="alert alert-success">
+    <strong>Transaction Details</strong>
+  </div>
+  
+  <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Asset:</strong></td>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right;">${asset}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Amount:</strong></td>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right;">${amount.toFixed(
+        8
+      )} ${asset}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Price per Unit:</strong></td>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right;">$${price.toLocaleString(
+        "en-US",
+        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      )}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Total Cost:</strong></td>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right; color: #e74c3c; font-weight: bold;">-$${totalCost.toLocaleString(
+        "en-US",
+        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      )}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px;"><strong>New Balance:</strong></td>
+      <td style="padding: 10px; text-align: right; color: #27ae60; font-weight: bold;">$${newBalance.toLocaleString(
+        "en-US",
+        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      )}</td>
+    </tr>
+  </table>
+  
+  <p>The ${asset} has been added to your portfolio and is ready to track!</p>
+  
+  <a href="${
+    process.env.NEXTAUTH_URL
+  }/dashboard" class="button">View Portfolio</a>
+  
+  <p style="color: #666; font-size: 14px; margin-top: 30px;">
+    <strong>Note:</strong> This is a spot purchase transaction. Your crypto is now available in your portfolio.
+  </p>
+  
+  <p>If you have any questions or concerns about this transaction, please contact our support team.</p>
+  
+  <p>Best regards,<br>The M4 Capital Team</p>
+`);
+
+// Crypto Purchase Text Template (plain text version)
+export const cryptoPurchaseTextTemplate = (
+  userName: string,
+  asset: string,
+  amount: number,
+  price: number,
+  totalCost: number,
+  newBalance: number
+) => `
+Crypto Purchase Successful!
+
+Hi ${userName},
+
+Your cryptocurrency purchase has been completed successfully.
+
+Transaction Details:
+- Asset: ${asset}
+- Amount: ${amount.toFixed(8)} ${asset}
+- Price per Unit: $${price.toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}
+- Total Cost: -$${totalCost.toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}
+- New Balance: $${newBalance.toLocaleString("en-US", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+})}
+
+The ${asset} has been added to your portfolio and is ready to track!
+
+View Portfolio: ${process.env.NEXTAUTH_URL}/dashboard
+
+Note: This is a spot purchase transaction. Your crypto is now available in your portfolio.
+
+If you have any questions or concerns about this transaction, please contact our support team.
+
+Best regards,
+The M4 Capital Team
+`;
