@@ -39,9 +39,9 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     }
   }, [availableAssets, sellData.asset]);
 
-  // Fetch real-time prices
+  // Fetch real-time prices - ONLY when modal is open
   useEffect(() => {
-    if (availableAssets.length === 0) return;
+    if (!isOpen || availableAssets.length === 0) return;
 
     const fetchPrices = async () => {
       try {
@@ -61,10 +61,10 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     };
 
     fetchPrices();
-    const interval = setInterval(fetchPrices, 5000); // Update every 5 seconds
+    const interval = setInterval(fetchPrices, 5000); // Update every 5 seconds (only while modal open)
 
     return () => clearInterval(interval);
-  }, [availableAssets]);
+  }, [availableAssets, isOpen]);
 
   // Get current asset data
   const currentAsset = availableAssets.find(

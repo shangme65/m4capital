@@ -1,13 +1,12 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import { useToast } from "@/contexts/ToastContext";
 import {
   CryptoMarketProvider,
-  useBitcoinPrice,
   useCryptoPrices,
 } from "@/components/client/CryptoMarketProvider";
 import { usePortfolio } from "@/lib/usePortfolio";
@@ -22,14 +21,11 @@ export const dynamic = "force-dynamic";
 
 // Dashboard content component with crypto integration
 function DashboardContent() {
-  const { data: session, status } = useSession();
-  const btcPrice = useBitcoinPrice();
-  const {
-    preferredCurrency,
-    convertAmount,
-    formatAmount,
-    isLoading: currencyLoading,
-  } = useCurrency();
+  const { data: session, status } = useSession({
+    refetchInterval: 0, // Disable automatic session polling
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+  });
+  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
 
   // Get portfolio first to know which symbols to fetch
   const {
@@ -39,18 +35,14 @@ function DashboardContent() {
     refetch,
   } = usePortfolio("all");
 
-  // Get real-time prices for all portfolio assets
-  const portfolioSymbols =
-    portfolio?.portfolio?.assets?.map((a: any) => a.symbol) || [];
-  const cryptoPrices = useCryptoPrices(portfolioSymbols);
-
-  // Debug logging for session
-  console.log("🎯 Dashboard Component Rendered");
-  console.log("🔐 Session Status:", status);
-  console.log(
-    "👤 Session Data:",
-    session ? { user: session.user } : "No session"
+  // Memoize portfolio symbols to prevent unnecessary re-subscriptions
+  const portfolioSymbols = useMemo(
+    () => portfolio?.portfolio?.assets?.map((a: any) => a.symbol) || [],
+    [portfolio?.portfolio?.assets]
   );
+
+  // Re-enabled: Fetch real-time crypto prices for portfolio assets
+  const cryptoPrices = useCryptoPrices(portfolioSymbols);
 
   const {
     openDepositModal,
@@ -71,19 +63,30 @@ function DashboardContent() {
   const [showAssetDetails, setShowAssetDetails] = useState(false);
   const [showAllAssets, setShowAllAssets] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
-  const [activeView, setActiveView] = useState<"crypto" | "history">(() => {
-    if (typeof window !== "undefined") {
-      return (
-        (localStorage.getItem("dashboardActiveView") as "crypto" | "history") ||
-        "crypto"
-      );
-    }
-    return "crypto";
-  });
+  const [activeView, setActiveView] = useState<"crypto" | "history">("crypto");
   const [showAddCryptoModal, setShowAddCryptoModal] = useState(false);
 
-  // Wait for session and currency to fully load before rendering dashboard
-  if (status === "loading" || currencyLoading) {
+  // Load activeView from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    const savedView = localStorage.getItem("dashboardActiveView") as
+      | "crypto"
+      | "history";
+    if (savedView) {
+      setActiveView(savedView);
+    }
+  }, []);
+
+  // Persist activeView to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("dashboardActiveView", activeView);
+    }
+  }, [activeView]);
+
+  // Removed "Just now" timer to prevent unnecessary re-renders
+
+  // Wait for session to fully load before rendering dashboard
+  if (status === "loading" || !session) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
@@ -93,13 +96,6 @@ function DashboardContent() {
       </div>
     );
   }
-
-  // Persist activeView to localStorage
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("dashboardActiveView", activeView);
-    }
-  }, [activeView]);
 
   const handleTransactionClick = (transaction: Transaction) => {
     // Enhance transaction with additional details for the modal
@@ -225,14 +221,6 @@ function DashboardContent() {
     typeof portfolio.portfolio.periodIncomePercent === "number"
       ? portfolio.portfolio.periodIncomePercent
       : 0;
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setLastUpdated("Just now");
-    }, 30000); // Update every 30 seconds
-
-    return () => clearInterval(timer);
-  }, []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -1242,10 +1230,10 @@ function DashboardContent() {
   );
 }
 
-// Main Dashboard component wrapped with crypto provider
+// Main Dashboard component with real-time crypto prices
 export default function DashboardPage() {
   return (
-    <CryptoMarketProvider>
+    <CryptoMarketProvider autoConnect={true} enableNews={false}>
       <DashboardContent />
     </CryptoMarketProvider>
   );

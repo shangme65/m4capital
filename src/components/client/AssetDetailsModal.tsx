@@ -248,7 +248,10 @@ export default function AssetDetailsModal({
   const [selectedBuyAmount, setSelectedBuyAmount] = useState<number>(30);
 
   // Fetch live price for asset.symbol from our prices API
+  // ONLY poll when modal is actually open to prevent continuous API calls
   useEffect(() => {
+    if (!isOpen || !asset?.symbol) return;
+
     let mounted = true;
     let interval: any = null;
     const fetchPrice = async () => {
@@ -268,14 +271,14 @@ export default function AssetDetailsModal({
 
     // initial fetch
     fetchPrice();
-    // poll every 30s
+    // poll every 30s (only while modal is open)
     interval = setInterval(fetchPrice, 30000);
 
     return () => {
       mounted = false;
       if (interval) clearInterval(interval);
     };
-  }, [asset?.symbol]);
+  }, [asset?.symbol, isOpen]);
 
   // Fetch transaction history for this asset (deposits/trades/withdrawals)
   useEffect(() => {

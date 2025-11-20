@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { useSession } from "next-auth/react";
@@ -73,6 +74,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [recentActivity, setRecentActivity] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const hasFetchedRef = useRef(false); // Track if we've already fetched to prevent loops
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -118,19 +120,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Poll for new notifications and transactions every 30 seconds
+  // Fetch notifications and transactions ONCE when authenticated (no polling, no re-fetching on session changes)
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.id) {
+    if (
+      status === "authenticated" &&
+      session?.user?.id &&
+      !hasFetchedRef.current
+    ) {
+      hasFetchedRef.current = true; // Mark as fetched BEFORE making requests
       fetchNotifications();
       fetchTransactions();
-
-      const interval = setInterval(() => {
-        fetchNotifications();
-        fetchTransactions();
-      }, 30000); // Poll every 30 seconds
-      return () => clearInterval(interval);
+      // Polling disabled - data will refresh on page reload or manual action
     }
-  }, [session?.user?.id, status]);
+  }, [status]); // Only depend on status, not session object (session reference changes constantly)
 
   const addNotification = (
     notificationData: Omit<Notification, "id" | "timestamp" | "read">

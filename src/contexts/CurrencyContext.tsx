@@ -35,7 +35,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({
     USD: 1,
   });
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Update preferred currency immediately when session loads
   useEffect(() => {
@@ -81,16 +81,12 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       setExchangeRates(rates);
     } catch (error) {
       console.error("Failed to fetch exchange rates:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     refreshRates();
-    // Refresh rates every hour
-    const interval = setInterval(refreshRates, 60 * 60 * 1000);
-    return () => clearInterval(interval);
+    // Polling disabled - rates will refresh on page reload
   }, []);
 
   const convertAmount = (amountUSD: number): number => {

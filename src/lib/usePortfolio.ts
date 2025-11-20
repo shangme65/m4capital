@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface PortfolioAsset {
   symbol: string;
@@ -54,69 +54,63 @@ export const usePortfolio = (period: string = "all") => {
   const [portfolio, setPortfolio] = useState<PortfolioData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = useRef<string | null>(null); // Track last fetched period to prevent duplicate calls
 
-  console.log("🎯 usePortfolio hook initialized with period:", period);
+  const fetchPortfolio = useCallback(
+    async (fetchPeriod?: string) => {
+      try {
+        const queryPeriod = fetchPeriod || period;
+        setIsLoading(true);
+        const response = await fetch(`/api/portfolio?period=${queryPeriod}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Important for NextAuth session cookies
+        });
 
-  const fetchPortfolio = async (fetchPeriod?: string) => {
-    try {
-      const queryPeriod = fetchPeriod || period;
-      console.log("🔄 Fetching portfolio data for period:", queryPeriod);
-      setIsLoading(true);
-      const response = await fetch(`/api/portfolio?period=${queryPeriod}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // Important for NextAuth session cookies
-      });
+        if (!response.ok) {
+          // Handle authentication errors gracefully
+          if (response.status === 401) {
+            setError("Authentication required");
+            setIsLoading(false);
+            return; // Don't throw error for auth issues
+          }
 
-      console.log(
-        "📡 Portfolio API response:",
-        response.status,
-        response.statusText
-      );
-
-      if (!response.ok) {
-        // Handle authentication errors gracefully
-        if (response.status === 401) {
-          console.log("⚠️ Not authenticated - user needs to login");
-          setError("Authentication required");
+          // Try to parse JSON, but handle cases where it's not JSON
+          let errorMessage = `Failed to fetch portfolio (${response.status})`;
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          } catch (parseError) {
+            const textError = await response.text();
+            errorMessage = textError || errorMessage;
+          }
+          setError(errorMessage);
           setIsLoading(false);
-          return; // Don't throw error for auth issues
+          return; // Don't throw, just set error state
         }
 
-        // Try to parse JSON, but handle cases where it's not JSON
-        let errorMessage = `Failed to fetch portfolio (${response.status})`;
-        try {
-          const errorData = await response.json();
-          console.log("⚠️ Portfolio API error:", errorData);
-          errorMessage = errorData.error || errorMessage;
-        } catch (parseError) {
-          const textError = await response.text();
-          console.log("⚠️ Non-JSON error response:", textError);
-          errorMessage = textError || errorMessage;
-        }
-        setError(errorMessage);
+        const data = await response.json();
+        setPortfolio(data);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
         setIsLoading(false);
-        return; // Don't throw, just set error state
       }
-
-      const data = await response.json();
-      console.log("✅ Portfolio data received:", data);
-      setPortfolio(data);
-      setError(null);
-    } catch (err) {
-      console.log("⚠️ Portfolio fetch error:", err);
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [] // Empty dependencies - period is captured in closure
+  );
 
   useEffect(() => {
-    console.log("🚀 usePortfolio useEffect running");
-    fetchPortfolio();
-  }, [period]); // Re-fetch when period changes
+    // Only fetch if period actually changed or we haven't fetched yet
+    if (hasFetchedRef.current !== period) {
+      hasFetchedRef.current = period;
+      fetchPortfolio(period);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [period]); // Only re-fetch when period actually changes
 
   return {
     portfolio,

@@ -277,12 +277,9 @@ export const CryptoMarketProvider: React.FC<CryptoMarketProviderProps> = ({
       // Fetch prices immediately via REST API
       fetchCryptoPricesREST();
 
-      // Set up polling every 60 seconds (matches CoinMarketCap cache duration)
-      const pollInterval = setInterval(() => {
-        fetchCryptoPricesREST();
-      }, 60000);
-
-      pollIntervalRef.current = pollInterval;
+      // Polling disabled to prevent continuous re-renders
+      // Prices will be fetched once on mount
+      pollIntervalRef.current = null;
 
       return () => {
         // Cleanup on unmount
