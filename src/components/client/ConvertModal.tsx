@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { usePortfolio } from "@/lib/usePortfolio";
+import SuccessModal from "@/components/client/SuccessModal";
 
 interface ConvertModalProps {
   isOpen: boolean;
@@ -16,6 +17,14 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
     toAsset: "ETH",
     amount: "",
   });
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState<{
+    asset: string;
+    amount: number;
+    value: number;
+    toAsset: string;
+    toAmount: number;
+  } | null>(null);
   const { portfolio } = usePortfolio();
   const [exchangeRates] = useState({
     BTC: { ETH: 26, ADA: 185714, SOL: 433 },
@@ -150,7 +159,23 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
           } to ${receiveAmount.toFixed(8)} ${convertData.toAsset}`,
         });
 
-        // Reset form and close modal
+        // Show success modal
+        setSuccessData({
+          asset: convertData.fromAsset,
+          amount: amount,
+          value:
+            amount *
+            (convertData.fromAsset === "BTC"
+              ? 65000
+              : convertData.fromAsset === "ETH"
+              ? 2500
+              : 0.5),
+          toAsset: convertData.toAsset,
+          toAmount: receiveAmount,
+        });
+        setShowSuccessModal(true);
+
+        // Reset form
         setConvertData({
           fromAsset: "BTC",
           toAsset: "ETH",
@@ -180,191 +205,55 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
   ];
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            key="convert-modal-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
-            style={{ touchAction: "none" }}
-          />
-          <motion.div
-            key="convert-modal-content"
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto"
-            onClick={(e) => e.stopPropagation()}
-            style={{ touchAction: "auto" }}
-          >
-            <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
-                aria-label="Close convert modal"
-                title="Close"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              key="convert-modal-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
+              style={{ touchAction: "none" }}
+            />
+            <motion.div
+              key="convert-modal-content"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto"
+              onClick={(e) => e.stopPropagation()}
+              style={{ touchAction: "auto" }}
+            >
+              <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
+                  aria-label="Close convert modal"
+                  title="Close"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
 
-              <div className="p-8">
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Convert Crypto
-                    </h2>
-                    <p className="text-gray-400">
-                      Exchange one cryptocurrency for another
-                    </p>
-                  </div>
-                </div>
-
-                {errors.general && (
-                  <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
-                    <p className="text-red-400 text-sm">{errors.general}</p>
-                  </div>
-                )}
-
-                <div className="space-y-6">
-                  {/* From Asset */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      From
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={convertData.fromAsset}
-                        onChange={(e) =>
-                          setConvertData((prev) => ({
-                            ...prev,
-                            fromAsset: e.target.value,
-                          }))
-                        }
-                        className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none appearance-none border-0"
-                        aria-label="Select asset to convert from"
-                      >
-                        {assets.map((asset) => (
-                          <option key={asset} value={asset}>
-                            {asset === "BTC"
-                              ? "Bitcoin (BTC)"
-                              : asset === "ETH"
-                              ? "Ethereum (ETH)"
-                              : asset === "XRP"
-                              ? "Ripple (XRP)"
-                              : asset === "TRX"
-                              ? "Tron (TRX)"
-                              : asset === "TON"
-                              ? "Toncoin (TON)"
-                              : asset === "LTC"
-                              ? "Litecoin (LTC)"
-                              : asset === "BCH"
-                              ? "Bitcoin Cash (BCH)"
-                              : asset === "ETC"
-                              ? "Ethereum Classic (ETC)"
-                              : asset === "USDC"
-                              ? "USD Coin (USDC)"
-                              : "Tether (USDT)"}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="mt-2 text-sm text-gray-400">
-                      Available:{" "}
-                      {
-                        availableBalances[
-                          convertData.fromAsset as keyof typeof availableBalances
-                        ]
-                      }{" "}
-                      {convertData.fromAsset}
-                    </div>
-                  </div>
-
-                  {/* Amount */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Amount
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="0.00000001"
-                        value={convertData.amount}
-                        onChange={(e) =>
-                          setConvertData((prev) => ({
-                            ...prev,
-                            amount: e.target.value,
-                          }))
-                        }
-                        className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        placeholder="0.00"
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                        {convertData.fromAsset}
-                      </span>
-                    </div>
-                    {errors.amount && (
-                      <p className="text-red-400 text-sm mt-1">
-                        {errors.amount}
-                      </p>
-                    )}
-
-                    <button
-                      onClick={() =>
-                        setConvertData((prev) => ({
-                          ...prev,
-                          amount:
-                            availableBalances[
-                              convertData.fromAsset as keyof typeof availableBalances
-                            ].toString(),
-                        }))
-                      }
-                      className="text-orange-400 text-sm mt-2 hover:text-orange-300 transition-colors"
-                    >
-                      Use Max
-                    </button>
-                  </div>
-
-                  {/* Swap Button */}
-                  <div className="flex justify-center">
-                    <button
-                      onClick={handleSwapAssets}
-                      className="w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors"
-                      aria-label="Swap assets"
-                      title="Swap assets"
-                    >
+                <div className="p-8">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
                       <svg
                         className="w-6 h-6 text-white"
                         fill="none"
@@ -375,163 +264,319 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
                           strokeLinecap="round"
                           strokeLinejoin="round"
                           strokeWidth={2}
-                          d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                          d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
                         />
                       </svg>
-                    </button>
-                  </div>
-
-                  {/* To Asset */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      To
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={convertData.toAsset}
-                        onChange={(e) =>
-                          setConvertData((prev) => ({
-                            ...prev,
-                            toAsset: e.target.value,
-                          }))
-                        }
-                        className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none appearance-none border-0"
-                        aria-label="Select asset to convert to"
-                      >
-                        {assets.map((asset) => (
-                          <option key={asset} value={asset}>
-                            {asset === "BTC"
-                              ? "Bitcoin (BTC)"
-                              : asset === "ETH"
-                              ? "Ethereum (ETH)"
-                              : asset === "XRP"
-                              ? "Ripple (XRP)"
-                              : asset === "TRX"
-                              ? "Tron (TRX)"
-                              : asset === "TON"
-                              ? "Toncoin (TON)"
-                              : asset === "LTC"
-                              ? "Litecoin (LTC)"
-                              : asset === "BCH"
-                              ? "Bitcoin Cash (BCH)"
-                              : asset === "ETC"
-                              ? "Ethereum Classic (ETC)"
-                              : asset === "USDC"
-                              ? "USD Coin (USDC)"
-                              : "Tether (USDT)"}
-                          </option>
-                        ))}
-                      </select>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        Convert Crypto
+                      </h2>
+                      <p className="text-gray-400">
+                        Exchange one cryptocurrency for another
+                      </p>
                     </div>
                   </div>
 
-                  {/* Exchange Rate */}
-                  {convertData.fromAsset !== convertData.toAsset && (
-                    <div className="bg-gray-800/50 rounded-lg p-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Exchange Rate:</span>
-                        <span className="text-white font-medium">
-                          1 {convertData.fromAsset} ={" "}
-                          {getConversionRate().toLocaleString()}{" "}
-                          {convertData.toAsset}
-                        </span>
-                      </div>
+                  {errors.general && (
+                    <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
+                      <p className="text-red-400 text-sm">{errors.general}</p>
                     </div>
                   )}
 
-                  {/* Conversion Summary */}
-                  {convertData.amount &&
-                    convertData.fromAsset !== convertData.toAsset && (
-                      <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
-                        <h3 className="text-white font-medium">
-                          Conversion Summary
-                        </h3>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">You pay:</span>
-                            <span className="text-white">
-                              {convertData.amount} {convertData.fromAsset}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">Gross amount:</span>
-                            <span className="text-white">
-                              {(
-                                parseFloat(convertData.amount) *
-                                getConversionRate()
-                              ).toFixed(8)}{" "}
-                              {convertData.toAsset}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-gray-400">
-                              Fee ({conversionFee}%):
-                            </span>
-                            <span className="text-white">
-                              {(
-                                parseFloat(convertData.amount) *
-                                getConversionRate() *
-                                (conversionFee / 100)
-                              ).toFixed(8)}{" "}
-                              {convertData.toAsset}
-                            </span>
-                          </div>
-                          <hr className="border-gray-600" />
-                          <div className="flex justify-between font-medium">
-                            <span className="text-gray-300">You receive:</span>
-                            <span className="text-white">
-                              {getEstimatedReceiveAmount().toFixed(8)}{" "}
-                              {convertData.toAsset}
-                            </span>
-                          </div>
+                  <div className="space-y-6">
+                    {/* From Asset */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        From
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={convertData.fromAsset}
+                          onChange={(e) =>
+                            setConvertData((prev) => ({
+                              ...prev,
+                              fromAsset: e.target.value,
+                            }))
+                          }
+                          className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none appearance-none border-0"
+                          aria-label="Select asset to convert from"
+                        >
+                          {assets.map((asset) => (
+                            <option key={asset} value={asset}>
+                              {asset === "BTC"
+                                ? "Bitcoin (BTC)"
+                                : asset === "ETH"
+                                ? "Ethereum (ETH)"
+                                : asset === "XRP"
+                                ? "Ripple (XRP)"
+                                : asset === "TRX"
+                                ? "Tron (TRX)"
+                                : asset === "TON"
+                                ? "Toncoin (TON)"
+                                : asset === "LTC"
+                                ? "Litecoin (LTC)"
+                                : asset === "BCH"
+                                ? "Bitcoin Cash (BCH)"
+                                : asset === "ETC"
+                                ? "Ethereum Classic (ETC)"
+                                : asset === "USDC"
+                                ? "USD Coin (USDC)"
+                                : "Tether (USDT)"}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="mt-2 text-sm text-gray-400">
+                        Available:{" "}
+                        {
+                          availableBalances[
+                            convertData.fromAsset as keyof typeof availableBalances
+                          ]
+                        }{" "}
+                        {convertData.fromAsset}
+                      </div>
+                    </div>
+
+                    {/* Amount */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Amount
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.00000001"
+                          value={convertData.amount}
+                          onChange={(e) =>
+                            setConvertData((prev) => ({
+                              ...prev,
+                              amount: e.target.value,
+                            }))
+                          }
+                          className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder="0.00"
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                          {convertData.fromAsset}
+                        </span>
+                      </div>
+                      {errors.amount && (
+                        <p className="text-red-400 text-sm mt-1">
+                          {errors.amount}
+                        </p>
+                      )}
+
+                      <button
+                        onClick={() =>
+                          setConvertData((prev) => ({
+                            ...prev,
+                            amount:
+                              availableBalances[
+                                convertData.fromAsset as keyof typeof availableBalances
+                              ].toString(),
+                          }))
+                        }
+                        className="text-orange-400 text-sm mt-2 hover:text-orange-300 transition-colors"
+                      >
+                        Use Max
+                      </button>
+                    </div>
+
+                    {/* Swap Button */}
+                    <div className="flex justify-center">
+                      <button
+                        onClick={handleSwapAssets}
+                        className="w-12 h-12 bg-gray-700 hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors"
+                        aria-label="Swap assets"
+                        title="Swap assets"
+                      >
+                        <svg
+                          className="w-6 h-6 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* To Asset */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        To
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={convertData.toAsset}
+                          onChange={(e) =>
+                            setConvertData((prev) => ({
+                              ...prev,
+                              toAsset: e.target.value,
+                            }))
+                          }
+                          className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none appearance-none border-0"
+                          aria-label="Select asset to convert to"
+                        >
+                          {assets.map((asset) => (
+                            <option key={asset} value={asset}>
+                              {asset === "BTC"
+                                ? "Bitcoin (BTC)"
+                                : asset === "ETH"
+                                ? "Ethereum (ETH)"
+                                : asset === "XRP"
+                                ? "Ripple (XRP)"
+                                : asset === "TRX"
+                                ? "Tron (TRX)"
+                                : asset === "TON"
+                                ? "Toncoin (TON)"
+                                : asset === "LTC"
+                                ? "Litecoin (LTC)"
+                                : asset === "BCH"
+                                ? "Bitcoin Cash (BCH)"
+                                : asset === "ETC"
+                                ? "Ethereum Classic (ETC)"
+                                : asset === "USDC"
+                                ? "USD Coin (USDC)"
+                                : "Tether (USDT)"}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Exchange Rate */}
+                    {convertData.fromAsset !== convertData.toAsset && (
+                      <div className="bg-gray-800/50 rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Exchange Rate:</span>
+                          <span className="text-white font-medium">
+                            1 {convertData.fromAsset} ={" "}
+                            {getConversionRate().toLocaleString()}{" "}
+                            {convertData.toAsset}
+                          </span>
                         </div>
                       </div>
                     )}
 
-                  <button
-                    onClick={handleConvert}
-                    disabled={
-                      !convertData.amount ||
-                      convertData.fromAsset === convertData.toAsset
-                    }
-                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
-                  >
-                    Convert Now
-                  </button>
+                    {/* Conversion Summary */}
+                    {convertData.amount &&
+                      convertData.fromAsset !== convertData.toAsset && (
+                        <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+                          <h3 className="text-white font-medium">
+                            Conversion Summary
+                          </h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">You pay:</span>
+                              <span className="text-white">
+                                {convertData.amount} {convertData.fromAsset}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">
+                                Gross amount:
+                              </span>
+                              <span className="text-white">
+                                {(
+                                  parseFloat(convertData.amount) *
+                                  getConversionRate()
+                                ).toFixed(8)}{" "}
+                                {convertData.toAsset}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">
+                                Fee ({conversionFee}%):
+                              </span>
+                              <span className="text-white">
+                                {(
+                                  parseFloat(convertData.amount) *
+                                  getConversionRate() *
+                                  (conversionFee / 100)
+                                ).toFixed(8)}{" "}
+                                {convertData.toAsset}
+                              </span>
+                            </div>
+                            <hr className="border-gray-600" />
+                            <div className="flex justify-between font-medium">
+                              <span className="text-gray-300">
+                                You receive:
+                              </span>
+                              <span className="text-white">
+                                {getEstimatedReceiveAmount().toFixed(8)}{" "}
+                                {convertData.toAsset}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
-                  {/* Info Notice */}
-                  <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
-                    <div className="flex">
-                      <svg
-                        className="w-5 h-5 text-purple-400 mt-0.5 mr-3"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                      <div>
-                        <p className="text-purple-400 text-sm font-medium">
-                          Instant Conversion
-                        </p>
-                        <p className="text-purple-300 text-sm mt-1">
-                          Conversions are processed instantly at current market
-                          rates with a {conversionFee}% fee.
-                        </p>
+                    <button
+                      onClick={handleConvert}
+                      disabled={
+                        !convertData.amount ||
+                        convertData.fromAsset === convertData.toAsset
+                      }
+                      className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                    >
+                      Convert Now
+                    </button>
+
+                    {/* Info Notice */}
+                    <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-4">
+                      <div className="flex">
+                        <svg
+                          className="w-5 h-5 text-purple-400 mt-0.5 mr-3"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <div>
+                          <p className="text-purple-400 text-sm font-medium">
+                            Instant Conversion
+                          </p>
+                          <p className="text-purple-300 text-sm mt-1">
+                            Conversions are processed instantly at current
+                            market rates with a {conversionFee}% fee.
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        </>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Success Modal */}
+      {isOpen && (
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          type="swap"
+          asset={successData?.asset || "BTC"}
+          amount={successData?.amount.toString() || "0"}
+          value={successData?.value.toString() || "0"}
+          toAsset={successData?.toAsset}
+          toAmount={successData?.toAmount?.toString()}
+        />
       )}
-    </AnimatePresence>
+    </>
   );
 }
