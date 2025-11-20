@@ -24,7 +24,12 @@ export const dynamic = "force-dynamic";
 function DashboardContent() {
   const { data: session, status } = useSession();
   const btcPrice = useBitcoinPrice();
-  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
+  const {
+    preferredCurrency,
+    convertAmount,
+    formatAmount,
+    isLoading: currencyLoading,
+  } = useCurrency();
 
   // Get portfolio first to know which symbols to fetch
   const {
@@ -76,6 +81,18 @@ function DashboardContent() {
     return "crypto";
   });
   const [showAddCryptoModal, setShowAddCryptoModal] = useState(false);
+
+  // Wait for session and currency to fully load before rendering dashboard
+  if (status === "loading" || currencyLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Persist activeView to localStorage
   useEffect(() => {
@@ -486,12 +503,6 @@ function DashboardContent() {
           <h1 className="text-xl sm:text-2xl font-bold text-white">
             Portfolio Value
           </h1>
-          <div className="text-xs sm:text-sm text-gray-400">
-            <span className="hidden sm:inline">
-              Last updated: {lastUpdated}
-            </span>
-            <span className="sm:hidden">{lastUpdated}</span>
-          </div>
         </div>
 
         <div className="mb-6 sm:mb-8">

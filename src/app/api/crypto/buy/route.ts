@@ -181,15 +181,64 @@ export async function POST(request: NextRequest) {
 
     // Send push notification
     try {
+      // Get user's preferred currency
+      const userCurrency = user.preferredCurrency || "USD";
+      const assetName =
+        symbol === "BTC"
+          ? "Bitcoin"
+          : symbol === "ETH"
+          ? "Ethereum"
+          : symbol === "XRP"
+          ? "Ripple"
+          : symbol === "LTC"
+          ? "Litecoin"
+          : symbol === "BCH"
+          ? "Bitcoin Cash"
+          : symbol === "ETC"
+          ? "Ethereum Classic"
+          : symbol === "TRX"
+          ? "Tron"
+          : symbol === "TON"
+          ? "Toncoin"
+          : symbol === "USDC"
+          ? "USD Coin"
+          : symbol === "USDT"
+          ? "Tether"
+          : symbol;
+
+      // Convert amount to user's preferred currency
+      let displayAmount = totalCost;
+      let currencySymbol = "$";
+
+      if (userCurrency !== "USD") {
+        // Fetch exchange rate
+        const ratesResponse = await fetch(
+          "https://api.frankfurter.app/latest?from=USD"
+        );
+        if (ratesResponse.ok) {
+          const ratesData = await ratesResponse.json();
+          const rate = ratesData.rates[userCurrency] || 1;
+          displayAmount = totalCost * rate;
+          currencySymbol =
+            userCurrency === "EUR"
+              ? "€"
+              : userCurrency === "GBP"
+              ? "£"
+              : userCurrency === "JPY"
+              ? "¥"
+              : userCurrency;
+        }
+      }
+
       await prisma.notification.create({
         data: {
           id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           userId: user.id,
           type: "TRANSACTION" as any,
-          title: `Crypto Purchase Successful`,
+          title: `You've bought ${assetName}`,
           message: `You successfully purchased ${amount.toFixed(
             8
-          )} ${symbol} for $${totalCost.toFixed(2)}`,
+          )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`,
           amount: totalCost,
           asset: symbol,
           read: false,
