@@ -19,7 +19,7 @@ import { useState, useEffect } from "react";
 import LogoutConfirmationModal from "./LogoutConfirmationModal";
 
 const Sidebar = () => {
-  const { data: session, status, update } = useSession();
+  const { data: session, status } = useSession(); // Removed 'update' to prevent session refresh loops
   const { isSidebarOpen, closeSidebar } = useSidebar();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [baseUrl, setBaseUrl] = useState("");
@@ -32,12 +32,8 @@ const Sidebar = () => {
     }
   }, []);
 
-  // Force session update on mount and when status changes to ensure fresh data
-  useEffect(() => {
-    if (status === "authenticated") {
-      update();
-    }
-  }, [status, update]);
+  // Session update removed to prevent infinite loops and continuous API calls
+  // The session will update naturally when needed via NextAuth's built-in mechanisms
 
   const navItems = [
     { icon: <Home size={24} />, name: "Homepage", href: "/" },

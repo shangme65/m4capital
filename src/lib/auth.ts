@@ -69,7 +69,7 @@ export const authOptions: AuthOptions = {
   session: {
     strategy: "jwt", // Using JWT for reliable session management
     maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // Update session every 24 hours
+    updateAge: 7 * 24 * 60 * 60, // Update session every 7 days (reduced from 24 hours)
   },
   cookies: {
     sessionToken: {
@@ -85,11 +85,6 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log("🔐 SignIn callback triggered:", {
-        provider: account?.provider,
-        userEmail: user.email,
-      });
-
       // For OAuth providers (Google, Facebook), ensure user exists in database
       if (account?.provider === "facebook" || account?.provider === "google") {
         try {
@@ -109,7 +104,6 @@ export const authOptions: AuthOptions = {
                 image: user.image,
               } as any,
             });
-            console.log("✅ New OAuth user created:", user.email);
           } else if (!existingUser.role) {
             // Update existing user without role
             await prisma.user.update({
@@ -120,22 +114,17 @@ export const authOptions: AuthOptions = {
                 isEmailVerified: true,
               } as any,
             });
-            console.log("✅ OAuth user updated:", user.email);
           }
         } catch (error) {
-          console.error("❌ Error handling OAuth user:", error);
           return false;
         }
       }
 
-      console.log("✅ SignIn successful");
       return true;
     },
     async jwt({ token, user, trigger, session }) {
       // On initial sign in (when user object is available from authorize)
       if (user) {
-        console.log("🎫 Creating JWT token for user:", user.email);
-
         // Fetch full user data from database
         const dbUser = await prisma.user.findUnique({
           where: { email: user.email! },
@@ -230,12 +219,18 @@ export const authOptions: AuthOptions = {
   },
   events: {
     async signOut({ token, session }) {
-      console.log("🚪 User signed out:", token?.email || session?.user?.email);
+      // User signed out
     },
   },
   pages: {
     signIn: "/",
     signOut: "/", // Redirect directly to homepage on signout, no confirmation page
+  },
+  debug: false, // Disable debug logging to prevent _log endpoint spam
+  logger: {
+    error: () => {}, // Suppress error logs
+    warn: () => {}, // Suppress warning logs
+    debug: () => {}, // Suppress debug logs
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

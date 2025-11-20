@@ -6,6 +6,7 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import SuccessModal from "@/components/client/SuccessModal";
 
 interface BuyModalProps {
   isOpen: boolean;
@@ -20,6 +21,12 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   });
   const [orderType, setOrderType] = useState<"market" | "limit">("market");
   const [limitPrice, setLimitPrice] = useState("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState<{
+    asset: string;
+    amount: number;
+    value: number;
+  } | null>(null);
   const { portfolio } = usePortfolio();
   const { preferredCurrency, convertAmount } = useCurrency();
   const availableBalance = portfolio?.portfolio?.balance
@@ -183,7 +190,15 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
           buyData.asset
         );
 
-        // Reset form and close modal
+        // Show success modal
+        setSuccessData({
+          asset: buyData.asset,
+          amount: assetAmount,
+          value: usdAmount,
+        });
+        setShowSuccessModal(true);
+
+        // Reset form
         setBuyData({
           asset: "BTC",
           amount: "",
@@ -260,282 +275,262 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            key="buy-modal-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
-            style={{ touchAction: "none" }}
-          />
-          <motion.div
-            key="buy-modal-content"
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto"
-            onClick={(e) => e.stopPropagation()}
-            style={{ touchAction: "auto" }}
-          >
-            <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
-                aria-label="Close buy modal"
-                title="Close"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+    <>
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div
+              key="buy-modal-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
+              style={{ touchAction: "none" }}
+            />
+            <motion.div
+              key="buy-modal-content"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto"
+              onClick={(e) => e.stopPropagation()}
+              style={{ touchAction: "auto" }}
+            >
+              <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10"
+                  aria-label="Close buy modal"
+                  title="Close"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
 
-              <div className="p-8">
-                {/* Header */}
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
-                    <svg
-                      className="w-6 h-6 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M7 11l5-5m0 0l5 5m-5-5v12"
-                      />
-                    </svg>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold text-white">
-                      Buy Crypto
-                    </h2>
-                    <p className="text-gray-400">Purchase cryptocurrency</p>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  {/* Order Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Order Type
-                    </label>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => setOrderType("market")}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                          orderType === "market"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
+                <div className="p-8">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
                       >
-                        Market
-                      </button>
-                      <button
-                        onClick={() => setOrderType("limit")}
-                        className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                          orderType === "limit"
-                            ? "bg-orange-500 text-white"
-                            : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        }`}
-                      >
-                        Limit
-                      </button>
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M7 11l5-5m0 0l5 5m-5-5v12"
+                        />
+                      </svg>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">
+                        Buy Crypto
+                      </h2>
+                      <p className="text-gray-400">Purchase cryptocurrency</p>
                     </div>
                   </div>
 
-                  {/* Asset Selection */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Select Asset
-                    </label>
-                    <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-3">
-                      <CryptoIcon symbol={buyData.asset} size="sm" />
-                      <select
-                        value={buyData.asset}
-                        onChange={(e) =>
-                          setBuyData((prev) => ({
-                            ...prev,
-                            asset: e.target.value,
-                          }))
-                        }
-                        className="flex-1 bg-transparent text-white focus:outline-none border-0"
-                        aria-label="Select asset to buy"
-                      >
-                        <option value="BTC">Bitcoin (BTC)</option>
-                        <option value="ETH">Ethereum (ETH)</option>
-                        <option value="XRP">Ripple (XRP)</option>
-                        <option value="TRX">Tron (TRX)</option>
-                        <option value="TON">Toncoin (TON)</option>
-                        <option value="LTC">Litecoin (LTC)</option>
-                        <option value="BCH">Bitcoin Cash (BCH)</option>
-                        <option value="ETC">Ethereum Classic (ETC)</option>
-                        <option value="USDC">USD Coin (USDC)</option>
-                        <option value="USDT">Tether (USDT)</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Current Price */}
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Current Price:</span>
-                      <span className="text-white font-medium">
-                        $
-                        {assetPrices[
-                          buyData.asset as keyof typeof assetPrices
-                        ].toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Limit Price (if limit order) */}
-                  {orderType === "limit" && (
+                  <div className="space-y-6">
+                    {/* Order Type */}
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Limit Price (USD)
+                        Order Type
                       </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={limitPrice}
-                        onChange={(e) => setLimitPrice(e.target.value)}
-                        className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                        placeholder="Enter limit price"
-                      />
-                      {errors.limitPrice && (
-                        <p className="text-red-400 text-sm mt-1">
-                          {errors.limitPrice}
-                        </p>
-                      )}
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => setOrderType("market")}
+                          className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                            orderType === "market"
+                              ? "bg-orange-500 text-white"
+                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          }`}
+                        >
+                          Market
+                        </button>
+                        <button
+                          onClick={() => setOrderType("limit")}
+                          className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                            orderType === "limit"
+                              ? "bg-orange-500 text-white"
+                              : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                          }`}
+                        >
+                          Limit
+                        </button>
+                      </div>
                     </div>
-                  )}
 
-                  {/* Amount with Currency Toggle */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      {getCurrentAmountLabel()}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step={getAmountStep()}
-                        value={buyData.amount}
-                        onChange={(e) =>
-                          setBuyData((prev) => ({
-                            ...prev,
-                            amount: e.target.value,
-                          }))
-                        }
-                        className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        placeholder={getAmountPlaceholder()}
-                      />
-                      <button
-                        type="button"
-                        onClick={toggleCurrency}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-300 transition-colors font-medium"
-                      >
-                        {getCurrentCurrencySymbol()}
-                      </button>
+                    {/* Asset Selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Select Asset
+                      </label>
+                      <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-3">
+                        <CryptoIcon symbol={buyData.asset} size="sm" />
+                        <select
+                          value={buyData.asset}
+                          onChange={(e) =>
+                            setBuyData((prev) => ({
+                              ...prev,
+                              asset: e.target.value,
+                            }))
+                          }
+                          className="flex-1 bg-transparent text-white focus:outline-none border-0"
+                          aria-label="Select asset to buy"
+                        >
+                          <option value="BTC">Bitcoin (BTC)</option>
+                          <option value="ETH">Ethereum (ETH)</option>
+                          <option value="XRP">Ripple (XRP)</option>
+                          <option value="TRX">Tron (TRX)</option>
+                          <option value="TON">Toncoin (TON)</option>
+                          <option value="LTC">Litecoin (LTC)</option>
+                          <option value="BCH">Bitcoin Cash (BCH)</option>
+                          <option value="ETC">Ethereum Classic (ETC)</option>
+                          <option value="USDC">USD Coin (USDC)</option>
+                          <option value="USDT">Tether (USDT)</option>
+                        </select>
+                      </div>
                     </div>
-                    {errors.amount && (
-                      <p className="text-red-400 text-sm mt-1">
-                        {errors.amount}
-                      </p>
-                    )}
 
-                    <div className="flex space-x-2 mt-2">
-                      {showAmountInCrypto
-                        ? [0.001, 0.01, 0.1, 1].map((preset) => (
-                            <button
-                              key={preset}
-                              onClick={() =>
-                                setBuyData((prev) => ({
-                                  ...prev,
-                                  amount: preset.toString(),
-                                }))
-                              }
-                              className="text-orange-400 text-sm hover:text-orange-300 transition-colors"
-                            >
-                              {preset} {buyData.asset}
-                            </button>
-                          ))
-                        : [100, 250, 500, 1000].map((preset) => (
-                            <button
-                              key={preset}
-                              onClick={() =>
-                                setBuyData((prev) => ({
-                                  ...prev,
-                                  amount: preset.toString(),
-                                }))
-                              }
-                              className="text-orange-400 text-sm hover:text-orange-300 transition-colors"
-                            >
-                              ${preset}
-                            </button>
-                          ))}
-                    </div>
-                  </div>
-
-                  {/* Estimated Amount */}
-                  {buyData.amount && (
+                    {/* Current Price */}
                     <div className="bg-gray-800/50 rounded-lg p-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400">You will receive:</span>
+                        <span className="text-gray-400">Current Price:</span>
                         <span className="text-white font-medium">
-                          {getEstimatedAmount().toFixed(8)} {buyData.asset}
+                          $
+                          {assetPrices[
+                            buyData.asset as keyof typeof assetPrices
+                          ].toLocaleString()}
                         </span>
                       </div>
                     </div>
-                  )}
 
-                  {/* Available Balance */}
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-gray-400">Available Balance:</span>
-                      <span className="text-white font-medium">
-                        {preferredCurrency === "USD"
-                          ? "$"
-                          : preferredCurrency === "EUR"
-                          ? "€"
-                          : preferredCurrency === "GBP"
-                          ? "£"
-                          : preferredCurrency}
-                        {(convertAmount(availableBalance) || 0).toLocaleString(
-                          "en-US",
-                          {
-                            minimumFractionDigits: 2,
-                          }
+                    {/* Limit Price (if limit order) */}
+                    {orderType === "limit" && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Limit Price (USD)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={limitPrice}
+                          onChange={(e) => setLimitPrice(e.target.value)}
+                          className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                          placeholder="Enter limit price"
+                        />
+                        {errors.limitPrice && (
+                          <p className="text-red-400 text-sm mt-1">
+                            {errors.limitPrice}
+                          </p>
                         )}
-                      </span>
-                    </div>
-                  </div>
+                      </div>
+                    )}
 
-                  {/* Fee Information */}
-                  {buyData.amount && (
-                    <div className="bg-gray-800/50 rounded-lg p-4 space-y-2">
+                    {/* Amount with Currency Toggle */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        {getCurrentAmountLabel()}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step={getAmountStep()}
+                          value={buyData.amount}
+                          onChange={(e) =>
+                            setBuyData((prev) => ({
+                              ...prev,
+                              amount: e.target.value,
+                            }))
+                          }
+                          className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          placeholder={getAmountPlaceholder()}
+                        />
+                        <button
+                          type="button"
+                          onClick={toggleCurrency}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                        >
+                          {getCurrentCurrencySymbol()}
+                        </button>
+                      </div>
+                      {errors.amount && (
+                        <p className="text-red-400 text-sm mt-1">
+                          {errors.amount}
+                        </p>
+                      )}
+
+                      <div className="flex space-x-2 mt-2">
+                        {showAmountInCrypto
+                          ? [0.001, 0.01, 0.1, 1].map((preset) => (
+                              <button
+                                key={preset}
+                                onClick={() =>
+                                  setBuyData((prev) => ({
+                                    ...prev,
+                                    amount: preset.toString(),
+                                  }))
+                                }
+                                className="text-orange-400 text-sm hover:text-orange-300 transition-colors"
+                              >
+                                {preset} {buyData.asset}
+                              </button>
+                            ))
+                          : [100, 250, 500, 1000].map((preset) => (
+                              <button
+                                key={preset}
+                                onClick={() =>
+                                  setBuyData((prev) => ({
+                                    ...prev,
+                                    amount: preset.toString(),
+                                  }))
+                                }
+                                className="text-orange-400 text-sm hover:text-orange-300 transition-colors"
+                              >
+                                ${preset}
+                              </button>
+                            ))}
+                      </div>
+                    </div>
+
+                    {/* Estimated Amount */}
+                    {buyData.amount && (
+                      <div className="bg-gray-800/50 rounded-lg p-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">
+                            You will receive:
+                          </span>
+                          <span className="text-white font-medium">
+                            {getEstimatedAmount().toFixed(8)} {buyData.asset}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Available Balance */}
+                    <div className="bg-gray-800/50 rounded-lg p-4">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Amount:</span>
-                        <span className="text-white">
+                        <span className="text-gray-400">
+                          Available Balance:
+                        </span>
+                        <span className="text-white font-medium">
                           {preferredCurrency === "USD"
                             ? "$"
                             : preferredCurrency === "EUR"
@@ -543,67 +538,102 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             : preferredCurrency === "GBP"
                             ? "£"
                             : preferredCurrency}
-                          {parseFloat(buyData.amount).toFixed(2)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-400">Fee (1.5%):</span>
-                        <span className="text-white">
-                          ${(parseFloat(buyData.amount) * 0.015).toFixed(2)}
-                        </span>
-                      </div>
-                      <hr className="border-gray-600" />
-                      <div className="flex justify-between items-center font-medium">
-                        <span className="text-gray-300">Total:</span>
-                        <span className="text-white">
-                          ${(parseFloat(buyData.amount) * 1.015).toFixed(2)}
+                          {(
+                            convertAmount(availableBalance) || 0
+                          ).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                          })}
                         </span>
                       </div>
                     </div>
-                  )}
 
-                  <button
-                    onClick={handleBuy}
-                    disabled={!buyData.amount}
-                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
-                  >
-                    {orderType === "market" ? "Buy Now" : "Place Buy Order"}
-                  </button>
-
-                  {orderType === "limit" && (
-                    <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-                      <div className="flex">
-                        <svg
-                          className="w-5 h-5 text-blue-400 mt-0.5 mr-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                          />
-                        </svg>
-                        <div>
-                          <p className="text-blue-400 text-sm font-medium">
-                            Limit Order
-                          </p>
-                          <p className="text-blue-300 text-sm mt-1">
-                            Your order will execute when the price reaches your
-                            specified limit.
-                          </p>
+                    {/* Fee Information */}
+                    {buyData.amount && (
+                      <div className="bg-gray-800/50 rounded-lg p-4 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Amount:</span>
+                          <span className="text-white">
+                            {preferredCurrency === "USD"
+                              ? "$"
+                              : preferredCurrency === "EUR"
+                              ? "€"
+                              : preferredCurrency === "GBP"
+                              ? "£"
+                              : preferredCurrency}
+                            {parseFloat(buyData.amount).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Fee (1.5%):</span>
+                          <span className="text-white">
+                            ${(parseFloat(buyData.amount) * 0.015).toFixed(2)}
+                          </span>
+                        </div>
+                        <hr className="border-gray-600" />
+                        <div className="flex justify-between items-center font-medium">
+                          <span className="text-gray-300">Total:</span>
+                          <span className="text-white">
+                            ${(parseFloat(buyData.amount) * 1.015).toFixed(2)}
+                          </span>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+
+                    <button
+                      onClick={handleBuy}
+                      disabled={!buyData.amount}
+                      className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
+                    >
+                      {orderType === "market" ? "Buy Now" : "Place Buy Order"}
+                    </button>
+
+                    {orderType === "limit" && (
+                      <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+                        <div className="flex">
+                          <svg
+                            className="w-5 h-5 text-blue-400 mt-0.5 mr-3"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <div>
+                            <p className="text-blue-400 text-sm font-medium">
+                              Limit Order
+                            </p>
+                            <p className="text-blue-300 text-sm mt-1">
+                              Your order will execute when the price reaches
+                              your specified limit.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        </>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Success Modal */}
+      {isOpen && (
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
+          type="buy"
+          asset={successData?.asset || "BTC"}
+          amount={successData?.amount.toString() || "0"}
+          value={successData?.value.toString() || "0"}
+        />
       )}
-    </AnimatePresence>
+    </>
   );
 }

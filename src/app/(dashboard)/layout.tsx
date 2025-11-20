@@ -30,7 +30,7 @@ export default async function DashboardLayout({
           <NotificationProvider>
             <ToastProvider>
               <CurrencyProvider>
-                <MarketDataProvider>
+                <MarketDataProvider autoConnect={false} enableNews={false}>
                   <div className="flex h-screen bg-gray-900 relative">
                     <Sidebar />
                     <div className="flex-1 flex flex-col overflow-hidden">

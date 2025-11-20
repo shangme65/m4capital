@@ -15,9 +15,9 @@ interface Cryptocurrency {
 const POPULAR_CRYPTOCURRENCIES: Cryptocurrency[] = [
   { symbol: "BTC", name: "Bitcoin", icon: "₿" },
   { symbol: "ETH", name: "Ethereum", icon: "Ξ" },
-  { symbol: "XRP", name: "XRP", icon: "✕" },
+  { symbol: "XRP", name: "Ripple", icon: "✕" },
   { symbol: "TRX", name: "Tron", icon: "Ⓣ" },
-  { symbol: "TON", name: "TON", icon: "◎" },
+  { symbol: "TON", name: "Toncoin", icon: "◎" },
   { symbol: "LTC", name: "Litecoin", icon: "Ł" },
   { symbol: "BCH", name: "Bitcoin Cash", icon: "Ƀ" },
   { symbol: "ETC", name: "Ethereum Classic", icon: "Ξ" },
@@ -196,7 +196,10 @@ export default function AddCryptoModal({
                           <CryptoIcon symbol={crypto.symbol} size="md" />
                           <div className="text-left">
                             <div className="text-white font-semibold flex items-center gap-2">
-                              {crypto.symbol} {crypto.name}
+                              <span>{crypto.symbol}</span>
+                              <span className="text-sm font-normal text-gray-300">
+                                {crypto.name}
+                              </span>
                               {isInPortfolio && hasBalance && (
                                 <span className="text-xs text-orange-400">
                                   (has balance)
@@ -239,39 +242,21 @@ export default function AddCryptoModal({
                             )}
                           </div>
                         </div>
-                        {isInPortfolio ? (
-                          <svg
-                            className={`w-5 h-5 transition-colors ${
-                              hasBalance
-                                ? "text-gray-600"
-                                : "text-gray-400 group-hover:text-red-400"
+
+                        {/* Toggle Switch */}
+                        <div
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                            isInPortfolio ? "bg-blue-500" : "bg-gray-600"
+                          } ${
+                            hasBalance ? "cursor-not-allowed opacity-50" : ""
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              isInPortfolio ? "translate-x-6" : "translate-x-1"
                             }`}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M20 12H4"
-                            />
-                          </svg>
-                        ) : (
-                          <svg
-                            className="w-5 h-5 text-gray-400 group-hover:text-blue-400 transition-colors"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 4v16m8-8H4"
-                            />
-                          </svg>
-                        )}
+                          />
+                        </div>
                       </button>
                     );
                   })}

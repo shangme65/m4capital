@@ -9,19 +9,14 @@ import NotificationsPanel from "./NotificationsPanel";
 import Image from "next/image";
 
 const DashboardHeader = () => {
-  const { data: session, status, update } = useSession();
+  const { data: session, status } = useSession(); // Removed 'update' to prevent infinite session refresh loop
   const { toggleSidebar } = useSidebar();
   const { unreadCount } = useNotifications();
   const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] =
     useState(false);
 
-  // Force session update on mount and when status changes
-  useEffect(() => {
-    if (status === "authenticated") {
-      // Update session to ensure we have the latest data
-      update();
-    }
-  }, [status, update]);
+  // Session update removed - it was causing continuous /api/auth/csrf and /api/auth/session spam
+  // The session will update naturally when needed via NextAuth's built-in mechanisms
 
   // Derive the secondary label (Investor / Trader, etc.)
   const secondaryLabel = (() => {
