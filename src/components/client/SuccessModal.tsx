@@ -52,15 +52,21 @@ export default function SuccessModal({
   const getMessage = () => {
     switch (type) {
       case "buy":
-        return `You have successfully purchased ${formatCryptoAmount(amount)} ${asset}`;
+        return `You have successfully purchased ${formatCryptoAmount(
+          amount
+        )} ${asset}`;
       case "sell":
-        return `You have successfully sold ${formatCryptoAmount(amount)} ${asset}`;
+        return `You have successfully sold ${formatCryptoAmount(
+          amount
+        )} ${asset}`;
       case "transfer":
-        return `You have successfully transferred ${formatCryptoAmount(amount)} ${asset}${
-          recipient ? ` to ${recipient}` : ""
-        }`;
+        return `You have successfully transferred ${formatCryptoAmount(
+          amount
+        )} ${asset}${recipient ? ` to ${recipient}` : ""}`;
       case "swap":
-        return `You have successfully swapped ${formatCryptoAmount(amount)} ${asset} for ${formatCryptoAmount(toAmount)} ${toAsset}`;
+        return `You have successfully swapped ${formatCryptoAmount(
+          amount
+        )} ${asset} for ${formatCryptoAmount(toAmount)} ${toAsset}`;
       default:
         return "Your transaction has been completed successfully";
     }
@@ -150,7 +156,9 @@ export default function SuccessModal({
                 {amount && type !== "swap" && (
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400">Amount</span>
-                    <span className="text-white font-semibold">{formatCryptoAmount(amount)}</span>
+                    <span className="text-white font-semibold">
+                      {formatCryptoAmount(amount)}
+                    </span>
                   </div>
                 )}
 
