@@ -49,9 +49,9 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
         const response = await fetch(`/api/crypto/prices?symbols=${symbols}`);
         const data = await response.json();
         const priceMap: Record<string, { price: number }> = {};
-        if (data.prices) {
-          Object.entries(data.prices).forEach(([symbol, priceData]: any) => {
-            priceMap[symbol] = { price: priceData.price };
+        if (data.prices && Array.isArray(data.prices)) {
+          data.prices.forEach((priceData: any) => {
+            priceMap[priceData.symbol] = { price: priceData.price };
           });
         }
         setAssetPrices(priceMap);
@@ -162,7 +162,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     }
   };
 
-  const handleSell = () => {
+  const handleSell = async () => {
     if (validateForm()) {
       try {
         const assetAmount = getAmountToSell();
@@ -171,7 +171,30 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
         const netReceived = usdValue - fee;
         const netReceivedConverted = convertAmount(netReceived);
 
-        // Create transaction
+        // Create transaction in database
+        const transactionResponse = await fetch("/api/transactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "sell",
+            asset: sellData.asset,
+            amount: assetAmount,
+            value: usdValue,
+            status: "completed",
+            fee: fee,
+            method: `${preferredCurrency} Balance`,
+            description: `Sold ${assetAmount.toFixed(8)} ${
+              sellData.asset
+            } for ${preferredCurrency}`,
+            rate: currentPrice,
+          }),
+        });
+
+        if (!transactionResponse.ok) {
+          throw new Error("Failed to create transaction");
+        }
+
+        // Create transaction for UI
         const transaction = {
           id: `sell_${Date.now()}`,
           type: "sell" as const,
@@ -191,6 +214,29 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
         addTransaction(transaction);
 
         // Create notification
+        const assetName =
+          sellData.asset === "BTC"
+            ? "Bitcoin"
+            : sellData.asset === "ETH"
+            ? "Ethereum"
+            : sellData.asset === "XRP"
+            ? "Ripple"
+            : sellData.asset === "LTC"
+            ? "Litecoin"
+            : sellData.asset === "BCH"
+            ? "Bitcoin Cash"
+            : sellData.asset === "ETC"
+            ? "Ethereum Classic"
+            : sellData.asset === "TRX"
+            ? "Tron"
+            : sellData.asset === "TON"
+            ? "Toncoin"
+            : sellData.asset === "USDC"
+            ? "USD Coin"
+            : sellData.asset === "USDT"
+            ? "Tether"
+            : sellData.asset;
+        const notificationTitle = `You've sold ${assetName}`;
         const notificationMessage = `Successfully sold ${assetAmount.toFixed(
           8
         )} ${
@@ -199,7 +245,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
         addNotification({
           type: "transaction",
-          title: "Sale Completed",
+          title: notificationTitle,
           message: notificationMessage,
           amount: usdValue,
           asset: sellData.asset,
@@ -207,7 +253,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
         // Send email notification
         sendNotificationEmail(
-          "Sale Completed",
+          notificationTitle,
           notificationMessage,
           usdValue,
           sellData.asset
@@ -215,7 +261,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
         // Send push notification
         sendPushNotification(
-          "Sale Completed",
+          notificationTitle,
           notificationMessage,
           usdValue,
           sellData.asset

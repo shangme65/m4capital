@@ -29,11 +29,20 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
-  const [preferredCurrency, setPreferredCurrency] = useState("USD");
+  const [preferredCurrency, setPreferredCurrency] = useState(
+    session?.user?.preferredCurrency || "USD"
+  );
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({
     USD: 1,
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  // Update preferred currency immediately when session loads
+  useEffect(() => {
+    if (session?.user?.preferredCurrency) {
+      setPreferredCurrency(session.user.preferredCurrency);
+    }
+  }, [session?.user?.preferredCurrency]);
 
   // Fetch user's preferred currency
   const fetchPreferredCurrency = useCallback(async () => {

@@ -4,9 +4,6 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
-  Check,
-  CheckCheck,
-  Trash2,
   Bell,
   DollarSign,
   TrendingUp,
@@ -24,13 +21,8 @@ export default function NotificationsPanel({
   isOpen,
   onClose,
 }: NotificationsPanelProps) {
-  const {
-    notifications,
-    unreadCount,
-    markNotificationAsRead,
-    markAllAsRead,
-    clearNotifications,
-  } = useNotifications();
+  const { notifications, unreadCount, markNotificationAsRead } =
+    useNotifications();
 
   const [expandedNotifications, setExpandedNotifications] = useState<
     Set<string>
@@ -48,16 +40,69 @@ export default function NotificationsPanel({
     });
   };
 
-  const getNotificationIcon = (type: Notification["type"]) => {
-    switch (type) {
+  const getNotificationIcon = (notification: Notification) => {
+    // Check if it's a buy/sell transaction based on title
+    if (notification.title?.includes("You've bought")) {
+      return (
+        <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+          <svg
+            className="w-4 h-4 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M7 11l5-5m0 0l5 5m-5-5v12"
+            />
+          </svg>
+        </div>
+      );
+    }
+    if (notification.title?.includes("You've sold")) {
+      return (
+        <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+          <svg
+            className="w-4 h-4 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M17 13l-5 5m0 0l-5-5m5 5V6"
+            />
+          </svg>
+        </div>
+      );
+    }
+    // Check for USD deposits
+    if (
+      notification.title?.includes("USD Deposit") ||
+      notification.title?.includes("Incoming USD")
+    ) {
+      return (
+        <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+          <DollarSign className="w-5 h-5 text-white" />
+        </div>
+      );
+    }
+
+    switch (notification.type) {
       case "deposit":
         return <DollarSign className="w-5 h-5 text-green-500" />;
       case "withdraw":
         return <DollarSign className="w-5 h-5 text-red-500" />;
       case "trade":
         return <TrendingUp className="w-5 h-5 text-blue-500" />;
+      case "transaction":
+        return <TrendingUp className="w-5 h-5 text-blue-500" />;
       case "success":
-        return <Check className="w-5 h-5 text-green-500" />;
+        return <Info className="w-5 h-5 text-green-500" />;
       case "warning":
         return <AlertTriangle className="w-5 h-5 text-yellow-500" />;
       default:
@@ -120,27 +165,6 @@ export default function NotificationsPanel({
               </button>
             </div>
 
-            {/* Actions */}
-            {notifications.length > 0 && (
-              <div className="flex items-center justify-between p-4 border-b border-gray-700">
-                <button
-                  onClick={markAllAsRead}
-                  disabled={unreadCount === 0}
-                  className="flex items-center space-x-2 text-sm text-orange-500 hover:text-orange-400 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
-                >
-                  <CheckCheck className="w-4 h-4" />
-                  <span>Mark all read</span>
-                </button>
-                <button
-                  onClick={clearNotifications}
-                  className="flex items-center space-x-2 text-sm text-red-500 hover:text-red-400 transition-colors"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Clear all</span>
-                </button>
-              </div>
-            )}
-
             {/* Notifications List */}
             <div className="flex-1 overflow-y-auto">
               {notifications.length === 0 ? (
@@ -176,7 +200,7 @@ export default function NotificationsPanel({
                       >
                         <div className="flex items-start space-x-3">
                           <div className="flex-shrink-0 mt-1">
-                            {getNotificationIcon(notification.type)}
+                            {getNotificationIcon(notification)}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between">

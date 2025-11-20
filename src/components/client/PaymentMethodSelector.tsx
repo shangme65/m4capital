@@ -190,7 +190,7 @@ export default function PaymentMethodSelector({
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm opacity-80">You're buying</span>
               <span className="text-lg font-bold">
-                {amount} {asset}
+                {Number(amount).toFixed(8)} {asset}
               </span>
             </div>
             <div className="flex justify-between items-center">
