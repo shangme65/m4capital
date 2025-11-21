@@ -243,7 +243,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       });
 
       if (!portfolioResponse.ok) {
-        throw new Error("Failed to update portfolio");
+        const errorData = await portfolioResponse.json();
+        console.error("Portfolio update failed:", errorData);
+        throw new Error(errorData.error || "Failed to update portfolio");
       }
 
       // Create transaction in database
@@ -266,7 +268,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       });
 
       if (!transactionResponse.ok) {
-        throw new Error("Failed to create transaction");
+        const errorData = await transactionResponse.json();
+        console.error("Transaction creation failed:", errorData);
+        throw new Error(errorData.error || "Failed to create transaction");
       }
 
       // Create transaction for UI
@@ -305,21 +309,21 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
         asset: buyData.asset,
       });
 
-      // Send email notification
-      await sendNotificationEmail(
+      // Send email notification (non-blocking)
+      sendNotificationEmail(
         orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
         notificationMessage,
         usdValue,
         buyData.asset
-      );
+      ).catch((err) => console.error("Email notification failed:", err));
 
-      // Send push notification
-      await sendPushNotification(
+      // Send push notification (non-blocking)
+      sendPushNotification(
         orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
         notificationMessage,
         usdValue,
         buyData.asset
-      );
+      ).catch((err) => console.error("Push notification failed:", err));
 
       // Show success screen
       setSuccessData({
@@ -331,6 +335,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       setStep("success");
     } catch (error) {
       console.error("Error processing buy order:", error);
+      alert(
+        `Purchase failed: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
       setStep("form");
     }
   };
