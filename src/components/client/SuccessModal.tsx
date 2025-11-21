@@ -27,6 +27,13 @@ export default function SuccessModal({
   toAmount = "",
   recipient = "",
 }: SuccessModalProps) {
+  // Format crypto amount to 8 decimal places
+  const formatCryptoAmount = (amt: string) => {
+    const num = parseFloat(amt);
+    if (isNaN(num)) return amt;
+    return num.toFixed(8);
+  };
+
   const getTitle = () => {
     switch (type) {
       case "buy":
@@ -45,15 +52,21 @@ export default function SuccessModal({
   const getMessage = () => {
     switch (type) {
       case "buy":
-        return `You have successfully purchased ${amount} ${asset}`;
+        return `You have successfully purchased ${formatCryptoAmount(
+          amount
+        )} ${asset}`;
       case "sell":
-        return `You have successfully sold ${amount} ${asset}`;
+        return `You have successfully sold ${formatCryptoAmount(
+          amount
+        )} ${asset}`;
       case "transfer":
-        return `You have successfully transferred ${amount} ${asset}${
-          recipient ? ` to ${recipient}` : ""
-        }`;
+        return `You have successfully transferred ${formatCryptoAmount(
+          amount
+        )} ${asset}${recipient ? ` to ${recipient}` : ""}`;
       case "swap":
-        return `You have successfully swapped ${amount} ${asset} for ${toAmount} ${toAsset}`;
+        return `You have successfully swapped ${formatCryptoAmount(
+          amount
+        )} ${asset} for ${formatCryptoAmount(toAmount)} ${toAsset}`;
       default:
         return "Your transaction has been completed successfully";
     }
@@ -124,7 +137,7 @@ export default function SuccessModal({
                       <div className="flex items-center gap-2">
                         <CryptoIcon symbol={asset} size="sm" />
                         <span className="text-white font-semibold">
-                          {amount} {asset}
+                          {formatCryptoAmount(amount)} {asset}
                         </span>
                       </div>
                     </div>
@@ -133,7 +146,7 @@ export default function SuccessModal({
                       <div className="flex items-center gap-2">
                         <CryptoIcon symbol={toAsset} size="sm" />
                         <span className="text-white font-semibold">
-                          {toAmount} {toAsset}
+                          {formatCryptoAmount(toAmount)} {toAsset}
                         </span>
                       </div>
                     </div>
@@ -143,7 +156,9 @@ export default function SuccessModal({
                 {amount && type !== "swap" && (
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400">Amount</span>
-                    <span className="text-white font-semibold">{amount}</span>
+                    <span className="text-white font-semibold">
+                      {formatCryptoAmount(amount)}
+                    </span>
                   </div>
                 )}
 

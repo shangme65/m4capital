@@ -7,6 +7,8 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import SuccessModal from "@/components/client/SuccessModal";
+import CryptoDropdown from "@/components/client/CryptoDropdown";
+import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 
 interface BuyModalProps {
   isOpen: boolean;
@@ -32,12 +34,22 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   const availableBalance = portfolio?.portfolio?.balance
     ? parseFloat(portfolio.portfolio.balance.toString())
     : 0;
-  const [assetPrices] = useState({
-    BTC: 65000,
-    ETH: 2500,
-    ADA: 0.35,
-    SOL: 150,
-  });
+
+  // Fetch real-time crypto prices
+  const cryptoSymbols = [
+    "BTC",
+    "ETH",
+    "XRP",
+    "TRX",
+    "TON",
+    "LTC",
+    "BCH",
+    "ETC",
+    "USDC",
+    "USDT",
+  ];
+  const cryptoPrices = useCryptoPrices(cryptoSymbols);
+
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [showAmountInCrypto, setShowAmountInCrypto] = useState(false);
   const { addTransaction, addNotification } = useNotifications();
@@ -59,9 +71,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   }, [isOpen]);
 
   const getCurrentPrice = () => {
-    return orderType === "limit" && limitPrice
-      ? parseFloat(limitPrice)
-      : assetPrices[buyData.asset as keyof typeof assetPrices];
+    if (orderType === "limit" && limitPrice) {
+      return parseFloat(limitPrice);
+    }
+    const cryptoPrice = cryptoPrices[buyData.asset];
+    return cryptoPrice?.price || 0;
   };
 
   const getEstimatedAmount = () => {
@@ -378,46 +392,75 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     </div>
 
                     {/* Asset Selection */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Select Asset
-                      </label>
-                      <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-3">
-                        <CryptoIcon symbol={buyData.asset} size="sm" />
-                        <select
-                          value={buyData.asset}
-                          onChange={(e) =>
-                            setBuyData((prev) => ({
-                              ...prev,
-                              asset: e.target.value,
-                            }))
-                          }
-                          className="flex-1 bg-transparent text-white focus:outline-none border-0"
-                          aria-label="Select asset to buy"
-                        >
-                          <option value="BTC">Bitcoin (BTC)</option>
-                          <option value="ETH">Ethereum (ETH)</option>
-                          <option value="XRP">Ripple (XRP)</option>
-                          <option value="TRX">Tron (TRX)</option>
-                          <option value="TON">Toncoin (TON)</option>
-                          <option value="LTC">Litecoin (LTC)</option>
-                          <option value="BCH">Bitcoin Cash (BCH)</option>
-                          <option value="ETC">Ethereum Classic (ETC)</option>
-                          <option value="USDC">USD Coin (USDC)</option>
-                          <option value="USDT">Tether (USDT)</option>
-                        </select>
-                      </div>
-                    </div>
+                    <CryptoDropdown
+                      label="Select Asset"
+                      value={buyData.asset}
+                      onChange={(value) =>
+                        setBuyData((prev) => ({ ...prev, asset: value }))
+                      }
+                      options={[
+                        {
+                          symbol: "BTC",
+                          name: "Bitcoin (BTC)",
+                          price: cryptoPrices.BTC?.price,
+                        },
+                        {
+                          symbol: "ETH",
+                          name: "Ethereum (ETH)",
+                          price: cryptoPrices.ETH?.price,
+                        },
+                        {
+                          symbol: "XRP",
+                          name: "Ripple (XRP)",
+                          price: cryptoPrices.XRP?.price,
+                        },
+                        {
+                          symbol: "TRX",
+                          name: "Tron (TRX)",
+                          price: cryptoPrices.TRX?.price,
+                        },
+                        {
+                          symbol: "TON",
+                          name: "Toncoin (TON)",
+                          price: cryptoPrices.TON?.price,
+                        },
+                        {
+                          symbol: "LTC",
+                          name: "Litecoin (LTC)",
+                          price: cryptoPrices.LTC?.price,
+                        },
+                        {
+                          symbol: "BCH",
+                          name: "Bitcoin Cash (BCH)",
+                          price: cryptoPrices.BCH?.price,
+                        },
+                        {
+                          symbol: "ETC",
+                          name: "Ethereum Classic (ETC)",
+                          price: cryptoPrices.ETC?.price,
+                        },
+                        {
+                          symbol: "USDC",
+                          name: "USD Coin (USDC)",
+                          price: cryptoPrices.USDC?.price,
+                        },
+                        {
+                          symbol: "USDT",
+                          name: "Tether (USDT)",
+                          price: cryptoPrices.USDT?.price,
+                        },
+                      ]}
+                      showPrices={true}
+                    />
 
                     {/* Current Price */}
                     <div className="bg-gray-800/50 rounded-lg p-4">
                       <div className="flex justify-between items-center">
                         <span className="text-gray-400">Current Price:</span>
                         <span className="text-white font-medium">
-                          $
-                          {assetPrices[
-                            buyData.asset as keyof typeof assetPrices
-                          ].toLocaleString()}
+                          {getCurrentPrice() > 0
+                            ? `$${getCurrentPrice().toLocaleString()}`
+                            : "Loading..."}
                         </span>
                       </div>
                     </div>

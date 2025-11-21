@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/contexts/ToastContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
@@ -44,6 +45,7 @@ export default function AddCryptoModal({
   const [isAdding, setIsAdding] = useState(false);
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const { showWarning } = useToast();
+  const { preferredCurrency, convertAmount } = useCurrency();
 
   // Get real-time prices for all cryptocurrencies
   const allSymbols = POPULAR_CRYPTOCURRENCIES.map((c) => c.symbol);
@@ -210,10 +212,16 @@ export default function AddCryptoModal({
                             {cryptoPrices[crypto.symbol] && (
                               <div className="flex items-center gap-2 mt-1">
                                 <span className="text-white text-xs font-medium">
-                                  $
-                                  {cryptoPrices[
-                                    crypto.symbol
-                                  ].price.toLocaleString("en-US", {
+                                  {preferredCurrency === "USD"
+                                    ? "$"
+                                    : preferredCurrency === "EUR"
+                                    ? "€"
+                                    : preferredCurrency === "GBP"
+                                    ? "£"
+                                    : preferredCurrency}
+                                  {convertAmount(
+                                    cryptoPrices[crypto.symbol].price
+                                  ).toLocaleString("en-US", {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits:
                                       cryptoPrices[crypto.symbol].price < 1
