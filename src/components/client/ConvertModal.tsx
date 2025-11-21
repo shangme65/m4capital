@@ -135,6 +135,7 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
           amount,
           asset: fromAsset,
           toAsset,
+          currency: "USD",
         }),
       });
     } catch (error) {

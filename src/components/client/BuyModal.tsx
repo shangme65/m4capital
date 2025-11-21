@@ -259,6 +259,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
           message,
           amount,
           asset,
+          currency: preferredCurrency,
         }),
       });
     } catch (error) {
