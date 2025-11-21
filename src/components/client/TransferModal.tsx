@@ -7,6 +7,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import SuccessModal from "@/components/client/SuccessModal";
+import CryptoDropdown from "@/components/client/CryptoDropdown";
 
 interface TransferModalProps {
   isOpen: boolean;
@@ -323,31 +324,17 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
                   <div className="space-y-6">
                     {/* Asset Selection */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Send From
-                      </label>
-                      <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-4 py-3">
-                        <CryptoIcon symbol={transferData.asset} size="sm" />
-                        <select
-                          value={transferData.asset}
-                          onChange={(e) =>
-                            setTransferData((prev) => ({
-                              ...prev,
-                              asset: e.target.value,
-                            }))
-                          }
-                          className="flex-1 bg-transparent text-white focus:outline-none border-0"
-                          aria-label="Select asset to transfer"
-                        >
-                          {supportedAssets.map((asset) => (
-                            <option key={asset.symbol} value={asset.symbol}>
-                              {asset.name} ({asset.symbol})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                    <CryptoDropdown
+                      label="Send From"
+                      value={transferData.asset}
+                      onChange={(value) =>
+                        setTransferData((prev) => ({ ...prev, asset: value }))
+                      }
+                      options={supportedAssets.map((asset) => ({
+                        symbol: asset.symbol,
+                        name: `${asset.name} (${asset.symbol})`,
+                      }))}
+                    />
 
                     {/* Available Balance */}
                     <div className="bg-gray-800/50 rounded-lg p-4">

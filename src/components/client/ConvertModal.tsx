@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import SuccessModal from "@/components/client/SuccessModal";
+import CryptoDropdown from "@/components/client/CryptoDropdown";
 
 interface ConvertModalProps {
   isOpen: boolean;
@@ -287,46 +288,27 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
                   <div className="space-y-6">
                     {/* From Asset */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        From
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={convertData.fromAsset}
-                          onChange={(e) =>
-                            setConvertData((prev) => ({
-                              ...prev,
-                              fromAsset: e.target.value,
-                            }))
-                          }
-                          className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none appearance-none border-0"
-                          aria-label="Select asset to convert from"
-                        >
-                          {assets.map((asset) => (
-                            <option key={asset} value={asset}>
-                              {asset === "BTC"
-                                ? "Bitcoin (BTC)"
-                                : asset === "ETH"
-                                ? "Ethereum (ETH)"
-                                : asset === "XRP"
-                                ? "Ripple (XRP)"
-                                : asset === "TRX"
-                                ? "Tron (TRX)"
-                                : asset === "TON"
-                                ? "Toncoin (TON)"
-                                : asset === "LTC"
-                                ? "Litecoin (LTC)"
-                                : asset === "BCH"
-                                ? "Bitcoin Cash (BCH)"
-                                : asset === "ETC"
-                                ? "Ethereum Classic (ETC)"
-                                : asset === "USDC"
-                                ? "USD Coin (USDC)"
-                                : "Tether (USDT)"}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <CryptoDropdown
+                        label="From"
+                        value={convertData.fromAsset}
+                        onChange={(value) =>
+                          setConvertData((prev) => ({ ...prev, fromAsset: value }))
+                        }
+                        options={assets.map((asset) => ({
+                          symbol: asset,
+                          name:
+                            asset === "BTC" ? "Bitcoin (BTC)" :
+                            asset === "ETH" ? "Ethereum (ETH)" :
+                            asset === "XRP" ? "Ripple (XRP)" :
+                            asset === "TRX" ? "Tron (TRX)" :
+                            asset === "TON" ? "Toncoin (TON)" :
+                            asset === "LTC" ? "Litecoin (LTC)" :
+                            asset === "BCH" ? "Bitcoin Cash (BCH)" :
+                            asset === "ETC" ? "Ethereum Classic (ETC)" :
+                            asset === "USDC" ? "USD Coin (USDC)" :
+                            "Tether (USDT)"
+                        }))}
+                      />
                       <div className="mt-2 text-sm text-gray-400">
                         Available:{" "}
                         {
@@ -409,46 +391,27 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
 
                     {/* To Asset */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
-                        To
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={convertData.toAsset}
-                          onChange={(e) =>
-                            setConvertData((prev) => ({
-                              ...prev,
-                              toAsset: e.target.value,
-                            }))
-                          }
-                          className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none appearance-none border-0"
-                          aria-label="Select asset to convert to"
-                        >
-                          {assets.map((asset) => (
-                            <option key={asset} value={asset}>
-                              {asset === "BTC"
-                                ? "Bitcoin (BTC)"
-                                : asset === "ETH"
-                                ? "Ethereum (ETH)"
-                                : asset === "XRP"
-                                ? "Ripple (XRP)"
-                                : asset === "TRX"
-                                ? "Tron (TRX)"
-                                : asset === "TON"
-                                ? "Toncoin (TON)"
-                                : asset === "LTC"
-                                ? "Litecoin (LTC)"
-                                : asset === "BCH"
-                                ? "Bitcoin Cash (BCH)"
-                                : asset === "ETC"
-                                ? "Ethereum Classic (ETC)"
-                                : asset === "USDC"
-                                ? "USD Coin (USDC)"
-                                : "Tether (USDT)"}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                      <CryptoDropdown
+                        label="To"
+                        value={convertData.toAsset}
+                        onChange={(value) =>
+                          setConvertData((prev) => ({ ...prev, toAsset: value }))
+                        }
+                        options={assets.map((asset) => ({
+                          symbol: asset,
+                          name:
+                            asset === "BTC" ? "Bitcoin (BTC)" :
+                            asset === "ETH" ? "Ethereum (ETH)" :
+                            asset === "XRP" ? "Ripple (XRP)" :
+                            asset === "TRX" ? "Tron (TRX)" :
+                            asset === "TON" ? "Toncoin (TON)" :
+                            asset === "LTC" ? "Litecoin (LTC)" :
+                            asset === "BCH" ? "Bitcoin Cash (BCH)" :
+                            asset === "ETC" ? "Ethereum Classic (ETC)" :
+                            asset === "USDC" ? "USD Coin (USDC)" :
+                            "Tether (USDT)"
+                        }))}
+                      />
                     </div>
 
                     {/* Exchange Rate */}
