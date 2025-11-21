@@ -215,14 +215,53 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       const fiatAmount = parseFloat(buyData.amount);
       const assetAmount = fiatAmount / price;
       const fee = fiatAmount * 0.015; // 1.5% fee
+      const usdValue = showAmountInCrypto ? assetAmount * price : fiatAmount;
 
-      // Create transaction
+      // Update portfolio via API
+      const portfolioResponse = await fetch("/api/crypto/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: buyData.asset,
+          amount: assetAmount,
+          price: price,
+        }),
+      });
+
+      if (!portfolioResponse.ok) {
+        throw new Error("Failed to update portfolio");
+      }
+
+      // Create transaction in database
+      const transactionResponse = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "buy",
+          asset: buyData.asset,
+          amount: assetAmount,
+          value: usdValue,
+          status: orderType === "market" ? "completed" : "pending",
+          fee: fee,
+          method: `${preferredCurrency} Balance`,
+          description: `${
+            orderType === "market" ? "Market" : "Limit"
+          } buy order for ${buyData.asset}`,
+          rate: price,
+        }),
+      });
+
+      if (!transactionResponse.ok) {
+        throw new Error("Failed to create transaction");
+      }
+
+      // Create transaction for UI
       const transaction = {
         id: `buy_${Date.now()}`,
         type: "buy" as const,
         asset: buyData.asset,
         amount: assetAmount,
-        value: fiatAmount,
+        value: usdValue,
         timestamp: new Date().toLocaleString(),
         status:
           orderType === "market"

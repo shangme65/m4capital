@@ -305,6 +305,22 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
         throw new Error("Failed to create transaction");
       }
 
+      // Update portfolio - remove sold crypto and add fiat
+      const portfolioUpdateResponse = await fetch("/api/crypto/sell", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: sellData.asset,
+          amount: assetAmount,
+          price: currentPrice,
+        }),
+      });
+
+      if (!portfolioUpdateResponse.ok) {
+        const errorData = await portfolioUpdateResponse.json();
+        throw new Error(errorData.error || "Failed to update portfolio");
+      }
+
       // Create transaction for UI
       const transaction = {
         id: `sell_${Date.now()}`,
