@@ -28,6 +28,7 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
     timestamp?: Date;
   } | null>(null);
   const [userCountry, setUserCountry] = useState<string>("US");
+  const [showAmountInCrypto, setShowAmountInCrypto] = useState(true);
   const { portfolio, refetch } = usePortfolio();
   const [exchangeRates] = useState({
     BTC: { ETH: 26, ADA: 185714, SOL: 433 },
@@ -114,6 +115,49 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
       hour12: userCountry === "US",
     });
     return { date: dateStr, time: timeStr };
+  };
+
+  const toggleCurrency = () => {
+    const currentAmount = parseFloat(convertData.amount) || 0;
+    const rate = getConversionRate();
+
+    if (showAmountInCrypto) {
+      // Convert to fiat equivalent (using BTC price as reference)
+      const btcPrice = 65000; // Reference price
+      const fiatAmount = currentAmount * btcPrice;
+      setConvertData((prev) => ({
+        ...prev,
+        amount: fiatAmount.toFixed(2),
+      }));
+    } else {
+      // Convert back to crypto
+      const btcPrice = 65000;
+      const cryptoAmount = currentAmount / btcPrice;
+      setConvertData((prev) => ({
+        ...prev,
+        amount: cryptoAmount.toString(),
+      }));
+    }
+
+    setShowAmountInCrypto(!showAmountInCrypto);
+  };
+
+  const getCurrentCurrencySymbol = () => {
+    return showAmountInCrypto ? convertData.fromAsset : "USD";
+  };
+
+  const getCurrentAmountLabel = () => {
+    return showAmountInCrypto
+      ? `Amount (${convertData.fromAsset})`
+      : "Amount (USD)";
+  };
+
+  const getAmountPlaceholder = () => {
+    return showAmountInCrypto ? "0.00000000" : "0.00";
+  };
+
+  const getAmountStep = () => {
+    return showAmountInCrypto ? "0.00000001" : "0.01";
   };
 
   const getConversionRate = () => {
@@ -497,12 +541,12 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
                         {/* Amount */}
                         <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Amount
+                            {getCurrentAmountLabel()}
                           </label>
                           <div className="relative">
                             <input
                               type="number"
-                              step="0.00000001"
+                              step={getAmountStep()}
                               value={convertData.amount}
                               onChange={(e) =>
                                 setConvertData((prev) => ({
@@ -510,12 +554,16 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
                                   amount: e.target.value,
                                 }))
                               }
-                              className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="0.00"
+                              className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-24 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              placeholder={getAmountPlaceholder()}
                             />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                              {convertData.fromAsset}
-                            </span>
+                            <button
+                              type="button"
+                              onClick={toggleCurrency}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md text-xs font-medium text-gray-300 transition-colors"
+                            >
+                              {getCurrentCurrencySymbol()}
+                            </button>
                           </div>
                           {errors.amount && (
                             <p className="text-red-400 text-sm mt-1">
