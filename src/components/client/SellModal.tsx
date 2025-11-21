@@ -140,6 +140,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
           message,
           amount,
           asset,
+          currency: preferredCurrency,
         }),
       });
     } catch (error) {
