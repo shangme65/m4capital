@@ -3,6 +3,11 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, Star } from "lucide-react";
 import RealTimeTradingChart from "@/components/client/RealTimeTradingChart";
+import BuyCryptoModal from "./BuyCryptoModal";
+import AssetSendModal from "./AssetSendModal";
+import AssetReceiveModal from "./AssetReceiveModal";
+import AssetSwapModal from "./AssetSwapModal";
+import AssetSellModal from "./AssetSellModal";
 
 interface Asset {
   symbol: string;
@@ -13,13 +18,12 @@ interface Asset {
   icon: string;
 }
 
-import BuyCryptoModal from "./BuyCryptoModal";
-
 interface AssetDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   asset: Asset | null;
   userBalance: number;
+  allAssets?: Asset[];
 }
 
 interface AssetInfo {
@@ -177,6 +181,7 @@ export default function AssetDetailsModal({
   onClose,
   asset,
   userBalance,
+  allAssets = [],
 }: AssetDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<"holdings" | "history" | "about">(
     "holdings"
@@ -720,113 +725,44 @@ export default function AssetDetailsModal({
           </motion.div>
 
           {/* Action Modals */}
-          {showSendModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              onClick={closeAllActionModals}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-2xl p-6 max-w-sm w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">↑</span>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-2">
-                    Send {asset?.symbol}
-                  </h2>
-                  <p className="text-gray-600 mb-6">
-                    Send {asset?.symbol} to another wallet or exchange
-                  </p>
-                  <button
-                    onClick={closeAllActionModals}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition-colors"
-                  >
-                    Coming Soon
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
+          <AssetSendModal
+            isOpen={showSendModal}
+            onClose={closeAllActionModals}
+            asset={{
+              symbol: asset?.symbol || "",
+              name: asset?.name || "",
+              amount: asset?.amount || 0,
+              price: currentPrice,
+            }}
+          />
 
-          {showReceiveModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              onClick={closeAllActionModals}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-2xl p-6 max-w-sm w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">↓</span>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-2">
-                    Receive {asset?.symbol}
-                  </h2>
-                  <p className="text-gray-600 mb-6">
-                    Get your wallet address to receive {asset?.symbol}
-                  </p>
-                  <button
-                    onClick={closeAllActionModals}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors"
-                  >
-                    Coming Soon
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
+          <AssetReceiveModal
+            isOpen={showReceiveModal}
+            onClose={closeAllActionModals}
+            asset={{
+              symbol: asset?.symbol || "",
+              name: asset?.name || "",
+              amount: asset?.amount || 0,
+              price: currentPrice,
+            }}
+          />
 
-          {showSwapModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              onClick={closeAllActionModals}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-2xl p-6 max-w-sm w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">⇄</span>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-2">
-                    Swap {asset?.symbol}
-                  </h2>
-                  <p className="text-gray-600 mb-6">
-                    Exchange {asset?.symbol} for other cryptocurrencies
-                  </p>
-                  <button
-                    onClick={closeAllActionModals}
-                    className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-colors"
-                  >
-                    Coming Soon
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
+          <AssetSwapModal
+            isOpen={showSwapModal}
+            onClose={closeAllActionModals}
+            asset={{
+              symbol: asset?.symbol || "",
+              name: asset?.name || "",
+              amount: asset?.amount || 0,
+              price: currentPrice,
+            }}
+            availableAssets={allAssets.map((a) => ({
+              symbol: a.symbol,
+              name: a.name,
+              amount: a.amount,
+              price: a.value / a.amount || 0,
+            }))}
+          />
 
           <BuyCryptoModal
             isOpen={showBuyModal}
@@ -839,41 +775,16 @@ export default function AssetDetailsModal({
             userBalance={userBalance}
           />
 
-          {showSellModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-              onClick={closeAllActionModals}
-            >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-white rounded-2xl p-6 max-w-sm w-full"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-2xl">🏛</span>
-                  </div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-2">
-                    Sell {asset?.symbol}
-                  </h2>
-                  <p className="text-gray-600 mb-6">
-                    Convert {asset?.symbol} to fiat currency
-                  </p>
-                  <button
-                    onClick={closeAllActionModals}
-                    className="w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-semibold transition-colors"
-                  >
-                    Coming Soon
-                  </button>
-                </div>
-              </motion.div>
-            </motion.div>
-          )}
+          <AssetSellModal
+            isOpen={showSellModal}
+            onClose={closeAllActionModals}
+            asset={{
+              symbol: asset?.symbol || "",
+              name: asset?.name || "",
+              amount: asset?.amount || 0,
+              price: currentPrice,
+            }}
+          />
         </>
       )}
     </AnimatePresence>

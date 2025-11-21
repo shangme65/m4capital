@@ -1017,6 +1017,7 @@ function DashboardContent() {
             ? parseFloat(portfolio.portfolio.balance.toString())
             : 0
         }
+        allAssets={userAssets}
       />
 
       {/* Add Crypto Modal */}
