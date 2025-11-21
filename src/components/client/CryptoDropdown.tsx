@@ -18,6 +18,7 @@ interface CryptoDropdownProps {
   label?: string;
   showPrices?: boolean;
   className?: string;
+  currencySymbol?: string;
 }
 
 export default function CryptoDropdown({
@@ -27,6 +28,7 @@ export default function CryptoDropdown({
   label,
   showPrices = false,
   className = "",
+  currencySymbol = "$",
 }: CryptoDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -77,7 +79,8 @@ export default function CryptoDropdown({
             </span>
             {showPrices && selectedOption?.price && (
               <span className="text-gray-400 text-xs">
-                ${selectedOption.price.toLocaleString()}
+                {currencySymbol}
+                {selectedOption.price.toLocaleString()}
               </span>
             )}
           </div>
@@ -148,7 +151,8 @@ export default function CryptoDropdown({
                   </div>
                   {showPrices && option.price && (
                     <span className="text-gray-500 text-sm">
-                      ${option.price.toLocaleString()}
+                      {currencySymbol}
+                      {option.price.toLocaleString()}
                     </span>
                   )}
                 </div>
