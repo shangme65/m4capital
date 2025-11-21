@@ -294,20 +294,61 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
       const rate = getConversionRate();
       const receiveAmount = getEstimatedReceiveAmount();
       const feeAmount = amount * rate * (conversionFee / 100);
+      const fromAssetPrice =
+        convertData.fromAsset === "BTC"
+          ? 65000
+          : convertData.fromAsset === "ETH"
+          ? 2500
+          : 0.5;
+      const usdValue = amount * fromAssetPrice;
 
-      // Create transaction
+      // Update portfolio via API
+      const portfolioResponse = await fetch("/api/crypto/convert", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fromAsset: convertData.fromAsset,
+          toAsset: convertData.toAsset,
+          amount: amount,
+          rate: rate,
+        }),
+      });
+
+      if (!portfolioResponse.ok) {
+        const errorData = await portfolioResponse.json();
+        throw new Error(errorData.error || "Failed to convert assets");
+      }
+
+      // Create transaction in database
+      const transactionResponse = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "convert",
+          asset: `${convertData.fromAsset} → ${convertData.toAsset}`,
+          amount: amount,
+          value: usdValue,
+          status: "completed",
+          fee: feeAmount,
+          method: "Instant Convert",
+          description: `Convert ${amount} ${
+            convertData.fromAsset
+          } to ${receiveAmount.toFixed(8)} ${convertData.toAsset}`,
+          rate: rate,
+        }),
+      });
+
+      if (!transactionResponse.ok) {
+        throw new Error("Failed to create transaction");
+      }
+
+      // Create transaction for UI
       const transaction = {
         id: `convert_${Date.now()}`,
         type: "convert" as const,
         asset: `${convertData.fromAsset} → ${convertData.toAsset}`,
         amount: amount,
-        value:
-          amount *
-          (convertData.fromAsset === "BTC"
-            ? 65000
-            : convertData.fromAsset === "ETH"
-            ? 2500
-            : 0.5),
+        value: usdValue,
         timestamp: new Date().toLocaleString(),
         status: "completed" as const,
         fee: feeAmount,

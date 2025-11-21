@@ -302,6 +302,58 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
     try {
       const amount = parseFloat(transferData.amount);
       const totalDeducted = amount + transferFee;
+      const assetPrice =
+        transferData.asset === "BTC"
+          ? 65000
+          : transferData.asset === "ETH"
+          ? 2500
+          : transferData.asset === "USD"
+          ? 1
+          : 0.5;
+      const usdValue = amount * assetPrice;
+
+      // Update portfolio via API
+      const portfolioResponse = await fetch("/api/crypto/transfer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          asset: transferData.asset,
+          amount: amount,
+          destination: transferData.destination,
+          memo: transferData.memo,
+        }),
+      });
+
+      if (!portfolioResponse.ok) {
+        const errorData = await portfolioResponse.json();
+        throw new Error(errorData.error || "Failed to transfer assets");
+      }
+
+      // Create transaction in database
+      const transactionResponse = await fetch("/api/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "transfer",
+          asset: transferData.asset,
+          amount: amount,
+          value: usdValue,
+          status: "pending",
+          fee: transferFee,
+          method: "External Transfer",
+          description: `Transfer ${amount} ${
+            transferData.asset
+          } to ${transferData.destination.slice(
+            0,
+            6
+          )}...${transferData.destination.slice(-4)}`,
+          memo: transferData.memo,
+        }),
+      });
+
+      if (!transactionResponse.ok) {
+        throw new Error("Failed to create transaction");
+      }
 
       // Add to recent addresses after successful transfer
       const newAddress = {
@@ -318,19 +370,13 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
         return [newAddress, ...filtered].slice(0, 3); // Keep only 3 most recent
       });
 
-      // Create transaction
+      // Create transaction for UI
       const transaction = {
         id: `transfer_${Date.now()}`,
         type: "transfer" as const,
         asset: transferData.asset,
         amount: amount,
-        value:
-          amount *
-          (transferData.asset === "BTC"
-            ? 65000
-            : transferData.asset === "ETH"
-            ? 2500
-            : 0.5),
+        value: usdValue,
         timestamp: new Date().toLocaleString(),
         status: "pending" as const,
         fee: transferFee,
