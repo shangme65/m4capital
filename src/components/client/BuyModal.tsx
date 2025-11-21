@@ -212,10 +212,24 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   const confirmBuy = async () => {
     try {
       const price = getCurrentPrice();
-      const fiatAmount = parseFloat(buyData.amount);
-      const assetAmount = fiatAmount / price;
+      const inputAmount = parseFloat(buyData.amount);
+
+      // Calculate fiat and asset amounts based on toggle state
+      let fiatAmount: number;
+      let assetAmount: number;
+
+      if (showAmountInCrypto) {
+        // Input is in crypto, calculate fiat
+        assetAmount = inputAmount;
+        fiatAmount = assetAmount * price;
+      } else {
+        // Input is in fiat, calculate crypto
+        fiatAmount = inputAmount;
+        assetAmount = fiatAmount / price;
+      }
+
       const fee = fiatAmount * 0.015; // 1.5% fee
-      const usdValue = showAmountInCrypto ? assetAmount * price : fiatAmount;
+      const usdValue = fiatAmount;
 
       // Update portfolio via API
       const portfolioResponse = await fetch("/api/crypto/buy", {
@@ -287,7 +301,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
         title:
           orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
         message: notificationMessage,
-        amount: fiatAmount,
+        amount: usdValue,
         asset: buyData.asset,
       });
 
@@ -295,7 +309,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       await sendNotificationEmail(
         orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
         notificationMessage,
-        fiatAmount,
+        usdValue,
         buyData.asset
       );
 
@@ -303,7 +317,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       await sendPushNotification(
         orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
         notificationMessage,
-        fiatAmount,
+        usdValue,
         buyData.asset
       );
 
@@ -311,7 +325,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       setSuccessData({
         asset: buyData.asset,
         amount: assetAmount,
-        value: fiatAmount,
+        value: usdValue,
         timestamp: new Date(),
       });
       setStep("success");
