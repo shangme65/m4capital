@@ -273,6 +273,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
         asset: buyData.asset,
         amount: assetAmount,
         value: fiatAmount,
+        timestamp: new Date(),
       });
       setStep("success");
     } catch (error) {
