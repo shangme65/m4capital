@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
 import { useState } from "react";
+import { useNotifications } from "@/contexts/NotificationContext";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 
 interface BuyCryptoModalProps {
@@ -25,6 +26,7 @@ export default function BuyCryptoModal({
   const [amount, setAmount] = useState("");
   const [showPaymentSelector, setShowPaymentSelector] = useState(false);
   const [inputMode, setInputMode] = useState<"crypto" | "usd">("crypto");
+  const { addTransaction, addNotification } = useNotifications();
 
   const cryptoAmount =
     inputMode === "crypto"
@@ -45,6 +47,93 @@ export default function BuyCryptoModal({
     if (cryptoAmount > 0) {
       setShowPaymentSelector(true);
     }
+  };
+
+  const sendNotificationEmail = async (
+    amount: number,
+    value: number,
+    asset: string
+  ) => {
+    try {
+      await fetch("/api/notifications/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "crypto_purchase",
+          title: `${asset} Purchase Successful`,
+          message: `You have successfully purchased ${amount.toFixed(
+            8
+          )} ${asset} for $${value.toFixed(2)}`,
+          amount: value,
+          asset: asset,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to send email notification:", error);
+    }
+  };
+
+  const sendPushNotification = async (
+    amount: number,
+    value: number,
+    asset: string
+  ) => {
+    try {
+      await fetch("/api/notifications/send-push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          type: "crypto_purchase",
+          title: `${asset} Purchase Successful`,
+          message: `You have successfully purchased ${amount.toFixed(
+            8
+          )} ${asset} for $${value.toFixed(2)}`,
+          amount: value,
+          asset: asset,
+        }),
+      });
+    } catch (error) {
+      console.error("Failed to send push notification:", error);
+    }
+  };
+
+  const handlePaymentSuccess = async () => {
+    // Add transaction to notification context
+    const transaction = {
+      id: `buy_${Date.now()}`,
+      type: "buy" as const,
+      asset: asset.symbol,
+      amount: cryptoAmount,
+      value: usdValue,
+      timestamp: new Date().toLocaleString(),
+      status: "pending" as const,
+      fee: 0,
+      method: "Crypto Purchase",
+      description: `Purchased ${cryptoAmount.toFixed(8)} ${
+        asset.symbol
+      } for $${usdValue.toFixed(2)}`,
+    };
+
+    addTransaction(transaction);
+
+    // Add notification
+    addNotification({
+      type: "transaction",
+      title: `${asset.symbol} Purchase Successful`,
+      message: `You have successfully purchased ${cryptoAmount.toFixed(8)} ${
+        asset.symbol
+      } for $${usdValue.toFixed(2)}`,
+      amount: usdValue,
+      asset: asset.symbol,
+    });
+
+    // Send email and push notifications
+    await sendNotificationEmail(cryptoAmount, usdValue, asset.symbol);
+    await sendPushNotification(cryptoAmount, usdValue, asset.symbol);
   };
 
   if (!isOpen) return null;
@@ -193,6 +282,7 @@ export default function BuyCryptoModal({
             setShowPaymentSelector(false);
             onClose();
           }}
+          onSuccess={handlePaymentSuccess}
           asset={asset.symbol}
           amount={cryptoAmount}
           usdValue={usdValue}

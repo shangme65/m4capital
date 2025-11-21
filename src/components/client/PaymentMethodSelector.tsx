@@ -10,6 +10,7 @@ import CustomWalletDeposit from "./CustomWalletDeposit";
 interface PaymentMethodSelectorProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess?: () => void;
   asset: string;
   amount: number;
   usdValue: number;
@@ -19,6 +20,7 @@ interface PaymentMethodSelectorProps {
 export default function PaymentMethodSelector({
   isOpen,
   onClose,
+  onSuccess,
   asset,
   amount,
   usdValue,
@@ -58,6 +60,11 @@ export default function PaymentMethodSelector({
 
         if (!response.ok) {
           throw new Error(data.error || "Failed to purchase crypto");
+        }
+
+        // Call onSuccess callback
+        if (onSuccess) {
+          await onSuccess();
         }
 
         // Show success modal
