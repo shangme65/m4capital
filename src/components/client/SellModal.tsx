@@ -29,6 +29,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     timestamp?: Date;
   } | null>(null);
   const [userCountry, setUserCountry] = useState<string>("US");
+  const [showAmountInCrypto, setShowAmountInCrypto] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [assetPrices, setAssetPrices] = useState<
     Record<string, { price: number }>
@@ -146,6 +147,47 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
       hour12: userCountry === "US",
     });
     return { date: dateStr, time: timeStr };
+  };
+
+  const toggleCurrency = () => {
+    const currentAmount = parseFloat(sellData.amount) || 0;
+    const price = currentPrice;
+
+    if (showAmountInCrypto) {
+      // Convert from crypto to preferred currency
+      const fiatAmount = currentAmount * price;
+      setSellData((prev) => ({
+        ...prev,
+        amount: fiatAmount.toFixed(2),
+      }));
+    } else {
+      // Convert from preferred currency to crypto
+      const cryptoAmount = currentAmount / price;
+      setSellData((prev) => ({
+        ...prev,
+        amount: cryptoAmount.toString(),
+      }));
+    }
+
+    setShowAmountInCrypto(!showAmountInCrypto);
+  };
+
+  const getCurrentCurrencySymbol = () => {
+    return showAmountInCrypto ? sellData.asset : preferredCurrency;
+  };
+
+  const getCurrentAmountLabel = () => {
+    return showAmountInCrypto
+      ? `Amount (${sellData.asset})`
+      : `Amount (${preferredCurrency})`;
+  };
+
+  const getAmountPlaceholder = () => {
+    return showAmountInCrypto ? "0.00000000" : "0.00";
+  };
+
+  const getAmountStep = () => {
+    return showAmountInCrypto ? "0.00000001" : "0.01";
   };
 
   const getAmountToSell = () => {
@@ -551,24 +593,31 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                             {/* Amount to Sell */}
                             <div>
                               <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Amount to Sell ({sellData.asset})
+                                {getCurrentAmountLabel()}
                               </label>
-                              <input
-                                type="number"
-                                step="0.00000001"
-                                max={currentAsset.amount}
-                                value={sellData.amount}
-                                onChange={(e) =>
-                                  setSellData((prev) => ({
-                                    ...prev,
-                                    amount: e.target.value,
-                                  }))
-                                }
-                                className="w-full bg-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                placeholder={`Max: ${(
-                                  currentAsset.amount || 0
-                                ).toFixed(8)}`}
-                              />
+                              <div className="relative">
+                                <input
+                                  type="number"
+                                  step={getAmountStep()}
+                                  max={currentAsset.amount}
+                                  value={sellData.amount}
+                                  onChange={(e) =>
+                                    setSellData((prev) => ({
+                                      ...prev,
+                                      amount: e.target.value,
+                                    }))
+                                  }
+                                  className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-24 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  placeholder={getAmountPlaceholder()}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={toggleCurrency}
+                                  className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md text-xs font-medium text-gray-300 transition-colors"
+                                >
+                                  {getCurrentCurrencySymbol()}
+                                </button>
+                              </div>
                               {errors.amount && (
                                 <p className="text-red-400 text-sm mt-1">
                                   {errors.amount}

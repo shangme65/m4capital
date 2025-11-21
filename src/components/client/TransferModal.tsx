@@ -30,6 +30,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
     timestamp?: Date;
   } | null>(null);
   const [userCountry, setUserCountry] = useState<string>("US");
+  const [showAmountInCrypto, setShowAmountInCrypto] = useState(false);
   const { portfolio, refetch } = usePortfolio();
   const { preferredCurrency, convertAmount } = useCurrency();
   const [recentAddresses, setRecentAddresses] = useState<
@@ -151,6 +152,81 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       hour12: userCountry === "US",
     });
     return { date: dateStr, time: timeStr };
+  };
+
+  const toggleCurrency = () => {
+    if (transferData.asset === "USD") {
+      // For USD, toggle between USD and other currency
+      const currentAmount = parseFloat(transferData.amount) || 0;
+      setShowAmountInCrypto(!showAmountInCrypto);
+      // USD doesn't need conversion
+      return;
+    }
+
+    const currentAmount = parseFloat(transferData.amount) || 0;
+    // Use approximate crypto prices
+    const cryptoPrices: Record<string, number> = {
+      BTC: 65000,
+      ETH: 2500,
+      XRP: 0.5,
+      TRX: 0.1,
+      TON: 2.5,
+      LTC: 70,
+      BCH: 200,
+      ETC: 20,
+      USDC: 1,
+      USDT: 1,
+    };
+
+    const price = cryptoPrices[transferData.asset] || 1;
+
+    if (showAmountInCrypto) {
+      // Convert from crypto to preferred currency
+      const fiatAmount = currentAmount * price;
+      setTransferData((prev) => ({
+        ...prev,
+        amount: fiatAmount.toFixed(2),
+      }));
+    } else {
+      // Convert from preferred currency to crypto
+      const cryptoAmount = currentAmount / price;
+      setTransferData((prev) => ({
+        ...prev,
+        amount: cryptoAmount.toString(),
+      }));
+    }
+
+    setShowAmountInCrypto(!showAmountInCrypto);
+  };
+
+  const getCurrentCurrencySymbol = () => {
+    if (transferData.asset === "USD") {
+      return preferredCurrency;
+    }
+    return showAmountInCrypto ? transferData.asset : preferredCurrency;
+  };
+
+  const getCurrentAmountLabel = () => {
+    if (transferData.asset === "USD") {
+      return `Amount (${preferredCurrency})`;
+    }
+    return showAmountInCrypto
+      ? `Amount (${transferData.asset})`
+      : `Amount (${preferredCurrency})`;
+  };
+
+  const getAmountPlaceholder = () => {
+    if (transferData.asset === "USD") {
+      return "0.00";
+    }
+    return showAmountInCrypto ? "0.00000000" : "0.00";
+  };
+
+  const getAmountStep = () => {
+    if (transferData.asset === "USD") {
+      return "0.01";
+    }
+    return showAmountInCrypto ? "0.00000001" : "0.01";
   };
 
   // Lookup receiver by email or account number
@@ -447,12 +523,12 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         {/* Amount */}
                         <div>
                           <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Amount
+                            {getCurrentAmountLabel()}
                           </label>
                           <div className="relative">
                             <input
                               type="number"
-                              step="0.00000001"
+                              step={getAmountStep()}
                               value={transferData.amount}
                               onChange={(e) =>
                                 setTransferData((prev) => ({
@@ -460,12 +536,16 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                                   amount: e.target.value,
                                 }))
                               }
-                              className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-16 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                              placeholder="0.00"
+                              className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-24 text-white focus:outline-none border-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                              placeholder={getAmountPlaceholder()}
                             />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
-                              {transferData.asset}
-                            </span>
+                            <button
+                              type="button"
+                              onClick={toggleCurrency}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 bg-gray-700 hover:bg-gray-600 rounded-md text-xs font-medium text-gray-300 transition-colors"
+                            >
+                              {getCurrentCurrencySymbol()}
+                            </button>
                           </div>
                           {errors.amount && (
                             <p className="text-red-400 text-sm mt-1">
