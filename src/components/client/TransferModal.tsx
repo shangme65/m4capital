@@ -27,7 +27,9 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
     amount: number;
     value: number;
     recipient: string;
+    timestamp?: Date;
   } | null>(null);
+  const [userCountry, setUserCountry] = useState<string>("US");
   const { portfolio, refetch } = usePortfolio();
   const { preferredCurrency, convertAmount } = useCurrency();
   const [recentAddresses, setRecentAddresses] = useState<
@@ -97,6 +99,59 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       document.body.style.paddingRight = "0px";
     };
   }, [isOpen]);
+
+  // Fetch user country for date/time localization
+  useEffect(() => {
+    const fetchUserCountry = async () => {
+      try {
+        const response = await fetch("/api/user/preferences");
+        if (response.ok) {
+          const data = await response.json();
+          const countryMap: { [key: string]: string } = {
+            "United States": "US",
+            "United Kingdom": "GB",
+            Germany: "DE",
+            France: "FR",
+            Spain: "ES",
+            Italy: "IT",
+            Canada: "CA",
+            Australia: "AU",
+            Netherlands: "NL",
+            Belgium: "BE",
+            Portugal: "PT",
+            Ireland: "IE",
+          };
+          setUserCountry(countryMap[data.country] || "US");
+        }
+      } catch (error) {
+        console.error("Error fetching user country:", error);
+      }
+    };
+    fetchUserCountry();
+  }, []);
+
+  const getLocalizedDateTime = (date: Date) => {
+    const locale =
+      userCountry === "GB"
+        ? "en-GB"
+        : userCountry === "DE"
+        ? "de-DE"
+        : userCountry === "FR"
+        ? "fr-FR"
+        : "en-US";
+    const dateStr = date.toLocaleDateString(locale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+    const timeStr = date.toLocaleTimeString(locale, {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: userCountry === "US",
+    });
+    return { date: dateStr, time: timeStr };
+  };
 
   // Lookup receiver by email or account number
   const lookupReceiver = async (identifier: string) => {
@@ -234,6 +289,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
             ? 2500
             : 0.5),
         recipient: transferData.destination,
+        timestamp: new Date(),
       });
       setStep("success");
     } catch (error) {
@@ -834,6 +890,28 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                                 }`}
                           </span>
                         </div>
+                        {successData.timestamp &&
+                          (() => {
+                            const { date, time } = getLocalizedDateTime(
+                              successData.timestamp
+                            );
+                            return (
+                              <>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-400">Date:</span>
+                                  <span className="text-white font-medium">
+                                    {date}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-gray-400">Time:</span>
+                                  <span className="text-white font-medium">
+                                    {time}
+                                  </span>
+                                </div>
+                              </>
+                            );
+                          })()}
                       </div>
 
                       <button
