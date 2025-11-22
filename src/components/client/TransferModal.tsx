@@ -346,7 +346,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
           6
         )}...${transferData.destination.slice(-4)}`,
         memo: transferData.memo,
-        date: new Date().toISOString(),
+        timestamp: new Date().toLocaleString(),
       };
       addTransaction(transaction);
 
@@ -364,28 +364,6 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
         );
         return [newAddress, ...filtered].slice(0, 3); // Keep only 3 most recent
       });
-
-      // Create transaction for UI
-      const transaction = {
-        id: `transfer_${Date.now()}`,
-        type: "transfer" as const,
-        asset: transferData.asset,
-        amount: amount,
-        value: usdValue,
-        timestamp: new Date().toLocaleString(),
-        status: "pending" as const,
-        fee: transferFee,
-        method: "External Transfer",
-        description: `Transfer ${amount} ${
-          transferData.asset
-        } to ${transferData.destination.slice(
-          0,
-          6
-        )}...${transferData.destination.slice(-4)}`,
-        memo: transferData.memo,
-      };
-
-      addTransaction(transaction);
 
       // Create notification
       addNotification({
