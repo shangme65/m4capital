@@ -382,15 +382,35 @@ export default function NotificationsPanel({
                                       {/* Amount Display with User's Currency */}
                                       {notification.amount &&
                                         notification.asset && (
-                                          <div className="inline-flex items-center space-x-2 px-3 py-2 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 mb-3">
-                                            <span className="text-2xl font-black bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                                              +
+                                          <div
+                                            className={`inline-flex items-center space-x-2 px-3 py-2 rounded-xl ${
+                                              notification.amount < 0
+                                                ? "bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/20"
+                                                : "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
+                                            } mb-3`}
+                                          >
+                                            <span
+                                              className={`text-2xl font-black ${
+                                                notification.amount < 0
+                                                  ? "bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent"
+                                                  : "bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
+                                              }`}
+                                            >
+                                              {notification.amount < 0
+                                                ? "-"
+                                                : "+"}
                                               {formatAmount(
-                                                notification.amount,
+                                                Math.abs(notification.amount),
                                                 2
                                               )}
                                             </span>
-                                            <span className="text-sm font-bold text-green-400">
+                                            <span
+                                              className={`text-sm font-bold ${
+                                                notification.amount < 0
+                                                  ? "text-red-400"
+                                                  : "text-green-400"
+                                              }`}
+                                            >
                                               {notification.asset}
                                             </span>
                                           </div>

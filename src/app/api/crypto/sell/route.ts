@@ -315,10 +315,10 @@ export async function POST(request: NextRequest) {
           userId: user.id,
           type: "TRANSACTION" as any,
           title: `You've sold ${assetName}`,
-          message: `+${currencySymbol}${displayAmount.toFixed(2)} ${
-            symbol === "BTC" ? "BTC" : symbol
-          }`,
-          amount: netReceived,
+          message: `Successfully sold ${amount.toFixed(
+            8
+          )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`,
+          amount: -netReceived, // Negative to indicate sell
           asset: symbol,
           read: false,
         },
