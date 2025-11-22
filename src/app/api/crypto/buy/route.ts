@@ -139,6 +139,8 @@ export async function POST(request: NextRequest) {
 
     // Send email notification
     try {
+      console.log("📧 Starting email notification process...");
+
       const { sendEmail } = await import("@/lib/email");
       const { cryptoPurchaseTemplate, cryptoPurchaseTextTemplate } =
         await import("@/lib/email-templates");
@@ -149,8 +151,18 @@ export async function POST(request: NextRequest) {
         select: { emailNotifications: true, email: true, name: true },
       });
 
+      console.log(`📧 User email preferences:`, {
+        email: userWithPrefs?.email,
+        emailNotifications: userWithPrefs?.emailNotifications,
+        hasSmtpUser: !!process.env.SMTP_USER,
+        hasSmtpPass: !!process.env.SMTP_PASS,
+        smtpHost: process.env.SMTP_HOST,
+      });
+
       if (userWithPrefs?.emailNotifications && userWithPrefs.email) {
-        await sendEmail({
+        console.log(`📧 Attempting to send email to ${userWithPrefs.email}...`);
+
+        const emailResult = await sendEmail({
           to: userWithPrefs.email,
           subject: `✅ Crypto Purchase Successful - ${amount.toFixed(
             8
@@ -172,10 +184,19 @@ export async function POST(request: NextRequest) {
             newBalance
           ),
         });
-        console.log(`📧 Email notification sent to ${userWithPrefs.email}`);
+
+        console.log(`📧 Email sent successfully:`, emailResult);
+      } else {
+        console.log(
+          "📧 Email not sent - user has notifications disabled or no email"
+        );
       }
     } catch (emailError) {
-      console.error("Failed to send email notification:", emailError);
+      console.error("❌ Failed to send email notification:", emailError);
+      if (emailError instanceof Error) {
+        console.error("❌ Email error details:", emailError.message);
+        console.error("❌ Email error stack:", emailError.stack);
+      }
       // Don't fail the transaction if email fails
     }
 
