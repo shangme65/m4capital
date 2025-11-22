@@ -49,60 +49,8 @@ export default function BuyCryptoModal({
     }
   };
 
-  const sendNotificationEmail = async (
-    amount: number,
-    value: number,
-    asset: string
-  ) => {
-    try {
-      await fetch("/api/notifications/send-email", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "crypto_purchase",
-          title: `${asset} Purchase Successful`,
-          message: `You have successfully purchased ${amount.toFixed(
-            8
-          )} ${asset} for $${value.toFixed(2)}`,
-          amount: value,
-          asset: asset,
-        }),
-      });
-    } catch (error) {
-      console.error("Failed to send email notification:", error);
-    }
-  };
-
-  const sendPushNotification = async (
-    amount: number,
-    value: number,
-    asset: string
-  ) => {
-    try {
-      await fetch("/api/notifications/send-push", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          type: "crypto_purchase",
-          title: `${asset} Purchase Successful`,
-          message: `You have successfully purchased ${amount.toFixed(
-            8
-          )} ${asset} for $${value.toFixed(2)}`,
-          amount: value,
-          asset: asset,
-        }),
-      });
-    } catch (error) {
-      console.error("Failed to send push notification:", error);
-    }
-  };
-
   const handlePaymentSuccess = async () => {
-    // Add transaction to notification context
+    // Add transaction to notification context (UI only - actual purchase would be via API)
     const transaction = {
       id: `buy_${Date.now()}`,
       type: "buy" as const,
@@ -120,7 +68,7 @@ export default function BuyCryptoModal({
 
     addTransaction(transaction);
 
-    // Add notification
+    // Add notification (UI only - API would send email/push if actual purchase)
     addNotification({
       type: "transaction",
       title: `${asset.symbol} Purchase Successful`,
@@ -131,9 +79,7 @@ export default function BuyCryptoModal({
       asset: asset.symbol,
     });
 
-    // Send email and push notifications
-    await sendNotificationEmail(cryptoAmount, usdValue, asset.symbol);
-    await sendPushNotification(cryptoAmount, usdValue, asset.symbol);
+    // Note: Email and push notifications would be sent by the actual purchase API endpoint
   };
 
   if (!isOpen) return null;
