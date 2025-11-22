@@ -104,16 +104,208 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update portfolio - remove crypto and add fiat balance
+    // Update portfolio and create trade record
     const newBalance = new Decimal(portfolio.balance).plus(netReceived);
 
-    await prisma.portfolio.update({
-      where: { id: portfolio.id },
-      data: {
-        balance: newBalance,
-        assets: updatedAssets as any,
-      },
-    });
+    const [updatedPortfolio, trade] = await prisma.$transaction([
+      prisma.portfolio.update({
+        where: { id: portfolio.id },
+        data: {
+          balance: newBalance,
+          assets: updatedAssets as any,
+        },
+      }),
+      prisma.trade.create({
+        data: {
+          id: generateId(),
+          userId: user.id,
+          symbol: symbol,
+          side: "SELL",
+          entryPrice: new Decimal(price),
+          quantity: new Decimal(amount),
+          profit: new Decimal(netReceived - amount * price),
+          commission: new Decimal(fee),
+          status: "CLOSED",
+          openedAt: new Date(),
+          closedAt: new Date(),
+          updatedAt: new Date(),
+          metadata: {
+            method: "USD_BALANCE",
+            cryptoSymbol: symbol,
+            cryptoAmount: amount,
+            pricePerUnit: price,
+            totalValue: totalValue,
+            fee: fee,
+            netReceived: netReceived,
+            saleType: "SPOT",
+          },
+        },
+      }),
+    ]);
+
+    console.log(
+      `✅ Crypto sale: ${amount} ${symbol} for $${totalValue.toFixed(
+        2
+      )} | New balance: $${parseFloat(newBalance.toString())}`
+    );
+
+    // Send email notification
+    try {
+      const { sendEmail } = await import("@/lib/email");
+
+      const userWithPrefs = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { emailNotifications: true, email: true, name: true },
+      });
+
+      if (userWithPrefs?.emailNotifications && userWithPrefs.email) {
+        const assetName =
+          symbol === "BTC"
+            ? "Bitcoin"
+            : symbol === "ETH"
+            ? "Ethereum"
+            : symbol === "XRP"
+            ? "Ripple"
+            : symbol === "LTC"
+            ? "Litecoin"
+            : symbol === "BCH"
+            ? "Bitcoin Cash"
+            : symbol === "ETC"
+            ? "Ethereum Classic"
+            : symbol === "TRX"
+            ? "Tron"
+            : symbol === "TON"
+            ? "Toncoin"
+            : symbol === "USDC"
+            ? "USD Coin"
+            : symbol === "USDT"
+            ? "Tether"
+            : symbol;
+
+        await sendEmail({
+          to: userWithPrefs.email,
+          subject: `✅ Crypto Sale Successful - ${amount.toFixed(8)} ${symbol}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #10b981;">Crypto Sale Successful</h2>
+              <p>Hi ${userWithPrefs.name || "User"},</p>
+              <p>You have successfully sold <strong>${amount.toFixed(
+                8
+              )} ${symbol}</strong>.</p>
+              <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 5px 0;"><strong>Asset:</strong> ${assetName} (${symbol})</p>
+                <p style="margin: 5px 0;"><strong>Amount Sold:</strong> ${amount.toFixed(
+                  8
+                )} ${symbol}</p>
+                <p style="margin: 5px 0;"><strong>Price per Unit:</strong> $${price.toFixed(
+                  2
+                )}</p>
+                <p style="margin: 5px 0;"><strong>Total Value:</strong> $${totalValue.toFixed(
+                  2
+                )}</p>
+                <p style="margin: 5px 0;"><strong>Fee (1.5%):</strong> $${fee.toFixed(
+                  2
+                )}</p>
+                <p style="margin: 5px 0; color: #10b981; font-size: 16px;"><strong>Net Received:</strong> $${netReceived.toFixed(
+                  2
+                )}</p>
+                <p style="margin: 5px 0;"><strong>New Balance:</strong> $${parseFloat(
+                  newBalance.toString()
+                ).toFixed(2)}</p>
+              </div>
+              <p>Thank you for using M4Capital!</p>
+            </div>
+          `,
+          text: `Crypto Sale Successful\n\nHi ${
+            userWithPrefs.name || "User"
+          },\n\nYou have successfully sold ${amount.toFixed(
+            8
+          )} ${symbol}.\n\nAsset: ${assetName} (${symbol})\nAmount Sold: ${amount.toFixed(
+            8
+          )} ${symbol}\nPrice per Unit: $${price.toFixed(
+            2
+          )}\nTotal Value: $${totalValue.toFixed(
+            2
+          )}\nFee (1.5%): $${fee.toFixed(
+            2
+          )}\nNet Received: $${netReceived.toFixed(
+            2
+          )}\nNew Balance: $${parseFloat(newBalance.toString()).toFixed(
+            2
+          )}\n\nThank you for using M4Capital!`,
+        });
+        console.log(`📧 Email notification sent to ${userWithPrefs.email}`);
+      }
+    } catch (emailError) {
+      console.error("Failed to send email notification:", emailError);
+    }
+
+    // Send push notification
+    try {
+      const userCurrency = user.preferredCurrency || "USD";
+      const assetName =
+        symbol === "BTC"
+          ? "Bitcoin"
+          : symbol === "ETH"
+          ? "Ethereum"
+          : symbol === "XRP"
+          ? "Ripple"
+          : symbol === "LTC"
+          ? "Litecoin"
+          : symbol === "BCH"
+          ? "Bitcoin Cash"
+          : symbol === "ETC"
+          ? "Ethereum Classic"
+          : symbol === "TRX"
+          ? "Tron"
+          : symbol === "TON"
+          ? "Toncoin"
+          : symbol === "USDC"
+          ? "USD Coin"
+          : symbol === "USDT"
+          ? "Tether"
+          : symbol;
+
+      let displayAmount = netReceived;
+      let currencySymbol = "$";
+
+      if (userCurrency !== "USD") {
+        const ratesResponse = await fetch(
+          "https://api.frankfurter.app/latest?from=USD"
+        );
+        if (ratesResponse.ok) {
+          const ratesData = await ratesResponse.json();
+          const rate = ratesData.rates[userCurrency] || 1;
+          displayAmount = netReceived * rate;
+          currencySymbol =
+            userCurrency === "EUR"
+              ? "€"
+              : userCurrency === "GBP"
+              ? "£"
+              : userCurrency === "JPY"
+              ? "¥"
+              : userCurrency;
+        }
+      }
+
+      await prisma.notification.create({
+        data: {
+          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: user.id,
+          type: "TRANSACTION" as any,
+          title: `You've sold ${assetName}`,
+          message: `+${currencySymbol}${displayAmount.toFixed(2)} ${
+            symbol === "BTC" ? "BTC" : symbol
+          }`,
+          amount: netReceived,
+          asset: symbol,
+          read: false,
+        },
+      });
+      console.log(`🔔 Push notification created for user ${user.id}`);
+    } catch (notifError) {
+      console.error("Failed to create push notification:", notifError);
+    }
 
     return NextResponse.json({
       success: true,

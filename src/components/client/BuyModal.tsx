@@ -280,37 +280,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
       addTransaction(transaction);
 
-      // Create notification with amount
-      const notificationMessage = `Successfully ${
-        orderType === "market" ? "purchased" : "placed buy order for"
-      } ${assetAmount.toFixed(8)} ${buyData.asset}`;
-
-      addNotification({
-        type: "transaction",
-        title:
-          orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
-        message: notificationMessage,
-        amount: usdValue,
-        asset: buyData.asset,
-      });
-
-      // Send email notification (non-blocking)
-      sendNotificationEmail(
-        orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
-        notificationMessage,
-        usdValue,
-        buyData.asset
-      ).catch((err) => console.error("Email notification failed:", err));
-
-      // Send push notification (non-blocking)
-      sendPushNotification(
-        orderType === "market" ? "Purchase Completed" : "Buy Order Placed",
-        notificationMessage,
-        usdValue,
-        buyData.asset
-      ).catch((err) => console.error("Push notification failed:", err));
-
-      // Show success screen
+      // Show success screen (API already sends email and push notifications)
       setSuccessData({
         asset: buyData.asset,
         amount: assetAmount,

@@ -317,59 +317,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
       addTransaction(transaction);
 
-      // Create notification
-      const assetName =
-        sellData.asset === "BTC"
-          ? "Bitcoin"
-          : sellData.asset === "ETH"
-          ? "Ethereum"
-          : sellData.asset === "XRP"
-          ? "Ripple"
-          : sellData.asset === "LTC"
-          ? "Litecoin"
-          : sellData.asset === "BCH"
-          ? "Bitcoin Cash"
-          : sellData.asset === "ETC"
-          ? "Ethereum Classic"
-          : sellData.asset === "TRX"
-          ? "Tron"
-          : sellData.asset === "TON"
-          ? "Toncoin"
-          : sellData.asset === "USDC"
-          ? "USD Coin"
-          : sellData.asset === "USDT"
-          ? "Tether"
-          : sellData.asset;
-      const notificationTitle = `You've sold ${assetName}`;
-      const notificationMessage = `Successfully sold ${assetAmount.toFixed(
-        8
-      )} ${
-        sellData.asset
-      } for ${preferredCurrency} ${netReceivedConverted.toFixed(2)}`;
-
-      addNotification({
-        type: "transaction",
-        title: notificationTitle,
-        message: notificationMessage,
-        amount: usdValue,
-        asset: sellData.asset,
-      });
-
-      // Send email notification
-      sendNotificationEmail(
-        notificationTitle,
-        notificationMessage,
-        usdValue,
-        sellData.asset
-      );
-
-      // Send push notification
-      sendPushNotification(
-        notificationTitle,
-        notificationMessage,
-        usdValue,
-        sellData.asset
-      );
+      // API endpoint handles notifications (email and push)
 
       // Show success step
       setSuccessData({
