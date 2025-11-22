@@ -16,8 +16,10 @@ import {
   Trash2,
   MailOpen,
   Circle,
+  ChevronDown,
 } from "lucide-react";
 import { useNotifications, Notification } from "@/contexts/NotificationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface NotificationsPanelProps {
   isOpen: boolean;
@@ -30,8 +32,10 @@ export default function NotificationsPanel({
 }: NotificationsPanelProps) {
   const { notifications, unreadCount, markNotificationAsRead } =
     useNotifications();
+  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
 
   const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const filteredNotifications =
     filter === "unread" ? notifications.filter((n) => !n.read) : notifications;
@@ -284,114 +288,146 @@ export default function NotificationsPanel({
               ) : (
                 <div className="p-4 space-y-3">
                   <AnimatePresence mode="popLayout">
-                    {filteredNotifications.map((notification, index) => (
-                      <motion.div
-                        key={notification.id}
-                        layout
-                        initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, x: -100, scale: 0.8 }}
-                        transition={{
-                          type: "spring",
-                          damping: 25,
-                          stiffness: 300,
-                          delay: index * 0.03,
-                        }}
-                        onClick={() => {
-                          if (!notification.read) {
-                            markNotificationAsRead(notification.id);
-                          }
-                        }}
-                        className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${
-                          !notification.read
-                            ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-orange-500/30 shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20"
-                            : "bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50"
-                        }`}
-                      >
-                        {/* Gradient overlay for unread */}
-                        {!notification.read && (
-                          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        )}
+                    {filteredNotifications.map((notification, index) => {
+                      const isExpanded = expandedId === notification.id;
 
-                        {/* Unread indicator line */}
-                        {!notification.read && (
-                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-500 via-purple-500 to-blue-500"></div>
-                        )}
+                      return (
+                        <motion.div
+                          key={notification.id}
+                          layout
+                          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, x: -100, scale: 0.8 }}
+                          transition={{
+                            type: "spring",
+                            damping: 25,
+                            stiffness: 300,
+                            delay: index * 0.03,
+                          }}
+                          onClick={() => {
+                            // Toggle expansion - only one can be open at a time
+                            if (isExpanded) {
+                              setExpandedId(null);
+                            } else {
+                              setExpandedId(notification.id);
+                              if (!notification.read) {
+                                markNotificationAsRead(notification.id);
+                              }
+                            }
+                          }}
+                          className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${
+                            !notification.read
+                              ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-orange-500/30 shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20"
+                              : "bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50"
+                          }`}
+                        >
+                          {/* Gradient overlay for unread */}
+                          {!notification.read && (
+                            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                          )}
 
-                        <div className="relative p-4">
-                          <div className="flex items-start space-x-4">
-                            {/* Enhanced Icon */}
-                            <div className="flex-shrink-0">
-                              {getNotificationIcon(notification)}
-                            </div>
+                          {/* Unread indicator line */}
+                          {!notification.read && (
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-500 via-purple-500 to-blue-500"></div>
+                          )}
 
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between mb-2">
-                                <h3
-                                  className={`text-base font-bold ${
-                                    !notification.read
-                                      ? "text-white"
-                                      : "text-gray-300"
-                                  }`}
-                                >
-                                  {notification.title}
-                                </h3>
-                                <span className="text-xs text-gray-500 ml-2 flex-shrink-0 font-medium">
-                                  {formatTimeAgo(notification.timestamp)}
-                                </span>
+                          <div className="relative p-4">
+                            <div className="flex items-start space-x-4">
+                              {/* Enhanced Icon */}
+                              <div className="flex-shrink-0">
+                                {getNotificationIcon(notification)}
                               </div>
 
-                              {/* Message */}
-                              {notification.message && (
-                                <p className="text-sm text-gray-400 leading-relaxed mb-3">
-                                  {notification.message}
-                                </p>
-                              )}
-
-                              {/* Amount Display */}
-                              {notification.amount && notification.asset && (
-                                <div className="inline-flex items-center space-x-2 px-3 py-2 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20">
-                                  <span className="text-2xl font-black bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-                                    {notification.message?.includes("+$")
-                                      ? ""
-                                      : "+$"}
-                                    {notification.amount.toLocaleString()}
-                                  </span>
-                                  <span className="text-sm font-bold text-green-400">
-                                    {notification.asset}
-                                  </span>
+                              {/* Content */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between mb-1">
+                                  <h3
+                                    className={`text-base font-bold ${
+                                      !notification.read
+                                        ? "text-white"
+                                        : "text-gray-300"
+                                    }`}
+                                  >
+                                    {notification.title}
+                                  </h3>
+                                  <div className="flex items-center space-x-2 ml-2">
+                                    <span className="text-xs text-gray-500 flex-shrink-0 font-medium">
+                                      {formatTimeAgo(notification.timestamp)}
+                                    </span>
+                                    <motion.div
+                                      animate={{ rotate: isExpanded ? 180 : 0 }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                                    </motion.div>
+                                  </div>
                                 </div>
-                              )}
 
-                              {/* Status Indicator */}
-                              <div className="flex items-center justify-between mt-3">
-                                <div className="flex items-center space-x-2">
-                                  {!notification.read ? (
-                                    <div className="flex items-center space-x-1.5">
-                                      <Circle className="w-2 h-2 text-orange-500 fill-orange-500 animate-pulse" />
-                                      <span className="text-xs text-orange-400 font-medium">
-                                        Unread
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div className="flex items-center space-x-1.5">
-                                      <MailOpen className="w-3.5 h-3.5 text-gray-500" />
-                                      <span className="text-xs text-gray-500">
-                                        Read
-                                      </span>
-                                    </div>
+                                {/* Expanded Content */}
+                                <AnimatePresence>
+                                  {isExpanded && (
+                                    <motion.div
+                                      initial={{ opacity: 0, height: 0 }}
+                                      animate={{ opacity: 1, height: "auto" }}
+                                      exit={{ opacity: 0, height: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      {/* Message */}
+                                      {notification.message && (
+                                        <p className="text-sm text-gray-400 leading-relaxed mb-3 mt-2">
+                                          {notification.message}
+                                        </p>
+                                      )}
+
+                                      {/* Amount Display with User's Currency */}
+                                      {notification.amount &&
+                                        notification.asset && (
+                                          <div className="inline-flex items-center space-x-2 px-3 py-2 rounded-xl bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20 mb-3">
+                                            <span className="text-2xl font-black bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                                              +
+                                              {formatAmount(
+                                                notification.amount,
+                                                2
+                                              )}
+                                            </span>
+                                            <span className="text-sm font-bold text-green-400">
+                                              {notification.asset}
+                                            </span>
+                                          </div>
+                                        )}
+                                    </motion.div>
                                   )}
+                                </AnimatePresence>
+
+                                {/* Status Indicator */}
+                                <div className="flex items-center justify-between mt-2">
+                                  <div className="flex items-center space-x-2">
+                                    {!notification.read ? (
+                                      <div className="flex items-center space-x-1.5">
+                                        <Circle className="w-2 h-2 text-orange-500 fill-orange-500 animate-pulse" />
+                                        <span className="text-xs text-orange-400 font-medium">
+                                          Unread
+                                        </span>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center space-x-1.5">
+                                        <MailOpen className="w-3.5 h-3.5 text-gray-500" />
+                                        <span className="text-xs text-gray-500">
+                                          Read
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Hover effect overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>
-                      </motion.div>
-                    ))}
+                          {/* Hover effect overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 pointer-events-none"></div>
+                        </motion.div>
+                      );
+                    })}
                   </AnimatePresence>
                 </div>
               )}
