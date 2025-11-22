@@ -329,31 +329,26 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
         throw new Error(errorData.error || "Failed to transfer assets");
       }
 
-      // Create transaction in database
-      const transactionResponse = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "transfer",
-          asset: transferData.asset,
-          amount: amount,
-          value: usdValue,
-          status: "pending",
-          fee: transferFee,
-          method: "External Transfer",
-          description: `Transfer ${amount} ${
-            transferData.asset
-          } to ${transferData.destination.slice(
-            0,
-            6
-          )}...${transferData.destination.slice(-4)}`,
-          memo: transferData.memo,
-        }),
-      });
-
-      if (!transactionResponse.ok) {
-        throw new Error("Failed to create transaction");
-      }
+      // Create transaction for UI
+      const transaction = {
+        id: `transfer_${Date.now()}`,
+        type: "transfer" as const,
+        asset: transferData.asset,
+        amount: amount,
+        value: usdValue,
+        status: "pending" as const,
+        fee: transferFee,
+        method: "External Transfer",
+        description: `Transfer ${amount} ${
+          transferData.asset
+        } to ${transferData.destination.slice(
+          0,
+          6
+        )}...${transferData.destination.slice(-4)}`,
+        memo: transferData.memo,
+        date: new Date().toISOString(),
+      };
+      addTransaction(transaction);
 
       // Add to recent addresses after successful transfer
       const newAddress = {

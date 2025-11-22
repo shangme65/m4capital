@@ -319,29 +319,6 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
         throw new Error(errorData.error || "Failed to convert assets");
       }
 
-      // Create transaction in database
-      const transactionResponse = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "convert",
-          asset: `${convertData.fromAsset} → ${convertData.toAsset}`,
-          amount: amount,
-          value: usdValue,
-          status: "completed",
-          fee: feeAmount,
-          method: "Instant Convert",
-          description: `Convert ${amount} ${
-            convertData.fromAsset
-          } to ${receiveAmount.toFixed(8)} ${convertData.toAsset}`,
-          rate: rate,
-        }),
-      });
-
-      if (!transactionResponse.ok) {
-        throw new Error("Failed to create transaction");
-      }
-
       // Create transaction for UI
       const transaction = {
         id: `convert_${Date.now()}`,

@@ -258,42 +258,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       const portfolioResult = await portfolioResponse.json();
       console.log("Portfolio updated successfully:", portfolioResult);
 
-      // Create transaction in database
-      const transactionResponse = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "buy",
-          asset: buyData.asset,
-          amount: assetAmount,
-          value: usdValue,
-          status: orderType === "market" ? "completed" : "pending",
-          fee: fee,
-          method: `${preferredCurrency} Balance`,
-          description: `${
-            orderType === "market" ? "Market" : "Limit"
-          } buy order for ${buyData.asset}`,
-          rate: price,
-        }),
-      });
-
-      if (!transactionResponse.ok) {
-        let errorMessage = "Failed to create transaction";
-        try {
-          const errorData = await transactionResponse.json();
-          errorMessage = errorData.error || errorMessage;
-        } catch (e) {
-          // Response has no JSON body
-          errorMessage = `Server error: ${transactionResponse.status} ${transactionResponse.statusText}`;
-        }
-        console.error("Transaction creation failed:", errorMessage);
-        throw new Error(errorMessage);
-      }
-
-      const transactionResult = await transactionResponse.json();
-      console.log("Transaction created successfully:", transactionResult);
-
-      // Create transaction for UI
+      // Create transaction for UI (portfolio API already created it in database)
       const transaction = {
         id: `buy_${Date.now()}`,
         type: "buy" as const,

@@ -282,29 +282,6 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
       const netReceived = usdValue - fee;
       const netReceivedConverted = convertAmount(netReceived);
 
-      // Create transaction in database
-      const transactionResponse = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "sell",
-          asset: sellData.asset,
-          amount: assetAmount,
-          value: usdValue,
-          status: "completed",
-          fee: fee,
-          method: `${preferredCurrency} Balance`,
-          description: `Sold ${assetAmount.toFixed(8)} ${
-            sellData.asset
-          } for ${preferredCurrency}`,
-          rate: currentPrice,
-        }),
-      });
-
-      if (!transactionResponse.ok) {
-        throw new Error("Failed to create transaction");
-      }
-
       // Update portfolio - remove sold crypto and add fiat
       const portfolioUpdateResponse = await fetch("/api/crypto/sell", {
         method: "POST",
