@@ -243,10 +243,20 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       });
 
       if (!portfolioResponse.ok) {
-        const errorData = await portfolioResponse.json();
-        console.error("Portfolio update failed:", errorData);
-        throw new Error(errorData.error || "Failed to update portfolio");
+        let errorMessage = "Failed to update portfolio";
+        try {
+          const errorData = await portfolioResponse.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // Response has no JSON body
+          errorMessage = `Server error: ${portfolioResponse.status} ${portfolioResponse.statusText}`;
+        }
+        console.error("Portfolio update failed:", errorMessage);
+        throw new Error(errorMessage);
       }
+
+      const portfolioResult = await portfolioResponse.json();
+      console.log("Portfolio updated successfully:", portfolioResult);
 
       // Create transaction in database
       const transactionResponse = await fetch("/api/transactions", {
@@ -268,10 +278,20 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       });
 
       if (!transactionResponse.ok) {
-        const errorData = await transactionResponse.json();
-        console.error("Transaction creation failed:", errorData);
-        throw new Error(errorData.error || "Failed to create transaction");
+        let errorMessage = "Failed to create transaction";
+        try {
+          const errorData = await transactionResponse.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // Response has no JSON body
+          errorMessage = `Server error: ${transactionResponse.status} ${transactionResponse.statusText}`;
+        }
+        console.error("Transaction creation failed:", errorMessage);
+        throw new Error(errorMessage);
       }
+
+      const transactionResult = await transactionResponse.json();
+      console.log("Transaction created successfully:", transactionResult);
 
       // Create transaction for UI
       const transaction = {
