@@ -1065,7 +1065,7 @@ function DashboardContent() {
                       onClick={() => handleTransactionClick(activity)}
                       className="group relative p-4 bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-xl border border-gray-700/50 hover:border-blue-500/50 cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 backdrop-blur-sm"
                     >
-                      <div className="flex items-start gap-4">
+                      <div className="flex items-start gap-3">
                         {/* Transaction Icon */}
                         {getTransactionIcon()}
 
@@ -1073,16 +1073,16 @@ function DashboardContent() {
                         <div className="flex-1 min-w-0">
                           {/* Header Row */}
                           <div className="flex items-start justify-between gap-2 mb-2">
-                            <div>
-                              <h3 className="text-white font-semibold text-base mb-0.5">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="text-white font-semibold text-sm sm:text-base mb-0.5 truncate">
                                 {getTransactionText()}
                               </h3>
-                              <p className="text-gray-400 text-xs">
+                              <p className="text-gray-400 text-xs truncate">
                                 {formatFullDateTime(activity.timestamp)}
                               </p>
                             </div>
                             <div
-                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide flex-shrink-0 ${
+                              className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide flex-shrink-0 ${
                                 activity.status === "completed"
                                   ? "bg-green-500/20 text-green-400 border border-green-500/30"
                                   : activity.status === "pending"
@@ -1095,9 +1095,9 @@ function DashboardContent() {
                           </div>
 
                           {/* Amount Row - Crypto and Fiat */}
-                          <div className="flex items-baseline gap-2 mb-2">
+                          <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 mb-2">
                             <div className="flex items-baseline gap-1.5">
-                              <span className="text-white font-bold text-lg">
+                              <span className="text-white font-bold text-base sm:text-lg">
                                 {formatCryptoAmount(
                                   activity.amount || 0,
                                   activity.asset?.split(" ")[0] || ""
@@ -1107,7 +1107,9 @@ function DashboardContent() {
                                 {activity.asset?.split(" ")[0]}
                               </span>
                             </div>
-                            <span className="text-gray-500">•</span>
+                            <span className="text-gray-500 hidden sm:inline">
+                              •
+                            </span>
                             <span className="text-gray-400 font-medium text-sm">
                               ≈ {formatAmount(getFiatValue(), 2)}
                             </span>

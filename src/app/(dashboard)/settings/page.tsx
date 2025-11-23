@@ -66,6 +66,10 @@ export default function SettingsPage() {
   const [linkSuccess, setLinkSuccess] = useState(false);
   const [loadingTelegram, setLoadingTelegram] = useState(true);
 
+  // Account number state
+  const [accountNumber, setAccountNumber] = useState<string | null>(null);
+  const [copiedAccountNumber, setCopiedAccountNumber] = useState(false);
+
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -192,7 +196,7 @@ export default function SettingsPage() {
     fetchTelegramStatus();
   }, []);
 
-  // Fetch 2FA status on mount
+  // Fetch 2FA status and account number on mount
   useEffect(() => {
     const fetch2FAStatus = async () => {
       try {
@@ -201,6 +205,7 @@ export default function SettingsPage() {
           const data = await response.json();
           setTwoFactorEnabled(data.twoFactorEnabled || false);
           setTwoFactorMethod(data.twoFactorMethod || null);
+          setAccountNumber(data.accountNumber || null);
         }
       } catch (error) {
         console.error("Failed to fetch 2FA status:", error);
@@ -226,6 +231,19 @@ export default function SettingsPage() {
     };
     fetchCurrencyPreference();
   }, []);
+
+  // Copy account number to clipboard
+  const copyAccountNumber = async () => {
+    if (!accountNumber) return;
+    try {
+      await navigator.clipboard.writeText(accountNumber);
+      setCopiedAccountNumber(true);
+      showSuccess("Account number copied to clipboard!");
+      setTimeout(() => setCopiedAccountNumber(false), 2000);
+    } catch (error) {
+      showError("Failed to copy account number");
+    }
+  };
 
   // Placeholder handlers (extend later)
   const handleProfileSave = async (e: React.FormEvent) => {
@@ -769,6 +787,39 @@ export default function SettingsPage() {
               defaultValue={session?.user?.email || ""}
               className="w-full bg-gray-700 rounded-lg px-3 py-2 opacity-70 cursor-not-allowed"
             />
+          </div>
+          <div>
+            <label
+              className="block text-sm font-medium mb-1"
+              htmlFor="accountNumber"
+            >
+              Account Number
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="accountNumber"
+                type="text"
+                disabled
+                value={accountNumber || "Loading..."}
+                className="flex-1 bg-gray-700 rounded-lg px-3 py-2 opacity-70 cursor-not-allowed font-mono text-sm"
+              />
+              <button
+                type="button"
+                onClick={copyAccountNumber}
+                disabled={!accountNumber}
+                className="flex-shrink-0 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                title="Copy account number"
+              >
+                {copiedAccountNumber ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-1">
+              Share this number with others to receive P2P transfers
+            </p>
           </div>
           <div>
             <label

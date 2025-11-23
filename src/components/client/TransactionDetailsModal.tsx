@@ -218,7 +218,7 @@ export default function TransactionDetailsModal({
   };
 
   const formatDate = (date: Date | string) => {
-    const d = typeof date === "string" ? new Date() : date;
+    const d = typeof date === "string" ? new Date(date) : date;
     return d.toLocaleString("en-US", {
       year: "numeric",
       month: "long",
