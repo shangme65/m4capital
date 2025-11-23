@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import BitcoinWallet from "./BitcoinWallet";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -35,6 +36,20 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
     console.log(
       "Notifications not available - this is expected for non-dashboard pages"
     );
+  }
+
+  // Use currency context if available
+  let formatAmount = (amount: number, decimals: number = 2) =>
+    `$${amount.toFixed(decimals)}`;
+  let preferredCurrency = "USD";
+
+  try {
+    const currency = useCurrency();
+    formatAmount = currency.formatAmount;
+    preferredCurrency = currency.preferredCurrency;
+  } catch (error) {
+    // CurrencyProvider not available, will use USD
+    console.log("Currency context not available - using USD");
   }
 
   // Prevent body scroll when modal is open
@@ -757,7 +772,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         </span>
                       ) : (
                         `Deposit ${
-                          amount ? `$${parseFloat(amount).toFixed(2)}` : "Funds"
+                          amount ? formatAmount(parseFloat(amount), 2) : "Funds"
                         }`
                       )}
                     </button>
