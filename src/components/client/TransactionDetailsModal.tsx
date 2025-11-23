@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 export interface DetailedTransaction {
   id: string;
@@ -41,6 +42,7 @@ export default function TransactionDetailsModal({
 }: TransactionDetailsModalProps) {
   // State must be declared at the top before any conditional returns
   const [copied, setCopied] = useState(false);
+  const { formatAmount, preferredCurrency } = useCurrency();
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -396,14 +398,10 @@ export default function TransactionDetailsModal({
                       Value
                     </label>
                     <div className="text-white text-2xl font-bold">
-                      $
-                      {transaction.value.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
+                      {formatAmount(transaction.value, 2)}
                     </div>
                     <div className="text-purple-300 text-sm font-medium mt-1">
-                      USD
+                      {preferredCurrency}
                     </div>
                   </div>
                 </div>
@@ -429,7 +427,7 @@ export default function TransactionDetailsModal({
                         Transaction Fee
                       </label>
                       <div className="text-white text-base font-medium">
-                        ${transaction.fee.toFixed(2)} USD
+                        {formatAmount(transaction.fee, 2)}
                       </div>
                     </div>
                   )}

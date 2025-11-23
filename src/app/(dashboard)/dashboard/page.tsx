@@ -94,26 +94,79 @@ function DashboardContent() {
     );
   }
 
-  const handleTransactionClick = (transaction: Transaction) => {
+  const handleTransactionClick = (activity: Transaction) => {
+    // Generate realistic crypto transaction hash based on asset type
+    const generateCryptoHash = (asset: string, id: string) => {
+      // Create deterministic hash from transaction ID for consistency
+      const seed = id + asset;
+      let hash = "";
+      for (let i = 0; i < seed.length; i++) {
+        hash += seed.charCodeAt(i).toString(16);
+      }
+
+      // Bitcoin and Bitcoin-based coins use base58 format (no 0, O, I, l)
+      if (["BTC", "LTC", "BCH"].includes(asset)) {
+        const base58Chars =
+          "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        let btcHash = "";
+        for (let i = 0; i < 64; i++) {
+          const index =
+            parseInt(hash.substr(i * 2, 2) || "00", 16) % base58Chars.length;
+          btcHash += base58Chars[index];
+        }
+        return btcHash;
+      }
+
+      // Ethereum and ERC-20 tokens use 0x + 64 hex chars
+      if (["ETH", "USDT", "USDC", "ETC"].includes(asset)) {
+        const hexHash =
+          "0x" + (hash + hash + hash).substr(0, 64).padEnd(64, "0");
+        return hexHash;
+      }
+
+      // XRP uses uppercase hex
+      if (asset === "XRP") {
+        return (hash + hash).substr(0, 64).toUpperCase().padEnd(64, "0");
+      }
+
+      // TRX (Tron) uses base58 similar to Bitcoin
+      if (asset === "TRX") {
+        const base58Chars =
+          "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+        let trxHash = "";
+        for (let i = 0; i < 64; i++) {
+          const index =
+            parseInt(hash.substr(i * 2, 2) || "00", 16) % base58Chars.length;
+          trxHash += base58Chars[index];
+        }
+        return trxHash;
+      }
+
+      // Default: hex format
+      return "0x" + (hash + hash + hash).substr(0, 64).padEnd(64, "0");
+    };
+
     // Enhance transaction with additional details for the modal
     const enhancedTransaction = {
-      ...transaction,
+      ...activity,
       date: new Date(),
-      fee:
-        transaction.type === "deposit" ? transaction.value * 0.02 : undefined,
-      method: transaction.type === "deposit" ? "Bitcoin (BTC)" : undefined,
-      description: `${transaction.type} transaction for ${transaction.asset}`,
+      fee: activity.type === "deposit" ? activity.value * 0.02 : undefined,
+      method: activity.type === "deposit" ? "Bitcoin (BTC)" : undefined,
+      description: `${activity.type} transaction for ${activity.asset}`,
       confirmations:
-        transaction.status === "pending" ? transaction.confirmations || 0 : 6,
+        activity.status === "pending" ? activity.confirmations || 0 : 6,
       maxConfirmations: 6,
       hash:
-        transaction.status !== "failed"
-          ? `0x${Math.random().toString(16).substr(2, 64)}`
+        activity.status !== "failed"
+          ? generateCryptoHash(
+              activity.asset?.split(" ")[0] || "BTC",
+              activity.id
+            )
           : undefined,
       network:
-        transaction.asset === "BTC" ? "Bitcoin Network" : "Ethereum Network",
+        activity.asset === "BTC" ? "Bitcoin Network" : "Ethereum Network",
       address:
-        transaction.type === "deposit"
+        activity.type === "deposit"
           ? `1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa`
           : undefined,
     };
