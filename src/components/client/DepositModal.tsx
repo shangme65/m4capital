@@ -20,6 +20,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [showBitcoinWallet, setShowBitcoinWallet] = useState(false);
   const [showCryptoSelection, setShowCryptoSelection] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState<string>("");
+  const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
 
   // Use notification context if available (dashboard), otherwise use null
   let addNotification = null;
@@ -62,6 +63,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setShowBitcoinWallet(false);
       setShowCryptoSelection(false);
       setSelectedCrypto("");
+      setShowPaymentDropdown(false);
     }
   }, [isOpen]);
 
@@ -587,31 +589,113 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         Payment Method
                       </label>
                       <div className="relative">
-                        <select
-                          value={paymentMethod}
-                          onChange={(e) => setPaymentMethod(e.target.value)}
-                          title="Select payment method"
-                          className="w-full px-5 py-4 bg-gray-800/60 border border-gray-700/50 rounded-2xl text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all appearance-none cursor-pointer backdrop-blur-sm font-medium"
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowPaymentDropdown(!showPaymentDropdown)
+                          }
+                          className="w-full px-5 py-4 bg-gradient-to-r from-gray-800/80 to-gray-800/60 border border-blue-500/30 rounded-2xl text-white text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all backdrop-blur-sm shadow-lg shadow-blue-500/10 hover:border-blue-500/50 flex items-center justify-between"
                         >
-                          <option value="bank_transfer">Bank Transfer</option>
-                          <option value="credit_card">Credit Card</option>
-                          <option value="debit_card">Debit Card</option>
-                          <option value="paypal">PayPal</option>
-                          <option value="crypto">Cryptocurrency</option>
-                        </select>
-                        <svg
-                          className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
+                          <span>
+                            {paymentMethod === "bank_transfer" &&
+                              "Bank Transfer"}
+                            {paymentMethod === "credit_card" && "Credit Card"}
+                            {paymentMethod === "debit_card" && "Debit Card"}
+                            {paymentMethod === "paypal" && "PayPal"}
+                            {paymentMethod === "crypto" && "Cryptocurrency"}
+                          </span>
+                          <svg
+                            className={`w-5 h-5 text-blue-400 transition-transform ${
+                              showPaymentDropdown ? "rotate-180" : ""
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2.5}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
+
+                        <AnimatePresence>
+                          {showPaymentDropdown && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              transition={{ duration: 0.2 }}
+                              className="absolute z-50 w-full mt-2 bg-gray-800 border border-gray-700/50 rounded-2xl shadow-2xl overflow-hidden"
+                            >
+                              <div className="py-2">
+                                {[
+                                  {
+                                    value: "bank_transfer",
+                                    label: "Bank Transfer",
+                                    icon: "🏦",
+                                  },
+                                  {
+                                    value: "credit_card",
+                                    label: "Credit Card",
+                                    icon: "💳",
+                                  },
+                                  {
+                                    value: "debit_card",
+                                    label: "Debit Card",
+                                    icon: "💳",
+                                  },
+                                  {
+                                    value: "paypal",
+                                    label: "PayPal",
+                                    icon: "💰",
+                                  },
+                                  {
+                                    value: "crypto",
+                                    label: "Cryptocurrency",
+                                    icon: "₿",
+                                  },
+                                ].map((method) => (
+                                  <button
+                                    key={method.value}
+                                    type="button"
+                                    onClick={() => {
+                                      setPaymentMethod(method.value);
+                                      setShowPaymentDropdown(false);
+                                    }}
+                                    className={`w-full px-5 py-4 text-left flex items-center gap-3 transition-all ${
+                                      paymentMethod === method.value
+                                        ? "bg-blue-600/20 text-white border-l-4 border-blue-500"
+                                        : "text-gray-300 hover:bg-gray-700/50 border-l-4 border-transparent"
+                                    }`}
+                                  >
+                                    <span className="text-2xl">
+                                      {method.icon}
+                                    </span>
+                                    <span className="font-semibold text-lg">
+                                      {method.label}
+                                    </span>
+                                    {paymentMethod === method.value && (
+                                      <svg
+                                        className="w-5 h-5 text-blue-400 ml-auto"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path
+                                          fillRule="evenodd"
+                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                          clipRule="evenodd"
+                                        />
+                                      </svg>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
                     </div>
 
