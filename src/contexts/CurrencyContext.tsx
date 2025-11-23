@@ -17,7 +17,7 @@ interface CurrencyContextType {
   preferredCurrency: string;
   exchangeRates: Record<string, number>;
   isLoading: boolean;
-  convertAmount: (amountUSD: number) => number;
+  convertAmount: (amount: number, toUSD?: boolean) => number;
   formatAmount: (amountUSD: number, decimals?: number) => string;
   refreshRates: () => Promise<void>;
   refreshCurrency: () => Promise<void>;
@@ -89,8 +89,14 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     // Polling disabled - rates will refresh on page reload
   }, []);
 
-  const convertAmount = (amountUSD: number): number => {
-    return convertCurrency(amountUSD, preferredCurrency, exchangeRates);
+  const convertAmount = (amount: number, toUSD: boolean = false): number => {
+    if (toUSD) {
+      // Convert from preferred currency to USD
+      const rate = exchangeRates[preferredCurrency] || 1;
+      return amount / rate;
+    }
+    // Convert from USD to preferred currency
+    return convertCurrency(amount, preferredCurrency, exchangeRates);
   };
 
   const formatAmount = (amountUSD: number, decimals: number = 2): string => {

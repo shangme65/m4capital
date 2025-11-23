@@ -3,8 +3,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import CryptoDropdown from "@/components/client/CryptoDropdown";
+import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { Check } from "lucide-react";
 
 interface ConvertModalProps {
@@ -30,15 +32,25 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
   const [userCountry, setUserCountry] = useState<string>("US");
   const [showAmountInCrypto, setShowAmountInCrypto] = useState(true);
   const { portfolio, refetch } = usePortfolio();
-  const [exchangeRates] = useState({
-    BTC: { ETH: 26, ADA: 185714, SOL: 433 },
-    ETH: { BTC: 0.038, ADA: 7143, SOL: 16.7 },
-    ADA: { BTC: 0.0000054, ETH: 0.00014, SOL: 0.0023 },
-    SOL: { BTC: 0.0023, ETH: 0.06, ADA: 429 },
-  });
+  const { preferredCurrency, convertAmount } = useCurrency();
   const [conversionFee] = useState(0.5); // 0.5% fee
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const { addTransaction, addNotification } = useNotifications();
+
+  // Fetch real-time crypto prices
+  const cryptoSymbols = [
+    "BTC",
+    "ETH",
+    "XRP",
+    "TRX",
+    "TON",
+    "LTC",
+    "BCH",
+    "ETC",
+    "USDC",
+    "USDT",
+  ];
+  const cryptoPrices = useCryptoPrices(cryptoSymbols);
 
   // Calculate available balances from portfolio assets
   const availableBalances =
@@ -119,23 +131,28 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
 
   const toggleCurrency = () => {
     const currentAmount = parseFloat(convertData.amount) || 0;
-    const rate = getConversionRate();
+    const fromPrice = cryptoPrices[convertData.fromAsset]?.price || 0;
+
+    if (fromPrice === 0) {
+      // If price not available, don't toggle
+      return;
+    }
 
     if (showAmountInCrypto) {
-      // Convert to fiat equivalent (using BTC price as reference)
-      const btcPrice = 65000; // Reference price
-      const fiatAmount = currentAmount * btcPrice;
+      // Convert to fiat equivalent
+      const usdAmount = currentAmount * fromPrice; // Crypto to USD
+      const fiatAmount = convertAmount(usdAmount); // USD to preferred currency
       setConvertData((prev) => ({
         ...prev,
         amount: fiatAmount.toFixed(2),
       }));
     } else {
       // Convert back to crypto
-      const btcPrice = 65000;
-      const cryptoAmount = currentAmount / btcPrice;
+      const usdAmount = convertAmount(currentAmount, true); // Preferred currency to USD
+      const cryptoAmount = usdAmount / fromPrice; // USD to crypto
       setConvertData((prev) => ({
         ...prev,
-        amount: cryptoAmount.toString(),
+        amount: cryptoAmount.toFixed(8),
       }));
     }
 
@@ -143,13 +160,13 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
   };
 
   const getCurrentCurrencySymbol = () => {
-    return showAmountInCrypto ? convertData.fromAsset : "USD";
+    return showAmountInCrypto ? convertData.fromAsset : preferredCurrency;
   };
 
   const getCurrentAmountLabel = () => {
     return showAmountInCrypto
       ? `Amount (${convertData.fromAsset})`
-      : "Amount (USD)";
+      : `Amount (${preferredCurrency})`;
   };
 
   const getAmountPlaceholder = () => {
@@ -163,23 +180,34 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
   const getConversionRate = () => {
     if (convertData.fromAsset === convertData.toAsset) return 1;
 
-    type AssetKey = keyof typeof exchangeRates;
-    const fromAsset = convertData.fromAsset as AssetKey;
-    const toAsset = convertData.toAsset as AssetKey;
+    const fromPrice = cryptoPrices[convertData.fromAsset]?.price || 0;
+    const toPrice = cryptoPrices[convertData.toAsset]?.price || 0;
 
-    const fromRates = exchangeRates[fromAsset];
-    if (fromRates && toAsset in fromRates) {
-      return fromRates[toAsset as keyof typeof fromRates];
-    }
+    if (fromPrice === 0 || toPrice === 0) return 0;
 
-    return 0;
+    // Calculate rate: (fromAsset in USD) / (toAsset in USD)
+    return fromPrice / toPrice;
   };
 
   const getEstimatedReceiveAmount = () => {
     if (!convertData.amount) return 0;
-    const amount = parseFloat(convertData.amount);
+    const inputAmount = parseFloat(convertData.amount);
+
+    let cryptoAmount: number;
+
+    if (showAmountInCrypto) {
+      // Already in crypto
+      cryptoAmount = inputAmount;
+    } else {
+      // In fiat - convert to crypto first
+      const fromPrice = cryptoPrices[convertData.fromAsset]?.price || 0;
+      if (fromPrice === 0) return 0;
+      const usdAmount = convertAmount(inputAmount, true);
+      cryptoAmount = usdAmount / fromPrice;
+    }
+
     const rate = getConversionRate();
-    const gross = amount * rate;
+    const gross = cryptoAmount * rate;
     const fee = gross * (conversionFee / 100);
     return gross - fee;
   };
@@ -191,8 +219,25 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
       newErrors.amount = "Please enter a valid amount";
     }
 
+    // Calculate the actual crypto amount for validation
+    const inputAmount = parseFloat(convertData.amount);
+    let cryptoAmount: number = 0;
+
+    if (showAmountInCrypto) {
+      cryptoAmount = inputAmount;
+    } else {
+      // Convert from fiat to crypto
+      const fromPrice = cryptoPrices[convertData.fromAsset]?.price || 0;
+      if (fromPrice === 0) {
+        newErrors.amount = "Price not available";
+      } else {
+        const usdAmount = convertAmount(inputAmount, true);
+        cryptoAmount = usdAmount / fromPrice;
+      }
+    }
+
     if (
-      parseFloat(convertData.amount) >
+      cryptoAmount >
       availableBalances[convertData.fromAsset as keyof typeof availableBalances]
     ) {
       newErrors.amount = "Insufficient balance";
@@ -290,17 +335,25 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
 
   const confirmConvert = async () => {
     try {
-      const amount = parseFloat(convertData.amount);
+      const inputAmount = parseFloat(convertData.amount);
+      let cryptoAmount: number;
+
+      if (showAmountInCrypto) {
+        cryptoAmount = inputAmount;
+      } else {
+        // Convert from fiat to crypto
+        const fromPrice = cryptoPrices[convertData.fromAsset]?.price || 0;
+        const usdAmount = convertAmount(inputAmount, true);
+        cryptoAmount = usdAmount / fromPrice;
+      }
+
       const rate = getConversionRate();
       const receiveAmount = getEstimatedReceiveAmount();
-      const feeAmount = amount * rate * (conversionFee / 100);
-      const fromAssetPrice =
-        convertData.fromAsset === "BTC"
-          ? 65000
-          : convertData.fromAsset === "ETH"
-          ? 2500
-          : 0.5;
-      const usdValue = amount * fromAssetPrice;
+      const feeAmount = cryptoAmount * rate * (conversionFee / 100);
+
+      // Calculate USD value for the transaction
+      const fromPrice = cryptoPrices[convertData.fromAsset]?.price || 0;
+      const usdValue = cryptoAmount * fromPrice;
 
       // Update portfolio via API
       const portfolioResponse = await fetch("/api/crypto/convert", {
@@ -309,7 +362,7 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
         body: JSON.stringify({
           fromAsset: convertData.fromAsset,
           toAsset: convertData.toAsset,
-          amount: amount,
+          amount: cryptoAmount,
           rate: rate,
         }),
       });
@@ -324,13 +377,13 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
         id: `convert_${Date.now()}`,
         type: "convert" as const,
         asset: `${convertData.fromAsset} → ${convertData.toAsset}`,
-        amount: amount,
+        amount: cryptoAmount,
         value: usdValue,
         timestamp: new Date().toLocaleString(),
         status: "completed" as const,
         fee: feeAmount,
         method: "Instant Convert",
-        description: `Convert ${amount} ${
+        description: `Convert ${cryptoAmount.toFixed(8)} ${
           convertData.fromAsset
         } to ${receiveAmount.toFixed(8)} ${convertData.toAsset}`,
         fromAsset: convertData.fromAsset,
@@ -342,9 +395,11 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
 
       // Create notification
       const notificationTitle = "Conversion Completed";
-      const notificationMessage = `Successfully converted ${amount} ${
-        convertData.fromAsset
-      } to ${receiveAmount.toFixed(8)} ${convertData.toAsset}`;
+      const notificationMessage = `Successfully converted ${cryptoAmount.toFixed(
+        8
+      )} ${convertData.fromAsset} to ${receiveAmount.toFixed(8)} ${
+        convertData.toAsset
+      }`;
 
       addNotification({
         type: "transaction",
@@ -358,7 +413,7 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
       sendNotificationEmail(
         notificationTitle,
         notificationMessage,
-        amount,
+        cryptoAmount,
         convertData.fromAsset,
         convertData.toAsset
       );
@@ -367,7 +422,7 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
       sendPushNotification(
         notificationTitle,
         notificationMessage,
-        amount,
+        cryptoAmount,
         convertData.fromAsset,
         convertData.toAsset
       );
@@ -375,14 +430,8 @@ export default function ConvertModal({ isOpen, onClose }: ConvertModalProps) {
       // Show success step
       setSuccessData({
         asset: convertData.fromAsset,
-        amount: amount,
-        value:
-          amount *
-          (convertData.fromAsset === "BTC"
-            ? 65000
-            : convertData.fromAsset === "ETH"
-            ? 2500
-            : 0.5),
+        amount: cryptoAmount,
+        value: usdValue,
         toAsset: convertData.toAsset,
         toAmount: receiveAmount,
         timestamp: new Date(),

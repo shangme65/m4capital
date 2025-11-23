@@ -155,17 +155,19 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
     if (showAmountInCrypto) {
       // Convert from crypto to preferred currency
-      const fiatAmount = currentAmount * price;
+      const usdAmount = currentAmount * price; // Crypto to USD
+      const fiatAmount = convertAmount(usdAmount); // USD to preferred currency
       setSellData((prev) => ({
         ...prev,
         amount: fiatAmount.toFixed(2),
       }));
     } else {
       // Convert from preferred currency to crypto
-      const cryptoAmount = currentAmount / price;
+      const usdAmount = convertAmount(currentAmount, true); // Preferred currency to USD
+      const cryptoAmount = usdAmount / price; // USD to crypto
       setSellData((prev) => ({
         ...prev,
-        amount: cryptoAmount.toString(),
+        amount: cryptoAmount.toFixed(8),
       }));
     }
 
@@ -192,11 +194,21 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
   const getAmountToSell = () => {
     const amount = parseFloat(sellData.amount) || 0;
-    return amount > 0 ? amount : currentAsset?.amount || 0;
+    if (amount <= 0) return currentAsset?.amount || 0;
+
+    if (showAmountInCrypto) {
+      // Already in crypto
+      return amount;
+    } else {
+      // In fiat - convert to USD first, then to crypto
+      const usdAmount = convertAmount(amount, true);
+      return usdAmount / currentPrice;
+    }
   };
 
   const getEstimatedValue = () => {
-    return getAmountToSell() * currentPrice;
+    const cryptoAmount = getAmountToSell();
+    return cryptoAmount * currentPrice; // Return USD value
   };
 
   const validateForm = () => {
@@ -207,12 +219,22 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     }
 
     if (sellData.amount) {
-      const amount = parseFloat(sellData.amount);
-      if (amount <= 0) {
+      const inputAmount = parseFloat(sellData.amount);
+      if (inputAmount <= 0) {
         newErrors.amount = "Please enter a valid amount";
       }
 
-      if (amount > (currentAsset?.amount || 0)) {
+      // Calculate the crypto amount for validation
+      let cryptoAmount: number;
+      if (showAmountInCrypto) {
+        cryptoAmount = inputAmount;
+      } else {
+        // Convert fiat to USD, then to crypto
+        const usdAmount = convertAmount(inputAmount, true);
+        cryptoAmount = usdAmount / currentPrice;
+      }
+
+      if (cryptoAmount > (currentAsset?.amount || 0)) {
         newErrors.amount = "Insufficient balance";
       }
     }

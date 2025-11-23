@@ -137,9 +137,17 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
   const getEstimatedAmount = () => {
     if (!buyData.amount) return 0;
-    const usdAmount = parseFloat(buyData.amount);
+    const inputAmount = parseFloat(buyData.amount);
     const price = getCurrentPrice();
-    return usdAmount / price;
+
+    if (showAmountInCrypto) {
+      // Already in crypto
+      return inputAmount;
+    } else {
+      // In fiat - convert fiat to USD first, then to crypto
+      const usdAmount = convertAmount(inputAmount, true); // Convert to USD
+      return usdAmount / price;
+    }
   };
 
   const toggleCurrency = () => {
@@ -148,17 +156,19 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
     if (showAmountInCrypto) {
       // Convert from crypto to preferred currency
-      const fiatAmount = currentAmount * price;
+      const usdAmount = currentAmount * price; // Crypto to USD
+      const fiatAmount = convertAmount(usdAmount); // USD to preferred currency
       setBuyData((prev) => ({
         ...prev,
         amount: fiatAmount.toFixed(2),
       }));
     } else {
       // Convert from preferred currency to crypto
-      const cryptoAmount = currentAmount / price;
+      const usdAmount = convertAmount(currentAmount, true); // Preferred currency to USD
+      const cryptoAmount = usdAmount / price; // USD to crypto
       setBuyData((prev) => ({
         ...prev,
-        amount: cryptoAmount.toString(),
+        amount: cryptoAmount.toFixed(8),
       }));
     }
 
@@ -190,7 +200,20 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       newErrors.amount = "Please enter a valid amount";
     }
 
-    const totalCost = parseFloat(buyData.amount) * 1.015; // Include 1.5% fee
+    // Calculate total cost in USD for validation
+    const inputAmount = parseFloat(buyData.amount);
+    const price = getCurrentPrice();
+    let usdCost: number;
+
+    if (showAmountInCrypto) {
+      // Input is crypto, convert to USD
+      usdCost = inputAmount * price;
+    } else {
+      // Input is in preferred currency, convert to USD
+      usdCost = convertAmount(inputAmount, true);
+    }
+
+    const totalCost = usdCost * 1.015; // Include 1.5% fee
     if (totalCost > availableBalance) {
       newErrors.amount = "Insufficient balance";
     }
@@ -215,21 +238,20 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       const inputAmount = parseFloat(buyData.amount);
 
       // Calculate fiat and asset amounts based on toggle state
-      let fiatAmount: number;
+      let usdValue: number;
       let assetAmount: number;
 
       if (showAmountInCrypto) {
-        // Input is in crypto, calculate fiat
+        // Input is in crypto, calculate USD value
         assetAmount = inputAmount;
-        fiatAmount = assetAmount * price;
+        usdValue = assetAmount * price; // USD value
       } else {
-        // Input is in fiat, calculate crypto
-        fiatAmount = inputAmount;
-        assetAmount = fiatAmount / price;
+        // Input is in preferred currency, convert to USD first
+        usdValue = convertAmount(inputAmount, true); // Convert to USD
+        assetAmount = usdValue / price; // Calculate crypto amount
       }
 
-      const fee = fiatAmount * 0.015; // 1.5% fee
-      const usdValue = fiatAmount;
+      const fee = usdValue * 0.015; // 1.5% fee in USD
 
       // Update portfolio via API
       const portfolioResponse = await fetch("/api/crypto/buy", {
@@ -739,45 +761,60 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             <div className="flex justify-between items-center">
                               <span className="text-gray-400">Amount:</span>
                               <span className="text-white">
-                                {preferredCurrency === "USD"
-                                  ? "$"
-                                  : preferredCurrency === "EUR"
-                                  ? "€"
-                                  : preferredCurrency === "GBP"
-                                  ? "£"
-                                  : preferredCurrency}
-                                {parseFloat(buyData.amount).toFixed(2)}
+                                {showAmountInCrypto
+                                  ? `${parseFloat(buyData.amount).toFixed(8)} ${
+                                      buyData.asset
+                                    }`
+                                  : `${
+                                      preferredCurrency === "USD"
+                                        ? "$"
+                                        : preferredCurrency === "EUR"
+                                        ? "€"
+                                        : preferredCurrency === "GBP"
+                                        ? "£"
+                                        : preferredCurrency
+                                    }${parseFloat(buyData.amount).toFixed(2)}`}
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
                               <span className="text-gray-400">Fee (1.5%):</span>
                               <span className="text-white">
-                                {preferredCurrency === "USD"
-                                  ? "$"
-                                  : preferredCurrency === "EUR"
-                                  ? "€"
-                                  : preferredCurrency === "GBP"
-                                  ? "£"
-                                  : preferredCurrency}
-                                {(parseFloat(buyData.amount) * 0.015).toFixed(
-                                  2
-                                )}
+                                {showAmountInCrypto
+                                  ? `${(
+                                      parseFloat(buyData.amount) * 0.015
+                                    ).toFixed(8)} ${buyData.asset}`
+                                  : `${
+                                      preferredCurrency === "USD"
+                                        ? "$"
+                                        : preferredCurrency === "EUR"
+                                        ? "€"
+                                        : preferredCurrency === "GBP"
+                                        ? "£"
+                                        : preferredCurrency
+                                    }${(
+                                      parseFloat(buyData.amount) * 0.015
+                                    ).toFixed(2)}`}
                               </span>
                             </div>
                             <hr className="border-gray-600" />
                             <div className="flex justify-between items-center font-medium">
                               <span className="text-gray-300">Total:</span>
                               <span className="text-white">
-                                {preferredCurrency === "USD"
-                                  ? "$"
-                                  : preferredCurrency === "EUR"
-                                  ? "€"
-                                  : preferredCurrency === "GBP"
-                                  ? "£"
-                                  : preferredCurrency}
-                                {(parseFloat(buyData.amount) * 1.015).toFixed(
-                                  2
-                                )}
+                                {showAmountInCrypto
+                                  ? `${(
+                                      parseFloat(buyData.amount) * 1.015
+                                    ).toFixed(8)} ${buyData.asset}`
+                                  : `${
+                                      preferredCurrency === "USD"
+                                        ? "$"
+                                        : preferredCurrency === "EUR"
+                                        ? "€"
+                                        : preferredCurrency === "GBP"
+                                        ? "£"
+                                        : preferredCurrency
+                                    }${(
+                                      parseFloat(buyData.amount) * 1.015
+                                    ).toFixed(2)}`}
                               </span>
                             </div>
                           </div>

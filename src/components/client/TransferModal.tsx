@@ -7,6 +7,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import CryptoDropdown from "@/components/client/CryptoDropdown";
+import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { Check } from "lucide-react";
 
 interface TransferModalProps {
@@ -46,6 +47,21 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
   const [receiverName, setReceiverName] = useState<string | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
   const { addTransaction, addNotification } = useNotifications();
+
+  // Fetch real-time crypto prices
+  const cryptoSymbols = [
+    "BTC",
+    "ETH",
+    "XRP",
+    "TRX",
+    "TON",
+    "LTC",
+    "BCH",
+    "ETC",
+    "USDC",
+    "USDT",
+  ];
+  const cryptoPrices = useCryptoPrices(cryptoSymbols);
 
   // Get supported assets - USD balance first, then crypto assets sorted by amount
   const supportedAssets = (() => {
@@ -156,43 +172,34 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
   const toggleCurrency = () => {
     if (transferData.asset === "USD") {
-      // For USD, toggle between USD and other currency
-      const currentAmount = parseFloat(transferData.amount) || 0;
-      setShowAmountInCrypto(!showAmountInCrypto);
-      // USD doesn't need conversion
+      // For USD, no toggle needed as it's already in fiat
       return;
     }
 
     const currentAmount = parseFloat(transferData.amount) || 0;
-    // Use approximate crypto prices
-    const cryptoPrices: Record<string, number> = {
-      BTC: 65000,
-      ETH: 2500,
-      XRP: 0.5,
-      TRX: 0.1,
-      TON: 2.5,
-      LTC: 70,
-      BCH: 200,
-      ETC: 20,
-      USDC: 1,
-      USDT: 1,
-    };
+    const cryptoPrice = cryptoPrices[transferData.asset];
+    const price = cryptoPrice?.price || 0;
 
-    const price = cryptoPrices[transferData.asset] || 1;
+    if (price === 0) {
+      // If price not available, don't toggle
+      return;
+    }
 
     if (showAmountInCrypto) {
       // Convert from crypto to preferred currency
-      const fiatAmount = currentAmount * price;
+      const usdAmount = currentAmount * price; // Crypto to USD
+      const fiatAmount = convertAmount(usdAmount); // USD to preferred currency
       setTransferData((prev) => ({
         ...prev,
         amount: fiatAmount.toFixed(2),
       }));
     } else {
       // Convert from preferred currency to crypto
-      const cryptoAmount = currentAmount / price;
+      const usdAmount = convertAmount(currentAmount, true); // Preferred currency to USD
+      const cryptoAmount = usdAmount / price; // USD to crypto
       setTransferData((prev) => ({
         ...prev,
-        amount: cryptoAmount.toString(),
+        amount: cryptoAmount.toFixed(8),
       }));
     }
 
@@ -264,8 +271,28 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       newErrors.amount = "Please enter a valid amount";
     }
 
+    // Calculate the actual crypto amount for validation
+    const inputAmount = parseFloat(transferData.amount);
+    let cryptoAmount: number;
+
+    if (transferData.asset === "USD") {
+      cryptoAmount = inputAmount;
+    } else if (showAmountInCrypto) {
+      cryptoAmount = inputAmount;
+    } else {
+      // Convert from fiat to crypto
+      const cryptoPrice = cryptoPrices[transferData.asset];
+      const price = cryptoPrice?.price || 0;
+      if (price > 0) {
+        const usdAmount = convertAmount(inputAmount, true);
+        cryptoAmount = usdAmount / price;
+      } else {
+        cryptoAmount = inputAmount; // Fallback
+      }
+    }
+
     if (
-      parseFloat(transferData.amount) >
+      cryptoAmount >
       availableBalances[transferData.asset as keyof typeof availableBalances]
     ) {
       newErrors.amount = "Insufficient balance";
@@ -300,17 +327,29 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
 
   const confirmTransfer = async () => {
     try {
-      const amount = parseFloat(transferData.amount);
-      const totalDeducted = amount + transferFee;
-      const assetPrice =
-        transferData.asset === "BTC"
-          ? 65000
-          : transferData.asset === "ETH"
-          ? 2500
-          : transferData.asset === "USD"
-          ? 1
-          : 0.5;
-      const usdValue = amount * assetPrice;
+      const inputAmount = parseFloat(transferData.amount);
+      let cryptoAmount: number;
+      let usdValue: number;
+
+      if (transferData.asset === "USD") {
+        cryptoAmount = inputAmount;
+        usdValue = inputAmount;
+      } else if (showAmountInCrypto) {
+        // Input is in crypto
+        cryptoAmount = inputAmount;
+        const cryptoPrice = cryptoPrices[transferData.asset];
+        const price = cryptoPrice?.price || 0;
+        usdValue = cryptoAmount * price;
+      } else {
+        // Input is in fiat
+        const cryptoPrice = cryptoPrices[transferData.asset];
+        const price = cryptoPrice?.price || 0;
+        const usdAmount = convertAmount(inputAmount, true);
+        cryptoAmount = usdAmount / price;
+        usdValue = usdAmount;
+      }
+
+      const totalDeducted = cryptoAmount + transferFee;
 
       // Update portfolio via API
       const portfolioResponse = await fetch("/api/crypto/transfer", {
@@ -318,7 +357,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           asset: transferData.asset,
-          amount: amount,
+          amount: cryptoAmount,
           destination: transferData.destination,
           memo: transferData.memo,
         }),
@@ -334,12 +373,12 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
         id: `transfer_${Date.now()}`,
         type: "transfer" as const,
         asset: transferData.asset,
-        amount: amount,
+        amount: cryptoAmount,
         value: usdValue,
         status: "pending" as const,
         fee: transferFee,
         method: "External Transfer",
-        description: `Transfer ${amount} ${
+        description: `Transfer ${cryptoAmount.toFixed(8)} ${
           transferData.asset
         } to ${transferData.destination.slice(
           0,
@@ -369,20 +408,16 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       addNotification({
         type: "transaction",
         title: "Transfer Initiated",
-        message: `Transfer of ${amount} ${transferData.asset} to wallet address is being processed`,
+        message: `Transfer of ${cryptoAmount.toFixed(8)} ${
+          transferData.asset
+        } to wallet address is being processed`,
       });
 
       // Show success step
       setSuccessData({
         asset: transferData.asset,
-        amount: amount,
-        value:
-          amount *
-          (transferData.asset === "BTC"
-            ? 65000
-            : transferData.asset === "ETH"
-            ? 2500
-            : 0.5),
+        amount: cryptoAmount,
+        value: usdValue,
         recipient: transferData.destination,
         timestamp: new Date(),
       });

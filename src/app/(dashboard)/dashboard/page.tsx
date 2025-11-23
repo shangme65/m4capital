@@ -849,12 +849,12 @@ function DashboardContent() {
 
           {/* History View */}
           {activeView === "history" && (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {recentActivity.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="w-20 h-20 bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
                     <svg
-                      className="w-8 h-8 text-gray-400"
+                      className="w-10 h-10 text-gray-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -867,7 +867,12 @@ function DashboardContent() {
                       />
                     </svg>
                   </div>
-                  <p className="text-gray-400">No transaction history yet</p>
+                  <p className="text-gray-400 text-lg font-medium">
+                    No transaction history yet
+                  </p>
+                  <p className="text-gray-500 text-sm mt-2">
+                    Your transactions will appear here
+                  </p>
                 </div>
               ) : (
                 recentActivity.map((activity) => {
@@ -884,6 +889,99 @@ function DashboardContent() {
                     return `${activity.type} ${activity.asset}`;
                   };
 
+                  // Get transaction type icon and color
+                  const getTransactionIcon = () => {
+                    const baseClasses =
+                      "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0";
+                    if (activity.type === "buy")
+                      return (
+                        <div
+                          className={`${baseClasses} bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30`}
+                        >
+                          <svg
+                            className="w-5 h-5 text-green-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 11l5-5m0 0l5 5m-5-5v12"
+                            />
+                          </svg>
+                        </div>
+                      );
+                    if (activity.type === "sell")
+                      return (
+                        <div
+                          className={`${baseClasses} bg-gradient-to-br from-red-500/20 to-red-600/20 border border-red-500/30`}
+                        >
+                          <svg
+                            className="w-5 h-5 text-red-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 13l-5 5m0 0l-5-5m5 5V6"
+                            />
+                          </svg>
+                        </div>
+                      );
+                    if (activity.type === "transfer")
+                      return (
+                        <div
+                          className={`${baseClasses} bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30`}
+                        >
+                          <svg
+                            className="w-5 h-5 text-blue-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                            />
+                          </svg>
+                        </div>
+                      );
+                    if (activity.type === "convert")
+                      return (
+                        <div
+                          className={`${baseClasses} bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30`}
+                        >
+                          <svg
+                            className="w-5 h-5 text-purple-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                            />
+                          </svg>
+                        </div>
+                      );
+                    return (
+                      <div
+                        className={`${baseClasses} bg-gradient-to-br from-gray-500/20 to-gray-600/20 border border-gray-500/30`}
+                      >
+                        <CryptoIcon symbol={activity.asset} size="sm" />
+                      </div>
+                    );
+                  };
+
                   // Format amount with 8 decimals for crypto
                   const formatCryptoAmount = (
                     amount: number,
@@ -893,21 +991,69 @@ function DashboardContent() {
                       activity.type === "deposit" ||
                       activity.type === "withdraw"
                     ) {
-                      return `$${amount.toLocaleString("en-US", {
+                      return `${amount.toLocaleString("en-US", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}`;
                     }
-                    return `${amount.toFixed(8)} ${asset}`;
+                    return amount.toLocaleString("en-US", {
+                      minimumFractionDigits: 8,
+                      maximumFractionDigits: 8,
+                    });
+                  };
+
+                  // Get crypto price and calculate fiat value
+                  const getCryptoPrice = () => {
+                    const assetSymbol = activity.asset?.split(" ")[0];
+                    return cryptoPrices[assetSymbol]?.price || 0;
+                  };
+
+                  const getFiatValue = () => {
+                    if (
+                      activity.type === "deposit" ||
+                      activity.type === "withdraw"
+                    ) {
+                      return convertAmount(activity.amount || 0);
+                    }
+                    const price = getCryptoPrice();
+                    const usdValue = (activity.amount || 0) * price;
+                    return convertAmount(usdValue);
                   };
 
                   // Format date and time
                   const formatDateTime = (timestamp: string) => {
                     try {
                       const date = new Date(timestamp);
-                      const dateStr = date.toISOString().split("T")[0]; // YYYY-MM-DD
-                      const timeStr = date.toTimeString().split(" ")[0]; // HH:MM:SS
-                      return `${dateStr} ${timeStr}`;
+                      const now = new Date();
+                      const diffMs = now.getTime() - date.getTime();
+                      const diffMins = Math.floor(diffMs / 60000);
+                      const diffHours = Math.floor(diffMs / 3600000);
+                      const diffDays = Math.floor(diffMs / 86400000);
+
+                      if (diffMins < 1) return "Just now";
+                      if (diffMins < 60) return `${diffMins}m ago`;
+                      if (diffHours < 24) return `${diffHours}h ago`;
+                      if (diffDays < 7) return `${diffDays}d ago`;
+
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                    } catch {
+                      return timestamp;
+                    }
+                  };
+
+                  const formatFullDateTime = (timestamp: string) => {
+                    try {
+                      const date = new Date(timestamp);
+                      return date.toLocaleString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      });
                     } catch {
                       return timestamp;
                     }
@@ -917,79 +1063,98 @@ function DashboardContent() {
                     <div
                       key={activity.id}
                       onClick={() => handleTransactionClick(activity)}
-                      className="flex items-center gap-4 p-3 bg-gray-900/30 rounded-lg border border-gray-700/20 hover:bg-gray-800/50 cursor-pointer transition-all duration-200 hover:border-orange-500/30"
+                      className="group relative p-4 bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-xl border border-gray-700/50 hover:border-blue-500/50 cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 backdrop-blur-sm"
                     >
-                      <CryptoIcon symbol={activity.asset} size="md" />
+                      <div className="flex items-start gap-4">
+                        {/* Transaction Icon */}
+                        {getTransactionIcon()}
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <div className="text-white font-medium truncate">
-                            {getTransactionText()}
-                          </div>
-                          <div
-                            className={`px-2 py-1 rounded text-xs font-medium ${
-                              activity.status === "completed"
-                                ? "bg-green-900/50 text-green-400"
-                                : "bg-yellow-900/50 text-yellow-400"
-                            }`}
-                          >
-                            {activity.status}
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between mt-1">
-                          <div className="text-gray-400 text-sm">
-                            {formatCryptoAmount(
-                              activity.amount || 0,
-                              activity.asset?.split(" ")[0] || ""
-                            )}
-                          </div>
-                          <div className="text-gray-500 text-xs">
-                            {formatDateTime(activity.timestamp)}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Show confirmation progress for pending deposits */}
-                      {activity.status === "pending" &&
-                        activity.type === "deposit" &&
-                        activity.confirmations !== undefined && (
-                          <div className="mt-2 flex items-center gap-2">
-                            <div className="flex-1 bg-gray-700 rounded-full h-1.5">
-                              <div
-                                className="bg-orange-500 h-1.5 rounded-full transition-all duration-500"
-                                style={{
-                                  width: `${Math.min(
-                                    100,
-                                    (activity.confirmations /
-                                      (activity.maxConfirmations || 6)) *
-                                      100
-                                  )}%`,
-                                }}
-                              ></div>
+                        {/* Transaction Details */}
+                        <div className="flex-1 min-w-0">
+                          {/* Header Row */}
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div>
+                              <h3 className="text-white font-semibold text-base mb-0.5">
+                                {getTransactionText()}
+                              </h3>
+                              <p className="text-gray-400 text-xs">
+                                {formatFullDateTime(activity.timestamp)}
+                              </p>
                             </div>
-                            <span className="text-xs text-gray-400">
-                              {activity.confirmations}/
-                              {activity.maxConfirmations || 6}
+                            <div
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide flex-shrink-0 ${
+                                activity.status === "completed"
+                                  ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                  : activity.status === "pending"
+                                  ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                  : "bg-red-500/20 text-red-400 border border-red-500/30"
+                              }`}
+                            >
+                              {activity.status}
+                            </div>
+                          </div>
+
+                          {/* Amount Row - Crypto and Fiat */}
+                          <div className="flex items-baseline gap-2 mb-2">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-white font-bold text-lg">
+                                {formatCryptoAmount(
+                                  activity.amount || 0,
+                                  activity.asset?.split(" ")[0] || ""
+                                )}
+                              </span>
+                              <span className="text-gray-400 font-medium text-sm">
+                                {activity.asset?.split(" ")[0]}
+                              </span>
+                            </div>
+                            <span className="text-gray-500">•</span>
+                            <span className="text-gray-400 font-medium text-sm">
+                              ≈ {formatAmount(getFiatValue(), 2)}
                             </span>
                           </div>
-                        )}
 
-                      {/* Click indicator */}
-                      <div className="text-gray-500 hover:text-orange-400 transition-colors">
-                        <svg
-                          className="w-5 h-5"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
+                          {/* Show confirmation progress for pending deposits */}
+                          {activity.status === "pending" &&
+                            activity.type === "deposit" &&
+                            activity.confirmations !== undefined && (
+                              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-700/50">
+                                <div className="flex-1 bg-gray-700/50 rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded-full transition-all duration-500"
+                                    style={{
+                                      width: `${Math.min(
+                                        100,
+                                        (activity.confirmations /
+                                          (activity.maxConfirmations || 6)) *
+                                          100
+                                      )}%`,
+                                    }}
+                                  ></div>
+                                </div>
+                                <span className="text-xs text-gray-400 font-medium flex-shrink-0">
+                                  {activity.confirmations}/
+                                  {activity.maxConfirmations || 6} confirmations
+                                </span>
+                              </div>
+                            )}
+                        </div>
+
+                        {/* Arrow indicator */}
+                        <div className="text-gray-600 group-hover:text-blue-400 transition-colors flex-shrink-0 mt-2">
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </div>
                       </div>
                     </div>
                   );
