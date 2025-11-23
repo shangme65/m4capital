@@ -39,6 +39,9 @@ export default function TransactionDetailsModal({
   onClose,
   transaction,
 }: TransactionDetailsModalProps) {
+  // State must be declared at the top before any conditional returns
+  const [copied, setCopied] = useState(false);
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -227,8 +230,6 @@ export default function TransactionDetailsModal({
       minute: "2-digit",
     });
   };
-
-  const [copied, setCopied] = useState(false);
 
   const copyToClipboard = async (text: string) => {
     try {
