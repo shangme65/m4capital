@@ -464,7 +464,11 @@ const Sidebar = () => {
                         }}
                       >
                         <Link
-                          href={adminItem.href}
+                          href={
+                            session?.user?.role === "STAFF_ADMIN"
+                              ? "/staff-admin"
+                              : adminItem.href
+                          }
                           className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
                           onClick={closeSidebar}
                           onMouseEnter={() => setHoveredItem("Admin")}

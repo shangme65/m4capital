@@ -47,9 +47,9 @@ export default function CookieConsent() {
               stiffness: 300,
               damping: 30,
             }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-[95%] max-w-2xl"
+            className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-[90%] sm:w-[95%] max-w-2xl px-2 sm:px-0"
           >
-            <div className="relative bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-2xl shadow-2xl shadow-purple-500/20 p-6 sm:p-8">
+            <div className="relative bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-xl sm:rounded-2xl shadow-2xl shadow-purple-500/20 p-4 sm:p-6 md:p-8">
               {/* Decorative gradient orbs */}
               <div className="absolute -top-20 -left-20 w-40 h-40 bg-purple-500/30 rounded-full blur-3xl"></div>
               <div className="absolute -bottom-20 -right-20 w-40 h-40 bg-orange-500/30 rounded-full blur-3xl"></div>
@@ -78,27 +78,27 @@ export default function CookieConsent() {
                   }}
                   className="flex-shrink-0"
                 >
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <Cookie className="w-8 h-8 text-white" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-orange-500 to-purple-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
+                    <Cookie className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                   </div>
                 </motion.div>
 
                 {/* Content */}
-                <div className="flex-1 space-y-3">
-                  <h3 className="text-xl sm:text-2xl font-bold text-white">
+                <div className="flex-1 space-y-2 sm:space-y-3">
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
                     We Value Your{" "}
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-400">
                       Privacy
                     </span>
                   </h3>
-                  <p className="text-gray-300 text-sm sm:text-base leading-relaxed">
+                  <p className="text-gray-300 text-xs sm:text-sm md:text-base leading-relaxed">
                     We use cookies to enhance your browsing experience, serve
                     personalized content, and analyze our traffic. By clicking
                     "OK", you consent to our use of cookies.
                   </p>
                   <a
                     href="/privacy"
-                    className="text-purple-400 hover:text-purple-300 text-sm underline underline-offset-2 transition-colors inline-block"
+                    className="text-purple-400 hover:text-purple-300 text-xs sm:text-sm underline underline-offset-2 transition-colors inline-block"
                   >
                     Learn more about our privacy policy
                   </a>
@@ -112,8 +112,8 @@ export default function CookieConsent() {
                   className="relative group flex-shrink-0 w-full sm:w-auto"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-purple-600 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white font-bold px-8 py-4 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
-                    <span className="text-lg">OK</span>
+                  <div className="relative bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white font-bold px-6 py-3 sm:px-8 sm:py-4 rounded-lg sm:rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
+                    <span className="text-base sm:text-lg">OK</span>
                     <motion.div
                       animate={{ x: [0, 3, 0] }}
                       transition={{
