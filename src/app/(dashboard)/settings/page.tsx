@@ -27,6 +27,7 @@ import {
   EyeOff,
   Key,
   Smartphone,
+  Lock,
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -94,6 +95,16 @@ export default function SettingsPage() {
   const [disabling2FA, setDisabling2FA] = useState(false);
   const [disable2FAPassword, setDisable2FAPassword] = useState("");
   const [showDisable2FA, setShowDisable2FA] = useState(false);
+
+  // Transfer PIN state
+  const [hasTransferPin, setHasTransferPin] = useState(false);
+  const [showTransferPinSetup, setShowTransferPinSetup] = useState(false);
+  const [transferPin, setTransferPin] = useState("");
+  const [confirmTransferPin, setConfirmTransferPin] = useState("");
+  const [currentTransferPin, setCurrentTransferPin] = useState("");
+  const [settingTransferPin, setSettingTransferPin] = useState(false);
+  const [transferPinError, setTransferPinError] = useState<string | null>(null);
+  const [transferPinSuccess, setTransferPinSuccess] = useState(false);
 
   // KYC state
   const [kycStatus, setKycStatus] = useState<
@@ -212,6 +223,22 @@ export default function SettingsPage() {
       }
     };
     fetch2FAStatus();
+  }, []);
+
+  // Fetch transfer PIN status on mount
+  useEffect(() => {
+    const fetchTransferPinStatus = async () => {
+      try {
+        const response = await fetch("/api/p2p-transfer/set-pin");
+        if (response.ok) {
+          const data = await response.json();
+          setHasTransferPin(data.hasPinSet || false);
+        }
+      } catch (error) {
+        console.error("Failed to fetch transfer PIN status:", error);
+      }
+    };
+    fetchTransferPinStatus();
   }, []);
 
   // Fetch currency preference on mount
@@ -571,6 +598,70 @@ export default function SettingsPage() {
       setTwoFactorError(error.message || "Failed to disable 2FA");
     } finally {
       setDisabling2FA(false);
+    }
+  };
+
+  // Handle transfer PIN setup/change
+  const handleTransferPinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTransferPinError(null);
+    setTransferPinSuccess(false);
+
+    // Validate PIN
+    if (transferPin.length !== 4 || !/^\d{4}$/.test(transferPin)) {
+      setTransferPinError("PIN must be exactly 4 digits");
+      return;
+    }
+
+    if (transferPin !== confirmTransferPin) {
+      setTransferPinError("PINs do not match");
+      return;
+    }
+
+    // If changing PIN, verify current PIN
+    if (hasTransferPin && !currentTransferPin) {
+      setTransferPinError("Please enter your current PIN");
+      return;
+    }
+
+    setSettingTransferPin(true);
+
+    try {
+      const body: any = { pin: transferPin };
+      if (hasTransferPin) {
+        body.currentPin = currentTransferPin;
+      }
+
+      const response = await fetch("/api/p2p-transfer/set-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to set transfer PIN");
+      }
+
+      setHasTransferPin(true);
+      setShowTransferPinSetup(false);
+      setTransferPin("");
+      setConfirmTransferPin("");
+      setCurrentTransferPin("");
+      setTransferPinSuccess(true);
+      showSuccess(
+        hasTransferPin
+          ? "Transfer PIN changed successfully!"
+          : "Transfer PIN set successfully!"
+      );
+
+      // Hide success message after 3 seconds
+      setTimeout(() => setTransferPinSuccess(false), 3000);
+    } catch (error: any) {
+      setTransferPinError(error.message || "Failed to set transfer PIN");
+    } finally {
+      setSettingTransferPin(false);
     }
   };
 
@@ -1205,6 +1296,175 @@ export default function SettingsPage() {
                         setShowDisable2FA(false);
                         setDisable2FAPassword("");
                         setTwoFactorError(null);
+                      }}
+                      className="text-sm text-gray-400 hover:text-white transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+
+          {/* Transfer PIN Section */}
+          <div className="border-t border-gray-700 pt-6">
+            <div className="flex items-center gap-2 mb-4">
+              <Lock className="w-5 h-5 text-orange-500" />
+              <h3 className="text-lg font-semibold text-white">Transfer PIN</h3>
+            </div>
+
+            {!showTransferPinSetup ? (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-300">
+                  {hasTransferPin
+                    ? "Your transfer PIN is set. You can change it here."
+                    : "Set up a 4-digit PIN to secure your P2P transfers and withdrawals."}
+                </p>
+
+                {hasTransferPin && (
+                  <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <p className="text-sm text-green-400 font-medium">
+                        Transfer PIN is Set
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {transferPinSuccess && (
+                  <div className="bg-green-900/20 border border-green-700 rounded-lg p-3">
+                    <p className="text-sm text-green-400">
+                      {hasTransferPin
+                        ? "Transfer PIN changed successfully!"
+                        : "Transfer PIN set successfully!"}
+                    </p>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => setShowTransferPinSetup(true)}
+                  className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                >
+                  {hasTransferPin ? "Change Transfer PIN" : "Set Transfer PIN"}
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-300">
+                  {hasTransferPin
+                    ? "Enter your current PIN and choose a new 4-digit PIN."
+                    : "Choose a 4-digit PIN for securing your transfers."}
+                </p>
+
+                <form onSubmit={handleTransferPinSubmit} className="space-y-4">
+                  {hasTransferPin && (
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-1 text-gray-300"
+                        htmlFor="currentTransferPin"
+                      >
+                        Current PIN
+                      </label>
+                      <input
+                        id="currentTransferPin"
+                        type="password"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={4}
+                        value={currentTransferPin}
+                        onChange={(e) =>
+                          setCurrentTransferPin(
+                            e.target.value.replace(/\D/g, "").slice(0, 4)
+                          )
+                        }
+                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg tracking-widest"
+                        placeholder="••••"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-1 text-gray-300"
+                      htmlFor="transferPin"
+                    >
+                      {hasTransferPin ? "New PIN" : "PIN"}
+                    </label>
+                    <input
+                      id="transferPin"
+                      type="password"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
+                      value={transferPin}
+                      onChange={(e) =>
+                        setTransferPin(
+                          e.target.value.replace(/\D/g, "").slice(0, 4)
+                        )
+                      }
+                      className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg tracking-widest"
+                      placeholder="••••"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-1 text-gray-300"
+                      htmlFor="confirmTransferPin"
+                    >
+                      Confirm PIN
+                    </label>
+                    <input
+                      id="confirmTransferPin"
+                      type="password"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
+                      value={confirmTransferPin}
+                      onChange={(e) =>
+                        setConfirmTransferPin(
+                          e.target.value.replace(/\D/g, "").slice(0, 4)
+                        )
+                      }
+                      className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg tracking-widest"
+                      placeholder="••••"
+                      required
+                    />
+                  </div>
+
+                  {transferPinError && (
+                    <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
+                      <p className="text-sm text-red-400">{transferPinError}</p>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="submit"
+                      disabled={
+                        settingTransferPin ||
+                        transferPin.length !== 4 ||
+                        confirmTransferPin.length !== 4
+                      }
+                      className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                    >
+                      {settingTransferPin
+                        ? "Setting..."
+                        : hasTransferPin
+                        ? "Change PIN"
+                        : "Set PIN"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowTransferPinSetup(false);
+                        setTransferPin("");
+                        setConfirmTransferPin("");
+                        setCurrentTransferPin("");
+                        setTransferPinError(null);
                       }}
                       className="text-sm text-gray-400 hover:text-white transition-colors"
                     >

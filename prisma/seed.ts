@@ -34,7 +34,11 @@ async function main() {
 
   // Create admin user from environment variables
   const adminPassword = await bcrypt.hash(adminPasswordRaw, 10);
-  const adminAccountNumber = generateAccountNumber();
+
+  // Get admin account number from env or generate one
+  const adminAccountNumber =
+    process.env.ORIGIN_ADMIN_ACCOUNT_NUMBER || generateAccountNumber();
+
   const adminUser = await prisma.user.create({
     data: {
       id: generateId(),

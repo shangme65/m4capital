@@ -50,6 +50,10 @@ export default function P2PTransferModal({
   const [loading, setLoading] = useState(false);
   const [hasPinSet, setHasPinSet] = useState(false);
   const [transferResult, setTransferResult] = useState<any>(null);
+  const [showPinSetup, setShowPinSetup] = useState(false);
+  const [newPin, setNewPin] = useState("");
+  const [confirmNewPin, setConfirmNewPin] = useState("");
+  const [settingUpPin, setSettingUpPin] = useState(false);
 
   // Check if user has PIN set
   useEffect(() => {
@@ -114,10 +118,48 @@ export default function P2PTransferModal({
 
   const handleConfirmNext = () => {
     if (!hasPinSet) {
-      showError("Please set up your transfer PIN first in settings");
+      setShowPinSetup(true);
       return;
     }
     setCurrentStep("pin");
+  };
+
+  const handleSetupPin = async () => {
+    if (newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+      showError("PIN must be exactly 4 digits");
+      return;
+    }
+
+    if (newPin !== confirmNewPin) {
+      showError("PINs do not match");
+      return;
+    }
+
+    setSettingUpPin(true);
+    try {
+      const response = await fetch("/api/p2p-transfer/set-pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin: newPin }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to set PIN");
+      }
+
+      setHasPinSet(true);
+      setShowPinSetup(false);
+      setNewPin("");
+      setConfirmNewPin("");
+      showSuccess("Transfer PIN set successfully!");
+      setCurrentStep("pin");
+    } catch (error: any) {
+      showError(error.message || "Failed to set PIN");
+    } finally {
+      setSettingUpPin(false);
+    }
   };
 
   const processTransfer = async () => {
@@ -528,6 +570,101 @@ export default function P2PTransferModal({
           )}
         </div>
       </div>
+
+      {/* PIN Setup Modal */}
+      {showPinSetup && (
+        <div className="absolute inset-0 bg-gray-900/95 backdrop-blur-sm z-10 flex items-center justify-center p-6">
+          <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full border border-gray-700">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-orange-500/20 rounded-lg">
+                <Lock className="w-6 h-6 text-orange-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white">
+                  Set Transfer PIN
+                </h3>
+                <p className="text-sm text-gray-400">
+                  Required for P2P transfers
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <p className="text-sm text-gray-300">
+                Create a 4-digit PIN to secure your transfers. You'll need this
+                PIN for all P2P transactions.
+              </p>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  New PIN
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={newPin}
+                  onChange={(e) =>
+                    setNewPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+                  }
+                  className="w-full bg-gray-700 text-white text-center text-2xl tracking-widest rounded-lg px-4 py-4 border border-gray-600 focus:outline-none focus:border-orange-500"
+                  placeholder="••••"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Confirm PIN
+                </label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={confirmNewPin}
+                  onChange={(e) =>
+                    setConfirmNewPin(
+                      e.target.value.replace(/\D/g, "").slice(0, 4)
+                    )
+                  }
+                  className="w-full bg-gray-700 text-white text-center text-2xl tracking-widest rounded-lg px-4 py-4 border border-gray-600 focus:outline-none focus:border-orange-500"
+                  placeholder="••••"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => {
+                    setShowPinSetup(false);
+                    setNewPin("");
+                    setConfirmNewPin("");
+                  }}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSetupPin}
+                  disabled={
+                    settingUpPin ||
+                    newPin.length !== 4 ||
+                    confirmNewPin.length !== 4
+                  }
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                >
+                  {settingUpPin ? "Setting..." : "Set PIN"}
+                </button>
+              </div>
+
+              <p className="text-xs text-gray-400 text-center">
+                You can change your PIN later in Settings → Security
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
