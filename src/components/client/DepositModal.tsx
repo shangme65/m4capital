@@ -6,7 +6,13 @@ import Image from "next/image";
 import BitcoinWallet from "./BitcoinWallet";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { getCurrencySymbol } from "@/lib/currencies";
+import {
+  getCurrencySymbol,
+  getExchangeRates,
+  convertCurrency,
+} from "@/lib/currencies";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { useCryptoPrices } from "./CryptoMarketProvider";
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -23,6 +29,144 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [showCryptoSelection, setShowCryptoSelection] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState<string>("");
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
+
+  // Supported cryptocurrencies from NowPayments
+  const supportedCryptos = [
+    {
+      id: "btc",
+      symbol: "BTC",
+      name: "Bitcoin",
+      minAmount: 0.0002,
+      minUSD: 20,
+      network: "Bitcoin",
+      enabled: true,
+      gradient: "from-orange-500 to-yellow-600",
+      bgColor: "bg-orange-500/10",
+      borderColor: "border-orange-500/50",
+      iconBg: "bg-orange-500",
+    },
+    {
+      id: "eth",
+      symbol: "ETH",
+      name: "Ethereum",
+      minAmount: 0.001,
+      minUSD: 3,
+      network: "Ethereum (ERC-20)",
+      enabled: false,
+      gradient: "from-blue-500 to-cyan-600",
+      bgColor: "bg-blue-500/10",
+      borderColor: "border-blue-500/50",
+      iconBg: "bg-blue-500",
+    },
+    {
+      id: "etc",
+      symbol: "ETC",
+      name: "Ethereum Classic",
+      minAmount: 0.1,
+      minUSD: 2,
+      network: "Ethereum Classic",
+      enabled: false,
+      gradient: "from-green-600 to-emerald-600",
+      bgColor: "bg-green-500/10",
+      borderColor: "border-green-500/50",
+      iconBg: "bg-green-600",
+    },
+    {
+      id: "ltc",
+      symbol: "LTC",
+      name: "Litecoin",
+      minAmount: 0.01,
+      minUSD: 1,
+      network: "Litecoin",
+      enabled: false,
+      gradient: "from-gray-400 to-gray-600",
+      bgColor: "bg-gray-400/10",
+      borderColor: "border-gray-400/50",
+      iconBg: "bg-gray-500",
+    },
+    {
+      id: "xrp",
+      symbol: "XRP",
+      name: "Ripple",
+      minAmount: 10,
+      minUSD: 5,
+      network: "XRP Ledger",
+      enabled: false,
+      gradient: "from-blue-600 to-indigo-600",
+      bgColor: "bg-blue-600/10",
+      borderColor: "border-blue-600/50",
+      iconBg: "bg-blue-600",
+    },
+    {
+      id: "usdcerc20",
+      symbol: "USDC",
+      name: "USD Coin",
+      minAmount: 1,
+      minUSD: 1,
+      network: "Ethereum (ERC-20)",
+      enabled: false,
+      gradient: "from-blue-500 to-blue-700",
+      bgColor: "bg-blue-500/10",
+      borderColor: "border-blue-500/50",
+      iconBg: "bg-blue-600",
+    },
+    {
+      id: "ton",
+      symbol: "TON",
+      name: "Toncoin",
+      minAmount: 1,
+      minUSD: 2,
+      network: "TON Network",
+      enabled: false,
+      gradient: "from-cyan-500 to-blue-600",
+      bgColor: "bg-cyan-500/10",
+      borderColor: "border-cyan-500/50",
+      iconBg: "bg-cyan-600",
+    },
+    {
+      id: "trx",
+      symbol: "TRX",
+      name: "Tron",
+      minAmount: 10,
+      minUSD: 2,
+      network: "Tron (TRC-20)",
+      enabled: false,
+      gradient: "from-red-500 to-pink-600",
+      bgColor: "bg-red-500/10",
+      borderColor: "border-red-500/50",
+      iconBg: "bg-red-600",
+    },
+    {
+      id: "usdttrc20",
+      symbol: "USDT",
+      name: "Tether",
+      minAmount: 1,
+      minUSD: 1,
+      network: "Tron (TRC-20)",
+      enabled: false,
+      gradient: "from-green-500 to-emerald-600",
+      bgColor: "bg-green-500/10",
+      borderColor: "border-green-500/50",
+      iconBg: "bg-green-600",
+    },
+    {
+      id: "bch",
+      symbol: "BCH",
+      name: "Bitcoin Cash",
+      minAmount: 0.001,
+      minUSD: 1,
+      network: "Bitcoin Cash",
+      enabled: false,
+      gradient: "from-green-600 to-lime-600",
+      bgColor: "bg-green-600/10",
+      borderColor: "border-green-600/50",
+      iconBg: "bg-green-700",
+    },
+  ];
+
+  // Get real-time crypto prices
+  const cryptoSymbols = supportedCryptos.map((c) => c.symbol);
+  const cryptoPrices = useCryptoPrices(cryptoSymbols);
 
   // Use notification context if available (dashboard), otherwise use null
   let addNotification = null;
@@ -297,192 +441,159 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         Choose which cryptocurrency you want to use for your
                         deposit of{" "}
                         <span className="text-white font-semibold">
-                          ${amount}
+                          {getCurrencySymbol(preferredCurrency)}
+                          {amount}
                         </span>
                       </p>
 
-                      <div className="space-y-3">
-                        {/* Bitcoin */}
-                        <div
-                          onClick={() => setSelectedCrypto("btc")}
-                          className={`group p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                            selectedCrypto === "btc"
-                              ? "border-orange-500/50 bg-gradient-to-r from-orange-500/10 to-yellow-500/10 shadow-lg shadow-orange-500/20"
-                              : "border-gray-700/50 bg-gray-800/40 hover:bg-gray-800/60 hover:border-gray-600/50"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <div
-                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
-                                  selectedCrypto === "btc"
-                                    ? "bg-gradient-to-br from-orange-500 to-yellow-500"
-                                    : "bg-orange-500/20 group-hover:bg-orange-500/30"
-                                }`}
-                              >
-                                <span
-                                  className={`font-bold text-xl ${
-                                    selectedCrypto === "btc"
-                                      ? "text-white"
-                                      : "text-orange-500"
-                                  }`}
-                                >
-                                  ₿
-                                </span>
-                              </div>
-                              <div>
-                                <p className="text-white font-semibold text-lg">
-                                  Bitcoin
-                                </p>
-                                <p className="text-gray-400 text-sm">BTC</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-white text-sm font-medium">
-                                Min: 0.0002 BTC
-                              </p>
-                              <p className="text-gray-400 text-xs">~$20 USD</p>
-                            </div>
-                          </div>
-                        </div>
+                      <div className="grid grid-cols-1 gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800/50">
+                        {supportedCryptos.map((crypto) => {
+                          const priceData = cryptoPrices[crypto.symbol];
+                          const currentPrice = priceData?.price || 0;
+                          const change24h = priceData?.changePercent24h || 0;
 
-                        {/* Ethereum */}
-                        <div
-                          onClick={() => setSelectedCrypto("eth")}
-                          className={`group p-5 rounded-2xl border-2 cursor-not-allowed transition-all opacity-60 ${
-                            selectedCrypto === "eth"
-                              ? "border-blue-500/50 bg-gradient-to-r from-blue-500/10 to-cyan-500/10"
-                              : "border-gray-700/50 bg-gray-800/40"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
-                                <span className="text-blue-500 font-bold text-xl">
-                                  Ξ
-                                </span>
-                              </div>
-                              <div>
-                                <p className="text-white font-semibold text-lg">
-                                  Ethereum
-                                </p>
-                                <p className="text-gray-400 text-sm">ETH</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-white text-sm font-medium">
-                                Min: 0.001 ETH
-                              </p>
-                              <p className="text-gray-400 text-xs">~$3 USD</p>
-                            </div>
-                          </div>
-                          <div className="mt-3 pt-3 border-t border-gray-700/50 text-yellow-400 text-xs flex items-center gap-1.5">
-                            <svg
-                              className="w-4 h-4"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
+                          return (
+                            <motion.div
+                              key={crypto.id}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ duration: 0.2 }}
+                              onClick={() =>
+                                crypto.enabled && setSelectedCrypto(crypto.id)
+                              }
+                              className={`group p-4 rounded-2xl border-2 transition-all ${
+                                !crypto.enabled
+                                  ? "cursor-not-allowed opacity-50"
+                                  : "cursor-pointer"
+                              } ${
+                                selectedCrypto === crypto.id
+                                  ? `${crypto.borderColor} bg-gradient-to-r ${crypto.gradient} bg-opacity-10 shadow-lg`
+                                  : "border-gray-700/50 bg-gray-800/40 hover:bg-gray-800/60 hover:border-gray-600/50"
+                              }`}
                             >
-                              <path
-                                fillRule="evenodd"
-                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            Coming soon
-                          </div>
-                        </div>
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  {/* Crypto Icon */}
+                                  <div
+                                    className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
+                                      selectedCrypto === crypto.id
+                                        ? `bg-gradient-to-br ${crypto.gradient} shadow-md`
+                                        : `${crypto.bgColor} group-hover:opacity-80`
+                                    }`}
+                                  >
+                                    <CryptoIcon
+                                      symbol={crypto.symbol}
+                                      size="lg"
+                                      className={
+                                        selectedCrypto === crypto.id
+                                          ? "brightness-0 invert"
+                                          : ""
+                                      }
+                                    />
+                                  </div>
 
-                        {/* USDT (TRC20) */}
-                        <div
-                          onClick={() => setSelectedCrypto("usdttrc20")}
-                          className={`group p-5 rounded-2xl border-2 cursor-not-allowed transition-all opacity-60 ${
-                            selectedCrypto === "usdttrc20"
-                              ? "border-green-500/50 bg-gradient-to-r from-green-500/10 to-emerald-500/10"
-                              : "border-gray-700/50 bg-gray-800/40"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
-                                <span className="text-green-500 font-bold text-lg">
-                                  ₮
-                                </span>
-                              </div>
-                              <div>
-                                <p className="text-white font-semibold text-lg">
-                                  Tether (TRC20)
-                                </p>
-                                <p className="text-gray-400 text-sm">USDT</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-white text-sm font-medium">
-                                Min: 1 USDT
-                              </p>
-                              <p className="text-gray-400 text-xs">~$1 USD</p>
-                            </div>
-                          </div>
-                          <div className="mt-3 pt-3 border-t border-gray-700/50 text-yellow-400 text-xs flex items-center gap-1.5">
-                            <svg
-                              className="w-4 h-4"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            Coming soon
-                          </div>
-                        </div>
+                                  {/* Crypto Info */}
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <p className="text-white font-semibold text-lg">
+                                        {crypto.name}
+                                      </p>
+                                      {selectedCrypto === crypto.id && (
+                                        <svg
+                                          className="w-5 h-5 text-green-400"
+                                          fill="currentColor"
+                                          viewBox="0 0 20 20"
+                                        >
+                                          <path
+                                            fillRule="evenodd"
+                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                            clipRule="evenodd"
+                                          />
+                                        </svg>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                      <p className="text-gray-400 text-sm">
+                                        {crypto.symbol}
+                                      </p>
+                                      <span className="text-gray-600">•</span>
+                                      <p className="text-gray-500 text-xs">
+                                        {crypto.network}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
 
-                        {/* Litecoin */}
-                        <div
-                          onClick={() => setSelectedCrypto("ltc")}
-                          className={`group p-5 rounded-2xl border-2 cursor-not-allowed transition-all opacity-60 ${
-                            selectedCrypto === "ltc"
-                              ? "border-gray-400/50 bg-gradient-to-r from-gray-400/10 to-gray-500/10"
-                              : "border-gray-700/50 bg-gray-800/40"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-12 h-12 rounded-xl bg-gray-400/20 flex items-center justify-center">
-                                <span className="text-gray-400 font-bold text-xl">
-                                  Ł
-                                </span>
+                                {/* Price Info */}
+                                <div className="text-right">
+                                  {currentPrice > 0 ? (
+                                    <>
+                                      <p className="text-white text-base font-bold">
+                                        {getCurrencySymbol(preferredCurrency)}
+                                        {(
+                                          currentPrice *
+                                          (preferredCurrency !== "USD" ? 1 : 1)
+                                        ).toLocaleString(undefined, {
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits:
+                                            crypto.symbol === "BTC" ? 0 : 2,
+                                        })}
+                                      </p>
+                                      <div
+                                        className={`flex items-center justify-end gap-1 text-xs font-medium ${
+                                          change24h >= 0
+                                            ? "text-green-400"
+                                            : "text-red-400"
+                                        }`}
+                                      >
+                                        <svg
+                                          className={`w-3 h-3 ${
+                                            change24h < 0 ? "rotate-180" : ""
+                                          }`}
+                                          fill="currentColor"
+                                          viewBox="0 0 20 20"
+                                        >
+                                          <path
+                                            fillRule="evenodd"
+                                            d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
+                                            clipRule="evenodd"
+                                          />
+                                        </svg>
+                                        {Math.abs(change24h).toFixed(2)}%
+                                      </div>
+                                    </>
+                                  ) : (
+                                    <div className="animate-pulse">
+                                      <div className="h-4 bg-gray-700 rounded w-20 mb-1"></div>
+                                      <div className="h-3 bg-gray-700 rounded w-16"></div>
+                                    </div>
+                                  )}
+                                  <p className="text-gray-500 text-xs mt-1">
+                                    Min: {crypto.minAmount} {crypto.symbol}
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="text-white font-semibold text-lg">
-                                  Litecoin
-                                </p>
-                                <p className="text-gray-400 text-sm">LTC</p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-white text-sm font-medium">
-                                Min: 0.01 LTC
-                              </p>
-                              <p className="text-gray-400 text-xs">~$1 USD</p>
-                            </div>
-                          </div>
-                          <div className="mt-3 pt-3 border-t border-gray-700/50 text-yellow-400 text-xs flex items-center gap-1.5">
-                            <svg
-                              className="w-4 h-4"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                            Coming soon
-                          </div>
-                        </div>
+
+                              {/* Coming Soon Badge */}
+                              {!crypto.enabled && (
+                                <div className="mt-3 pt-3 border-t border-gray-700/50 text-yellow-400 text-xs flex items-center gap-1.5">
+                                  <svg
+                                    className="w-4 h-4"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  Coming soon
+                                </div>
+                              )}
+                            </motion.div>
+                          );
+                        })}
                       </div>
                     </div>
 
