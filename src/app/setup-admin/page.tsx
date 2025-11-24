@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import AdminSetupClient from "./AdminSetupClient";
+import { ToastProvider } from "@/contexts/ToastContext";
 
 // Force dynamic rendering to avoid static generation errors
 export const dynamic = "force-dynamic";
@@ -69,10 +70,12 @@ export default async function AdminSetupPage() {
 
   // Allow access ONLY if: no admin exists (first-time setup) OR user is logged in as admin
   return (
-    <AdminSetupClient
-      adminExists={!!adminExists}
-      isAuthenticated={!!session}
-      isAdmin={session?.user.role === "ADMIN"}
-    />
+    <ToastProvider>
+      <AdminSetupClient
+        adminExists={!!adminExists}
+        isAuthenticated={!!session}
+        isAdmin={session?.user.role === "ADMIN"}
+      />
+    </ToastProvider>
   );
 }
