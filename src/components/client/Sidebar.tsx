@@ -448,7 +448,8 @@ const Sidebar = () => {
                       </motion.div>
                     </li>
                   ))}
-                  {session?.user?.role === "ADMIN" && (
+                  {(session?.user?.role === "ADMIN" ||
+                    session?.user?.role === "STAFF_ADMIN") && (
                     <li className="mb-6">
                       <motion.div
                         animate={{

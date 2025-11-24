@@ -12,7 +12,17 @@ async function main() {
   const adminEmail = process.env.ORIGIN_ADMIN_EMAIL;
   const adminPasswordRaw = process.env.ORIGIN_ADMIN_PASSWORD;
   const adminCountry = process.env.ORIGIN_ADMIN_COUNTRY || "United States";
-  const adminCurrency = process.env.ORIGIN_ADMIN_CURRENCY || "USD";
+
+  // Auto-determine currency from country (no need for ORIGIN_ADMIN_CURRENCY)
+  const { COUNTRY_CURRENCY_MAP } = await import(
+    "../src/lib/country-currencies"
+  );
+  const { countries } = await import("../src/lib/countries");
+  let adminCurrency = "USD"; // Default
+  const countryData = countries.find((c: any) => c.name === adminCountry);
+  if (countryData && COUNTRY_CURRENCY_MAP[countryData.code]) {
+    adminCurrency = COUNTRY_CURRENCY_MAP[countryData.code];
+  }
 
   if (!adminEmail || !adminPasswordRaw) {
     console.error(
@@ -39,6 +49,9 @@ async function main() {
   const adminAccountNumber =
     process.env.ORIGIN_ADMIN_ACCOUNT_NUMBER || generateAccountNumber();
 
+  // Get country code for nationality
+  const adminCountryCode = countryData?.code || "US";
+
   const adminUser = await prisma.user.create({
     data: {
       id: generateId(),
@@ -64,13 +77,13 @@ async function main() {
           lastName:
             process.env.ORIGIN_ADMIN_NAME?.split(" ").slice(1).join(" ") ||
             "User",
-          dateOfBirth: "1990-01-01",
-          nationality: "US",
-          phoneNumber: "+1234567890",
-          address: "Admin Address",
-          city: "Admin City",
-          postalCode: "00000",
-          country: "US",
+          dateOfBirth: process.env.ORIGIN_ADMIN_DOB || "1990-01-01",
+          nationality: adminCountryCode,
+          phoneNumber: process.env.ORIGIN_ADMIN_PHONE || "+1234567890",
+          address: process.env.ORIGIN_ADMIN_ADDRESS || "Admin Address",
+          city: process.env.ORIGIN_ADMIN_CITY || "Admin City",
+          postalCode: process.env.ORIGIN_ADMIN_POSTAL_CODE || "00000",
+          country: adminCountryCode,
           idDocumentUrl: "admin-verified",
           proofOfAddressUrl: "admin-verified",
           selfieUrl: "admin-verified",

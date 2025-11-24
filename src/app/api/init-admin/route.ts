@@ -9,6 +9,9 @@ import {
   createErrorResponse,
   createSuccessResponse,
 } from "@/lib/middleware/errorHandler";
+import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
+import { countries } from "@/lib/countries";
+import { generateAccountNumber } from "@/lib/p2p-transfer-utils";
 
 /**
  * Initialize or update the origin admin user
@@ -26,7 +29,17 @@ export async function GET(request: Request) {
   const password = process.env.ORIGIN_ADMIN_PASSWORD;
   const name = process.env.ORIGIN_ADMIN_NAME || "Super Admin";
   const country = process.env.ORIGIN_ADMIN_COUNTRY || "United States";
-  const currency = process.env.ORIGIN_ADMIN_CURRENCY || "USD";
+
+  // Auto-determine currency from country (no need for ORIGIN_ADMIN_CURRENCY env var)
+  let preferredCurrency = "USD"; // Default
+  const countryData = countries.find((c) => c.name === country);
+  if (countryData && COUNTRY_CURRENCY_MAP[countryData.code]) {
+    preferredCurrency = COUNTRY_CURRENCY_MAP[countryData.code];
+  }
+
+  // Auto-generate account number if not in env vars
+  const accountNumber =
+    process.env.ORIGIN_ADMIN_ACCOUNT_NUMBER || generateAccountNumber();
 
   // Validate environment variables
   if (!email || !password) {
@@ -88,7 +101,8 @@ export async function GET(request: Request) {
           isDeleted: false, // Ensure not deleted
           isOriginAdmin: true, // Mark as the current origin admin
           country,
-          preferredCurrency: currency,
+          preferredCurrency, // Auto-determined from country
+          accountNumber, // Auto-generated or from env
         },
         select: {
           id: true,
@@ -122,19 +136,22 @@ export async function GET(request: Request) {
       });
 
       if (!existingKyc) {
+        // Get country code for nationality
+        const adminCountryCode = countryData?.code || "US";
+
         await prisma.kycVerification.create({
           data: {
             id: generateId(),
             userId: existingAdmin.id,
             firstName: name.split(" ")[0] || "Admin",
             lastName: name.split(" ").slice(1).join(" ") || "User",
-            dateOfBirth: "1990-01-01",
-            nationality: "US",
-            phoneNumber: "+1234567890",
-            address: "Admin Address",
-            city: "Admin City",
-            postalCode: "00000",
-            country: "US",
+            dateOfBirth: process.env.ORIGIN_ADMIN_DOB || "1990-01-01",
+            nationality: adminCountryCode,
+            phoneNumber: process.env.ORIGIN_ADMIN_PHONE || "+55234567890",
+            address: process.env.ORIGIN_ADMIN_ADDRESS || "Admin Address",
+            city: process.env.ORIGIN_ADMIN_CITY || "Admin City",
+            postalCode: process.env.ORIGIN_ADMIN_POSTAL_CODE || "00000",
+            country: adminCountryCode,
             idDocumentUrl: "admin-verified",
             proofOfAddressUrl: "admin-verified",
             selfieUrl: "admin-verified",
@@ -176,7 +193,8 @@ export async function GET(request: Request) {
           accountType: "INVESTOR",
           isOriginAdmin: true, // Mark as the current origin admin
           country,
-          preferredCurrency: currency,
+          preferredCurrency, // Auto-determined from country
+          accountNumber, // Auto-generated or from env
           updatedAt: new Date(),
           Portfolio: {
             create: {
@@ -190,13 +208,13 @@ export async function GET(request: Request) {
               id: generateId(),
               firstName: name.split(" ")[0] || "Admin",
               lastName: name.split(" ").slice(1).join(" ") || "User",
-              dateOfBirth: "1990-01-01",
-              nationality: "US",
-              phoneNumber: "+1234567890",
-              address: "Admin Address",
-              city: "Admin City",
-              postalCode: "00000",
-              country: "US",
+              dateOfBirth: process.env.ORIGIN_ADMIN_DOB || "1990-01-01",
+              nationality: countryData?.code || "US",
+              phoneNumber: process.env.ORIGIN_ADMIN_PHONE || "+1234567890",
+              address: process.env.ORIGIN_ADMIN_ADDRESS || "Admin Address",
+              city: process.env.ORIGIN_ADMIN_CITY || "Admin City",
+              postalCode: process.env.ORIGIN_ADMIN_POSTAL_CODE || "00000",
+              country: countryData?.code || "US",
               idDocumentUrl: "admin-verified",
               proofOfAddressUrl: "admin-verified",
               selfieUrl: "admin-verified",
