@@ -42,45 +42,19 @@ import {
 } from "lucide-react";
 
 interface BudgetCategory {
-  id: string;
   name: string;
-  icon: React.ReactNode;
   budgeted: number;
   spent: number;
   remaining: number;
-  type: "expense" | "income" | "savings";
-  color: string;
-  subcategories?: BudgetSubcategory[];
-}
-
-interface BudgetSubcategory {
-  id: string;
-  name: string;
-  budgeted: number;
-  spent: number;
-}
-
-interface Transaction {
-  id: string;
-  description: string;
-  amount: number;
-  category: string;
-  date: string;
-  type: "income" | "expense";
-  account: string;
-  recurring?: boolean;
+  percentage: number;
 }
 
 interface SavingsGoal {
-  id: string;
   name: string;
-  targetAmount: number;
-  currentAmount: number;
-  targetDate: string;
-  monthlyContribution: number;
-  priority: "high" | "medium" | "low";
-  category: string;
-  description: string;
+  target: number;
+  current: number;
+  deadline: string;
+  monthlyRequired: number;
 }
 
 interface CashFlowProjection {
@@ -89,250 +63,86 @@ interface CashFlowProjection {
   expenses: number;
   savings: number;
   netFlow: number;
-  cumulativeBalance: number;
+  balance: number;
 }
 
-// TODO: REPLACE WITH REAL USER BUDGET DATA FROM DATABASE
-// This mock data needs to be replaced with actual user budget data:
-// - Fetch from Prisma: await prisma.budget.findMany({ where: { userId } })
-// - Include: categories, subcategories, actual spending from transactions
-// - Calculate real-time budget vs actual spending
-// - NEVER use this mock data in production
-const mockBudgetCategories: BudgetCategory[] = [
-  {
-    id: "housing",
-    name: "Housing",
-    icon: <Home className="w-5 h-5" />,
-    budgeted: 2500,
-    spent: 2400,
-    remaining: 100,
-    type: "expense",
-    color: "#EF4444",
-    subcategories: [
-      { id: "rent", name: "Rent/Mortgage", budgeted: 2000, spent: 2000 },
-      { id: "utilities", name: "Utilities", budgeted: 300, spent: 280 },
-      { id: "insurance", name: "Insurance", budgeted: 200, spent: 120 },
-    ],
-  },
-  {
-    id: "food",
-    name: "Food & Dining",
-    icon: <Coffee className="w-5 h-5" />,
-    budgeted: 800,
-    spent: 650,
-    remaining: 150,
-    type: "expense",
-    color: "#F59E0B",
-    subcategories: [
-      { id: "groceries", name: "Groceries", budgeted: 500, spent: 450 },
-      { id: "restaurants", name: "Restaurants", budgeted: 300, spent: 200 },
-    ],
-  },
-  {
-    id: "transportation",
-    name: "Transportation",
-    icon: <Car className="w-5 h-5" />,
-    budgeted: 600,
-    spent: 580,
-    remaining: 20,
-    type: "expense",
-    color: "#10B981",
-    subcategories: [
-      { id: "gas", name: "Gas", budgeted: 200, spent: 180 },
-      { id: "maintenance", name: "Maintenance", budgeted: 150, spent: 200 },
-      { id: "insurance", name: "Car Insurance", budgeted: 250, spent: 200 },
-    ],
-  },
-  {
-    id: "investment",
-    name: "Investments",
-    icon: <TrendingUp className="w-5 h-5" />,
-    budgeted: 3000,
-    spent: 3000,
-    remaining: 0,
-    type: "savings",
-    color: "#3B82F6",
-  },
-  {
-    id: "emergency",
-    name: "Emergency Fund",
-    icon: <PiggyBank className="w-5 h-5" />,
-    budgeted: 500,
-    spent: 500,
-    remaining: 0,
-    type: "savings",
-    color: "#8B5CF6",
-  },
-  {
-    id: "salary",
-    name: "Salary",
-    icon: <Building className="w-5 h-5" />,
-    budgeted: 8000,
-    spent: 8000,
-    remaining: 0,
-    type: "income",
-    color: "#10B981",
-  },
-  {
-    id: "freelance",
-    name: "Freelance",
-    icon: <Smartphone className="w-5 h-5" />,
-    budgeted: 1500,
-    spent: 1200,
-    remaining: 300,
-    type: "income",
-    color: "#06B6D4",
-  },
-];
-
-// TODO: REPLACE WITH REAL USER SAVINGS GOALS FROM DATABASE
-// This mock data needs to be replaced with actual user savings goals:
-// - Fetch from Prisma: await prisma.savingsGoal.findMany({ where: { userId } })
-// - Track real contributions and progress
-// - NEVER use this mock data in production
-const mockSavingsGoals: SavingsGoal[] = [
-  {
-    id: "vacation",
-    name: "Europe Vacation",
-    targetAmount: 10000,
-    currentAmount: 6500,
-    targetDate: "2024-08-15",
-    monthlyContribution: 800,
-    priority: "high",
-    category: "Travel",
-    description: "3-week European adventure with family",
-  },
-  {
-    id: "car",
-    name: "New Car Down Payment",
-    targetAmount: 15000,
-    currentAmount: 8200,
-    targetDate: "2024-12-31",
-    monthlyContribution: 1200,
-    priority: "medium",
-    category: "Transportation",
-    description: "Down payment for Tesla Model 3",
-  },
-  {
-    id: "house",
-    name: "House Down Payment",
-    targetAmount: 80000,
-    currentAmount: 32000,
-    targetDate: "2026-06-01",
-    monthlyContribution: 2000,
-    priority: "high",
-    category: "Housing",
-    description: "20% down payment for first home",
-  },
-];
-
-// TODO: REPLACE WITH REAL CASH FLOW PROJECTIONS FROM DATABASE
-// This mock data needs to be replaced with actual cash flow calculations:
-// - Calculate from real income, expenses, and savings patterns
-// - Use historical transaction data for projections
-// - NEVER use this mock data in production
-const mockCashFlow: CashFlowProjection[] = [
-  {
-    month: "Jan 2024",
-    income: 9500,
-    expenses: 6200,
-    savings: 3500,
-    netFlow: -200,
-    cumulativeBalance: 15200,
-  },
-  {
-    month: "Feb 2024",
-    income: 9500,
-    expenses: 5800,
-    savings: 3500,
-    netFlow: 200,
-    cumulativeBalance: 15400,
-  },
-  {
-    month: "Mar 2024",
-    income: 9500,
-    expenses: 6400,
-    savings: 3500,
-    netFlow: -400,
-    cumulativeBalance: 15000,
-  },
-  {
-    month: "Apr 2024",
-    income: 9500,
-    expenses: 5900,
-    savings: 3500,
-    netFlow: 100,
-    cumulativeBalance: 15100,
-  },
-  {
-    month: "May 2024",
-    income: 9500,
-    expenses: 6100,
-    savings: 3500,
-    netFlow: -100,
-    cumulativeBalance: 15000,
-  },
-  {
-    month: "Jun 2024",
-    income: 9500,
-    expenses: 6000,
-    savings: 3500,
-    netFlow: 0,
-    cumulativeBalance: 15000,
-  },
-];
+interface BudgetData {
+  categories: BudgetCategory[];
+  savingsGoals: SavingsGoal[];
+  cashFlowProjections: CashFlowProjection[];
+  summary: {
+    totalIncome: number;
+    totalExpenses: number;
+    netSavings: number;
+    savingsRate: number;
+  };
+}
 
 export function BudgetingCashFlow() {
   const [selectedPeriod, setSelectedPeriod] = useState("monthly");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showProjections, setShowProjections] = useState(false);
-  const [editingGoal, setEditingGoal] = useState<string | null>(null);
+  const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const totalIncome = mockBudgetCategories
-    .filter((cat) => cat.type === "income")
-    .reduce((sum, cat) => sum + cat.spent, 0);
+  useEffect(() => {
+    const fetchBudgetData = async () => {
+      try {
+        const response = await fetch("/api/finance/budget");
+        if (!response.ok) throw new Error("Failed to fetch budget data");
+        const data = await response.json();
+        setBudgetData(data);
+      } catch (error) {
+        console.error("Error fetching budget data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const totalExpenses = mockBudgetCategories
-    .filter((cat) => cat.type === "expense")
-    .reduce((sum, cat) => sum + cat.spent, 0);
+    fetchBudgetData();
+  }, []);
 
-  const totalSavings = mockBudgetCategories
-    .filter((cat) => cat.type === "savings")
-    .reduce((sum, cat) => sum + cat.spent, 0);
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
-  const netCashFlow = totalIncome - totalExpenses - totalSavings;
-  const savingsRate = (totalSavings / totalIncome) * 100;
+  if (!budgetData) {
+    return (
+      <div className="text-center text-gray-400 py-12">
+        <AlertTriangle className="w-12 h-12 mx-auto mb-4" />
+        <p>Unable to load budget data</p>
+      </div>
+    );
+  }
+
+  const totalIncome = budgetData.summary.totalIncome;
+  const totalExpenses = budgetData.summary.totalExpenses;
+  const netSavings = budgetData.summary.netSavings;
+  const savingsRate = budgetData.summary.savingsRate;
+  const netCashFlow = totalIncome - totalExpenses;
 
   const getCategoryProgress = (category: BudgetCategory) => {
-    if (category.type === "income") {
-      return (category.spent / category.budgeted) * 100;
-    }
-    return ((category.budgeted - category.remaining) / category.budgeted) * 100;
+    return category.percentage;
   };
 
   const getCategoryStatus = (category: BudgetCategory) => {
-    const progress = getCategoryProgress(category);
-    if (category.type === "income") {
-      if (progress >= 100)
-        return { status: "success", color: "text-green-400" };
-      if (progress >= 80)
-        return { status: "warning", color: "text-yellow-400" };
-      return { status: "danger", color: "text-red-400" };
-    } else {
-      if (progress <= 75) return { status: "success", color: "text-green-400" };
-      if (progress <= 90)
-        return { status: "warning", color: "text-yellow-400" };
-      return { status: "danger", color: "text-red-400" };
-    }
+    const progress = category.percentage;
+    if (progress <= 75) return { status: "success", color: "text-green-400" };
+    if (progress <= 90) return { status: "warning", color: "text-yellow-400" };
+    return { status: "danger", color: "text-red-400" };
   };
 
   const getGoalProgress = (goal: SavingsGoal) => {
-    return (goal.currentAmount / goal.targetAmount) * 100;
+    return (goal.current / goal.target) * 100;
   };
 
   const getMonthsToGoal = (goal: SavingsGoal) => {
-    const remaining = goal.targetAmount - goal.currentAmount;
-    return Math.ceil(remaining / goal.monthlyContribution);
+    const remaining = goal.target - goal.current;
+    return Math.ceil(remaining / (goal.monthlyRequired || 1));
   };
 
   const getPriorityColor = (priority: string) => {
@@ -439,7 +249,7 @@ export function BudgetingCashFlow() {
           </div>
           <div>
             <p className="text-2xl font-bold text-white">
-              ${totalSavings.toLocaleString()}
+              ${netSavings.toLocaleString()}
             </p>
             <p className="text-sm text-blue-400 mt-1">
               {savingsRate.toFixed(1)}% rate
@@ -503,13 +313,13 @@ export function BudgetingCashFlow() {
         </div>
 
         <div className="space-y-4">
-          {mockBudgetCategories.map((category, index) => {
+          {budgetData.categories.map((category, index) => {
             const progress = getCategoryProgress(category);
             const status = getCategoryStatus(category);
 
             return (
               <motion.div
-                key={category.id}
+                key={category.name}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
@@ -517,19 +327,11 @@ export function BudgetingCashFlow() {
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-3">
-                    <div
-                      className="p-2 bg-gray-600 rounded-lg"
-                      style={{ color: category.color }}
-                    >
-                      {category.icon}
-                    </div>
+                    <div className="p-2 bg-gray-600 rounded-lg"></div>
                     <div>
                       <h4 className="text-white font-medium">
                         {category.name}
                       </h4>
-                      <p className="text-gray-400 text-sm capitalize">
-                        {category.type}
-                      </p>
                     </div>
                   </div>
 
@@ -539,72 +341,21 @@ export function BudgetingCashFlow() {
                       {category.budgeted.toLocaleString()}
                     </p>
                     <p className={`text-sm ${status.color}`}>
-                      {category.type === "income"
-                        ? `${progress.toFixed(0)}% achieved`
-                        : `${
-                            category.remaining > 0
-                              ? "$" +
-                                category.remaining.toLocaleString() +
-                                " left"
-                              : "Over budget"
-                          }`}
+                      {category.remaining > 0
+                        ? "$" + category.remaining.toLocaleString() + " left"
+                        : "Over budget"}
                     </p>
                   </div>
                 </div>
 
                 <div className="w-full bg-gray-600 rounded-full h-2 mb-3">
                   <div
-                    className="h-2 rounded-full transition-all duration-300"
+                    className="h-2 rounded-full transition-all duration-300 bg-blue-500"
                     style={{
                       width: `${Math.min(progress, 100)}%`,
-                      backgroundColor: category.color,
                     }}
                   />
                 </div>
-
-                {category.subcategories && (
-                  <div className="mt-3 pt-3 border-t border-gray-600">
-                    <button
-                      onClick={() =>
-                        setSelectedCategory(
-                          selectedCategory === category.id ? null : category.id
-                        )
-                      }
-                      className="flex items-center text-sm text-gray-400 hover:text-white transition-colors"
-                    >
-                      <ChevronRight
-                        className={`w-4 h-4 mr-1 transition-transform ${
-                          selectedCategory === category.id ? "rotate-90" : ""
-                        }`}
-                      />
-                      {category.subcategories.length} subcategories
-                    </button>
-
-                    <AnimatePresence>
-                      {selectedCategory === category.id && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: "auto", opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          className="mt-3 space-y-2 overflow-hidden"
-                        >
-                          {category.subcategories.map((sub) => (
-                            <div
-                              key={sub.id}
-                              className="flex items-center justify-between text-sm"
-                            >
-                              <span className="text-gray-300">{sub.name}</span>
-                              <span className="text-gray-400">
-                                ${sub.spent.toLocaleString()} / $
-                                {sub.budgeted.toLocaleString()}
-                              </span>
-                            </div>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
               </motion.div>
             );
           })}
@@ -622,13 +373,13 @@ export function BudgetingCashFlow() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-          {mockSavingsGoals.map((goal, index) => {
+          {budgetData.savingsGoals.map((goal, index) => {
             const progress = getGoalProgress(goal);
             const monthsToGo = getMonthsToGoal(goal);
 
             return (
               <motion.div
-                key={goal.id}
+                key={goal.name}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -637,15 +388,7 @@ export function BudgetingCashFlow() {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h4 className="text-white font-medium mb-1">{goal.name}</h4>
-                    <p className="text-gray-400 text-sm">{goal.description}</p>
                   </div>
-                  <span
-                    className={`px-2 py-1 rounded text-xs border ${getPriorityColor(
-                      goal.priority
-                    )}`}
-                  >
-                    {goal.priority}
-                  </span>
                 </div>
 
                 <div className="space-y-3">
@@ -663,8 +406,8 @@ export function BudgetingCashFlow() {
 
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-400">
-                      ${goal.currentAmount.toLocaleString()} / $
-                      {goal.targetAmount.toLocaleString()}
+                      ${goal.current.toLocaleString()} / $
+                      {goal.target.toLocaleString()}
                     </span>
                     <span className="text-white">
                       {monthsToGo} months to go
@@ -677,7 +420,7 @@ export function BudgetingCashFlow() {
                         Monthly Contribution
                       </p>
                       <p className="text-white font-medium">
-                        ${goal.monthlyContribution.toLocaleString()}
+                        ${goal.monthlyRequired.toLocaleString()}
                       </p>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -744,7 +487,7 @@ export function BudgetingCashFlow() {
                   </tr>
                 </thead>
                 <tbody>
-                  {mockCashFlow.map((month, index) => (
+                  {budgetData.cashFlowProjections.map((month, index) => (
                     <tr
                       key={month.month}
                       className="border-b border-gray-700 hover:bg-gray-700/30"
@@ -770,7 +513,7 @@ export function BudgetingCashFlow() {
                         {month.netFlow.toLocaleString()}
                       </td>
                       <td className="p-3 text-right text-white font-medium">
-                        ${month.cumulativeBalance.toLocaleString()}
+                        ${month.balance.toLocaleString()}
                       </td>
                     </tr>
                   ))}

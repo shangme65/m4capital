@@ -485,7 +485,11 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                                       : "bg-gray-800/50 border border-gray-700/50 hover:border-gray-600"
                                   }`}
                                 >
-                                  <CryptoIcon symbol={asset.symbol} size="sm" />
+                                  <CryptoIcon
+                                    symbol={asset.symbol}
+                                    size="sm"
+                                    showNetwork={true}
+                                  />
                                   <div className="flex-1 text-left">
                                     <div className="text-white font-medium">
                                       {asset.symbol}

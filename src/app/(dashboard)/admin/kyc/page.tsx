@@ -72,10 +72,13 @@ export default function KycManagementPage() {
       const response = await fetch(`/api/admin/kyc/list?status=${filter}`);
       if (response.ok) {
         const data = await response.json();
-        setSubmissions(data.submissions);
+        setSubmissions(data.submissions || []);
+      } else {
+        setSubmissions([]);
       }
     } catch (error) {
       console.error("Failed to fetch KYC submissions:", error);
+      setSubmissions([]);
     } finally {
       setLoading(false);
     }
@@ -471,7 +474,7 @@ export default function KycManagementPage() {
           <div className="inline-block w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-gray-400 mt-4">Loading submissions...</p>
         </div>
-      ) : submissions.length === 0 ? (
+      ) : !submissions || submissions.length === 0 ? (
         <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
           <FileText className="w-12 h-12 text-gray-600 mx-auto mb-4" />
           <p className="text-gray-400">No KYC submissions found</p>

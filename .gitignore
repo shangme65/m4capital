@@ -34,6 +34,7 @@ yarn-error.log*
 README.md
 NOWPAYMENTS_READY.md
 QUICK_SETUP.md
+/docs
 
 # vercel
 .vercel

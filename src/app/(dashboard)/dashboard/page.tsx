@@ -854,7 +854,11 @@ function DashboardContent() {
                   >
                     {/* Left side: Icon and Info */}
                     <div className="flex items-center gap-3">
-                      <CryptoIcon symbol={asset.symbol} size="md" />
+                      <CryptoIcon
+                        symbol={asset.symbol}
+                        size="md"
+                        showNetwork={true}
+                      />
                       <div className="flex flex-col">
                         <div className="flex items-center gap-2">
                           <span className="text-white font-bold text-base">

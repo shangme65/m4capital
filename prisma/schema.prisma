@@ -462,6 +462,7 @@ model User {
   createdAt              DateTime           @default(now())
   updatedAt              DateTime
   isOriginAdmin          Boolean            @default(false)
+  assignedStaffId        String?
   linkedTelegramId       BigInt?            @unique
   linkedTelegramUsername String?
   twoFactorEnabled       Boolean            @default(false)
@@ -644,4 +645,5 @@ enum TwoFactorMethod {
 enum UserRole {
   USER
   ADMIN
+  STAFF_ADMIN
 }

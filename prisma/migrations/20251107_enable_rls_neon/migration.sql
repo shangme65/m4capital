@@ -10,7 +10,7 @@ ALTER TABLE "KycVerification" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Portfolio" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Deposit" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Withdrawal" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "Trade" ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "Trade" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "PaperPortfolio" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "PaperTrade" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Strategy" ENABLE ROW LEVEL SECURITY;
@@ -47,7 +47,7 @@ ALTER TABLE "User" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Portfolio" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Deposit" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Withdrawal" FORCE ROW LEVEL SECURITY;
-ALTER TABLE "Trade" FORCE ROW LEVEL SECURITY;
+-- ALTER TABLE "Trade" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "PaperPortfolio" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "PaperTrade" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "KycVerification" FORCE ROW LEVEL SECURITY;
@@ -106,15 +106,15 @@ CREATE POLICY "Admins can manage all withdrawals" ON "Withdrawal"
   FOR ALL
   USING (is_admin());
 
--- Trade policies
-CREATE POLICY "Users can view own trades" ON "Trade"
-  FOR SELECT
-  USING ("userId" = current_user_id());
+-- Trade policies (commented out - table not created yet)
+-- CREATE POLICY "Users can view own trades" ON "Trade"
+--   FOR SELECT
+--   USING ("userId" = current_user_id());
 
-CREATE POLICY "Users can manage own trades" ON "Trade"
-  FOR ALL
-  USING ("userId" = current_user_id())
-  WITH CHECK ("userId" = current_user_id());
+-- CREATE POLICY "Users can manage own trades" ON "Trade"
+--   FOR ALL
+--   USING ("userId" = current_user_id())
+--   WITH CHECK ("userId" = current_user_id());
 
 -- Paper Portfolio policies
 CREATE POLICY "Users can view own paper portfolio" ON "PaperPortfolio"

@@ -7,6 +7,7 @@ interface CryptoIconProps {
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
   alt?: string;
+  showNetwork?: boolean; // Show network badge (e.g., ETH badge on USDT)
 }
 
 const sizeMap = {
@@ -31,11 +32,18 @@ const colorMap: Record<string, string> = {
   USD: "#ffd700",
 };
 
+// Map tokens to their network
+const networkMap: Record<string, string> = {
+  USDT: "ETH", // USDT ERC-20
+  USDC: "ETH", // USDC ERC-20
+};
+
 export function CryptoIcon({
   symbol,
   size = "md",
   className = "",
   alt,
+  showNetwork = false,
 }: CryptoIconProps) {
   const [failed, setFailed] = useState(false);
   const iconSize = sizeMap[size];
@@ -43,37 +51,78 @@ export function CryptoIcon({
   const iconPath = `/${normalizedSymbol}.svg`;
   const bgColor = colorMap[symbol] || "#6b7280";
 
+  const networkSymbol = networkMap[symbol];
+  const badgeSize = Math.floor(iconSize * 0.4);
+
   if (failed) {
     // Fallback to colored circle with symbol
     return (
-      <div
-        className={`inline-flex items-center justify-center rounded-full text-white font-bold flex-shrink-0 ${className}`}
-        style={{
-          width: `${iconSize}px`,
-          height: `${iconSize}px`,
-          backgroundColor: bgColor,
-          fontSize: `${iconSize * 0.4}px`,
-        }}
-      >
-        {symbol.substring(0, 1)}
+      <div className="relative inline-block">
+        <div
+          className={`inline-flex items-center justify-center rounded-full text-white font-bold flex-shrink-0 ${className}`}
+          style={{
+            width: `${iconSize}px`,
+            height: `${iconSize}px`,
+            backgroundColor: bgColor,
+            fontSize: `${iconSize * 0.4}px`,
+          }}
+        >
+          {symbol.substring(0, 1)}
+        </div>
+        {showNetwork && networkSymbol && (
+          <div
+            className="absolute -bottom-0.5 -right-0.5 rounded-full bg-white ring-2 ring-gray-900"
+            style={{
+              width: `${badgeSize}px`,
+              height: `${badgeSize}px`,
+            }}
+          >
+            <img
+              src={`/${networkSymbol.toLowerCase()}.svg`}
+              alt={`${networkSymbol} network`}
+              width={badgeSize}
+              height={badgeSize}
+              className="rounded-full"
+            />
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <img
-      src={iconPath}
-      alt={alt || `${symbol} icon`}
-      width={iconSize}
-      height={iconSize}
-      className={`inline-block ${className}`}
-      onError={() => {
-        setFailed(true);
-      }}
-      style={{
-        width: `${iconSize}px`,
-        height: `${iconSize}px`,
-      }}
-    />
+    <div className="relative inline-block">
+      <img
+        src={iconPath}
+        alt={alt || `${symbol} icon`}
+        width={iconSize}
+        height={iconSize}
+        className={`inline-block ${className}`}
+        onError={() => {
+          setFailed(true);
+        }}
+        style={{
+          width: `${iconSize}px`,
+          height: `${iconSize}px`,
+        }}
+      />
+      {showNetwork && networkSymbol && (
+        <div
+          className="absolute -bottom-0.5 -right-0.5 rounded-full bg-white ring-2 ring-gray-900"
+          style={{
+            width: `${badgeSize}px`,
+            height: `${badgeSize}px`,
+          }}
+        >
+          <img
+            src={`/${networkSymbol.toLowerCase()}.svg`}
+            alt={`${networkSymbol} network`}
+            width={badgeSize}
+            height={badgeSize}
+            className="rounded-full"
+          />
+        </div>
+      )}
+    </div>
   );
 }

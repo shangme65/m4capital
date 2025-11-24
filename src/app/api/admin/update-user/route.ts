@@ -72,10 +72,10 @@ export async function PUT(req: NextRequest) {
   }
 
   // Validate role
-  if (!["USER", "ADMIN"].includes(role)) {
+  if (!["USER", "ADMIN", "STAFF_ADMIN"].includes(role)) {
     return createErrorResponse(
       "Invalid role",
-      "Role must be USER or ADMIN",
+      "Role must be USER, ADMIN, or STAFF_ADMIN",
       undefined,
       400
     );

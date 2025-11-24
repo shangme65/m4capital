@@ -195,7 +195,11 @@ export default function AddCryptoModal({
                         className="w-full flex items-center justify-between p-4 bg-gray-900/50 hover:bg-gray-900 rounded-xl border border-gray-700/50 hover:border-gray-600 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <div className="flex items-center gap-4">
-                          <CryptoIcon symbol={crypto.symbol} size="md" />
+                          <CryptoIcon
+                            symbol={crypto.symbol}
+                            size="md"
+                            showNetwork={true}
+                          />
                           <div className="text-left">
                             <div className="text-white font-semibold flex items-center gap-2">
                               <span>{crypto.symbol}</span>

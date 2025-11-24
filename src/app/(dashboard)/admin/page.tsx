@@ -29,7 +29,10 @@ import {
   ArrowLeft,
   Trash2,
   AlertCircle,
+  Check,
+  X,
 } from "lucide-react";
+import { motion } from "framer-motion";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -267,7 +270,9 @@ const AdminDashboard = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [newRole, setNewRole] = useState<"USER" | "ADMIN">("USER");
+  const [newRole, setNewRole] = useState<"USER" | "ADMIN" | "STAFF_ADMIN">(
+    "USER"
+  );
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>(paymentMethods[0]);
@@ -559,7 +564,7 @@ const AdminDashboard = () => {
 
   const handleUpdateUserRole = async (
     userId: string,
-    newRole: "USER" | "ADMIN"
+    newRole: "USER" | "ADMIN" | "STAFF_ADMIN"
   ) => {
     setLoading(true);
     try {
@@ -1031,7 +1036,12 @@ const AdminDashboard = () => {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setEditingUser(user);
-                                    setNewRole(user.role as "USER" | "ADMIN");
+                                    setNewRole(
+                                      user.role as
+                                        | "USER"
+                                        | "ADMIN"
+                                        | "STAFF_ADMIN"
+                                    );
                                   }}
                                   className="text-gray-400 hover:text-orange-400 transition-colors"
                                   title="Edit Role"
@@ -1780,46 +1790,182 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Edit User Role Modal */}
+      {/* Edit User Role Modal - Responsive Web UI */}
       {editingUser && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4">Edit User Role</h3>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-400 mb-1">User:</p>
-                <p className="font-semibold">{editingUser.email}</p>
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ duration: 0.2 }}
+            className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-b border-gray-700 px-6 py-4">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <Settings className="w-6 h-6 text-orange-400" />
+                Edit User Role
+              </h3>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 space-y-6">
+              {/* User Info */}
+              <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+                <p className="text-sm text-gray-400 mb-1">User</p>
+                <p className="font-semibold text-white truncate">
+                  {editingUser.email}
+                </p>
+                {editingUser.name && (
+                  <p className="text-sm text-gray-300 mt-1">
+                    {editingUser.name}
+                  </p>
+                )}
               </div>
+
+              {/* Role Selection */}
               <div>
-                <label className="block text-sm text-gray-400 mb-2">Role</label>
-                <select
-                  value={newRole}
-                  onChange={(e) =>
-                    setNewRole(e.target.value as "USER" | "ADMIN")
-                  }
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
-                >
-                  <option value="USER">USER</option>
-                  <option value="ADMIN">ADMIN</option>
-                </select>
+                <label className="block text-sm font-medium text-gray-300 mb-3">
+                  Select Role
+                </label>
+                <div className="space-y-2">
+                  {/* USER Role */}
+                  <label className="flex items-center justify-between p-4 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-orange-500/50 group">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          newRole === "USER"
+                            ? "border-orange-500 bg-orange-500"
+                            : "border-gray-600 group-hover:border-orange-500/50"
+                        }`}
+                      >
+                        {newRole === "USER" && (
+                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">User</p>
+                        <p className="text-xs text-gray-400">
+                          Standard user account
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="role"
+                      value="USER"
+                      checked={newRole === "USER"}
+                      onChange={(e) =>
+                        setNewRole(
+                          e.target.value as "USER" | "ADMIN" | "STAFF_ADMIN"
+                        )
+                      }
+                      className="sr-only"
+                    />
+                  </label>
+
+                  {/* ADMIN Role */}
+                  <label className="flex items-center justify-between p-4 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-orange-500/50 group">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          newRole === "ADMIN"
+                            ? "border-orange-500 bg-orange-500"
+                            : "border-gray-600 group-hover:border-orange-500/50"
+                        }`}
+                      >
+                        {newRole === "ADMIN" && (
+                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">Admin</p>
+                        <p className="text-xs text-gray-400">
+                          Full system access
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="role"
+                      value="ADMIN"
+                      checked={newRole === "ADMIN"}
+                      onChange={(e) =>
+                        setNewRole(
+                          e.target.value as "USER" | "ADMIN" | "STAFF_ADMIN"
+                        )
+                      }
+                      className="sr-only"
+                    />
+                  </label>
+
+                  {/* STAFF_ADMIN Role */}
+                  <label className="flex items-center justify-between p-4 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-orange-500/50 group">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                          newRole === "STAFF_ADMIN"
+                            ? "border-orange-500 bg-orange-500"
+                            : "border-gray-600 group-hover:border-orange-500/50"
+                        }`}
+                      >
+                        {newRole === "STAFF_ADMIN" && (
+                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-white">Staff Admin</p>
+                        <p className="text-xs text-gray-400">
+                          Manage assigned users only
+                        </p>
+                      </div>
+                    </div>
+                    <input
+                      type="radio"
+                      name="role"
+                      value="STAFF_ADMIN"
+                      checked={newRole === "STAFF_ADMIN"}
+                      onChange={(e) =>
+                        setNewRole(
+                          e.target.value as "USER" | "ADMIN" | "STAFF_ADMIN"
+                        )
+                      }
+                      className="sr-only"
+                    />
+                  </label>
+                </div>
               </div>
-              <div className="flex space-x-3">
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   onClick={() => handleUpdateUserRole(editingUser.id, newRole)}
                   disabled={loading}
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors"
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg disabled:shadow-none flex items-center justify-center gap-2"
                 >
-                  {loading ? "Updating..." : "Update Role"}
+                  {loading ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-5 h-5" />
+                      Update Role
+                    </>
+                  )}
                 </button>
                 <button
                   onClick={() => setEditingUser(null)}
-                  className="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded-lg transition-colors"
+                  disabled={loading}
+                  className="flex-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
                 >
+                  <X className="w-5 h-5" />
                   Cancel
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>

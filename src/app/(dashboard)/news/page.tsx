@@ -1,23 +1,9 @@
 "use client";
 
-// TODO: CRITICAL - ENTIRE NEWS PAGE GENERATES FAKE ARTICLES
-// This page creates completely simulated news with:
-// - Random article generation from templates
-// - Fake sources, timestamps, and content
-// - Math.random() for all data attributes
-//
-// MUST BE REPLACED WITH:
-// - Real news API integration (NewsAPI, Benzinga, Alpha Vantage News, etc.)
-// - Actual market news fetched from legitimate sources
-// - Real timestamps and verified content
-// - NEVER use this fake news generator in production
-//
-// See generateRealTimeNews() function below - entirely fake!
-
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { motion } from "framer-motion";
 import {
   Search,
   TrendingUp,
@@ -40,27 +26,21 @@ import {
   Calendar,
   User,
 } from "lucide-react";
-import {
-  useMarketNews,
-  useMarketData,
-} from "@/components/client/MarketDataProvider";
-import { NewsItem } from "@/lib/marketData";
 
-// Extended NewsItem interface for enhanced features
-interface ExtendedNewsItem extends NewsItem {
-  priority?: "high" | "medium" | "low" | "breaking";
-  breaking?: boolean;
-  trending?: boolean;
-  verified?: boolean;
-  keywords?: string[];
-  readTime?: string;
-  category?: string;
+// NewsItem interface
+interface NewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  source: string;
+  timestamp: string;
   url?: string;
+  category?: string;
+  sentiment?: "positive" | "negative" | "neutral";
+  impact?: "high" | "medium" | "low";
 }
 
 const NewsPage = () => {
-  const { news, refreshNews } = useMarketNews();
-
   // Core state
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -69,16 +49,15 @@ const NewsPage = () => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Modal state
-  const [selectedArticle, setSelectedArticle] =
-    useState<ExtendedNewsItem | null>(null);
+  const [selectedArticle, setSelectedArticle] = useState<NewsItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Pagination and loading state
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [allNews, setAllNews] = useState<ExtendedNewsItem[]>([]);
+  const [allNews, setAllNews] = useState<NewsItem[]>([]);
   const [hasMoreNews, setHasMoreNews] = useState(true);
-  const articlesPerPage = 12;
+  const [loading, setLoading] = useState(true);
 
   // Enhanced state
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
@@ -88,172 +67,68 @@ const NewsPage = () => {
     trending: 0,
   });
 
-  // Generate real-time news data for forex, banks, crypto
-  const generateRealTimeNews = (page: number): ExtendedNewsItem[] => {
-    const sources = [
-      "Reuters",
-      "Bloomberg",
-      "CNBC",
-      "Financial Times",
-      "MarketWatch",
-      "CoinDesk",
-      "ForexLive",
-    ];
-    const categories = ["forex", "banking", "crypto", "markets", "economic"];
-    const newsTemplates = {
-      forex: [
-        "USD/EUR hits new monthly high amid Fed policy uncertainty",
-        "GBP strengthens against major currencies following BoE decision",
-        "JPY weakness continues as Bank of Japan maintains dovish stance",
-        "AUD/USD pair shows volatility amid commodity price fluctuations",
-        "CHF gains safe-haven appeal during market turbulence",
-      ],
-      banking: [
-        "Major banks report stronger Q3 earnings amid rising interest rates",
-        "Central bank digital currencies gain momentum globally",
-        "Banking sector sees increased lending activity",
-        "Regional banks face pressure from commercial real estate exposure",
-        "Financial institutions boost cyber security investments",
-      ],
-      crypto: [
-        "Bitcoin reaches new monthly high as institutional adoption continues",
-        "Ethereum network upgrade shows promising scalability improvements",
-        "Cryptocurrency markets surge as regulatory clarity emerges",
-        "DeFi protocols show significant growth in total value locked",
-        "Major corporations add crypto to treasury reserves",
-      ],
-      markets: [
-        "Stock markets rally on positive economic data",
-        "Technology sector leads market gains amid AI optimism",
-        "Energy stocks fluctuate with oil price volatility",
-        "Emerging markets show resilience despite global headwinds",
-        "Bond yields stabilize as inflation concerns ease",
-      ],
-      economic: [
-        "Fed signals potential rate cut in next meeting",
-        "Inflation data shows continued cooling trend",
-        "Employment figures exceed analyst expectations",
-        "GDP growth remains steady in latest quarter",
-        "Consumer confidence reaches six-month high",
-      ],
-    };
+  // Fetch real news from API
+  const fetchRealNews = async (page: number = 1) => {
+    try {
+      setIsLoadingMore(page > 1);
+      setLoading(page === 1);
 
-    const news: ExtendedNewsItem[] = [];
+      const response = await fetch(
+        `/api/news?category=${selectedCategory}&page=${page}`
+      );
+      const data = await response.json();
 
-    for (let i = 0; i < articlesPerPage; i++) {
-      const category =
-        categories[Math.floor(Math.random() * categories.length)];
-      const templates = newsTemplates[category as keyof typeof newsTemplates];
-      const title = templates[Math.floor(Math.random() * templates.length)];
-      const source = sources[Math.floor(Math.random() * sources.length)];
-      const timestamp = Date.now() - Math.floor(Math.random() * 86400000); // Within last 24 hours
+      if (data.success && data.news) {
+        if (page === 1) {
+          setAllNews(data.news);
+        } else {
+          setAllNews((prev) => [...prev, ...data.news]);
+        }
 
-      const sentiments = ["positive", "negative", "neutral"] as const;
-      const sentiment =
-        sentiments[Math.floor(Math.random() * sentiments.length)];
+        setHasMoreNews(data.news.length >= data.pageSize);
+        setLastUpdate(new Date());
 
-      const isBreaking = Math.random() < 0.1; // 10% chance of breaking news
-      const isTrending = Math.random() < 0.15; // 15% chance of trending
-
-      news.push({
-        id: `news-${page}-${i + 1}`,
-        title,
-        summary: `Detailed analysis of ${title.toLowerCase()}. Market experts provide insights into the latest developments and their potential impact on global financial markets.`,
-        source,
-        timestamp,
-        symbols: [],
-        sentiment,
-        priority: isBreaking
-          ? "breaking"
-          : Math.random() < 0.3
-          ? "high"
-          : "medium",
-        breaking: isBreaking,
-        trending: isTrending,
-        verified: true,
-        keywords: [
-          category,
-          sentiment === "positive"
-            ? "bullish"
-            : sentiment === "negative"
-            ? "bearish"
-            : "neutral",
-        ],
-        readTime: `${Math.floor(Math.random() * 3) + 2} min read`,
-        category: category.charAt(0).toUpperCase() + category.slice(1),
-        url: `https://example.com/news/${category}/${i + 1}`,
-      });
+        // Update stats
+        setLiveStats({
+          total: data.total || data.news.length,
+          breaking: data.news.filter((n: NewsItem) => n.impact === "high")
+            .length,
+          trending: data.news.filter(
+            (n: NewsItem) => n.sentiment === "positive"
+          ).length,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching news:", error);
+    } finally {
+      setLoading(false);
+      setIsLoadingMore(false);
     }
-
-    return news;
   };
 
-  // Handle scroll effect for header
+  // Fetch on mount and when category changes
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchRealNews(1);
+  }, [selectedCategory]);
+
+  // Scroll detection
   useEffect(() => {
     const handleScroll = () => {
-      const scrollTop = window.scrollY;
-      setIsScrolled(scrollTop > 50);
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Initialize news data
-  useEffect(() => {
-    const initialNews = generateRealTimeNews(1);
-    setAllNews(initialNews);
-  }, []);
-
-  // Update live statistics
-  useEffect(() => {
-    const extendedNews =
-      allNews.length > 0 ? allNews : (news as ExtendedNewsItem[]);
-    const breakingCount = extendedNews.filter(
-      (item) => item.priority === "high" || item.breaking === true
-    ).length;
-    const trendingCount = extendedNews.filter(
-      (item) => item.trending === true
-    ).length;
-
-    setLiveStats({
-      total: extendedNews.length,
-      breaking: breakingCount,
-      trending: trendingCount,
-    });
-  }, [allNews, news]);
-
-  // Load saved articles from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem("savedArticles");
-    if (saved) {
-      try {
-        setSavedArticles(new Set(JSON.parse(saved)));
-      } catch (error) {
-        console.error("Error loading saved articles:", error);
-      }
-    }
-  }, []);
-
-  // Enhanced filtering logic
-  const filteredNews = (
-    allNews.length > 0 ? allNews : (news as ExtendedNewsItem[])
-  ).filter((item) => {
+  // Filter news
+  const filteredNews = allNews.filter((news) => {
     const matchesSearch =
-      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.summary.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.symbols || []).some((symbol) =>
-        symbol.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-
-    const matchesCategory = (() => {
-      if (selectedCategory === "all") return true;
-      if (selectedCategory === "breaking")
-        return item.priority === "high" || item.breaking === true;
-      if (selectedCategory === "trending") return item.trending === true;
-      if (selectedCategory === "saved") return savedArticles.has(item.id);
-      return true; // Simplified for now
-    })();
+      news.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      news.summary.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || news.category === selectedCategory;
 
     return matchesSearch && matchesCategory;
   });
@@ -261,17 +136,14 @@ const NewsPage = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      // Generate fresh news data
-      const freshNews = generateRealTimeNews(1);
-      setAllNews(freshNews);
+      // Fetch fresh news data from API
+      await fetchRealNews(1);
       setCurrentPage(1);
-      setHasMoreNews(true);
-      setLastUpdate(new Date());
 
       // Show success notification
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("News Updated", {
-          body: `Updated with ${freshNews.length} fresh articles`,
+          body: `News feed refreshed`,
           icon: "/m4capitallogo1.png",
         });
       }
@@ -288,21 +160,13 @@ const NewsPage = () => {
     setIsLoadingMore(true);
     try {
       const nextPage = currentPage + 1;
-      const newNews = generateRealTimeNews(nextPage);
-
-      // Add new news to existing news
-      setAllNews((prev) => [...prev, ...newNews]);
+      await fetchRealNews(nextPage);
       setCurrentPage(nextPage);
-
-      // Simulate pagination limit (stop after 5 pages)
-      if (nextPage >= 5) {
-        setHasMoreNews(false);
-      }
 
       // Show notification
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("More News Loaded", {
-          body: `Loaded ${newNews.length} additional articles`,
+          body: `Loaded additional articles`,
           icon: "/m4capitallogo1.png",
         });
       }
@@ -345,9 +209,11 @@ const NewsPage = () => {
     return baseColor;
   };
 
-  const formatTimeAgo = (timestamp: number) => {
+  const formatTimeAgo = (timestamp: string | number) => {
+    const timestampMs =
+      typeof timestamp === "string" ? new Date(timestamp).getTime() : timestamp;
     const now = Date.now();
-    const diff = now - timestamp;
+    const diff = now - timestampMs;
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -358,7 +224,7 @@ const NewsPage = () => {
     if (minutes < 60) return `${minutes}m ago`;
     if (hours < 24) return `${hours}h ago`;
     if (days < 7) return `${days}d ago`;
-    return new Date(timestamp).toLocaleDateString();
+    return new Date(timestampMs).toLocaleDateString();
   };
 
   const toggleSaveArticle = (articleId: string) => {
@@ -374,7 +240,7 @@ const NewsPage = () => {
     localStorage.setItem("savedArticles", JSON.stringify(Array.from(newSaved)));
   };
 
-  const shareArticle = async (article: ExtendedNewsItem) => {
+  const shareArticle = async (article: NewsItem) => {
     if (navigator.share) {
       try {
         await navigator.share({
@@ -396,7 +262,7 @@ const NewsPage = () => {
   };
 
   // Modal handling functions
-  const handleArticleClick = (article: ExtendedNewsItem) => {
+  const handleArticleClick = (article: NewsItem) => {
     setSelectedArticle(article);
     setIsModalOpen(true);
     // Prevent body scroll when modal is open
@@ -582,7 +448,12 @@ const NewsPage = () => {
         </div>
 
         {/* News Grid */}
-        {filteredNews.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-400">Loading real-time financial news...</p>
+          </div>
+        ) : filteredNews.length === 0 ? (
           <div className="text-center py-8">
             <Newspaper className="w-12 h-12 text-gray-500 mx-auto mb-3" />
             <h3 className="text-lg font-semibold text-gray-300 mb-2">
@@ -608,11 +479,11 @@ const NewsPage = () => {
                 transition={{ delay: index * 0.02 }}
                 className={`relative bg-black/20 backdrop-blur-lg border-l-4 rounded-lg p-4 hover:bg-white/5 transition-all duration-300 border border-white/10 cursor-pointer ${getSentimentColor(
                   article.sentiment,
-                  article.priority
+                  article.impact
                 )}`}
                 onClick={() => handleArticleClick(article)}
               >
-                {article.priority === "breaking" && (
+                {article.impact === "high" && (
                   <div className="absolute -top-1 -right-1">
                     <div className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">
                       !
@@ -674,27 +545,20 @@ const NewsPage = () => {
                   {article.summary}
                 </p>
 
-                {article.keywords && article.keywords.length > 0 && (
+                {article.category && (
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {article.keywords.slice(0, 2).map((keyword, idx) => (
-                      <span
-                        key={idx}
-                        className="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded-full"
-                      >
-                        {keyword}
-                      </span>
-                    ))}
+                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded-full">
+                      {article.category}
+                    </span>
                   </div>
                 )}
 
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2 text-xs text-gray-400">
-                    {article.readTime && (
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {article.readTime}
-                      </span>
-                    )}
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {article.category || "News"}
+                    </span>
                   </div>
 
                   <div className="text-blue-400 text-xs flex items-center gap-1">
@@ -773,9 +637,9 @@ const NewsPage = () => {
                     {selectedArticle.source}
                   </span>
                 </div>
-                {selectedArticle.priority === "breaking" && (
+                {selectedArticle.impact === "high" && (
                   <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                    BREAKING
+                    HIGH IMPACT
                   </div>
                 )}
               </div>
@@ -806,12 +670,6 @@ const NewsPage = () => {
                       }
                     )}
                   </div>
-                  {selectedArticle.readTime && (
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      {selectedArticle.readTime}
-                    </div>
-                  )}
                   {selectedArticle.category && (
                     <div className="flex items-center gap-1">
                       <Star className="w-4 h-4" />
@@ -824,21 +682,6 @@ const NewsPage = () => {
                 <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">
                   {selectedArticle.title}
                 </h1>
-
-                {/* Keywords */}
-                {selectedArticle.keywords &&
-                  selectedArticle.keywords.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {selectedArticle.keywords.map((keyword, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-blue-500/20 text-blue-300 text-sm rounded-full"
-                        >
-                          {keyword}
-                        </span>
-                      ))}
-                    </div>
-                  )}
 
                 {/* Article Summary/Content */}
                 <div className="prose prose-invert max-w-none">

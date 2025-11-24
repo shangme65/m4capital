@@ -185,10 +185,16 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
       return;
     }
 
+    // If no amount entered, just toggle the display mode
+    if (currentAmount === 0 || !transferData.amount) {
+      setShowAmountInCrypto(!showAmountInCrypto);
+      return;
+    }
+
     if (showAmountInCrypto) {
       // Convert from crypto to preferred currency
       const usdAmount = currentAmount * price; // Crypto to USD
-      const fiatAmount = convertAmount(usdAmount); // USD to preferred currency
+      const fiatAmount = convertAmount(usdAmount, false); // USD to preferred currency
       setTransferData((prev) => ({
         ...prev,
         amount: fiatAmount.toFixed(2),
@@ -561,7 +567,8 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                                 ? convertAmount(
                                     availableBalances[
                                       transferData.asset as keyof typeof availableBalances
-                                    ] || 0
+                                    ] || 0,
+                                    false
                                   )
                                 : availableBalances[
                                     transferData.asset as keyof typeof availableBalances
@@ -569,7 +576,9 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                               ).toFixed(
                                 transferData.asset === "USD" ? 2 : 8
                               )}{" "}
-                              {transferData.asset}
+                              {transferData.asset === "USD"
+                                ? preferredCurrency
+                                : transferData.asset}
                             </span>
                           </div>
                         </div>

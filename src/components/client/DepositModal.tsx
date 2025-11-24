@@ -6,11 +6,7 @@ import Image from "next/image";
 import BitcoinWallet from "./BitcoinWallet";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import {
-  getCurrencySymbol,
-  getExchangeRates,
-  convertCurrency,
-} from "@/lib/currencies";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "./CryptoMarketProvider";
 
@@ -434,10 +430,10 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     )}
 
                     <div>
-                      <h3 className="text-2xl font-bold text-white mb-2">
+                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-1.5 sm:mb-2">
                         Select Cryptocurrency
                       </h3>
-                      <p className="text-gray-400 text-sm mb-6">
+                      <p className="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">
                         Choose which cryptocurrency you want to use for your
                         deposit of{" "}
                         <span className="text-white font-semibold">
@@ -446,7 +442,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         </span>
                       </p>
 
-                      <div className="grid grid-cols-1 gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800/50">
+                      <div className="grid grid-cols-1 gap-2.5 sm:gap-3 max-h-[500px] overflow-y-auto pr-1 sm:pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800/50">
                         {supportedCryptos.map((crypto) => {
                           const priceData = cryptoPrices[crypto.symbol];
                           const currentPrice = priceData?.price || 0;
@@ -461,7 +457,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                               onClick={() =>
                                 crypto.enabled && setSelectedCrypto(crypto.id)
                               }
-                              className={`group p-4 rounded-2xl border-2 transition-all ${
+                              className={`group p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all ${
                                 !crypto.enabled
                                   ? "cursor-not-allowed opacity-50"
                                   : "cursor-pointer"
@@ -471,11 +467,11 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                   : "border-gray-700/50 bg-gray-800/40 hover:bg-gray-800/60 hover:border-gray-600/50"
                               }`}
                             >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
+                              <div className="flex items-start sm:items-center justify-between gap-2">
+                                <div className="flex items-center space-x-2.5 sm:space-x-4 flex-1 min-w-0">
                                   {/* Crypto Icon */}
                                   <div
-                                    className={`w-14 h-14 rounded-xl flex items-center justify-center transition-all ${
+                                    className={`w-11 h-11 sm:w-14 sm:h-14 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
                                       selectedCrypto === crypto.id
                                         ? `bg-gradient-to-br ${crypto.gradient} shadow-md`
                                         : `${crypto.bgColor} group-hover:opacity-80`
@@ -493,14 +489,14 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                   </div>
 
                                   {/* Crypto Info */}
-                                  <div>
-                                    <div className="flex items-center gap-2">
-                                      <p className="text-white font-semibold text-lg">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                      <p className="text-white font-semibold text-sm sm:text-lg truncate">
                                         {crypto.name}
                                       </p>
                                       {selectedCrypto === crypto.id && (
                                         <svg
-                                          className="w-5 h-5 text-green-400"
+                                          className="w-4 h-4 sm:w-5 sm:h-5 text-green-400 flex-shrink-0"
                                           fill="currentColor"
                                           viewBox="0 0 20 20"
                                         >
@@ -512,12 +508,14 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                         </svg>
                                       )}
                                     </div>
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <p className="text-gray-400 text-sm">
+                                    <div className="flex items-center gap-1.5 sm:gap-2 mt-0.5">
+                                      <p className="text-gray-400 text-xs sm:text-sm font-medium">
                                         {crypto.symbol}
                                       </p>
-                                      <span className="text-gray-600">•</span>
-                                      <p className="text-gray-500 text-xs">
+                                      <span className="text-gray-600 text-xs">
+                                        •
+                                      </span>
+                                      <p className="text-gray-500 text-[10px] sm:text-xs truncate">
                                         {crypto.network}
                                       </p>
                                     </div>
@@ -525,10 +523,10 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                 </div>
 
                                 {/* Price Info */}
-                                <div className="text-right">
+                                <div className="text-right flex-shrink-0">
                                   {currentPrice > 0 ? (
                                     <>
-                                      <p className="text-white text-base font-bold">
+                                      <p className="text-white text-sm sm:text-base font-bold whitespace-nowrap">
                                         {getCurrencySymbol(preferredCurrency)}
                                         {(
                                           currentPrice *
@@ -539,14 +537,14 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                         })}
                                       </p>
                                       <div
-                                        className={`flex items-center justify-end gap-1 text-xs font-medium ${
+                                        className={`flex items-center justify-end gap-0.5 sm:gap-1 text-[10px] sm:text-xs font-medium ${
                                           change24h >= 0
                                             ? "text-green-400"
                                             : "text-red-400"
                                         }`}
                                       >
                                         <svg
-                                          className={`w-3 h-3 ${
+                                          className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${
                                             change24h < 0 ? "rotate-180" : ""
                                           }`}
                                           fill="currentColor"
@@ -563,11 +561,11 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                     </>
                                   ) : (
                                     <div className="animate-pulse">
-                                      <div className="h-4 bg-gray-700 rounded w-20 mb-1"></div>
-                                      <div className="h-3 bg-gray-700 rounded w-16"></div>
+                                      <div className="h-3.5 sm:h-4 bg-gray-700 rounded w-16 sm:w-20 mb-1"></div>
+                                      <div className="h-2.5 sm:h-3 bg-gray-700 rounded w-12 sm:w-16"></div>
                                     </div>
                                   )}
-                                  <p className="text-gray-500 text-xs mt-1">
+                                  <p className="text-gray-500 text-[10px] sm:text-xs mt-0.5 sm:mt-1 whitespace-nowrap">
                                     Min: {crypto.minAmount} {crypto.symbol}
                                   </p>
                                 </div>
@@ -575,9 +573,9 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
                               {/* Coming Soon Badge */}
                               {!crypto.enabled && (
-                                <div className="mt-3 pt-3 border-t border-gray-700/50 text-yellow-400 text-xs flex items-center gap-1.5">
+                                <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-700/50 text-yellow-400 text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5">
                                   <svg
-                                    className="w-4 h-4"
+                                    className="w-3 h-3 sm:w-4 sm:h-4"
                                     fill="currentColor"
                                     viewBox="0 0 20 20"
                                   >
@@ -597,11 +595,11 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-3 pt-6">
+                    <div className="flex gap-2 sm:gap-3 pt-4 sm:pt-6">
                       <button
                         type="button"
                         onClick={handleCryptoSelectionBack}
-                        className="flex-1 bg-gray-800/60 hover:bg-gray-700/60 border border-gray-700/50 text-white py-4 px-4 rounded-2xl font-semibold transition-all"
+                        className="flex-1 bg-gray-800/60 hover:bg-gray-700/60 border border-gray-700/50 text-white py-3 sm:py-4 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base transition-all"
                       >
                         Back
                       </button>
@@ -609,7 +607,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         type="button"
                         onClick={handleProceedToPayment}
                         disabled={!selectedCrypto}
-                        className="flex-1 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-500 hover:via-purple-500 hover:to-blue-500 disabled:from-gray-600 disabled:to-gray-700 text-white py-4 px-4 rounded-2xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/30"
+                        className="flex-1 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-500 hover:via-purple-500 hover:to-blue-500 disabled:from-gray-600 disabled:to-gray-700 text-white py-3 sm:py-4 px-3 sm:px-4 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/30"
                       >
                         Proceed to Payment
                       </button>
