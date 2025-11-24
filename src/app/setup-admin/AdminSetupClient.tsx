@@ -1,10 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useToast } from "@/contexts/ToastContext";
 import ConfirmDialog from "@/components/client/ConfirmDialog";
+import {
+  Shield,
+  CheckCircle,
+  AlertCircle,
+  Trash2,
+  RefreshCw,
+  Lock,
+  User,
+  Mail,
+  Key,
+  Server,
+  Activity,
+  Zap,
+  XCircle,
+  ArrowRight,
+  Terminal,
+  Database,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 
 interface AdminSetupClientProps {
   adminExists: boolean;
@@ -22,12 +42,21 @@ export default function AdminSetupClient({
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  const { showSuccess, showError } = useToast();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const initializeAdmin = async () => {
     setInitLoading(true);
     setError(null);
     setResult(null);
+    setActiveStep(1);
 
     try {
       const response = await fetch("/api/init-admin");
@@ -35,6 +64,7 @@ export default function AdminSetupClient({
 
       if (data.success) {
         setResult(data);
+        showSuccess(data.message || "Admin initialized successfully!");
 
         // After successful initialization, auto-login with credentials
         if (
@@ -50,31 +80,38 @@ export default function AdminSetupClient({
           });
 
           if (loginResult?.ok) {
-            // Successfully logged in - redirect to dashboard
-            window.location.href = "/dashboard";
+            showSuccess("Auto-login successful! Redirecting...");
+            setTimeout(() => {
+              window.location.href = "/dashboard";
+            }, 1500);
           } else {
             setError(
               loginResult?.error ||
                 "Admin created but auto-login failed. Please login manually."
             );
+            showError("Auto-login failed. Please login manually.");
           }
         }
       } else {
         setError(data.error || "Failed to initialize admin");
+        showError(data.error || "Failed to initialize admin");
       }
     } catch (err) {
-      setError(
+      const errorMsg =
         "Network error: " +
-          (err instanceof Error ? err.message : "Unknown error")
-      );
+        (err instanceof Error ? err.message : "Unknown error");
+      setError(errorMsg);
+      showError(errorMsg);
     } finally {
       setInitLoading(false);
+      setActiveStep(null);
     }
   };
 
   const removeOtherAdmins = async () => {
     setRemoveLoading(true);
     setError(null);
+    setActiveStep(2);
 
     try {
       const response = await fetch("/api/admin/remove-other-admins", {
@@ -84,124 +121,328 @@ export default function AdminSetupClient({
 
       if (data.success) {
         setResult(data);
+        showSuccess(data.message || "Origin admin removed successfully!");
       } else {
         setError(data.error || "Failed to remove origin admin");
+        showError(data.error || "Failed to remove origin admin");
       }
     } catch (err) {
-      setError(
+      const errorMsg =
         "Network error: " +
-          (err instanceof Error ? err.message : "Unknown error")
-      );
+        (err instanceof Error ? err.message : "Unknown error");
+      setError(errorMsg);
+      showError(errorMsg);
     } finally {
       setRemoveLoading(false);
+      setActiveStep(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-lg shadow-2xl p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-gray-900">Admin Setup</h1>
-          {isAuthenticated && isAdmin && (
-            <span className="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full">
-              Authenticated
-            </span>
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+      </div>
+
+      {/* Grid Pattern Overlay */}
+      <div
+        className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: `linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
+                           linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)`,
+          backgroundSize: "50px 50px",
+        }}
+      ></div>
+
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
+        <div
+          className={`w-full max-w-5xl transition-all duration-1000 ${
+            mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
+          }`}
+        >
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-2xl mb-4 animate-pulse">
+              <Shield className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3 tracking-tight">
+              Admin <span className="text-purple-400">Setup</span>
+            </h1>
+            <p className="text-gray-400 text-lg">
+              Initialize and manage your super admin account
+            </p>
+
+            {/* Status Badges */}
+            <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
+              {isAuthenticated && isAdmin && (
+                <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-500/30 text-green-400 px-4 py-2 rounded-full backdrop-blur-sm">
+                  <CheckCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    Authenticated as Admin
+                  </span>
+                </div>
+              )}
+              {adminExists && !isAuthenticated && (
+                <div className="inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 px-4 py-2 rounded-full backdrop-blur-sm">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">Not Logged In</span>
+                </div>
+              )}
+              {!adminExists && (
+                <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-500/30 text-blue-400 px-4 py-2 rounded-full backdrop-blur-sm">
+                  <Server className="w-4 h-4" />
+                  <span className="text-sm font-medium">First-Time Setup</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Alert Banners */}
+          {!adminExists && (
+            <div className="mb-6 bg-blue-500/10 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-6 shadow-xl">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                    <Activity className="w-6 h-6 text-blue-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-blue-300 font-semibold text-lg mb-2">
+                    First-Time Setup Detected
+                  </h3>
+                  <p className="text-blue-200/80 text-sm leading-relaxed">
+                    No admin account exists yet. This page is publicly
+                    accessible for initial setup. After creating an admin, this
+                    page will require admin authentication for security.
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
+
           {adminExists && !isAuthenticated && (
-            <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-3 py-1 rounded-full">
-              Not Logged In
-            </span>
+            <div className="mb-6 bg-yellow-500/10 backdrop-blur-xl border border-yellow-500/20 rounded-2xl p-6 shadow-xl">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
+                    <Lock className="w-6 h-6 text-yellow-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-yellow-300 font-semibold text-lg mb-2">
+                    Admin Already Exists
+                  </h3>
+                  <p className="text-yellow-200/80 text-sm leading-relaxed">
+                    An admin account exists in the database. You can still
+                    reinitialize or update the origin admin from your .env file.
+                    For security operations,{" "}
+                    <a
+                      href="/?login=true"
+                      className="underline font-semibold hover:text-yellow-300 transition-colors"
+                    >
+                      login as admin
+                    </a>
+                    .
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
-        </div>
 
-        {!adminExists && (
-          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-blue-800 text-sm">
-              <strong>First-time setup detected:</strong> No admin account
-              exists yet. This page is publicly accessible for initial setup.
-              After creating an admin, this page will require admin
-              authentication.
-            </p>
-          </div>
-        )}
-
-        {adminExists && !isAuthenticated && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-yellow-800 text-sm">
-              <strong>Admin already exists:</strong> An admin account exists in
-              the database. You can still use this page to reinitialize or
-              update the origin admin account from your .env file. For security
-              operations, please{" "}
-              <a href="/?login=true" className="underline font-semibold">
-                login as admin
-              </a>
-              .
-            </p>
-          </div>
-        )}
-
-        <div className="space-y-6">
-          {/* Initialize Admin Section */}
-          <div className="border border-gray-200 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-3">
-              1. Initialize Origin Admin
-            </h2>
-            <p className="text-gray-600 mb-4">
-              Create or update the super admin account using credentials from
-              your .env file.
-              <br />
-              <span className="text-sm text-gray-500">
-                (ORIGIN_ADMIN_EMAIL, ORIGIN_ADMIN_PASSWORD, ORIGIN_ADMIN_NAME)
-              </span>
-            </p>
-            <button
-              onClick={initializeAdmin}
-              disabled={initLoading}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+          {/* Main Content Grid */}
+          <div className="grid lg:grid-cols-2 gap-6 mb-6">
+            {/* Initialize Admin Card */}
+            <div
+              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-[1.02] ${
+                activeStep === 1 ? "ring-2 ring-purple-500" : ""
+              }`}
             >
-              {initLoading ? "Initializing..." : "Initialize Admin"}
-            </button>
-          </div>
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+                    <span className="text-white font-bold">1</span>
+                  </div>
+                  <h2 className="text-xl font-bold text-white">
+                    Initialize Origin Admin
+                  </h2>
+                </div>
+                {result?.action && (
+                  <CheckCircle className="w-6 h-6 text-green-400" />
+                )}
+              </div>
 
-          {/* Remove Other Admins Section */}
-          <div className="border border-red-200 rounded-lg p-6 bg-red-50">
-            <h2 className="text-xl font-semibold text-red-800 mb-3">
-              2. Remove Origin Admin (Optional)
-            </h2>
-            <p className="text-red-600 mb-4">
-              Remove the origin admin account. This helps clean up the admin if
-              you want to start fresh.
-              <br />
-              <span className="text-sm text-red-500">
-                ⚠️ This will soft-delete the admin set in ORIGIN_ADMIN_EMAIL
-              </span>
-            </p>
-            <button
-              onClick={() => setShowConfirmDialog(true)}
-              disabled={removeLoading}
-              className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+              <p className="text-gray-300 mb-4 leading-relaxed">
+                Create or update the super admin account using credentials from
+                your environment configuration.
+              </p>
+
+              <div className="bg-white/5 rounded-xl p-4 mb-4 border border-white/10">
+                <div className="flex items-center gap-2 mb-3">
+                  <Terminal className="w-4 h-4 text-purple-400" />
+                  <span className="text-sm font-semibold text-purple-300">
+                    Required Environment Variables
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="w-4 h-4 text-gray-400" />
+                    <code className="text-gray-300 font-mono text-xs">
+                      ORIGIN_ADMIN_EMAIL
+                    </code>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Key className="w-4 h-4 text-gray-400" />
+                    <code className="text-gray-300 font-mono text-xs">
+                      ORIGIN_ADMIN_PASSWORD
+                    </code>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <code className="text-gray-300 font-mono text-xs">
+                      ORIGIN_ADMIN_NAME
+                    </code>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={initializeAdmin}
+                disabled={initLoading}
+                className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-purple-500/50 flex items-center justify-center gap-2 group"
+              >
+                {initLoading ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <span>Initializing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                    <span>Initialize Admin</span>
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Remove Admin Card */}
+            <div
+              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl hover:shadow-red-500/20 transition-all duration-300 hover:scale-[1.02] ${
+                activeStep === 2 ? "ring-2 ring-red-500" : ""
+              }`}
             >
-              {removeLoading ? "Processing..." : "Remove Origin Admin"}
-            </button>
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center">
+                    <span className="text-white font-bold">2</span>
+                  </div>
+                  <h2 className="text-xl font-bold text-white">
+                    Remove Origin Admin
+                  </h2>
+                </div>
+                <div className="px-3 py-1 bg-orange-500/20 border border-orange-500/30 rounded-full">
+                  <span className="text-xs font-semibold text-orange-400">
+                    Optional
+                  </span>
+                </div>
+              </div>
+
+              <p className="text-gray-300 mb-4 leading-relaxed">
+                Remove the origin admin account if you want to clean up or start
+                fresh. This operation is reversible.
+              </p>
+
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-red-300 font-semibold text-sm mb-1">
+                      Caution
+                    </p>
+                    <p className="text-red-200/80 text-sm leading-relaxed">
+                      This will soft-delete the admin account specified in{" "}
+                      <code className="bg-red-900/30 px-1.5 py-0.5 rounded text-xs font-mono">
+                        ORIGIN_ADMIN_EMAIL
+                      </code>
+                      . The account can be restored if needed.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowConfirmDialog(true)}
+                disabled={removeLoading}
+                className="w-full bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/50 flex items-center justify-center gap-2 group"
+              >
+                {removeLoading ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <span>Processing...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                    <span>Remove Origin Admin</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* Result Display */}
           {result && (
-            <div className="border border-green-200 rounded-lg p-6 bg-green-50">
-              <h3 className="text-lg font-semibold text-green-800 mb-2">
-                ✅ Success
-              </h3>
-              <p className="text-green-700 mb-3">{result.message}</p>
-              <pre className="bg-white p-4 rounded border border-green-200 overflow-auto text-sm">
-                {JSON.stringify(result, null, 2)}
-              </pre>
+            <div className="mb-6 bg-green-500/10 backdrop-blur-xl border border-green-500/20 rounded-2xl p-6 shadow-xl animate-slideIn">
+              <div className="flex items-start gap-4 mb-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                    <CheckCircle className="w-6 h-6 text-green-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-green-300 font-semibold text-lg mb-2">
+                    Operation Successful
+                  </h3>
+                  <p className="text-green-200/80 text-sm">{result.message}</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowDetails(!showDetails)}
+                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 mb-4"
+              >
+                {showDetails ? (
+                  <>
+                    <EyeOff className="w-4 h-4" />
+                    <span>Hide Details</span>
+                  </>
+                ) : (
+                  <>
+                    <Eye className="w-4 h-4" />
+                    <span>View Details</span>
+                  </>
+                )}
+              </button>
+
+              {showDetails && (
+                <div className="bg-black/30 rounded-xl p-4 overflow-auto max-h-64 animate-slideDown">
+                  <pre className="text-green-300 text-xs font-mono">
+                    {JSON.stringify(result, null, 2)}
+                  </pre>
+                </div>
+              )}
+
               {result.action === "created" && (
-                <div className="mt-4">
+                <div className="mt-4 flex gap-3">
                   <button
                     onClick={() => router.push("/?login=true")}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-green-500/50 flex items-center justify-center gap-2"
                   >
-                    Go to Login
+                    <ArrowRight className="w-5 h-5" />
+                    <span>Go to Login</span>
                   </button>
                 </div>
               )}
@@ -210,40 +451,83 @@ export default function AdminSetupClient({
 
           {/* Error Display */}
           {error && (
-            <div className="border border-red-200 rounded-lg p-6 bg-red-50">
-              <h3 className="text-lg font-semibold text-red-800 mb-2">
-                ❌ Error
-              </h3>
-              <p className="text-red-700">{error}</p>
+            <div className="mb-6 bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-2xl p-6 shadow-xl animate-shake">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
+                    <XCircle className="w-6 h-6 text-red-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-red-300 font-semibold text-lg mb-2">
+                    Error Occurred
+                  </h3>
+                  <p className="text-red-200/80 text-sm leading-relaxed">
+                    {error}
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Instructions */}
-          <div className="border border-blue-200 rounded-lg p-6 bg-blue-50">
-            <h3 className="text-lg font-semibold text-blue-800 mb-3">
-              📋 Instructions
-            </h3>
-            <ol className="list-decimal list-inside space-y-2 text-blue-700">
-              <li>
-                Make sure you've set ORIGIN_ADMIN_EMAIL and
-                ORIGIN_ADMIN_PASSWORD in your .env file
-              </li>
-              <li>
-                Click "Initialize Admin" to create/update the super admin
-                account
-              </li>
-              <li>
-                The admin will be automatically verified (no email verification
-                needed)
-              </li>
-              <li>
-                You can now login using the credentials from your .env file
-              </li>
-              <li>
-                (Optional) Use "Remove Origin Admin" to clean up the admin
-                account
-              </li>
-            </ol>
+          {/* Instructions Card */}
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
+                <Database className="w-5 h-5 text-white" />
+              </div>
+              <h3 className="text-xl font-bold text-white">Setup Guide</h3>
+            </div>
+
+            <div className="space-y-3">
+              {[
+                {
+                  step: "1",
+                  text: "Ensure ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD are set in your .env file",
+                  icon: Terminal,
+                },
+                {
+                  step: "2",
+                  text: 'Click "Initialize Admin" to create or update the super admin account',
+                  icon: Zap,
+                },
+                {
+                  step: "3",
+                  text: "The admin will be automatically verified (no email verification required)",
+                  icon: CheckCircle,
+                },
+                {
+                  step: "4",
+                  text: "Login using the credentials from your .env file",
+                  icon: Lock,
+                },
+                {
+                  step: "5",
+                  text: 'Optional: Use "Remove Origin Admin" to clean up if needed',
+                  icon: Trash2,
+                },
+              ].map((item, index) => {
+                const Icon = item.icon;
+                return (
+                  <div
+                    key={index}
+                    className="flex items-start gap-3 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 group"
+                  >
+                    <div className="flex-shrink-0 w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <span className="text-blue-400 font-bold text-sm">
+                        {item.step}
+                      </span>
+                    </div>
+                    <div className="flex items-start gap-2 flex-1">
+                      <Icon className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-gray-300 text-sm leading-relaxed">
+                        {item.text}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
@@ -259,6 +543,80 @@ export default function AdminSetupClient({
           onCancel={() => setShowConfirmDialog(false)}
         />
       )}
+
+      <style jsx global>{`
+        @keyframes blob {
+          0%,
+          100% {
+            transform: translate(0, 0) scale(1);
+          }
+          33% {
+            transform: translate(30px, -50px) scale(1.1);
+          }
+          66% {
+            transform: translate(-20px, 20px) scale(0.9);
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            max-height: 0;
+          }
+          to {
+            opacity: 1;
+            max-height: 500px;
+          }
+        }
+
+        @keyframes shake {
+          0%,
+          100% {
+            transform: translateX(0);
+          }
+          25% {
+            transform: translateX(-10px);
+          }
+          75% {
+            transform: translateX(10px);
+          }
+        }
+
+        .animate-blob {
+          animation: blob 7s infinite;
+        }
+
+        .animation-delay-2000 {
+          animation-delay: 2s;
+        }
+
+        .animation-delay-4000 {
+          animation-delay: 4s;
+        }
+
+        .animate-slideIn {
+          animation: slideIn 0.5s ease-out;
+        }
+
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+
+        .animate-shake {
+          animation: shake 0.5s ease-out;
+        }
+      `}</style>
     </div>
   );
 }
