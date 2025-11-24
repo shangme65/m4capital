@@ -48,7 +48,7 @@ export function CryptoIcon({
   const [failed, setFailed] = useState(false);
   const iconSize = sizeMap[size];
   const normalizedSymbol = symbol.toLowerCase();
-  const iconPath = `/${normalizedSymbol}.svg`;
+  const iconPath = `/crypto/${normalizedSymbol}.svg`;
   const bgColor = colorMap[symbol] || "#6b7280";
 
   const networkSymbol = networkMap[symbol];
@@ -78,7 +78,7 @@ export function CryptoIcon({
             }}
           >
             <img
-              src={`/${networkSymbol.toLowerCase()}.svg`}
+              src={`/crypto/${networkSymbol.toLowerCase()}.svg`}
               alt={`${networkSymbol} network`}
               width={badgeSize}
               height={badgeSize}
@@ -115,7 +115,7 @@ export function CryptoIcon({
           }}
         >
           <img
-            src={`/${networkSymbol.toLowerCase()}.svg`}
+            src={`/crypto/${networkSymbol.toLowerCase()}.svg`}
             alt={`${networkSymbol} network`}
             width={badgeSize}
             height={badgeSize}
