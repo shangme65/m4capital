@@ -157,44 +157,44 @@ export default function AdminSetupClient({
         }}
       ></div>
 
-      <div className="relative z-10 flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8 pt-24 sm:pt-28">
         <div
-          className={`w-full max-w-5xl transition-all duration-1000 ${
+          className={`w-full max-w-4xl transition-all duration-1000 ${
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
           }`}
         >
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-2xl mb-4 animate-pulse">
-              <Shield className="w-10 h-10 text-white" />
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-2xl mb-3 animate-pulse">
+              <Shield className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight">
               Admin <span className="text-purple-400">Setup</span>
             </h1>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-400 text-base">
               Initialize and manage your super admin account
             </p>
 
             {/* Status Badges */}
-            <div className="flex items-center justify-center gap-3 mt-4 flex-wrap">
+            <div className="flex items-center justify-center gap-2 mt-3 flex-wrap">
               {isAuthenticated && isAdmin && (
-                <div className="inline-flex items-center gap-2 bg-green-500/20 border border-green-500/30 text-green-400 px-4 py-2 rounded-full backdrop-blur-sm">
-                  <CheckCircle className="w-4 h-4" />
-                  <span className="text-sm font-medium">
+                <div className="inline-flex items-center gap-1.5 bg-green-500/20 border border-green-500/30 text-green-400 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium">
                     Authenticated as Admin
                   </span>
                 </div>
               )}
               {adminExists && !isAuthenticated && (
-                <div className="inline-flex items-center gap-2 bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 px-4 py-2 rounded-full backdrop-blur-sm">
-                  <AlertCircle className="w-4 h-4" />
-                  <span className="text-sm font-medium">Not Logged In</span>
+                <div className="inline-flex items-center gap-1.5 bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium">Not Logged In</span>
                 </div>
               )}
               {!adminExists && (
-                <div className="inline-flex items-center gap-2 bg-blue-500/20 border border-blue-500/30 text-blue-400 px-4 py-2 rounded-full backdrop-blur-sm">
-                  <Server className="w-4 h-4" />
-                  <span className="text-sm font-medium">First-Time Setup</span>
+                <div className="inline-flex items-center gap-1.5 bg-blue-500/20 border border-blue-500/30 text-blue-400 px-3 py-1.5 rounded-full backdrop-blur-sm">
+                  <Server className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium">First-Time Setup</span>
                 </div>
               )}
             </div>
@@ -202,18 +202,18 @@ export default function AdminSetupClient({
 
           {/* Alert Banners */}
           {!adminExists && (
-            <div className="mb-6 bg-blue-500/10 backdrop-blur-xl border border-blue-500/20 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-start gap-4">
+            <div className="mb-4 bg-blue-500/10 backdrop-blur-xl border border-blue-500/20 rounded-xl p-4 shadow-xl">
+              <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                    <Activity className="w-6 h-6 text-blue-400" />
+                  <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-blue-400" />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-blue-300 font-semibold text-lg mb-2">
+                  <h3 className="text-blue-300 font-semibold text-base mb-1">
                     First-Time Setup Detected
                   </h3>
-                  <p className="text-blue-200/80 text-sm leading-relaxed">
+                  <p className="text-blue-200/80 text-xs leading-relaxed">
                     No admin account exists yet. This page is publicly
                     accessible for initial setup. After creating an admin, this
                     page will require admin authentication for security.
@@ -224,18 +224,18 @@ export default function AdminSetupClient({
           )}
 
           {adminExists && !isAuthenticated && (
-            <div className="mb-6 bg-yellow-500/10 backdrop-blur-xl border border-yellow-500/20 rounded-2xl p-6 shadow-xl">
-              <div className="flex items-start gap-4">
+            <div className="mb-4 bg-yellow-500/10 backdrop-blur-xl border border-yellow-500/20 rounded-xl p-4 shadow-xl">
+              <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
-                    <Lock className="w-6 h-6 text-yellow-400" />
+                  <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-yellow-400" />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-yellow-300 font-semibold text-lg mb-2">
+                  <h3 className="text-yellow-300 font-semibold text-base mb-1">
                     Admin Already Exists
                   </h3>
-                  <p className="text-yellow-200/80 text-sm leading-relaxed">
+                  <p className="text-yellow-200/80 text-xs leading-relaxed">
                     An admin account exists in the database. You can still
                     reinitialize or update the origin admin from your .env file.
                     For security operations,{" "}
@@ -253,28 +253,28 @@ export default function AdminSetupClient({
           )}
 
           {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid lg:grid-cols-2 gap-4 mb-4">
             {/* Initialize Admin Card */}
             <div
-              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-[1.02] ${
+              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-[1.02] ${
                 activeStep === 1 ? "ring-2 ring-purple-500" : ""
               }`}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold">1</span>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">1</span>
                   </div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-lg font-bold text-white">
                     Initialize Origin Admin
                   </h2>
                 </div>
                 {result?.action && (
-                  <CheckCircle className="w-6 h-6 text-green-400" />
+                  <CheckCircle className="w-5 h-5 text-green-400" />
                 )}
               </div>
 
-              <p className="text-gray-300 mb-4 leading-relaxed">
+              <p className="text-gray-300 text-sm mb-3 leading-relaxed">
                 Create or update the super admin account using credentials from
                 your environment configuration.
               </p>
@@ -330,39 +330,39 @@ export default function AdminSetupClient({
 
             {/* Remove Admin Card */}
             <div
-              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl hover:shadow-red-500/20 transition-all duration-300 hover:scale-[1.02] ${
+              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 shadow-2xl hover:shadow-red-500/20 transition-all duration-300 hover:scale-[1.02] ${
                 activeStep === 2 ? "ring-2 ring-red-500" : ""
               }`}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-600 rounded-xl flex items-center justify-center">
-                    <span className="text-white font-bold">2</span>
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-sm">2</span>
                   </div>
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-lg font-bold text-white">
                     Remove Origin Admin
                   </h2>
                 </div>
-                <div className="px-3 py-1 bg-orange-500/20 border border-orange-500/30 rounded-full">
+                <div className="px-2 py-0.5 bg-orange-500/20 border border-orange-500/30 rounded-full">
                   <span className="text-xs font-semibold text-orange-400">
                     Optional
                   </span>
                 </div>
               </div>
 
-              <p className="text-gray-300 mb-4 leading-relaxed">
+              <p className="text-gray-300 text-sm mb-3 leading-relaxed">
                 Remove the origin admin account if you want to clean up or start
                 fresh. This operation is reversible.
               </p>
 
-              <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mb-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-red-300 font-semibold text-sm mb-1">
+                    <p className="text-red-300 font-semibold text-xs mb-0.5">
                       Caution
                     </p>
-                    <p className="text-red-200/80 text-sm leading-relaxed">
+                    <p className="text-red-200/80 text-xs leading-relaxed">
                       This will soft-delete the admin account specified in{" "}
                       <code className="bg-red-900/30 px-1.5 py-0.5 rounded text-xs font-mono">
                         ORIGIN_ADMIN_EMAIL
@@ -376,16 +376,16 @@ export default function AdminSetupClient({
               <button
                 onClick={() => setShowConfirmDialog(true)}
                 disabled={removeLoading}
-                className="w-full bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/50 flex items-center justify-center gap-2 group"
+                className="w-full bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-5 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/50 flex items-center justify-center gap-2 group text-sm"
               >
                 {removeLoading ? (
                   <>
-                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <RefreshCw className="w-4 h-4 animate-spin" />
                     <span>Processing...</span>
                   </>
                 ) : (
                   <>
-                    <Trash2 className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                    <Trash2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                     <span>Remove Origin Admin</span>
                   </>
                 )}
@@ -395,40 +395,40 @@ export default function AdminSetupClient({
 
           {/* Result Display */}
           {result && (
-            <div className="mb-6 bg-green-500/10 backdrop-blur-xl border border-green-500/20 rounded-2xl p-6 shadow-xl animate-slideIn">
-              <div className="flex items-start gap-4 mb-4">
+            <div className="mb-4 bg-green-500/10 backdrop-blur-xl border border-green-500/20 rounded-xl p-4 shadow-xl animate-slideIn">
+              <div className="flex items-start gap-3 mb-3">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
-                    <CheckCircle className="w-6 h-6 text-green-400" />
+                  <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
+                    <CheckCircle className="w-5 h-5 text-green-400" />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-green-300 font-semibold text-lg mb-2">
+                  <h3 className="text-green-300 font-semibold text-base mb-1">
                     Operation Successful
                   </h3>
-                  <p className="text-green-200/80 text-sm">{result.message}</p>
+                  <p className="text-green-200/80 text-xs">{result.message}</p>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowDetails(!showDetails)}
-                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white px-4 py-3 rounded-xl font-medium transition-all duration-300 flex items-center justify-center gap-2 mb-4"
+                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 mb-3 text-sm"
               >
                 {showDetails ? (
                   <>
-                    <EyeOff className="w-4 h-4" />
+                    <EyeOff className="w-3.5 h-3.5" />
                     <span>Hide Details</span>
                   </>
                 ) : (
                   <>
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-3.5 h-3.5" />
                     <span>View Details</span>
                   </>
                 )}
               </button>
 
               {showDetails && (
-                <div className="bg-black/30 rounded-xl p-4 overflow-auto max-h-64 animate-slideDown">
+                <div className="bg-black/30 rounded-lg p-3 overflow-auto max-h-48 animate-slideDown">
                   <pre className="text-green-300 text-xs font-mono">
                     {JSON.stringify(result, null, 2)}
                   </pre>
@@ -436,12 +436,12 @@ export default function AdminSetupClient({
               )}
 
               {result.action === "created" && (
-                <div className="mt-4 flex gap-3">
+                <div className="mt-3 flex gap-2">
                   <button
                     onClick={() => router.push("/?login=true")}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-green-500/50 flex items-center justify-center gap-2"
+                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-green-500/50 flex items-center justify-center gap-2 text-sm"
                   >
-                    <ArrowRight className="w-5 h-5" />
+                    <ArrowRight className="w-4 h-4" />
                     <span>Go to Login</span>
                   </button>
                 </div>
@@ -451,18 +451,18 @@ export default function AdminSetupClient({
 
           {/* Error Display */}
           {error && (
-            <div className="mb-6 bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-2xl p-6 shadow-xl animate-shake">
-              <div className="flex items-start gap-4">
+            <div className="mb-4 bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-xl p-4 shadow-xl animate-shake">
+              <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center">
-                    <XCircle className="w-6 h-6 text-red-400" />
+                  <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
+                    <XCircle className="w-5 h-5 text-red-400" />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-red-300 font-semibold text-lg mb-2">
+                  <h3 className="text-red-300 font-semibold text-base mb-1">
                     Error Occurred
                   </h3>
-                  <p className="text-red-200/80 text-sm leading-relaxed">
+                  <p className="text-red-200/80 text-xs leading-relaxed">{error}</p>
                     {error}
                   </p>
                 </div>
@@ -471,15 +471,15 @@ export default function AdminSetupClient({
           )}
 
           {/* Instructions Card */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center">
-                <Database className="w-5 h-5 text-white" />
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 shadow-2xl">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                <Database className="w-4 h-4 text-white" />
               </div>
-              <h3 className="text-xl font-bold text-white">Setup Guide</h3>
+              <h3 className="text-lg font-bold text-white">Setup Guide</h3>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2">
               {[
                 {
                   step: "1",
@@ -511,16 +511,16 @@ export default function AdminSetupClient({
                 return (
                   <div
                     key={index}
-                    className="flex items-start gap-3 p-3 bg-white/5 rounded-xl hover:bg-white/10 transition-all duration-300 group"
+                    className="flex items-start gap-2 p-2.5 bg-white/5 rounded-lg hover:bg-white/10 transition-all duration-300 group"
                   >
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <span className="text-blue-400 font-bold text-sm">
+                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <span className="text-blue-400 font-bold text-xs">
                         {item.step}
                       </span>
                     </div>
-                    <div className="flex items-start gap-2 flex-1">
-                      <Icon className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-gray-300 text-sm leading-relaxed">
+                    <div className="flex items-start gap-1.5 flex-1">
+                      <Icon className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-gray-300 text-xs leading-relaxed">
                         {item.text}
                       </p>
                     </div>
