@@ -137,12 +137,12 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
       iconBg: "bg-red-600",
     },
     {
-      id: "usdttrc20",
+      id: "usdterc20",
       symbol: "USDT",
       name: "Tether",
       minAmount: 1,
       minUSD: 1,
-      network: "Tron (TRC-20)",
+      network: "Ethereum (ERC-20)",
       enabled: true,
       gradient: "from-green-500 to-emerald-600",
       bgColor: "bg-green-500/10",
@@ -534,9 +534,8 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                           currentPrice *
                                           (preferredCurrency !== "USD" ? 1 : 1)
                                         ).toLocaleString(undefined, {
-                                          minimumFractionDigits: 2,
-                                          maximumFractionDigits:
-                                            crypto.symbol === "BTC" ? 0 : 2,
+                                          minimumFractionDigits: 0,
+                                          maximumFractionDigits: 2,
                                         })}
                                       </p>
                                       <div
