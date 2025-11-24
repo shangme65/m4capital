@@ -144,16 +144,24 @@ export async function POST(request: NextRequest) {
       const { sendEmail } = await import("@/lib/email");
       const { cryptoPurchaseTemplate, cryptoPurchaseTextTemplate } =
         await import("@/lib/email-templates");
+      const { getCurrencySymbol, getExchangeRates, convertCurrency } =
+        await import("@/lib/currencies");
 
-      // Check if user has email notifications enabled
+      // Check if user has email notifications enabled and fetch preferred currency
       const userWithPrefs = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { emailNotifications: true, email: true, name: true },
+        select: {
+          emailNotifications: true,
+          email: true,
+          name: true,
+          preferredCurrency: true,
+        },
       });
 
       console.log(`📧 User email preferences:`, {
         email: userWithPrefs?.email,
         emailNotifications: userWithPrefs?.emailNotifications,
+        preferredCurrency: userWithPrefs?.preferredCurrency,
         hasSmtpUser: !!process.env.SMTP_USER,
         hasSmtpPass: !!process.env.SMTP_PASS,
         smtpHost: process.env.SMTP_HOST,
@@ -161,6 +169,34 @@ export async function POST(request: NextRequest) {
 
       if (userWithPrefs?.emailNotifications && userWithPrefs.email) {
         console.log(`📧 Attempting to send email to ${userWithPrefs.email}...`);
+
+        // Get user's preferred currency
+        const preferredCurrency = userWithPrefs.preferredCurrency || "USD";
+        const currencySymbol = getCurrencySymbol(preferredCurrency);
+
+        // Convert amounts to user's preferred currency if not USD
+        let displayPrice = price;
+        let displayTotalCost = totalCost;
+        let displayNewBalance = newBalance;
+
+        if (preferredCurrency !== "USD") {
+          const exchangeRates = await getExchangeRates();
+          displayPrice = convertCurrency(
+            price,
+            preferredCurrency,
+            exchangeRates
+          );
+          displayTotalCost = convertCurrency(
+            totalCost,
+            preferredCurrency,
+            exchangeRates
+          );
+          displayNewBalance = convertCurrency(
+            newBalance,
+            preferredCurrency,
+            exchangeRates
+          );
+        }
 
         const emailResult = await sendEmail({
           to: userWithPrefs.email,
@@ -171,17 +207,21 @@ export async function POST(request: NextRequest) {
             userWithPrefs.name || "User",
             symbol,
             amount,
-            price,
-            totalCost,
-            newBalance
+            displayPrice,
+            displayTotalCost,
+            displayNewBalance,
+            preferredCurrency,
+            currencySymbol
           ),
           text: cryptoPurchaseTextTemplate(
             userWithPrefs.name || "User",
             symbol,
             amount,
-            price,
-            totalCost,
-            newBalance
+            displayPrice,
+            displayTotalCost,
+            displayNewBalance,
+            preferredCurrency,
+            currencySymbol
           ),
         });
 

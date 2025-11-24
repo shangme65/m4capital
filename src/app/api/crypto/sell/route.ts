@@ -154,15 +154,23 @@ export async function POST(request: NextRequest) {
       console.log("📧 Starting email notification process for sell...");
 
       const { sendEmail } = await import("@/lib/email");
+      const { getCurrencySymbol, getExchangeRates, convertCurrency } =
+        await import("@/lib/currencies");
 
       const userWithPrefs = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { emailNotifications: true, email: true, name: true },
+        select: {
+          emailNotifications: true,
+          email: true,
+          name: true,
+          preferredCurrency: true,
+        },
       });
 
       console.log(`📧 User email preferences:`, {
         email: userWithPrefs?.email,
         emailNotifications: userWithPrefs?.emailNotifications,
+        preferredCurrency: userWithPrefs?.preferredCurrency,
         hasSmtpUser: !!process.env.SMTP_USER,
         hasSmtpPass: !!process.env.SMTP_PASS,
         smtpHost: process.env.SMTP_HOST,
@@ -170,6 +178,42 @@ export async function POST(request: NextRequest) {
 
       if (userWithPrefs?.emailNotifications && userWithPrefs.email) {
         console.log(`📧 Attempting to send email to ${userWithPrefs.email}...`);
+
+        // Get user's preferred currency
+        const preferredCurrency = userWithPrefs.preferredCurrency || "USD";
+        const currencySymbol = getCurrencySymbol(preferredCurrency);
+
+        // Convert amounts to user's preferred currency if not USD
+        let displayPrice = price;
+        let displayTotalValue = totalValue;
+        let displayFee = fee;
+        let displayNetReceived = netReceived;
+        let displayNewBalance = parseFloat(newBalance.toString());
+
+        if (preferredCurrency !== "USD") {
+          const exchangeRates = await getExchangeRates();
+          displayPrice = convertCurrency(
+            price,
+            preferredCurrency,
+            exchangeRates
+          );
+          displayTotalValue = convertCurrency(
+            totalValue,
+            preferredCurrency,
+            exchangeRates
+          );
+          displayFee = convertCurrency(fee, preferredCurrency, exchangeRates);
+          displayNetReceived = convertCurrency(
+            netReceived,
+            preferredCurrency,
+            exchangeRates
+          );
+          displayNewBalance = convertCurrency(
+            parseFloat(newBalance.toString()),
+            preferredCurrency,
+            exchangeRates
+          );
+        }
 
         const assetName =
           symbol === "BTC"
@@ -209,21 +253,21 @@ export async function POST(request: NextRequest) {
                 <p style="margin: 5px 0;"><strong>Amount Sold:</strong> ${amount.toFixed(
                   8
                 )} ${symbol}</p>
-                <p style="margin: 5px 0;"><strong>Price per Unit:</strong> $${price.toFixed(
-                  2
-                )}</p>
-                <p style="margin: 5px 0;"><strong>Total Value:</strong> $${totalValue.toFixed(
-                  2
-                )}</p>
-                <p style="margin: 5px 0;"><strong>Fee (1.5%):</strong> $${fee.toFixed(
-                  2
-                )}</p>
-                <p style="margin: 5px 0; color: #10b981; font-size: 16px;"><strong>Net Received:</strong> $${netReceived.toFixed(
-                  2
-                )}</p>
-                <p style="margin: 5px 0;"><strong>New Balance:</strong> $${parseFloat(
-                  newBalance.toString()
-                ).toFixed(2)}</p>
+                <p style="margin: 5px 0;"><strong>Price per Unit:</strong> ${currencySymbol}${displayPrice.toFixed(
+            2
+          )}</p>
+                <p style="margin: 5px 0;"><strong>Total Value:</strong> ${currencySymbol}${displayTotalValue.toFixed(
+            2
+          )}</p>
+                <p style="margin: 5px 0;"><strong>Fee (1.5%):</strong> ${currencySymbol}${displayFee.toFixed(
+            2
+          )}</p>
+                <p style="margin: 5px 0; color: #10b981; font-size: 16px;"><strong>Net Received:</strong> ${currencySymbol}${displayNetReceived.toFixed(
+            2
+          )}</p>
+                <p style="margin: 5px 0;"><strong>New Balance:</strong> ${currencySymbol}${displayNewBalance.toFixed(
+            2
+          )}</p>
               </div>
               <p>Thank you for using M4Capital!</p>
             </div>
@@ -234,15 +278,15 @@ export async function POST(request: NextRequest) {
             8
           )} ${symbol}.\n\nAsset: ${assetName} (${symbol})\nAmount Sold: ${amount.toFixed(
             8
-          )} ${symbol}\nPrice per Unit: $${price.toFixed(
+          )} ${symbol}\nPrice per Unit: ${currencySymbol}${displayPrice.toFixed(
             2
-          )}\nTotal Value: $${totalValue.toFixed(
+          )}\nTotal Value: ${currencySymbol}${displayTotalValue.toFixed(
             2
-          )}\nFee (1.5%): $${fee.toFixed(
+          )}\nFee (1.5%): ${currencySymbol}${displayFee.toFixed(
             2
-          )}\nNet Received: $${netReceived.toFixed(
+          )}\nNet Received: ${currencySymbol}${displayNetReceived.toFixed(
             2
-          )}\nNew Balance: $${parseFloat(newBalance.toString()).toFixed(
+          )}\nNew Balance: ${currencySymbol}${displayNewBalance.toFixed(
             2
           )}\n\nThank you for using M4Capital!`,
         });

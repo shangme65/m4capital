@@ -566,7 +566,9 @@ export const cryptoPurchaseTemplate = (
   amount: number,
   price: number,
   totalCost: number,
-  newBalance: number
+  newBalance: number,
+  currencyCode: string = "USD",
+  currencySymbol: string = "$"
 ) =>
   emailTemplate(`
   <h2>🎉 Crypto Purchase Successful!</h2>
@@ -592,24 +594,24 @@ export const cryptoPurchaseTemplate = (
     </tr>
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Price per Unit:</strong></td>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right;">$${price.toLocaleString(
-        "en-US",
-        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-      )}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right;">${currencySymbol}${price.toLocaleString(
+    "en-US",
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+  )}</td>
     </tr>
     <tr>
       <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Total Cost:</strong></td>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right; color: #e74c3c; font-weight: bold;">-$${totalCost.toLocaleString(
-        "en-US",
-        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-      )}</td>
+      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right; color: #e74c3c; font-weight: bold;">-${currencySymbol}${totalCost.toLocaleString(
+    "en-US",
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+  )}</td>
     </tr>
     <tr>
       <td style="padding: 10px;"><strong>New Balance:</strong></td>
-      <td style="padding: 10px; text-align: right; color: #27ae60; font-weight: bold;">$${newBalance.toLocaleString(
-        "en-US",
-        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-      )}</td>
+      <td style="padding: 10px; text-align: right; color: #27ae60; font-weight: bold;">${currencySymbol}${newBalance.toLocaleString(
+    "en-US",
+    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+  )}</td>
     </tr>
   </table>
   
@@ -635,7 +637,9 @@ export const cryptoPurchaseTextTemplate = (
   amount: number,
   price: number,
   totalCost: number,
-  newBalance: number
+  newBalance: number,
+  currencyCode: string = "USD",
+  currencySymbol: string = "$"
 ) => `
 Crypto Purchase Successful!
 
@@ -646,15 +650,15 @@ Your cryptocurrency purchase has been completed successfully.
 Transaction Details:
 - Asset: ${asset}
 - Amount: ${amount.toFixed(8)} ${asset}
-- Price per Unit: $${price.toLocaleString("en-US", {
+- Price per Unit: ${currencySymbol}${price.toLocaleString("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })}
-- Total Cost: -$${totalCost.toLocaleString("en-US", {
+- Total Cost: -${currencySymbol}${totalCost.toLocaleString("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })}
-- New Balance: $${newBalance.toLocaleString("en-US", {
+- New Balance: ${currencySymbol}${newBalance.toLocaleString("en-US", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 })}
