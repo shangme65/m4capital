@@ -21,8 +21,6 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     amount: "",
     paymentMethod: "balance",
   });
-  const [orderType, setOrderType] = useState<"market" | "limit">("market");
-  const [limitPrice, setLimitPrice] = useState("");
   const [step, setStep] = useState<"form" | "confirm" | "success">("form");
   const [successData, setSuccessData] = useState<{
     asset: string;
@@ -128,9 +126,6 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   };
 
   const getCurrentPrice = () => {
-    if (orderType === "limit" && limitPrice) {
-      return parseFloat(limitPrice);
-    }
     const cryptoPrice = cryptoPrices[buyData.asset];
     return cryptoPrice?.price || 0;
   };
@@ -218,10 +213,6 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       newErrors.amount = "Insufficient balance";
     }
 
-    if (orderType === "limit" && (!limitPrice || parseFloat(limitPrice) <= 0)) {
-      newErrors.limitPrice = "Please enter a valid limit price";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -288,15 +279,10 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
         amount: assetAmount,
         value: usdValue,
         timestamp: new Date().toLocaleString(),
-        status:
-          orderType === "market"
-            ? ("completed" as const)
-            : ("pending" as const),
+        status: "completed" as const,
         fee: fee,
         method: `${preferredCurrency} Balance`,
-        description: `${
-          orderType === "market" ? "Market" : "Limit"
-        } buy order for ${buyData.asset}`,
+        description: `Market buy order for ${buyData.asset}`,
         rate: price,
       };
 
@@ -328,8 +314,6 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       amount: "",
       paymentMethod: "balance",
     });
-    setOrderType("market");
-    setLimitPrice("");
     setErrors({});
     setStep("form");
 
@@ -478,35 +462,6 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       </div>
 
                       <div className="space-y-6">
-                        {/* Order Type */}
-                        <div>
-                          <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Order Type
-                          </label>
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => setOrderType("market")}
-                              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                                orderType === "market"
-                                  ? "bg-orange-500 text-white"
-                                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                              }`}
-                            >
-                              Market
-                            </button>
-                            <button
-                              onClick={() => setOrderType("limit")}
-                              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                                orderType === "limit"
-                                  ? "bg-orange-500 text-white"
-                                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                              }`}
-                            >
-                              Limit
-                            </button>
-                          </div>
-                        </div>
-
                         {/* Asset Selection */}
                         <CryptoDropdown
                           label="Select Asset"
@@ -621,28 +576,6 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             </span>
                           </div>
                         </div>
-
-                        {/* Limit Price (if limit order) */}
-                        {orderType === "limit" && (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">
-                              Limit Price (USD)
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              value={limitPrice}
-                              onChange={(e) => setLimitPrice(e.target.value)}
-                              className="w-full bg-gray-800 border border-gray-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                              placeholder="Enter limit price"
-                            />
-                            {errors.limitPrice && (
-                              <p className="text-red-400 text-sm mt-1">
-                                {errors.limitPrice}
-                              </p>
-                            )}
-                          </div>
-                        )}
 
                         {/* Amount with Currency Toggle */}
                         <div>
@@ -825,39 +758,8 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                           disabled={!buyData.amount}
                           className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-medium transition-colors"
                         >
-                          {orderType === "market"
-                            ? "Buy Now"
-                            : "Place Buy Order"}
+                          Buy Now
                         </button>
-
-                        {orderType === "limit" && (
-                          <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-                            <div className="flex">
-                              <svg
-                                className="w-5 h-5 text-blue-400 mt-0.5 mr-3"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                              </svg>
-                              <div>
-                                <p className="text-blue-400 text-sm font-medium">
-                                  Limit Order
-                                </p>
-                                <p className="text-blue-300 text-sm mt-1">
-                                  Your order will execute when the price reaches
-                                  your specified limit.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </>
@@ -928,12 +830,6 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
                       <div className="space-y-6">
                         <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Order Type:</span>
-                            <span className="text-white font-medium capitalize">
-                              {orderType}
-                            </span>
-                          </div>
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-400">
                               Price per {buyData.asset}:

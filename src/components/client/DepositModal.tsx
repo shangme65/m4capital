@@ -6,6 +6,7 @@ import Image from "next/image";
 import BitcoinWallet from "./BitcoinWallet";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 interface DepositModalProps {
   isOpen: boolean;
@@ -227,7 +228,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
             onClick={(e) => e.stopPropagation()}
             style={{ touchAction: "auto" }}
           >
-            <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl shadow-2xl w-full max-w-md relative overflow-hidden border border-gray-700/50 max-h-[95vh] overflow-y-auto">
+            <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl shadow-2xl w-full max-w-md mx-4 relative overflow-hidden border border-gray-700/50 max-h-[95vh] overflow-y-auto">
               {/* Close Button */}
               <button
                 onClick={onClose}
@@ -257,17 +258,14 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                   <div className="flex items-center justify-center mb-4">
                     <Image
                       src="/m4capitallogo1.png"
-                      alt="Capital Logo"
-                      width={40}
-                      height={40}
+                      alt="M4Capital Logo"
+                      width={48}
+                      height={48}
                       className="drop-shadow-lg"
                     />
-                    <span className="ml-3 text-orange-500 font-bold text-2xl tracking-tight">
-                      Capital
-                    </span>
                   </div>
 
-                  <h2 className="text-4xl font-bold text-white mb-3 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
+                  <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
                     Deposit Funds
                   </h2>
                   <p className="text-gray-300 text-center text-sm">
@@ -276,7 +274,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 </div>
               </div>
 
-              <div className="px-8 pb-8 -mt-2">
+              <div className="px-4 sm:px-8 pb-6 sm:pb-8 -mt-2">
                 {showBitcoinWallet ? (
                   <BitcoinWallet
                     amount={amount}
@@ -542,18 +540,18 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     {/* Amount */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-300 mb-3">
-                        Deposit Amount
+                        Deposit Amount ({preferredCurrency})
                       </label>
                       <div className="relative">
                         <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-lg">
-                          $
+                          {getCurrencySymbol(preferredCurrency)}
                         </span>
                         <input
                           type="number"
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           placeholder="0.00"
-                          className="w-full pl-10 pr-5 py-4 bg-gray-800/60 border border-gray-700/50 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all text-lg font-medium backdrop-blur-sm"
+                          className="w-full pl-10 pr-5 py-3 sm:py-4 bg-gray-800/60 border border-gray-700/50 rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all text-base sm:text-lg font-medium backdrop-blur-sm"
                           min="10"
                           step="0.01"
                           required
@@ -571,7 +569,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                             clipRule="evenodd"
                           />
                         </svg>
-                        Minimum deposit: $10.00
+                        Minimum deposit: {formatAmount(10, 2)}
                       </p>
                     </div>
 
@@ -580,19 +578,20 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       <label className="block text-sm font-semibold text-gray-300 mb-3">
                         Quick Select
                       </label>
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-3 gap-2 sm:gap-3">
                         {quickAmounts.map((quickAmount) => (
                           <button
                             key={quickAmount}
                             type="button"
                             onClick={() => setAmount(quickAmount.toString())}
-                            className={`py-3.5 px-4 rounded-xl font-semibold transition-all ${
+                            className={`py-2.5 sm:py-3.5 px-2 sm:px-4 rounded-xl font-semibold text-sm sm:text-base transition-all ${
                               amount === quickAmount.toString()
                                 ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-600/30"
                                 : "bg-gray-800/60 text-gray-300 hover:bg-gray-700/60 border border-gray-700/50"
                             }`}
                           >
-                            ${quickAmount}
+                            {getCurrencySymbol(preferredCurrency)}
+                            {quickAmount}
                           </button>
                         ))}
                       </div>
