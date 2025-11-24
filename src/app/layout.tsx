@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { Providers } from "@/components/Providers";
+import CookieConsent from "@/components/client/CookieConsent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -79,6 +80,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <ConditionalLayout>{children}</ConditionalLayout>
+          <CookieConsent />
         </Providers>
       </body>
     </html>
