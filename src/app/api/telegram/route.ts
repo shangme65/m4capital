@@ -509,7 +509,7 @@ export async function POST(req: NextRequest) {
     if (text === "/start") {
       await sendTelegramMessage(
         chatId,
-        `Welcome to M4Capital! 🚀\n\nI am your personal assistant and can help you with:\n\n💰 **Crypto Prices** - Ask about any of the top 320 cryptocurrencies\n🎨 **Image Generation** - Ask me to create, generate, or imagine images\n💬 **AI Chat** - Ask me anything!\n🔗 **Account Linking** - Link your M4Capital account\n💳 **Deposits** - Fund your account with crypto or Telegram Stars\n💼 **Portfolio** - View your balance and assets\n\n**Commands:**\n/link - Get code to link your account\n/balance - View your account balance\n/portfolio - View detailed portfolio\n/deposit - Make a deposit\n/clear - Reset conversation\n\n**Examples:**\n• "What's the price of Bitcoin?"\n• "Show me Ethereum and Solana prices"\n• "Generate an image of a futuristic city"\n• "Create a logo for a tech startup"`
+        `Welcome to M4Capital! 🚀\n\nI am your personal trading assistant. Here's what I can help you with:\n\n*💼 Account Management*\n/link - Link your M4Capital account\n/balance - View your cash balance\n/portfolio - View detailed holdings\n\n*💸 Transactions*\n/deposit AMOUNT - Deposit funds (in your currency)\n/send @user AMOUNT - Send money to another user\n/buy CRYPTO AMOUNT - Buy cryptocurrency\n\n*📊 Market Data*\nAsk about crypto prices for top 320 coins\nExample: "What's the price of Bitcoin?"\n\n*🎨 AI Features*\n• Ask me to generate images\n• Natural conversation\n• Investment advice\n\n*Examples:*\n\`/deposit 100\` - Deposit $100\n\`/send @victor 50\` - Send $50 to Victor\n\`/buy BTC 100\` - Buy $100 of Bitcoin\n\n*💡 Note:* All amounts use your preferred currency!\n\nType /clear to reset conversation.`
       );
       return NextResponse.json({ ok: true });
     }
@@ -584,8 +584,80 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Handle /balance command - Show account balance
+    // Handle /balance command - delegated to dedicated handler
     if (text === "/balance") {
+      await fetch(`${process.env.NEXTAUTH_URL}/api/telegram/commands/balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId: userId, chatId }),
+      });
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /portfolio command - delegated to dedicated handler
+    if (text === "/portfolio") {
+      await fetch(
+        `${process.env.NEXTAUTH_URL}/api/telegram/commands/portfolio`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ telegramId: userId, chatId }),
+        }
+      );
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /send command - P2P transfer
+    if (text.startsWith("/send")) {
+      await fetch(`${process.env.NEXTAUTH_URL}/api/telegram/commands/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId: userId, chatId, command: text }),
+      });
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /buy command - Buy cryptocurrency
+    if (text.startsWith("/buy")) {
+      await fetch(`${process.env.NEXTAUTH_URL}/api/telegram/commands/buy`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId: userId, chatId, command: text }),
+      });
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /deposit command - Deposit funds
+    if (text.startsWith("/deposit")) {
+      await fetch(`${process.env.NEXTAUTH_URL}/api/telegram/commands/deposit`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId: userId, chatId, command: text }),
+      });
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /sell command - Sell cryptocurrency
+    if (text.startsWith("/sell")) {
+      await fetch(`${process.env.NEXTAUTH_URL}/api/telegram/commands/sell`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ telegramId: userId, chatId, command: text }),
+      });
+      return NextResponse.json({ ok: true });
+    }
+
+    // Handle /help command
+    if (text === "/help") {
+      await sendTelegramMessage(
+        chatId,
+        `📖 *M4Capital Bot Commands*\n\n*Account Management*\n/link - Link your M4Capital account\n/balance - View your cash balance\n/portfolio - View detailed holdings with real-time prices\n\n*Transactions*\n\`/deposit AMOUNT\` - Deposit funds\n\`/send @user AMOUNT\` - Send money to another user\n\`/send email@example.com AMOUNT\` - Send by email\n\`/send 1234567890 AMOUNT\` - Send by account number\n\n*Trading*\n\`/buy CRYPTO AMOUNT\` - Buy cryptocurrency\n\`/sell CRYPTO AMOUNT\` - Sell cryptocurrency\n\`/sell CRYPTO all\` - Sell all of a crypto\n\n*Supported Cryptocurrencies*\nBTC, ETH, XRP, TRX, TON, LTC, BCH, ETC, USDT, USDC\n\n*Market Data*\nAsk: "What's the price of Bitcoin?"\n"Show me ETH and SOL prices"\n\n*AI Features*\n"Generate an image of..."\n"Create a logo for..."\nAsk any investment question!\n\n*Other Commands*\n/start - Show welcome message\n/help - Show this help message\n/clear - Reset conversation\n\n*💡 Important Notes:*\n• All amounts use your preferred currency\n• Prices are updated in real-time\n• P2P transfers are instant\n• Deposits via crypto (Bitcoin, etc.)\n\n_Type any command to get started!_`
+      );
+      return NextResponse.json({ ok: true });
+    }
+
+    // Legacy balance handler (will be removed by delegation above)
+    if (text === "/balance_old") {
       try {
         const { PrismaClient } = await import("@prisma/client");
         const prisma = new PrismaClient();
