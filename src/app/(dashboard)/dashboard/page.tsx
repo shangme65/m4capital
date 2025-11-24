@@ -80,6 +80,20 @@ function DashboardContent() {
     }
   }, [activeView]);
 
+  // Auto-reload if stuck on loading screen
+  useEffect(() => {
+    if (status === "loading" || !session) {
+      // Set a timeout to reload the page if loading takes too long
+      const reloadTimer = setTimeout(() => {
+        console.log("Dashboard loading timeout - auto-reloading page");
+        window.location.reload();
+      }, 5000); // Reload after 5 seconds
+
+      // Clear timeout if component unmounts or loading completes
+      return () => clearTimeout(reloadTimer);
+    }
+  }, [status, session]);
+
   // Removed "Just now" timer to prevent unnecessary re-renders
 
   // Wait for session to fully load before rendering dashboard
@@ -89,6 +103,7 @@ function DashboardContent() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Loading dashboard...</p>
+          <p className="text-gray-500 text-sm mt-2">Please wait...</p>
         </div>
       </div>
     );

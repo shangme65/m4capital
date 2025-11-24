@@ -59,6 +59,17 @@ export default function StaffAdminPage() {
     }
   }, [status, session]);
 
+  // Auto-reload if stuck on loading screen
+  useEffect(() => {
+    if (status === "loading" || loading) {
+      const reloadTimer = setTimeout(() => {
+        console.log("Staff admin loading timeout - auto-reloading page");
+        window.location.reload();
+      }, 5000);
+      return () => clearTimeout(reloadTimer);
+    }
+  }, [status, loading]);
+
   const fetchAssignedUsers = async () => {
     try {
       setLoading(true);
@@ -127,7 +138,11 @@ export default function StaffAdminPage() {
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-400">Loading staff admin...</p>
+          <p className="text-gray-500 text-sm mt-2">Please wait...</p>
+        </div>
       </div>
     );
   }
