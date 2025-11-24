@@ -462,7 +462,9 @@ export default function AdminSetupClient({
                   <h3 className="text-red-300 font-semibold text-base mb-1">
                     Error Occurred
                   </h3>
-                  <p className="text-red-200/80 text-xs leading-relaxed">{error}</p>
+                  <p className="text-red-200/80 text-xs leading-relaxed">
+                    {error}
+                  </p>
                 </div>
               </div>
             </div>
