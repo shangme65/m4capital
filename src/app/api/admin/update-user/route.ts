@@ -127,14 +127,14 @@ export async function PUT(req: NextRequest) {
                 Your account role has been updated to <strong>Standard User</strong>.
               </p>
               <p style="font-size: 16px; line-height: 1.6; color: #333;">
-                You will need to log out and log back in for this change to take effect.
+                Your session will automatically refresh within a few seconds to reflect this change.
               </p>
               <div style="margin: 30px 0; text-align: center;">
                 <a href="${
                   process.env.NEXTAUTH_URL || "https://m4capital.com"
-                }" 
+                }/dashboard" 
                    style="background: #f97316; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  Go to M4 Capital
+                  Go to Dashboard
                 </a>
               </div>
               <p style="font-size: 14px; color: #888; margin-top: 20px;">
@@ -148,7 +148,7 @@ export async function PUT(req: NextRequest) {
             to: userBefore.email,
             subject: "Account Role Updated - M4 Capital",
             html: emailTemplate(demotionEmailContent),
-            text: `Hi ${userBefore.name}, your account role has been updated to Standard User. Please log out and log back in for this change to take effect.`,
+            text: `Hi ${userBefore.name}, your account role has been updated to Standard User. Your session will automatically refresh to reflect this change.`,
           });
         }
 
@@ -158,7 +158,7 @@ export async function PUT(req: NextRequest) {
             userId: userBefore.id,
             type: "INFO",
             title: "Account Role Updated",
-            message: `Your account role has been updated. Please log out and log back in for changes to take effect.`,
+            message: `Your account role has been updated to Standard User. Your interface will refresh automatically.`,
           },
         });
       } catch (error) {
@@ -298,9 +298,10 @@ export async function PUT(req: NextRequest) {
     return createSuccessResponse(
       {
         user: updatedUser,
-        sessionInvalidated: true,
+        sessionInvalidated: false,
+        autoRefresh: true,
         message:
-          "User role updated. User must log out and log back in for changes to take effect.",
+          "User role updated. Changes will be applied automatically within 5 seconds.",
       },
       "User role updated successfully"
     );

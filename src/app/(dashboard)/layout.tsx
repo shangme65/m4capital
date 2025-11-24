@@ -9,6 +9,7 @@ import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import { DashboardModalWrapper } from "@/components/layout/DashboardModalWrapper";
 import { MarketDataProvider } from "@/components/client/MarketDataProvider";
 import CryptoMarketProvider from "@/components/client/CryptoMarketProvider";
+import { RoleChangeMonitor } from "@/components/client/RoleChangeMonitor";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -33,6 +34,7 @@ export default async function DashboardLayout({
               <CurrencyProvider>
                 <MarketDataProvider autoConnect={false} enableNews={false}>
                   <CryptoMarketProvider autoStart={true}>
+                    <RoleChangeMonitor />
                     <div className="flex h-screen bg-gray-900 relative">
                       <Sidebar />
                       <div className="flex-1 flex flex-col overflow-hidden">
