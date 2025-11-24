@@ -9,6 +9,7 @@ export default function DashboardHeaderWrapper() {
   const hideOnNews = pathname?.startsWith("/news");
   const hideOnTraderoom = pathname?.startsWith("/traderoom");
   const hideOnStaffAdmin = pathname?.startsWith("/staff-admin");
-  if (hideOnSettings || hideOnNews || hideOnTraderoom || hideOnStaffAdmin) return null;
+  if (hideOnSettings || hideOnNews || hideOnTraderoom || hideOnStaffAdmin)
+    return null;
   return <DashboardHeader />;
 }

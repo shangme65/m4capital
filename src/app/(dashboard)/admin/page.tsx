@@ -575,8 +575,9 @@ const AdminDashboard = () => {
       });
 
       if (res.ok) {
+        const data = await res.json();
         showPopupNotification(
-          `User role updated successfully to ${newRole}`,
+          `✅ User role updated to ${newRole}.\n\n⚠️ Important: The user must log out and log back in for the role change to take effect.\n\nTheir current session will no longer have the old privileges.`,
           "success"
         );
         fetchUsers();

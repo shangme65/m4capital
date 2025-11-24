@@ -105,6 +105,67 @@ export async function PUT(req: NextRequest) {
       data: { role },
     });
 
+    // **CRITICAL: Invalidate user's session by updating updatedAt**
+    // This forces the user to re-authenticate with their new role
+    await prisma.user.update({
+      where: { id: userId },
+      data: { updatedAt: new Date() },
+    });
+
+    // Send notification based on role change
+    if (role === "USER" && userBefore.role !== "USER") {
+      // User was demoted to USER - send notification
+      try {
+        if (userBefore.email) {
+          const demotionEmailContent = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #f97316;">Account Role Updated</h2>
+              <p style="font-size: 16px; line-height: 1.6; color: #333;">
+                Hi ${userBefore.name},
+              </p>
+              <p style="font-size: 16px; line-height: 1.6; color: #333;">
+                Your account role has been updated to <strong>Standard User</strong>.
+              </p>
+              <p style="font-size: 16px; line-height: 1.6; color: #333;">
+                You will need to log out and log back in for this change to take effect.
+              </p>
+              <div style="margin: 30px 0; text-align: center;">
+                <a href="${
+                  process.env.NEXTAUTH_URL || "https://m4capital.com"
+                }" 
+                   style="background: #f97316; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                  Go to M4 Capital
+                </a>
+              </div>
+              <p style="font-size: 14px; color: #888; margin-top: 20px;">
+                Best regards,<br>
+                The M4 Capital Team
+              </p>
+            </div>
+          `;
+
+          await sendEmail({
+            to: userBefore.email,
+            subject: "Account Role Updated - M4 Capital",
+            html: emailTemplate(demotionEmailContent),
+            text: `Hi ${userBefore.name}, your account role has been updated to Standard User. Please log out and log back in for this change to take effect.`,
+          });
+        }
+
+        await prisma.notification.create({
+          data: {
+            id: generateId(),
+            userId: userBefore.id,
+            type: "INFO",
+            title: "Account Role Updated",
+            message: `Your account role has been updated. Please log out and log back in for changes to take effect.`,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to send demotion notification:", error);
+      }
+    }
+
     // If user was promoted to STAFF_ADMIN, send notifications
     if (role === "STAFF_ADMIN" && userBefore.role !== "STAFF_ADMIN") {
       // 1. Send email notification to the promoted user
@@ -235,7 +296,12 @@ export async function PUT(req: NextRequest) {
     }
 
     return createSuccessResponse(
-      { user: updatedUser },
+      {
+        user: updatedUser,
+        sessionInvalidated: true,
+        message:
+          "User role updated. User must log out and log back in for changes to take effect.",
+      },
       "User role updated successfully"
     );
   } catch (error) {
