@@ -152,22 +152,26 @@ export default function StaffAdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8">
-      {/* Header */}
-      <div className="max-w-7xl mx-auto mb-8">
-        <div className="flex items-center gap-4 mb-6">
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold">Staff Admin Dashboard</h1>
-            <p className="text-gray-400">Manage your assigned users</p>
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* Custom Header for Staff Admin */}
+      <div className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold">Staff Admin Dashboard</h1>
+              <p className="text-sm text-gray-400">Manage your assigned users</p>
+            </div>
           </div>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30 rounded-xl p-6">
@@ -231,8 +235,7 @@ export default function StaffAdminPage() {
       )}
 
       {/* Users List */}
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
+      <div className=\"max-w-7xl mx-auto\">\n        <div className=\"bg-gray-800 rounded-xl border border-gray-700 overflow-hidden\">"
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-700/50">
@@ -417,7 +420,7 @@ export default function StaffAdminPage() {
             </div>
           </motion.div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

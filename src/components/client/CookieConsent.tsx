@@ -47,7 +47,7 @@ export default function CookieConsent() {
               stiffness: 300,
               damping: 30,
             }}
-            className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-[90%] sm:w-[95%] max-w-2xl px-2 sm:px-0"
+            className="fixed bottom-4 sm:bottom-6 left-4 right-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-[9999] sm:w-[95%] sm:max-w-2xl"
           >
             <div className="relative bg-gradient-to-br from-slate-900/95 via-purple-900/95 to-slate-900/95 backdrop-blur-xl border border-purple-500/30 rounded-xl sm:rounded-2xl shadow-2xl shadow-purple-500/20 p-4 sm:p-6 md:p-8">
               {/* Decorative gradient orbs */}
