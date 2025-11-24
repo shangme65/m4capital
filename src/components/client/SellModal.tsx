@@ -155,16 +155,16 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
     if (showAmountInCrypto) {
       // Convert from crypto to preferred currency
-      const usdAmount = currentAmount * price; // Crypto to USD
-      const fiatAmount = convertAmount(usdAmount); // USD to preferred currency
+      const usdAmount = currentAmount * price; // Crypto amount * price = USD value
+      const fiatAmount = convertAmount(usdAmount); // Convert USD to preferred currency
       setSellData((prev) => ({
         ...prev,
         amount: fiatAmount.toFixed(2),
       }));
     } else {
       // Convert from preferred currency to crypto
-      const usdAmount = convertAmount(currentAmount, true); // Preferred currency to USD
-      const cryptoAmount = usdAmount / price; // USD to crypto
+      const usdAmount = convertAmount(currentAmount, true); // Convert preferred currency to USD
+      const cryptoAmount = usdAmount / price; // USD value / price = crypto amount
       setSellData((prev) => ({
         ...prev,
         amount: cryptoAmount.toFixed(8),
@@ -194,15 +194,15 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
   const getAmountToSell = () => {
     const amount = parseFloat(sellData.amount) || 0;
-    if (amount <= 0) return currentAsset?.amount || 0;
+    if (amount <= 0) return 0;
 
     if (showAmountInCrypto) {
-      // Already in crypto
+      // Amount is already in crypto
       return amount;
     } else {
-      // In fiat - convert to USD first, then to crypto
-      const usdAmount = convertAmount(amount, true);
-      return usdAmount / currentPrice;
+      // Amount is in fiat - convert to USD first, then to crypto
+      const usdAmount = convertAmount(amount, true); // Convert from preferred currency to USD
+      return usdAmount / currentPrice; // Convert USD to crypto amount
     }
   };
 
