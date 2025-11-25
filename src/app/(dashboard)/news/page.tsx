@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
   TrendingUp,
@@ -14,17 +12,19 @@ import {
   Newspaper,
   Globe,
   Star,
-  Bell,
   Zap,
   Bookmark,
   Share2,
   ExternalLink,
-  Activity,
   AlertTriangle,
   BookmarkCheck,
   X,
   Calendar,
-  User,
+  Filter,
+  Sparkles,
+  Activity,
+  BarChart3,
+  ChevronRight,
 } from "lucide-react";
 
 // NewsItem interface
@@ -46,7 +46,6 @@ const NewsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [savedArticles, setSavedArticles] = useState<Set<string>>(new Set());
-  const [isScrolled, setIsScrolled] = useState(false);
 
   // Modal state
   const [selectedArticle, setSelectedArticle] = useState<NewsItem | null>(null);
@@ -66,6 +65,15 @@ const NewsPage = () => {
     breaking: 0,
     trending: 0,
   });
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+
+  // Load saved articles from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("savedArticles");
+    if (saved) {
+      setSavedArticles(new Set(JSON.parse(saved)));
+    }
+  }, []);
 
   // Fetch real news from API
   const fetchRealNews = async (page: number = 1) => {
@@ -112,15 +120,14 @@ const NewsPage = () => {
     fetchRealNews(1);
   }, [selectedCategory]);
 
-  // Scroll detection
+  // Auto-refresh every 5 minutes
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
+    const interval = setInterval(() => {
+      fetchRealNews(1);
+    }, 300000); // 5 minutes
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () => clearInterval(interval);
+  }, [selectedCategory]);
 
   // Filter news
   const filteredNews = allNews.filter((news) => {
@@ -136,14 +143,12 @@ const NewsPage = () => {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      // Fetch fresh news data from API
       await fetchRealNews(1);
       setCurrentPage(1);
 
-      // Show success notification
       if ("Notification" in window && Notification.permission === "granted") {
         new Notification("News Updated", {
-          body: `News feed refreshed`,
+          body: `Latest market news refreshed`,
           icon: "/m4capitallogo1.png",
         });
       }
@@ -162,14 +167,6 @@ const NewsPage = () => {
       const nextPage = currentPage + 1;
       await fetchRealNews(nextPage);
       setCurrentPage(nextPage);
-
-      // Show notification
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("More News Loaded", {
-          body: `Loaded additional articles`,
-          icon: "/m4capitallogo1.png",
-        });
-      }
     } catch (error) {
       console.error("Failed to load more news:", error);
     } finally {
@@ -184,29 +181,23 @@ const NewsPage = () => {
       case "negative":
         return <TrendingDown className="w-4 h-4 text-red-400" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-gray-400" />;
+        return <Activity className="w-4 h-4 text-blue-400" />;
     }
   };
 
   const getSentimentColor = (sentiment?: string, priority?: string) => {
-    let baseColor = "";
+    if (priority === "high" || priority === "breaking") {
+      return "bg-gradient-to-br from-red-500/20 to-orange-500/20 border-red-500/50 shadow-lg shadow-red-500/10";
+    }
+
     switch (sentiment) {
       case "positive":
-        baseColor = "border-l-green-400 bg-green-500/10";
-        break;
+        return "bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-500/30";
       case "negative":
-        baseColor = "border-l-red-400 bg-red-500/10";
-        break;
+        return "bg-gradient-to-br from-red-500/10 to-pink-500/10 border-red-500/30";
       default:
-        baseColor = "border-l-gray-400 bg-gray-500/10";
+        return "bg-gradient-to-br from-gray-700/50 to-gray-800/50 border-gray-600/30";
     }
-
-    // Add breaking news highlighting
-    if (priority === "high" || priority === "breaking") {
-      baseColor += " ring-2 ring-red-500/50 shadow-lg shadow-red-500/20";
-    }
-
-    return baseColor;
   };
 
   const formatTimeAgo = (timestamp: string | number) => {
@@ -235,8 +226,6 @@ const NewsPage = () => {
       newSaved.add(articleId);
     }
     setSavedArticles(newSaved);
-
-    // Save to localStorage
     localStorage.setItem("savedArticles", JSON.stringify(Array.from(newSaved)));
   };
 
@@ -252,7 +241,6 @@ const NewsPage = () => {
         console.error("Error sharing:", error);
       }
     } else {
-      // Fallback: copy to clipboard
       navigator.clipboard.writeText(
         `${article.title}\n${article.summary}\n${
           article.url || window.location.href
@@ -261,18 +249,15 @@ const NewsPage = () => {
     }
   };
 
-  // Modal handling functions
   const handleArticleClick = (article: NewsItem) => {
     setSelectedArticle(article);
     setIsModalOpen(true);
-    // Prevent body scroll when modal is open
     document.body.style.overflow = "hidden";
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedArticle(null);
-    // Restore body scroll
     document.body.style.overflow = "unset";
   };
 
@@ -282,7 +267,6 @@ const NewsPage = () => {
     }
   };
 
-  // Close modal with Escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isModalOpen) {
@@ -296,232 +280,281 @@ const NewsPage = () => {
     }
   }, [isModalOpen]);
 
+  const categories = [
+    { id: "all", label: "All News", icon: Globe },
+    { id: "crypto", label: "Crypto", icon: Sparkles },
+    { id: "forex", label: "Forex", icon: TrendingUp },
+    { id: "banking", label: "Banking", icon: BarChart3 },
+    { id: "breaking", label: "Breaking", icon: AlertTriangle },
+    { id: "saved", label: "Saved", icon: Bookmark },
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
-      {/* Logo Header */}
-      <motion.header
-        className="bg-gray-900/80 backdrop-blur-md border-b border-gray-700/50 sticky top-0 z-10"
-        initial={{ opacity: 1 }}
-        animate={{
-          opacity: isScrolled ? 0 : 1,
-          y: isScrolled ? -100 : 0,
-        }}
-        transition={{ duration: 0.3, ease: "easeInOut" }}
+    <div className="space-y-4 sm:space-y-6">
+      {/* Hero Stats Section */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-br from-blue-600/20 via-purple-600/20 to-pink-600/20 backdrop-blur-xl rounded-2xl mobile:rounded-xl p-4 sm:p-6 border border-white/10 relative overflow-hidden"
       >
-        <div className="max-w-6xl mx-auto px-3 py-3">
-          <Link href="/" className="flex items-center group">
-            <Image
-              src="/m4capitallogo1.png"
-              alt="M4 Capital Logo"
-              width={24}
-              height={24}
-              className="transition-transform duration-300 group-hover:scale-110"
-            />
-            <span className="ml-0.5 text-base font-bold text-white transition-transform duration-300 group-hover:scale-110">
-              capital
-            </span>
-          </Link>
-        </div>
-      </motion.header>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 bg-grid-white/[0.02] pointer-events-none" />
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-3 py-4">
-        {/* Real-time Statistics */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-black/20 backdrop-blur-lg rounded-lg p-3 md:p-4 mb-4 border border-white/10"
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6 sm:gap-8 md:gap-10 lg:gap-12 overflow-x-auto">
-              <div className="text-center min-w-0 flex-shrink-0 px-2 sm:px-3 md:px-4 lg:px-5">
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 text-base sm:text-lg md:text-2xl lg:text-3xl font-bold text-blue-400">
-                  <Globe className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7" />
-                  {liveStats.total.toLocaleString()}
-                </div>
-                <p className="text-sm sm:text-sm md:text-base text-gray-400 whitespace-nowrap">
-                  Total
-                </p>
-              </div>
-              <div className="text-center min-w-0 flex-shrink-0 px-2 sm:px-3 md:px-4 lg:px-5">
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 text-base sm:text-lg md:text-2xl lg:text-3xl font-bold text-red-400">
-                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7" />
-                  {liveStats.breaking}
-                </div>
-                <p className="text-sm sm:text-sm md:text-base text-gray-400 whitespace-nowrap">
-                  Breaking
-                </p>
-              </div>
-              <div className="text-center min-w-0 flex-shrink-0 px-2 sm:px-3 md:px-4 lg:px-5">
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 text-base sm:text-lg md:text-2xl lg:text-3xl font-bold text-orange-400">
-                  <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7" />
-                  {liveStats.trending}
-                </div>
-                <p className="text-sm sm:text-sm md:text-base text-gray-400 whitespace-nowrap">
-                  Trending
-                </p>
-              </div>
-              <div className="text-center min-w-0 flex-shrink-0 px-2 sm:px-3 md:px-4 lg:px-5">
-                <div className="flex items-center justify-center gap-1.5 sm:gap-2 md:gap-2.5 text-base sm:text-lg md:text-2xl lg:text-3xl font-bold text-green-400">
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 lg:w-7 lg:h-7" />
-                  {Math.floor(
-                    (Date.now() - (lastUpdate?.getTime() || Date.now())) / 60000
-                  )}
-                  m
-                </div>
-                <p className="text-sm sm:text-sm md:text-base text-gray-400 whitespace-nowrap">
-                  Update
-                </p>
-              </div>
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 flex items-center gap-2">
+                <Newspaper className="w-7 h-7 text-blue-400" />
+                Market News
+              </h1>
+              <p className="text-sm text-gray-300">
+                Real-time financial & crypto updates
+              </p>
             </div>
-
-            {/* Refresh Button */}
             <button
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="p-2 sm:p-2.5 md:p-3 bg-white/10 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50 flex-shrink-0 ml-2"
+              className="p-3 bg-white/10 hover:bg-white/20 rounded-xl transition-all disabled:opacity-50 backdrop-blur-sm border border-white/10"
               title="Refresh News"
-              aria-label="Refresh news"
             >
               <RefreshCw
-                className={`w-4 h-4 sm:w-4 sm:h-4 md:w-5 md:h-5 ${
-                  isRefreshing ? "animate-spin" : ""
-                }`}
+                className={`w-5 h-5 ${isRefreshing ? "animate-spin" : ""}`}
               />
             </button>
           </div>
-        </motion.div>
 
-        {/* Enhanced Controls Bar */}
-        <div className="bg-black/20 backdrop-blur-lg rounded-lg p-3 mb-4 border border-white/10">
-          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-            {/* Search */}
-            <div className="relative w-full sm:flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search news..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm bg-black/30 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label="Search news articles"
-              />
+          {/* Live Stats Grid */}
+          <div className="grid grid-cols-4 gap-3 sm:gap-4">
+            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+              <div className="flex items-center gap-2 mb-1">
+                <Globe className="w-4 h-4 text-blue-400" />
+                <span className="text-xs text-gray-400">Total</span>
+              </div>
+              <div className="text-xl sm:text-2xl font-bold text-white">
+                {liveStats.total}
+              </div>
             </div>
 
-            {/* Category Pills */}
-            <div className="flex flex-wrap gap-1 sm:gap-2">
-              {["all", "breaking", "trending", "saved"].map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-2 py-1 sm:px-3 sm:py-2 rounded-md text-xs sm:text-sm font-medium transition-all flex items-center gap-1 ${
-                    selectedCategory === category
-                      ? "bg-blue-500 text-white shadow-lg"
-                      : "bg-white/10 text-gray-300 hover:bg-white/20"
-                  }`}
-                  aria-label={`Filter by ${category}`}
-                >
-                  {category === "all" && <Globe className="w-3 h-3" />}
-                  {category === "breaking" && (
-                    <AlertTriangle className="w-3 h-3" />
-                  )}
-                  {category === "trending" && (
-                    <TrendingUp className="w-3 h-3" />
-                  )}
-                  {category === "saved" && <Bookmark className="w-3 h-3" />}
-                  <span className="hidden sm:inline">
-                    {category.charAt(0).toUpperCase() + category.slice(1)}
-                  </span>
-                  <span className="sm:hidden">
-                    {category === "all"
-                      ? "All"
-                      : category === "breaking"
-                      ? "!"
-                      : category === "trending"
-                      ? "↗"
-                      : "★"}
-                  </span>
-                </button>
-              ))}
+            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertTriangle className="w-4 h-4 text-red-400" />
+                <span className="text-xs text-gray-400">Breaking</span>
+              </div>
+              <div className="text-xl sm:text-2xl font-bold text-red-400">
+                {liveStats.breaking}
+              </div>
+            </div>
+
+            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+              <div className="flex items-center gap-2 mb-1">
+                <Zap className="w-4 h-4 text-orange-400" />
+                <span className="text-xs text-gray-400">Trending</span>
+              </div>
+              <div className="text-xl sm:text-2xl font-bold text-orange-400">
+                {liveStats.trending}
+              </div>
+            </div>
+
+            <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/10">
+              <div className="flex items-center gap-2 mb-1">
+                <Clock className="w-4 h-4 text-green-400" />
+                <span className="text-xs text-gray-400">Updated</span>
+              </div>
+              <div className="text-xl sm:text-2xl font-bold text-green-400">
+                {Math.floor(
+                  (Date.now() - (lastUpdate?.getTime() || Date.now())) / 60000
+                )}
+                m
+              </div>
             </div>
           </div>
         </div>
+      </motion.div>
 
-        {/* News Grid */}
-        {loading ? (
-          <div className="text-center py-12">
-            <div className="inline-block w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-gray-400">Loading real-time financial news...</p>
+      {/* Search and Filter Bar */}
+      <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl mobile:rounded-xl p-4 border border-gray-700/50">
+        <div className="flex flex-col sm:flex-row gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search breaking news, crypto, forex..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-gray-900/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm"
+            />
           </div>
-        ) : filteredNews.length === 0 ? (
-          <div className="text-center py-8">
-            <Newspaper className="w-12 h-12 text-gray-500 mx-auto mb-3" />
-            <h3 className="text-lg font-semibold text-gray-300 mb-2">
-              No news articles found
-            </h3>
-            <p className="text-gray-500 mb-3 text-sm">
-              Try adjusting your search terms or filters
-            </p>
+
+          {/* View Toggle */}
+          <div className="flex gap-2 bg-gray-900/50 p-1 rounded-xl border border-gray-600/50">
             <button
-              onClick={handleRefresh}
-              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors text-sm"
+              onClick={() => setViewMode("grid")}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                viewMode === "grid"
+                  ? "bg-blue-500 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
             >
-              Refresh News
+              Grid
+            </button>
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                viewMode === "list"
+                  ? "bg-blue-500 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              List
             </button>
           </div>
-        ) : (
-          <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-hide">
+          {categories.map((cat) => {
+            const Icon = cat.icon;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
+                  selectedCategory === cat.id
+                    ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg shadow-blue-500/30"
+                    : "bg-gray-700/50 text-gray-300 hover:bg-gray-700 border border-gray-600/30"
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="mobile:hidden sm:inline">{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* News Content */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+            <Newspaper className="w-6 h-6 text-blue-500 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <p className="text-gray-400 mt-4 text-sm">
+            Loading real-time market news...
+          </p>
+        </div>
+      ) : filteredNews.length === 0 ? (
+        <div className="bg-gray-800/50 backdrop-blur-xl rounded-2xl p-12 text-center border border-gray-700/50">
+          <Newspaper className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-300 mb-2">
+            No news articles found
+          </h3>
+          <p className="text-gray-500 mb-4">
+            Try adjusting your search or filters
+          </p>
+          <button
+            onClick={handleRefresh}
+            className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl transition-all hover:shadow-lg hover:shadow-blue-500/30 font-medium"
+          >
+            Refresh News Feed
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* News Grid/List */}
+          <div
+            className={
+              viewMode === "grid"
+                ? "grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                : "space-y-3"
+            }
+          >
             {filteredNews.map((article, index) => (
               <motion.div
                 key={article.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.02 }}
-                className={`relative bg-black/20 backdrop-blur-lg border-l-4 rounded-lg p-4 hover:bg-white/5 transition-all duration-300 border border-white/10 cursor-pointer ${getSentimentColor(
+                transition={{ delay: index * 0.03 }}
+                className={`group relative backdrop-blur-xl border rounded-2xl mobile:rounded-xl p-4 sm:p-5 hover:shadow-xl transition-all duration-300 cursor-pointer ${getSentimentColor(
                   article.sentiment,
                   article.impact
-                )}`}
+                )} hover:scale-[1.02]`}
                 onClick={() => handleArticleClick(article)}
               >
+                {/* Breaking Badge */}
                 {article.impact === "high" && (
-                  <div className="absolute -top-1 -right-1">
-                    <div className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">
-                      !
+                  <div className="absolute -top-2 -right-2 z-10">
+                    <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs px-3 py-1 rounded-full font-bold animate-pulse shadow-lg">
+                      BREAKING
                     </div>
                   </div>
                 )}
 
-                <div className="flex justify-between items-start mb-2">
-                  <div className="flex items-center gap-1">
+                {/* Article Header */}
+                <div className="flex justify-between items-start mb-3">
+                  <div className="flex items-center gap-2">
                     {getSentimentIcon(article.sentiment)}
-                    <span className="text-xs text-gray-400 truncate">
+                    <span className="text-xs font-medium text-gray-400">
                       {article.source}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-500">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
                       {formatTimeAgo(article.timestamp)}
                     </span>
+                  </div>
+                </div>
+
+                {/* Article Title */}
+                <h3
+                  className={`font-bold text-white mb-2 leading-tight group-hover:text-blue-400 transition-colors ${
+                    viewMode === "grid"
+                      ? "text-sm line-clamp-2"
+                      : "text-base line-clamp-1"
+                  }`}
+                >
+                  {article.title}
+                </h3>
+
+                {/* Article Summary */}
+                <p
+                  className={`text-gray-300 mb-3 leading-relaxed ${
+                    viewMode === "grid"
+                      ? "text-xs line-clamp-2"
+                      : "text-sm line-clamp-1"
+                  }`}
+                >
+                  {article.summary}
+                </p>
+
+                {/* Article Footer */}
+                <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                  <div className="flex items-center gap-2">
+                    {article.category && (
+                      <span className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded-lg font-medium">
+                        {article.category}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         toggleSaveArticle(article.id);
                       }}
-                      className={`p-0.5 rounded hover:bg-white/10 transition-colors ${
+                      className={`p-1.5 rounded-lg transition-all ${
                         savedArticles.has(article.id)
-                          ? "text-yellow-400"
-                          : "text-gray-400"
+                          ? "text-yellow-400 bg-yellow-500/20"
+                          : "text-gray-400 hover:bg-white/10"
                       }`}
-                      aria-label={
-                        savedArticles.has(article.id)
-                          ? "Remove from saved"
-                          : "Save article"
-                      }
                     >
                       {savedArticles.has(article.id) ? (
-                        <BookmarkCheck className="w-3 h-3" />
+                        <BookmarkCheck className="w-4 h-4" />
                       ) : (
-                        <Bookmark className="w-3 h-3" />
+                        <Bookmark className="w-4 h-4" />
                       )}
                     </button>
                     <button
@@ -529,135 +562,105 @@ const NewsPage = () => {
                         e.stopPropagation();
                         shareArticle(article);
                       }}
-                      className="p-0.5 rounded hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
-                      aria-label="Share article"
+                      className="p-1.5 rounded-lg text-gray-400 hover:bg-white/10 transition-all"
                     >
-                      <Share2 className="w-3 h-3" />
+                      <Share2 className="w-4 h-4" />
                     </button>
-                  </div>
-                </div>
-
-                <h3 className="text-sm font-semibold text-white mb-2 line-clamp-2 leading-tight">
-                  {article.title}
-                </h3>
-
-                <p className="text-gray-300 text-xs mb-3 line-clamp-2 leading-relaxed">
-                  {article.summary}
-                </p>
-
-                {article.category && (
-                  <div className="flex flex-wrap gap-1 mb-2">
-                    <span className="px-1.5 py-0.5 bg-blue-500/20 text-blue-300 text-xs rounded-full">
-                      {article.category}
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2 text-xs text-gray-400">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {article.category || "News"}
-                    </span>
-                  </div>
-
-                  <div className="text-blue-400 text-xs flex items-center gap-1">
-                    <span>Read more</span>
-                    <ExternalLink className="w-3 h-3" />
+                    <ChevronRight className="w-4 h-4 text-blue-400 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
               </motion.div>
             ))}
           </div>
-        )}
 
-        {/* Load More Button */}
-        {filteredNews.length > 0 && hasMoreNews && (
-          <div className="text-center mt-6">
-            <button
-              onClick={loadMoreNews}
-              disabled={isLoadingMore}
-              className="px-6 py-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:opacity-50 text-white rounded-lg transition-colors text-sm flex items-center gap-2 mx-auto"
-              aria-label="Load more articles"
-            >
-              {isLoadingMore ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <Globe className="w-4 h-4" />
-                  Load More Articles
-                </>
-              )}
-            </button>
-            <p className="text-xs text-gray-500 mt-2">
-              Real-time news from Forex, Banking & Crypto markets
-            </p>
-          </div>
-        )}
-
-        {!hasMoreNews && filteredNews.length > 0 && (
-          <div className="text-center mt-6">
-            <p className="text-sm text-gray-400">No more articles to load</p>
-            <button
-              onClick={handleRefresh}
-              className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm"
-            >
-              Refresh for Latest News
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Article Modal */}
-      {isModalOpen && selectedArticle && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
-          onClick={closeModal}
-        >
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.8, opacity: 0 }}
-            transition={{ type: "spring", duration: 0.5 }}
-            className="relative bg-gray-900 rounded-xl border border-white/20 w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  {getSentimentIcon(selectedArticle.sentiment)}
-                  <span className="text-sm text-gray-400">
-                    {selectedArticle.source}
-                  </span>
-                </div>
-                {selectedArticle.impact === "high" && (
-                  <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
-                    HIGH IMPACT
-                  </div>
-                )}
-              </div>
+          {/* Load More Section */}
+          {hasMoreNews && (
+            <div className="text-center">
               <button
-                onClick={closeModal}
-                className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                aria-label="Close modal"
+                onClick={loadMoreNews}
+                disabled={isLoadingMore}
+                className="px-8 py-3 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 disabled:opacity-50 text-white rounded-xl transition-all font-medium border border-gray-600/50 disabled:cursor-not-allowed flex items-center gap-3 mx-auto"
               >
-                <X className="w-5 h-5" />
+                {isLoadingMore ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    Loading more news...
+                  </>
+                ) : (
+                  <>
+                    <Globe className="w-5 h-5" />
+                    Load More Articles
+                  </>
+                )}
+              </button>
+              <p className="text-xs text-gray-500 mt-3">
+                Real-time updates from Forex, Banking & Crypto markets
+              </p>
+            </div>
+          )}
+
+          {!hasMoreNews && (
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-400 mb-3">
+                You've reached the end
+              </p>
+              <button
+                onClick={handleRefresh}
+                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl transition-all hover:shadow-lg hover:shadow-blue-500/30 font-medium"
+              >
+                Refresh for Latest News
               </button>
             </div>
+          )}
+        </>
+      )}
 
-            {/* Modal Content */}
-            <div className="overflow-y-auto max-h-[calc(90vh-180px)]">
-              <div className="p-6">
-                {/* Article Meta */}
+      {/* Article Modal */}
+      <AnimatePresence>
+        {isModalOpen && selectedArticle && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
+            onClick={closeModal}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", duration: 0.5, bounce: 0.3 }}
+              className="relative bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl border border-white/20 w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-white/10 bg-gray-900/50 backdrop-blur-xl">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {getSentimentIcon(selectedArticle.sentiment)}
+                    <span className="text-sm font-medium text-gray-400">
+                      {selectedArticle.source}
+                    </span>
+                  </div>
+                  {selectedArticle.impact === "high" && (
+                    <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs px-3 py-1 rounded-full font-bold animate-pulse">
+                      HIGH IMPACT
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={closeModal}
+                  className="p-2 rounded-xl hover:bg-white/10 transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="overflow-y-auto max-h-[calc(90vh-200px)] p-6">
+                {/* Meta Info */}
                 <div className="flex flex-wrap items-center gap-4 mb-4 text-sm text-gray-400">
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <Calendar className="w-4 h-4" />
                     {new Date(selectedArticle.timestamp).toLocaleDateString(
                       "en-US",
@@ -671,52 +674,51 @@ const NewsPage = () => {
                     )}
                   </div>
                   {selectedArticle.category && (
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4" />
+                    <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-lg font-medium">
                       {selectedArticle.category}
-                    </div>
+                    </span>
                   )}
                 </div>
 
-                {/* Article Title */}
-                <h1 className="text-2xl md:text-3xl font-bold text-white mb-4 leading-tight">
+                {/* Title */}
+                <h1 className="text-3xl font-bold text-white mb-6 leading-tight">
                   {selectedArticle.title}
                 </h1>
 
-                {/* Article Summary/Content */}
+                {/* Content */}
                 <div className="prose prose-invert max-w-none">
                   <p className="text-gray-300 text-lg leading-relaxed mb-6">
                     {selectedArticle.summary}
                   </p>
 
-                  {/* Simulated full article content */}
-                  <div className="space-y-4 text-gray-300">
+                  <div className="space-y-4 text-gray-300 leading-relaxed">
                     <p>
-                      This comprehensive article provides detailed insights into
-                      the latest market developments. Our analysis covers the
-                      key factors driving current trends and what investors
-                      should watch for in the coming weeks.
+                      This comprehensive analysis provides detailed insights
+                      into the latest market developments. Our team of experts
+                      has analyzed the key factors driving current trends and
+                      what investors should watch for in the coming weeks.
                     </p>
                     <p>
-                      Market experts suggest that recent developments could have
-                      significant implications for portfolio strategies. The
-                      data indicates changing investor sentiment and potential
-                      shifts in market dynamics.
+                      Market dynamics are showing significant changes as
+                      institutional investors adjust their positions. Recent
+                      data indicates evolving sentiment patterns that could
+                      influence market direction in both traditional and
+                      cryptocurrency markets.
                     </p>
                     <p>
                       Looking ahead, several key indicators will be crucial for
-                      determining the market's direction. Investors are advised
-                      to monitor these developments closely and consider their
-                      risk tolerance when making decisions.
+                      determining market trajectory. Investors are advised to
+                      monitor these developments closely and consider their risk
+                      tolerance when making strategic decisions.
                     </p>
                   </div>
                 </div>
 
-                {/* Article Actions */}
+                {/* Actions */}
                 <div className="flex flex-wrap gap-3 mt-8 pt-6 border-t border-white/10">
                   <button
                     onClick={() => toggleSaveArticle(selectedArticle.id)}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all font-medium ${
                       savedArticles.has(selectedArticle.id)
                         ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30"
                         : "bg-white/10 text-gray-300 hover:bg-white/20"
@@ -734,7 +736,7 @@ const NewsPage = () => {
 
                   <button
                     onClick={() => shareArticle(selectedArticle)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/10 text-gray-300 hover:bg-white/20 rounded-lg transition-colors"
+                    className="flex items-center gap-2 px-5 py-2.5 bg-white/10 text-gray-300 hover:bg-white/20 rounded-xl transition-all font-medium"
                   >
                     <Share2 className="w-4 h-4" />
                     Share
@@ -743,18 +745,18 @@ const NewsPage = () => {
                   {selectedArticle.url && (
                     <button
                       onClick={() => visitOriginalSite(selectedArticle.url)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded-lg transition-colors"
+                      className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:shadow-lg hover:shadow-blue-500/30 rounded-xl transition-all font-medium"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Visit Original Source
+                      Read Full Article
                     </button>
                   )}
                 </div>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };
