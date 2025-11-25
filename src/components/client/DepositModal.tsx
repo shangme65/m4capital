@@ -383,12 +383,12 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
               {/* Close Button */}
               <button
                 onClick={onClose}
-                className="absolute mobile:top-3 mobile:right-3 top-6 right-6 mobile:w-8 mobile:h-8 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all z-10"
+                className="absolute mobile:top-3 mobile:right-3 top-4 right-4 mobile:w-9 mobile:h-9 w-10 h-10 flex items-center justify-center text-white bg-gray-800/80 hover:bg-gray-700 rounded-xl transition-all z-20 shadow-lg border border-gray-600/50"
                 aria-label="Close deposit modal"
                 title="Close"
               >
                 <svg
-                  className="mobile:w-4 mobile:h-4 w-5 h-5"
+                  className="mobile:w-5 mobile:h-5 w-6 h-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -402,9 +402,8 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 </svg>
               </button>
 
-              {/* Header with Gradient Background */}
-              <div className="relative bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-orange-600/20 mobile:p-4 mobile:pb-6 p-8 pb-10">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/50"></div>
+              {/* Header with Solid Background */}
+              <div className="relative bg-gray-900 border-b border-gray-700/50 mobile:p-4 mobile:pb-6 p-8 pb-10">
                 <div className="relative z-10">
                   <div className="flex items-center justify-center mobile:mb-2 mb-4">
                     <Image
@@ -413,14 +412,14 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       width={48}
                       height={48}
                       priority
-                      className="mobile:w-10 mobile:h-10 drop-shadow-lg"
+                      className="mobile:w-10 mobile:h-10 w-12 h-12 object-contain drop-shadow-lg"
                     />
                   </div>
 
-                  <h2 className="mobile:text-xl xs:text-2xl sm:text-4xl text-3xl font-bold text-white mobile:mb-1 mb-3 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-300">
+                  <h2 className="mobile:text-xl xs:text-2xl sm:text-4xl text-3xl font-bold text-white mobile:mb-1 mb-3 text-center">
                     Deposit Funds
                   </h2>
-                  <p className="text-gray-300 text-center mobile:text-xs text-sm">
+                  <p className="text-gray-400 text-center mobile:text-xs text-sm">
                     Add funds to your trading account
                   </p>
                 </div>
