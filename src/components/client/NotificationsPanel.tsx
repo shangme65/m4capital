@@ -41,13 +41,13 @@ export default function NotificationsPanel({
     filter === "unread" ? notifications.filter((n) => !n.read) : notifications;
 
   const getNotificationIcon = (notification: Notification) => {
-    // Enhanced icons with gradient backgrounds
+    // Smaller icons with gradient backgrounds
     if (notification.title?.includes("You've bought")) {
       return (
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl blur-md opacity-50"></div>
-          <div className="relative w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <ArrowUpRight className="w-6 h-6 text-white" strokeWidth={2.5} />
+          <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg blur-sm opacity-50"></div>
+          <div className="relative w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
+            <ArrowUpRight className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
         </div>
       );
@@ -55,9 +55,9 @@ export default function NotificationsPanel({
     if (notification.title?.includes("You've sold")) {
       return (
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-rose-600 rounded-2xl blur-md opacity-50"></div>
-          <div className="relative w-12 h-12 bg-gradient-to-br from-red-400 to-rose-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <ArrowDownRight className="w-6 h-6 text-white" strokeWidth={2.5} />
+          <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-rose-600 rounded-lg blur-sm opacity-50"></div>
+          <div className="relative w-8 h-8 bg-gradient-to-br from-red-400 to-rose-600 rounded-lg flex items-center justify-center shadow-md">
+            <ArrowDownRight className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
         </div>
       );
@@ -69,9 +69,9 @@ export default function NotificationsPanel({
     ) {
       return (
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-2xl blur-md opacity-50"></div>
-          <div className="relative w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-2xl flex items-center justify-center shadow-lg">
-            <DollarSign className="w-6 h-6 text-white" strokeWidth={2.5} />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-lg blur-sm opacity-50"></div>
+          <div className="relative w-8 h-8 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
+            <DollarSign className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
         </div>
       );
@@ -120,13 +120,13 @@ export default function NotificationsPanel({
     return (
       <div className="relative">
         <div
-          className={`absolute inset-0 bg-gradient-to-br ${config.gradient} rounded-2xl blur-md opacity-50`}
+          className={`absolute inset-0 bg-gradient-to-br ${config.gradient} rounded-lg blur-sm opacity-50`}
         ></div>
         <div
-          className={`relative w-12 h-12 bg-gradient-to-br ${config.gradient} rounded-2xl flex items-center justify-center shadow-lg`}
+          className={`relative w-8 h-8 bg-gradient-to-br ${config.gradient} rounded-lg flex items-center justify-center shadow-md`}
         >
           <IconComponent
-            className={`w-6 h-6 ${config.color}`}
+            className={`w-4 h-4 ${config.color}`}
             strokeWidth={2.5}
           />
         </div>
@@ -168,30 +168,30 @@ export default function NotificationsPanel({
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-l border-gray-700/50 z-50 flex flex-col shadow-2xl"
           >
-            {/* Enhanced Header with gradient */}
+            {/* Smaller Header */}
             <div className="relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-purple-500/10 to-blue-500/10"></div>
-              <div className="relative flex items-center justify-between p-6 border-b border-gray-700/50">
-                <div className="flex items-center space-x-3">
+              <div className="relative flex items-center justify-between p-4 border-b border-gray-700/50">
+                <div className="flex items-center space-x-2">
                   <div className="relative">
-                    <Bell className="w-6 h-6 text-orange-500" />
+                    <Bell className="w-5 h-5 text-orange-500" />
                     {unreadCount > 0 && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg"
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-orange-500 to-red-500 rounded-full flex items-center justify-center shadow-lg"
                       >
-                        <span className="text-white text-[10px] font-bold">
+                        <span className="text-white text-[9px] font-bold">
                           {unreadCount > 9 ? "9+" : unreadCount}
                         </span>
                       </motion.div>
                     )}
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-white">
+                    <h2 className="text-lg font-bold text-white">
                       Notifications
                     </h2>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-[10px] text-gray-400">
                       {notifications.length} total
                     </p>
                   </div>
@@ -202,15 +202,15 @@ export default function NotificationsPanel({
                   aria-label="Close notifications panel"
                   title="Close"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              {/* Filter Tabs */}
-              <div className="relative flex items-center space-x-2 px-6 py-3 bg-gray-800/50">
+              {/* Smaller Filter Tabs */}
+              <div className="relative flex items-center space-x-2 px-4 py-2 bg-gray-800/50">
                 <button
                   onClick={() => setFilter("all")}
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     filter === "all"
                       ? "text-white"
                       : "text-gray-400 hover:text-white"
@@ -231,7 +231,7 @@ export default function NotificationsPanel({
                 </button>
                 <button
                   onClick={() => setFilter("unread")}
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     filter === "unread"
                       ? "text-white"
                       : "text-gray-400 hover:text-white"
@@ -248,10 +248,10 @@ export default function NotificationsPanel({
                       }}
                     />
                   )}
-                  <span className="relative flex items-center space-x-2">
+                  <span className="relative flex items-center space-x-1.5">
                     <span>Unread</span>
                     {unreadCount > 0 && (
-                      <span className="bg-orange-500 text-white text-xs px-1.5 py-0.5 rounded-full">
+                      <span className="bg-orange-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
                         {unreadCount}
                       </span>
                     )}
@@ -286,7 +286,7 @@ export default function NotificationsPanel({
                   </p>
                 </motion.div>
               ) : (
-                <div className="p-4 space-y-3">
+                <div className="p-2 space-y-2">
                   <AnimatePresence mode="popLayout">
                     {filteredNotifications.map((notification, index) => {
                       const isExpanded = expandedId === notification.id;
@@ -315,7 +315,7 @@ export default function NotificationsPanel({
                               }
                             }
                           }}
-                          className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${
+                          className={`group relative overflow-hidden rounded-lg border transition-all duration-300 cursor-pointer ${
                             !notification.read
                               ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-orange-500/30 shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20"
                               : "bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50"
@@ -331,8 +331,8 @@ export default function NotificationsPanel({
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-500 via-purple-500 to-blue-500"></div>
                           )}
 
-                          <div className="relative p-4">
-                            <div className="flex items-start space-x-4">
+                          <div className="relative p-2.5">
+                            <div className="flex items-start space-x-2.5">
                               {/* Enhanced Icon */}
                               <div className="flex-shrink-0">
                                 {getNotificationIcon(notification)}
@@ -340,9 +340,9 @@ export default function NotificationsPanel({
 
                               {/* Content */}
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between mb-1">
+                                <div className="flex items-start justify-between mb-0.5">
                                   <h3
-                                    className={`text-base font-bold ${
+                                    className={`text-sm font-bold ${
                                       !notification.read
                                         ? "text-white"
                                         : "text-gray-300"
@@ -350,15 +350,15 @@ export default function NotificationsPanel({
                                   >
                                     {notification.title}
                                   </h3>
-                                  <div className="flex items-center space-x-2 ml-2">
-                                    <span className="text-xs text-gray-500 flex-shrink-0 font-medium">
+                                  <div className="flex items-center space-x-1.5 ml-2">
+                                    <span className="text-[10px] text-gray-500 flex-shrink-0 font-medium">
                                       {formatTimeAgo(notification.timestamp)}
                                     </span>
                                     <motion.div
                                       animate={{ rotate: isExpanded ? 180 : 0 }}
                                       transition={{ duration: 0.2 }}
                                     >
-                                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                                      <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
                                     </motion.div>
                                   </div>
                                 </div>
@@ -374,7 +374,7 @@ export default function NotificationsPanel({
                                     >
                                       {/* Message */}
                                       {notification.message && (
-                                        <p className="text-sm text-gray-400 leading-relaxed mb-3 mt-2">
+                                        <p className="text-xs text-gray-400 leading-relaxed mb-2 mt-1">
                                           {notification.message}
                                         </p>
                                       )}
@@ -383,14 +383,14 @@ export default function NotificationsPanel({
                                       {notification.amount &&
                                         notification.asset && (
                                           <div
-                                            className={`inline-flex items-center space-x-2 px-3 py-2 rounded-xl ${
+                                            className={`inline-flex items-center space-x-1.5 px-2 py-1 rounded-lg ${
                                               notification.amount < 0
                                                 ? "bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/20"
                                                 : "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
-                                            } mb-3`}
+                                            } mb-2`}
                                           >
                                             <span
-                                              className={`text-2xl font-black ${
+                                              className={`text-base font-black ${
                                                 notification.amount < 0
                                                   ? "bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent"
                                                   : "bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
@@ -405,7 +405,7 @@ export default function NotificationsPanel({
                                               )}
                                             </span>
                                             <span
-                                              className={`text-sm font-bold ${
+                                              className={`text-xs font-bold ${
                                                 notification.amount < 0
                                                   ? "text-red-400"
                                                   : "text-green-400"
@@ -420,19 +420,19 @@ export default function NotificationsPanel({
                                 </AnimatePresence>
 
                                 {/* Status Indicator */}
-                                <div className="flex items-center justify-between mt-2">
-                                  <div className="flex items-center space-x-2">
+                                <div className="flex items-center justify-between mt-1">
+                                  <div className="flex items-center space-x-1.5">
                                     {!notification.read ? (
-                                      <div className="flex items-center space-x-1.5">
-                                        <Circle className="w-2 h-2 text-orange-500 fill-orange-500 animate-pulse" />
-                                        <span className="text-xs text-orange-400 font-medium">
+                                      <div className="flex items-center space-x-1">
+                                        <Circle className="w-1.5 h-1.5 text-orange-500 fill-orange-500 animate-pulse" />
+                                        <span className="text-[10px] text-orange-400 font-medium">
                                           Unread
                                         </span>
                                       </div>
                                     ) : (
-                                      <div className="flex items-center space-x-1.5">
-                                        <MailOpen className="w-3.5 h-3.5 text-gray-500" />
-                                        <span className="text-xs text-gray-500">
+                                      <div className="flex items-center space-x-1">
+                                        <MailOpen className="w-3 h-3 text-gray-500" />
+                                        <span className="text-[10px] text-gray-500">
                                           Read
                                         </span>
                                       </div>

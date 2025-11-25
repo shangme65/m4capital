@@ -387,13 +387,13 @@ function Hero() {
             <>
               <button
                 onClick={openSignupModal}
-                className="w-full xs:w-auto bg-orange-500 hover:bg-orange-600 text-white px-8 xs:px-12 py-4 xs:py-5 rounded-xl font-bold text-lg xs:text-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
+                className="w-full xs:w-auto bg-orange-500 hover:bg-orange-600 text-white px-6 xs:px-12 py-3 xs:py-5 rounded-xl font-bold text-base xs:text-xl transition-all duration-200 transform hover:scale-105 shadow-lg"
               >
                 Get Started
               </button>
               <button
                 onClick={handleTryDemo}
-                className="w-full xs:w-auto bg-gray-700 hover:bg-gray-600 text-white px-8 xs:px-12 py-4 xs:py-5 rounded-xl font-bold text-lg xs:text-xl transition-all duration-200 transform hover:scale-105 border border-gray-600 shadow-lg"
+                className="w-full xs:w-auto bg-gray-700 hover:bg-gray-600 text-white px-6 xs:px-12 py-3 xs:py-5 rounded-xl font-bold text-base xs:text-xl transition-all duration-200 transform hover:scale-105 border border-gray-600 shadow-lg"
               >
                 Try Free Demo
               </button>
