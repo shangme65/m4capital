@@ -618,6 +618,7 @@ const AdminDashboard = () => {
   const [amountInputType, setAmountInputType] = useState<"usd" | "crypto">(
     "usd"
   );
+  const [showCryptoDropdown, setShowCryptoDropdown] = useState(false);
 
   // System stats state
   const [systemStats, setSystemStats] = useState({
@@ -2197,37 +2198,48 @@ const AdminDashboard = () => {
                                   ))
                                 ) : (
                                   <div className="relative">
-                                    <select
-                                      value={cryptoAsset}
-                                      onChange={(e) =>
-                                        setCryptoAsset(e.target.value)
+                                    <label className="block text-xs font-semibold text-gray-300 mb-2">
+                                      Select Cryptocurrency
+                                    </label>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setShowCryptoDropdown(
+                                          !showCryptoDropdown
+                                        )
                                       }
-                                      className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none pr-10"
+                                      className="w-full bg-gray-700/50 border border-gray-600/50 hover:border-orange-500/50 rounded-lg p-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 flex items-center justify-between transition-all"
                                     >
-                                      {cryptoPaymentMethods.map((method) => {
-                                        const cryptoPrice =
-                                          prices[method.name.toLowerCase()];
-                                        const price = cryptoPrice?.price || 0;
-                                        const currencySymbol =
-                                          getCurrencySymbol(
-                                            selectedUser?.preferredCurrency ||
-                                              "USD"
-                                          );
-                                        return (
-                                          <option
-                                            key={method.id}
-                                            value={method.name}
-                                          >
-                                            {method.name} - {method.fullName} (
-                                            {currencySymbol}
-                                            {price.toFixed(2)})
-                                          </option>
-                                        );
-                                      })}
-                                    </select>
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                      <div className="flex items-center gap-3">
+                                        <CryptoIcon
+                                          symbol={cryptoAsset}
+                                          className="w-6 h-6"
+                                        />
+                                        <div className="text-left">
+                                          <p className="font-semibold">
+                                            {cryptoAsset} -{" "}
+                                            {
+                                              cryptoAssets.find(
+                                                (a) => a.symbol === cryptoAsset
+                                              )?.name
+                                            }
+                                          </p>
+                                          <p className="text-xs text-gray-400">
+                                            {getCurrencySymbol(
+                                              selectedUser?.preferredCurrency ||
+                                                "USD"
+                                            )}
+                                            {(
+                                              prices[cryptoAsset.toLowerCase()]
+                                                ?.price || 0
+                                            ).toLocaleString()}
+                                          </p>
+                                        </div>
+                                      </div>
                                       <svg
-                                        className="w-4 h-4 text-gray-400"
+                                        className={`w-5 h-5 text-gray-400 transition-transform ${
+                                          showCryptoDropdown ? "rotate-180" : ""
+                                        }`}
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -2239,7 +2251,76 @@ const AdminDashboard = () => {
                                           d="M19 9l-7 7-7-7"
                                         />
                                       </svg>
-                                    </div>
+                                    </button>
+
+                                    {showCryptoDropdown && (
+                                      <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto">
+                                        {cryptoPaymentMethods.map((method) => {
+                                          const cryptoPrice =
+                                            prices[method.name.toLowerCase()];
+                                          const price = cryptoPrice?.price || 0;
+                                          const change =
+                                            cryptoPrice?.change24h || 0;
+                                          const currencySymbol =
+                                            getCurrencySymbol(
+                                              selectedUser?.preferredCurrency ||
+                                                "USD"
+                                            );
+                                          const isSelected =
+                                            cryptoAsset === method.name;
+
+                                          return (
+                                            <button
+                                              key={method.id}
+                                              type="button"
+                                              onClick={() => {
+                                                setCryptoAsset(method.name);
+                                                setShowCryptoDropdown(false);
+                                              }}
+                                              className={`w-full p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-colors ${
+                                                isSelected
+                                                  ? "bg-orange-500/10 border-l-4 border-orange-500"
+                                                  : ""
+                                              }`}
+                                            >
+                                              <CryptoIcon
+                                                symbol={method.name}
+                                                className="w-8 h-8 flex-shrink-0"
+                                              />
+                                              <div className="flex-1 text-left">
+                                                <div className="flex items-center justify-between">
+                                                  <p className="font-semibold text-white">
+                                                    {method.name}
+                                                  </p>
+                                                  <span
+                                                    className={`text-xs font-medium ${
+                                                      change >= 0
+                                                        ? "text-green-400"
+                                                        : "text-red-400"
+                                                    }`}
+                                                  >
+                                                    {change >= 0 ? "+" : ""}
+                                                    {change.toFixed(2)}%
+                                                  </span>
+                                                </div>
+                                                <div className="flex items-center justify-between mt-1">
+                                                  <p className="text-xs text-gray-400">
+                                                    {method.fullName}
+                                                  </p>
+                                                  <p className="text-sm font-medium text-white">
+                                                    {currencySymbol}
+                                                    {price.toLocaleString()}
+                                                  </p>
+                                                </div>
+                                              </div>
+                                              {isSelected && (
+                                                <Check className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                                              )}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -2248,55 +2329,128 @@ const AdminDashboard = () => {
                         )}
 
                         {/* Crypto Deposit Options */}
+                        {/* Crypto Deposit Options */}
                         {depositType === "crypto" && (
-                          <div>
+                          <div className="relative">
                             <label className="block text-xs font-semibold text-gray-300 mb-2">
                               Select Cryptocurrency
                             </label>
-                            <div className="relative">
-                              <select
-                                value={cryptoAsset}
-                                onChange={(e) => setCryptoAsset(e.target.value)}
-                                className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 appearance-none pr-10"
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowCryptoDropdown(!showCryptoDropdown)
+                              }
+                              className="w-full bg-gray-700/50 border border-gray-600/50 hover:border-orange-500/50 rounded-lg p-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 flex items-center justify-between transition-all"
+                            >
+                              <div className="flex items-center gap-3">
+                                <CryptoIcon
+                                  symbol={cryptoAsset}
+                                  className="w-6 h-6"
+                                />
+                                <div className="text-left">
+                                  <p className="font-semibold">
+                                    {cryptoAsset} -{" "}
+                                    {
+                                      cryptoAssets.find(
+                                        (a) => a.symbol === cryptoAsset
+                                      )?.name
+                                    }
+                                  </p>
+                                  <p className="text-xs text-gray-400">
+                                    {getCurrencySymbol(
+                                      selectedUser?.preferredCurrency || "USD"
+                                    )}
+                                    {(
+                                      prices[cryptoAsset.toLowerCase()]
+                                        ?.price || 0
+                                    ).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <svg
+                                className={`w-5 h-5 text-gray-400 transition-transform ${
+                                  showCryptoDropdown ? "rotate-180" : ""
+                                }`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                               >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M19 9l-7 7-7-7"
+                                />
+                              </svg>
+                            </button>
+
+                            {showCryptoDropdown && (
+                              <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto">
                                 {cryptoAssets.map((asset) => {
                                   const cryptoPrice =
                                     prices[asset.symbol.toLowerCase()];
                                   const price = cryptoPrice?.price || 0;
+                                  const change = cryptoPrice?.change24h || 0;
                                   const currencySymbol = getCurrencySymbol(
                                     selectedUser?.preferredCurrency || "USD"
                                   );
+                                  const isSelected =
+                                    cryptoAsset === asset.symbol;
+
                                   return (
-                                    <option
+                                    <button
                                       key={asset.symbol}
-                                      value={asset.symbol}
+                                      type="button"
+                                      onClick={() => {
+                                        setCryptoAsset(asset.symbol);
+                                        setShowCryptoDropdown(false);
+                                      }}
+                                      className={`w-full p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-colors ${
+                                        isSelected
+                                          ? "bg-orange-500/10 border-l-4 border-orange-500"
+                                          : ""
+                                      }`}
                                     >
-                                      {asset.symbol} - {asset.name} (
-                                      {currencySymbol}
-                                      {price.toFixed(2)})
-                                    </option>
+                                      <CryptoIcon
+                                        symbol={asset.symbol}
+                                        className="w-8 h-8 flex-shrink-0"
+                                      />
+                                      <div className="flex-1 text-left">
+                                        <div className="flex items-center justify-between">
+                                          <p className="font-semibold text-white">
+                                            {asset.symbol}
+                                          </p>
+                                          <span
+                                            className={`text-xs font-medium ${
+                                              change >= 0
+                                                ? "text-green-400"
+                                                : "text-red-400"
+                                            }`}
+                                          >
+                                            {change >= 0 ? "+" : ""}
+                                            {change.toFixed(2)}%
+                                          </span>
+                                        </div>
+                                        <div className="flex items-center justify-between mt-1">
+                                          <p className="text-xs text-gray-400">
+                                            {asset.name}
+                                          </p>
+                                          <p className="text-sm font-medium text-white">
+                                            {currencySymbol}
+                                            {price.toLocaleString()}
+                                          </p>
+                                        </div>
+                                      </div>
+                                      {isSelected && (
+                                        <Check className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                                      )}
+                                    </button>
                                   );
                                 })}
-                              </select>
-                              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                <svg
-                                  className="w-4 h-4 text-gray-400"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M19 9l-7 7-7-7"
-                                  />
-                                </svg>
                               </div>
-                            </div>
+                            )}
                           </div>
                         )}
-
                         <div>
                           <label className="block text-xs font-semibold text-gray-300 mb-2">
                             Amount
