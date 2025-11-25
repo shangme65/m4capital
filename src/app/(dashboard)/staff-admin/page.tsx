@@ -165,7 +165,9 @@ export default function StaffAdminPage() {
             </button>
             <div>
               <h1 className="text-2xl font-bold">Staff Admin Dashboard</h1>
-              <p className="text-sm text-gray-400">Manage your assigned users</p>
+              <p className="text-sm text-gray-400">
+                Manage your assigned users
+              </p>
             </div>
           </div>
         </div>
@@ -235,7 +237,8 @@ export default function StaffAdminPage() {
       )}
 
       {/* Users List */}
-      <div className=\"max-w-7xl mx-auto\">\n        <div className=\"bg-gray-800 rounded-xl border border-gray-700 overflow-hidden\">"
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-700/50">
@@ -420,7 +423,7 @@ export default function StaffAdminPage() {
             </div>
           </motion.div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
