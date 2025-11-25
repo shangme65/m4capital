@@ -33,6 +33,9 @@ import {
   X,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -377,17 +380,25 @@ const AdminDashboard = () => {
   });
 
   const cryptoAssets = [
-    "BTC",
-    "ETH",
-    "XRP",
-    "TRX",
-    "TON",
-    "LTC",
-    "BCH",
-    "ETC",
-    "USDC",
-    "USDT",
+    { symbol: "BTC", name: "Bitcoin" },
+    { symbol: "ETH", name: "Ethereum" },
+    { symbol: "XRP", name: "Ripple" },
+    { symbol: "TRX", name: "Tron" },
+    { symbol: "TON", name: "Toncoin" },
+    { symbol: "LTC", name: "Litecoin" },
+    { symbol: "BCH", name: "Bitcoin Cash" },
+    { symbol: "ETC", name: "Ethereum Classic" },
+    { symbol: "USDC", name: "USD Coin" },
+    { symbol: "USDT", name: "Tether" },
   ];
+
+  const cryptoPaymentMethods = cryptoAssets.map((asset) => ({
+    id: asset.symbol.toLowerCase(),
+    name: asset.symbol,
+    fullName: asset.name,
+  }));
+
+  const prices = useCryptoPrices(cryptoAssets.map((asset) => asset.symbol)); // Add crypto prices hook
 
   const traditionalPaymentMethods = [
     { id: "pix", name: "PIX", icon: "🇧🇷" },
@@ -396,12 +407,6 @@ const AdminDashboard = () => {
     { id: "paypal", name: "PayPal", icon: "💰" },
     { id: "wire_transfer", name: "Wire Transfer", icon: "📤" },
   ];
-
-  const cryptoPaymentMethods = cryptoAssets.map((asset) => ({
-    id: `crypto_${asset.toLowerCase()}`,
-    name: asset,
-    icon: "₿",
-  }));
 
   // Show popup notification
   const showPopupNotification = (
@@ -1045,14 +1050,14 @@ const AdminDashboard = () => {
         </div>
       )}
       {/* Admin Header */}
-      <div className="mb-4 sm:mb-8">
+      <div className="mb-3 xs:mb-4 sm:mb-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-4xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+              <h1 className="text-lg xs:text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                 Admin Control Panel
               </h1>
-              <p className="text-xs sm:text-sm text-gray-400">
+              <p className="text-xs text-gray-400">
                 Complete administrative dashboard
               </p>
             </div>
@@ -1064,97 +1069,95 @@ const AdminDashboard = () => {
       {activeTab === "dashboard" && (
         <div className="space-y-4 sm:space-y-8">
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                <button
-                  onClick={() => {
-                    setShowPaymentModal(true);
-                    fetchUsers();
-                  }}
-                  className="w-full bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <CreditCard size={24} />
-                  <span>Process Manual Payment</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("users")}
-                  className="w-full bg-blue-500/20 border-2 border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <Users size={24} />
-                  <span>Manage Users</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("bin")}
-                  className="w-full bg-red-500/20 border-2 border-red-500/40 hover:bg-red-500/30 hover:border-red-500/60 text-red-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg relative"
-                >
-                  <Trash2 size={24} />
-                  <span>Deleted Users Bin</span>
-                  {deletedUsersCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full px-3 py-1 text-sm font-bold shadow-lg">
-                      {deletedUsersCount}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={() => (window.location.href = "/admin/kyc")}
-                  className="w-full bg-orange-500/20 border-2 border-orange-500/40 hover:bg-orange-500/30 hover:border-orange-500/60 text-orange-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <Shield size={24} />
-                  <span>KYC Verification</span>
-                </button>
-                <button
-                  onClick={() => router.push("/admin/analytics")}
-                  className="w-full bg-cyan-500/20 border-2 border-cyan-500/40 hover:bg-cyan-500/30 hover:border-cyan-500/60 text-cyan-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <BarChart3 size={24} />
-                  <span>Analytics Dashboard</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("notifications")}
-                  className="w-full bg-purple-500/20 border-2 border-purple-500/40 hover:bg-purple-500/30 hover:border-purple-500/60 text-purple-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <Bell size={24} />
-                  <span>Send Notifications</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("transactions")}
-                  className="w-full bg-indigo-500/20 border-2 border-indigo-500/40 hover:bg-indigo-500/30 hover:border-indigo-500/60 text-indigo-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <History size={24} />
-                  <span>Transaction History</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("system")}
-                  className="w-full bg-gray-500/20 border-2 border-gray-500/40 hover:bg-gray-500/30 hover:border-gray-500/60 text-gray-300 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <Settings size={24} />
-                  <span>System Settings</span>
-                </button>
-                <button
-                  onClick={() => setActiveTab("reports")}
-                  className="w-full bg-yellow-500/20 border-2 border-yellow-500/40 hover:bg-yellow-500/30 hover:border-yellow-500/60 text-yellow-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <FileText size={24} />
-                  <span>Reports</span>
-                </button>
-                <button
-                  onClick={() => setShowDatabaseModal(true)}
-                  className="w-full bg-pink-500/20 border-2 border-pink-500/40 hover:bg-pink-500/30 hover:border-pink-500/60 text-pink-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <Database size={24} />
-                  <span>Database</span>
-                </button>
-                <button
-                  onClick={() => setShowActivityModal(true)}
-                  className="w-full bg-teal-500/20 border-2 border-teal-500/40 hover:bg-teal-500/30 hover:border-teal-500/60 text-teal-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
-                >
-                  <Activity size={24} />
-                  <span>Activity Logs</span>
-                </button>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-3 xs:gap-4">
+            <button
+              onClick={() => {
+                setShowPaymentModal(true);
+                fetchUsers();
+              }}
+              className="w-full bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <CreditCard className="flex-shrink-0" size={28} />
+              <span className="text-left">Process Manual Payment</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("users")}
+              className="w-full bg-blue-500/20 border-2 border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <Users className="flex-shrink-0" size={28} />
+              <span className="text-left">Manage Users</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("bin")}
+              className="w-full bg-red-500/20 border-2 border-red-500/40 hover:bg-red-500/30 hover:border-red-500/60 text-red-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg relative"
+            >
+              <Trash2 className="flex-shrink-0" size={28} />
+              <span className="text-left">Deleted Users Bin</span>
+              {deletedUsersCount > 0 && (
+                <span className="absolute top-2 right-2 bg-red-500 text-white rounded-full px-3 py-1 text-sm font-bold shadow-lg">
+                  {deletedUsersCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => (window.location.href = "/admin/kyc")}
+              className="w-full bg-orange-500/20 border-2 border-orange-500/40 hover:bg-orange-500/30 hover:border-orange-500/60 text-orange-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <Shield className="flex-shrink-0" size={28} />
+              <span className="text-left">KYC Verification</span>
+            </button>
+            <button
+              onClick={() => router.push("/admin/analytics")}
+              className="w-full bg-cyan-500/20 border-2 border-cyan-500/40 hover:bg-cyan-500/30 hover:border-cyan-500/60 text-cyan-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <BarChart3 className="flex-shrink-0" size={28} />
+              <span className="text-left">Analytics Dashboard</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("notifications")}
+              className="w-full bg-purple-500/20 border-2 border-purple-500/40 hover:bg-purple-500/30 hover:border-purple-500/60 text-purple-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <Bell className="flex-shrink-0" size={28} />
+              <span className="text-left">Send Notifications</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("transactions")}
+              className="w-full bg-indigo-500/20 border-2 border-indigo-500/40 hover:bg-indigo-500/30 hover:border-indigo-500/60 text-indigo-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <History className="flex-shrink-0" size={28} />
+              <span className="text-left">Transaction History</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("system")}
+              className="w-full bg-gray-500/20 border-2 border-gray-500/40 hover:bg-gray-500/30 hover:border-gray-500/60 text-gray-300 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <Settings className="flex-shrink-0" size={28} />
+              <span className="text-left">System Settings</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("reports")}
+              className="w-full bg-yellow-500/20 border-2 border-yellow-500/40 hover:bg-yellow-500/30 hover:border-yellow-500/60 text-yellow-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <FileText className="flex-shrink-0" size={28} />
+              <span className="text-left">Reports</span>
+            </button>
+            <button
+              onClick={() => setShowDatabaseModal(true)}
+              className="w-full bg-pink-500/20 border-2 border-pink-500/40 hover:bg-pink-500/30 hover:border-pink-500/60 text-pink-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <Database className="flex-shrink-0" size={28} />
+              <span className="text-left">Database</span>
+            </button>
+            <button
+              onClick={() => setShowActivityModal(true)}
+              className="w-full bg-teal-500/20 border-2 border-teal-500/40 hover:bg-teal-500/30 hover:border-teal-500/60 text-teal-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+            >
+              <Activity className="flex-shrink-0" size={28} />
+              <span className="text-left">Activity Logs</span>
+            </button>
+          </div>
 
+          <div className="grid grid-cols-1 gap-4">
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
               <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
                 <BarChart3 className="text-blue-400" size={20} />
@@ -1615,7 +1618,7 @@ const AdminDashboard = () => {
             className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-6xl max-h-[90vh] overflow-y-auto"
           >
             {/* Modal Header with Close Button */}
-            <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-4 sm:p-6 flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-3 xs:p-4 sm:p-6 flex items-center justify-between z-10">
               <div className="flex items-center gap-3">
                 {selectedUser && (
                   <button
@@ -1626,11 +1629,16 @@ const AdminDashboard = () => {
                     <ArrowLeft size={20} />
                   </button>
                 )}
-                <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
-                  <CreditCard className="text-green-400" size={24} />
-                  {selectedUser
-                    ? `Payment for ${selectedUser.email}`
-                    : "Process Manual Payment"}
+                <h2 className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
+                  <CreditCard
+                    className="text-green-400 mobile:hidden xs:block"
+                    size={20}
+                  />
+                  <span className="truncate">
+                    {selectedUser
+                      ? `Payment for ${selectedUser.email}`
+                      : "Manual Payment"}
+                  </span>
                 </h2>
               </div>
               <button
@@ -1646,7 +1654,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="p-4 sm:p-6">
+            <div className="p-3 xs:p-4 sm:p-6">
               {/* User Selection */}
               {!selectedUser && (
                 <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
@@ -1708,31 +1716,31 @@ const AdminDashboard = () => {
                     </h3>
 
                     {/* Main Deposit Type Selection */}
-                    <div className="mb-6">
-                      <label className="block text-sm font-semibold text-gray-300 mb-3">
+                    <div className="mb-4 xs:mb-5 sm:mb-6">
+                      <label className="block text-xs xs:text-sm font-semibold text-gray-300 mb-2 xs:mb-3">
                         Deposit Type
                       </label>
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-2 gap-2 xs:gap-3 sm:gap-4">
                         <button
                           onClick={() => {
                             setDepositType("fiat");
                             setPaymentMethodType("traditional");
                           }}
-                          className={`p-6 rounded-xl border-2 transition-all ${
+                          className={`p-3 xs:p-4 sm:p-6 rounded-lg xs:rounded-xl border-2 transition-all ${
                             depositType === "fiat"
                               ? "bg-gradient-to-br from-green-500/20 to-blue-500/20 border-green-500 shadow-lg shadow-green-500/20"
                               : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
                           }`}
                         >
                           <DollarSign
-                            className={`w-10 h-10 mx-auto mb-2 ${
+                            className={`w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 mx-auto mb-1 xs:mb-2 ${
                               depositType === "fiat"
                                 ? "text-green-400"
                                 : "text-gray-400"
                             }`}
                           />
                           <span
-                            className={`text-lg font-bold block ${
+                            className={`text-sm xs:text-base sm:text-lg font-bold block ${
                               depositType === "fiat"
                                 ? "text-green-400"
                                 : "text-gray-400"
@@ -1740,42 +1748,45 @@ const AdminDashboard = () => {
                           >
                             Deposit Fiat
                           </span>
-                          <span className="text-xs text-gray-500 block mt-1">
+                          <span className="text-xs xs:text-xs text-gray-500 block mt-1 mobile:hidden xs:block">
                             Add to user's fiat balance
                           </span>
                         </button>
                         <button
                           onClick={() => setDepositType("crypto")}
-                          className={`p-6 rounded-xl border-2 transition-all ${
+                          className={`p-3 xs:p-4 sm:p-6 rounded-lg xs:rounded-xl border-2 transition-all ${
                             depositType === "crypto"
                               ? "bg-gradient-to-br from-orange-500/20 to-purple-500/20 border-orange-500 shadow-lg shadow-orange-500/20"
                               : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
                           }`}
                         >
                           <Wallet
-                            className={`w-10 h-10 mx-auto mb-2 ${
+                            className={`w-6 h-6 xs:w-8 xs:h-8 sm:w-10 sm:h-10 mx-auto mb-1 xs:mb-2 ${
                               depositType === "crypto"
                                 ? "text-orange-400"
                                 : "text-gray-400"
                             }`}
                           />
                           <span
-                            className={`text-lg font-bold block ${
+                            className={`text-sm xs:text-base sm:text-lg font-bold block ${
                               depositType === "crypto"
                                 ? "text-orange-400"
                                 : "text-gray-400"
                             }`}
                           >
-                            Deposit Cryptocurrency
+                            <span className="mobile:hidden xs:inline">
+                              Deposit{" "}
+                            </span>
+                            Cryptocurrency
                           </span>
-                          <span className="text-xs text-gray-500 block mt-1">
+                          <span className="text-xs xs:text-xs text-gray-500 block mt-1 mobile:hidden xs:block">
                             Add to user's crypto portfolio
                           </span>
                         </button>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 xs:gap-4 sm:gap-6">
                       <div className="space-y-4">
                         <div>
                           <p className="text-sm text-gray-400 mb-1">
@@ -1835,24 +1846,42 @@ const AdminDashboard = () => {
                                   ))
                                 ) : (
                                   <div className="grid grid-cols-2 gap-2">
-                                    {cryptoPaymentMethods.map((method) => (
-                                      <button
-                                        key={method.id}
-                                        onClick={() =>
-                                          setCryptoAsset(method.name)
-                                        }
-                                        className={`p-3 rounded-lg border transition-all ${
-                                          cryptoAsset === method.name &&
-                                          paymentMethodType === "crypto"
-                                            ? "bg-orange-500/20 border-orange-500 text-orange-400"
-                                            : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
-                                        }`}
-                                      >
-                                        <span className="text-lg block font-bold">
-                                          {method.name}
-                                        </span>
-                                      </button>
-                                    ))}
+                                    {cryptoPaymentMethods.map((method) => {
+                                      const cryptoPrice =
+                                        prices[method.name.toLowerCase()];
+                                      const price = cryptoPrice?.price || 0;
+                                      const currencySymbol = getCurrencySymbol(
+                                        selectedUser?.preferredCurrency || "USD"
+                                      );
+                                      return (
+                                        <button
+                                          key={method.id}
+                                          onClick={() =>
+                                            setCryptoAsset(method.name)
+                                          }
+                                          className={`p-2 xs:p-3 rounded-lg border transition-all ${
+                                            cryptoAsset === method.name &&
+                                            paymentMethodType === "crypto"
+                                              ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                                              : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
+                                          }`}
+                                        >
+                                          <div className="flex flex-col items-center gap-1">
+                                            <CryptoIcon
+                                              symbol={method.name}
+                                              className="w-6 h-6 xs:w-7 xs:h-7"
+                                            />
+                                            <span className="text-sm xs:text-base font-bold">
+                                              {method.name}
+                                            </span>
+                                            <span className="text-xs text-gray-400 mobile:hidden xs:block">
+                                              {currencySymbol}
+                                              {price.toFixed(2)}
+                                            </span>
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
                                   </div>
                                 )}
                               </div>
@@ -1867,21 +1896,39 @@ const AdminDashboard = () => {
                               Select Cryptocurrency
                             </label>
                             <div className="grid grid-cols-2 gap-2">
-                              {cryptoAssets.map((asset) => (
-                                <button
-                                  key={asset}
-                                  onClick={() => setCryptoAsset(asset)}
-                                  className={`p-3 rounded-lg border transition-all ${
-                                    cryptoAsset === asset
-                                      ? "bg-orange-500/20 border-orange-500 text-orange-400"
-                                      : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
-                                  }`}
-                                >
-                                  <span className="text-lg block font-bold">
-                                    {asset}
-                                  </span>
-                                </button>
-                              ))}
+                              {cryptoAssets.map((asset) => {
+                                const cryptoPrice =
+                                  prices[asset.symbol.toLowerCase()];
+                                const price = cryptoPrice?.price || 0;
+                                const currencySymbol = getCurrencySymbol(
+                                  selectedUser?.preferredCurrency || "USD"
+                                );
+                                return (
+                                  <button
+                                    key={asset.symbol}
+                                    onClick={() => setCryptoAsset(asset.symbol)}
+                                    className={`p-2 xs:p-3 rounded-lg border transition-all ${
+                                      cryptoAsset === asset.symbol
+                                        ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                                        : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
+                                    }`}
+                                  >
+                                    <div className="flex flex-col items-center gap-1">
+                                      <CryptoIcon
+                                        symbol={asset.symbol}
+                                        className="w-6 h-6 xs:w-7 xs:h-7"
+                                      />
+                                      <span className="text-sm xs:text-base font-bold">
+                                        {asset.symbol}
+                                      </span>
+                                      <span className="text-xs text-gray-400 mobile:hidden xs:block">
+                                        {currencySymbol}
+                                        {price.toFixed(2)}
+                                      </span>
+                                    </div>
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                         )}

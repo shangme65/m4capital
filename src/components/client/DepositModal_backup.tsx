@@ -198,17 +198,17 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
     if (isOpen) {
       document.body.style.overflow = "hidden";
       document.body.style.paddingRight = "0px";
-      
+
       // Add history entry for mobile back button
       window.history.pushState({ modalOpen: true }, "");
-      
+
       // Handle mobile back button
       const handlePopState = (e: PopStateEvent) => {
         onClose();
       };
-      
+
       window.addEventListener("popstate", handlePopState);
-      
+
       return () => {
         window.removeEventListener("popstate", handlePopState);
         document.body.style.overflow = "unset";
@@ -814,7 +814,9 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       ) : (
                         <>
                           Deposit{" "}
-                          {amount ? formatAmount(parseFloat(amount), 2) : "Funds"}
+                          {amount
+                            ? formatAmount(parseFloat(amount), 2)
+                            : "Funds"}
                         </>
                       )}
                     </button>

@@ -62,6 +62,29 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 - DO NOT push automatically
 - Wait for user to explicitly request git operations
 
+### ⚡ RAPID ERROR RESOLUTION
+
+**CRITICAL RULE:** When errors are detected, fix them immediately without lengthy explanations.
+
+**REQUIRED approach:**
+
+1. **Dive straight into the solution** - No analysis paragraphs
+2. **Fix errors on first detection** - Don't explain what the error is
+3. **Make the edit immediately** - Use tools to fix, not describe
+4. **Move to next error** - Chain fixes without commentary
+5. **Only brief status updates** - "Fixed X, building..." maximum
+
+**FORBIDDEN responses:**
+
+- ❌ Long explanations of what went wrong
+- ❌ Analysis of why the error occurred
+- ❌ Multiple paragraphs before fixing
+- ❌ Describing the error instead of fixing it
+
+**CORRECT workflow:**
+
+- Error detected → Tool call to fix → Next error → Done
+
 ### 📋 Code Review Checklist
 
 Before making any changes, verify:
