@@ -7,6 +7,30 @@ import { Decimal } from "@prisma/client/runtime/library";
 
 export const dynamic = "force-dynamic";
 
+// Crypto name mapping
+const CRYPTO_NAMES: Record<string, string> = {
+  BTC: "Bitcoin",
+  ETH: "Ethereum",
+  XRP: "Ripple",
+  TRX: "Tron",
+  TON: "Toncoin",
+  LTC: "Litecoin",
+  BCH: "Bitcoin Cash",
+  ETC: "Ethereum Classic",
+  USDC: "USD Coin",
+  USDT: "Tether",
+  BNB: "Binance Coin",
+  SOL: "Solana",
+  ADA: "Cardano",
+  DOGE: "Dogecoin",
+  DOT: "Polkadot",
+  MATIC: "Polygon",
+  AVAX: "Avalanche",
+  LINK: "Chainlink",
+  UNI: "Uniswap",
+  ATOM: "Cosmos",
+};
+
 interface BuyCryptoRequest {
   symbol: string; // e.g., "BTC", "ETH"
   amount: number; // Amount of crypto to buy
@@ -88,8 +112,18 @@ export async function POST(request: NextRequest) {
           : asset
       );
     } else {
-      // Add new asset
-      updatedAssets = [...assets, { symbol, amount }];
+      // Add new asset with full structure (name, symbol, amount, etc.)
+      const cryptoName = CRYPTO_NAMES[symbol] || symbol;
+      updatedAssets = [
+        ...assets,
+        {
+          symbol,
+          name: cryptoName,
+          amount,
+          averagePrice: price,
+          totalInvested: totalCost,
+        },
+      ];
     }
 
     // Use transaction to atomically update portfolio and create trade record
