@@ -314,6 +314,258 @@ const paymentMethods: PaymentMethod[] = [
   },
 ];
 
+// Transaction History Component
+const TransactionHistoryView = () => {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalDeposits: 0,
+    totalWithdrawals: 0,
+    totalTrades: 0,
+    manualTransactions: 0,
+  });
+  const [filter, setFilter] = useState<
+    "all" | "deposit" | "withdraw" | "buy" | "sell"
+  >("all");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    fetchAllTransactions();
+  }, []);
+
+  const fetchAllTransactions = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch("/api/admin/all-transactions");
+      const data = await response.json();
+      setTransactions(data.transactions || []);
+      setStats(
+        data.stats || {
+          totalDeposits: 0,
+          totalWithdrawals: 0,
+          totalTrades: 0,
+          manualTransactions: 0,
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+    }
+    setLoading(false);
+  };
+
+  const filteredTransactions = transactions.filter((tx) => {
+    const matchesFilter = filter === "all" || tx.type === filter;
+    const matchesSearch =
+      tx.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tx.userEmail?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tx.asset?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      tx.method?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "deposit":
+        return "text-green-400 bg-green-500/10 border-green-500/30";
+      case "withdraw":
+        return "text-red-400 bg-red-500/10 border-red-500/30";
+      case "buy":
+        return "text-blue-400 bg-blue-500/10 border-blue-500/30";
+      case "sell":
+        return "text-orange-400 bg-orange-500/10 border-orange-500/30";
+      default:
+        return "text-gray-400 bg-gray-500/10 border-gray-500/30";
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "completed":
+        return "text-green-400";
+      case "pending":
+        return "text-yellow-400";
+      case "failed":
+        return "text-red-400";
+      default:
+        return "text-gray-400";
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
+          <p className="text-xs text-green-400 mb-1">Total Deposits</p>
+          <p className="text-xl font-bold text-green-400">
+            {stats.totalDeposits}
+          </p>
+        </div>
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+          <p className="text-xs text-red-400 mb-1">Total Withdrawals</p>
+          <p className="text-xl font-bold text-red-400">
+            {stats.totalWithdrawals}
+          </p>
+        </div>
+        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
+          <p className="text-xs text-blue-400 mb-1">Total Trades</p>
+          <p className="text-xl font-bold text-blue-400">{stats.totalTrades}</p>
+        </div>
+        <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
+          <p className="text-xs text-purple-400 mb-1">Manual Payments</p>
+          <p className="text-xl font-bold text-purple-400">
+            {stats.manualTransactions}
+          </p>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            placeholder="Search by user name, email, asset..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          />
+          <div className="flex gap-2 overflow-x-auto">
+            {["all", "deposit", "withdraw", "buy", "sell"].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilter(type as any)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                  filter === type
+                    ? "bg-blue-500 text-white"
+                    : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                }`}
+              >
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Transactions Table */}
+      <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-gray-400">Loading transactions...</p>
+            </div>
+          ) : filteredTransactions.length === 0 ? (
+            <div className="text-center py-12">
+              <History className="mx-auto mb-4 text-gray-500" size={48} />
+              <p className="text-gray-400">No transactions found</p>
+            </div>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-gray-700/50 border-b border-gray-600">
+                <tr>
+                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
+                    Date
+                  </th>
+                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
+                    User
+                  </th>
+                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
+                    Type
+                  </th>
+                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
+                    Asset
+                  </th>
+                  <th className="text-right p-3 text-xs font-semibold text-gray-300">
+                    Amount
+                  </th>
+                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
+                    Method
+                  </th>
+                  <th className="text-center p-3 text-xs font-semibold text-gray-300">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTransactions.map((tx, index) => (
+                  <tr
+                    key={tx.id || index}
+                    className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors"
+                  >
+                    <td className="p-3 text-xs text-gray-400">
+                      {new Date(tx.timestamp).toLocaleDateString()}
+                      <br />
+                      <span className="text-[10px]">
+                        {new Date(tx.timestamp).toLocaleTimeString()}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <div className="text-xs">
+                        <p className="font-semibold text-white">
+                          {tx.userName || "Unknown"}
+                        </p>
+                        <p className="text-[10px] text-gray-500">
+                          {tx.userEmail}
+                        </p>
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <span
+                        className={`inline-block px-2 py-1 rounded text-[10px] font-medium border ${getTypeColor(
+                          tx.type
+                        )}`}
+                      >
+                        {tx.type.toUpperCase()}
+                        {tx.isManual && <span className="ml-1">🔧</span>}
+                      </span>
+                    </td>
+                    <td className="p-3 text-xs font-semibold text-white">
+                      {tx.asset}
+                    </td>
+                    <td className="p-3 text-right">
+                      <p className="text-xs font-bold text-white">
+                        {tx.amount.toFixed(8)}
+                      </p>
+                      {tx.fee > 0 && (
+                        <p className="text-[10px] text-gray-500">
+                          Fee: {tx.fee.toFixed(8)}
+                        </p>
+                      )}
+                    </td>
+                    <td className="p-3 text-xs text-gray-400">{tx.method}</td>
+                    <td className="p-3 text-center">
+                      <span
+                        className={`text-xs font-semibold ${getStatusColor(
+                          tx.status
+                        )}`}
+                      >
+                        {tx.status?.toUpperCase() || "N/A"}
+                      </span>
+                      {tx.confirmations !== undefined &&
+                        tx.status === "pending" && (
+                          <p className="text-[10px] text-gray-500 mt-1">
+                            {tx.confirmations}/{tx.maxConfirmations}
+                          </p>
+                        )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* Transaction Count */}
+      <div className="text-center text-sm text-gray-400">
+        Showing {filteredTransactions.length} of {transactions.length}{" "}
+        transactions
+      </div>
+    </div>
+  );
+};
+
 const AdminDashboard = () => {
   const { data: session } = useSession();
   const router = useRouter();
@@ -440,6 +692,46 @@ const AdminDashboard = () => {
       return () => clearInterval(interval);
     }
   }, [showActivityModal]);
+
+  // Handle browser/mobile back button to close modals
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (showPaymentModal) {
+        e.preventDefault();
+        setShowPaymentModal(false);
+        setSelectedUser(null);
+      } else if (showActivityModal) {
+        e.preventDefault();
+        setShowActivityModal(false);
+      } else if (showDatabaseModal) {
+        e.preventDefault();
+        setShowDatabaseModal(false);
+      } else if (showUserStatsModal) {
+        e.preventDefault();
+        setShowUserStatsModal(null);
+      }
+    };
+
+    // Add state to history when modal opens
+    if (
+      showPaymentModal ||
+      showActivityModal ||
+      showDatabaseModal ||
+      showUserStatsModal
+    ) {
+      window.history.pushState({ modalOpen: true }, "");
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [
+    showPaymentModal,
+    showActivityModal,
+    showDatabaseModal,
+    showUserStatsModal,
+  ]);
 
   // Fetch database stats on mount and when modal opens
   useEffect(() => {
@@ -2239,6 +2531,9 @@ const AdminDashboard = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Transaction History Tab */}
+      {activeTab === "transactions" && <TransactionHistoryView />}
 
       {/* Analytics Tab */}
       {activeTab === "analytics" && (

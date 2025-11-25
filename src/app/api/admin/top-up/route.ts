@@ -19,13 +19,16 @@ export async function POST(req: NextRequest) {
     const {
       userId,
       amount,
+      fiatAmount,
+      cryptoAmount,
       paymentMethod,
       paymentDetails,
       adminNote,
       processedBy,
-      depositType, // "balance" or "crypto"
+      depositType, // "fiat" or "crypto"
       cryptoAsset, // e.g., "BTC", "ETH"
       isAdminManual, // Flag to indicate admin manual payment
+      preferredCurrency,
     } = await req.json();
 
     if (!userId || !amount || amount <= 0) {
@@ -35,12 +38,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (
-      !depositType ||
-      (depositType !== "balance" && depositType !== "crypto")
-    ) {
+    if (!depositType || (depositType !== "fiat" && depositType !== "crypto")) {
       return NextResponse.json(
-        { error: "Invalid deposit type. Must be 'balance' or 'crypto'" },
+        { error: "Invalid deposit type. Must be 'fiat' or 'crypto'" },
         { status: 400 }
       );
     }
@@ -100,8 +100,12 @@ export async function POST(req: NextRequest) {
         id: generateId(),
         portfolioId: portfolio.id,
         userId: user.id,
-        amount: amount,
-        currency: depositType === "crypto" ? cryptoAsset : "USD",
+        amount:
+          depositType === "crypto"
+            ? cryptoAmount || amount
+            : fiatAmount || amount,
+        currency:
+          depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD",
         status: "PENDING", // Start as PENDING for confirmation simulation
         method: paymentMethod || "ADMIN_MANUAL",
         type:
@@ -120,6 +124,8 @@ export async function POST(req: NextRequest) {
           depositType,
           isAdminManual: true,
           confirmationStartTime: new Date().toISOString(),
+          fiatAmount: fiatAmount || amount,
+          cryptoAmount: cryptoAmount,
         },
       },
     });
