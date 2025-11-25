@@ -454,7 +454,9 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </p>
 
                       <div className="grid grid-cols-1 gap-2.5 sm:gap-3 max-h-[500px] overflow-y-auto pr-1 sm:pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800/50">
-                        {supportedCryptos.map((crypto) => (
+                        {supportedCryptos
+                          .sort((a, b) => (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0))
+                          .map((crypto) => (
                           <button
                             key={crypto.id}
                             onClick={() => setSelectedCrypto(crypto.id)}
