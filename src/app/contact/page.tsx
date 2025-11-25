@@ -9,12 +9,12 @@ export default function ContactPage() {
     <>
       <Header />
       <div className="min-h-screen bg-white pt-20">
-        <div className="bg-gray-50 py-12 border-b">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+        <div className="bg-gray-50 py-8 xs:py-10 sm:py-12 border-b">
+          <div className="max-w-4xl mx-auto px-4 xs:px-5 sm:px-6 lg:px-8">
+            <h1 className="text-3xl xs:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
               Contact M4 Capital
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-base xs:text-lg text-gray-600">
               Get in touch with us for any inquiries or support
             </p>
           </div>

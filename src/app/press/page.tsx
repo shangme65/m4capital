@@ -9,16 +9,16 @@ export default function PressPage() {
     <>
       <Header />
       <div className="min-h-screen bg-white pt-20">
-        <div className="bg-[#1a2332] py-24 border-b">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-white">
+        <div className="bg-[#1a2332] py-16 xs:py-20 sm:py-24 border-b">
+          <div className="max-w-6xl mx-auto px-4 xs:px-5 sm:px-6 lg:px-8 text-center">
+            <h1 className="text-3xl xs:text-4xl md:text-5xl font-bold text-white">
               Our Online Trading Platform In The News
             </h1>
           </div>
         </div>
 
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="space-y-8">
+        <div className="max-w-4xl mx-auto px-4 xs:px-5 sm:px-6 lg:px-8 py-8 xs:py-10 sm:py-12">
+          <div className="space-y-6 xs:space-y-8">
             <div className="border-b pb-8">
               <div className="flex items-start gap-4 mb-4">
                 <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center flex-shrink-0">

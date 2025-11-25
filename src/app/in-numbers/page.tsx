@@ -6,12 +6,12 @@ export default function InNumbersPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-blue-900">
       {/* Hero Section */}
-      <div className="relative py-20 px-4 sm:px-6 lg:px-8">
+      <div className="relative py-12 xs:py-16 sm:py-20 px-4 xs:px-5 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6">
+          <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4 xs:mb-5 sm:mb-6">
             Our Trading Platform In Numbers
           </h1>
-          <p className="text-xl sm:text-2xl text-gray-200 max-w-3xl mx-auto">
+          <p className="text-lg xs:text-xl sm:text-2xl text-gray-200 max-w-3xl mx-auto">
             Trace the history of our company since 2014
           </p>
         </div>
@@ -87,7 +87,7 @@ export default function InNumbersPage() {
       </div>
 
       {/* Trades Per Day Section */}
-      <div className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-purple-900 via-blue-800 to-blue-900">
+      <div className="py-12 xs:py-16 sm:py-20 px-4 xs:px-5 sm:px-6 lg:px-8 bg-gradient-to-br from-purple-900 via-blue-800 to-blue-900">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl sm:text-5xl font-bold text-white mb-6">
