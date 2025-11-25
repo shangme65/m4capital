@@ -198,17 +198,17 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
     if (isOpen) {
       document.body.style.overflow = "hidden";
       document.body.style.paddingRight = "0px";
-      
+
       // Add history entry for mobile back button
       window.history.pushState({ modalOpen: true }, "");
-      
+
       // Handle mobile back button
       const handlePopState = (e: PopStateEvent) => {
         onClose();
       };
-      
+
       window.addEventListener("popstate", handlePopState);
-      
+
       return () => {
         window.removeEventListener("popstate", handlePopState);
         document.body.style.overflow = "unset";
@@ -455,92 +455,94 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
                       <div className="grid grid-cols-1 gap-2.5 sm:gap-3 max-h-[500px] overflow-y-auto pr-1 sm:pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800/50">
                         {supportedCryptos
-                          .sort((a, b) => (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0))
+                          .sort(
+                            (a, b) => (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0)
+                          )
                           .map((crypto) => (
-                          <button
-                            key={crypto.id}
-                            onClick={() => setSelectedCrypto(crypto.id)}
-                            className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 ${
-                              selectedCrypto === crypto.id
-                                ? `${crypto.bgColor} ${crypto.borderColor} shadow-lg`
-                                : "bg-gray-800/40 border-gray-700/30 hover:border-gray-600/50 hover:bg-gray-800/60"
-                            }`}
-                          >
-                            <div className="flex items-center mobile:gap-3 gap-4">
-                              <div
-                                className={`mobile:w-10 mobile:h-10 w-12 h-12 rounded-full ${
-                                  selectedCrypto === crypto.id
-                                    ? crypto.iconBg
-                                    : "bg-gray-700"
-                                } flex items-center justify-center flex-shrink-0`}
-                              >
-                                <CryptoIcon
-                                  symbol={crypto.symbol}
-                                  className="mobile:w-5 mobile:h-5 w-6 h-6 text-white"
-                                />
-                              </div>
+                            <button
+                              key={crypto.id}
+                              onClick={() => setSelectedCrypto(crypto.id)}
+                              className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-200 ${
+                                selectedCrypto === crypto.id
+                                  ? `${crypto.bgColor} ${crypto.borderColor} shadow-lg`
+                                  : "bg-gray-800/40 border-gray-700/30 hover:border-gray-600/50 hover:bg-gray-800/60"
+                              }`}
+                            >
+                              <div className="flex items-center mobile:gap-3 gap-4">
+                                <div
+                                  className={`mobile:w-10 mobile:h-10 w-12 h-12 rounded-full ${
+                                    selectedCrypto === crypto.id
+                                      ? crypto.iconBg
+                                      : "bg-gray-700"
+                                  } flex items-center justify-center flex-shrink-0`}
+                                >
+                                  <CryptoIcon
+                                    symbol={crypto.symbol}
+                                    className="mobile:w-5 mobile:h-5 w-6 h-6 text-white"
+                                  />
+                                </div>
 
-                              <div className="flex-1 text-left">
-                                <div className="flex items-center justify-between mobile:mb-0.5 mb-1">
-                                  <h3
-                                    className={`mobile:text-sm text-base sm:text-lg font-bold ${
-                                      selectedCrypto === crypto.id
-                                        ? "text-white"
-                                        : "text-gray-200"
-                                    }`}
-                                  >
-                                    {crypto.name}
-                                  </h3>
-                                  <span
-                                    className={`mobile:text-xs text-sm font-semibold ${
-                                      selectedCrypto === crypto.id
-                                        ? "text-orange-400"
-                                        : "text-gray-400"
-                                    }`}
-                                  >
-                                    {crypto.symbol}
-                                  </span>
+                                <div className="flex-1 text-left">
+                                  <div className="flex items-center justify-between mobile:mb-0.5 mb-1">
+                                    <h3
+                                      className={`mobile:text-sm text-base sm:text-lg font-bold ${
+                                        selectedCrypto === crypto.id
+                                          ? "text-white"
+                                          : "text-gray-200"
+                                      }`}
+                                    >
+                                      {crypto.name}
+                                    </h3>
+                                    <span
+                                      className={`mobile:text-xs text-sm font-semibold ${
+                                        selectedCrypto === crypto.id
+                                          ? "text-orange-400"
+                                          : "text-gray-400"
+                                      }`}
+                                    >
+                                      {crypto.symbol}
+                                    </span>
+                                  </div>
+                                  <p className="mobile:text-[10px] text-xs text-gray-400 mobile:leading-relaxed leading-normal">
+                                    Network: {crypto.network}
+                                  </p>
+                                  <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-700/50 text-yellow-400 text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5">
+                                    <svg
+                                      className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                    <span className="mobile:leading-tight leading-normal">
+                                      Min: {crypto.minAmount} {crypto.symbol} (~
+                                      {formatAmount(crypto.minUSD, 0)})
+                                    </span>
+                                  </div>
                                 </div>
-                                <p className="mobile:text-[10px] text-xs text-gray-400 mobile:leading-relaxed leading-normal">
-                                  Network: {crypto.network}
-                                </p>
-                                <div className="mt-2 sm:mt-3 pt-2 sm:pt-3 border-t border-gray-700/50 text-yellow-400 text-[10px] sm:text-xs flex items-center gap-1 sm:gap-1.5">
-                                  <svg
-                                    className="w-3 h-3 sm:w-3.5 sm:h-3.5 flex-shrink-0"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                  <span className="mobile:leading-tight leading-normal">
-                                    Min: {crypto.minAmount} {crypto.symbol} (~
-                                    {formatAmount(crypto.minUSD, 0)})
-                                  </span>
-                                </div>
-                              </div>
 
-                              {selectedCrypto === crypto.id && (
-                                <div className="text-green-400 flex-shrink-0">
-                                  <svg
-                                    className="mobile:w-5 mobile:h-5 w-6 h-6"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                          </button>
-                        ))}
+                                {selectedCrypto === crypto.id && (
+                                  <div className="text-green-400 flex-shrink-0">
+                                    <svg
+                                      className="mobile:w-5 mobile:h-5 w-6 h-6"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+                            </button>
+                          ))}
                       </div>
                     </div>
 
@@ -816,7 +818,9 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       ) : (
                         <>
                           Deposit{" "}
-                          {amount ? formatAmount(parseFloat(amount), 2) : "Funds"}
+                          {amount
+                            ? formatAmount(parseFloat(amount), 2)
+                            : "Funds"}
                         </>
                       )}
                     </button>
