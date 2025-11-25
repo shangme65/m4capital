@@ -632,13 +632,6 @@ function DashboardContent() {
             onClick={handleDeposit}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center gap-2"
           >
-            <Image
-              src="/payments/pix-logo.svg"
-              alt="PIX"
-              width={20}
-              height={20}
-              className="w-4 h-4 sm:w-5 sm:h-5"
-            />
             Deposit
           </button>
           <button

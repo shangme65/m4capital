@@ -270,7 +270,6 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       const methodNames = {
         bank_transfer: "Bank Transfer",
         credit_card: "Credit Card",
-        debit_card: "Debit Card",
         paypal: "PayPal",
         pix: "PIX (Brazil)",
       };
@@ -384,7 +383,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
               {/* Close Button */}
               <button
                 onClick={onClose}
-                className="absolute mobile:top-3 mobile:right-3 top-6 right-6 mobile:w-8 mobile:h-8 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all z-10 backdrop-blur-sm"
+                className="absolute mobile:top-3 mobile:right-3 top-6 right-6 mobile:w-8 mobile:h-8 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all z-10"
                 aria-label="Close deposit modal"
                 title="Close"
               >
@@ -413,6 +412,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       alt="M4Capital Logo"
                       width={48}
                       height={48}
+                      priority
                       className="mobile:w-10 mobile:h-10 drop-shadow-lg"
                     />
                   </div>
@@ -592,7 +592,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {error && (
-                      <div className="text-red-400 text-sm text-center bg-red-500/10 p-4 rounded-2xl border border-red-500/30 backdrop-blur-sm">
+                      <div className="text-red-400 text-sm text-center bg-red-500/10 p-4 rounded-2xl border border-red-500/30">
                         {error}
                       </div>
                     )}
@@ -611,7 +611,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           placeholder="0.00"
-                          className="w-full mobile:pl-8 pl-10 mobile:pr-3 pr-5 mobile:py-2.5 py-3 sm:py-4 bg-gray-800/60 border border-gray-700/50 mobile:rounded-xl rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all mobile:text-base text-base sm:text-lg font-medium backdrop-blur-sm"
+                          className="w-full mobile:pl-8 pl-10 mobile:pr-3 pr-5 mobile:py-2.5 py-3 sm:py-4 bg-gray-800/60 border border-gray-700/50 mobile:rounded-xl rounded-2xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all mobile:text-base text-base sm:text-lg font-medium"
                           min="10"
                           step="0.01"
                           required
@@ -644,7 +644,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           onClick={() =>
                             setShowPaymentDropdown(!showPaymentDropdown)
                           }
-                          className="w-full mobile:px-3 px-5 mobile:py-3 py-4 bg-gradient-to-r from-gray-800/80 to-gray-800/60 border border-blue-500/30 mobile:rounded-xl rounded-2xl text-white mobile:text-sm text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all backdrop-blur-sm shadow-lg shadow-blue-500/10 hover:border-blue-500/50 flex items-center justify-between"
+                          className="w-full mobile:px-3 px-5 mobile:py-3 py-4 bg-gradient-to-r from-gray-800/80 to-gray-800/60 border border-blue-500/30 mobile:rounded-xl rounded-2xl text-white mobile:text-sm text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all shadow-lg shadow-blue-500/10 hover:border-blue-500/50 flex items-center justify-between"
                         >
                           <span>
                             {paymentMethod === "crypto"
@@ -684,7 +684,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                               initial={{ opacity: 0, y: -10 }}
                               animate={{ opacity: 1, y: 0 }}
                               exit={{ opacity: 0, y: -10 }}
-                              className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700/50 mobile:rounded-xl rounded-2xl shadow-2xl z-20 backdrop-blur-sm"
+                              className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700/50 mobile:rounded-xl rounded-2xl shadow-2xl z-20"
                             >
                               <div className="py-2">
                                 {[
@@ -692,31 +692,34 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                     id: "crypto",
                                     name: "💰 Cryptocurrency",
                                     desc: "Bitcoin, Ethereum & more",
+                                    logo: null,
                                   },
                                   {
                                     id: "bank_transfer",
                                     name: "🏦 Bank Transfer",
                                     desc: "Direct bank deposit",
+                                    logo: null,
                                   },
                                   {
                                     id: "credit_card",
                                     name: "💳 Credit Card",
                                     desc: "Visa, Mastercard",
-                                  },
-                                  {
-                                    id: "debit_card",
-                                    name: "💳 Debit Card",
-                                    desc: "Instant debit payment",
+                                    logo: [
+                                      "/payments/visa.svg",
+                                      "/payments/mastercard.svg",
+                                    ],
                                   },
                                   {
                                     id: "paypal",
                                     name: "💰 PayPal",
                                     desc: "PayPal account",
+                                    logo: "/payments/paypal.svg",
                                   },
                                   {
                                     id: "pix",
                                     name: "🇧🇷 PIX (Brazil)",
                                     desc: "Instant Brazilian payment",
+                                    logo: "/payments/pix-logo.svg",
                                   },
                                 ].map((method) => (
                                   <button
@@ -728,13 +731,39 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                     }}
                                     className="w-full text-left mobile:px-3 px-4 mobile:py-2.5 py-3 hover:bg-gray-700/50 transition-colors flex items-center justify-between"
                                   >
-                                    <div>
-                                      <div className="mobile:text-sm text-base font-semibold text-white">
-                                        {method.name}
+                                    <div className="flex items-center gap-3">
+                                      <div>
+                                        <div className="mobile:text-sm text-base font-semibold text-white">
+                                          {method.name}
+                                        </div>
+                                        <div className="mobile:text-[10px] text-xs text-gray-400">
+                                          {method.desc}
+                                        </div>
                                       </div>
-                                      <div className="mobile:text-[10px] text-xs text-gray-400">
-                                        {method.desc}
-                                      </div>
+                                      {method.logo && (
+                                        <div className="flex gap-1">
+                                          {Array.isArray(method.logo) ? (
+                                            method.logo.map((logoSrc, idx) => (
+                                              <Image
+                                                key={idx}
+                                                src={logoSrc}
+                                                alt="Payment logo"
+                                                width={24}
+                                                height={24}
+                                                className="w-6 h-6 object-contain"
+                                              />
+                                            ))
+                                          ) : (
+                                            <Image
+                                              src={method.logo}
+                                              alt="Payment logo"
+                                              width={24}
+                                              height={24}
+                                              className="w-6 h-6 object-contain"
+                                            />
+                                          )}
+                                        </div>
+                                      )}
                                     </div>
                                     {paymentMethod === method.id && (
                                       <svg
@@ -759,7 +788,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     </div>
 
                     {/* Payment Info */}
-                    <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 border border-blue-500/20 mobile:rounded-xl rounded-2xl mobile:p-3 p-5 backdrop-blur-sm">
+                    <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 border border-blue-500/20 mobile:rounded-xl rounded-2xl mobile:p-3 p-5">
                       <div className="flex items-start mobile:gap-2 gap-3">
                         <svg
                           className="mobile:w-4 mobile:h-4 w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0"
