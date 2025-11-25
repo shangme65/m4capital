@@ -2,6 +2,7 @@
 import { useSession } from "next-auth/react";
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -629,8 +630,15 @@ function DashboardContent() {
         <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8">
           <button
             onClick={handleDeposit}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center gap-2"
           >
+            <Image
+              src="/payments/pix-logo.svg"
+              alt="PIX"
+              width={20}
+              height={20}
+              className="w-4 h-4 sm:w-5 sm:h-5"
+            />
             Deposit
           </button>
           <button

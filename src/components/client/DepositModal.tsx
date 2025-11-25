@@ -754,7 +754,8 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                   {
                                     value: "pix",
                                     label: "PIX (Brazil)",
-                                    icon: "🇧🇷",
+                                    icon: "/payments/pix-logo.svg",
+                                    isImage: true,
                                   },
                                   {
                                     value: "crypto",
@@ -773,11 +774,21 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                       paymentMethod === method.value
                                         ? "bg-blue-600/20 text-white border-l-4 border-blue-500"
                                         : "text-gray-300 hover:bg-gray-700/50 border-l-4 border-transparent"
-                                    }`}
+                                    }
                                   >
-                                    <span className="text-2xl">
-                                      {method.icon}
-                                    </span>
+                                    {method.isImage ? (
+                                      <Image
+                                        src={method.icon}
+                                        alt={method.label}
+                                        width={28}
+                                        height={28}
+                                        className="w-6 h-6 sm:w-7 sm:h-7"
+                                      />
+                                    ) : (
+                                      <span className="text-2xl">
+                                        {method.icon}
+                                      </span>
+                                    )}
                                     <span className="font-semibold text-lg">
                                       {method.label}
                                     </span>

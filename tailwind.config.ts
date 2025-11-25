@@ -9,13 +9,16 @@ const config: Config = {
   theme: {
     extend: {
       screens: {
-        xs: "475px", // Extra small devices (small phones)
+        xs: "360px", // Extra small devices (budget phones like Redmi 14C - 360-400px)
         sm: "640px", // Small devices (large phones) - Tailwind default
         md: "768px", // Medium devices (tablets) - Tailwind default
         lg: "1024px", // Large devices (laptops) - Tailwind default
         xl: "1280px", // Extra large devices (desktops) - Tailwind default
         "2xl": "1536px", // 2X large devices (large desktops) - Tailwind default
         "3xl": "1920px", // 3X large devices (ultra-wide screens)
+        // Mobile-specific breakpoints
+        mobile: { max: "639px" }, // Target mobile devices specifically
+        "mobile-sm": { max: "359px" }, // Very small phones
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
