@@ -343,6 +343,14 @@ const AdminDashboard = () => {
   const [showUserStatsModal, setShowUserStatsModal] = useState<
     "total" | "admin" | "staff" | "regular" | "sessions" | null
   >(null);
+  const [showActivityModal, setShowActivityModal] = useState(false);
+  const [showDatabaseModal, setShowDatabaseModal] = useState(false);
+  const [activityLogs, setActivityLogs] = useState<any[]>([]);
+  const [databaseStats, setDatabaseStats] = useState({
+    size: "Loading...",
+    totalRecords: 0,
+    lastBackup: "Loading...",
+  });
 
   // New states for deposit type selection
   const [depositType, setDepositType] = useState<"fiat" | "crypto">("fiat");
@@ -408,6 +416,50 @@ const AdminDashboard = () => {
     }, 3000); // Hide after 3 seconds
   };
 
+  // Fetch activity logs on mount and when modal opens
+  useEffect(() => {
+    if (showActivityModal) {
+      const fetchActivityLogs = async () => {
+        try {
+          const response = await fetch("/api/admin/activity-logs");
+          const data = await response.json();
+          setActivityLogs(data.activities || []);
+        } catch (error) {
+          console.error("Error fetching activity logs:", error);
+        }
+      };
+
+      fetchActivityLogs();
+      // Refresh every 10 seconds for real-time updates
+      const interval = setInterval(fetchActivityLogs, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [showActivityModal]);
+
+  // Fetch database stats on mount and when modal opens
+  useEffect(() => {
+    if (showDatabaseModal) {
+      const fetchDatabaseStats = async () => {
+        try {
+          const response = await fetch("/api/admin/database-stats");
+          const data = await response.json();
+          setDatabaseStats({
+            size: data.size || "0 KB",
+            totalRecords: data.totalRecords || 0,
+            lastBackup: data.lastBackup || "Not available",
+          });
+        } catch (error) {
+          console.error("Error fetching database stats:", error);
+        }
+      };
+
+      fetchDatabaseStats();
+      // Refresh every 30 seconds for real-time updates
+      const interval = setInterval(fetchDatabaseStats, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [showDatabaseModal]);
+
   // Handle back button for mobile (closes modals)
   useEffect(() => {
     const handlePopState = () => {
@@ -420,6 +472,10 @@ const AdminDashboard = () => {
         setShowAssetWarning(false);
       } else if (showUserStatsModal) {
         setShowUserStatsModal(null);
+      } else if (showActivityModal) {
+        setShowActivityModal(false);
+      } else if (showDatabaseModal) {
+        setShowDatabaseModal(false);
       }
     };
 
@@ -428,14 +484,23 @@ const AdminDashboard = () => {
       showPaymentModal ||
       editingUser ||
       showAssetWarning ||
-      showUserStatsModal
+      showUserStatsModal ||
+      showActivityModal ||
+      showDatabaseModal
     ) {
       window.history.pushState({ modal: true }, "");
     }
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [showPaymentModal, editingUser, showAssetWarning, showUserStatsModal]);
+  }, [
+    showPaymentModal,
+    editingUser,
+    showAssetWarning,
+    showUserStatsModal,
+    showActivityModal,
+    showDatabaseModal,
+  ]);
 
   // Auto-hide admin mode notification after 2 seconds
   useEffect(() => {
@@ -1074,14 +1139,14 @@ const AdminDashboard = () => {
                   <span>Reports</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab("database")}
+                  onClick={() => setShowDatabaseModal(true)}
                   className="w-full bg-pink-500/20 border-2 border-pink-500/40 hover:bg-pink-500/30 hover:border-pink-500/60 text-pink-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
                   <Database size={24} />
                   <span>Database</span>
                 </button>
                 <button
-                  onClick={() => setActiveTab("activity")}
+                  onClick={() => setShowActivityModal(true)}
                   className="w-full bg-teal-500/20 border-2 border-teal-500/40 hover:bg-teal-500/30 hover:border-teal-500/60 text-teal-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
                   <Activity size={24} />
@@ -1632,244 +1697,217 @@ const AdminDashboard = () => {
                 </div>
               )}
 
-              {activeTab === "payments" && (
+              {/* Payment Form */}
+              {selectedUser && (
                 <div className="space-y-8">
                   {/* Manual Top-up Section */}
-                  {selectedUser && (
-                    <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-                      <h3 className="text-xl font-bold mb-6 flex items-center space-x-2">
-                        <Wallet className="text-green-400" size={24} />
-                        <span>Manual Payment Processing</span>
-                      </h3>
+                  <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+                    <h3 className="text-xl font-bold mb-6 flex items-center space-x-2">
+                      <Wallet className="text-green-400" size={24} />
+                      <span>Manual Payment Processing</span>
+                    </h3>
 
-                      {/* Main Deposit Type Selection */}
-                      <div className="mb-6">
-                        <label className="block text-sm font-semibold text-gray-300 mb-3">
-                          Deposit Type
-                        </label>
-                        <div className="grid grid-cols-2 gap-4">
-                          <button
-                            onClick={() => {
-                              setDepositType("fiat");
-                              setPaymentMethodType("traditional");
-                            }}
-                            className={`p-6 rounded-xl border-2 transition-all ${
+                    {/* Main Deposit Type Selection */}
+                    <div className="mb-6">
+                      <label className="block text-sm font-semibold text-gray-300 mb-3">
+                        Deposit Type
+                      </label>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button
+                          onClick={() => {
+                            setDepositType("fiat");
+                            setPaymentMethodType("traditional");
+                          }}
+                          className={`p-6 rounded-xl border-2 transition-all ${
+                            depositType === "fiat"
+                              ? "bg-gradient-to-br from-green-500/20 to-blue-500/20 border-green-500 shadow-lg shadow-green-500/20"
+                              : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
+                          }`}
+                        >
+                          <DollarSign
+                            className={`w-10 h-10 mx-auto mb-2 ${
                               depositType === "fiat"
-                                ? "bg-gradient-to-br from-green-500/20 to-blue-500/20 border-green-500 shadow-lg shadow-green-500/20"
-                                : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
+                                ? "text-green-400"
+                                : "text-gray-400"
+                            }`}
+                          />
+                          <span
+                            className={`text-lg font-bold block ${
+                              depositType === "fiat"
+                                ? "text-green-400"
+                                : "text-gray-400"
                             }`}
                           >
-                            <DollarSign
-                              className={`w-10 h-10 mx-auto mb-2 ${
-                                depositType === "fiat"
-                                  ? "text-green-400"
-                                  : "text-gray-400"
-                              }`}
-                            />
-                            <span
-                              className={`text-lg font-bold block ${
-                                depositType === "fiat"
-                                  ? "text-green-400"
-                                  : "text-gray-400"
-                              }`}
-                            >
-                              Deposit Fiat
-                            </span>
-                            <span className="text-xs text-gray-500 block mt-1">
-                              Add to user's fiat balance
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => setDepositType("crypto")}
-                            className={`p-6 rounded-xl border-2 transition-all ${
+                            Deposit Fiat
+                          </span>
+                          <span className="text-xs text-gray-500 block mt-1">
+                            Add to user's fiat balance
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => setDepositType("crypto")}
+                          className={`p-6 rounded-xl border-2 transition-all ${
+                            depositType === "crypto"
+                              ? "bg-gradient-to-br from-orange-500/20 to-purple-500/20 border-orange-500 shadow-lg shadow-orange-500/20"
+                              : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
+                          }`}
+                        >
+                          <Wallet
+                            className={`w-10 h-10 mx-auto mb-2 ${
                               depositType === "crypto"
-                                ? "bg-gradient-to-br from-orange-500/20 to-purple-500/20 border-orange-500 shadow-lg shadow-orange-500/20"
-                                : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
+                                ? "text-orange-400"
+                                : "text-gray-400"
+                            }`}
+                          />
+                          <span
+                            className={`text-lg font-bold block ${
+                              depositType === "crypto"
+                                ? "text-orange-400"
+                                : "text-gray-400"
                             }`}
                           >
-                            <Wallet
-                              className={`w-10 h-10 mx-auto mb-2 ${
-                                depositType === "crypto"
-                                  ? "text-orange-400"
-                                  : "text-gray-400"
-                              }`}
-                            />
-                            <span
-                              className={`text-lg font-bold block ${
-                                depositType === "crypto"
-                                  ? "text-orange-400"
-                                  : "text-gray-400"
-                              }`}
-                            >
-                              Deposit Cryptocurrency
-                            </span>
-                            <span className="text-xs text-gray-500 block mt-1">
-                              Add to user's crypto portfolio
-                            </span>
-                          </button>
-                        </div>
+                            Deposit Cryptocurrency
+                          </span>
+                          <span className="text-xs text-gray-500 block mt-1">
+                            Add to user's crypto portfolio
+                          </span>
+                        </button>
                       </div>
+                    </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-4">
-                          <div>
-                            <p className="text-sm text-gray-400 mb-1">
-                              Selected User:
-                            </p>
-                            <p className="font-semibold text-white">
-                              {selectedUser.email}
-                            </p>
-                          </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <p className="text-sm text-gray-400 mb-1">
+                            Selected User:
+                          </p>
+                          <p className="font-semibold text-white">
+                            {selectedUser.email}
+                          </p>
+                        </div>
 
-                          {/* Fiat Deposit Options */}
-                          {depositType === "fiat" && (
-                            <>
-                              <div>
-                                <label className="block text-sm font-semibold text-gray-300 mb-3">
-                                  Payment Method
-                                </label>
-                                <div className="grid grid-cols-2 gap-2 mb-3">
-                                  <button
-                                    onClick={() =>
-                                      setPaymentMethodType("traditional")
-                                    }
-                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                                      paymentMethodType === "traditional"
-                                        ? "bg-blue-500 text-white"
-                                        : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
-                                    }`}
-                                  >
-                                    Traditional
-                                  </button>
-                                  <button
-                                    onClick={() =>
-                                      setPaymentMethodType("crypto")
-                                    }
-                                    className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
-                                      paymentMethodType === "crypto"
-                                        ? "bg-blue-500 text-white"
-                                        : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
-                                    }`}
-                                  >
-                                    Cryptocurrency
-                                  </button>
-                                </div>
+                        {/* Fiat Deposit Options */}
+                        {depositType === "fiat" && (
+                          <>
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-300 mb-3">
+                                Payment Method
+                              </label>
+                              <div className="grid grid-cols-2 gap-2 mb-3">
+                                <button
+                                  onClick={() =>
+                                    setPaymentMethodType("traditional")
+                                  }
+                                  className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                                    paymentMethodType === "traditional"
+                                      ? "bg-blue-500 text-white"
+                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                  }`}
+                                >
+                                  Traditional
+                                </button>
+                                <button
+                                  onClick={() => setPaymentMethodType("crypto")}
+                                  className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                                    paymentMethodType === "crypto"
+                                      ? "bg-blue-500 text-white"
+                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                  }`}
+                                >
+                                  Cryptocurrency
+                                </button>
+                              </div>
 
-                                <div className="space-y-2">
-                                  {paymentMethodType === "traditional" ? (
-                                    traditionalPaymentMethods.map((method) => (
+                              <div className="space-y-2">
+                                {paymentMethodType === "traditional" ? (
+                                  traditionalPaymentMethods.map((method) => (
+                                    <button
+                                      key={method.id}
+                                      className="w-full p-3 bg-gray-700/30 hover:bg-gray-700/50 border border-gray-600/30 hover:border-blue-500/50 rounded-lg transition-all text-left flex items-center gap-3"
+                                    >
+                                      <span className="text-2xl">
+                                        {method.icon}
+                                      </span>
+                                      <span className="font-medium text-white">
+                                        {method.name}
+                                      </span>
+                                    </button>
+                                  ))
+                                ) : (
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {cryptoPaymentMethods.map((method) => (
                                       <button
                                         key={method.id}
-                                        className="w-full p-3 bg-gray-700/30 hover:bg-gray-700/50 border border-gray-600/30 hover:border-blue-500/50 rounded-lg transition-all text-left flex items-center gap-3"
+                                        onClick={() =>
+                                          setCryptoAsset(method.name)
+                                        }
+                                        className={`p-3 rounded-lg border transition-all ${
+                                          cryptoAsset === method.name &&
+                                          paymentMethodType === "crypto"
+                                            ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                                            : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
+                                        }`}
                                       >
-                                        <span className="text-2xl">
-                                          {method.icon}
-                                        </span>
-                                        <span className="font-medium text-white">
+                                        <span className="text-lg block font-bold">
                                           {method.name}
                                         </span>
                                       </button>
-                                    ))
-                                  ) : (
-                                    <div className="grid grid-cols-2 gap-2">
-                                      {cryptoPaymentMethods.map((method) => (
-                                        <button
-                                          key={method.id}
-                                          onClick={() =>
-                                            setCryptoAsset(method.name)
-                                          }
-                                          className={`p-3 rounded-lg border transition-all ${
-                                            cryptoAsset === method.name &&
-                                            paymentMethodType === "crypto"
-                                              ? "bg-orange-500/20 border-orange-500 text-orange-400"
-                                              : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
-                                          }`}
-                                        >
-                                          <span className="text-lg block font-bold">
-                                            {method.name}
-                                          </span>
-                                        </button>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </>
-                          )}
-
-                          {/* Crypto Deposit Options */}
-                          {depositType === "crypto" && (
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-300 mb-3">
-                                Select Cryptocurrency
-                              </label>
-                              <div className="grid grid-cols-2 gap-2">
-                                {cryptoAssets.map((asset) => (
-                                  <button
-                                    key={asset}
-                                    onClick={() => setCryptoAsset(asset)}
-                                    className={`p-3 rounded-lg border transition-all ${
-                                      cryptoAsset === asset
-                                        ? "bg-orange-500/20 border-orange-500 text-orange-400"
-                                        : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
-                                    }`}
-                                  >
-                                    <span className="text-lg block font-bold">
-                                      {asset}
-                                    </span>
-                                  </button>
-                                ))}
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
-                          )}
+                          </>
+                        )}
 
+                        {/* Crypto Deposit Options */}
+                        {depositType === "crypto" && (
                           <div>
-                            <label className="block text-sm font-semibold text-gray-300 mb-2">
-                              Amount
+                            <label className="block text-sm font-semibold text-gray-300 mb-3">
+                              Select Cryptocurrency
                             </label>
-                            {depositType === "fiat" &&
-                              paymentMethodType === "crypto" && (
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <button
-                                    onClick={() => setAmountInputType("usd")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                      amountInputType === "usd"
-                                        ? "bg-green-500 text-white"
-                                        : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
-                                    }`}
-                                  >
-                                    {selectedUser?.preferredCurrency || "USD"}
-                                  </button>
-                                  <button
-                                    onClick={() => setAmountInputType("crypto")}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                      amountInputType === "crypto"
-                                        ? "bg-green-500 text-white"
-                                        : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
-                                    }`}
-                                  >
-                                    {cryptoAsset}
-                                  </button>
-                                </div>
-                              )}
-                            {depositType === "crypto" && (
+                            <div className="grid grid-cols-2 gap-2">
+                              {cryptoAssets.map((asset) => (
+                                <button
+                                  key={asset}
+                                  onClick={() => setCryptoAsset(asset)}
+                                  className={`p-3 rounded-lg border transition-all ${
+                                    cryptoAsset === asset
+                                      ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                                      : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
+                                  }`}
+                                >
+                                  <span className="text-lg block font-bold">
+                                    {asset}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-300 mb-2">
+                            Amount
+                          </label>
+                          {depositType === "fiat" &&
+                            paymentMethodType === "crypto" && (
                               <div className="flex items-center space-x-2 mb-2">
                                 <button
                                   onClick={() => setAmountInputType("usd")}
                                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                     amountInputType === "usd"
-                                      ? "bg-orange-500 text-white"
+                                      ? "bg-green-500 text-white"
                                       : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
                                   }`}
                                 >
-                                  {selectedUser?.preferredCurrency || "USD"}{" "}
-                                  Value
+                                  {selectedUser?.preferredCurrency || "USD"}
                                 </button>
                                 <button
                                   onClick={() => setAmountInputType("crypto")}
                                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                                     amountInputType === "crypto"
-                                      ? "bg-orange-500 text-white"
+                                      ? "bg-green-500 text-white"
                                       : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
                                   }`}
                                 >
@@ -1877,153 +1915,176 @@ const AdminDashboard = () => {
                                 </button>
                               </div>
                             )}
-                            <input
-                              type="text"
-                              value={amount}
-                              onChange={(e) => setAmount(e.target.value)}
-                              className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                              placeholder={
-                                amountInputType === "usd"
-                                  ? `0.00 ${
-                                      selectedUser?.preferredCurrency || "USD"
-                                    }`
-                                  : `0.00000000 ${cryptoAsset}`
-                              }
-                              disabled={loading}
-                            />
-                            {amountInputType === "usd" &&
-                              (depositType === "crypto" ||
-                                (depositType === "fiat" &&
-                                  paymentMethodType === "crypto")) && (
-                                <p className="text-xs text-gray-500 mt-1">
-                                  Equivalent crypto amount will be calculated
-                                  automatically
-                                </p>
-                              )}
-                          </div>
-                          <div>
-                            <label className="block text-sm font-semibold text-gray-300 mb-2">
-                              Notification Message
-                            </label>
-                            <textarea
-                              value={notificationMessage}
-                              onChange={(e) =>
-                                setNotificationMessage(e.target.value)
-                              }
-                              className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                              placeholder="Optional note for the user..."
-                              rows={3}
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="bg-gray-700/30 p-4 rounded-lg border border-gray-600/30">
-                            <h4 className="font-semibold mb-3 text-lg">
-                              Transaction Summary
-                            </h4>
-                            <div className="space-y-2 text-sm">
-                              <div className="flex justify-between">
-                                <span className="text-gray-400">Type:</span>
-                                <span className="font-semibold">
-                                  {depositType === "fiat"
-                                    ? "Fiat Deposit"
-                                    : "Crypto Deposit"}
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-400">Method:</span>
-                                <span className="capitalize">
-                                  {depositType === "fiat"
-                                    ? paymentMethodType === "crypto"
-                                      ? `${cryptoAsset} (→ Fiat)`
-                                      : "Traditional"
-                                    : `${cryptoAsset} Asset`}
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-400">Amount:</span>
-                                <span className="font-semibold text-green-400">
-                                  {amountInputType === "usd"
-                                    ? `${amount || "0"} ${
-                                        selectedUser?.preferredCurrency || "USD"
-                                      }`
-                                    : `${amount || "0"} ${cryptoAsset}`}
-                                </span>
-                              </div>
-                              <div className="flex justify-between">
-                                <span className="text-gray-400">User:</span>
-                                <span className="truncate max-w-[180px]">
-                                  {selectedUser.email}
-                                </span>
-                              </div>
-                              <div className="flex justify-between pt-2 mt-2 border-t border-gray-600">
-                                <span className="text-gray-400">
-                                  Will be added to:
-                                </span>
-                                <span className="text-blue-400 font-semibold">
-                                  {depositType === "fiat"
-                                    ? "Fiat Balance"
-                                    : `${cryptoAsset} Holdings`}
-                                </span>
-                              </div>
+                          {depositType === "crypto" && (
+                            <div className="flex items-center space-x-2 mb-2">
+                              <button
+                                onClick={() => setAmountInputType("usd")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  amountInputType === "usd"
+                                    ? "bg-orange-500 text-white"
+                                    : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                }`}
+                              >
+                                {selectedUser?.preferredCurrency || "USD"} Value
+                              </button>
+                              <button
+                                onClick={() => setAmountInputType("crypto")}
+                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                  amountInputType === "crypto"
+                                    ? "bg-orange-500 text-white"
+                                    : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                }`}
+                              >
+                                {cryptoAsset}
+                              </button>
                             </div>
-                          </div>
-
-                          <div
-                            className={`border rounded-lg p-3 ${
-                              depositType === "fiat"
-                                ? "bg-green-900/20 border-green-700"
-                                : "bg-orange-900/20 border-orange-700"
-                            }`}
-                          >
-                            <p
-                              className={`text-xs ${
-                                depositType === "fiat"
-                                  ? "text-green-300"
-                                  : "text-orange-300"
-                              }`}
-                            >
-                              ℹ️{" "}
-                              {depositType === "fiat"
-                                ? paymentMethodType === "crypto"
-                                  ? `This ${cryptoAsset} deposit will be converted to ${
-                                      selectedUser?.preferredCurrency || "USD"
-                                    } and added to the user's fiat balance.`
-                                  : `This will add funds to the user's fiat balance in their preferred currency (${
-                                      selectedUser?.preferredCurrency || "USD"
-                                    }).`
-                                : `This will add ${cryptoAsset} directly to the user's cryptocurrency portfolio, not their fiat balance.`}
-                            </p>
-                          </div>
-
-                          <button
-                            onClick={handleTopUp}
-                            disabled={
-                              loading || !amount || parseFloat(amount) <= 0
+                          )}
+                          <input
+                            type="text"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                            className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                            placeholder={
+                              amountInputType === "usd"
+                                ? `0.00 ${
+                                    selectedUser?.preferredCurrency || "USD"
+                                  }`
+                                : `0.00000000 ${cryptoAsset}`
                             }
-                            className={`w-full font-bold py-4 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 shadow-lg ${
-                              depositType === "fiat"
-                                ? "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700"
-                                : "bg-gradient-to-r from-orange-500 to-purple-500 hover:from-orange-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700"
-                            } disabled:cursor-not-allowed text-white`}
-                          >
-                            {depositType === "fiat" ? (
-                              <DollarSign size={24} />
-                            ) : (
-                              <Wallet size={24} />
+                            disabled={loading}
+                          />
+                          {amountInputType === "usd" &&
+                            (depositType === "crypto" ||
+                              (depositType === "fiat" &&
+                                paymentMethodType === "crypto")) && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Equivalent crypto amount will be calculated
+                                automatically
+                              </p>
                             )}
-                            <span className="text-lg">
-                              {loading
-                                ? "Processing..."
-                                : `Process ${
-                                    depositType === "fiat" ? "Fiat" : "Crypto"
-                                  } Deposit`}
-                            </span>
-                          </button>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-semibold text-gray-300 mb-2">
+                            Notification Message
+                          </label>
+                          <textarea
+                            value={notificationMessage}
+                            onChange={(e) =>
+                              setNotificationMessage(e.target.value)
+                            }
+                            className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                            placeholder="Optional note for the user..."
+                            rows={3}
+                          />
                         </div>
                       </div>
+                      <div className="space-y-4">
+                        <div className="bg-gray-700/30 p-4 rounded-lg border border-gray-600/30">
+                          <h4 className="font-semibold mb-3 text-lg">
+                            Transaction Summary
+                          </h4>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Type:</span>
+                              <span className="font-semibold">
+                                {depositType === "fiat"
+                                  ? "Fiat Deposit"
+                                  : "Crypto Deposit"}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Method:</span>
+                              <span className="capitalize">
+                                {depositType === "fiat"
+                                  ? paymentMethodType === "crypto"
+                                    ? `${cryptoAsset} (→ Fiat)`
+                                    : "Traditional"
+                                  : `${cryptoAsset} Asset`}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">Amount:</span>
+                              <span className="font-semibold text-green-400">
+                                {amountInputType === "usd"
+                                  ? `${amount || "0"} ${
+                                      selectedUser?.preferredCurrency || "USD"
+                                    }`
+                                  : `${amount || "0"} ${cryptoAsset}`}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400">User:</span>
+                              <span className="truncate max-w-[180px]">
+                                {selectedUser.email}
+                              </span>
+                            </div>
+                            <div className="flex justify-between pt-2 mt-2 border-t border-gray-600">
+                              <span className="text-gray-400">
+                                Will be added to:
+                              </span>
+                              <span className="text-blue-400 font-semibold">
+                                {depositType === "fiat"
+                                  ? "Fiat Balance"
+                                  : `${cryptoAsset} Holdings`}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          className={`border rounded-lg p-3 ${
+                            depositType === "fiat"
+                              ? "bg-green-900/20 border-green-700"
+                              : "bg-orange-900/20 border-orange-700"
+                          }`}
+                        >
+                          <p
+                            className={`text-xs ${
+                              depositType === "fiat"
+                                ? "text-green-300"
+                                : "text-orange-300"
+                            }`}
+                          >
+                            ℹ️{" "}
+                            {depositType === "fiat"
+                              ? paymentMethodType === "crypto"
+                                ? `This ${cryptoAsset} deposit will be converted to ${
+                                    selectedUser?.preferredCurrency || "USD"
+                                  } and added to the user's fiat balance.`
+                                : `This will add funds to the user's fiat balance in their preferred currency (${
+                                    selectedUser?.preferredCurrency || "USD"
+                                  }).`
+                              : `This will add ${cryptoAsset} directly to the user's cryptocurrency portfolio, not their fiat balance.`}
+                          </p>
+                        </div>
+
+                        <button
+                          onClick={handleTopUp}
+                          disabled={
+                            loading || !amount || parseFloat(amount) <= 0
+                          }
+                          className={`w-full font-bold py-4 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 shadow-lg ${
+                            depositType === "fiat"
+                              ? "bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700"
+                              : "bg-gradient-to-r from-orange-500 to-purple-500 hover:from-orange-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700"
+                          } disabled:cursor-not-allowed text-white`}
+                        >
+                          {depositType === "fiat" ? (
+                            <DollarSign size={24} />
+                          ) : (
+                            <Wallet size={24} />
+                          )}
+                          <span className="text-lg">
+                            {loading
+                              ? "Processing..."
+                              : `Process ${
+                                  depositType === "fiat" ? "Fiat" : "Crypto"
+                                } Deposit`}
+                          </span>
+                        </button>
+                      </div>
                     </div>
-                  )}
+                  </div>
 
                   {/* Asset Warning Modal */}
                   {showAssetWarning && (
@@ -2666,6 +2727,237 @@ const AdminDashboard = () => {
                   </p>
                 </div>
               )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Activity Logs Modal */}
+      {showActivityModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+          >
+            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Activity className="text-teal-400" size={24} />
+                Recent Activity Logs
+              </h2>
+              <button
+                onClick={() => setShowActivityModal(false)}
+                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              {activityLogs.length === 0 ? (
+                <div className="text-center py-12">
+                  <Activity className="w-16 h-16 mx-auto text-gray-600 mb-4" />
+                  <p className="text-gray-400">No recent activity</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {activityLogs.map((activity) => (
+                    <div
+                      key={activity.id}
+                      className="bg-gray-700/30 border border-gray-600/30 rounded-lg p-4 hover:bg-gray-700/50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-white text-sm sm:text-base">
+                            {activity.message}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {activity.timeAgo}
+                          </p>
+                        </div>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ml-2 ${
+                            activity.color === "green"
+                              ? "bg-green-500/20 text-green-400"
+                              : activity.color === "blue"
+                              ? "bg-blue-500/20 text-blue-400"
+                              : activity.color === "orange"
+                              ? "bg-orange-500/20 text-orange-400"
+                              : "bg-gray-500/20 text-gray-400"
+                          }`}
+                        >
+                          {activity.type}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-4 text-center text-xs text-gray-500">
+                Auto-refreshes every 10 seconds
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Database Management Modal */}
+      {showDatabaseModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+          >
+            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                <Database className="text-pink-400" size={24} />
+                Database Management
+              </h2>
+              <button
+                onClick={() => setShowDatabaseModal(false)}
+                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              {/* Database Stats */}
+              <div className="bg-gray-700/30 border border-gray-600/30 rounded-xl p-6 mb-6">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  Database Statistics
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="bg-gray-800/50 rounded-lg p-4">
+                    <p className="text-xs text-gray-400 mb-1">Database Size</p>
+                    <p className="text-xl font-bold text-white">
+                      {databaseStats.size}
+                    </p>
+                  </div>
+                  <div className="bg-gray-800/50 rounded-lg p-4">
+                    <p className="text-xs text-gray-400 mb-1">Total Records</p>
+                    <p className="text-xl font-bold text-white">
+                      {databaseStats.totalRecords.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="bg-gray-800/50 rounded-lg p-4">
+                    <p className="text-xs text-gray-400 mb-1">Last Backup</p>
+                    <p className="text-sm font-medium text-white">
+                      {databaseStats.lastBackup}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Database Actions */}
+              <div className="space-y-3">
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(
+                        "/api/admin/database-backup",
+                        {
+                          method: "POST",
+                        }
+                      );
+                      const data = await response.json();
+                      if (data.success) {
+                        showPopupNotification(
+                          "Database backup initiated successfully",
+                          "success"
+                        );
+                      } else {
+                        showPopupNotification(
+                          "Failed to create backup",
+                          "error"
+                        );
+                      }
+                    } catch (error) {
+                      showPopupNotification("Error creating backup", "error");
+                    }
+                  }}
+                  className="w-full bg-blue-500/20 border-2 border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-4 px-4 rounded-xl transition-all font-semibold flex items-center justify-center space-x-3"
+                >
+                  <Database size={20} />
+                  <span>Create Database Backup</span>
+                </button>
+
+                <button
+                  onClick={async () => {
+                    try {
+                      const response = await fetch(
+                        "/api/admin/database-optimize",
+                        {
+                          method: "POST",
+                        }
+                      );
+                      const data = await response.json();
+                      if (data.success) {
+                        showPopupNotification(
+                          "Database optimized successfully",
+                          "success"
+                        );
+                      } else {
+                        showPopupNotification(
+                          "Failed to optimize database",
+                          "error"
+                        );
+                      }
+                    } catch (error) {
+                      showPopupNotification(
+                        "Error optimizing database",
+                        "error"
+                      );
+                    }
+                  }}
+                  className="w-full bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-4 px-4 rounded-xl transition-all font-semibold flex items-center justify-center space-x-3"
+                >
+                  <Activity size={20} />
+                  <span>Optimize Database</span>
+                </button>
+
+                <button
+                  onClick={async () => {
+                    if (
+                      !confirm(
+                        "Are you sure you want to clear old logs? This will delete transaction logs older than 90 days and failed deposits older than 30 days."
+                      )
+                    ) {
+                      return;
+                    }
+                    try {
+                      const response = await fetch(
+                        "/api/admin/database-clear-logs",
+                        {
+                          method: "POST",
+                        }
+                      );
+                      const data = await response.json();
+                      if (data.success) {
+                        showPopupNotification(
+                          `Cleared ${data.deleted.transactions} old transactions and ${data.deleted.deposits} failed deposits`,
+                          "success"
+                        );
+                      } else {
+                        showPopupNotification("Failed to clear logs", "error");
+                      }
+                    } catch (error) {
+                      showPopupNotification("Error clearing logs", "error");
+                    }
+                  }}
+                  className="w-full bg-red-500/20 border-2 border-red-500/40 hover:bg-red-500/30 hover:border-red-500/60 text-red-400 py-4 px-4 rounded-xl transition-all font-semibold flex items-center justify-center space-x-3"
+                >
+                  <X size={20} />
+                  <span>Clear Old Logs</span>
+                </button>
+              </div>
+
+              <div className="mt-6 text-center text-xs text-gray-500">
+                Stats auto-refresh every 30 seconds
+              </div>
             </div>
           </motion.div>
         </div>
