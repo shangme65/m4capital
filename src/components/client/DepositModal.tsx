@@ -682,30 +682,6 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </p>
                     </div>
 
-                    {/* Quick Amount Buttons */}
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-300 mb-3">
-                        Quick Select
-                      </label>
-                      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-                        {quickAmounts.map((quickAmount) => (
-                          <button
-                            key={quickAmount}
-                            type="button"
-                            onClick={() => setAmount(quickAmount.toString())}
-                            className={`py-2.5 sm:py-3.5 px-2 sm:px-4 rounded-xl font-semibold text-sm sm:text-base transition-all ${
-                              amount === quickAmount.toString()
-                                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg shadow-blue-600/30"
-                                : "bg-gray-800/60 text-gray-300 hover:bg-gray-700/60 border border-gray-700/50"
-                            }`}
-                          >
-                            {getCurrencySymbol(preferredCurrency)}
-                            {quickAmount}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
                     {/* Payment Method */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-300 mb-3">
