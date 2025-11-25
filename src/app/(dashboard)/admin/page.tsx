@@ -45,6 +45,13 @@ type User = Pick<
   balance?: number;
   kycVerification?: { status: string } | null;
   deletedAt?: Date;
+  assignedStaffId?: string | null;
+};
+
+type StaffAdmin = {
+  id: string;
+  name: string | null;
+  email: string;
 };
 
 type PaymentMethod = {
@@ -286,6 +293,8 @@ const AdminDashboard = () => {
   );
   const [showAdminMode, setShowAdminMode] = useState(true);
   const [pendingKycCount, setPendingKycCount] = useState(0);
+  const [staffAdmins, setStaffAdmins] = useState<StaffAdmin[]>([]);
+  const [assigningStaff, setAssigningStaff] = useState(false);
 
   // New states for deposit type selection
   const [depositType, setDepositType] = useState<"balance" | "crypto">(
@@ -377,6 +386,15 @@ const AdminDashboard = () => {
       if (res.ok) {
         const data = await res.json();
         setUsers(data);
+        // Also update staff admins list
+        const staffList = data
+          .filter((u: User) => u.role === "STAFF_ADMIN")
+          .map((u: User) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+          }));
+        setStaffAdmins(staffList);
       }
     } catch (error) {
       console.error("Failed to fetch users:", error);
@@ -394,6 +412,25 @@ const AdminDashboard = () => {
       }
     } catch (error) {
       console.error("Failed to fetch deleted users:", error);
+    }
+  };
+
+  const fetchStaffAdmins = async () => {
+    try {
+      const res = await fetch("/api/admin/users");
+      if (res.ok) {
+        const data = await res.json();
+        const staffList = data
+          .filter((u: User) => u.role === "STAFF_ADMIN")
+          .map((u: User) => ({
+            id: u.id,
+            name: u.name,
+            email: u.email,
+          }));
+        setStaffAdmins(staffList);
+      }
+    } catch (error) {
+      console.error("Failed to fetch staff admins:", error);
     }
   };
 
@@ -703,6 +740,44 @@ const AdminDashboard = () => {
       );
     }
     setLoading(false);
+  };
+
+  const handleAssignStaff = async (
+    userId: string,
+    staffAdminId: string | null
+  ) => {
+    setAssigningStaff(true);
+    try {
+      const res = await fetch("/api/admin/assign-staff", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, staffAdminId }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        showPopupNotification(
+          staffAdminId
+            ? `✅ User assigned to staff admin successfully`
+            : `✅ User unassigned from staff admin`,
+          "success"
+        );
+        fetchUsers();
+        // Update selected user
+        if (selectedUser?.id === userId) {
+          setSelectedUser((prev) =>
+            prev ? { ...prev, assignedStaffId: staffAdminId } : null
+          );
+        }
+      } else {
+        showPopupNotification(`Failed to assign user: ${data.error}`, "error");
+      }
+    } catch (error) {
+      console.error("Assign staff error:", error);
+      showPopupNotification("Failed to assign user to staff admin", "error");
+    }
+    setAssigningStaff(false);
   };
 
   const handlePaymentDetailChange = (field: string, value: string) => {
@@ -1036,12 +1111,19 @@ const AdminDashboard = () => {
                             <p className="text-xs text-gray-500">
                               Account: {user.accountType}
                             </p>
+                            {user.assignedStaffId && (
+                              <p className="text-xs text-blue-400 mt-1">
+                                📋 Assigned to staff admin
+                              </p>
+                            )}
                           </div>
                           <div className="flex items-center space-x-2 flex-shrink-0">
                             <span
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 user.role === "ADMIN"
                                   ? "bg-orange-500/20 text-orange-400"
+                                  : user.role === "STAFF_ADMIN"
+                                  ? "bg-green-500/20 text-green-400"
                                   : "bg-gray-500/20 text-gray-400"
                               }`}
                             >
@@ -1103,6 +1185,46 @@ const AdminDashboard = () => {
                     <p className="font-semibold text-white">
                       {selectedUser.email}
                     </p>
+
+                    {/* Assign to Staff Admin - Only for non-admin users */}
+                    {selectedUser.role === "USER" &&
+                      !selectedUser.isOriginAdmin && (
+                        <div className="space-y-2">
+                          <label className="text-sm text-gray-400">
+                            Assign to Staff Admin:
+                          </label>
+                          <select
+                            value={selectedUser.assignedStaffId || ""}
+                            onChange={(e) =>
+                              handleAssignStaff(
+                                selectedUser.id,
+                                e.target.value || null
+                              )
+                            }
+                            disabled={
+                              assigningStaff || staffAdmins.length === 0
+                            }
+                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="">
+                              {staffAdmins.length === 0
+                                ? "No staff admins available"
+                                : "Unassigned"}
+                            </option>
+                            {staffAdmins.map((staff) => (
+                              <option key={staff.id} value={staff.id}>
+                                {staff.name || staff.email}
+                              </option>
+                            ))}
+                          </select>
+                          {selectedUser.assignedStaffId && (
+                            <p className="text-xs text-green-400">
+                              ✓ Assigned to staff admin
+                            </p>
+                          )}
+                        </div>
+                      )}
+
                     <button
                       onClick={() => setActiveTab("payments")}
                       className="w-full bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-400 py-2 px-4 rounded-lg transition-colors"
