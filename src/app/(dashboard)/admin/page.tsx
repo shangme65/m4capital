@@ -339,6 +339,7 @@ const AdminDashboard = () => {
   const [staffAdmins, setStaffAdmins] = useState<StaffAdmin[]>([]);
   const [assigningStaff, setAssigningStaff] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showUserStatsModal, setShowUserStatsModal] = useState<'total' | 'admin' | 'staff' | 'regular' | 'sessions' | null>(null);
 
   // New states for deposit type selection
   const [depositType, setDepositType] = useState<"balance" | "crypto">(
@@ -405,17 +406,19 @@ const AdminDashboard = () => {
         setEditingUser(null);
       } else if (showAssetWarning) {
         setShowAssetWarning(false);
+      } else if (showUserStatsModal) {
+        setShowUserStatsModal(null);
       }
     };
 
     // Push state when modal opens
-    if (showPaymentModal || editingUser || showAssetWarning) {
+    if (showPaymentModal || editingUser || showAssetWarning || showUserStatsModal) {
       window.history.pushState({ modal: true }, "");
     }
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [showPaymentModal, editingUser, showAssetWarning]);
+  }, [showPaymentModal, editingUser, showAssetWarning, showUserStatsModal]);
 
   // Auto-hide admin mode notification after 2 seconds
   useEffect(() => {
@@ -1162,7 +1165,10 @@ const AdminDashboard = () => {
         <div className="space-y-6">
           {/* User Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+            <button
+              onClick={() => setShowUserStatsModal('total')}
+              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-xs sm:text-sm">
@@ -1174,9 +1180,12 @@ const AdminDashboard = () => {
                 </div>
                 <Users className="text-blue-400" size={24} />
               </div>
-            </div>
+            </button>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+            <button
+              onClick={() => setShowUserStatsModal('admin')}
+              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-xs sm:text-sm">
@@ -1188,9 +1197,12 @@ const AdminDashboard = () => {
                 </div>
                 <UserCheck className="text-green-400" size={24} />
               </div>
-            </div>
+            </button>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+            <button
+              onClick={() => setShowUserStatsModal('staff')}
+              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-xs sm:text-sm">
@@ -1202,9 +1214,12 @@ const AdminDashboard = () => {
                 </div>
                 <Shield className="text-green-400" size={24} />
               </div>
-            </div>
+            </button>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+            <button
+              onClick={() => setShowUserStatsModal('regular')}
+              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-xs sm:text-sm">
@@ -1216,9 +1231,12 @@ const AdminDashboard = () => {
                 </div>
                 <UserX className="text-blue-400" size={24} />
               </div>
-            </div>
+            </button>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+            <button
+              onClick={() => setShowUserStatsModal('sessions')}
+              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
+            >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-gray-400 text-xs sm:text-sm">
@@ -1230,7 +1248,7 @@ const AdminDashboard = () => {
                 </div>
                 <Activity className="text-purple-400" size={24} />
               </div>
-            </div>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
@@ -1276,7 +1294,7 @@ const AdminDashboard = () => {
                             <span
                               className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 user.role === "ADMIN"
-                                  ? "bg-orange-500/20 text-orange-400"
+                                  ? "bg-green-500/20 text-green-400"
                                   : user.role === "STAFF_ADMIN"
                                   ? "bg-green-500/20 text-green-400"
                                   : "bg-gray-500/20 text-gray-400"
@@ -2372,6 +2390,119 @@ const AdminDashboard = () => {
                   Cancel
                 </button>
               </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* User Stats Modal */}
+      {showUserStatsModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+          >
+            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                {showUserStatsModal === 'total' && (
+                  <>
+                    <Users className="text-blue-400" size={24} />
+                    All Users ({totalUsers})
+                  </>
+                )}
+                {showUserStatsModal === 'admin' && (
+                  <>
+                    <UserCheck className="text-green-400" size={24} />
+                    Admin Users ({adminUsers})
+                  </>
+                )}
+                {showUserStatsModal === 'staff' && (
+                  <>
+                    <Shield className="text-green-400" size={24} />
+                    Staff Admin Users ({staffAdminUsers})
+                  </>
+                )}
+                {showUserStatsModal === 'regular' && (
+                  <>
+                    <UserX className="text-blue-400" size={24} />
+                    Regular Users ({regularUsers})
+                  </>
+                )}
+                {showUserStatsModal === 'sessions' && (
+                  <>
+                    <Activity className="text-purple-400" size={24} />
+                    Active Sessions (24)
+                  </>
+                )}
+              </h2>
+              <button
+                onClick={() => setShowUserStatsModal(null)}
+                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <div className="space-y-3">
+                {users
+                  .filter((user) => {
+                    if (showUserStatsModal === 'total') return true;
+                    if (showUserStatsModal === 'admin') return user.role === 'ADMIN';
+                    if (showUserStatsModal === 'staff') return user.role === 'STAFF_ADMIN';
+                    if (showUserStatsModal === 'regular') return user.role === 'USER';
+                    if (showUserStatsModal === 'sessions') return true; // Show all for now
+                    return false;
+                  })
+                  .map((user) => (
+                    <div
+                      key={user.id}
+                      className="bg-gray-700/30 border border-gray-600/30 rounded-lg p-4 hover:bg-gray-700/50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-white text-sm sm:text-base truncate">
+                            {user.email}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-400">
+                            {user.name || "No name"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            Account: {user.accountType}
+                          </p>
+                        </div>
+                        <div className="flex items-center space-x-2 flex-shrink-0">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              user.role === "ADMIN"
+                                ? "bg-green-500/20 text-green-400"
+                                : user.role === "STAFF_ADMIN"
+                                ? "bg-green-500/20 text-green-400"
+                                : "bg-gray-500/20 text-gray-400"
+                            }`}
+                          >
+                            {user.role}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+
+              {users.filter((user) => {
+                if (showUserStatsModal === 'total') return true;
+                if (showUserStatsModal === 'admin') return user.role === 'ADMIN';
+                if (showUserStatsModal === 'staff') return user.role === 'STAFF_ADMIN';
+                if (showUserStatsModal === 'regular') return user.role === 'USER';
+                if (showUserStatsModal === 'sessions') return true;
+                return false;
+              }).length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-400">No users found in this category</p>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
