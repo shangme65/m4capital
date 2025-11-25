@@ -59,10 +59,15 @@ const Sidebar = () => {
     closeSidebar();
 
     try {
-      // Clear localStorage and sessionStorage immediately
+      // Clear localStorage and sessionStorage immediately, but preserve cookie consent
       if (typeof window !== "undefined") {
+        const cookieConsent = localStorage.getItem("m4capital-cookie-consent");
         localStorage.clear();
         sessionStorage.clear();
+        // Restore cookie consent preference
+        if (cookieConsent) {
+          localStorage.setItem("m4capital-cookie-consent", cookieConsent);
+        }
       }
 
       // Call API route to delete cookies on server

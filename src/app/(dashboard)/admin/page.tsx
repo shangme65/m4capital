@@ -989,95 +989,93 @@ const AdminDashboard = () => {
       {activeTab === "dashboard" && (
         <div className="space-y-4 sm:space-y-8">
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
-              <div className="space-y-2 sm:space-y-3">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 <button
                   onClick={() => {
                     setShowPaymentModal(true);
                     fetchUsers();
                   }}
-                  className="w-full bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <CreditCard size={16} />
-                  <span className="font-bold">Process Manual Payment</span>
+                  <CreditCard size={24} />
+                  <span>Process Manual Payment</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("users")}
-                  className="w-full bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-blue-500/20 border-2 border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <Users size={16} />
-                  <span className="font-bold">Manage Users</span>
+                  <Users size={24} />
+                  <span>Manage Users</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("bin")}
-                  className="w-full bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center justify-between"
+                  className="w-full bg-red-500/20 border-2 border-red-500/40 hover:bg-red-500/30 hover:border-red-500/60 text-red-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg relative"
                 >
-                  <div className="flex items-center space-x-2">
-                    <Trash2 size={16} />
-                    <span className="font-bold">Deleted Users Bin</span>
-                  </div>
+                  <Trash2 size={24} />
+                  <span>Deleted Users Bin</span>
                   {deletedUsersCount > 0 && (
-                    <span className="bg-red-500 text-white rounded-full px-2 py-0.5 text-xs">
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full px-3 py-1 text-sm font-bold shadow-lg">
                       {deletedUsersCount}
                     </span>
                   )}
                 </button>
                 <button
                   onClick={() => (window.location.href = "/admin/kyc")}
-                  className="w-full bg-orange-500/20 border border-orange-500/30 hover:bg-orange-500/30 text-orange-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-orange-500/20 border-2 border-orange-500/40 hover:bg-orange-500/30 hover:border-orange-500/60 text-orange-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <Shield size={16} />
-                  <span className="font-bold">KYC Verification</span>
+                  <Shield size={24} />
+                  <span>KYC Verification</span>
                 </button>
                 <button
                   onClick={() => router.push("/admin/analytics")}
-                  className="w-full bg-cyan-500/20 border border-cyan-500/30 hover:bg-cyan-500/30 text-cyan-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-cyan-500/20 border-2 border-cyan-500/40 hover:bg-cyan-500/30 hover:border-cyan-500/60 text-cyan-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <BarChart3 size={16} />
-                  <span className="font-bold">Analytics Dashboard</span>
+                  <BarChart3 size={24} />
+                  <span>Analytics Dashboard</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("notifications")}
-                  className="w-full bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 text-purple-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-purple-500/20 border-2 border-purple-500/40 hover:bg-purple-500/30 hover:border-purple-500/60 text-purple-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <Bell size={16} />
-                  <span className="font-bold">Send Notifications</span>
+                  <Bell size={24} />
+                  <span>Send Notifications</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("transactions")}
-                  className="w-full bg-indigo-500/20 border border-indigo-500/30 hover:bg-indigo-500/30 text-indigo-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-indigo-500/20 border-2 border-indigo-500/40 hover:bg-indigo-500/30 hover:border-indigo-500/60 text-indigo-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <History size={16} />
-                  <span className="font-bold">Transaction History</span>
+                  <History size={24} />
+                  <span>Transaction History</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("system")}
-                  className="w-full bg-gray-500/20 border border-gray-500/30 hover:bg-gray-500/30 text-gray-300 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-gray-500/20 border-2 border-gray-500/40 hover:bg-gray-500/30 hover:border-gray-500/60 text-gray-300 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <Settings size={16} />
-                  <span className="font-bold">System Settings</span>
+                  <Settings size={24} />
+                  <span>System Settings</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("reports")}
-                  className="w-full bg-yellow-500/20 border border-yellow-500/30 hover:bg-yellow-500/30 text-yellow-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-yellow-500/20 border-2 border-yellow-500/40 hover:bg-yellow-500/30 hover:border-yellow-500/60 text-yellow-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <FileText size={16} />
-                  <span className="font-bold">Reports</span>
+                  <FileText size={24} />
+                  <span>Reports</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("database")}
-                  className="w-full bg-pink-500/20 border border-pink-500/30 hover:bg-pink-500/30 text-pink-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-pink-500/20 border-2 border-pink-500/40 hover:bg-pink-500/30 hover:border-pink-500/60 text-pink-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <Database size={16} />
-                  <span className="font-bold">Database</span>
+                  <Database size={24} />
+                  <span>Database</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("activity")}
-                  className="w-full bg-teal-500/20 border border-teal-500/30 hover:bg-teal-500/30 text-teal-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                  className="w-full bg-teal-500/20 border-2 border-teal-500/40 hover:bg-teal-500/30 hover:border-teal-500/60 text-teal-400 py-4 px-4 rounded-xl transition-all text-base sm:text-lg font-bold flex items-center justify-center space-x-3 shadow-lg"
                 >
-                  <Activity size={16} />
-                  <span className="font-bold">Activity Logs</span>
+                  <Activity size={24} />
+                  <span>Activity Logs</span>
                 </button>
               </div>
             </div>
@@ -1631,7 +1629,7 @@ const AdminDashboard = () => {
                               </p>
                               <p className="text-xs sm:text-sm text-gray-400 truncate">
                                 {user.name || "No name"} • Balance: $
-                                {user.balance?.toFixed(2) || "0.00"}
+                                {typeof user.balance === 'number' ? user.balance.toFixed(2) : '0.00'}
                               </p>
                             </div>
                             <span
