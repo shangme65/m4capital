@@ -62,6 +62,31 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 - DO NOT push automatically
 - Wait for user to explicitly request git operations
 
+### 🚫 NEVER PERFORM AUTOMATIC BUILD OPERATIONS
+
+**CRITICAL RULE:** Never run build commands automatically without explicit user request.
+
+**FORBIDDEN actions:**
+
+- ❌ `npm run build` without user asking to build
+- ❌ `npm run dev` without user asking to start dev server
+- ❌ Running builds automatically after making changes
+- ❌ Running builds to "verify" changes work
+
+**ONLY run builds when user explicitly says:**
+
+- ✅ "run build"
+- ✅ "build the project"
+- ✅ "check for errors"
+- ✅ "run build and fix errors"
+
+**When making code changes:**
+
+- Make the edits ONLY
+- DO NOT run build automatically
+- DO NOT verify with build automatically
+- Wait for user to explicitly request build operations
+
 ### ⚡ RAPID ERROR RESOLUTION
 
 **CRITICAL RULE:** When errors are detected, fix them immediately without lengthy explanations.
@@ -97,6 +122,7 @@ Before making any changes, verify:
 - [ ] Database schema uses proper foreign keys and relations
 - [ ] All sensitive data is properly encrypted (bcrypt for passwords)
 - [ ] NOT performing automatic git operations without user request
+- [ ] NOT performing automatic build operations without user request
 
 ## 1. The Big Picture: Architecture & Stack
 

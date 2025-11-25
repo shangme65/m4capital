@@ -96,7 +96,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
     {
       id: "usdcerc20",
       symbol: "USDC",
-      name: "USD Coin",
+      name: "Ethereum",
       minAmount: 1,
       minUSD: 1,
       network: "Ethereum (ERC-20)",
@@ -135,7 +135,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
     {
       id: "usdterc20",
       symbol: "USDT",
-      name: "Tether",
+      name: "Ethereum",
       minAmount: 1,
       minUSD: 1,
       network: "Ethereum (ERC-20)",
