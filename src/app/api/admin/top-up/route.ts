@@ -90,6 +90,20 @@ export async function POST(req: NextRequest) {
     const txHash = paymentDetails?.transactionHash || generateTxHash();
     const fee = paymentDetails?.networkFee || 0;
 
+    // Helper function for currency symbol
+    const getCurrencySymbol = (currency: string): string => {
+      const symbols: { [key: string]: string } = {
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        NGN: "₦",
+        ZAR: "R",
+        KES: "KSh",
+        GHS: "₵",
+      };
+      return symbols[currency] || "$";
+    };
+
     // Create deposit transaction record as COMPLETED (admin manual = instant)
     const deposit = await prisma.deposit.create({
       data: {
@@ -197,20 +211,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Helper function for currency symbol
-    function getCurrencySymbol(currency: string): string {
-      const symbols: { [key: string]: string } = {
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        NGN: "₦",
-        ZAR: "R",
-        KES: "KSh",
-        GHS: "₵",
-      };
-      return symbols[currency] || "$";
-    }
-
     // Create in-app notification for COMPLETED deposit
     await prisma.notification.create({
       data: {
@@ -242,20 +242,6 @@ export async function POST(req: NextRequest) {
         },
       },
     });
-
-    // Helper function for currency symbol
-    function getCurrencySymbol(currency: string): string {
-      const symbols: { [key: string]: string } = {
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        NGN: "₦",
-        ZAR: "R",
-        KES: "KSh",
-        GHS: "₵",
-      };
-      return symbols[currency] || "$";
-    }
 
     // Send email notification to user
     if (user.email && user.isEmailVerified) {
@@ -327,20 +313,6 @@ export async function POST(req: NextRequest) {
         console.error("Failed to send email notification:", emailError);
         // Continue even if email fails
       }
-    }
-
-    // Helper function for currency symbol
-    function getCurrencySymbol(currency: string): string {
-      const symbols: { [key: string]: string } = {
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        NGN: "₦",
-        ZAR: "R",
-        KES: "KSh",
-        GHS: "₵",
-      };
-      return symbols[currency] || "$";
     }
 
     return NextResponse.json({
