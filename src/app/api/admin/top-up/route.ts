@@ -135,7 +135,8 @@ export async function POST(req: NextRequest) {
 
       if (existingAssetIndex >= 0 && assets[existingAssetIndex]) {
         const asset = assets[existingAssetIndex] as any;
-        asset.amount = (asset.amount || 0) + parseFloat((cryptoAmount || amount).toString());
+        asset.amount =
+          (asset.amount || 0) + parseFloat((cryptoAmount || amount).toString());
       } else {
         // Get crypto name from mapping
         const CRYPTO_NAMES: { [key: string]: string } = {
@@ -160,7 +161,7 @@ export async function POST(req: NextRequest) {
           AVAX: "Avalanche",
           UNI: "Uniswap",
         };
-        
+
         assets.push({
           symbol: cryptoAsset,
           name: CRYPTO_NAMES[cryptoAsset] || cryptoAsset,
@@ -173,7 +174,11 @@ export async function POST(req: NextRequest) {
         data: { assets },
       });
 
-      console.log(`✅ Credited ${cryptoAmount || amount} ${cryptoAsset} to user ${user.email}`);
+      console.log(
+        `✅ Credited ${cryptoAmount || amount} ${cryptoAsset} to user ${
+          user.email
+        }`
+      );
     } else {
       // Credit USD/fiat balance
       await prisma.portfolio.update({
@@ -185,7 +190,11 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      console.log(`✅ Credited ${getCurrencySymbol(preferredCurrency || "USD")}${fiatAmount || amount} to user ${user.email}`);
+      console.log(
+        `✅ Credited ${getCurrencySymbol(preferredCurrency || "USD")}${
+          fiatAmount || amount
+        } to user ${user.email}`
+      );
     }
 
     // Helper function for currency symbol
@@ -208,12 +217,19 @@ export async function POST(req: NextRequest) {
         id: generateId(),
         userId: user.id,
         type: "SUCCESS",
-        title: `${depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD"} Deposit Completed`,
+        title: `${
+          depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD"
+        } Deposit Completed`,
         message: `Your deposit of ${
-          depositType === "crypto" ? `${cryptoAmount || amount} ${cryptoAsset}` : `${getCurrencySymbol(preferredCurrency || "USD")}${fiatAmount || amount}`
+          depositType === "crypto"
+            ? `${cryptoAmount || amount} ${cryptoAsset}`
+            : `${getCurrencySymbol(preferredCurrency || "USD")}${
+                fiatAmount || amount
+              }`
         } has been confirmed and credited to your account.`,
         amount: amount,
-        asset: depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD",
+        asset:
+          depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD",
         metadata: {
           depositId: deposit.id,
           transactionId: deposit.transactionId,
@@ -246,7 +262,9 @@ export async function POST(req: NextRequest) {
       try {
         await sendEmail({
           to: user.email,
-          subject: `${depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD"} Deposit Completed`,
+          subject: `${
+            depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD"
+          } Deposit Completed`,
           html: `
             <!DOCTYPE html>
             <html>
@@ -269,7 +287,9 @@ export async function POST(req: NextRequest) {
                     <p style="margin: 5px 0;"><strong>Amount:</strong> ${
                       depositType === "crypto"
                         ? `${cryptoAmount || amount} ${cryptoAsset}`
-                        : `${getCurrencySymbol(preferredCurrency || "USD")}${fiatAmount || amount}`
+                        : `${getCurrencySymbol(preferredCurrency || "USD")}${
+                            fiatAmount || amount
+                          }`
                     }</p>
                     <p style="margin: 5px 0;"><strong>Type:</strong> ${
                       depositType === "crypto"
@@ -281,7 +301,9 @@ export async function POST(req: NextRequest) {
                     <p style="margin: 5px 0;"><strong>Network Fee:</strong> ${
                       depositType === "crypto"
                         ? `${fee.toFixed(2)} ${cryptoAsset}`
-                        : `${getCurrencySymbol(preferredCurrency || "USD")}${fee.toFixed(2)}`
+                        : `${getCurrencySymbol(
+                            preferredCurrency || "USD"
+                          )}${fee.toFixed(2)}`
                     }</p>
                     <p style="margin: 5px 0;"><strong>Transaction ID:</strong> ${(
                       deposit.transactionId || ""
