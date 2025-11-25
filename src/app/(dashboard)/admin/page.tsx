@@ -46,6 +46,7 @@ type User = Pick<
   kycVerification?: { status: string } | null;
   deletedAt?: Date;
   assignedStaffId?: string | null;
+  preferredCurrency?: string;
 };
 
 type StaffAdmin = {
@@ -1265,162 +1266,131 @@ const AdminDashboard = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {/* Users List */}
-            <div className="xl:col-span-2">
-              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 sm:p-6">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Users className="text-orange-400" size={20} />
-                  <h2 className="text-xl sm:text-2xl font-bold">
-                    User Management
-                  </h2>
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  <div className="space-y-2">
-                    {users.map((user) => (
-                      <div
-                        key={user.id}
-                        className={`p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
-                          selectedUser?.id === user.id
-                            ? "bg-orange-500/20 border-orange-500/50"
-                            : "bg-gray-700/30 border-gray-600/30 hover:bg-gray-700/50"
-                        }`}
-                        onClick={() => setSelectedUser(user)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-white text-sm sm:text-base truncate">
-                              {user.email}
-                            </p>
-                            <p className="text-xs sm:text-sm text-gray-400">
-                              {user.name || "No name"}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Account: {user.accountType}
-                            </p>
-                            {user.assignedStaffId && (
-                              <p className="text-xs text-blue-400 mt-1">
-                                📋 Assigned to staff admin
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2 flex-shrink-0">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                user.role === "ADMIN"
-                                  ? "bg-green-500/20 text-green-400"
-                                  : user.role === "STAFF_ADMIN"
-                                  ? "bg-green-500/20 text-green-400"
-                                  : "bg-gray-500/20 text-gray-400"
-                              }`}
-                            >
-                              {user.role}
-                            </span>
-                            {/* Hide settings and delete buttons for origin admin */}
-                            {!user.isOriginAdmin && (
-                              <>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingUser(user);
-                                    setNewRole(
-                                      user.role as
-                                        | "USER"
-                                        | "ADMIN"
-                                        | "STAFF_ADMIN"
-                                    );
-                                  }}
-                                  className="text-gray-400 hover:text-orange-400 transition-colors"
-                                  title="Edit Role"
-                                >
-                                  <Settings size={14} />
-                                </button>
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeleteUser(
-                                      user.id,
-                                      user.email || "Unknown"
-                                    );
-                                  }}
-                                  className="text-gray-400 hover:text-red-400 transition-colors"
-                                  title="Delete User"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+          {/* User Management List */}
+          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 sm:p-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <Users className="text-orange-400" size={20} />
+              <h2 className="text-xl sm:text-2xl font-bold">User Management</h2>
             </div>
-
-            {/* User Actions */}
-            <div className="space-y-6">
-              {selectedUser && (
-                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-                  <div className="flex items-center space-x-2 mb-4">
-                    <UserCheck className="text-blue-400" size={24} />
-                    <h3 className="text-xl font-bold">User Actions</h3>
-                  </div>
-                  <div className="space-y-3">
-                    <p className="text-sm text-gray-400">Selected User:</p>
-                    <p className="font-semibold text-white">
-                      {selectedUser.email}
-                    </p>
-
-                    {/* Assign to Staff Admin - Only for non-admin users */}
-                    {selectedUser.role === "USER" &&
-                      !selectedUser.isOriginAdmin && (
-                        <div className="space-y-2">
-                          <label className="text-sm text-gray-400">
-                            Assign to Staff Admin:
-                          </label>
-                          <select
-                            value={selectedUser.assignedStaffId || ""}
-                            onChange={(e) =>
-                              handleAssignStaff(
-                                selectedUser.id,
-                                e.target.value || null
-                              )
-                            }
-                            disabled={
-                              assigningStaff || staffAdmins.length === 0
-                            }
-                            className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <option value="">
-                              {staffAdmins.length === 0
-                                ? "No staff admins available"
-                                : "Unassigned"}
-                            </option>
-                            {staffAdmins.map((staff) => (
-                              <option key={staff.id} value={staff.id}>
-                                {staff.name || staff.email}
-                              </option>
-                            ))}
-                          </select>
-                          {selectedUser.assignedStaffId && (
-                            <p className="text-xs text-green-400">
-                              ✓ Assigned to staff admin
-                            </p>
+            <div className="max-h-[600px] overflow-y-auto">
+              <div className="space-y-2">
+                {users.map((user) => (
+                  <div
+                    key={user.id}
+                    className={`p-3 sm:p-4 rounded-lg border transition-all ${
+                      selectedUser?.id === user.id
+                        ? "bg-orange-500/20 border-orange-500/50"
+                        : "bg-gray-700/30 border-gray-600/30 hover:bg-gray-700/50"
+                    } ${user.role === "USER" ? "cursor-pointer" : ""}`}
+                    onClick={() =>
+                      user.role === "USER" && setSelectedUser(user)
+                    }
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-white text-sm sm:text-base truncate">
+                          {user.email}
+                        </p>
+                        <p className="text-xs sm:text-sm text-gray-400">
+                          {user.name || "No name"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Account: {user.accountType}
+                        </p>
+                        {user.assignedStaffId && (
+                          <p className="text-xs text-blue-400 mt-1">
+                            📋 Assigned to staff admin
+                          </p>
+                        )}
+                        {/* Show Assign to Staff Admin inline for regular users */}
+                        {selectedUser?.id === user.id &&
+                          user.role === "USER" &&
+                          !user.isOriginAdmin && (
+                            <div className="mt-3 space-y-2">
+                              <label className="text-sm text-gray-300 font-semibold">
+                                Assign to Staff Admin:
+                              </label>
+                              <select
+                                value={user.assignedStaffId || ""}
+                                onChange={(e) =>
+                                  handleAssignStaff(
+                                    user.id,
+                                    e.target.value || null
+                                  )
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                                disabled={
+                                  assigningStaff || staffAdmins.length === 0
+                                }
+                                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <option value="">
+                                  {staffAdmins.length === 0
+                                    ? "No staff admins available"
+                                    : "Unassigned"}
+                                </option>
+                                {staffAdmins.map((staff) => (
+                                  <option key={staff.id} value={staff.id}>
+                                    {staff.name || staff.email}
+                                  </option>
+                                ))}
+                              </select>
+                              {user.assignedStaffId && (
+                                <p className="text-xs text-green-400">
+                                  ✓ Assigned to staff admin
+                                </p>
+                              )}
+                            </div>
                           )}
-                        </div>
-                      )}
-
-                    <button
-                      onClick={() => setActiveTab("payments")}
-                      className="w-full bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-400 py-2 px-4 rounded-lg transition-colors"
-                    >
-                      Process Payment
-                    </button>
+                      </div>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            user.role === "ADMIN"
+                              ? "bg-green-500/20 text-green-400"
+                              : user.role === "STAFF_ADMIN"
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-gray-500/20 text-gray-400"
+                          }`}
+                        >
+                          {user.role}
+                        </span>
+                        {/* Hide settings and delete buttons for origin admin */}
+                        {!user.isOriginAdmin && (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingUser(user);
+                                setNewRole(
+                                  user.role as "USER" | "ADMIN" | "STAFF_ADMIN"
+                                );
+                              }}
+                              className="text-gray-400 hover:text-orange-400 transition-colors"
+                              title="Edit Role"
+                            >
+                              <Settings size={14} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteUser(
+                                  user.id,
+                                  user.email || "Unknown"
+                                );
+                              }}
+                              className="text-gray-400 hover:text-red-400 transition-colors"
+                              title="Delete User"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -1689,8 +1659,20 @@ const AdminDashboard = () => {
                                 : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
                             }`}
                           >
-                            <DollarSign className={`w-10 h-10 mx-auto mb-2 ${depositType === "fiat" ? "text-green-400" : "text-gray-400"}`} />
-                            <span className={`text-lg font-bold block ${depositType === "fiat" ? "text-green-400" : "text-gray-400"}`}>
+                            <DollarSign
+                              className={`w-10 h-10 mx-auto mb-2 ${
+                                depositType === "fiat"
+                                  ? "text-green-400"
+                                  : "text-gray-400"
+                              }`}
+                            />
+                            <span
+                              className={`text-lg font-bold block ${
+                                depositType === "fiat"
+                                  ? "text-green-400"
+                                  : "text-gray-400"
+                              }`}
+                            >
                               Deposit Fiat
                             </span>
                             <span className="text-xs text-gray-500 block mt-1">
@@ -1705,8 +1687,20 @@ const AdminDashboard = () => {
                                 : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
                             }`}
                           >
-                            <Wallet className={`w-10 h-10 mx-auto mb-2 ${depositType === "crypto" ? "text-orange-400" : "text-gray-400"}`} />
-                            <span className={`text-lg font-bold block ${depositType === "crypto" ? "text-orange-400" : "text-gray-400"}`}>
+                            <Wallet
+                              className={`w-10 h-10 mx-auto mb-2 ${
+                                depositType === "crypto"
+                                  ? "text-orange-400"
+                                  : "text-gray-400"
+                              }`}
+                            />
+                            <span
+                              className={`text-lg font-bold block ${
+                                depositType === "crypto"
+                                  ? "text-orange-400"
+                                  : "text-gray-400"
+                              }`}
+                            >
                               Deposit Cryptocurrency
                             </span>
                             <span className="text-xs text-gray-500 block mt-1">
@@ -1736,7 +1730,9 @@ const AdminDashboard = () => {
                                 </label>
                                 <div className="grid grid-cols-2 gap-2 mb-3">
                                   <button
-                                    onClick={() => setPaymentMethodType("traditional")}
+                                    onClick={() =>
+                                      setPaymentMethodType("traditional")
+                                    }
                                     className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                                       paymentMethodType === "traditional"
                                         ? "bg-blue-500 text-white"
@@ -1746,7 +1742,9 @@ const AdminDashboard = () => {
                                     Traditional
                                   </button>
                                   <button
-                                    onClick={() => setPaymentMethodType("crypto")}
+                                    onClick={() =>
+                                      setPaymentMethodType("crypto")
+                                    }
                                     className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                                       paymentMethodType === "crypto"
                                         ? "bg-blue-500 text-white"
@@ -1764,8 +1762,12 @@ const AdminDashboard = () => {
                                         key={method.id}
                                         className="w-full p-3 bg-gray-700/30 hover:bg-gray-700/50 border border-gray-600/30 hover:border-blue-500/50 rounded-lg transition-all text-left flex items-center gap-3"
                                       >
-                                        <span className="text-2xl">{method.icon}</span>
-                                        <span className="font-medium text-white">{method.name}</span>
+                                        <span className="text-2xl">
+                                          {method.icon}
+                                        </span>
+                                        <span className="font-medium text-white">
+                                          {method.name}
+                                        </span>
                                       </button>
                                     ))
                                   ) : (
@@ -1773,14 +1775,19 @@ const AdminDashboard = () => {
                                       {cryptoPaymentMethods.map((method) => (
                                         <button
                                           key={method.id}
-                                          onClick={() => setCryptoAsset(method.name)}
+                                          onClick={() =>
+                                            setCryptoAsset(method.name)
+                                          }
                                           className={`p-3 rounded-lg border transition-all ${
-                                            cryptoAsset === method.name && paymentMethodType === "crypto"
+                                            cryptoAsset === method.name &&
+                                            paymentMethodType === "crypto"
                                               ? "bg-orange-500/20 border-orange-500 text-orange-400"
                                               : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
                                           }`}
                                         >
-                                          <span className="text-lg block font-bold">{method.name}</span>
+                                          <span className="text-lg block font-bold">
+                                            {method.name}
+                                          </span>
                                         </button>
                                       ))}
                                     </div>
@@ -1807,7 +1814,9 @@ const AdminDashboard = () => {
                                         : "bg-gray-700/30 border-gray-600/30 hover:border-gray-500 text-gray-300"
                                     }`}
                                   >
-                                    <span className="text-lg block font-bold">{asset}</span>
+                                    <span className="text-lg block font-bold">
+                                      {asset}
+                                    </span>
                                   </button>
                                 ))}
                               </div>
@@ -1818,30 +1827,31 @@ const AdminDashboard = () => {
                             <label className="block text-sm font-semibold text-gray-300 mb-2">
                               Amount
                             </label>
-                            {depositType === "fiat" && paymentMethodType === "crypto" && (
-                              <div className="flex items-center space-x-2 mb-2">
-                                <button
-                                  onClick={() => setAmountInputType("usd")}
-                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                    amountInputType === "usd"
-                                      ? "bg-green-500 text-white"
-                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
-                                  }`}
-                                >
-                                  USD
-                                </button>
-                                <button
-                                  onClick={() => setAmountInputType("crypto")}
-                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                    amountInputType === "crypto"
-                                      ? "bg-green-500 text-white"
-                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
-                                  }`}
-                                >
-                                  {cryptoAsset}
-                                </button>
-                              </div>
-                            )}
+                            {depositType === "fiat" &&
+                              paymentMethodType === "crypto" && (
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <button
+                                    onClick={() => setAmountInputType("usd")}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                      amountInputType === "usd"
+                                        ? "bg-green-500 text-white"
+                                        : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                    }`}
+                                  >
+                                    {selectedUser?.preferredCurrency || "USD"}
+                                  </button>
+                                  <button
+                                    onClick={() => setAmountInputType("crypto")}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                      amountInputType === "crypto"
+                                        ? "bg-green-500 text-white"
+                                        : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                    }`}
+                                  >
+                                    {cryptoAsset}
+                                  </button>
+                                </div>
+                              )}
                             {depositType === "crypto" && (
                               <div className="flex items-center space-x-2 mb-2">
                                 <button
@@ -1852,7 +1862,8 @@ const AdminDashboard = () => {
                                       : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
                                   }`}
                                 >
-                                  USD Value
+                                  {selectedUser?.preferredCurrency || "USD"}{" "}
+                                  Value
                                 </button>
                                 <button
                                   onClick={() => setAmountInputType("crypto")}
@@ -1873,16 +1884,22 @@ const AdminDashboard = () => {
                               className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                               placeholder={
                                 amountInputType === "usd"
-                                  ? "0.00 USD"
+                                  ? `0.00 ${
+                                      selectedUser?.preferredCurrency || "USD"
+                                    }`
                                   : `0.00000000 ${cryptoAsset}`
                               }
                               disabled={loading}
                             />
-                            {amountInputType === "usd" && (depositType === "crypto" || (depositType === "fiat" && paymentMethodType === "crypto")) && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                Equivalent crypto amount will be calculated automatically
-                              </p>
-                            )}
+                            {amountInputType === "usd" &&
+                              (depositType === "crypto" ||
+                                (depositType === "fiat" &&
+                                  paymentMethodType === "crypto")) && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Equivalent crypto amount will be calculated
+                                  automatically
+                                </p>
+                              )}
                           </div>
                           <div>
                             <label className="block text-sm font-semibold text-gray-300 mb-2">
@@ -1908,15 +1925,17 @@ const AdminDashboard = () => {
                               <div className="flex justify-between">
                                 <span className="text-gray-400">Type:</span>
                                 <span className="font-semibold">
-                                  {depositType === "fiat" ? "Fiat Deposit" : "Crypto Deposit"}
+                                  {depositType === "fiat"
+                                    ? "Fiat Deposit"
+                                    : "Crypto Deposit"}
                                 </span>
                               </div>
                               <div className="flex justify-between">
                                 <span className="text-gray-400">Method:</span>
                                 <span className="capitalize">
-                                  {depositType === "fiat" 
-                                    ? paymentMethodType === "crypto" 
-                                      ? `${cryptoAsset} (→ Fiat)` 
+                                  {depositType === "fiat"
+                                    ? paymentMethodType === "crypto"
+                                      ? `${cryptoAsset} (→ Fiat)`
                                       : "Traditional"
                                     : `${cryptoAsset} Asset`}
                                 </span>
@@ -1925,7 +1944,9 @@ const AdminDashboard = () => {
                                 <span className="text-gray-400">Amount:</span>
                                 <span className="font-semibold text-green-400">
                                   {amountInputType === "usd"
-                                    ? `$${amount || "0"} USD`
+                                    ? `${amount || "0"} ${
+                                        selectedUser?.preferredCurrency || "USD"
+                                      }`
                                     : `${amount || "0"} ${cryptoAsset}`}
                                 </span>
                               </div>
@@ -1936,22 +1957,41 @@ const AdminDashboard = () => {
                                 </span>
                               </div>
                               <div className="flex justify-between pt-2 mt-2 border-t border-gray-600">
-                                <span className="text-gray-400">Will be added to:</span>
+                                <span className="text-gray-400">
+                                  Will be added to:
+                                </span>
                                 <span className="text-blue-400 font-semibold">
-                                  {depositType === "fiat" ? "Fiat Balance" : `${cryptoAsset} Holdings`}
+                                  {depositType === "fiat"
+                                    ? "Fiat Balance"
+                                    : `${cryptoAsset} Holdings`}
                                 </span>
                               </div>
                             </div>
                           </div>
 
-                          <div className={`border rounded-lg p-3 ${
-                            depositType === "fiat" ? "bg-green-900/20 border-green-700" : "bg-orange-900/20 border-orange-700"
-                          }`}>
-                            <p className={`text-xs ${depositType === "fiat" ? "text-green-300" : "text-orange-300"}`}>
-                              ℹ️ {depositType === "fiat" 
+                          <div
+                            className={`border rounded-lg p-3 ${
+                              depositType === "fiat"
+                                ? "bg-green-900/20 border-green-700"
+                                : "bg-orange-900/20 border-orange-700"
+                            }`}
+                          >
+                            <p
+                              className={`text-xs ${
+                                depositType === "fiat"
+                                  ? "text-green-300"
+                                  : "text-orange-300"
+                              }`}
+                            >
+                              ℹ️{" "}
+                              {depositType === "fiat"
                                 ? paymentMethodType === "crypto"
-                                  ? `This ${cryptoAsset} deposit will be converted to USD and added to the user's fiat balance.`
-                                  : "This will add funds to the user's fiat balance in their preferred currency."
+                                  ? `This ${cryptoAsset} deposit will be converted to ${
+                                      selectedUser?.preferredCurrency || "USD"
+                                    } and added to the user's fiat balance.`
+                                  : `This will add funds to the user's fiat balance in their preferred currency (${
+                                      selectedUser?.preferredCurrency || "USD"
+                                    }).`
                                 : `This will add ${cryptoAsset} directly to the user's cryptocurrency portfolio, not their fiat balance.`}
                             </p>
                           </div>
@@ -1967,9 +2007,17 @@ const AdminDashboard = () => {
                                 : "bg-gradient-to-r from-orange-500 to-purple-500 hover:from-orange-600 hover:to-purple-600 disabled:from-gray-600 disabled:to-gray-700"
                             } disabled:cursor-not-allowed text-white`}
                           >
-                            {depositType === "fiat" ? <DollarSign size={24} /> : <Wallet size={24} />}
+                            {depositType === "fiat" ? (
+                              <DollarSign size={24} />
+                            ) : (
+                              <Wallet size={24} />
+                            )}
                             <span className="text-lg">
-                              {loading ? "Processing..." : `Process ${depositType === "fiat" ? "Fiat" : "Crypto"} Deposit`}
+                              {loading
+                                ? "Processing..."
+                                : `Process ${
+                                    depositType === "fiat" ? "Fiat" : "Crypto"
+                                  } Deposit`}
                             </span>
                           </button>
                         </div>
