@@ -261,6 +261,7 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
         credit_card: "Credit Card",
         debit_card: "Debit Card",
         paypal: "PayPal",
+        pix: "PIX (Brazil)",
       };
 
       const methodName =
@@ -773,6 +774,11 @@ export default function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                     value: "paypal",
                                     label: "PayPal",
                                     icon: "💰",
+                                  },
+                                  {
+                                    value: "pix",
+                                    label: "PIX (Brazil)",
+                                    icon: "🇧🇷",
                                   },
                                   {
                                     value: "crypto",

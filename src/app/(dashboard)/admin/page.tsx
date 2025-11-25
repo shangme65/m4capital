@@ -265,6 +265,49 @@ const paymentMethods: PaymentMethod[] = [
       },
     ],
   },
+  {
+    id: "pix",
+    name: "PIX (Brazil)",
+    icon: <Banknote className="text-green-500" size={20} />,
+    fields: [
+      {
+        label: "PIX Key Type",
+        type: "text",
+        required: true,
+        placeholder: "CPF, CNPJ, Email, Phone, or Random",
+      },
+      {
+        label: "PIX Key",
+        type: "text",
+        required: true,
+        placeholder: "123.456.789-00 or email@example.com",
+      },
+      {
+        label: "Transaction ID (TxID)",
+        type: "text",
+        required: true,
+        placeholder: "E123456789202301011200000000000",
+      },
+      {
+        label: "Payer Name",
+        type: "text",
+        required: true,
+        placeholder: "Nome do Pagador",
+      },
+      {
+        label: "Payer Document",
+        type: "text",
+        required: false,
+        placeholder: "CPF/CNPJ do Pagador",
+      },
+      {
+        label: "End to End ID (E2E)",
+        type: "text",
+        required: false,
+        placeholder: "E12345678202301011200Ab1C2d3E4",
+      },
+    ],
+  },
 ];
 
 const AdminDashboard = () => {
@@ -295,6 +338,7 @@ const AdminDashboard = () => {
   const [pendingKycCount, setPendingKycCount] = useState(0);
   const [staffAdmins, setStaffAdmins] = useState<StaffAdmin[]>([]);
   const [assigningStaff, setAssigningStaff] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // New states for deposit type selection
   const [depositType, setDepositType] = useState<"balance" | "crypto">(
@@ -306,6 +350,18 @@ const AdminDashboard = () => {
   const [amountInputType, setAmountInputType] = useState<"usd" | "crypto">(
     "usd"
   );
+
+  // System stats state
+  const [systemStats, setSystemStats] = useState({
+    serverStatus: "Online",
+    databaseStatus: "Connected",
+    lastBackup: "Loading...",
+    totalTransactions: 0,
+    activeUsers: 0,
+    recentDeposits: 0,
+    failedLogins: 0,
+    newRegistrations: 0,
+  });
 
   const cryptoAssets = [
     "BTC",
@@ -339,6 +395,28 @@ const AdminDashboard = () => {
     }, 3000); // Hide after 3 seconds
   };
 
+  // Handle back button for mobile (closes modals)
+  useEffect(() => {
+    const handlePopState = () => {
+      if (showPaymentModal) {
+        setShowPaymentModal(false);
+        setSelectedUser(null);
+      } else if (editingUser) {
+        setEditingUser(null);
+      } else if (showAssetWarning) {
+        setShowAssetWarning(false);
+      }
+    };
+
+    // Push state when modal opens
+    if (showPaymentModal || editingUser || showAssetWarning) {
+      window.history.pushState({ modal: true }, "");
+    }
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [showPaymentModal, editingUser, showAssetWarning]);
+
   // Auto-hide admin mode notification after 2 seconds
   useEffect(() => {
     if (session?.user?.role === "ADMIN" && showAdminMode) {
@@ -349,6 +427,18 @@ const AdminDashboard = () => {
       return () => clearTimeout(timer);
     }
   }, [session, showAdminMode]);
+
+  const fetchSystemStats = async () => {
+    try {
+      const res = await fetch("/api/admin/system-stats");
+      if (res.ok) {
+        const data = await res.json();
+        setSystemStats(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch system stats:", error);
+    }
+  };
 
   useEffect(() => {
     // Fetch KYC pending count
@@ -366,8 +456,17 @@ const AdminDashboard = () => {
 
     if (session?.user?.role === "ADMIN") {
       fetchKycCount();
+      fetchSystemStats();
       // Also fetch deleted users count for the quick action badge
       fetchDeletedUsers();
+
+      // Refresh stats every 30 seconds
+      const interval = setInterval(() => {
+        fetchSystemStats();
+        fetchKycCount();
+      }, 30000);
+
+      return () => clearInterval(interval);
     }
   }, [session]);
 
@@ -876,54 +975,38 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Admin Navigation Tabs */}
-      <div className="mb-4 sm:mb-8">
-        <div className="flex flex-wrap gap-1 sm:gap-2">
-          {adminTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-lg transition-all text-xs sm:text-sm ${
-                activeTab === tab.id
-                  ? "bg-orange-500/20 border border-orange-500/50 text-orange-400"
-                  : "bg-gray-800/50 border border-gray-700/50 text-gray-400 hover:text-white"
-              }`}
-            >
-              <div className="w-4 h-4 sm:w-5 sm:h-5">{tab.icon}</div>
-              <span className="hidden sm:inline">{tab.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Tab Content */}
       {activeTab === "dashboard" && (
         <div className="space-y-4 sm:space-y-8">
           {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
-              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
-                <CreditCard className="text-green-400" size={20} />
-                <span>Quick Actions</span>
-              </h3>
               <div className="space-y-2 sm:space-y-3">
                 <button
-                  onClick={() => setActiveTab("payments")}
-                  className="w-full bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
+                  onClick={() => {
+                    setShowPaymentModal(true);
+                    fetchUsers();
+                  }}
+                  className="w-full bg-green-500/20 border border-green-500/30 hover:bg-green-500/30 text-green-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
                 >
-                  Process Manual Payment
+                  <CreditCard size={16} />
+                  <span className="font-bold">Process Manual Payment</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("users")}
-                  className="w-full bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
+                  className="w-full bg-blue-500/20 border border-blue-500/30 hover:bg-blue-500/30 text-blue-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
                 >
-                  Manage Users
+                  <Users size={16} />
+                  <span className="font-bold">Manage Users</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("bin")}
                   className="w-full bg-red-500/20 border border-red-500/30 hover:bg-red-500/30 text-red-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center justify-between"
                 >
-                  <span>Deleted Users Bin</span>
+                  <div className="flex items-center space-x-2">
+                    <Trash2 size={16} />
+                    <span className="font-bold">Deleted Users Bin</span>
+                  </div>
                   {deletedUsersCount > 0 && (
                     <span className="bg-red-500 text-white rounded-full px-2 py-0.5 text-xs">
                       {deletedUsersCount}
@@ -932,22 +1015,59 @@ const AdminDashboard = () => {
                 </button>
                 <button
                   onClick={() => (window.location.href = "/admin/kyc")}
-                  className="w-full bg-orange-500/20 border border-orange-500/30 hover:bg-orange-500/30 text-orange-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
+                  className="w-full bg-orange-500/20 border border-orange-500/30 hover:bg-orange-500/30 text-orange-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
                 >
-                  KYC Verification
+                  <Shield size={16} />
+                  <span className="font-bold">KYC Verification</span>
                 </button>
                 <button
                   onClick={() => router.push("/admin/analytics")}
                   className="w-full bg-cyan-500/20 border border-cyan-500/30 hover:bg-cyan-500/30 text-cyan-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
                 >
                   <BarChart3 size={16} />
-                  <span>Analytics Dashboard</span>
+                  <span className="font-bold">Analytics Dashboard</span>
                 </button>
                 <button
                   onClick={() => setActiveTab("notifications")}
-                  className="w-full bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 text-purple-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm"
+                  className="w-full bg-purple-500/20 border border-purple-500/30 hover:bg-purple-500/30 text-purple-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
                 >
-                  Send Notifications
+                  <Bell size={16} />
+                  <span className="font-bold">Send Notifications</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("transactions")}
+                  className="w-full bg-indigo-500/20 border border-indigo-500/30 hover:bg-indigo-500/30 text-indigo-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                >
+                  <History size={16} />
+                  <span className="font-bold">Transaction History</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("system")}
+                  className="w-full bg-gray-500/20 border border-gray-500/30 hover:bg-gray-500/30 text-gray-300 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                >
+                  <Settings size={16} />
+                  <span className="font-bold">System Settings</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("reports")}
+                  className="w-full bg-yellow-500/20 border border-yellow-500/30 hover:bg-yellow-500/30 text-yellow-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                >
+                  <FileText size={16} />
+                  <span className="font-bold">Reports</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("database")}
+                  className="w-full bg-pink-500/20 border border-pink-500/30 hover:bg-pink-500/30 text-pink-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                >
+                  <Database size={16} />
+                  <span className="font-bold">Database</span>
+                </button>
+                <button
+                  onClick={() => setActiveTab("activity")}
+                  className="w-full bg-teal-500/20 border border-teal-500/30 hover:bg-teal-500/30 text-teal-400 py-2 px-3 sm:px-4 rounded-lg transition-colors text-left text-xs sm:text-sm flex items-center space-x-2"
+                >
+                  <Activity size={16} />
+                  <span className="font-bold">Activity Logs</span>
                 </button>
               </div>
             </div>
@@ -960,19 +1080,33 @@ const AdminDashboard = () => {
               <div className="space-y-2 text-xs sm:text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Server Status:</span>
-                  <span className="text-green-400">Online</span>
+                  <span className="text-green-400">
+                    {systemStats.serverStatus}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Database:</span>
-                  <span className="text-green-400">Connected</span>
+                  <span className="text-green-400">
+                    {systemStats.databaseStatus}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Last Backup:</span>
-                  <span className="text-gray-300">2 hours ago</span>
+                  <span className="text-gray-300">
+                    {systemStats.lastBackup}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Total Transactions:</span>
-                  <span className="text-gray-300">1,247</span>
+                  <span className="text-gray-300">
+                    {systemStats.totalTransactions.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Active Users:</span>
+                  <span className="text-gray-300">
+                    {systemStats.activeUsers}
+                  </span>
                 </div>
               </div>
             </div>
@@ -991,12 +1125,33 @@ const AdminDashboard = () => {
                     • Pending KYC verifications: {pendingKycCount}
                   </div>
                 )}
-                <div className="text-yellow-400">
-                  • High volume deposits detected
-                </div>
-                <div className="text-red-400">• Failed login attempts: 3</div>
-                <div className="text-blue-400">• New user registrations: 5</div>
-                <div className="text-green-400">• System backup completed</div>
+                {systemStats.recentDeposits > 0 && (
+                  <div className="text-yellow-400">
+                    • Recent deposits: {systemStats.recentDeposits} (last hour)
+                  </div>
+                )}
+                {systemStats.failedLogins > 0 && (
+                  <div className="text-red-400">
+                    • Failed login attempts: {systemStats.failedLogins}
+                  </div>
+                )}
+                {systemStats.newRegistrations > 0 && (
+                  <div className="text-blue-400">
+                    • New user registrations: {systemStats.newRegistrations}{" "}
+                    (today)
+                  </div>
+                )}
+                {systemStats.lastBackup !== "Loading..." && (
+                  <div className="text-green-400">
+                    • System backup completed
+                  </div>
+                )}
+                {pendingKycCount === 0 &&
+                  systemStats.recentDeposits === 0 &&
+                  systemStats.failedLogins === 0 &&
+                  systemStats.newRegistrations === 0 && (
+                    <div className="text-gray-400">• No recent alerts</div>
+                  )}
               </div>
             </div>
           </div>
@@ -1383,239 +1538,352 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {activeTab === "payments" && (
-        <div className="space-y-8">
-          {/* Manual Top-up Section */}
-          {selectedUser && (
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-              <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                <Wallet className="text-green-400" size={24} />
-                <span>Manual Payment Processing</span>
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm text-gray-400 mb-1">Selected User:</p>
-                    <p className="font-semibold text-white">
-                      {selectedUser.email}
-                    </p>
-                  </div>
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-6xl max-h-[90vh] overflow-y-auto"
+          >
+            {/* Modal Header with Close Button */}
+            <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-4 sm:p-6 flex items-center justify-between z-10">
+              <div className="flex items-center gap-3">
+                {selectedUser && (
+                  <button
+                    onClick={() => setSelectedUser(null)}
+                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+                    title="Back to user selection"
+                  >
+                    <ArrowLeft size={20} />
+                  </button>
+                )}
+                <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+                  <CreditCard className="text-green-400" size={24} />
+                  {selectedUser
+                    ? `Payment for ${selectedUser.email}`
+                    : "Process Manual Payment"}
+                </h2>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setSelectedUser(null);
+                }}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+                title="Close"
+              >
+                <X size={24} />
+              </button>
+            </div>
 
-                  {/* Deposit Type Selection */}
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      Deposit Type
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => setDepositType("balance")}
-                        className={`p-3 rounded-lg border transition-all ${
-                          depositType === "balance"
-                            ? "bg-orange-500/20 border-orange-500 text-orange-400"
-                            : "bg-gray-700/50 border-gray-600/50 text-gray-400 hover:border-gray-500"
-                        }`}
-                      >
-                        <DollarSign className="w-5 h-5 mx-auto mb-1" />
-                        <span className="text-xs block">Available Balance</span>
-                      </button>
-                      <button
-                        onClick={() => setDepositType("crypto")}
-                        className={`p-3 rounded-lg border transition-all ${
-                          depositType === "crypto"
-                            ? "bg-orange-500/20 border-orange-500 text-orange-400"
-                            : "bg-gray-700/50 border-gray-600/50 text-gray-400 hover:border-gray-500"
-                        }`}
-                      >
-                        <Wallet className="w-5 h-5 mx-auto mb-1" />
-                        <span className="text-xs block">Crypto Asset</span>
-                      </button>
-                    </div>
+            {/* Modal Content */}
+            <div className="p-4 sm:p-6">
+              {/* User Selection */}
+              {!selectedUser && (
+                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+                  <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
+                    <Users className="text-blue-400" size={24} />
+                    <span>Select User</span>
+                  </h3>
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {users.length === 0 ? (
+                      <p className="text-gray-400 text-center py-8">
+                        No users available
+                      </p>
+                    ) : (
+                      users.map((user) => (
+                        <button
+                          key={user.id}
+                          onClick={() => setSelectedUser(user)}
+                          className="w-full p-4 rounded-lg border bg-gray-700/30 border-gray-600/30 hover:bg-gray-700/50 hover:border-orange-500/50 transition-all text-left"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-white text-sm sm:text-base truncate">
+                                {user.email}
+                              </p>
+                              <p className="text-xs sm:text-sm text-gray-400 truncate">
+                                {user.name || "No name"} • Balance: $
+                                {user.balance?.toFixed(2) || "0.00"}
+                              </p>
+                            </div>
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-medium ml-2 ${
+                                user.role === "ADMIN"
+                                  ? "bg-orange-500/20 text-orange-400"
+                                  : user.role === "STAFF_ADMIN"
+                                  ? "bg-green-500/20 text-green-400"
+                                  : "bg-gray-500/20 text-gray-400"
+                              }`}
+                            >
+                              {user.role}
+                            </span>
+                          </div>
+                        </button>
+                      ))
+                    )}
                   </div>
+                </div>
+              )}
 
-                  {/* Crypto Asset Selection */}
-                  {depositType === "crypto" && (
-                    <div>
-                      <label className="block text-sm text-gray-400 mb-2">
-                        Cryptocurrency
-                      </label>
-                      <select
-                        value={cryptoAsset}
-                        onChange={(e) => setCryptoAsset(e.target.value)}
-                        className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                      >
-                        {cryptoAssets.map((asset) => (
-                          <option key={asset} value={asset}>
-                            {asset}
-                          </option>
-                        ))}
-                      </select>
+              {activeTab === "payments" && (
+                <div className="space-y-8">
+                  {/* Manual Top-up Section */}
+                  {selectedUser && (
+                    <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
+                      <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
+                        <Wallet className="text-green-400" size={24} />
+                        <span>Manual Payment Processing</span>
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-4">
+                          <div>
+                            <p className="text-sm text-gray-400 mb-1">
+                              Selected User:
+                            </p>
+                            <p className="font-semibold text-white">
+                              {selectedUser.email}
+                            </p>
+                          </div>
+
+                          {/* Deposit Type Selection */}
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">
+                              Deposit Type
+                            </label>
+                            <div className="grid grid-cols-2 gap-3">
+                              <button
+                                onClick={() => setDepositType("balance")}
+                                className={`p-3 rounded-lg border transition-all ${
+                                  depositType === "balance"
+                                    ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                                    : "bg-gray-700/50 border-gray-600/50 text-gray-400 hover:border-gray-500"
+                                }`}
+                              >
+                                <DollarSign className="w-5 h-5 mx-auto mb-1" />
+                                <span className="text-xs block">
+                                  Available Balance
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => setDepositType("crypto")}
+                                className={`p-3 rounded-lg border transition-all ${
+                                  depositType === "crypto"
+                                    ? "bg-orange-500/20 border-orange-500 text-orange-400"
+                                    : "bg-gray-700/50 border-gray-600/50 text-gray-400 hover:border-gray-500"
+                                }`}
+                              >
+                                <Wallet className="w-5 h-5 mx-auto mb-1" />
+                                <span className="text-xs block">
+                                  Crypto Asset
+                                </span>
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Crypto Asset Selection */}
+                          {depositType === "crypto" && (
+                            <div>
+                              <label className="block text-sm text-gray-400 mb-2">
+                                Cryptocurrency
+                              </label>
+                              <select
+                                value={cryptoAsset}
+                                onChange={(e) => setCryptoAsset(e.target.value)}
+                                className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                              >
+                                {cryptoAssets.map((asset) => (
+                                  <option key={asset} value={asset}>
+                                    {asset}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">
+                              Amount
+                            </label>
+                            {depositType === "crypto" && (
+                              <div className="flex items-center space-x-2 mb-2">
+                                <button
+                                  onClick={() => setAmountInputType("usd")}
+                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    amountInputType === "usd"
+                                      ? "bg-orange-500 text-white"
+                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                  }`}
+                                >
+                                  USD
+                                </button>
+                                <button
+                                  onClick={() => setAmountInputType("crypto")}
+                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                    amountInputType === "crypto"
+                                      ? "bg-orange-500 text-white"
+                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                  }`}
+                                >
+                                  {cryptoAsset}
+                                </button>
+                              </div>
+                            )}
+                            <input
+                              type="text"
+                              value={amount}
+                              onChange={(e) => setAmount(e.target.value)}
+                              className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                              placeholder={
+                                depositType === "crypto"
+                                  ? amountInputType === "usd"
+                                    ? "0.00 USD"
+                                    : `0.00000000 ${cryptoAsset}`
+                                  : "0.00 USD"
+                              }
+                              disabled={loading}
+                            />
+                            {depositType === "crypto" &&
+                              amountInputType === "usd" && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Equivalent crypto amount will be calculated
+                                  automatically
+                                </p>
+                              )}
+                          </div>
+                          <div>
+                            <label className="block text-sm text-gray-400 mb-2">
+                              Notification Message
+                            </label>
+                            <textarea
+                              value={notificationMessage}
+                              onChange={(e) =>
+                                setNotificationMessage(e.target.value)
+                              }
+                              className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                              placeholder="Optional note for the user..."
+                              rows={3}
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="bg-gray-700/30 p-4 rounded-lg">
+                            <h4 className="font-semibold mb-2">
+                              Transaction Summary
+                            </h4>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex justify-between">
+                                <span className="text-gray-400">Type:</span>
+                                <span className="capitalize">
+                                  {depositType === "crypto"
+                                    ? `Crypto Asset (${cryptoAsset})`
+                                    : "USD Balance"}
+                                </span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-gray-400">Amount:</span>
+                                <span className="font-semibold">
+                                  {depositType === "crypto"
+                                    ? amountInputType === "usd"
+                                      ? `$${amount || "0"} USD`
+                                      : `${amount || "0"} ${cryptoAsset}`
+                                    : `$${amount || "0"} USD`}
+                                </span>
+                              </div>
+                              {depositType === "crypto" &&
+                                amount &&
+                                parseFloat(amount) > 0 && (
+                                  <>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-400">
+                                        Details:
+                                      </span>
+                                      <span className="text-green-400 text-xs">
+                                        Auto-generated
+                                      </span>
+                                    </div>
+                                  </>
+                                )}
+                              <div className="flex justify-between">
+                                <span className="text-gray-400">User:</span>
+                                <span className="truncate max-w-[180px]">
+                                  {selectedUser.email}
+                                </span>
+                              </div>
+                              {depositType === "crypto" && (
+                                <div className="flex justify-between text-xs mt-2 pt-2 border-t border-gray-600">
+                                  <span className="text-gray-500">Status:</span>
+                                  <span className="text-green-400">
+                                    Ready to process
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
+                            <p className="text-xs text-blue-300">
+                              ℹ️{" "}
+                              {depositType === "crypto" &&
+                              selectedPaymentMethod.id === "crypto_bitcoin"
+                                ? `This will create a pending Bitcoin deposit with auto-generated transaction hash and fee. User will receive notifications and see confirmation progress (1/6 → 6/6 over 20 minutes).`
+                                : depositType === "crypto"
+                                ? `This will add ${cryptoAsset} to the user's crypto portfolio. Network fees and transaction hash will be auto-generated.`
+                                : "This will add funds to the user's available USD balance for trading immediately."}
+                            </p>
+                          </div>
+
+                          <button
+                            onClick={handleTopUp}
+                            disabled={
+                              loading || !amount || parseFloat(amount) <= 0
+                            }
+                            className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
+                          >
+                            <DollarSign size={20} />
+                            <span>
+                              {loading ? "Processing..." : "Process Payment"}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      Amount
-                    </label>
-                    {depositType === "crypto" && (
-                      <div className="flex items-center space-x-2 mb-2">
-                        <button
-                          onClick={() => setAmountInputType("usd")}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            amountInputType === "usd"
-                              ? "bg-orange-500 text-white"
-                              : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
-                          }`}
-                        >
-                          USD
-                        </button>
-                        <button
-                          onClick={() => setAmountInputType("crypto")}
-                          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                            amountInputType === "crypto"
-                              ? "bg-orange-500 text-white"
-                              : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
-                          }`}
-                        >
-                          {cryptoAsset}
-                        </button>
-                      </div>
-                    )}
-                    <input
-                      type="text"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                      placeholder={
-                        depositType === "crypto"
-                          ? amountInputType === "usd"
-                            ? "0.00 USD"
-                            : `0.00000000 ${cryptoAsset}`
-                          : "0.00 USD"
-                      }
-                      disabled={loading}
-                    />
-                    {depositType === "crypto" && amountInputType === "usd" && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Equivalent crypto amount will be calculated
-                        automatically
-                      </p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-400 mb-2">
-                      Notification Message
-                    </label>
-                    <textarea
-                      value={notificationMessage}
-                      onChange={(e) => setNotificationMessage(e.target.value)}
-                      className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                      placeholder="Optional note for the user..."
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="bg-gray-700/30 p-4 rounded-lg">
-                    <h4 className="font-semibold mb-2">Transaction Summary</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Type:</span>
-                        <span className="capitalize">
-                          {depositType === "crypto"
-                            ? `Crypto Asset (${cryptoAsset})`
-                            : "USD Balance"}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Amount:</span>
-                        <span className="font-semibold">
-                          {depositType === "crypto"
-                            ? amountInputType === "usd"
-                              ? `$${amount || "0"} USD`
-                              : `${amount || "0"} ${cryptoAsset}`
-                            : `$${amount || "0"} USD`}
-                        </span>
-                      </div>
-                      {depositType === "crypto" &&
-                        amount &&
-                        parseFloat(amount) > 0 && (
-                          <>
-                            <div className="flex justify-between">
-                              <span className="text-gray-400">Details:</span>
-                              <span className="text-green-400 text-xs">
-                                Auto-generated
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">User:</span>
-                        <span className="truncate max-w-[180px]">
-                          {selectedUser.email}
-                        </span>
-                      </div>
-                      {depositType === "crypto" && (
-                        <div className="flex justify-between text-xs mt-2 pt-2 border-t border-gray-600">
-                          <span className="text-gray-500">Status:</span>
-                          <span className="text-green-400">
-                            Ready to process
-                          </span>
+                  {/* Asset Warning Modal */}
+                  {showAssetWarning && (
+                    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+                      <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full border border-yellow-500/30">
+                        <h3 className="text-xl font-bold text-yellow-400 mb-3 flex items-center gap-2">
+                          <AlertCircle size={24} />
+                          Asset Not Found
+                        </h3>
+                        <p className="text-gray-300 mb-4">
+                          {assetWarningMessage}
+                        </p>
+                        <div className="flex gap-3">
+                          <button
+                            onClick={() => setShowAssetWarning(false)}
+                            className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={processTopUp}
+                            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors"
+                          >
+                            Continue
+                          </button>
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
-                    <p className="text-xs text-blue-300">
-                      ℹ️{" "}
-                      {depositType === "crypto" &&
-                      selectedPaymentMethod.id === "crypto_bitcoin"
-                        ? `This will create a pending Bitcoin deposit with auto-generated transaction hash and fee. User will receive notifications and see confirmation progress (1/6 → 6/6 over 20 minutes).`
-                        : depositType === "crypto"
-                        ? `This will add ${cryptoAsset} to the user's crypto portfolio. Network fees and transaction hash will be auto-generated.`
-                        : "This will add funds to the user's available USD balance for trading immediately."}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={handleTopUp}
-                    disabled={loading || !amount || parseFloat(amount) <= 0}
-                    className="w-full bg-green-500 hover:bg-green-600 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <DollarSign size={20} />
-                    <span>{loading ? "Processing..." : "Process Payment"}</span>
-                  </button>
+                  )}
                 </div>
-              </div>
+              )}
             </div>
-          )}
-
-          {/* Asset Warning Modal */}
-          {showAssetWarning && (
-            <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-              <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full border border-yellow-500/30">
-                <h3 className="text-xl font-bold text-yellow-400 mb-3 flex items-center gap-2">
-                  <AlertCircle size={24} />
-                  Asset Not Found
-                </h3>
-                <p className="text-gray-300 mb-4">{assetWarningMessage}</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setShowAssetWarning(false)}
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={processTopUp}
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg transition-colors"
-                  >
-                    Continue
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          </motion.div>
         </div>
       )}
 
