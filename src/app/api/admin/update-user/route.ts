@@ -115,6 +115,8 @@ export async function PUT(req: NextRequest) {
     // Send notification based on role change
     if (role === "USER" && userBefore.role !== "USER") {
       // User was demoted to USER - send notification
+      const wasStaffAdmin = userBefore.role === "STAFF_ADMIN";
+
       try {
         if (userBefore.email) {
           const demotionEmailContent = `
@@ -161,6 +163,68 @@ export async function PUT(req: NextRequest) {
             message: `Your account role has been updated to Standard User. Your interface will refresh automatically.`,
           },
         });
+
+        // If user was demoted from STAFF_ADMIN, notify origin admin
+        if (wasStaffAdmin) {
+          try {
+            const originAdmin = await prisma.user.findFirst({
+              where: {
+                role: "ADMIN",
+                isOriginAdmin: true,
+                isDeleted: false,
+              },
+              select: { id: true, email: true, name: true },
+            });
+
+            if (originAdmin && originAdmin.email) {
+              const adminDemotionEmailContent = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #f97316;">Staff Administrator Demoted</h2>
+                  <p style="font-size: 16px; line-height: 1.6; color: #333;">
+                    A Staff Administrator has been demoted to Standard User.
+                  </p>
+                  <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Name:</strong> ${userBefore.name}</p>
+                    <p style="margin: 5px 0;"><strong>Email:</strong> ${userBefore.email}</p>
+                    <p style="margin: 5px 0;"><strong>User ID:</strong> ${userBefore.id}</p>
+                    <p style="margin: 5px 0;"><strong>Previous Role:</strong> Staff Administrator</p>
+                    <p style="margin: 5px 0;"><strong>New Role:</strong> Standard User</p>
+                  </div>
+                  <p style="font-size: 14px; color: #888; margin-top: 20px;">
+                    This is an automated notification from M4 Capital.
+                  </p>
+                </div>
+              `;
+
+              await sendEmail({
+                to: originAdmin.email,
+                subject: "Staff Administrator Demoted - M4 Capital",
+                html: emailTemplate(adminDemotionEmailContent),
+                text: `A Staff Administrator has been demoted to Standard User: ${userBefore.name} (${userBefore.email}).`,
+              });
+
+              console.log(
+                `✅ Admin demotion notification email sent to ${originAdmin.email}`
+              );
+
+              // Create push notification for origin admin
+              await prisma.notification.create({
+                data: {
+                  id: generateId(),
+                  userId: originAdmin.id,
+                  type: "INFO",
+                  title: "Staff Administrator Demoted",
+                  message: `${userBefore.name} has been demoted from Staff Administrator to Standard User.`,
+                },
+              });
+            }
+          } catch (adminNotifError) {
+            console.error(
+              "Failed to notify origin admin of demotion:",
+              adminNotifError
+            );
+          }
+        }
       } catch (error) {
         console.error("Failed to send demotion notification:", error);
       }
