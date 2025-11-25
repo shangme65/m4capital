@@ -339,7 +339,9 @@ const AdminDashboard = () => {
   const [staffAdmins, setStaffAdmins] = useState<StaffAdmin[]>([]);
   const [assigningStaff, setAssigningStaff] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showUserStatsModal, setShowUserStatsModal] = useState<'total' | 'admin' | 'staff' | 'regular' | 'sessions' | null>(null);
+  const [showUserStatsModal, setShowUserStatsModal] = useState<
+    "total" | "admin" | "staff" | "regular" | "sessions" | null
+  >(null);
 
   // New states for deposit type selection
   const [depositType, setDepositType] = useState<"balance" | "crypto">(
@@ -412,7 +414,12 @@ const AdminDashboard = () => {
     };
 
     // Push state when modal opens
-    if (showPaymentModal || editingUser || showAssetWarning || showUserStatsModal) {
+    if (
+      showPaymentModal ||
+      editingUser ||
+      showAssetWarning ||
+      showUserStatsModal
+    ) {
       window.history.pushState({ modal: true }, "");
     }
 
@@ -1166,7 +1173,7 @@ const AdminDashboard = () => {
           {/* User Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <button
-              onClick={() => setShowUserStatsModal('total')}
+              onClick={() => setShowUserStatsModal("total")}
               className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
             >
               <div className="flex items-center justify-between">
@@ -1183,7 +1190,7 @@ const AdminDashboard = () => {
             </button>
 
             <button
-              onClick={() => setShowUserStatsModal('admin')}
+              onClick={() => setShowUserStatsModal("admin")}
               className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
             >
               <div className="flex items-center justify-between">
@@ -1200,7 +1207,7 @@ const AdminDashboard = () => {
             </button>
 
             <button
-              onClick={() => setShowUserStatsModal('staff')}
+              onClick={() => setShowUserStatsModal("staff")}
               className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
             >
               <div className="flex items-center justify-between">
@@ -1217,7 +1224,7 @@ const AdminDashboard = () => {
             </button>
 
             <button
-              onClick={() => setShowUserStatsModal('regular')}
+              onClick={() => setShowUserStatsModal("regular")}
               className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
             >
               <div className="flex items-center justify-between">
@@ -1234,7 +1241,7 @@ const AdminDashboard = () => {
             </button>
 
             <button
-              onClick={() => setShowUserStatsModal('sessions')}
+              onClick={() => setShowUserStatsModal("sessions")}
               className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
             >
               <div className="flex items-center justify-between">
@@ -2406,31 +2413,31 @@ const AdminDashboard = () => {
           >
             <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                {showUserStatsModal === 'total' && (
+                {showUserStatsModal === "total" && (
                   <>
                     <Users className="text-blue-400" size={24} />
                     All Users ({totalUsers})
                   </>
                 )}
-                {showUserStatsModal === 'admin' && (
+                {showUserStatsModal === "admin" && (
                   <>
                     <UserCheck className="text-green-400" size={24} />
                     Admin Users ({adminUsers})
                   </>
                 )}
-                {showUserStatsModal === 'staff' && (
+                {showUserStatsModal === "staff" && (
                   <>
                     <Shield className="text-green-400" size={24} />
                     Staff Admin Users ({staffAdminUsers})
                   </>
                 )}
-                {showUserStatsModal === 'regular' && (
+                {showUserStatsModal === "regular" && (
                   <>
                     <UserX className="text-blue-400" size={24} />
                     Regular Users ({regularUsers})
                   </>
                 )}
-                {showUserStatsModal === 'sessions' && (
+                {showUserStatsModal === "sessions" && (
                   <>
                     <Activity className="text-purple-400" size={24} />
                     Active Sessions (24)
@@ -2449,11 +2456,14 @@ const AdminDashboard = () => {
               <div className="space-y-3">
                 {users
                   .filter((user) => {
-                    if (showUserStatsModal === 'total') return true;
-                    if (showUserStatsModal === 'admin') return user.role === 'ADMIN';
-                    if (showUserStatsModal === 'staff') return user.role === 'STAFF_ADMIN';
-                    if (showUserStatsModal === 'regular') return user.role === 'USER';
-                    if (showUserStatsModal === 'sessions') return true; // Show all for now
+                    if (showUserStatsModal === "total") return true;
+                    if (showUserStatsModal === "admin")
+                      return user.role === "ADMIN";
+                    if (showUserStatsModal === "staff")
+                      return user.role === "STAFF_ADMIN";
+                    if (showUserStatsModal === "regular")
+                      return user.role === "USER";
+                    if (showUserStatsModal === "sessions") return true; // Show all for now
                     return false;
                   })
                   .map((user) => (
@@ -2492,15 +2502,20 @@ const AdminDashboard = () => {
               </div>
 
               {users.filter((user) => {
-                if (showUserStatsModal === 'total') return true;
-                if (showUserStatsModal === 'admin') return user.role === 'ADMIN';
-                if (showUserStatsModal === 'staff') return user.role === 'STAFF_ADMIN';
-                if (showUserStatsModal === 'regular') return user.role === 'USER';
-                if (showUserStatsModal === 'sessions') return true;
+                if (showUserStatsModal === "total") return true;
+                if (showUserStatsModal === "admin")
+                  return user.role === "ADMIN";
+                if (showUserStatsModal === "staff")
+                  return user.role === "STAFF_ADMIN";
+                if (showUserStatsModal === "regular")
+                  return user.role === "USER";
+                if (showUserStatsModal === "sessions") return true;
                 return false;
               }).length === 0 && (
                 <div className="text-center py-12">
-                  <p className="text-gray-400">No users found in this category</p>
+                  <p className="text-gray-400">
+                    No users found in this category
+                  </p>
                 </div>
               )}
             </div>
