@@ -75,11 +75,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // For admin manual payments, DO NOT credit immediately
-    // Create PENDING transaction and let confirmation system handle it
-    // For admin manual payments, DO NOT credit immediately
-    // Create PENDING transaction and let confirmation system handle it
-
+    // For admin manual payments, credit immediately since these are trusted actions
     // Generate realistic transaction hash (64-character hex)
     const generateTxHash = () => {
       const chars = "0123456789abcdef";
@@ -94,7 +90,7 @@ export async function POST(req: NextRequest) {
     const txHash = paymentDetails?.transactionHash || generateTxHash();
     const fee = paymentDetails?.networkFee || 0;
 
-    // Create deposit transaction record as PENDING
+    // Create deposit transaction record as COMPLETED (admin manual = instant)
     const deposit = await prisma.deposit.create({
       data: {
         id: generateId(),
@@ -106,14 +102,14 @@ export async function POST(req: NextRequest) {
             : fiatAmount || amount,
         currency:
           depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD",
-        status: "PENDING", // Start as PENDING for confirmation simulation
+        status: "COMPLETED", // Admin manual deposits complete immediately
         method: paymentMethod || "ADMIN_MANUAL",
         type:
           depositType === "crypto" ? `CRYPTO_${cryptoAsset}` : "ADMIN_BALANCE",
         transactionId: `ADMIN-${Date.now()}`,
         transactionHash: txHash,
         fee: fee,
-        confirmations: 0,
+        confirmations: 6, // Instantly confirmed for admin deposits
         targetAsset: depositType === "crypto" ? cryptoAsset : null,
         updatedAt: new Date(),
         metadata: {
@@ -123,48 +119,152 @@ export async function POST(req: NextRequest) {
           processedAt: new Date().toISOString(),
           depositType,
           isAdminManual: true,
-          confirmationStartTime: new Date().toISOString(),
           fiatAmount: fiatAmount || amount,
           cryptoAmount: cryptoAmount,
         },
       },
     });
 
-    // Create in-app notification for PENDING deposit (incoming)
+    // Immediately credit the portfolio for admin manual deposits
+    if (depositType === "crypto" && cryptoAsset) {
+      // Credit crypto asset
+      const assets = Array.isArray(portfolio.assets) ? portfolio.assets : [];
+      const existingAssetIndex = assets.findIndex(
+        (a: any) => a.symbol === cryptoAsset
+      );
+
+      if (existingAssetIndex >= 0 && assets[existingAssetIndex]) {
+        const asset = assets[existingAssetIndex] as any;
+        asset.amount =
+          (asset.amount || 0) + parseFloat((cryptoAmount || amount).toString());
+      } else {
+        // Get crypto name from mapping
+        const CRYPTO_NAMES: { [key: string]: string } = {
+          BTC: "Bitcoin",
+          ETH: "Ethereum",
+          USDT: "Tether",
+          BNB: "Binance Coin",
+          SOL: "Solana",
+          USDC: "USD Coin",
+          XRP: "Ripple",
+          ADA: "Cardano",
+          DOGE: "Dogecoin",
+          TRX: "TRON",
+          TON: "Toncoin",
+          LINK: "Chainlink",
+          MATIC: "Polygon",
+          DOT: "Polkadot",
+          DAI: "Dai",
+          SHIB: "Shiba Inu",
+          LTC: "Litecoin",
+          BCH: "Bitcoin Cash",
+          AVAX: "Avalanche",
+          UNI: "Uniswap",
+        };
+
+        assets.push({
+          symbol: cryptoAsset,
+          name: CRYPTO_NAMES[cryptoAsset] || cryptoAsset,
+          amount: parseFloat((cryptoAmount || amount).toString()),
+        });
+      }
+
+      await prisma.portfolio.update({
+        where: { id: portfolio.id },
+        data: { assets },
+      });
+
+      console.log(
+        `✅ Credited ${cryptoAmount || amount} ${cryptoAsset} to user ${
+          user.email
+        }`
+      );
+    } else {
+      // Credit USD/fiat balance
+      await prisma.portfolio.update({
+        where: { id: portfolio.id },
+        data: {
+          balance: {
+            increment: fiatAmount || amount,
+          },
+        },
+      });
+
+      console.log(
+        `✅ Credited ${getCurrencySymbol(preferredCurrency || "USD")}${
+          fiatAmount || amount
+        } to user ${user.email}`
+      );
+    }
+
+    // Helper function for currency symbol
+    function getCurrencySymbol(currency: string): string {
+      const symbols: { [key: string]: string } = {
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        NGN: "₦",
+        ZAR: "R",
+        KES: "KSh",
+        GHS: "₵",
+      };
+      return symbols[currency] || "$";
+    }
+
+    // Create in-app notification for COMPLETED deposit
     await prisma.notification.create({
       data: {
         id: generateId(),
         userId: user.id,
-        type: "DEPOSIT",
-        title: `Incoming ${
-          depositType === "crypto" ? cryptoAsset : "USD"
-        } Deposit`,
+        type: "SUCCESS",
+        title: `${
+          depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD"
+        } Deposit Completed`,
         message: `Your deposit of ${
-          depositType === "crypto" ? `${amount} ${cryptoAsset}` : `$${amount}`
-        } is being processed.`,
+          depositType === "crypto"
+            ? `${cryptoAmount || amount} ${cryptoAsset}`
+            : `${getCurrencySymbol(preferredCurrency || "USD")}${
+                fiatAmount || amount
+              }`
+        } has been confirmed and credited to your account.`,
         amount: amount,
-        asset: depositType === "crypto" ? cryptoAsset : "USD",
+        asset:
+          depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD",
         metadata: {
           depositId: deposit.id,
           transactionId: deposit.transactionId,
           transactionHash: txHash,
           method: deposit.method,
-          confirmations: 0,
+          confirmations: 6,
           targetConfirmations: 6,
           fee: fee,
-          status: "PENDING",
+          status: "COMPLETED",
         },
       },
     });
+
+    // Helper function for currency symbol
+    function getCurrencySymbol(currency: string): string {
+      const symbols: { [key: string]: string } = {
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        NGN: "₦",
+        ZAR: "R",
+        KES: "KSh",
+        GHS: "₵",
+      };
+      return symbols[currency] || "$";
+    }
 
     // Send email notification to user
     if (user.email && user.isEmailVerified) {
       try {
         await sendEmail({
           to: user.email,
-          subject: `Incoming ${
-            depositType === "crypto" ? cryptoAsset : "USD"
-          } Deposit`,
+          subject: `${
+            depositType === "crypto" ? cryptoAsset : preferredCurrency || "USD"
+          } Deposit Completed`,
           html: `
             <!DOCTYPE html>
             <html>
@@ -180,40 +280,39 @@ export async function POST(req: NextRequest) {
                   }/m4capitallogo2.png" alt="M4 Capital" style="max-width: 180px; height: auto; display: block; margin: 0 auto; background-color: white; padding: 10px; border-radius: 8px;" />
                 </div>
                 <div style="padding: 40px 30px;">
-                  <h2 style="color: #f97316;">Incoming Deposit Detected</h2>
+                  <h2 style="color: #10b981;">✅ Deposit Successfully Completed!</h2>
                   <p>Hello ${user.name || "User"},</p>
-                  <p>We've detected an incoming deposit to your account.</p>
+                  <p>Great news! Your deposit has been confirmed and credited to your account.</p>
                   <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
                     <p style="margin: 5px 0;"><strong>Amount:</strong> ${
                       depositType === "crypto"
-                        ? `${amount} ${cryptoAsset}`
-                        : `$${amount}`
+                        ? `${cryptoAmount || amount} ${cryptoAsset}`
+                        : `${getCurrencySymbol(preferredCurrency || "USD")}${
+                            fiatAmount || amount
+                          }`
                     }</p>
                     <p style="margin: 5px 0;"><strong>Type:</strong> ${
                       depositType === "crypto"
                         ? `Cryptocurrency (${cryptoAsset})`
-                        : "USD Balance"
+                        : `${preferredCurrency || "USD"} Balance`
                     }</p>
-                    <p style="margin: 5px 0;"><strong>Status:</strong> Processing...</p>
+                    <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #10b981;">COMPLETED ✅</span></p>
                     <p style="margin: 5px 0;"><strong>Transaction Hash:</strong> <code style="font-size: 11px;">${txHash}</code></p>
                     <p style="margin: 5px 0;"><strong>Network Fee:</strong> ${
                       depositType === "crypto"
                         ? `${fee.toFixed(2)} ${cryptoAsset}`
-                        : `$${fee.toFixed(2)}`
+                        : `${getCurrencySymbol(
+                            preferredCurrency || "USD"
+                          )}${fee.toFixed(2)}`
                     }</p>
                     <p style="margin: 5px 0;"><strong>Transaction ID:</strong> ${(
                       deposit.transactionId || ""
                     ).replace("ADMIN-", "")}</p>
                     <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>
                   </div>
-                  <p style="background-color: #fef3c7; padding: 15px; border-left: 4px solid #f59e0b; margin: 20px 0;">
-                    <strong>⚡ Fast Processing:</strong> Your deposit is being processed and will be credited within seconds.
+                  <p style="background-color: #d1fae5; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0;">
+                    <strong>✅ Your funds are now available!</strong> You can start trading immediately.
                   </p>
-                  <p><strong>Note:</strong> ${
-                    depositType === "crypto"
-                      ? `Crypto deposit via ${cryptoAsset}`
-                      : "USD deposit via Bitcoin"
-                  }</p>
                 </div>
                 <div style="padding: 30px; text-align: center; color: #999999; font-size: 14px; border-top: 1px solid #eeeeee;">
                   <p>© 2025 M4 Capital. All rights reserved.</p>
@@ -230,37 +329,22 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Store deposit start time for progressive confirmation
-    // The /api/cron/process-confirmations endpoint will handle updates
-    const depositMetadata = {
-      ...((deposit.metadata as object) || {}),
-      startTime: new Date().toISOString(),
-      depositType,
-      cryptoAsset,
-    };
-
-    await prisma.deposit.update({
-      where: { id: deposit.id },
-      data: {
-        metadata: depositMetadata,
-      },
-    });
-
-    // Trigger initial confirmation update (non-blocking)
-    fetch(
-      `${
-        process.env.NEXTAUTH_URL || "http://localhost:3000"
-      }/api/admin/process-single-deposit`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ depositId: deposit.id }),
-      }
-    ).catch((err) => console.error("Failed to trigger confirmation:", err));
+    // Helper function for currency symbol
+    function getCurrencySymbol(currency: string): string {
+      const symbols: { [key: string]: string } = {
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        NGN: "₦",
+        ZAR: "R",
+        KES: "KSh",
+        GHS: "₵",
+      };
+      return symbols[currency] || "$";
+    }
 
     return NextResponse.json({
-      message:
-        "Deposit initiated. Confirmations will complete within 1-2 minutes.",
+      message: "Deposit completed successfully and credited to user account.",
       deposit: {
         id: deposit.id,
         amount: deposit.amount,
@@ -268,7 +352,7 @@ export async function POST(req: NextRequest) {
         transactionId: deposit.transactionId,
         transactionHash: txHash,
         fee: fee,
-        confirmations: 0,
+        confirmations: 6,
         targetConfirmations: 6,
         status: deposit.status,
         createdAt: deposit.createdAt,
