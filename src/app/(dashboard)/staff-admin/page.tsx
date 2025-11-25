@@ -15,6 +15,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 interface AssignedUser {
   id: string;
@@ -23,6 +24,7 @@ interface AssignedUser {
   accountType: string;
   balance: number;
   createdAt: string;
+  preferredCurrency?: string;
 }
 
 export default function StaffAdminPage() {
@@ -103,7 +105,7 @@ export default function StaffAdminPage() {
         body: JSON.stringify({
           userId: selectedUser.id,
           amount: parseFloat(topupAmount),
-          currency: "USD",
+          currency: selectedUser.preferredCurrency || "USD",
           description: topupDescription || "Manual top-up by staff admin",
         }),
       });
@@ -111,8 +113,11 @@ export default function StaffAdminPage() {
       const data = await response.json();
 
       if (data.success) {
+        const currencySymbol = getCurrencySymbol(
+          selectedUser.preferredCurrency || "USD"
+        );
         showMessage(
-          `Successfully credited $${topupAmount} to ${selectedUser.email}`,
+          `Successfully credited ${currencySymbol}${topupAmount} to ${selectedUser.email}`,
           "success"
         );
         setSelectedUser(null);
@@ -290,7 +295,8 @@ export default function StaffAdminPage() {
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-semibold text-green-400">
-                          ${user.balance.toLocaleString()}
+                          {getCurrencySymbol(user.preferredCurrency || "USD")}
+                          {user.balance.toLocaleString()}
                         </p>
                       </td>
                       <td className="px-6 py-4">
@@ -346,7 +352,8 @@ export default function StaffAdminPage() {
                 <p className="text-sm text-gray-400 mt-2">
                   Current Balance:{" "}
                   <span className="text-green-400 font-semibold">
-                    ${selectedUser.balance.toLocaleString()}
+                    {getCurrencySymbol(selectedUser.preferredCurrency || "USD")}
+                    {selectedUser.balance.toLocaleString()}
                   </span>
                 </p>
               </div>
@@ -354,10 +361,12 @@ export default function StaffAdminPage() {
               {/* Amount Input */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount (USD)
+                  Amount ({selectedUser.preferredCurrency || "USD"})
                 </label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">
+                    {getCurrencySymbol(selectedUser.preferredCurrency || "USD")}
+                  </span>
                   <input
                     type="number"
                     value={topupAmount}
