@@ -401,10 +401,10 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className="fixed inset-0 z-50 flex items-end mobile:items-center justify-center p-0"
+            className="fixed inset-0 z-50 flex items-end mobile:items-start justify-center mobile:pt-0 p-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gray-900 w-full mobile:max-w-full max-w-md mobile:h-screen h-auto mobile:rounded-none rounded-t-3xl overflow-hidden flex flex-col">
+            <div className="bg-gray-900 w-full mobile:max-w-full max-w-md mobile:min-h-screen mobile:max-h-screen h-auto mobile:rounded-none rounded-t-3xl overflow-hidden flex flex-col">
               {/* Close Button */}
               <div className="absolute right-4 top-4 z-50">
                 <button
@@ -436,14 +436,14 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     onComplete={handleBitcoinPaymentComplete}
                   />
                 ) : showCryptoSelection ? (
-                  <div className="mobile:space-y-0 space-y-4">
+                  <div className="mobile:space-y-0 space-y-4 mobile:h-screen mobile:flex mobile:flex-col">
                     {error && (
-                      <div className="text-red-400 text-sm text-center bg-red-500/10 mobile:p-3 p-4 mobile:rounded-none rounded-xl border-b border-red-500/30 backdrop-blur-sm mobile:mx-0 mx-4">
+                      <div className="text-red-400 text-sm text-center bg-red-500/10 mobile:p-2.5 p-4 mobile:rounded-none rounded-xl border-b border-red-500/30 backdrop-blur-sm mobile:mx-0 mx-4">
                         {error}
                       </div>
                     )}
 
-                    <div className="mobile:px-4 mobile:pt-4 mobile:pb-2">
+                    <div className="mobile:px-4 mobile:pt-3 mobile:pb-1.5">
                       <p className="text-gray-400 text-xs mobile:text-center">
                         Deposit amount:{" "}
                         <span className="text-white font-semibold">
@@ -452,7 +452,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </p>
                     </div>
 
-                    <div className="grid grid-cols-1 mobile:gap-0 gap-3 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800/50">
+                    <div className="grid grid-cols-1 mobile:gap-0 gap-3 mobile:flex-1 mobile:overflow-y-auto max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800/50">
                       {supportedCryptos
                         .sort(
                           (a, b) => (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0)
@@ -461,7 +461,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           <button
                             key={crypto.id}
                             onClick={() => setSelectedCrypto(crypto.id)}
-                            className={`group relative mobile:p-3 p-4 mobile:rounded-none rounded-xl mobile:border-b-2 mobile:border-x-0 mobile:border-t-0 border-2 transition-all duration-300 transform mobile:hover:scale-100 hover:scale-[1.02] active:scale-[0.98] ${
+                            className={`group relative mobile:p-2.5 p-4 mobile:rounded-none rounded-xl mobile:border-b-2 mobile:border-x-0 mobile:border-t-0 border-2 transition-all duration-300 transform mobile:hover:scale-100 hover:scale-[1.02] active:scale-[0.98] ${
                               selectedCrypto === crypto.id
                                 ? `bg-gradient-to-br ${crypto.bgColor} ${crypto.borderColor} shadow-xl hover:shadow-2xl shadow-${crypto.iconBg}/20`
                                 : "bg-gradient-to-br from-gray-800/80 to-gray-900/80 mobile:border-gray-700/30 border-gray-700/50 hover:from-gray-800 hover:to-gray-900 hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10"
@@ -634,16 +634,16 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     </p>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit} className="mobile:space-y-4 space-y-6 mobile:h-screen mobile:flex mobile:flex-col">
                     {error && (
-                      <div className="text-red-400 text-sm text-center bg-red-500/10 p-4 rounded-2xl border border-red-500/30">
+                      <div className="text-red-400 text-sm text-center bg-red-500/10 mobile:p-3 p-4 mobile:rounded-xl rounded-2xl border border-red-500/30">
                         {error}
                       </div>
                     )}
 
                     {/* Amount */}
-                    <div>
-                      <label className="block mobile:text-xs text-sm font-semibold text-white mobile:mb-2 mb-3">
+                    <div className="mobile:flex-shrink-0">
+                      <label className="block mobile:text-xs text-sm font-semibold text-white mobile:mb-1.5 mb-3">
                         Deposit Amount ({preferredCurrency})
                       </label>
                       <div className="relative">
@@ -661,7 +661,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           required
                         />
                       </div>
-                      <p className="mt-2 mobile:text-[10px] text-xs text-gray-400 flex items-center gap-1.5">
+                      <p className="mt-1.5 mobile:text-[10px] text-xs text-gray-400 flex items-center gap-1.5">
                         <svg
                           className="w-3.5 h-3.5"
                           fill="currentColor"
@@ -678,8 +678,8 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     </div>
 
                     {/* Payment Method */}
-                    <div>
-                      <label className="block mobile:text-xs text-sm font-semibold text-gray-300 mobile:mb-2 mb-3">
+                    <div className="mobile:flex-shrink-0">
+                      <label className="block mobile:text-xs text-sm font-semibold text-gray-300 mobile:mb-1.5 mb-3">
                         Payment Method
                       </label>
                       <div className="relative">
@@ -1012,7 +1012,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     </div>
 
                     {/* Payment Info */}
-                    <div className="bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 border border-blue-500/20 mobile:rounded-xl rounded-2xl mobile:p-3 p-5">
+                    <div className="mobile:flex-shrink-0 bg-gradient-to-r from-blue-500/10 via-purple-500/10 to-blue-500/10 border border-blue-500/20 mobile:rounded-xl rounded-2xl mobile:p-3 p-5">
                       <div className="flex items-start mobile:gap-2 gap-3">
                         <svg
                           className="mobile:w-4 mobile:h-4 w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0"
@@ -1026,7 +1026,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           />
                         </svg>
                         <div className="flex-1">
-                          <p className="mobile:text-[11px] text-sm text-blue-200 font-medium mobile:leading-relaxed leading-normal">
+                          <p className="mobile:text-[10px] text-sm text-blue-200 font-medium mobile:leading-relaxed leading-normal">
                             {paymentMethod === "crypto"
                               ? "You will be redirected to select your preferred cryptocurrency. Deposits are processed instantly after blockchain confirmation."
                               : paymentMethod === "bank_transfer"
@@ -1043,7 +1043,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     <button
                       type="submit"
                       disabled={isLoading || !amount}
-                      className="w-full mobile:py-3 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-500 hover:via-purple-500 hover:to-blue-500 text-white mobile:rounded-xl rounded-2xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/30 mobile:text-base text-lg"
+                      className="w-full mobile:py-2.5 py-4 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 hover:from-blue-500 hover:via-purple-500 hover:to-blue-500 text-white mobile:rounded-xl rounded-2xl font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/30 mobile:text-base text-lg mobile:flex-shrink-0 mobile:mt-auto"
                     >
                       {isLoading ? (
                         <span className="flex items-center justify-center gap-2">
