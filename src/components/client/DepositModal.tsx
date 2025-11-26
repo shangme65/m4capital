@@ -404,7 +404,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
             className="fixed inset-0 z-50 flex items-end mobile:items-start justify-center mobile:pt-0 p-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gray-900 w-full mobile:max-w-full max-w-md mobile:min-h-screen mobile:max-h-screen h-auto mobile:rounded-none rounded-t-3xl overflow-hidden flex flex-col">
+            <div className="bg-gray-900 w-full mobile:max-w-full max-w-md mobile:min-h-screen mobile:max-h-screen h-auto mobile:rounded-none rounded-t-3xl overflow-hidden flex flex-col mobile:pt-12">
               {/* Close Button */}
               <div className="absolute right-4 top-4 z-50">
                 <button
@@ -443,7 +443,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       </div>
                     )}
 
-                    <div className="mobile:px-4 mobile:pt-3 mobile:pb-1.5">
+                    <div className="mobile:px-4 mobile:pt-2 mobile:pb-1">
                       <p className="text-gray-400 text-xs mobile:text-center">
                         Deposit amount:{" "}
                         <span className="text-white font-semibold">
