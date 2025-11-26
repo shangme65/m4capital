@@ -153,18 +153,28 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     const currentAmount = parseFloat(sellData.amount) || 0;
     const price = currentPrice;
 
+    if (currentAmount === 0) {
+      // Just toggle without conversion if amount is 0
+      setShowAmountInCrypto(!showAmountInCrypto);
+      return;
+    }
+
     if (showAmountInCrypto) {
-      // Convert from crypto to preferred currency
-      const usdAmount = currentAmount * price; // Crypto amount * price = USD value
-      const fiatAmount = convertAmount(usdAmount); // Convert USD to preferred currency
+      // Currently showing crypto, switching to fiat
+      // Crypto amount * USD price = USD value
+      const usdValue = currentAmount * price;
+      // Convert USD to preferred currency
+      const fiatAmount = convertAmount(usdValue);
       setSellData((prev) => ({
         ...prev,
         amount: fiatAmount.toFixed(2),
       }));
     } else {
-      // Convert from preferred currency to crypto
-      const usdAmount = convertAmount(currentAmount, true); // Convert preferred currency to USD
-      const cryptoAmount = usdAmount / price; // USD value / price = crypto amount
+      // Currently showing fiat, switching to crypto
+      // Convert preferred currency to USD
+      const usdValue = convertAmount(currentAmount, true);
+      // USD value / USD price = crypto amount
+      const cryptoAmount = usdValue / price;
       setSellData((prev) => ({
         ...prev,
         amount: cryptoAmount.toFixed(8),
@@ -392,11 +402,11 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
-              className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-auto"
+              className="fixed inset-0 z-50 flex items-center justify-center p-3 overflow-auto"
               onClick={(e) => e.stopPropagation()}
               style={{ touchAction: "auto" }}
             >
-              <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-lg relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
+              <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-md mobile:max-w-[95vw] relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
                 {step === "form" && (
                   <>
                     <button
@@ -420,9 +430,9 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       </svg>
                     </button>
 
-                    <div className="p-8">
+                    <div className="mobile:p-4 p-6">
                       {/* Header */}
-                      <div className="flex items-center gap-3 mb-8">
+                      <div className="flex items-center gap-3 mobile:mb-4 mb-6">
                         <div className="w-12 h-12 bg-red-600 rounded-full flex items-center justify-center">
                           <svg
                             className="w-6 h-6 text-white"
@@ -591,12 +601,25 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                                 </p>
                               )}
                               <button
-                                onClick={() =>
-                                  setSellData((prev) => ({
-                                    ...prev,
-                                    amount: currentAsset.amount.toString(),
-                                  }))
-                                }
+                                onClick={() => {
+                                  // Set amount based on current toggle state
+                                  if (showAmountInCrypto) {
+                                    // Show all crypto amount
+                                    setSellData((prev) => ({
+                                      ...prev,
+                                      amount: currentAsset.amount.toFixed(8),
+                                    }));
+                                  } else {
+                                    // Convert all crypto to fiat equivalent
+                                    const usdValue =
+                                      currentAsset.amount * currentPrice;
+                                    const fiatValue = convertAmount(usdValue);
+                                    setSellData((prev) => ({
+                                      ...prev,
+                                      amount: fiatValue.toFixed(2),
+                                    }));
+                                  }
+                                }}
                                 className="text-blue-400 hover:text-blue-300 text-xs font-medium mt-2"
                               >
                                 Sell All
