@@ -77,29 +77,33 @@ export async function sendInlineKeyboard(
 }
 
 /**
- * Get crypto price from CoinGecko
+ * Get crypto price from internal API (uses Binance)
  */
 export async function getCryptoPrice(symbol: string): Promise<number | null> {
   try {
-    const symbolLower = symbol.toLowerCase();
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${symbolLower}&vs_currencies=usd`
-    );
+    // Use internal API which already handles all crypto symbols correctly
+    const apiUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const response = await fetch(`${apiUrl}/api/crypto/prices?symbols=${symbol.toUpperCase()}`, {
+      cache: 'no-store',
+    });
 
     if (response.ok) {
       const data = await response.json();
-      return data[symbolLower]?.usd || null;
+      if (data.prices && data.prices.length > 0) {
+        return data.prices[0].price;
+      }
     }
 
-    // Fallback to Binance
+    // Fallback to direct Binance API call
     const binanceSymbol = `${symbol.toUpperCase()}USDT`;
     const binanceResponse = await fetch(
-      `https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`
+      `https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`,
+      { cache: 'no-store' }
     );
 
     if (binanceResponse.ok) {
       const binanceData = await binanceResponse.json();
-      return parseFloat(binanceData.lastPrice);
+      return parseFloat(binanceData.price);
     }
 
     return null;
@@ -178,6 +182,7 @@ export function formatCurrency(
 
 /**
  * Update user portfolio with real-time crypto prices
+ * Updates prices for ALL assets, even those with 0 balance
  */
 export async function updatePortfolioRealtime(userId: string) {
   try {
@@ -191,17 +196,50 @@ export async function updatePortfolioRealtime(userId: string) {
     }
 
     const assets = (user.Portfolio.assets as any[]) || [];
+    
+    // Always update prices, even if no assets exist
     if (assets.length === 0) {
       return user.Portfolio;
+    }
+
+    // Fetch all symbols at once for better performance
+    const symbols = assets.map((asset) => asset.symbol).join(',');
+    const apiUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
+    let priceMap: Record<string, number> = {};
+    
+    try {
+      const response = await fetch(`${apiUrl}/api/crypto/prices?symbols=${symbols}`, {
+        cache: 'no-store',
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.prices && Array.isArray(data.prices)) {
+          data.prices.forEach((priceData: any) => {
+            priceMap[priceData.symbol] = priceData.price;
+          });
+        }
+      }
+    } catch (fetchError) {
+      console.error('Error fetching bulk prices, falling back to individual fetches:', fetchError);
     }
 
     // Update prices for all crypto assets
     const updatedAssets = await Promise.all(
       assets.map(async (asset) => {
-        const currentPrice = await getCryptoPrice(asset.symbol);
+        // Try to get price from bulk fetch first
+        let currentPrice = priceMap[asset.symbol];
+        
+        // If not found, fetch individually
+        if (!currentPrice) {
+          currentPrice = await getCryptoPrice(asset.symbol);
+        }
+        
+        // Always update the price, even if asset amount is 0
         return {
           ...asset,
-          price: currentPrice || asset.price,
+          price: currentPrice || asset.price || 0,
           lastUpdated: new Date().toISOString(),
         };
       })
