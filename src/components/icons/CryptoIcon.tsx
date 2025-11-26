@@ -91,21 +91,33 @@ export function CryptoIcon({
   }
 
   return (
-    <div className="relative inline-block">
-      <img
-        src={iconPath}
-        alt={alt || `${symbol} icon`}
-        width={iconSize}
-        height={iconSize}
-        className={`inline-block ${className}`}
-        onError={() => {
-          setFailed(true);
-        }}
+    <div className="relative inline-block flex-shrink-0">
+      <div
         style={{
           width: `${iconSize}px`,
           height: `${iconSize}px`,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
         }}
-      />
+      >
+        <img
+          src={iconPath}
+          alt={alt || `${symbol} icon`}
+          className={`block ${className}`}
+          onError={() => {
+            setFailed(true);
+          }}
+          style={{
+            width: "100%",
+            height: "100%",
+            maxWidth: `${iconSize}px`,
+            maxHeight: `${iconSize}px`,
+            objectFit: "contain",
+            objectPosition: "center",
+          }}
+        />
+      </div>
       {showNetwork && networkSymbol && (
         <div
           className="absolute -bottom-0.5 -right-0.5 rounded-full bg-white ring-2 ring-gray-900"
@@ -120,6 +132,9 @@ export function CryptoIcon({
             width={badgeSize}
             height={badgeSize}
             className="rounded-full"
+            style={{
+              objectFit: "contain",
+            }}
           />
         </div>
       )}

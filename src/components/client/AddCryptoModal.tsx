@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/contexts/ToastContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -22,8 +22,8 @@ const POPULAR_CRYPTOCURRENCIES: Cryptocurrency[] = [
   { symbol: "LTC", name: "Litecoin", icon: "Ł" },
   { symbol: "BCH", name: "Bitcoin Cash", icon: "Ƀ" },
   { symbol: "ETC", name: "Ethereum Classic", icon: "Ξ" },
-  { symbol: "USDC", name: "USD Coin", icon: "$" },
-  { symbol: "USDT", name: "Tether", icon: "₮" },
+  { symbol: "USDC", name: "Ethereum", icon: "$" },
+  { symbol: "USDT", name: "Ethereum", icon: "₮" },
 ];
 
 interface AddCryptoModalProps {
@@ -47,6 +47,22 @@ export default function AddCryptoModal({
   const { showWarning } = useToast();
   const { preferredCurrency, convertAmount } = useCurrency();
 
+  // Handle mobile back button to close modal
+  useEffect(() => {
+    if (isOpen) {
+      const handlePopState = () => {
+        onClose();
+      };
+
+      window.addEventListener("popstate", handlePopState);
+      window.history.pushState(null, "", window.location.href);
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }
+  }, [isOpen, onClose]);
+
   // Get real-time prices for all cryptocurrencies
   const allSymbols = POPULAR_CRYPTOCURRENCIES.map((c) => c.symbol);
   const cryptoPrices = useCryptoPrices(allSymbols);
@@ -57,7 +73,14 @@ export default function AddCryptoModal({
     (crypto) =>
       crypto.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       crypto.symbol.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  ).sort((a, b) => {
+    // Sort enabled assets to the top
+    const aEnabled = existingSymbols.includes(a.symbol);
+    const bEnabled = existingSymbols.includes(b.symbol);
+    if (aEnabled && !bEnabled) return -1;
+    if (!aEnabled && bEnabled) return 1;
+    return 0;
+  });
 
   const handleAdd = async (crypto: Cryptocurrency) => {
     setIsAdding(true);
@@ -96,11 +119,15 @@ export default function AddCryptoModal({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 z-50 overflow-hidden flex flex-col max-h-[90vh]"
+            className="fixed inset-2 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md bg-gradient-to-br from-gray-800/95 to-gray-900/95 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(59,130,246,0.4)] border border-gray-700/50 hover:border-blue-500/50 z-50 overflow-hidden flex flex-col max-h-[90vh] backdrop-blur-xl transition-all duration-300"
+            style={{
+              transform: "perspective(1000px) rotateX(2deg)",
+              transformStyle: "preserve-3d",
+            }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700">
-              <h2 className="text-xl font-bold text-white">
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/80 to-gray-900/80 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+              <h2 className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(59,130,246,0.3)]">
                 Add Cryptocurrency
               </h2>
               <button
@@ -123,7 +150,7 @@ export default function AddCryptoModal({
               </button>
             </div>
             {/* Search */}
-            <div className="p-4 sm:p-6 border-b border-gray-700">
+            <div className="p-4 sm:p-6 border-b border-gray-700/50 bg-gray-900/30">
               <div className="relative">
                 <svg
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
@@ -143,7 +170,7 @@ export default function AddCryptoModal({
                   placeholder="Search cryptocurrency..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-900/80 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all shadow-inner"
                 />
               </div>
             </div>{" "}
@@ -180,19 +207,12 @@ export default function AddCryptoModal({
                     const hasBalance = asset && asset.amount > 0;
 
                     return (
-                      <button
+                      <div
                         key={crypto.symbol}
-                        onClick={() =>
-                          isInPortfolio
-                            ? handleRemove(crypto.symbol)
-                            : handleAdd(crypto)
-                        }
-                        disabled={
-                          isAdding ||
-                          isRemoving === crypto.symbol ||
-                          (isInPortfolio && hasBalance)
-                        }
-                        className="w-full flex items-center justify-between p-4 bg-gray-900/50 hover:bg-gray-900 rounded-xl border border-gray-700/50 hover:border-gray-600 transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-between p-4 bg-gradient-to-br from-gray-900/80 to-gray-800/80 hover:from-gray-800/90 hover:to-gray-900/90 rounded-xl border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.3)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                        style={{
+                          transform: "translateZ(10px)",
+                        }}
                       >
                         <div className="flex items-center gap-4">
                           <CryptoIcon
@@ -203,14 +223,9 @@ export default function AddCryptoModal({
                           <div className="text-left">
                             <div className="text-white font-semibold flex items-center gap-2">
                               <span>{crypto.symbol}</span>
-                              <span className="text-sm font-normal text-gray-300">
+                              <span className="text-[10px] font-normal text-gray-300 bg-gray-700/50 px-1 py-[1px] rounded-md leading-tight border border-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)]">
                                 {crypto.name}
                               </span>
-                              {isInPortfolio && hasBalance && (
-                                <span className="text-xs text-orange-400">
-                                  (has balance)
-                                </span>
-                              )}
                             </div>
                             {/* Real-time price display */}
                             {cryptoPrices[crypto.symbol] && (
@@ -256,20 +271,46 @@ export default function AddCryptoModal({
                         </div>
 
                         {/* Toggle Switch */}
-                        <div
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                            isInPortfolio ? "bg-blue-500" : "bg-gray-600"
-                          } ${
-                            hasBalance ? "cursor-not-allowed opacity-50" : ""
-                          }`}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (isInPortfolio) {
+                              handleRemove(crypto.symbol);
+                            } else {
+                              handleAdd(crypto);
+                            }
+                          }}
+                          disabled={
+                            isAdding ||
+                            isRemoving === crypto.symbol ||
+                            (isInPortfolio && hasBalance)
+                          }
+                          className="flex-shrink-0"
                         >
-                          <span
-                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                              isInPortfolio ? "translate-x-6" : "translate-x-1"
+                          <div
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.4)] ${
+                              isInPortfolio
+                                ? "bg-gradient-to-r from-blue-500 to-blue-600 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
+                                : "bg-gray-600"
+                            } ${
+                              hasBalance
+                                ? "cursor-not-allowed opacity-30 bg-gray-800"
+                                : "cursor-pointer"
                             }`}
-                          />
-                        </div>
-                      </button>
+                            style={{
+                              transform: "translateZ(5px)",
+                            }}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-[0_2px_4px_rgba(0,0,0,0.3)] transition-transform ${
+                                isInPortfolio
+                                  ? "translate-x-6"
+                                  : "translate-x-1"
+                              }`}
+                            />
+                          </div>
+                        </button>
+                      </div>
                     );
                   })}
                 </div>

@@ -102,9 +102,9 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           <Image
             src="/m4capitallogo1.png"
             alt="M4 Capital Logo"
-            width={120}
-            height={40}
-            className="transition-transform duration-300 group-hover:scale-110 group-hover:animate-bounce object-contain w-28 md:w-auto"
+            width={140}
+            height={47}
+            className="transition-transform duration-300 group-hover:scale-110 group-hover:animate-bounce object-contain w-32 md:w-auto"
             priority
           />
         </Link>
