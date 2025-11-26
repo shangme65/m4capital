@@ -65,13 +65,18 @@ function DashboardContent() {
   const [showAddCryptoModal, setShowAddCryptoModal] = useState(false);
   const [showBalances, setShowBalances] = useState(true);
 
-  // Load activeView from localStorage after mount to avoid hydration mismatch
+  // Load activeView and showBalances from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
     const savedView = localStorage.getItem("dashboardActiveView") as
       | "crypto"
       | "history";
     if (savedView) {
       setActiveView(savedView);
+    }
+
+    const savedShowBalances = localStorage.getItem("showBalances");
+    if (savedShowBalances !== null) {
+      setShowBalances(savedShowBalances === "true");
     }
   }, []);
 
@@ -81,6 +86,13 @@ function DashboardContent() {
       localStorage.setItem("dashboardActiveView", activeView);
     }
   }, [activeView]);
+
+  // Persist showBalances to localStorage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("showBalances", showBalances.toString());
+    }
+  }, [showBalances]);
 
   // Auto-reload if stuck on loading screen
   useEffect(() => {
