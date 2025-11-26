@@ -71,18 +71,23 @@ export function CryptoIcon({
         </div>
         {showNetwork && networkSymbol && (
           <div
-            className="absolute -bottom-0.5 -right-0.5 rounded-full bg-white ring-2 ring-gray-900"
+            className="absolute -bottom-1 -right-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-gray-900"
             style={{
               width: `${badgeSize}px`,
               height: `${badgeSize}px`,
+              padding: "2px",
+              boxShadow: "0 2px 6px rgba(59,130,246,0.5)",
             }}
           >
             <img
               src={`/crypto/${networkSymbol.toLowerCase()}.svg`}
               alt={`${networkSymbol} network`}
-              width={badgeSize}
-              height={badgeSize}
               className="rounded-full"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+              }}
             />
           </div>
         )}
@@ -120,19 +125,21 @@ export function CryptoIcon({
       </div>
       {showNetwork && networkSymbol && (
         <div
-          className="absolute -bottom-0.5 -right-0.5 rounded-full bg-white ring-2 ring-gray-900"
+          className="absolute -bottom-1 -right-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-gray-900"
           style={{
             width: `${badgeSize}px`,
             height: `${badgeSize}px`,
+            padding: "2px",
+            boxShadow: "0 2px 6px rgba(59,130,246,0.5)",
           }}
         >
           <img
             src={`/crypto/${networkSymbol.toLowerCase()}.svg`}
             alt={`${networkSymbol} network`}
-            width={badgeSize}
-            height={badgeSize}
             className="rounded-full"
             style={{
+              width: "100%",
+              height: "100%",
               objectFit: "contain",
             }}
           />
