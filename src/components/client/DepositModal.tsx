@@ -17,7 +17,7 @@ interface DepositModalProps {
 
 function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [amount, setAmount] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("bank_transfer");
+  const [paymentMethod, setPaymentMethod] = useState("crypto");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -367,65 +367,57 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
-            style={{ touchAction: "none" }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
-            className="fixed inset-0 z-50 flex items-center justify-center mobile:p-0 p-4 overflow-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="fixed inset-0 z-50 flex items-end mobile:items-center justify-center p-0"
             onClick={(e) => e.stopPropagation()}
-            style={{ touchAction: "auto" }}
           >
-            <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 mobile:rounded-none rounded-3xl shadow-2xl w-full mobile:max-w-full max-w-md mobile:mx-0 mx-4 relative overflow-hidden border mobile:border-0 border-gray-700/50 mobile:h-screen mobile:max-h-screen max-h-[95vh] overflow-y-auto">
-              {/* Close Button */}
-              <button
-                onClick={onClose}
-                className="absolute mobile:top-3 mobile:right-3 top-4 right-4 mobile:w-9 mobile:h-9 w-10 h-10 flex items-center justify-center text-white bg-gray-800/80 hover:bg-gray-700 rounded-xl transition-all z-20 shadow-lg border border-gray-600/50"
-                aria-label="Close deposit modal"
-                title="Close"
-              >
-                <svg
-                  className="mobile:w-5 mobile:h-5 w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M6 18L18 6M6 6l12 12"
+            <div className="bg-gray-900 w-full mobile:max-w-full max-w-lg mobile:h-screen h-auto mobile:rounded-none rounded-t-3xl overflow-hidden flex flex-col">
+              {/* Header */}
+              <div className="relative px-6 mobile:pt-4 pt-8 mobile:pb-4 pb-6">
+                <div className="flex flex-col items-center text-center mobile:mt-8 mt-0">
+                  <Image
+                    src="/m4capitallogo1.png"
+                    alt="M4Capital"
+                    width={80}
+                    height={80}
+                    className="mb-4"
                   />
-                </svg>
-              </button>
-
-              {/* Header with Solid Background */}
-              <div className="relative bg-gray-900 border-b border-gray-700/50 mobile:p-4 mobile:pb-6 p-8 pb-10">
-                <div className="relative z-10">
-                  <div className="flex items-center justify-center mobile:mb-2 mb-4">
-                    <Image
-                      src="/m4capitallogo1.png"
-                      alt="M4Capital Logo"
-                      width={48}
-                      height={48}
-                      priority
-                      className="mobile:w-10 mobile:h-10 w-12 h-12 object-contain drop-shadow-lg"
-                    />
+                  <div className="flex items-center gap-2 mb-2">
+                    <h2 className="text-2xl font-bold text-white">
+                      Deposit Funds
+                    </h2>
+                    <button
+                      onClick={onClose}
+                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-all"
+                    >
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
                   </div>
-
-                  <h2 className="mobile:text-xl xs:text-2xl sm:text-4xl text-3xl font-bold text-white mobile:mb-1 mb-3 text-center">
-                    Deposit Funds
-                  </h2>
-                  <p className="text-gray-400 text-center mobile:text-xs text-sm">
-                    Add funds to your trading account
+                  <p className="text-sm text-gray-400">
+                    Make deposits to automatically top up your M4Capital account
                   </p>
                 </div>
               </div>
 
-              <div className="mobile:px-3 mobile:pb-4 px-4 sm:px-8 pb-6 sm:pb-8 -mt-2">
+              {/* Content */}
+              <div className="flex-1 mobile:p-6 p-6 overflow-y-auto mobile:pb-8 pb-6">
                 {showBitcoinWallet ? (
                   <BitcoinWallet
                     amount={amount}
@@ -598,7 +590,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
                     {/* Amount */}
                     <div>
-                      <label className="block mobile:text-xs text-sm font-semibold text-gray-300 mobile:mb-2 mb-3">
+                      <label className="block mobile:text-xs text-sm font-semibold text-white mobile:mb-2 mb-3">
                         Deposit Amount ({preferredCurrency})
                       </label>
                       <div className="relative">
@@ -645,20 +637,77 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           }
                           className="w-full mobile:px-3 px-5 mobile:py-3 py-4 bg-gradient-to-r from-gray-800/80 to-gray-800/60 border border-blue-500/30 mobile:rounded-xl rounded-2xl text-white mobile:text-sm text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all shadow-lg shadow-blue-500/10 hover:border-blue-500/50 flex items-center justify-between"
                         >
-                          <span>
-                            {paymentMethod === "crypto"
-                              ? "💰 Cryptocurrency"
-                              : paymentMethod === "bank_transfer"
-                              ? "🏦 Bank Transfer"
-                              : paymentMethod === "credit_card"
-                              ? "💳 Credit Card"
-                              : paymentMethod === "debit_card"
-                              ? "💳 Debit Card"
-                              : paymentMethod === "paypal"
-                              ? "💰 PayPal"
-                              : paymentMethod === "pix"
-                              ? "🇧🇷 PIX (Brazil)"
-                              : "🏦 Bank Transfer"}
+                          <span className="flex items-center gap-2">
+                            {paymentMethod === "crypto" ? (
+                              <>
+                                <div className="flex items-center -space-x-2">
+                                  <Image
+                                    src="/crypto/btc.svg"
+                                    alt="BTC"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-10"
+                                  />
+                                  <Image
+                                    src="/crypto/eth.svg"
+                                    alt="ETH"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-20"
+                                  />
+                                  <Image
+                                    src="/crypto/usdt.svg"
+                                    alt="USDT"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-30"
+                                  />
+                                  <Image
+                                    src="/crypto/ltc.svg"
+                                    alt="LTC"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-40"
+                                  />
+                                  <Image
+                                    src="/crypto/usdc.svg"
+                                    alt="USDC"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-50"
+                                  />
+                                  <Image
+                                    src="/crypto/bch.svg"
+                                    alt="BCH"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-60"
+                                  />
+                                </div>
+                                <span>Deposit via Crypto</span>
+                              </>
+                            ) : paymentMethod === "bank_transfer" ? (
+                              "🏦 Bank Transfer"
+                            ) : paymentMethod === "credit_card" ? (
+                              "💳 Credit Card"
+                            ) : paymentMethod === "debit_card" ? (
+                              "💳 Debit Card"
+                            ) : paymentMethod === "paypal" ? (
+                              "💰 PayPal"
+                            ) : paymentMethod === "pix" ? (
+                              <>
+                                <Image
+                                  src="/payments/pix-logo.svg"
+                                  alt="PIX"
+                                  width={80}
+                                  height={32}
+                                  className="w-20 h-8 object-contain"
+                                />
+                                <span>Deposit via PIX</span>
+                              </>
+                            ) : (
+                              "🏦 Bank Transfer"
+                            )}
                           </span>
                           <svg
                             className={`mobile:w-4 mobile:h-4 w-5 h-5 text-gray-400 transition-transform ${
@@ -685,98 +734,221 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                               exit={{ opacity: 0, y: -10 }}
                               className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700/50 mobile:rounded-xl rounded-2xl shadow-2xl z-20"
                             >
-                              <div className="py-2">
+                              <div className="py-2 px-2 space-y-2">
                                 {[
                                   {
                                     id: "crypto",
-                                    name: "💰 Cryptocurrency",
-                                    desc: "Bitcoin, Ethereum & more",
+                                    name: "Deposit via Crypto",
+                                    desc: "Fast & secure deposits with Bitcoin, Ethereum, USDT, and other cryptocurrencies. Transactions confirmed within minutes.",
                                     logo: null,
+                                    enabled: true,
+                                    isCrypto: true,
                                   },
-                                  {
-                                    id: "bank_transfer",
-                                    name: "🏦 Bank Transfer",
-                                    desc: "Direct bank deposit",
-                                    logo: null,
-                                  },
-                                  {
-                                    id: "credit_card",
-                                    name: "💳 Credit Card",
-                                    desc: "Visa, Mastercard",
-                                    logo: [
-                                      "/payments/visa.svg",
-                                      "/payments/mastercard.svg",
-                                    ],
-                                  },
-                                  {
-                                    id: "paypal",
-                                    name: "💰 PayPal",
-                                    desc: "PayPal account",
-                                    logo: "/payments/paypal.svg",
-                                  },
+                                  // {
+                                  //   id: "bank_transfer",
+                                  //   name: "🏦 Bank Transfer",
+                                  //   desc: "Traditional bank deposit via wire transfer. Processing time: 1-3 business days.",
+                                  //   logo: null,
+                                  //   enabled: false,
+                                  // },
+                                  // {
+                                  //   id: "credit_card",
+                                  //   name: "💳 Credit Card",
+                                  //   desc: "Instant deposits using Visa or Mastercard. Secure payment processing with 3D verification.",
+                                  //   logo: [
+                                  //     "/payments/visa.svg",
+                                  //     "/payments/mastercard.svg",
+                                  //   ],
+                                  //   enabled: false,
+                                  // },
+                                  // {
+                                  //   id: "paypal",
+                                  //   name: "💰 PayPal",
+                                  //   desc: "Quick and easy deposits using your PayPal account balance or linked payment methods.",
+                                  //   logo: "/payments/paypal.svg",
+                                  //   enabled: false,
+                                  // },
                                   {
                                     id: "pix",
-                                    name: "🇧🇷 PIX (Brazil)",
-                                    desc: "Instant Brazilian payment",
+                                    name: "Deposit via PIX",
+                                    desc: "Instant payment method for Brazilian customers. Processed 24/7 in real-time.",
                                     logo: "/payments/pix-logo.svg",
+                                    enabled: true,
+                                    isPixLogo: true,
                                   },
                                 ].map((method) => (
                                   <button
                                     key={method.id}
                                     type="button"
                                     onClick={() => {
-                                      setPaymentMethod(method.id);
-                                      setShowPaymentDropdown(false);
+                                      if (method.enabled) {
+                                        setPaymentMethod(method.id);
+                                        setShowPaymentDropdown(false);
+                                      }
                                     }}
-                                    className="w-full text-left mobile:px-3 px-4 mobile:py-2.5 py-3 hover:bg-gray-700/50 transition-colors flex items-center justify-between"
+                                    disabled={!method.enabled}
+                                    className={`w-full text-left transition-all duration-300 rounded-xl ${
+                                      method.isPixLogo
+                                        ? "mobile:px-3 mobile:py-1 px-4 py-1.5"
+                                        : "mobile:p-3 p-4"
+                                    } ${
+                                      method.enabled
+                                        ? "bg-gradient-to-br from-gray-900/80 to-gray-800/80 hover:from-gray-800/90 hover:to-gray-900/90 border border-gray-700/50 hover:border-blue-500/50 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.3)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                                        : "bg-gray-900/40 border border-gray-800/50 opacity-40 cursor-not-allowed"
+                                    }`}
                                   >
                                     <div className="flex items-center gap-3">
-                                      <div>
-                                        <div className="mobile:text-sm text-base font-semibold text-white">
-                                          {method.name}
-                                        </div>
-                                        <div className="mobile:text-[10px] text-xs text-gray-400">
-                                          {method.desc}
-                                        </div>
-                                      </div>
-                                      {method.logo && (
-                                        <div className="flex gap-1">
-                                          {Array.isArray(method.logo) ? (
-                                            method.logo.map((logoSrc, idx) => (
-                                              <Image
-                                                key={idx}
-                                                src={logoSrc}
-                                                alt="Payment logo"
-                                                width={24}
-                                                height={24}
-                                                className="w-6 h-6 object-contain"
-                                              />
-                                            ))
-                                          ) : (
+                                      {method.isPixLogo ? (
+                                        <div className="flex flex-col gap-1 w-full">
+                                          <div className="flex items-center justify-between">
+                                            <div className="mobile:text-sm text-base font-semibold text-white flex items-center gap-1">
+                                              {method.name}
+                                              {paymentMethod === method.id && (
+                                                <svg
+                                                  className="mobile:w-4 mobile:h-4 w-5 h-5 text-green-400"
+                                                  fill="currentColor"
+                                                  viewBox="0 0 20 20"
+                                                >
+                                                  <path
+                                                    fillRule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clipRule="evenodd"
+                                                  />
+                                                </svg>
+                                              )}
+                                            </div>
                                             <Image
-                                              src={method.logo}
-                                              alt="Payment logo"
-                                              width={24}
-                                              height={24}
-                                              className="w-6 h-6 object-contain"
+                                              src={method.logo as string}
+                                              alt="PIX"
+                                              width={140}
+                                              height={64}
+                                              className="w-35 h-16 object-contain m-0 p-0"
+                                              style={{
+                                                objectPosition: "center",
+                                              }}
                                             />
-                                          )}
+                                          </div>
+                                          <div className="mobile:text-[10px] text-xs text-gray-400">
+                                            {method.desc}
+                                          </div>
                                         </div>
+                                      ) : method.isCrypto ? (
+                                        <div className="flex flex-col gap-2 w-full">
+                                          <div className="flex items-center justify-between">
+                                            <div className="mobile:text-sm text-base font-semibold text-white flex items-center gap-1">
+                                              {method.name}
+                                              {paymentMethod === method.id && (
+                                                <svg
+                                                  className="mobile:w-4 mobile:h-4 w-5 h-5 text-green-400"
+                                                  fill="currentColor"
+                                                  viewBox="0 0 20 20"
+                                                >
+                                                  <path
+                                                    fillRule="evenodd"
+                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                    clipRule="evenodd"
+                                                  />
+                                                </svg>
+                                              )}
+                                              {!method.enabled && (
+                                                <span className="text-[10px] text-gray-500 bg-gray-800/50 px-2 py-0.5 rounded-full">
+                                                  Coming Soon
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="flex items-center -space-x-4">
+                                              <Image
+                                                src="/crypto/btc.svg"
+                                                alt="BTC"
+                                                width={32}
+                                                height={32}
+                                                className="w-8 h-8 rounded-full border-2 border-gray-800 relative z-10"
+                                              />
+                                              <Image
+                                                src="/crypto/eth.svg"
+                                                alt="ETH"
+                                                width={32}
+                                                height={32}
+                                                className="w-8 h-8 rounded-full border-2 border-gray-800 relative z-20"
+                                              />
+                                              <Image
+                                                src="/crypto/usdt.svg"
+                                                alt="USDT"
+                                                width={32}
+                                                height={32}
+                                                className="w-8 h-8 rounded-full border-2 border-gray-800 relative z-30"
+                                              />
+                                              <Image
+                                                src="/crypto/ltc.svg"
+                                                alt="LTC"
+                                                width={32}
+                                                height={32}
+                                                className="w-8 h-8 rounded-full border-2 border-gray-800 relative z-40"
+                                              />
+                                              <Image
+                                                src="/crypto/usdc.svg"
+                                                alt="USDC"
+                                                width={32}
+                                                height={32}
+                                                className="w-8 h-8 rounded-full border-2 border-gray-800 relative z-50"
+                                              />
+                                              <Image
+                                                src="/crypto/bch.svg"
+                                                alt="BCH"
+                                                width={32}
+                                                height={32}
+                                                className="w-8 h-8 rounded-full border-2 border-gray-800 relative z-60"
+                                              />
+                                            </div>
+                                          </div>
+                                          <div className="mobile:text-[10px] text-xs text-gray-400">
+                                            {method.desc}
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <div>
+                                            <div className="mobile:text-sm text-base font-semibold text-white flex items-center gap-2">
+                                              {method.name}
+                                              {!method.enabled && (
+                                                <span className="text-[10px] text-gray-500 bg-gray-800/50 px-2 py-0.5 rounded-full">
+                                                  Coming Soon
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="mobile:text-[10px] text-xs text-gray-400">
+                                              {method.desc}
+                                            </div>
+                                          </div>
+                                          {method.logo && (
+                                            <div className="flex gap-1">
+                                              {Array.isArray(method.logo) ? (
+                                                method.logo.map(
+                                                  (logoSrc, idx) => (
+                                                    <Image
+                                                      key={idx}
+                                                      src={logoSrc}
+                                                      alt="Payment logo"
+                                                      width={24}
+                                                      height={24}
+                                                      className="w-6 h-6 object-contain"
+                                                    />
+                                                  )
+                                                )
+                                              ) : (
+                                                <Image
+                                                  src={method.logo}
+                                                  alt="Payment logo"
+                                                  width={24}
+                                                  height={24}
+                                                  className="w-6 h-6 object-contain"
+                                                />
+                                              )}
+                                            </div>
+                                          )}
+                                        </>
                                       )}
                                     </div>
-                                    {paymentMethod === method.id && (
-                                      <svg
-                                        className="mobile:w-4 mobile:h-4 w-5 h-5 text-green-400"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                      >
-                                        <path
-                                          fillRule="evenodd"
-                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                          clipRule="evenodd"
-                                        />
-                                      </svg>
-                                    )}
                                   </button>
                                 ))}
                               </div>
@@ -847,7 +1019,9 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         <>
                           Deposit{" "}
                           {amount
-                            ? formatAmount(parseFloat(amount), 2)
+                            ? `${getCurrencySymbol(
+                                preferredCurrency
+                              )}${parseFloat(amount).toFixed(2)}`
                             : "Funds"}
                         </>
                       )}

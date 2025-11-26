@@ -63,6 +63,7 @@ function DashboardContent() {
   const [showAllActivity, setShowAllActivity] = useState(false);
   const [activeView, setActiveView] = useState<"crypto" | "history">("crypto");
   const [showAddCryptoModal, setShowAddCryptoModal] = useState(false);
+  const [showBalances, setShowBalances] = useState(true);
 
   // Load activeView from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
@@ -221,9 +222,9 @@ function DashboardContent() {
         icon: "ᗐ",
         color: "from-green-600 to-teal-700",
       },
-      USDC: { name: "USD Coin", icon: "$", color: "from-blue-500 to-blue-600" },
+      USDC: { name: "Ethereum", icon: "$", color: "from-blue-500 to-blue-600" },
       USDT: {
-        name: "Tether",
+        name: "Ethereum",
         icon: "₮",
         color: "from-green-500 to-teal-600",
         network: "Ethereum",
@@ -358,8 +359,8 @@ function DashboardContent() {
       // Refresh portfolio data
       await refetch();
 
-      // Close modal
-      setShowAddCryptoModal(false);
+      // Keep modal open - don't close
+      // setShowAddCryptoModal(false);
 
       // Show success message
       showSuccess(`${name} (${symbol}) added successfully!`);
@@ -550,9 +551,9 @@ function DashboardContent() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-3 sm:space-y-4">
       {/* Portfolio Value Card */}
-      <div className="bg-gray-800/50 rounded-2xl p-4 sm:p-8 border border-gray-700/50">
+      <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-4 sm:p-8 border border-gray-700/50 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_16px_rgba(59,130,246,0.15),0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25)] transition-all duration-300">
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl font-bold text-white">
             Portfolio Value
@@ -560,12 +561,60 @@ function DashboardContent() {
         </div>
 
         <div className="mb-6 sm:mb-8">
-          <div className="text-3xl sm:text-5xl font-bold text-white mb-2">
-            {portfolioLoading ? (
-              <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
-            ) : (
-              formatAmount(portfolioValue || 0, 2)
-            )}
+          <div className="flex items-center gap-2">
+            <div
+              className="text-3xl sm:text-5xl font-bold text-white mb-2 bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+              style={{ WebkitTextStroke: "0.5px rgba(255,255,255,0.1)" }}
+            >
+              {portfolioLoading ? (
+                <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
+              ) : showBalances ? (
+                formatAmount(portfolioValue || 0, 2)
+              ) : (
+                "••••••"
+              )}
+            </div>
+            <button
+              onClick={() => setShowBalances(!showBalances)}
+              className="text-gray-400 hover:opacity-70 transition-opacity p-2 mb-2"
+              aria-label={showBalances ? "Hide balances" : "Show balances"}
+            >
+              {showBalances ? (
+                <svg
+                  className="w-5 h-5 sm:w-6 sm:h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+              ) : (
+                <svg
+                  className="w-5 h-5 sm:w-6 sm:h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                  />
+                </svg>
+              )}
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
@@ -643,23 +692,28 @@ function DashboardContent() {
         </div>
 
         <div className="flex items-center justify-between">
-          <span className="text-gray-400 text-base sm:text-lg">
+          <span className="text-gray-400 text-base sm:text-lg font-bold">
             {preferredCurrency} Balance
           </span>
-          <span className="text-white text-lg sm:text-xl font-medium">
+          <span
+            className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-400 via-white to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+            style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+          >
             {portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
-            ) : (
+            ) : showBalances ? (
               formatAmount(availableBalance || 0, 2)
+            ) : (
+              "••••••"
             )}
           </span>
         </div>
 
         {/* Progress bar - Dynamic based on actual balance */}
         <div className="mt-3">
-          <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+          <div className="h-1 bg-gray-700 rounded-full overflow-hidden shadow-[0_0_8px_rgba(59,130,246,0.4)]">
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
+              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(59,130,246,0.8)]"
               style={{
                 width: `${Math.min(
                   Math.max((availableBalance / 10000) * 100, 0),
@@ -675,102 +729,110 @@ function DashboardContent() {
       <div className="grid grid-cols-4 gap-2 sm:gap-4">
         <button
           onClick={handleBuy}
-          className="bg-green-600 hover:bg-green-700 text-white p-2 sm:p-6 rounded-xl font-semibold text-xs sm:text-lg transition-colors flex flex-col items-center gap-1 sm:gap-2"
+          className="bg-gradient-to-br from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white p-1 sm:p-2 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 shadow-lg hover:shadow-xl hover:shadow-green-500/30 border border-green-400/20 hover:scale-105 active:scale-95"
         >
-          <svg
-            className="w-3 h-3 sm:w-6 sm:h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M7 11l5-5m0 0l5 5m-5-5v12"
-            />
-          </svg>
+          <div className="bg-white/20 p-1.5 sm:p-2 rounded-full shadow-inner">
+            <svg
+              className="w-3 h-3 sm:w-6 sm:h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M7 11l5-5m0 0l5 5m-5-5v12"
+              />
+            </svg>
+          </div>
           Buy
         </button>
 
         <button
           onClick={handleSell}
-          className="bg-red-600 hover:bg-red-700 text-white p-2 sm:p-6 rounded-xl font-semibold text-xs sm:text-lg transition-colors flex flex-col items-center gap-1 sm:gap-2"
+          className="bg-gradient-to-br from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white p-1 sm:p-2 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 shadow-lg hover:shadow-xl hover:shadow-red-500/30 border border-red-400/20 hover:scale-105 active:scale-95"
         >
-          <svg
-            className="w-3 h-3 sm:w-6 sm:h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M17 13l-5 5m0 0l-5-5m5 5V6"
-            />
-          </svg>
+          <div className="bg-white/20 p-1.5 sm:p-2 rounded-full shadow-inner">
+            <svg
+              className="w-3 h-3 sm:w-6 sm:h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 13l-5 5m0 0l-5-5m5 5V6"
+              />
+            </svg>
+          </div>
           Sell
         </button>
 
         <button
           onClick={handleTransfer}
-          className="bg-purple-600 hover:bg-purple-700 text-white p-2 sm:p-6 rounded-xl font-semibold text-xs sm:text-lg transition-colors flex flex-col items-center gap-1 sm:gap-2"
+          className="bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white p-1 sm:p-2 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 shadow-lg hover:shadow-xl hover:shadow-purple-500/30 border border-purple-400/20 hover:scale-105 active:scale-95"
         >
-          <svg
-            className="w-3 h-3 sm:w-6 sm:h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-            />
-          </svg>
+          <div className="bg-white/20 p-1.5 sm:p-2 rounded-full shadow-inner">
+            <svg
+              className="w-3 h-3 sm:w-6 sm:h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              />
+            </svg>
+          </div>
           Transfer
         </button>
 
         <button
           onClick={handleConvert}
-          className="bg-orange-600 hover:bg-orange-700 text-white p-2 sm:p-6 rounded-xl font-semibold text-xs sm:text-lg transition-colors flex flex-col items-center gap-1 sm:gap-2"
+          className="bg-gradient-to-br from-orange-500 to-orange-700 hover:from-orange-600 hover:to-orange-800 text-white p-1 sm:p-2 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 shadow-lg hover:shadow-xl hover:shadow-orange-500/30 border border-orange-400/20 hover:scale-105 active:scale-95"
         >
-          <svg
-            className="w-3 h-3 sm:w-6 sm:h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 5H6a2 2 0 00-2 2v6a2 2 0 002 2h2m2-6h10m0 0l-4-4m4 4l-4 4m0 0v-5m0 5h2a2 2 0 002-2V7a2 2 0 00-2-2h-2"
-            />
-          </svg>
+          <div className="bg-white/20 p-1.5 sm:p-2 rounded-full shadow-inner">
+            <svg
+              className="w-3 h-3 sm:w-6 sm:h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 5H6a2 2 0 00-2 2v6a2 2 0 002 2h2m2-6h10m0 0l-4-4m4 4l-4 4m0 0v-5m0 5h2a2 2 0 002-2V7a2 2 0 00-2-2h-2"
+              />
+            </svg>
+          </div>
           Swap
         </button>
       </div>
 
       {/* Crypto and History Toggle View */}
-      <div className="grid grid-cols-1 gap-8">
-        <div className="bg-gray-800/50 rounded-2xl p-4 sm:p-6 border border-gray-700/50">
+      <div className="grid grid-cols-1">
+        <div className="bg-gray-800/50 rounded-2xl p-1.5 sm:p-3 border border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
           {/* Header with Toggle and Add Button */}
-          <div className="flex items-center justify-between gap-2 mb-6">
-            <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-1.5 mb-4">
+            <div className="flex items-center gap-1.5 flex-1 min-w-0">
               {/* Crypto Tab */}
               <button
                 onClick={() => setActiveView("crypto")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap text-xs ${
                   activeView === "crypto"
-                    ? "text-white border-b-2 border-blue-500"
-                    : "text-gray-400 hover:text-white"
+                    ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
+                    : "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
                 }`}
               >
                 <svg
-                  className="w-4 h-4 flex-shrink-0"
+                  className="w-3.5 h-3.5 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -788,14 +850,14 @@ function DashboardContent() {
               {/* History Tab */}
               <button
                 onClick={() => setActiveView("history")}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg font-semibold transition-all whitespace-nowrap text-sm ${
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap text-xs ${
                   activeView === "history"
-                    ? "text-white border-b-2 border-blue-500"
-                    : "text-gray-400 hover:text-white"
+                    ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
+                    : "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
                 }`}
               >
                 <svg
-                  className="w-4 h-4 flex-shrink-0"
+                  className="w-3.5 h-3.5 flex-shrink-0"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -814,10 +876,10 @@ function DashboardContent() {
             {/* Add Crypto Button */}
             <button
               onClick={handleAddCrypto}
-              className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-sm whitespace-nowrap flex-shrink-0"
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-xs whitespace-nowrap flex-shrink-0"
             >
               <svg
-                className="w-4 h-4 flex-shrink-0"
+                className="w-3.5 h-3.5 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -829,7 +891,7 @@ function DashboardContent() {
                   d="M12 4v16m8-8H4"
                 />
               </svg>
-              Add
+              Add Crypto
             </button>
           </div>
 
@@ -866,30 +928,30 @@ function DashboardContent() {
                   <div
                     key={asset.symbol}
                     onClick={() => handleAssetClick(asset)}
-                    className="flex items-center justify-between p-4 bg-transparent hover:bg-gray-900/30 transition-colors cursor-pointer rounded-lg"
+                    className="flex items-center justify-between p-2.5 bg-gradient-to-br from-gray-800/80 to-gray-900/80 hover:from-gray-800 hover:to-gray-900 transition-all cursor-pointer rounded-xl border border-gray-700/50 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/30"
                   >
                     {/* Left side: Icon and Info */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
                       <CryptoIcon
                         symbol={asset.symbol}
                         size="md"
                         showNetwork={true}
                       />
                       <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <span className="text-white font-bold text-base">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-white font-bold text-sm">
                             {asset.symbol}
                           </span>
-                          <span className="text-gray-400 text-sm">
+                          <span className="text-gray-300 text-[10px] bg-gray-700/50 px-1 py-[1px] rounded-md leading-tight border border-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)]">
                             {asset.name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-white font-medium text-sm">
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-white font-medium text-xs">
                             {formatAmount(asset.currentPrice || 0, 2)}
                           </span>
                           <span
-                            className={`text-sm font-medium ${
+                            className={`text-xs font-medium ${
                               asset.change >= 0
                                 ? "text-green-400"
                                 : "text-red-400"
@@ -904,13 +966,13 @@ function DashboardContent() {
 
                     {/* Right side: Holdings */}
                     <div className="text-right">
-                      <div className="text-white font-bold text-base">
+                      <div className="text-white font-bold text-sm">
                         {(asset.amount || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 8,
                         })}
                       </div>
-                      <div className="text-gray-400 text-sm mt-0.5">
+                      <div className="text-gray-400 text-xs mt-0.5">
                         {formatAmount(asset.value || 0, 2)}
                       </div>
                     </div>
@@ -951,106 +1013,29 @@ function DashboardContent() {
                 recentActivity.map((activity) => {
                   // Format transaction type text
                   const getTransactionText = () => {
-                    if (activity.type === "buy")
-                      return `${activity.asset} Bought`;
-                    if (activity.type === "sell")
-                      return `${activity.asset} Sold`;
+                    const assetSymbol = activity.asset?.split(" ")[0] || "";
+                    const assetMetadata = getCryptoMetadata(assetSymbol);
+                    const fullName = assetMetadata.name;
+
+                    if (activity.type === "buy") return `${fullName} Bought`;
+                    if (activity.type === "sell") return `${fullName} Sold`;
                     if (activity.type === "transfer")
-                      return `${activity.asset} Transferred`;
+                      return `${fullName} Transferred`;
                     if (activity.type === "convert")
-                      return `${activity.asset} Swapped`;
-                    return `${activity.type} ${activity.asset}`;
+                      return `${fullName} Swapped`;
+                    return `${activity.type} ${fullName}`;
                   };
 
                   // Get transaction type icon and color
                   const getTransactionIcon = () => {
-                    const baseClasses =
-                      "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0";
-                    if (activity.type === "buy")
-                      return (
-                        <div
-                          className={`${baseClasses} bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30`}
-                        >
-                          <svg
-                            className="w-5 h-5 text-green-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M7 11l5-5m0 0l5 5m-5-5v12"
-                            />
-                          </svg>
-                        </div>
-                      );
-                    if (activity.type === "sell")
-                      return (
-                        <div
-                          className={`${baseClasses} bg-gradient-to-br from-red-500/20 to-red-600/20 border border-red-500/30`}
-                        >
-                          <svg
-                            className="w-5 h-5 text-red-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 13l-5 5m0 0l-5-5m5 5V6"
-                            />
-                          </svg>
-                        </div>
-                      );
-                    if (activity.type === "transfer")
-                      return (
-                        <div
-                          className={`${baseClasses} bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30`}
-                        >
-                          <svg
-                            className="w-5 h-5 text-blue-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                            />
-                          </svg>
-                        </div>
-                      );
-                    if (activity.type === "convert")
-                      return (
-                        <div
-                          className={`${baseClasses} bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/30`}
-                        >
-                          <svg
-                            className="w-5 h-5 text-purple-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                            />
-                          </svg>
-                        </div>
-                      );
+                    const assetSymbol = activity.asset?.split(" ")[0] || "";
                     return (
-                      <div
-                        className={`${baseClasses} bg-gradient-to-br from-gray-500/20 to-gray-600/20 border border-gray-500/30`}
-                      >
-                        <CryptoIcon symbol={activity.asset} size="sm" />
+                      <div className="relative">
+                        <CryptoIcon
+                          symbol={assetSymbol}
+                          size="sm"
+                          showNetwork={true}
+                        />
                       </div>
                     );
                   };
@@ -1136,28 +1121,28 @@ function DashboardContent() {
                     <div
                       key={activity.id}
                       onClick={() => handleTransactionClick(activity)}
-                      className="group relative p-4 bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-xl border border-gray-700/50 hover:border-blue-500/50 cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10 backdrop-blur-sm"
+                      className="group relative p-2.5 bg-gradient-to-br from-gray-800/60 to-gray-900/80 rounded-xl border border-gray-700/60 hover:border-blue-500/50 cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.2)] backdrop-blur-sm hover:-translate-y-0.5"
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2">
                         {/* Transaction Icon */}
                         {getTransactionIcon()}
 
                         {/* Transaction Details */}
                         <div className="flex-1 min-w-0">
-                          {/* Header Row */}
-                          <div className="flex items-start justify-between gap-2 mb-2">
+                          {/* Header Row with Title, Date and Status */}
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
                             <div className="flex-1 min-w-0">
                               <h3 className="text-white font-semibold text-sm sm:text-base mb-0.5 truncate">
                                 {getTransactionText()}
                               </h3>
-                              <p className="text-gray-400 text-xs truncate">
+                              <p className="text-gray-400 text-[10px] truncate">
                                 {formatFullDateTime(activity.timestamp)}
                               </p>
                             </div>
                             <div
-                              className={`px-2 sm:px-2.5 py-1 rounded-lg text-xs font-semibold uppercase tracking-wide flex-shrink-0 ${
+                              className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase tracking-wider flex-shrink-0 ${
                                 activity.status === "completed"
-                                  ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                                  ? "bg-gradient-to-r from-gray-700 to-gray-800 text-green-400 border border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] animate-pulse-glow"
                                   : activity.status === "pending"
                                   ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
                                   : "bg-red-500/20 text-red-400 border border-red-500/30"
@@ -1167,24 +1152,21 @@ function DashboardContent() {
                             </div>
                           </div>
 
-                          {/* Amount Row - Crypto and Fiat */}
-                          <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2 mb-2">
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-white font-bold text-base sm:text-lg">
+                          {/* Amount Row - Crypto and Fiat on same line */}
+                          <div className="flex items-baseline justify-between gap-2">
+                            <div className="flex items-baseline gap-1 px-2 py-0.5 rounded-md bg-gray-700/50">
+                              <span className="font-medium text-xs text-white">
                                 {formatCryptoAmount(
                                   activity.amount || 0,
                                   activity.asset?.split(" ")[0] || ""
                                 )}
                               </span>
-                              <span className="text-gray-400 font-medium text-sm">
+                              <span className="font-medium text-[10px] text-gray-300">
                                 {activity.asset?.split(" ")[0]}
                               </span>
                             </div>
-                            <span className="text-gray-500 hidden sm:inline">
-                              •
-                            </span>
-                            <span className="text-gray-400 font-medium text-sm">
-                              ≈ {formatAmount(getFiatValue(), 2)}
+                            <span className="font-medium text-xs text-white px-2 py-0.5 rounded-md bg-gray-700/50">
+                              {formatAmount(getFiatValue(), 2)}
                             </span>
                           </div>
 
@@ -1212,23 +1194,6 @@ function DashboardContent() {
                                 </span>
                               </div>
                             )}
-                        </div>
-
-                        {/* Arrow indicator */}
-                        <div className="text-gray-600 group-hover:text-blue-400 transition-colors flex-shrink-0 mt-2">
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M9 5l7 7-7 7"
-                            />
-                          </svg>
                         </div>
                       </div>
                     </div>
@@ -1322,9 +1287,11 @@ function DashboardContent() {
                     className="flex items-center justify-between p-4 bg-gray-900/50 rounded-xl border border-gray-700/30 cursor-pointer hover:bg-gray-900/70 transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-xl font-bold text-white">
-                        {asset.icon}
-                      </div>
+                      <CryptoIcon
+                        symbol={asset.symbol}
+                        size="lg"
+                        showNetwork={true}
+                      />
                       <div>
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-white">
@@ -1457,14 +1424,14 @@ function DashboardContent() {
                       }}
                       className="flex items-center gap-4 p-4 bg-gray-900/30 rounded-lg border border-gray-700/20 hover:bg-gray-800/50 cursor-pointer transition-all duration-200 hover:border-orange-500/30"
                     >
-                      <CryptoIcon symbol={activity.asset} size="md" />
+                      <CryptoIcon symbol={activity.asset} size="lg" />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <span className="font-medium text-white">
                             {getTransactionText()}
                           </span>
                           <span
-                            className={`px-2 py-1 rounded-full text-xs ${
+                            className={`px-2 py-1 rounded-lg text-xs ${
                               activity.status === "completed"
                                 ? "bg-green-900/30 text-green-400"
                                 : activity.status === "pending"
