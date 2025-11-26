@@ -1411,14 +1411,14 @@ const AdminDashboard = () => {
         </div>
       )}
       {/* Admin Header */}
-      <div className="mb-3 xs:mb-4 sm:mb-6">
+      <div className="mb-2 xs:mb-3 sm:mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2 sm:space-x-3">
             <div>
-              <h1 className="text-lg xs:text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+              <h1 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                 Admin Control Panel
               </h1>
-              <p className="text-xs text-gray-400">
+              <p className="text-[10px] xs:text-xs text-gray-400">
                 Complete administrative dashboard
               </p>
             </div>
@@ -1428,92 +1428,92 @@ const AdminDashboard = () => {
 
       {/* Tab Content */}
       {activeTab === "dashboard" && (
-        <div className="space-y-4 sm:space-y-8">
+        <div className="space-y-3 sm:space-y-8">
           {/* Quick Actions */}
-          <div className="grid grid-cols-1 gap-3 xs:gap-4">
+          <div className="grid grid-cols-1 gap-2 xs:gap-3">
             <button
               onClick={() => {
                 setShowPaymentModal(true);
                 fetchUsers();
               }}
-              className="w-full bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <CreditCard className="flex-shrink-0" size={28} />
+              <CreditCard className="flex-shrink-0" size={18} />
               <span className="text-left">Process Manual Payment</span>
             </button>
             <button
               onClick={() => setActiveTab("users")}
-              className="w-full bg-blue-500/20 border-2 border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-blue-500/20 border-2 border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <Users className="flex-shrink-0" size={28} />
+              <Users className="flex-shrink-0" size={18} />
               <span className="text-left">Manage Users</span>
             </button>
             <button
               onClick={() => setActiveTab("bin")}
-              className="w-full bg-red-500/20 border-2 border-red-500/40 hover:bg-red-500/30 hover:border-red-500/60 text-red-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg relative"
+              className="w-full bg-red-500/20 border-2 border-red-500/40 hover:bg-red-500/30 hover:border-red-500/60 text-red-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg relative"
             >
-              <Trash2 className="flex-shrink-0" size={28} />
+              <Trash2 className="flex-shrink-0" size={18} />
               <span className="text-left">Deleted Users Bin</span>
               {deletedUsersCount > 0 && (
-                <span className="absolute top-2 right-2 bg-red-500 text-white rounded-full px-3 py-1 text-sm font-bold shadow-lg">
+                <span className="absolute top-1 right-1 bg-red-500 text-white rounded-full px-1.5 py-0.5 text-[10px] font-bold shadow-lg">
                   {deletedUsersCount}
                 </span>
               )}
             </button>
             <button
               onClick={() => (window.location.href = "/admin/kyc")}
-              className="w-full bg-orange-500/20 border-2 border-orange-500/40 hover:bg-orange-500/30 hover:border-orange-500/60 text-orange-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-orange-500/20 border-2 border-orange-500/40 hover:bg-orange-500/30 hover:border-orange-500/60 text-orange-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <Shield className="flex-shrink-0" size={28} />
+              <Shield className="flex-shrink-0" size={18} />
               <span className="text-left">KYC Verification</span>
             </button>
             <button
               onClick={() => router.push("/admin/analytics")}
-              className="w-full bg-cyan-500/20 border-2 border-cyan-500/40 hover:bg-cyan-500/30 hover:border-cyan-500/60 text-cyan-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-cyan-500/20 border-2 border-cyan-500/40 hover:bg-cyan-500/30 hover:border-cyan-500/60 text-cyan-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <BarChart3 className="flex-shrink-0" size={28} />
+              <BarChart3 className="flex-shrink-0" size={18} />
               <span className="text-left">Analytics Dashboard</span>
             </button>
             <button
               onClick={() => setActiveTab("notifications")}
-              className="w-full bg-purple-500/20 border-2 border-purple-500/40 hover:bg-purple-500/30 hover:border-purple-500/60 text-purple-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-purple-500/20 border-2 border-purple-500/40 hover:bg-purple-500/30 hover:border-purple-500/60 text-purple-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <Bell className="flex-shrink-0" size={28} />
+              <Bell className="flex-shrink-0" size={18} />
               <span className="text-left">Send Notifications</span>
             </button>
             <button
               onClick={() => setActiveTab("transactions")}
-              className="w-full bg-indigo-500/20 border-2 border-indigo-500/40 hover:bg-indigo-500/30 hover:border-indigo-500/60 text-indigo-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-indigo-500/20 border-2 border-indigo-500/40 hover:bg-indigo-500/30 hover:border-indigo-500/60 text-indigo-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <History className="flex-shrink-0" size={28} />
+              <History className="flex-shrink-0" size={18} />
               <span className="text-left">Transaction History</span>
             </button>
             <button
               onClick={() => setActiveTab("system")}
-              className="w-full bg-gray-500/20 border-2 border-gray-500/40 hover:bg-gray-500/30 hover:border-gray-500/60 text-gray-300 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-gray-500/20 border-2 border-gray-500/40 hover:bg-gray-500/30 hover:border-gray-500/60 text-gray-300 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <Settings className="flex-shrink-0" size={28} />
+              <Settings className="flex-shrink-0" size={18} />
               <span className="text-left">System Settings</span>
             </button>
             <button
               onClick={() => setActiveTab("reports")}
-              className="w-full bg-yellow-500/20 border-2 border-yellow-500/40 hover:bg-yellow-500/30 hover:border-yellow-500/60 text-yellow-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-yellow-500/20 border-2 border-yellow-500/40 hover:bg-yellow-500/30 hover:border-yellow-500/60 text-yellow-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <FileText className="flex-shrink-0" size={28} />
+              <FileText className="flex-shrink-0" size={18} />
               <span className="text-left">Reports</span>
             </button>
             <button
               onClick={() => setShowDatabaseModal(true)}
-              className="w-full bg-pink-500/20 border-2 border-pink-500/40 hover:bg-pink-500/30 hover:border-pink-500/60 text-pink-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-pink-500/20 border-2 border-pink-500/40 hover:bg-pink-500/30 hover:border-pink-500/60 text-pink-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <Database className="flex-shrink-0" size={28} />
+              <Database className="flex-shrink-0" size={18} />
               <span className="text-left">Database</span>
             </button>
             <button
               onClick={() => setShowActivityModal(true)}
-              className="w-full bg-teal-500/20 border-2 border-teal-500/40 hover:bg-teal-500/30 hover:border-teal-500/60 text-teal-400 py-5 xs:py-6 sm:py-7 px-4 rounded-xl transition-all text-base xs:text-lg sm:text-xl font-bold flex items-center space-x-4 shadow-lg"
+              className="w-full bg-teal-500/20 border-2 border-teal-500/40 hover:bg-teal-500/30 hover:border-teal-500/60 text-teal-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
             >
-              <Activity className="flex-shrink-0" size={28} />
+              <Activity className="flex-shrink-0" size={18} />
               <span className="text-left">Activity Logs</span>
             </button>
           </div>

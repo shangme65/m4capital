@@ -82,10 +82,13 @@ export async function sendInlineKeyboard(
 export async function getCryptoPrice(symbol: string): Promise<number | null> {
   try {
     // Use internal API which already handles all crypto symbols correctly
-    const apiUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const response = await fetch(`${apiUrl}/api/crypto/prices?symbols=${symbol.toUpperCase()}`, {
-      cache: 'no-store',
-    });
+    const apiUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const response = await fetch(
+      `${apiUrl}/api/crypto/prices?symbols=${symbol.toUpperCase()}`,
+      {
+        cache: "no-store",
+      }
+    );
 
     if (response.ok) {
       const data = await response.json();
@@ -98,7 +101,7 @@ export async function getCryptoPrice(symbol: string): Promise<number | null> {
     const binanceSymbol = `${symbol.toUpperCase()}USDT`;
     const binanceResponse = await fetch(
       `https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`,
-      { cache: 'no-store' }
+      { cache: "no-store" }
     );
 
     if (binanceResponse.ok) {
@@ -196,23 +199,26 @@ export async function updatePortfolioRealtime(userId: string) {
     }
 
     const assets = (user.Portfolio.assets as any[]) || [];
-    
+
     // Always update prices, even if no assets exist
     if (assets.length === 0) {
       return user.Portfolio;
     }
 
     // Fetch all symbols at once for better performance
-    const symbols = assets.map((asset) => asset.symbol).join(',');
-    const apiUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    
+    const symbols = assets.map((asset) => asset.symbol).join(",");
+    const apiUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
     let priceMap: Record<string, number> = {};
-    
+
     try {
-      const response = await fetch(`${apiUrl}/api/crypto/prices?symbols=${symbols}`, {
-        cache: 'no-store',
-      });
-      
+      const response = await fetch(
+        `${apiUrl}/api/crypto/prices?symbols=${symbols}`,
+        {
+          cache: "no-store",
+        }
+      );
+
       if (response.ok) {
         const data = await response.json();
         if (data.prices && Array.isArray(data.prices)) {
@@ -222,20 +228,23 @@ export async function updatePortfolioRealtime(userId: string) {
         }
       }
     } catch (fetchError) {
-      console.error('Error fetching bulk prices, falling back to individual fetches:', fetchError);
+      console.error(
+        "Error fetching bulk prices, falling back to individual fetches:",
+        fetchError
+      );
     }
 
     // Update prices for all crypto assets
     const updatedAssets = await Promise.all(
       assets.map(async (asset) => {
         // Try to get price from bulk fetch first
-        let currentPrice = priceMap[asset.symbol];
-        
+        let currentPrice: number | null = priceMap[asset.symbol];
+
         // If not found, fetch individually
         if (!currentPrice) {
           currentPrice = await getCryptoPrice(asset.symbol);
         }
-        
+
         // Always update the price, even if asset amount is 0
         return {
           ...asset,
