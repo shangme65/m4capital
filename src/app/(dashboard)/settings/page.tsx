@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import ConfirmModal from "@/components/client/ConfirmModal";
 import CurrencySelector from "@/components/client/CurrencySelector";
+import Image from "next/image";
 import {
   Upload,
   CheckCircle,
@@ -813,36 +814,67 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <header>
-        <h1 className="text-3xl font-bold text-white mb-2">Settings</h1>
-        <p className="text-gray-400 text-sm">
+    <div className="mobile:max-w-full max-w-4xl mx-auto mobile:p-0 p-6 space-y-6">
+      <header className="mobile:px-4 mobile:pt-6 mobile:pb-4">
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/m4capitallogo1.png"
+            alt="M4Capital"
+            width={80}
+            height={80}
+            className="drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
+          />
+        </div>
+
+        <h1 className="text-3xl font-bold text-white mb-2 text-center">
+          Settings
+        </h1>
+        <p className="text-gray-400 text-sm text-center">
           Manage your account preferences and platform experience.
         </p>
       </header>
 
       {/* Settings Menu */}
-      <div className="space-y-3">
+      <div className="mobile:space-y-0 space-y-3 mobile:px-0">
         {settingsItems.map((item) => {
           const Icon = item.icon;
           return (
             <button
               key={item.id}
               onClick={() => setActiveModal(item.id)}
-              className="w-full bg-gray-800 rounded-xl border border-gray-700 p-4 hover:bg-gray-750 transition-colors flex items-center justify-between group"
+              className="group relative w-full mobile:rounded-none rounded-xl mobile:border-b-2 mobile:border-x-0 mobile:border-t-0 border-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 hover:from-gray-800 hover:to-gray-900 mobile:p-4 p-5 transition-all duration-300 transform mobile:hover:scale-100 hover:scale-[1.02] active:scale-[0.98] mobile:border-gray-700/30 border-gray-700/50 hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 flex items-center"
+              style={{
+                transformStyle: "preserve-3d",
+                perspective: "1000px",
+              }}
             >
-              <div className="flex items-center gap-4">
-                <div className="p-2 bg-gray-700 rounded-lg group-hover:bg-gray-600 transition-colors">
-                  <Icon className="w-5 h-5 text-indigo-400" />
+              {/* 3D Glow Effect on Hover */}
+              <div className="absolute inset-0 mobile:rounded-none rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-xl -z-10" />
+
+              <div className="flex items-center gap-4 flex-1">
+                {/* 3D Icon Container */}
+                <div
+                  className="mobile:w-11 mobile:h-11 w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 relative"
+                  style={{
+                    boxShadow:
+                      "0 4px 16px rgba(99,102,241,0.4), 0 2px 8px rgba(99,102,241,0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                  }}
+                >
+                  {/* Inner glow */}
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                  <Icon className="mobile:w-5 mobile:h-5 w-6 h-6 text-white relative z-10 drop-shadow-lg" />
                 </div>
-                <div className="text-left">
-                  <h3 className="text-base font-semibold text-white">
+
+                <div className="text-left flex-1">
+                  <h3 className="mobile:text-sm text-base font-bold text-white group-hover:text-white transition-colors">
                     {item.title}
                   </h3>
-                  <p className="text-sm text-gray-400">{item.description}</p>
+                  <p className="mobile:text-xs text-sm text-gray-400 mobile:leading-tight">
+                    {item.description}
+                  </p>
                 </div>
               </div>
-              <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" />
             </button>
           );
         })}

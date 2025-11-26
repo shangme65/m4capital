@@ -206,6 +206,63 @@ export default function AddCryptoModal({
                     );
                     const hasBalance = asset && asset.amount > 0;
 
+                    // Get crypto metadata for 3D styling
+                    const getCryptoMetadata = (symbol: string) => {
+                      const cryptoData: Record<
+                        string,
+                        { gradient: string; iconBg: string }
+                      > = {
+                        BTC: {
+                          gradient: "from-orange-500 to-yellow-600",
+                          iconBg: "#f97316",
+                        },
+                        ETH: {
+                          gradient: "from-blue-500 to-cyan-600",
+                          iconBg: "#3b82f6",
+                        },
+                        XRP: {
+                          gradient: "from-blue-600 to-indigo-600",
+                          iconBg: "#2563eb",
+                        },
+                        TRX: {
+                          gradient: "from-red-500 to-red-600",
+                          iconBg: "#ef4444",
+                        },
+                        TON: {
+                          gradient: "from-blue-500 to-cyan-600",
+                          iconBg: "#3b82f6",
+                        },
+                        LTC: {
+                          gradient: "from-gray-400 to-gray-600",
+                          iconBg: "#9ca3af",
+                        },
+                        BCH: {
+                          gradient: "from-green-500 to-green-600",
+                          iconBg: "#22c55e",
+                        },
+                        ETC: {
+                          gradient: "from-green-600 to-emerald-600",
+                          iconBg: "#059669",
+                        },
+                        USDC: {
+                          gradient: "from-blue-500 to-blue-600",
+                          iconBg: "#3b82f6",
+                        },
+                        USDT: {
+                          gradient: "from-green-500 to-teal-600",
+                          iconBg: "#22c55e",
+                        },
+                      };
+                      return (
+                        cryptoData[symbol] || {
+                          gradient: "from-gray-600 to-gray-700",
+                          iconBg: "#6b7280",
+                        }
+                      );
+                    };
+
+                    const metadata = getCryptoMetadata(crypto.symbol);
+
                     return (
                       <div
                         key={crypto.symbol}
@@ -215,11 +272,40 @@ export default function AddCryptoModal({
                         }}
                       >
                         <div className="flex items-center gap-4">
-                          <CryptoIcon
-                            symbol={crypto.symbol}
-                            size="md"
-                            showNetwork={true}
-                          />
+                          {/* 3D Crypto Icon Container */}
+                          <div className="relative flex-shrink-0">
+                            <div
+                              className={`w-10 h-10 rounded-xl bg-gradient-to-br ${metadata.gradient} flex items-center justify-center relative transition-all duration-300 group-hover:scale-110`}
+                              style={{
+                                boxShadow: `0 4px 16px ${metadata.iconBg}40, 0 2px 8px ${metadata.iconBg}60, inset 0 1px 2px rgba(255,255,255,0.2)`,
+                              }}
+                            >
+                              {/* Inner glow overlay */}
+                              <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                              <CryptoIcon
+                                symbol={crypto.symbol}
+                                size="md"
+                                showNetwork={false}
+                                className="relative z-10 drop-shadow-lg"
+                              />
+                            </div>
+                            {/* Network badge for USDT/USDC */}
+                            {(crypto.symbol === "USDT" ||
+                              crypto.symbol === "USDC") && (
+                              <div
+                                className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-gray-900"
+                                style={{
+                                  boxShadow: "0 2px 6px rgba(59,130,246,0.5)",
+                                }}
+                              >
+                                <CryptoIcon
+                                  symbol="ETH"
+                                  size="xs"
+                                  className="w-2.5 h-2.5"
+                                />
+                              </div>
+                            )}
+                          </div>
                           <div className="text-left">
                             <div className="text-white font-semibold flex items-center gap-2">
                               <span>{crypto.symbol}</span>
