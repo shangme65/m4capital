@@ -404,12 +404,12 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
             className="fixed inset-0 z-50 flex items-end mobile:items-center justify-center p-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gray-900 w-full mobile:max-w-full max-w-lg mobile:h-screen h-auto mobile:rounded-none rounded-t-3xl overflow-hidden flex flex-col">
-              {/* Header */}
-              <div className="relative px-6 mobile:pt-4 pt-8 mobile:pb-4 pb-6">
+            <div className="bg-gray-900 w-full mobile:max-w-full max-w-md mobile:h-screen h-auto mobile:rounded-none rounded-t-3xl overflow-hidden flex flex-col">
+              {/* Close Button */}
+              <div className="absolute right-4 top-4 z-50">
                 <button
                   onClick={onClose}
-                  className="absolute right-6 top-8 mobile:top-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-all z-10"
+                  className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800/80 hover:bg-gray-700 rounded-full transition-all backdrop-blur-sm"
                 >
                   <svg
                     className="w-4 h-4"
@@ -425,26 +425,10 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     />
                   </svg>
                 </button>
-                <div className="flex flex-col items-center text-center mobile:mt-8 mt-0">
-                  <div className="mb-4">
-                    <Image
-                      src="/m4capitallogo1.png"
-                      alt="M4Capital"
-                      width={80}
-                      height={80}
-                    />
-                  </div>
-                  <h2 className="text-2xl font-bold text-white mb-2">
-                    Deposit Funds
-                  </h2>
-                  <p className="text-sm text-gray-400">
-                    Make deposits to automatically top up your M4Capital account
-                  </p>
-                </div>
               </div>
 
               {/* Content */}
-              <div className="flex-1 mobile:p-6 p-6 overflow-y-auto mobile:pb-8 pb-6">
+              <div className="flex-1 mobile:p-0 p-4 overflow-y-auto mobile:pb-0 pb-4">
                 {showBitcoinWallet ? (
                   <BitcoinWallet
                     amount={amount}
@@ -452,166 +436,162 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     onComplete={handleBitcoinPaymentComplete}
                   />
                 ) : showCryptoSelection ? (
-                  <div className="space-y-6">
+                  <div className="mobile:space-y-0 space-y-4">
                     {error && (
-                      <div className="text-red-400 text-sm text-center bg-red-500/10 p-4 rounded-2xl border border-red-500/30 backdrop-blur-sm">
+                      <div className="text-red-400 text-sm text-center bg-red-500/10 mobile:p-3 p-4 mobile:rounded-none rounded-xl border-b border-red-500/30 backdrop-blur-sm mobile:mx-0 mx-4">
                         {error}
                       </div>
                     )}
 
-                    <div>
-                      <h3 className="text-xl sm:text-2xl font-bold text-white mb-1.5 sm:mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                        Select Cryptocurrency
-                      </h3>
-                      <p className="text-gray-400 text-xs sm:text-sm mb-4 sm:mb-6">
-                        Choose which cryptocurrency you want to use for your
-                        deposit of{" "}
+                    <div className="mobile:px-4 mobile:pt-4 mobile:pb-2">
+                      <p className="text-gray-400 text-xs mobile:text-center">
+                        Deposit amount:{" "}
                         <span className="text-white font-semibold">
                           {formatAmount(parseFloat(amount) || 0, 2)}
                         </span>
                       </p>
+                    </div>
 
-                      <div className="grid grid-cols-1 gap-3 sm:gap-4 max-h-[500px] overflow-y-auto pr-1 sm:pr-2 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800/50">
-                        {supportedCryptos
-                          .sort(
-                            (a, b) => (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0)
-                          )
-                          .map((crypto) => (
-                            <button
-                              key={crypto.id}
-                              onClick={() => setSelectedCrypto(crypto.id)}
-                              className={`group relative p-4 sm:p-5 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] ${
+                    <div className="grid grid-cols-1 mobile:gap-0 gap-3 max-h-[500px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-800/50">
+                      {supportedCryptos
+                        .sort(
+                          (a, b) => (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0)
+                        )
+                        .map((crypto) => (
+                          <button
+                            key={crypto.id}
+                            onClick={() => setSelectedCrypto(crypto.id)}
+                            className={`group relative mobile:p-3 p-4 mobile:rounded-none rounded-xl mobile:border-b-2 mobile:border-x-0 mobile:border-t-0 border-2 transition-all duration-300 transform mobile:hover:scale-100 hover:scale-[1.02] active:scale-[0.98] ${
+                              selectedCrypto === crypto.id
+                                ? `bg-gradient-to-br ${crypto.bgColor} ${crypto.borderColor} shadow-xl hover:shadow-2xl shadow-${crypto.iconBg}/20`
+                                : "bg-gradient-to-br from-gray-800/80 to-gray-900/80 mobile:border-gray-700/30 border-gray-700/50 hover:from-gray-800 hover:to-gray-900 hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10"
+                            }`}
+                            style={{
+                              transformStyle: "preserve-3d",
+                              perspective: "1000px",
+                            }}
+                          >
+                            {/* 3D Glow Effect on Hover */}
+                            <div
+                              className={`absolute inset-0 mobile:rounded-none rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
                                 selectedCrypto === crypto.id
-                                  ? `bg-gradient-to-br ${crypto.bgColor} ${crypto.borderColor} shadow-xl hover:shadow-2xl shadow-${crypto.iconBg}/20`
-                                  : "bg-gradient-to-br from-gray-800/80 to-gray-900/80 border-gray-700/50 hover:from-gray-800 hover:to-gray-900 hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10"
-                              }`}
-                              style={{
-                                transformStyle: "preserve-3d",
-                                perspective: "1000px",
-                              }}
-                            >
-                              {/* 3D Glow Effect on Hover */}
+                                  ? "bg-gradient-to-br " + crypto.gradient
+                                  : "bg-gradient-to-br from-blue-500/20 to-purple-500/20"
+                              } blur-xl -z-10`}
+                            />
+
+                            <div className="flex items-center mobile:gap-2.5 gap-4">
+                              {/* Enhanced 3D Crypto Icon */}
                               <div
-                                className={`absolute inset-0 rounded-xl sm:rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                                className={`mobile:w-11 mobile:h-11 w-14 h-14 mobile:rounded-xl rounded-2xl ${
                                   selectedCrypto === crypto.id
-                                    ? "bg-gradient-to-br " + crypto.gradient
-                                    : "bg-gradient-to-br from-blue-500/20 to-purple-500/20"
-                                } blur-xl -z-10`}
-                              />
-
-                              <div className="flex items-center mobile:gap-3 gap-4">
-                                {/* Enhanced 3D Crypto Icon */}
-                                <div
-                                  className={`mobile:w-12 mobile:h-12 w-14 h-14 rounded-2xl ${
+                                    ? `bg-gradient-to-br ${crypto.gradient} shadow-lg`
+                                    : "bg-gradient-to-br from-gray-700 to-gray-800"
+                                } flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 relative`}
+                                style={{
+                                  boxShadow:
                                     selectedCrypto === crypto.id
-                                      ? `bg-gradient-to-br ${crypto.gradient} shadow-lg`
-                                      : "bg-gradient-to-br from-gray-700 to-gray-800"
-                                  } flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 relative`}
-                                  style={{
-                                    boxShadow:
-                                      selectedCrypto === crypto.id
-                                        ? `0 8px 32px ${crypto.iconBg}40, 0 4px 16px ${crypto.iconBg}60, inset 0 1px 2px rgba(255,255,255,0.2)`
-                                        : "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)",
-                                  }}
-                                >
-                                  {/* Inner glow */}
-                                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
-                                  <CryptoIcon
-                                    symbol={crypto.symbol}
-                                    className="mobile:w-6 mobile:h-6 w-8 h-8 text-white relative z-10 drop-shadow-lg"
-                                  />
-                                </div>
+                                      ? `0 8px 32px ${crypto.iconBg}40, 0 4px 16px ${crypto.iconBg}60, inset 0 1px 2px rgba(255,255,255,0.2)`
+                                      : "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)",
+                                }}
+                              >
+                                {/* Inner glow */}
+                                <div className="absolute inset-0 mobile:rounded-xl rounded-2xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                                <CryptoIcon
+                                  symbol={crypto.symbol}
+                                  className="mobile:w-5 mobile:h-5 w-8 h-8 text-white relative z-10 drop-shadow-lg"
+                                />
+                              </div>
 
-                                {/* Enhanced Content */}
-                                <div className="flex-1 text-left">
-                                  <div className="flex items-center justify-between mobile:mb-1 mb-1.5">
-                                    <h3
-                                      className={`mobile:text-base text-lg sm:text-xl font-bold transition-colors ${
-                                        selectedCrypto === crypto.id
-                                          ? "text-white"
-                                          : "text-gray-200 group-hover:text-white"
-                                      }`}
-                                    >
-                                      {crypto.name}
-                                    </h3>
-                                    <span
-                                      className={`mobile:text-sm text-base font-bold px-2 py-0.5 rounded-lg transition-all ${
-                                        selectedCrypto === crypto.id
-                                          ? `${crypto.iconBg} text-white shadow-md`
-                                          : "bg-gray-700/60 text-gray-300 group-hover:bg-blue-500/20 group-hover:text-blue-400"
-                                      }`}
-                                    >
-                                      {crypto.symbol}
-                                    </span>
-                                  </div>
-                                  <p className="mobile:text-xs text-sm text-gray-400 mb-2 flex items-center gap-1.5">
-                                    <svg
-                                      className="w-3.5 h-3.5 mobile:w-3 mobile:h-3"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                                      />
-                                    </svg>
-                                    {crypto.network}
-                                  </p>
-                                  <div
-                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium transition-all ${
+                              {/* Enhanced Content */}
+                              <div className="flex-1 text-left">
+                                <div className="flex items-center justify-between mobile:mb-0.5 mb-1.5">
+                                  <h3
+                                    className={`mobile:text-sm text-lg font-bold transition-colors ${
                                       selectedCrypto === crypto.id
-                                        ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
-                                        : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                                        ? "text-white"
+                                        : "text-gray-200 group-hover:text-white"
                                     }`}
                                   >
+                                    {crypto.name}
+                                  </h3>
+                                  <span
+                                    className={`mobile:text-xs text-base font-bold px-2 py-0.5 rounded-lg transition-all ${
+                                      selectedCrypto === crypto.id
+                                        ? `${crypto.iconBg} text-white shadow-md`
+                                        : "bg-gray-700/60 text-gray-300 group-hover:bg-blue-500/20 group-hover:text-blue-400"
+                                    }`}
+                                  >
+                                    {crypto.symbol}
+                                  </span>
+                                </div>
+                                <p className="mobile:text-[11px] text-sm text-gray-400 mobile:mb-1 mb-2 flex items-center gap-1.5">
+                                  <svg
+                                    className="w-3 h-3 mobile:w-2.5 mobile:h-2.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                                    />
+                                  </svg>
+                                  {crypto.network}
+                                </p>
+                                <div
+                                  className={`inline-flex items-center gap-1 mobile:px-2 px-2.5 mobile:py-0.5 py-1 rounded-lg mobile:text-[10px] text-[11px] font-medium transition-all ${
+                                    selectedCrypto === crypto.id
+                                      ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                                      : "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20"
+                                  }`}
+                                >
+                                  <svg
+                                    className="mobile:w-3 mobile:h-3 w-3.5 h-3.5 flex-shrink-0"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                  <span>
+                                    Min: {crypto.minAmount} {crypto.symbol} (~
+                                    {formatAmount(crypto.minUSD, 0)})
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Enhanced Selection Indicator */}
+                              {selectedCrypto === crypto.id && (
+                                <div className="text-green-400 flex-shrink-0 animate-in fade-in zoom-in duration-300">
+                                  <div className="relative">
+                                    <div className="absolute inset-0 bg-green-400 rounded-full blur-lg opacity-50 animate-pulse" />
                                     <svg
-                                      className="w-3.5 h-3.5 flex-shrink-0"
+                                      className="mobile:w-5 mobile:h-5 w-7 h-7 relative"
                                       fill="currentColor"
                                       viewBox="0 0 20 20"
                                     >
                                       <path
                                         fillRule="evenodd"
-                                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                                         clipRule="evenodd"
                                       />
                                     </svg>
-                                    <span>
-                                      Min: {crypto.minAmount} {crypto.symbol} (~
-                                      {formatAmount(crypto.minUSD, 0)})
-                                    </span>
                                   </div>
                                 </div>
-
-                                {/* Enhanced Selection Indicator */}
-                                {selectedCrypto === crypto.id && (
-                                  <div className="text-green-400 flex-shrink-0 animate-in fade-in zoom-in duration-300">
-                                    <div className="relative">
-                                      <div className="absolute inset-0 bg-green-400 rounded-full blur-lg opacity-50 animate-pulse" />
-                                      <svg
-                                        className="mobile:w-6 mobile:h-6 w-7 h-7 relative"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                      >
-                                        <path
-                                          fillRule="evenodd"
-                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                          clipRule="evenodd"
-                                        />
-                                      </svg>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </button>
-                          ))}
-                      </div>
+                              )}
+                            </div>
+                          </button>
+                        ))}
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex gap-2 sm:gap-3 pt-4 sm:pt-6">
+                    <div className="flex gap-2 sm:gap-3 mobile:p-4 pt-4 sm:pt-6">
                       <button
                         type="button"
                         onClick={handleCryptoSelectionBack}
