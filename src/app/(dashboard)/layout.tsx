@@ -35,11 +35,11 @@ export default async function DashboardLayout({
                 <MarketDataProvider autoConnect={false} enableNews={false}>
                   <CryptoMarketProvider autoStart={true}>
                     <RoleChangeMonitor />
-                    <div className="flex h-screen bg-gray-900 relative">
+                    <div className="flex h-screen relative bg-gray-900">
                       <Sidebar />
                       <div className="flex-1 flex flex-col overflow-hidden">
                         <DashboardHeaderWrapper />
-                        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-2 sm:p-4">
+                        <main className="flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4">
                           <DashboardModalWrapper>
                             {children}
                           </DashboardModalWrapper>

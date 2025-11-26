@@ -224,7 +224,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
   useEffect(() => {
     if (!isOpen) {
       setAmount("");
-      setPaymentMethod("bank_transfer");
+      setPaymentMethod("crypto");
       setError("");
       setSuccess("");
       setShowBitcoinWallet(false);
@@ -261,6 +261,34 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
         setShowCryptoSelection(true);
         setIsLoading(false);
         return;
+      }
+
+      // Handle PIX payment
+      if (paymentMethod === "pix") {
+        try {
+          const response = await fetch("/api/deposits/pix", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount: numAmount }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || "Failed to create PIX payment");
+          }
+
+          // PIX payment created successfully - data should contain QR code and payment info
+          setSuccess(
+            "PIX payment created! Scan the QR code to complete payment."
+          );
+          setIsLoading(false);
+          return;
+        } catch (err: any) {
+          setError(err.message || "Failed to create PIX payment");
+          setIsLoading(false);
+          return;
+        }
       }
 
       // Simulate API call for other payment methods
@@ -379,37 +407,36 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
             <div className="bg-gray-900 w-full mobile:max-w-full max-w-lg mobile:h-screen h-auto mobile:rounded-none rounded-t-3xl overflow-hidden flex flex-col">
               {/* Header */}
               <div className="relative px-6 mobile:pt-4 pt-8 mobile:pb-4 pb-6">
+                <button
+                  onClick={onClose}
+                  className="absolute right-6 top-8 mobile:top-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-all z-10"
+                >
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
                 <div className="flex flex-col items-center text-center mobile:mt-8 mt-0">
-                  <Image
-                    src="/m4capitallogo1.png"
-                    alt="M4Capital"
-                    width={80}
-                    height={80}
-                    className="mb-4"
-                  />
-                  <div className="flex items-center gap-2 mb-2">
-                    <h2 className="text-2xl font-bold text-white">
-                      Deposit Funds
-                    </h2>
-                    <button
-                      onClick={onClose}
-                      className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 rounded-lg transition-all"
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+                  <div className="mb-4">
+                    <Image
+                      src="/m4capitallogo1.png"
+                      alt="M4Capital"
+                      width={80}
+                      height={80}
+                    />
                   </div>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    Deposit Funds
+                  </h2>
                   <p className="text-sm text-gray-400">
                     Make deposits to automatically top up your M4Capital account
                   </p>
