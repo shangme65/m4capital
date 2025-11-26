@@ -208,37 +208,84 @@ function DashboardContent() {
   const getCryptoMetadata = (symbol: string) => {
     const cryptoData: Record<
       string,
-      { name: string; icon: string; color: string; network?: string }
+      {
+        name: string;
+        icon: string;
+        color: string;
+        gradient: string;
+        iconBg: string;
+        network?: string;
+      }
     > = {
       BTC: {
         name: "Bitcoin",
         icon: "₿",
         color: "from-orange-500 to-orange-600",
+        gradient: "from-orange-500 to-yellow-600",
+        iconBg: "#f97316",
       },
       ETH: {
         name: "Ethereum",
         icon: "Ξ",
         color: "from-blue-500 to-purple-600",
+        gradient: "from-blue-500 to-cyan-600",
+        iconBg: "#3b82f6",
       },
-      XRP: { name: "Ripple", icon: "✕", color: "from-blue-600 to-blue-700" },
-      TRX: { name: "Tron", icon: "T", color: "from-red-500 to-red-600" },
-      TON: { name: "Toncoin", icon: "💎", color: "from-blue-500 to-cyan-600" },
-      LTC: { name: "Litecoin", icon: "Ł", color: "from-gray-400 to-gray-500" },
+      XRP: {
+        name: "Ripple",
+        icon: "✕",
+        color: "from-blue-600 to-blue-700",
+        gradient: "from-blue-600 to-indigo-600",
+        iconBg: "#2563eb",
+      },
+      TRX: {
+        name: "Tron",
+        icon: "T",
+        color: "from-red-500 to-red-600",
+        gradient: "from-red-500 to-red-600",
+        iconBg: "#ef4444",
+      },
+      TON: {
+        name: "Toncoin",
+        icon: "💎",
+        color: "from-blue-500 to-cyan-600",
+        gradient: "from-blue-500 to-cyan-600",
+        iconBg: "#3b82f6",
+      },
+      LTC: {
+        name: "Litecoin",
+        icon: "Ł",
+        color: "from-gray-400 to-gray-500",
+        gradient: "from-gray-400 to-gray-600",
+        iconBg: "#9ca3af",
+      },
       BCH: {
         name: "Bitcoin Cash",
         icon: "₿",
         color: "from-green-500 to-green-600",
+        gradient: "from-green-500 to-green-600",
+        iconBg: "#22c55e",
       },
       ETC: {
         name: "Ethereum Classic",
         icon: "ᗐ",
         color: "from-green-600 to-teal-700",
+        gradient: "from-green-600 to-emerald-600",
+        iconBg: "#059669",
       },
-      USDC: { name: "Ethereum", icon: "$", color: "from-blue-500 to-blue-600" },
+      USDC: {
+        name: "Ethereum",
+        icon: "$",
+        color: "from-blue-500 to-blue-600",
+        gradient: "from-blue-500 to-blue-600",
+        iconBg: "#3b82f6",
+      },
       USDT: {
         name: "Ethereum",
         icon: "₮",
         color: "from-green-500 to-teal-600",
+        gradient: "from-green-500 to-teal-600",
+        iconBg: "#22c55e",
         network: "Ethereum",
       },
     };
@@ -247,6 +294,8 @@ function DashboardContent() {
         name: symbol,
         icon: "○",
         color: "from-gray-600 to-gray-700",
+        gradient: "from-gray-600 to-gray-700",
+        iconBg: "#6b7280",
       }
     );
   };
@@ -275,6 +324,7 @@ function DashboardContent() {
               change: priceChange,
               icon: metadata.icon,
               color: metadata.color,
+              metadata: metadata,
             };
           })
           .sort((a: any, b: any) => b.value - a.value) // Sort by asset value highest first
@@ -944,11 +994,26 @@ function DashboardContent() {
                   >
                     {/* Left side: Icon and Info */}
                     <div className="flex items-center gap-2">
-                      <CryptoIcon
-                        symbol={asset.symbol}
-                        size="md"
-                        showNetwork={true}
-                      />
+                      {/* 3D Crypto Icon Container */}
+                      <div
+                        className={`w-10 h-10 rounded-xl bg-gradient-to-br ${asset.color} flex items-center justify-center flex-shrink-0 transition-all duration-300 relative`}
+                        style={{
+                          boxShadow: `0 4px 16px ${
+                            asset.metadata?.iconBg || "#6b7280"
+                          }40, 0 2px 8px ${
+                            asset.metadata?.iconBg || "#6b7280"
+                          }60, inset 0 1px 2px rgba(255,255,255,0.2)`,
+                        }}
+                      >
+                        {/* Inner glow */}
+                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                        <CryptoIcon
+                          symbol={asset.symbol}
+                          size="md"
+                          showNetwork={true}
+                          className="relative z-10 drop-shadow-lg"
+                        />
+                      </div>
                       <div className="flex flex-col">
                         <div className="flex items-center gap-1.5">
                           <span className="text-white font-bold text-sm">
