@@ -8,15 +8,34 @@ import { rateLimiters } from "@/lib/middleware/ratelimit";
 import {
   createErrorResponse,
   createSuccessResponse,
-  withErrorHandler,
 } from "@/lib/middleware/errorHandler";
 
 export const dynamic = "force-dynamic";
 
+// Mapping of supported cryptocurrencies to their NowPayments codes
+const SUPPORTED_CRYPTOS: Record<string, { code: string; name: string }> = {
+  btc: { code: "btc", name: "Bitcoin" },
+  eth: { code: "eth", name: "Ethereum" },
+  etc: { code: "etc", name: "Ethereum Classic" },
+  ltc: { code: "ltc", name: "Litecoin" },
+  xrp: { code: "xrp", name: "Ripple" },
+  usdc: { code: "usdcerc20", name: "USDC (ERC-20)" },
+  usdcerc20: { code: "usdcerc20", name: "USDC (ERC-20)" },
+  sol: { code: "sol", name: "Solana" },
+  doge: { code: "doge", name: "Dogecoin" },
+  bnb: { code: "bnbbsc", name: "BNB (BSC)" },
+  trx: { code: "trx", name: "Tron" },
+  usdt: { code: "usdterc20", name: "USDT (ERC-20)" },
+  usdterc20: { code: "usdterc20", name: "USDT (ERC-20)" },
+  usdttrc20: { code: "usdttrc20", name: "USDT (TRC-20)" },
+  bch: { code: "bch", name: "Bitcoin Cash" },
+  ton: { code: "ton", name: "Toncoin" },
+};
+
 /**
- * POST /api/payment/create-bitcoin
- * Create a Bitcoin deposit payment via NOWPayments
- * Supports both payment API and invoice API methods
+ * POST /api/payment/create-crypto
+ * Create a cryptocurrency deposit payment via NOWPayments
+ * Supports multiple cryptocurrencies
  */
 export async function POST(request: NextRequest) {
   // Apply rate limiting
@@ -38,12 +57,27 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { amount, currency = "USD", useInvoice = false } = body;
+    const { amount, currency = "USD", cryptoCurrency = "btc" } = body;
 
     if (!amount || amount <= 0) {
       return createErrorResponse(
         "Invalid input",
         "Amount must be greater than 0",
+        undefined,
+        400
+      );
+    }
+
+    // Validate cryptocurrency
+    const cryptoKey = cryptoCurrency.toLowerCase();
+    const cryptoInfo = SUPPORTED_CRYPTOS[cryptoKey];
+
+    if (!cryptoInfo) {
+      return createErrorResponse(
+        "Invalid cryptocurrency",
+        `Cryptocurrency ${cryptoCurrency} is not supported. Supported: ${Object.keys(
+          SUPPORTED_CRYPTOS
+        ).join(", ")}`,
         undefined,
         400
       );
@@ -72,38 +106,29 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Use invoice method if requested or if payment API fails
-    if (useInvoice) {
-      return await createInvoicePayment(
+    // Try payment API first, fall back to invoice API
+    try {
+      return await createCryptoPayment(
         user,
         portfolio,
         amount,
         currency,
-        request
+        cryptoInfo.code,
+        cryptoInfo.name
       );
-    } else {
-      // Try payment API first
-      try {
-        return await createStandardPayment(
-          user,
-          portfolio,
-          amount,
-          currency,
-          request
-        );
-      } catch (error) {
-        console.log("Payment API failed, falling back to invoice API:", error);
-        return await createInvoicePayment(
-          user,
-          portfolio,
-          amount,
-          currency,
-          request
-        );
-      }
+    } catch (error) {
+      console.log("Payment API failed, falling back to invoice API:", error);
+      return await createCryptoInvoice(
+        user,
+        portfolio,
+        amount,
+        currency,
+        cryptoInfo.code,
+        cryptoInfo.name
+      );
     }
   } catch (error) {
-    console.error("Create Bitcoin payment error:", error);
+    console.error("Create crypto payment error:", error);
     return createErrorResponse(
       "Internal server error",
       error instanceof Error ? error.message : "Failed to create payment",
@@ -114,36 +139,48 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Create payment using standard NOWPayments API
+ * Create payment using standard NOWPayments payment API
  */
-async function createStandardPayment(
+async function createCryptoPayment(
   user: any,
   portfolio: any,
-  amount: string,
+  amount: number,
   currency: string,
-  request: NextRequest
+  payCurrency: string,
+  cryptoName: string
 ) {
-  // Get minimum Bitcoin amount
-  const minAmount = await nowPayments.getMinimumAmount("btc");
-  console.log("Minimum BTC amount:", minAmount);
+  // Get minimum amount for the selected crypto
+  let minAmount = { min_amount: 0 };
+  try {
+    minAmount = await nowPayments.getMinimumAmount(payCurrency);
+    console.log(`Minimum ${payCurrency.toUpperCase()} amount:`, minAmount);
+  } catch (error) {
+    console.log("Could not get minimum amount, proceeding without check");
+  }
 
-  // Estimate BTC amount
+  // Estimate crypto amount
   const estimate = await nowPayments.estimatePrice({
-    amount: parseFloat(amount),
+    amount: parseFloat(String(amount)),
     currency_from: currency.toLowerCase(),
-    currency_to: "btc",
+    currency_to: payCurrency,
   });
 
   console.log("Payment estimate:", estimate);
 
-  // Check if amount meets minimum
-  if (estimate.estimated_amount < minAmount.min_amount) {
+  // Check if amount meets minimum (if we have the data)
+  if (
+    minAmount.min_amount > 0 &&
+    estimate.estimated_amount < minAmount.min_amount
+  ) {
+    const minUsdValue = (
+      minAmount.min_amount *
+      (parseFloat(String(amount)) / estimate.estimated_amount)
+    ).toFixed(2);
     return createErrorResponse(
       "Invalid amount",
-      `Amount too low. Minimum deposit is ${minAmount.min_amount} BTC (~$${(
-        minAmount.min_amount *
-        (parseFloat(amount) / estimate.estimated_amount)
-      ).toFixed(2)})`,
+      `Amount too low. Minimum deposit is ${
+        minAmount.min_amount
+      } ${payCurrency.toUpperCase()} (~$${minUsdValue})`,
       undefined,
       400
     );
@@ -155,12 +192,12 @@ async function createStandardPayment(
       id: generateId(),
       portfolioId: portfolio.id,
       userId: user.id,
-      amount: parseFloat(amount),
+      amount: parseFloat(String(amount)),
       currency: currency,
       cryptoAmount: estimate.estimated_amount,
-      cryptoCurrency: "BTC",
+      cryptoCurrency: payCurrency.toUpperCase(),
       status: "PENDING",
-      method: "NOWPAYMENTS_BTC",
+      method: `NOWPAYMENTS_${payCurrency.toUpperCase()}`,
       updatedAt: new Date(),
     },
   });
@@ -169,12 +206,12 @@ async function createStandardPayment(
   const callbackUrl = `${process.env.NEXTAUTH_URL}/api/payment/webhook`;
 
   const payment = await nowPayments.createPayment({
-    price_amount: parseFloat(amount),
+    price_amount: parseFloat(String(amount)),
     price_currency: currency.toLowerCase(),
-    pay_currency: "btc",
+    pay_currency: payCurrency,
     ipn_callback_url: callbackUrl,
     order_id: deposit.id,
-    order_description: `Deposit for user ${user.email}`,
+    order_description: `${cryptoName} deposit for user ${user.email}`,
   });
 
   console.log("Payment created:", payment);
@@ -186,6 +223,7 @@ async function createStandardPayment(
       paymentId: payment.payment_id,
       paymentAddress: payment.pay_address,
       paymentAmount: payment.pay_amount,
+      paymentStatus: payment.payment_status,
     },
   });
 
@@ -196,10 +234,11 @@ async function createStandardPayment(
         amount: amount,
         currency: currency,
         cryptoAmount: payment.pay_amount,
-        cryptoCurrency: "BTC",
+        cryptoCurrency: payCurrency.toUpperCase(),
         paymentId: payment.payment_id,
         paymentAddress: payment.pay_address,
-        status: payment.payment_status,
+        paymentStatus: payment.payment_status,
+        status: "PENDING",
         createdAt: deposit.createdAt,
         expiresAt: payment.expiration_estimate_date,
         method: "payment",
@@ -210,38 +249,22 @@ async function createStandardPayment(
 }
 
 /**
- * Create payment using NOWPayments invoice API
- * This method doesn't require payment tool setup
+ * Create payment using NOWPayments invoice API (fallback)
  */
-async function createInvoicePayment(
+async function createCryptoInvoice(
   user: any,
   portfolio: any,
-  amount: string,
+  amount: number,
   currency: string,
-  request: NextRequest
+  payCurrency: string,
+  cryptoName: string
 ) {
-  // Get minimum Bitcoin amount
-  const minAmount = await nowPayments.getMinimumAmount("btc");
-
-  // Estimate BTC amount
+  // Estimate crypto amount
   const estimate = await nowPayments.estimatePrice({
-    amount: parseFloat(amount),
+    amount: parseFloat(String(amount)),
     currency_from: currency.toLowerCase(),
-    currency_to: "btc",
+    currency_to: payCurrency,
   });
-
-  // Check if amount meets minimum
-  if (estimate.estimated_amount < minAmount.min_amount) {
-    return createErrorResponse(
-      "Invalid amount",
-      `Amount too low. Minimum deposit is ${minAmount.min_amount} BTC (~$${(
-        minAmount.min_amount *
-        (parseFloat(amount) / estimate.estimated_amount)
-      ).toFixed(2)})`,
-      undefined,
-      400
-    );
-  }
 
   // Create deposit record
   const deposit = await prisma.deposit.create({
@@ -249,12 +272,12 @@ async function createInvoicePayment(
       id: generateId(),
       portfolioId: portfolio.id,
       userId: user.id,
-      amount: parseFloat(amount),
+      amount: parseFloat(String(amount)),
       currency: currency,
       cryptoAmount: estimate.estimated_amount,
-      cryptoCurrency: "BTC",
+      cryptoCurrency: payCurrency.toUpperCase(),
       status: "PENDING",
-      method: "NOWPAYMENTS_BTC_INVOICE",
+      method: `NOWPAYMENTS_${payCurrency.toUpperCase()}_INVOICE`,
       updatedAt: new Date(),
     },
   });
@@ -263,12 +286,12 @@ async function createInvoicePayment(
   const callbackUrl = `${process.env.NEXTAUTH_URL}/api/payment/webhook`;
 
   const invoice = await nowPayments.createInvoice({
-    price_amount: parseFloat(amount),
+    price_amount: parseFloat(String(amount)),
     price_currency: currency.toUpperCase(),
-    pay_currency: "btc",
+    pay_currency: payCurrency,
     ipn_callback_url: callbackUrl,
     order_id: deposit.id,
-    order_description: `Deposit for user ${user.email}`,
+    order_description: `${cryptoName} deposit for user ${user.email}`,
     success_url: `${process.env.NEXTAUTH_URL}/dashboard?payment=success`,
     cancel_url: `${process.env.NEXTAUTH_URL}/dashboard?payment=cancelled`,
   });
@@ -281,6 +304,8 @@ async function createInvoicePayment(
     data: {
       paymentId: invoice.id,
       invoiceUrl: invoice.invoice_url,
+      paymentAddress: invoice.pay_address,
+      paymentAmount: invoice.pay_amount,
     },
   });
 
@@ -291,10 +316,12 @@ async function createInvoicePayment(
         amount: amount,
         currency: currency,
         cryptoAmount: estimate.estimated_amount,
-        cryptoCurrency: "BTC",
+        cryptoCurrency: payCurrency.toUpperCase(),
         invoiceId: invoice.id,
         invoiceUrl: invoice.invoice_url,
-        status: "pending",
+        paymentAddress: invoice.pay_address,
+        paymentAmount: invoice.pay_amount,
+        status: "PENDING",
         createdAt: deposit.createdAt,
         method: "invoice",
       },
