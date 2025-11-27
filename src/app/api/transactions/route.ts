@@ -53,8 +53,8 @@ export async function GET(req: NextRequest) {
     const depositTransactions = deposits.map((d) => ({
       id: d.id,
       type: "deposit" as const,
-      asset: d.targetAsset || d.currency || "USD",
-      amount: Number(d.amount),
+      asset: d.targetAsset || d.cryptoCurrency || d.currency || "USD",
+      amount: Number(d.cryptoAmount || d.amount),
       value: Number(d.amount),
       timestamp: d.createdAt.toISOString(),
       status:
@@ -65,14 +65,19 @@ export async function GET(req: NextRequest) {
           : ("failed" as const),
       fee: d.fee ? Number(d.fee) : undefined,
       method: d.method || "Manual",
-      description: d.targetAsset
+      description: d.cryptoCurrency
+        ? `deposit ${d.cryptoCurrency}`
+        : d.targetAsset
         ? `${d.targetAsset} deposit to your portfolio`
         : "Balance deposit to your account",
       date: d.createdAt,
       confirmations: d.confirmations,
       maxConfirmations: 6,
       hash: d.transactionHash || undefined,
-      network: d.targetAsset ? `${d.targetAsset} Network` : undefined,
+      network:
+        d.cryptoCurrency || d.targetAsset
+          ? `${d.cryptoCurrency || d.targetAsset} Network`
+          : undefined,
     }));
 
     // Transform withdrawals into transaction format
