@@ -160,7 +160,7 @@ export default function CryptoWallet({
 
       // Handle both response formats: { success, data: { deposit } } or { success, deposit }
       const deposit = data.data?.deposit || data.deposit;
-      
+
       if (!data.success || !deposit) {
         console.error("Invalid response structure:", data);
         throw new Error("Invalid payment response");
@@ -176,18 +176,21 @@ export default function CryptoWallet({
         method: deposit.method,
       });
 
-      // Create transaction notification
+      // Create transaction notification (for immediate UI feedback)
+      // The actual deposit is already saved in the database by the API
+      const now = new Date();
       addTransaction({
         type: "deposit",
         asset: cryptoSymbol.toUpperCase(),
         amount: deposit.cryptoAmount || deposit.paymentAmount,
         value: parseFloat(amount),
-        timestamp: new Date().toLocaleString(),
+        timestamp: now.toISOString(),
         status: "pending",
         description: `${cryptoName} deposit of ${
           deposit.cryptoAmount || deposit.paymentAmount
         } ${cryptoSymbol.toUpperCase()}`,
         method: `${cryptoName} (NOWPayments)`,
+        date: now,
       });
     } catch (err: any) {
       console.error("Payment creation error:", err);
