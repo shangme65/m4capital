@@ -88,12 +88,20 @@ class NOWPaymentsClient {
   constructor() {
     this.apiKey = API_KEY;
     this.baseUrl = NOWPAYMENTS_API_URL;
+
+    if (!this.apiKey) {
+      console.warn("⚠️ NOWPAYMENTS_API_KEY is not configured");
+    }
   }
 
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
+    if (!this.apiKey) {
+      throw new Error("NowPayments API key not configured");
+    }
+
     const url = `${this.baseUrl}${endpoint}`;
     const headers = {
       "x-api-key": this.apiKey,
@@ -145,10 +153,13 @@ class NOWPaymentsClient {
    * Estimate price in crypto
    */
   async estimatePrice(params: EstimateParams): Promise<PaymentEstimate> {
-    return this.request("/estimate", {
-      method: "POST",
-      body: JSON.stringify(params),
-    });
+    // NowPayments estimate API uses GET with query parameters
+    const queryParams = new URLSearchParams({
+      amount: params.amount.toString(),
+      currency_from: params.currency_from,
+      currency_to: params.currency_to,
+    }).toString();
+    return this.request(`/estimate?${queryParams}`);
   }
 
   /**
