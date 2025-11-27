@@ -150,6 +150,7 @@ export default function CryptoWallet({
       });
 
       const data = await response.json();
+      console.log("Payment API response:", data);
 
       if (!response.ok) {
         throw new Error(
@@ -157,30 +158,34 @@ export default function CryptoWallet({
         );
       }
 
-      if (!data.success || !data.deposit) {
+      // Handle both response formats: { success, data: { deposit } } or { success, deposit }
+      const deposit = data.data?.deposit || data.deposit;
+      
+      if (!data.success || !deposit) {
+        console.error("Invalid response structure:", data);
         throw new Error("Invalid payment response");
       }
 
       setPaymentData({
-        paymentAddress: data.deposit.paymentAddress,
-        paymentAmount: data.deposit.cryptoAmount || data.deposit.paymentAmount,
-        depositId: data.deposit.id,
-        paymentId: data.deposit.paymentId || data.deposit.invoiceId,
-        expiresAt: data.deposit.expiresAt,
-        invoiceUrl: data.deposit.invoiceUrl,
-        method: data.deposit.method,
+        paymentAddress: deposit.paymentAddress,
+        paymentAmount: deposit.cryptoAmount || deposit.paymentAmount,
+        depositId: deposit.id,
+        paymentId: deposit.paymentId || deposit.invoiceId,
+        expiresAt: deposit.expiresAt,
+        invoiceUrl: deposit.invoiceUrl,
+        method: deposit.method,
       });
 
       // Create transaction notification
       addTransaction({
         type: "deposit",
         asset: cryptoSymbol.toUpperCase(),
-        amount: data.deposit.cryptoAmount || data.deposit.paymentAmount,
+        amount: deposit.cryptoAmount || deposit.paymentAmount,
         value: parseFloat(amount),
         timestamp: new Date().toLocaleString(),
         status: "pending",
         description: `${cryptoName} deposit of ${
-          data.deposit.cryptoAmount || data.deposit.paymentAmount
+          deposit.cryptoAmount || deposit.paymentAmount
         } ${cryptoSymbol.toUpperCase()}`,
         method: `${cryptoName} (NOWPayments)`,
       });
