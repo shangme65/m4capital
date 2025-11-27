@@ -66,10 +66,10 @@ export async function GET(req: NextRequest) {
       fee: d.fee ? Number(d.fee) : undefined,
       method: d.method || "Manual",
       description: d.cryptoCurrency
-        ? `deposit ${d.cryptoCurrency}`
+        ? `Deposit ${d.cryptoCurrency}`
         : d.targetAsset
-        ? `${d.targetAsset} deposit to your portfolio`
-        : "Balance deposit to your account",
+        ? `${d.targetAsset} Deposit to your portfolio`
+        : "Balance Deposit to your account",
       date: d.createdAt,
       confirmations: d.confirmations,
       maxConfirmations: 6,
