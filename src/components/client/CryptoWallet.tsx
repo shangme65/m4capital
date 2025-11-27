@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface CryptoWalletProps {
@@ -113,6 +114,7 @@ export default function CryptoWallet({
   const [paymentStatus, setPaymentStatus] = useState<string>("pending");
 
   const { addNotification, addTransaction } = useNotifications();
+  const { preferredCurrency, formatAmount, convertAmount } = useCurrency();
 
   const cryptoConfig =
     CRYPTO_CONFIG[cryptoSymbol.toUpperCase()] || CRYPTO_CONFIG.BTC;
@@ -404,8 +406,12 @@ export default function CryptoWallet({
       {/* Amount Summary */}
       <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
         <div className="flex justify-between">
-          <span className="text-gray-400">Deposit Amount (USD)</span>
-          <span className="text-white font-medium">${amount}</span>
+          <span className="text-gray-400">
+            Deposit Amount ({preferredCurrency})
+          </span>
+          <span className="text-white font-medium">
+            {formatAmount(convertAmount(parseFloat(amount)), 2)}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-gray-400">{cryptoName} Amount</span>

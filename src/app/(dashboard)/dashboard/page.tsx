@@ -1162,7 +1162,16 @@ function DashboardContent() {
                       return `${fullName} Transferred`;
                     if (activity.type === "convert")
                       return `${fullName} Swapped`;
-                    return `${activity.type} ${fullName}`;
+                    if (activity.type === "deposit")
+                      return `Deposit ${fullName}`;
+                    if (activity.type === "withdraw")
+                      return `Withdraw ${fullName}`;
+                    // Fallback for any other type
+                    return `${String(activity.type)
+                      .charAt(0)
+                      .toUpperCase()}${String(activity.type).slice(
+                      1
+                    )} ${fullName}`;
                   };
 
                   // Get transaction type icon and color
@@ -1525,7 +1534,16 @@ function DashboardContent() {
                       return `${activity.asset} Transferred`;
                     if (activity.type === "convert")
                       return `${activity.asset} Swapped`;
-                    return `${activity.type} ${activity.asset}`;
+                    if (activity.type === "deposit")
+                      return `Deposit ${activity.asset}`;
+                    if (activity.type === "withdraw")
+                      return `Withdraw ${activity.asset}`;
+                    // Fallback for any other type
+                    return `${String(activity.type)
+                      .charAt(0)
+                      .toUpperCase()}${String(activity.type).slice(1)} ${
+                      activity.asset
+                    }`;
                   };
 
                   // Format amount with 8 decimals for crypto
