@@ -175,25 +175,87 @@ function DashboardContent() {
       return "0x" + (hash + hash + hash).substr(0, 64).padEnd(64, "0");
     };
 
+    // Helper to get crypto name from symbol
+    const getCryptoName = (symbol: string): string => {
+      const cryptoNames: Record<string, string> = {
+        BTC: "Bitcoin",
+        ETH: "Ethereum",
+        ETC: "Ethereum Classic",
+        LTC: "Litecoin",
+        XRP: "Ripple",
+        USDC: "USD Coin",
+        USDT: "Tether",
+        SOL: "Solana",
+        DOGE: "Dogecoin",
+        BNB: "BNB",
+        TRX: "Tron",
+        BCH: "Bitcoin Cash",
+        TON: "Toncoin",
+      };
+      return cryptoNames[symbol] || symbol;
+    };
+
+    // Helper to get network name from asset
+    const getNetworkName = (symbol: string): string => {
+      const networks: Record<string, string> = {
+        BTC: "Bitcoin Network",
+        ETH: "Ethereum Network",
+        ETC: "Ethereum Classic Network",
+        LTC: "Litecoin Network",
+        XRP: "XRP Ledger",
+        USDC: "Ethereum Network (ERC-20)",
+        USDT: "Ethereum Network (ERC-20)",
+        USDTERC20: "Ethereum Network (ERC-20)",
+        USDTTRC20: "Tron Network (TRC-20)",
+        SOL: "Solana Network",
+        DOGE: "Dogecoin Network",
+        BNB: "BNB Smart Chain",
+        TRX: "Tron Network",
+        BCH: "Bitcoin Cash Network",
+        TON: "TON Network",
+      };
+      return networks[symbol] || `${symbol} Network`;
+    };
+
+    // Get proper payment method display from method field
+    const getPaymentMethodDisplay = (
+      method: string | undefined,
+      asset: string
+    ): string => {
+      if (!method) return `${getCryptoName(asset)} (${asset})`;
+
+      // Parse NOWPAYMENTS_XXX format
+      if (method.startsWith("NOWPAYMENTS_")) {
+        const cryptoCode = method
+          .replace("NOWPAYMENTS_", "")
+          .replace("_INVOICE", "");
+        return `${getCryptoName(cryptoCode)} (${cryptoCode})`;
+      }
+
+      return method;
+    };
+
+    // Get the asset symbol from the activity
+    const assetSymbol = activity.asset?.split(" ")[0] || "BTC";
+
     // Enhance transaction with additional details for the modal
     const enhancedTransaction = {
       ...activity,
       date: new Date(),
       fee: activity.type === "deposit" ? activity.value * 0.02 : undefined,
-      method: activity.type === "deposit" ? "Bitcoin (BTC)" : undefined,
+      method:
+        activity.type === "deposit"
+          ? getPaymentMethodDisplay(activity.method, assetSymbol)
+          : undefined,
       description: `${activity.type} transaction for ${activity.asset}`,
       confirmations:
         activity.status === "pending" ? activity.confirmations || 0 : 6,
       maxConfirmations: 6,
       hash:
         activity.status !== "failed"
-          ? generateCryptoHash(
-              activity.asset?.split(" ")[0] || "BTC",
-              activity.id
-            )
+          ? generateCryptoHash(assetSymbol, activity.id)
           : undefined,
-      network:
-        activity.asset === "BTC" ? "Bitcoin Network" : "Ethereum Network",
+      network: getNetworkName(assetSymbol),
       address:
         activity.type === "deposit"
           ? `1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa`
@@ -1148,7 +1210,10 @@ function DashboardContent() {
                       activity.type === "deposit" ||
                       activity.type === "withdraw"
                     ) {
-                      return convertAmount(activity.amount || 0);
+                      // Use activity.value which is the USD amount for deposits/withdrawals
+                      return convertAmount(
+                        activity.value || activity.amount || 0
+                      );
                     }
                     const price = getCryptoPrice();
                     const usdValue = (activity.amount || 0) * price;
