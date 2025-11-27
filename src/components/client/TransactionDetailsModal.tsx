@@ -61,40 +61,19 @@ export default function TransactionDetailsModal({
     };
   }, [isOpen]);
 
-  // Handle mobile back button to close modal
+  // Handle mobile hardware back button to close modal
   useEffect(() => {
+    if (!isOpen) return;
+
+    // Push a new state when modal opens
+    window.history.pushState({ transactionModal: true }, "");
+
     const handleBackButton = (e: PopStateEvent) => {
-      if (isOpen) {
-        e.preventDefault();
-        onClose();
-      }
+      e.preventDefault();
+      onClose();
     };
 
-    if (isOpen) {
-      // Push a new state when modal opens
-      window.history.pushState({ modalOpen: true }, "");
-      window.addEventListener("popstate", handleBackButton);
-    }
-
-    return () => {
-      window.removeEventListener("popstate", handleBackButton);
-    };
-  }, [isOpen, onClose]);
-
-  // Handle mobile back button to close modal
-  useEffect(() => {
-    const handleBackButton = (e: PopStateEvent) => {
-      if (isOpen) {
-        e.preventDefault();
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      // Push a new state when modal opens
-      window.history.pushState({ modalOpen: true }, "");
-      window.addEventListener("popstate", handleBackButton);
-    }
+    window.addEventListener("popstate", handleBackButton);
 
     return () => {
       window.removeEventListener("popstate", handleBackButton);
@@ -319,46 +298,54 @@ export default function TransactionDetailsModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 overflow-hidden"
+            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] overflow-hidden"
             style={{ touchAction: "none" }}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 50 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 50 }}
-            transition={{ type: "spring", duration: 0.5, bounce: 0.25 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 overflow-auto"
+            initial={{ opacity: 0, y: "100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "100%" }}
+            transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
+            className="fixed inset-0 z-[60] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             style={{ touchAction: "auto" }}
           >
-            <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-none sm:rounded-3xl shadow-2xl w-full sm:max-w-2xl relative overflow-hidden border-0 sm:border border-gray-700/50 h-full sm:h-auto sm:max-h-[95vh] overflow-y-auto">
-              {/* Close Button */}
-              <button
-                onClick={onClose}
-                className="absolute top-3 right-3 sm:top-6 sm:right-6 w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-xl transition-all z-10 backdrop-blur-sm"
-                aria-label="Close transaction details"
-                title="Close"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+            <div
+              className="bg-gray-900 w-full h-full min-h-screen overflow-y-auto"
+              style={{ minHeight: "100dvh" }}
+            >
+              {/* Mobile Header with Back Button */}
+              <div className="flex items-center justify-between p-4 border-b border-gray-700 sticky top-0 bg-gray-900/95 backdrop-blur-sm z-10">
+                <button
+                  onClick={onClose}
+                  className="text-gray-300 hover:text-white transition-colors flex items-center gap-2"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2.5}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  <span className="text-sm font-medium">Back</span>
+                </button>
+                <h1 className="text-lg font-bold text-white">
+                  Transaction Details
+                </h1>
+                <div className="w-16"></div> {/* Spacer for centering */}
+              </div>
 
               {/* Header Section with Gradient Background */}
-              <div className="relative bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 p-3 sm:p-6 pb-6 sm:pb-10">
+              <div className="relative bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 p-4 pb-8">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/50"></div>
                 <div className="relative z-10">
-                  <div className="flex items-start gap-2 sm:gap-3 mb-3 sm:mb-5">
+                  <div className="flex items-start gap-3 mb-4">
                     <div className="flex-shrink-0">
                       <CryptoIcon
                         symbol={transaction.asset}
@@ -370,25 +357,25 @@ export default function TransactionDetailsModal({
                       />
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-lg sm:text-xl font-bold text-white mb-1.5 sm:mb-2">
+                      <h2 className="text-xl font-bold text-white mb-2">
                         {getTransactionTitle()}
                       </h2>
                       <div className="flex items-center gap-2 flex-wrap">
                         <div
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md border font-semibold text-[9px] sm:text-[10px] uppercase tracking-wide ${
+                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border font-semibold text-xs uppercase tracking-wide ${
                             transaction.status === "completed"
-                              ? "bg-green-500/10 text-green-400 border-green-500/40 shadow-[0_0_8px_rgba(34,197,94,0.4)]"
+                              ? "bg-green-500/20 text-green-400 border-green-500/40 shadow-[0_0_12px_rgba(34,197,94,0.4)]"
                               : transaction.status === "pending"
                               ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
                               : "bg-red-500/20 text-red-400 border-red-500/30"
                           }`}
                         >
                           <div
-                            className={`w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full animate-pulse ${
+                            className={`w-2 h-2 rounded-full ${
                               transaction.status === "completed"
                                 ? "bg-green-400"
                                 : transaction.status === "pending"
-                                ? "bg-yellow-400"
+                                ? "bg-yellow-400 animate-pulse"
                                 : "bg-red-400"
                             }`}
                           ></div>
@@ -399,22 +386,31 @@ export default function TransactionDetailsModal({
                   </div>
 
                   {/* Transaction ID */}
-                  <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 sm:p-3 border border-white/10">
-                    <label className="block text-gray-400 text-[9px] sm:text-[10px] font-medium mb-1 sm:mb-1.5 uppercase tracking-wider">
+                  <div
+                    className="rounded-xl p-3"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                    }}
+                  >
+                    <label className="block text-gray-400 text-xs font-medium mb-2 uppercase tracking-wider">
                       Transaction ID
                     </label>
-                    <div className="flex items-center gap-1.5 sm:gap-2">
-                      <code className="flex-1 text-white font-mono text-[10px] sm:text-xs break-all">
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-white font-mono text-sm break-all">
                         {transaction.id}
                       </code>
                       <button
                         onClick={() => copyToClipboard(transaction.id)}
-                        className="flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-all"
+                        className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl transition-all active:scale-95"
                         aria-label="Copy transaction ID"
                       >
                         {copied ? (
                           <svg
-                            className="w-4 h-4"
+                            className="w-5 h-5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -428,7 +424,7 @@ export default function TransactionDetailsModal({
                           </svg>
                         ) : (
                           <svg
-                            className="w-4 h-4"
+                            className="w-5 h-5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -447,94 +443,225 @@ export default function TransactionDetailsModal({
                 </div>
               </div>
 
-              <div className="p-2 sm:p-5 pt-0">
+              <div className="p-4 pt-0">
                 {/* Main Transaction Details */}
-                <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4 -mt-3 sm:-mt-4">
+                <div className="space-y-3 mb-4 -mt-4">
                   {/* Amount Card */}
-                  <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/10 border border-blue-500/20 rounded-lg sm:rounded-xl p-2 sm:p-3 backdrop-blur-sm">
-                    <label className="block text-blue-400 text-[9px] sm:text-[10px] font-semibold mb-1 uppercase tracking-wider">
+                  <div
+                    className="rounded-xl p-4"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(59, 130, 246, 0.2)",
+                    }}
+                  >
+                    <label className="block text-blue-400 text-xs font-semibold mb-2 uppercase tracking-wider">
                       Amount
                     </label>
-                    <div className="text-white text-[11px] sm:text-sm font-bold break-all">
-                      <span className="text-white">
-                        {transaction.type === "deposit" ||
-                        transaction.type === "withdraw"
-                          ? transaction.amount.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })
-                          : transaction.amount.toLocaleString("en-US", {
-                              minimumFractionDigits: 8,
-                              maximumFractionDigits: 8,
-                            })}
-                      </span>{" "}
-                      <span className="text-white">{transaction.asset}</span>
+                    <div className="text-white text-xl font-bold">
+                      {transaction.type === "deposit" ||
+                      transaction.type === "withdraw"
+                        ? transaction.amount.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })
+                        : transaction.amount.toLocaleString("en-US", {
+                            minimumFractionDigits: 8,
+                            maximumFractionDigits: 8,
+                          })}
+                      <span className="text-gray-400 text-base ml-2">
+                        {transaction.asset}
+                      </span>
                     </div>
                   </div>
 
                   {/* Value Card */}
-                  <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/10 border border-purple-500/20 rounded-lg sm:rounded-xl p-2 sm:p-3 backdrop-blur-sm">
-                    <label className="block text-purple-400 text-[9px] sm:text-[10px] font-semibold mb-1 uppercase tracking-wider">
+                  <div
+                    className="rounded-xl p-4"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(168, 85, 247, 0.2)",
+                    }}
+                  >
+                    <label className="block text-purple-400 text-xs font-semibold mb-2 uppercase tracking-wider">
                       Value
                     </label>
-                    <div className="text-white text-[11px] sm:text-sm font-bold">
-                      <span className="text-white">
-                        {formatAmount(transaction.value, 2)}
-                      </span>{" "}
-                      <span className="text-white">{preferredCurrency}</span>
+                    <div className="text-white text-xl font-bold">
+                      {formatAmount(transaction.value, 2)}
+                      <span className="text-gray-400 text-base ml-2">
+                        {preferredCurrency}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Additional Details Grid */}
-                <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
+                <div className="space-y-3 mb-4">
                   {/* Date & Time */}
-                  <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 border border-gray-700/50 flex items-center justify-between">
-                    <label className="text-gray-400 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider">
-                      Date & Time
-                    </label>
-                    <div className="text-white text-[11px] sm:text-sm font-medium text-right">
-                      {transaction.date
-                        ? formatDate(transaction.date)
-                        : transaction.timestamp}
+                  <div
+                    className="rounded-xl p-4 flex items-center justify-between"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center">
+                        <svg
+                          className="w-5 h-5 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                      </div>
+                      <div>
+                        <label className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                          Date & Time
+                        </label>
+                        <div className="text-white font-medium">
+                          {transaction.date
+                            ? formatDate(transaction.date)
+                            : transaction.timestamp}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Fee */}
-                  {transaction.fee && (
-                    <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 border border-gray-700/50 flex items-center justify-between">
-                      <label className="text-gray-400 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider">
-                        Transaction Fee
-                      </label>
-                      <div className="text-white text-[11px] sm:text-sm font-medium">
-                        {formatAmount(transaction.fee, 2)}
+                  {transaction.fee !== undefined && transaction.fee > 0 && (
+                    <div
+                      className="rounded-xl p-4 flex items-center justify-between"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                        boxShadow:
+                          "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
+                          <svg
+                            className="w-5 h-5 text-orange-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <label className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                            Network Fee
+                          </label>
+                          <div className="text-white font-medium">
+                            {formatAmount(transaction.fee, 2)}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {/* Payment Method */}
                   {transaction.method && (
-                    <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 border border-gray-700/50 flex items-center justify-between">
-                      <label className="text-gray-400 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider">
-                        Payment Method
-                      </label>
-                      <div className="text-white text-[11px] sm:text-sm font-medium">
-                        {transaction.method}
+                    <div
+                      className="rounded-xl p-4 flex items-center justify-between"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                        boxShadow:
+                          "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                          <svg
+                            className="w-5 h-5 text-green-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <label className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                            Payment Method
+                          </label>
+                          <div className="text-white font-medium capitalize">
+                            {transaction.method}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {/* Exchange Rate */}
                   {transaction.rate && (
-                    <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 border border-gray-700/50 flex items-center justify-between">
-                      <label className="text-gray-400 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider">
-                        Exchange Rate
-                      </label>
-                      <div className="text-white text-[11px] sm:text-sm font-medium">
-                        $
-                        {transaction.rate.toLocaleString("en-US", {
-                          minimumFractionDigits: 2,
-                        })}
+                    <div
+                      className="rounded-xl p-4 flex items-center justify-between"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                        boxShadow:
+                          "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                          <svg
+                            className="w-5 h-5 text-cyan-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                            />
+                          </svg>
+                        </div>
+                        <div>
+                          <label className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                            Exchange Rate
+                          </label>
+                          <div className="text-white font-medium">
+                            $
+                            {transaction.rate.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                            })}{" "}
+                            per {transaction.asset}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -545,41 +672,52 @@ export default function TransactionDetailsModal({
                   transaction.address ||
                   transaction.network ||
                   transaction.confirmations !== undefined) && (
-                  <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-lg sm:rounded-xl p-2 sm:p-4 mb-3 sm:mb-4 border border-gray-700/50 backdrop-blur-sm">
-                    <h3 className="text-white font-bold text-sm sm:text-base mb-2 sm:mb-3 flex items-center gap-1.5 sm:gap-2">
-                      <svg
-                        className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
-                        />
-                      </svg>
+                  <div
+                    className="rounded-xl p-4 mb-4"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                    }}
+                  >
+                    <h3 className="text-white font-bold text-base mb-4 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                        <svg
+                          className="w-4 h-4 text-blue-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                          />
+                        </svg>
+                      </div>
                       Network Information
                     </h3>
-                    <div className="space-y-1.5 sm:space-y-2">
+                    <div className="space-y-3">
                       {transaction.hash && (
                         <div>
-                          <label className="block text-gray-400 text-[9px] sm:text-[10px] font-semibold mb-1 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
                             Transaction Hash
                           </label>
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 text-white font-mono text-[10px] sm:text-xs break-all">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white font-mono text-sm break-all">
                               {transaction.hash}
                             </div>
                             <button
                               onClick={() => copyToClipboard(transaction.hash!)}
-                              className="flex-shrink-0 w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all shadow-lg hover:shadow-orange-500/50"
+                              className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition-all shadow-lg hover:shadow-orange-500/50 active:scale-95"
                               aria-label="Copy transaction hash"
                             >
                               {copied ? (
                                 <svg
-                                  className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                                  className="w-5 h-5"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -593,7 +731,7 @@ export default function TransactionDetailsModal({
                                 </svg>
                               ) : (
                                 <svg
-                                  className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                                  className="w-5 h-5"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -613,23 +751,23 @@ export default function TransactionDetailsModal({
 
                       {transaction.address && (
                         <div>
-                          <label className="block text-gray-400 text-[9px] sm:text-[10px] font-semibold mb-1 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
                             Wallet Address
                           </label>
-                          <div className="flex items-center gap-1.5 sm:gap-2">
-                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 text-white font-mono text-[10px] sm:text-xs break-all">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white font-mono text-sm break-all">
                               {transaction.address}
                             </div>
                             <button
                               onClick={() =>
                                 copyToClipboard(transaction.address!)
                               }
-                              className="flex-shrink-0 w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all shadow-lg hover:shadow-orange-500/50"
+                              className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition-all shadow-lg hover:shadow-orange-500/50 active:scale-95"
                               aria-label="Copy wallet address"
                             >
                               {copied ? (
                                 <svg
-                                  className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                                  className="w-5 h-5"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -643,7 +781,7 @@ export default function TransactionDetailsModal({
                                 </svg>
                               ) : (
                                 <svg
-                                  className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                                  className="w-5 h-5"
                                   fill="none"
                                   stroke="currentColor"
                                   viewBox="0 0 24 24"
@@ -663,10 +801,10 @@ export default function TransactionDetailsModal({
 
                       {transaction.network && (
                         <div>
-                          <label className="block text-gray-400 text-[9px] sm:text-[10px] font-semibold mb-1 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
                             Network
                           </label>
-                          <div className="text-white font-semibold text-[11px] sm:text-sm bg-black/40 border border-gray-600/30 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2">
+                          <div className="text-white font-semibold bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2">
                             {transaction.network}
                           </div>
                         </div>
@@ -674,13 +812,13 @@ export default function TransactionDetailsModal({
 
                       {transaction.confirmations !== undefined && (
                         <div>
-                          <label className="block text-gray-400 text-[9px] sm:text-[10px] font-semibold mb-1 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
                             Confirmations
                           </label>
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-700/50 rounded-full h-2 sm:h-2.5 overflow-hidden border border-gray-600/30">
+                          <div className="flex items-center gap-3">
+                            <div className="flex-1 bg-gray-700/50 rounded-full h-3 overflow-hidden border border-gray-600/30">
                               <div
-                                className="bg-gradient-to-r from-orange-500 to-orange-400 h-full rounded-full transition-all duration-500 shadow-lg"
+                                className="bg-gradient-to-r from-green-500 to-green-400 h-full rounded-full transition-all duration-500 shadow-lg"
                                 style={{
                                   width: `${Math.min(
                                     100,
@@ -691,7 +829,7 @@ export default function TransactionDetailsModal({
                                 }}
                               ></div>
                             </div>
-                            <div className="flex-shrink-0 text-white font-bold text-[10px] sm:text-xs bg-gray-700/50 border border-gray-600/30 rounded-lg px-2 py-1">
+                            <div className="flex-shrink-0 text-white font-bold text-sm bg-gray-700/50 border border-gray-600/30 rounded-lg px-3 py-1">
                               {transaction.confirmations}/
                               {transaction.maxConfirmations || 6}
                             </div>
@@ -704,10 +842,19 @@ export default function TransactionDetailsModal({
 
                 {/* Description */}
                 {transaction.description && (
-                  <div className="bg-gray-800/50 rounded-lg p-2 sm:p-3 mb-3 sm:mb-4 border border-gray-700/50">
-                    <h3 className="text-white font-semibold text-xs sm:text-sm mb-1.5 sm:mb-2 flex items-center gap-1.5">
+                  <div
+                    className="rounded-xl p-4 mb-4"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                    }}
+                  >
+                    <h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
                       <svg
-                        className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-gray-400"
+                        className="w-4 h-4 text-gray-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -721,17 +868,24 @@ export default function TransactionDetailsModal({
                       </svg>
                       Description
                     </h3>
-                    <p className="text-gray-300 text-[10px] sm:text-xs leading-relaxed">
+                    <p className="text-gray-300 text-sm leading-relaxed">
                       {transaction.description}
                     </p>
                   </div>
                 )}
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-1 sm:pt-2">
+                <div className="flex gap-3 pt-2 pb-8">
                   <button
                     onClick={onClose}
-                    className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl text-xs sm:text-sm"
+                    className="flex-1 py-4 px-6 rounded-xl font-semibold transition-all active:scale-95 text-white"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                      boxShadow:
+                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                    }}
                   >
                     Close
                   </button>
@@ -743,10 +897,10 @@ export default function TransactionDetailsModal({
                           "_blank"
                         )
                       }
-                      className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg sm:rounded-xl font-semibold transition-all shadow-lg hover:shadow-orange-500/50 flex items-center justify-center gap-1.5 sm:gap-2 text-xs sm:text-sm"
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-4 px-6 rounded-xl font-semibold transition-all active:scale-95 shadow-lg hover:shadow-blue-500/50 flex items-center justify-center gap-2"
                     >
                       <svg
-                        className="w-3.5 h-3.5 sm:w-4 sm:h-4"
+                        className="w-5 h-5"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -758,7 +912,7 @@ export default function TransactionDetailsModal({
                           d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
                         />
                       </svg>
-                      View on Blockchain
+                      View on Explorer
                     </button>
                   )}
                 </div>

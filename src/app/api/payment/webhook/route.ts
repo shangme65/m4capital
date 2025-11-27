@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         if (deposit.status !== "PENDING" && deposit.User) {
           await prisma.notification.create({
             data: {
-            id: generateId(),
+              id: generateId(),
               userId: deposit.User.id,
               type: "DEPOSIT",
               title: `Incoming ${deposit.cryptoCurrency || "BTC"} Deposit`,
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       if (!portfolio) {
         portfolio = await prisma.portfolio.create({
           data: {
-          id: generateId(),
+            id: generateId(),
             userId: deposit.User.id,
             balance: 0,
             assets: [],
@@ -175,27 +175,29 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      // Add amount to balance
+      // Add amount to balance in the deposit's currency
       const newBalance =
         parseFloat(portfolio.balance.toString()) +
         parseFloat(deposit.amount.toString());
+      const depositCurrency = deposit.currency || "USD";
 
       await prisma.portfolio.update({
         where: { id: portfolio.id },
         data: {
           balance: newBalance,
+          balanceCurrency: depositCurrency,
         },
       });
 
       console.log(
-        `💵 Credited ${deposit.amount} ${deposit.currency} to user ${deposit.User.email}`
+        `💵 Credited ${deposit.amount} ${depositCurrency} to user ${deposit.User.email}`
       );
-      console.log(`New balance: ${newBalance}`);
+      console.log(`New balance: ${newBalance} ${depositCurrency}`);
 
       // Create notification for successful deposit
       await prisma.notification.create({
         data: {
-            id: generateId(),
+          id: generateId(),
           userId: deposit.User.id,
           type: "DEPOSIT",
           title: "Deposit Completed",

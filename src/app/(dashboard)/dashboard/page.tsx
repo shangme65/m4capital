@@ -16,6 +16,7 @@ import AssetDetailsModal from "@/components/client/AssetDetailsModal";
 import AddCryptoModal from "@/components/client/AddCryptoModal";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -398,11 +399,32 @@ function DashboardContent() {
     ? 0
     : userAssets.reduce((total, asset) => total + asset.value, 0);
 
+  // Get the raw balance and its stored currency
   const availableBalance = portfolio?.portfolio?.balance
     ? parseFloat(portfolio.portfolio.balance.toString())
     : 0;
+  const balanceCurrency = portfolio?.portfolio?.balanceCurrency || "USD";
 
   const portfolioValue = cryptoAssetsValue + availableBalance;
+
+  // Helper function to format balance correctly
+  // If stored currency matches preferred currency, show directly (no conversion)
+  // Otherwise, convert from stored currency to preferred currency
+  const formatBalanceDisplay = (balance: number): string => {
+    if (balanceCurrency === preferredCurrency) {
+      // Same currency - show directly without conversion
+      return `${getCurrencySymbol(preferredCurrency)}${balance.toLocaleString(
+        undefined,
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+      )}`;
+    }
+    // Different currency - formatAmount will convert from USD to preferred
+    // Note: If balanceCurrency is not USD, this may need additional conversion logic
+    return formatAmount(balance, 2);
+  };
 
   // Income percent: measure change of user's money (deposits + received + earnings)
   // Use server-provided periodIncomePercent when available for selected period
@@ -826,7 +848,7 @@ function DashboardContent() {
             {portfolioLoading ? (
               <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
             ) : showBalances ? (
-              formatAmount(availableBalance || 0, 2)
+              formatBalanceDisplay(availableBalance || 0)
             ) : (
               "••••••"
             )}
@@ -1373,6 +1395,7 @@ function DashboardContent() {
             ? parseFloat(portfolio.portfolio.balance.toString())
             : 0
         }
+        balanceCurrency={balanceCurrency}
         allAssets={userAssets}
       />
 

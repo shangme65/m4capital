@@ -41,7 +41,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const transferFee = 0.5; // Fixed transfer fee
+    // Dynamic network fees based on asset type (in USD equivalent)
+    const getNetworkFee = (symbol: string): number => {
+      const networkFees: { [key: string]: number } = {
+        BTC: 2.5, // Bitcoin average fee
+        ETH: 3.0, // Ethereum gas fee
+        LTC: 0.05, // Litecoin low fee
+        BCH: 0.01, // Bitcoin Cash low fee
+        XRP: 0.001, // Ripple very low
+        TRX: 0.001, // Tron very low
+        TON: 0.01, // Toncoin low
+        SOL: 0.001, // Solana very low
+        DOGE: 0.5, // Dogecoin
+        ADA: 0.2, // Cardano
+        DOT: 0.1, // Polkadot
+        USDT: 1.0, // Tether (depends on network)
+        USDC: 1.0, // USD Coin
+        ETC: 0.1, // Ethereum Classic
+        USD: 0.5, // Fiat transfer fee
+      };
+      return networkFees[symbol] || 0.5; // Default $0.50
+    };
+
+    const transferFee = getNetworkFee(asset);
     const totalDeducted = amount + transferFee;
 
     // Find user with portfolio

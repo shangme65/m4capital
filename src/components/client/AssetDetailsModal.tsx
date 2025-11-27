@@ -8,6 +8,11 @@ import AssetSendModal from "./AssetSendModal";
 import AssetReceiveModal from "./AssetReceiveModal";
 import AssetSwapModal from "./AssetSwapModal";
 import AssetSellModal from "./AssetSellModal";
+import TransactionDetailsModal, {
+  DetailedTransaction,
+} from "./TransactionDetailsModal";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface Asset {
   symbol: string;
@@ -23,6 +28,7 @@ interface AssetDetailsModalProps {
   onClose: () => void;
   asset: Asset | null;
   userBalance: number;
+  balanceCurrency?: string;
   allAssets?: Asset[];
 }
 
@@ -181,6 +187,7 @@ export default function AssetDetailsModal({
   onClose,
   asset,
   userBalance,
+  balanceCurrency = "USD",
   allAssets = [],
 }: AssetDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<"holdings" | "history" | "about">(
@@ -192,6 +199,35 @@ export default function AssetDetailsModal({
   const [showSwapModal, setShowSwapModal] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSellModal, setShowSellModal] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<DetailedTransaction | null>(null);
+  const [showTransactionDetails, setShowTransactionDetails] = useState(false);
+
+  // Currency context for user's preferred currency
+  const { preferredCurrency, formatAmount, convertAmount } = useCurrency();
+
+  // Helper to format user balance - show directly if currencies match
+  const formatUserBalance = (balance: number): string => {
+    if (balanceCurrency === preferredCurrency) {
+      // Same currency - show directly without conversion
+      const symbols: { [key: string]: string } = {
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        NGN: "₦",
+        ZAR: "R",
+        KES: "KSh",
+        GHS: "₵",
+      };
+      const symbol = symbols[preferredCurrency] || "$";
+      return `${symbol}${balance.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+    // Different currency - formatAmount converts from USD to preferred
+    return formatAmount(balance, 2);
+  };
 
   // Prevent body scroll when modal is open and handle browser back button
   useEffect(() => {
@@ -351,15 +387,18 @@ export default function AssetDetailsModal({
           />
           <motion.div
             key="asset-details-content"
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
-            className="fixed inset-0 z-50 flex items-start justify-center p-0 overflow-auto"
+            initial={{ opacity: 0, y: "100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "100%" }}
+            transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
+            className="fixed inset-0 z-50 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
             style={{ touchAction: "auto" }}
           >
-            <div className="bg-gray-900 w-full h-full overflow-y-auto">
+            <div
+              className="bg-gray-900 w-full h-full min-h-screen overflow-y-auto"
+              style={{ minHeight: "100dvh" }}
+            >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-700">
                 <button
@@ -388,20 +427,37 @@ export default function AssetDetailsModal({
 
               {/* Price Section */}
               <div className="p-4 bg-gray-900">
+                {/* Network Fee Indicator - Shows estimated transfer fee for this asset */}
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
-                    <span className="text-white text-xs">⛽</span>
-                  </div>
-                  <span className="text-gray-400">$2.23</span>
+                  <span className="text-gray-400 text-sm">⛽</span>
+                  <span className="text-gray-400 text-sm">
+                    {(() => {
+                      // Estimated network fees per asset (in USD equivalent)
+                      const networkFees: { [key: string]: number } = {
+                        BTC: 2.5, // Bitcoin average fee
+                        ETH: 3.0, // Ethereum gas fee
+                        LTC: 0.05, // Litecoin low fee
+                        BCH: 0.01, // Bitcoin Cash low fee
+                        XRP: 0.001, // Ripple very low
+                        TRX: 0.001, // Tron very low
+                        TON: 0.01, // Toncoin low
+                        SOL: 0.001, // Solana very low
+                        DOGE: 0.5, // Dogecoin
+                        ADA: 0.2, // Cardano
+                        DOT: 0.1, // Polkadot
+                        USDT: 1.0, // Tether (depends on network)
+                        USDC: 1.0, // USD Coin
+                        ETC: 0.1, // Ethereum Classic
+                      };
+                      const fee = networkFees[asset.symbol] || 0.5; // Default $0.50
+                      return formatAmount(convertAmount(fee), 2);
+                    })()}
+                  </span>
                 </div>
 
                 <div className="text-center mb-6">
                   <div className="text-4xl md:text-5xl font-bold text-white mb-2">
-                    $
-                    {currentPrice.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    {formatAmount(convertAmount(currentPrice), 2)}
                   </div>
                   <div
                     className={`flex items-center justify-center gap-1 ${
@@ -412,7 +468,12 @@ export default function AssetDetailsModal({
                       {priceChange >= 0 ? "↑" : "↓"}
                     </span>
                     <span className="text-lg font-medium">
-                      ${Math.abs((currentPrice * priceChange) / 100).toFixed(2)}{" "}
+                      {formatAmount(
+                        convertAmount(
+                          Math.abs((currentPrice * priceChange) / 100)
+                        ),
+                        2
+                      )}{" "}
                       ({priceChange >= 0 ? "+" : ""}
                       {priceChange.toFixed(2)}%)
                     </span>
@@ -465,49 +526,104 @@ export default function AssetDetailsModal({
                   ))}
                 </div>
 
-                {/* Buy Now Section */}
-                <div className="bg-gray-800 rounded-lg p-4 mb-6">
+                {/* Buy Now Section - 3D Card Style */}
+                <div
+                  className="rounded-xl p-4 mb-6"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                    boxShadow:
+                      "0 15px 30px -8px rgba(0, 0, 0, 0.6), 0 8px 16px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                  }}
+                >
                   <h3 className="text-lg font-semibold text-white mb-4">
                     Buy now
                   </h3>
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <div className="text-2xl font-bold text-white">
-                        ${selectedBuyAmount.toFixed(2)}{" "}
-                        <span className="text-gray-400">USD</span>
+                        {formatAmount(convertAmount(selectedBuyAmount), 2)}{" "}
+                        <span className="text-gray-400">
+                          {preferredCurrency}
+                        </span>
                       </div>
                       <div className="flex gap-2 mt-2">
                         {quickBuyAmounts.map((amount) => (
                           <button
                             key={amount}
                             onClick={() => setSelectedBuyAmount(amount)}
-                            className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                               selectedBuyAmount === amount
-                                ? "bg-blue-600 text-white"
-                                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                                ? "text-white"
+                                : "text-gray-300 hover:text-white"
                             }`}
+                            style={
+                              selectedBuyAmount === amount
+                                ? {
+                                    background:
+                                      "linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%)",
+                                    boxShadow:
+                                      "0 4px 12px -2px rgba(37, 99, 235, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
+                                    border: "1px solid rgba(59, 130, 246, 0.4)",
+                                  }
+                                : {
+                                    background:
+                                      "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                                    boxShadow:
+                                      "0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                                    border:
+                                      "1px solid rgba(255, 255, 255, 0.06)",
+                                  }
+                            }
                           >
-                            ${amount}
+                            {formatAmount(convertAmount(amount), 0)}
                           </button>
                         ))}
                       </div>
                     </div>
                     <button
                       onClick={handleBuy}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors"
+                      className="text-white px-6 py-3 rounded-full font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)",
+                        boxShadow:
+                          "0 8px 20px -4px rgba(37, 99, 235, 0.6), 0 4px 10px -2px rgba(0, 0, 0, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.2)",
+                        border: "1px solid rgba(59, 130, 246, 0.5)",
+                      }}
                     >
                       Buy
                     </button>
                   </div>
                   <p className="text-sm text-gray-400">
                     Buying {(selectedBuyAmount / currentPrice).toFixed(5)}{" "}
-                    {asset.symbol} • Bank transfer • Onramp Money
+                    {asset.symbol} from available balance:{" "}
+                    <span
+                      className="font-bold bg-gradient-to-r from-green-400 via-white to-green-400 bg-clip-text text-transparent"
+                      style={{
+                        textShadow:
+                          "0 0 15px rgba(34,197,94,0.1), 0 2px 4px rgba(0,0,0,0.8)",
+                        WebkitTextStroke: "0.3px rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      {formatUserBalance(userBalance)}
+                    </span>
                   </p>
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="border-b border-gray-700">
+              {/* 3D Tabs Card */}
+              <div
+                className="mx-4 rounded-xl overflow-hidden"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                  boxShadow:
+                    "0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                }}
+              >
                 <div className="flex">
                   {[
                     { key: "holdings", label: "Holdings" },
@@ -517,9 +633,9 @@ export default function AssetDetailsModal({
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key as any)}
-                      className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
+                      className={`flex-1 py-3 px-4 text-center font-medium transition-all duration-200 ${
                         activeTab === tab.key
-                          ? "text-blue-500 border-b-2 border-blue-500"
+                          ? "text-blue-400 border-b-2 border-blue-500 shadow-[0_2px_8px_rgba(59,130,246,0.3)]"
                           : "text-gray-400 hover:text-white"
                       }`}
                     >
@@ -536,36 +652,66 @@ export default function AssetDetailsModal({
                     <h3 className="text-lg font-semibold text-white mb-4">
                       My Balance
                     </h3>
-                    <div className="bg-gray-800 rounded-lg p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">
-                            {asset.icon}
-                          </span>
+                    {/* 3D Card with depth effect */}
+                    <div
+                      className="relative rounded-xl p-3 flex items-center justify-between overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                        boxShadow:
+                          "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                      }}
+                    >
+                      {/* Subtle glow effect */}
+                      <div
+                        className="absolute inset-0 opacity-20 rounded-xl"
+                        style={{
+                          background:
+                            "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
+                        }}
+                      />
+
+                      <div className="flex items-center gap-3 relative z-10">
+                        {/* 3D Logo matching dashboard style */}
+                        <div
+                          className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                          style={{
+                            boxShadow: `0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)`,
+                          }}
+                        >
+                          {/* Inner glow */}
+                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                          <CryptoIcon
+                            symbol={asset.symbol}
+                            size="md"
+                            showNetwork={true}
+                            className="relative z-10 drop-shadow-lg"
+                          />
                         </div>
                         <div>
-                          <div className="font-semibold text-white">
+                          <div className="font-bold text-white text-lg">
                             {asset.name}
                           </div>
-                          <div className="text-gray-400">
-                            {asset.amount.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 8,
-                            })}{" "}
+                          <div className="text-gray-400 text-sm">
                             {asset.symbol}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-white">
-                          $
-                          {asset.value.toLocaleString("en-US", {
+                      <div className="text-right relative z-10">
+                        <div className="font-bold text-white text-xl">
+                          {formatAmount(convertAmount(asset.value), 2)}
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          {asset.amount.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
+                            maximumFractionDigits: 8,
                           })}
                         </div>
-                        <div className="text-gray-500">-</div>
                       </div>
                     </div>
+                    {/* Bottom margin spacer */}
+                    <div className="mb-8"></div>
                   </div>
                 )}
 
@@ -575,27 +721,194 @@ export default function AssetDetailsModal({
                       Recent Transactions
                     </h3>
                     {history.length > 0 ? (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {history.map((tx) => (
                           <div
                             key={tx.id}
-                            className="bg-gray-800 rounded-lg p-4"
+                            onClick={() => {
+                              // Convert to DetailedTransaction format
+                              const detailedTx: DetailedTransaction = {
+                                id:
+                                  tx.id?.toString() ||
+                                  tx.paymentId ||
+                                  `tx-${Date.now()}`,
+                                type: tx.type as
+                                  | "buy"
+                                  | "sell"
+                                  | "deposit"
+                                  | "withdraw"
+                                  | "convert"
+                                  | "transfer",
+                                asset: tx.cryptoCurrency || asset.symbol,
+                                amount:
+                                  typeof tx.amount === "number"
+                                    ? tx.amount
+                                    : parseFloat(tx.amount) || 0,
+                                value:
+                                  tx.fiatValue ||
+                                  tx.price *
+                                    (typeof tx.amount === "number"
+                                      ? tx.amount
+                                      : parseFloat(tx.amount) || 0),
+                                timestamp: new Date(tx.date).toLocaleString(),
+                                status: (tx.status?.toLowerCase() ===
+                                  "completed" ||
+                                tx.status?.toLowerCase() === "closed"
+                                  ? "completed"
+                                  : tx.status?.toLowerCase() === "pending" ||
+                                    tx.status?.toLowerCase() === "confirming"
+                                  ? "pending"
+                                  : "failed") as
+                                  | "completed"
+                                  | "pending"
+                                  | "failed",
+                                fee: tx.fee || undefined,
+                                method:
+                                  tx.method || tx.paymentMethod || undefined,
+                                date: new Date(tx.date),
+                                currency: tx.currency || preferredCurrency,
+                                rate: tx.price || undefined,
+                                hash: tx.hash || tx.txHash || undefined,
+                                network: tx.network || undefined,
+                                address:
+                                  tx.address || tx.payAddress || undefined,
+                                confirmations: tx.confirmations,
+                                maxConfirmations: tx.maxConfirmations || 6,
+                              };
+                              setSelectedTransaction(detailedTx);
+                              setShowTransactionDetails(true);
+                            }}
+                            className="rounded-xl p-4 transition-all duration-200 hover:scale-[1.01] cursor-pointer active:scale-[0.99]"
+                            style={{
+                              background:
+                                "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                              boxShadow:
+                                "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                              border: "1px solid rgba(255, 255, 255, 0.06)",
+                            }}
                           >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium text-white capitalize">
-                                  {tx.type} {asset.symbol}
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                    tx.type === "buy" || tx.type === "deposit"
+                                      ? "bg-green-500/20"
+                                      : tx.type === "sell"
+                                      ? "bg-red-500/20"
+                                      : "bg-blue-500/20"
+                                  }`}
+                                >
+                                  <span
+                                    className={`text-lg ${
+                                      tx.type === "buy" || tx.type === "deposit"
+                                        ? "text-green-400"
+                                        : tx.type === "sell"
+                                        ? "text-red-400"
+                                        : "text-blue-400"
+                                    }`}
+                                  >
+                                    {tx.type === "buy" || tx.type === "deposit"
+                                      ? "↓"
+                                      : tx.type === "sell"
+                                      ? "↑"
+                                      : "↔"}
+                                  </span>
                                 </div>
-                                <div className="text-sm text-gray-400">
-                                  {tx.date}
+                                <div>
+                                  <div className="font-semibold text-white capitalize text-base">
+                                    {tx.type}{" "}
+                                    {tx.cryptoCurrency || asset.symbol}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {new Date(tx.date).toLocaleDateString(
+                                      "en-US",
+                                      {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      }
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    tx.status?.toLowerCase() === "completed" ||
+                                    tx.status?.toLowerCase() === "closed"
+                                      ? "bg-green-500/20 text-green-400"
+                                      : tx.status?.toLowerCase() ===
+                                          "pending" ||
+                                        tx.status?.toLowerCase() ===
+                                          "confirming"
+                                      ? "bg-yellow-500/20 text-yellow-400"
+                                      : "bg-gray-500/20 text-gray-400"
+                                  }`}
+                                >
+                                  {tx.status || "completed"}
+                                </div>
+                                {/* Chevron indicator for clickable */}
+                                <svg
+                                  className="w-4 h-4 text-gray-500"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+
+                            <div className="flex items-end justify-between pt-2 border-t border-gray-700/50">
+                              <div>
+                                <div className="text-xs text-gray-500 mb-1">
+                                  Amount
+                                </div>
+                                <div
+                                  className={`font-bold text-lg ${
+                                    tx.type === "buy" || tx.type === "deposit"
+                                      ? "text-green-400"
+                                      : tx.type === "sell"
+                                      ? "text-red-400"
+                                      : "text-white"
+                                  }`}
+                                >
+                                  {tx.type === "buy" || tx.type === "deposit"
+                                    ? "+"
+                                    : tx.type === "sell"
+                                    ? "-"
+                                    : ""}
+                                  {typeof tx.amount === "number"
+                                    ? tx.amount.toLocaleString(undefined, {
+                                        maximumFractionDigits: 8,
+                                      })
+                                    : tx.amount}{" "}
+                                  {tx.cryptoCurrency || asset.symbol}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="font-medium text-white">
-                                  {tx.amount} {asset.symbol}
+                                <div className="text-xs text-gray-500 mb-1">
+                                  Value
                                 </div>
-                                <div className="text-sm text-gray-400">
-                                  ${tx.price.toLocaleString()}
+                                <div className="font-semibold text-white">
+                                  {tx.fiatValue
+                                    ? formatAmount(tx.fiatValue, 2)
+                                    : formatAmount(
+                                        convertAmount(
+                                          tx.price *
+                                            (typeof tx.amount === "number"
+                                              ? tx.amount
+                                              : parseFloat(tx.amount))
+                                        ),
+                                        2
+                                      )}
                                 </div>
                               </div>
                             </div>
@@ -687,52 +1000,52 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Bottom Action Bar */}
-              <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-3">
-                <div className="flex justify-center gap-4 max-w-md mx-auto">
+              <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-2">
+                <div className="flex justify-center gap-3 max-w-md mx-auto">
                   <button
                     onClick={handleSend}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       ↑
                     </div>
-                    <span className="text-xs font-medium">Send</span>
+                    <span className="text-[10px] font-medium">Send</span>
                   </button>
                   <button
                     onClick={handleReceive}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       ↓
                     </div>
-                    <span className="text-xs font-medium">Receive</span>
+                    <span className="text-[10px] font-medium">Receive</span>
                   </button>
                   <button
                     onClick={handleSwap}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       ⇄
                     </div>
-                    <span className="text-xs font-medium">Swap</span>
+                    <span className="text-[10px] font-medium">Swap</span>
                   </button>
                   <button
                     onClick={handleBuy}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-green-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-green-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       ⚡
                     </div>
-                    <span className="text-xs font-medium">Buy</span>
+                    <span className="text-[10px] font-medium">Buy</span>
                   </button>
                   <button
                     onClick={handleSell}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-orange-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-orange-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       🏛
                     </div>
-                    <span className="text-xs font-medium">Sell</span>
+                    <span className="text-[10px] font-medium">Sell</span>
                   </button>
                 </div>
               </div>
@@ -799,6 +1112,16 @@ export default function AssetDetailsModal({
               amount: asset?.amount || 0,
               price: currentPrice,
             }}
+          />
+
+          {/* Transaction Details Modal */}
+          <TransactionDetailsModal
+            isOpen={showTransactionDetails}
+            onClose={() => {
+              setShowTransactionDetails(false);
+              setSelectedTransaction(null);
+            }}
+            transaction={selectedTransaction}
           />
         </>
       )}
