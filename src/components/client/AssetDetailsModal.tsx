@@ -193,17 +193,32 @@ export default function AssetDetailsModal({
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSellModal, setShowSellModal] = useState(false);
 
-  // Prevent body scroll when modal is open
+  // Prevent body scroll when modal is open and handle browser back button
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
+
+      // Push a state to handle browser back button
+      window.history.pushState({ assetModal: true }, "");
+
+      // Handle browser back button
+      const handlePopState = (event: PopStateEvent) => {
+        onClose();
+      };
+
+      window.addEventListener("popstate", handlePopState);
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+        document.body.style.overflow = "unset";
+      };
     } else {
       document.body.style.overflow = "unset";
     }
     return () => {
       document.body.style.overflow = "unset";
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   // Action handlers
   const handleSend = () => {
@@ -344,26 +359,26 @@ export default function AssetDetailsModal({
             onClick={(e) => e.stopPropagation()}
             style={{ touchAction: "auto" }}
           >
-            <div className="bg-white w-full h-full overflow-y-auto">
+            <div className="bg-gray-900 w-full h-full overflow-y-auto">
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between p-4 border-b border-gray-700">
                 <button
                   onClick={onClose}
-                  className="text-gray-600 hover:text-gray-800 transition-colors"
+                  className="text-gray-300 hover:text-white transition-colors"
                   aria-label="Go back"
                 >
                   <ArrowLeft size={24} />
                 </button>
                 <div className="text-center">
-                  <h1 className="text-xl font-bold text-gray-900">
+                  <h1 className="text-xl font-bold text-white">
                     {asset.symbol}
                   </h1>
-                  <p className="text-sm text-gray-500">COIN | {asset.name}</p>
+                  <p className="text-sm text-gray-400">COIN | {asset.name}</p>
                 </div>
                 <button
                   onClick={() => setIsStarred(!isStarred)}
                   className={`transition-colors ${
-                    isStarred ? "text-yellow-500" : "text-gray-400"
+                    isStarred ? "text-yellow-500" : "text-gray-500"
                   }`}
                   aria-label="Add to favorites"
                 >
@@ -372,16 +387,16 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Price Section */}
-              <div className="p-4 bg-white">
+              <div className="p-4 bg-gray-900">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
                     <span className="text-white text-xs">⛽</span>
                   </div>
-                  <span className="text-gray-600">$2.23</span>
+                  <span className="text-gray-400">$2.23</span>
                 </div>
 
                 <div className="text-center mb-6">
-                  <div className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+                  <div className="text-4xl md:text-5xl font-bold text-white mb-2">
                     $
                     {currentPrice.toLocaleString("en-US", {
                       minimumFractionDigits: 2,
@@ -441,8 +456,8 @@ export default function AssetDetailsModal({
                       onClick={() => setSelectedPeriod(period.key as any)}
                       className={`px-3 py-1 text-sm transition-colors rounded ${
                         selectedPeriod === period.key
-                          ? "bg-gray-900 text-white"
-                          : "text-gray-600 hover:text-gray-900"
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-400 hover:text-white"
                       }`}
                     >
                       {period.label}
@@ -451,15 +466,15 @@ export default function AssetDetailsModal({
                 </div>
 
                 {/* Buy Now Section */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <div className="bg-gray-800 rounded-lg p-4 mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-4">
                     Buy now
                   </h3>
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-2xl font-bold text-white">
                         ${selectedBuyAmount.toFixed(2)}{" "}
-                        <span className="text-gray-500">USD</span>
+                        <span className="text-gray-400">USD</span>
                       </div>
                       <div className="flex gap-2 mt-2">
                         {quickBuyAmounts.map((amount) => (
@@ -469,7 +484,7 @@ export default function AssetDetailsModal({
                             className={`px-3 py-1 rounded-full text-sm transition-colors ${
                               selectedBuyAmount === amount
                                 ? "bg-blue-600 text-white"
-                                : "bg-blue-100 text-blue-600 hover:bg-blue-200"
+                                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
                             }`}
                           >
                             ${amount}
@@ -484,7 +499,7 @@ export default function AssetDetailsModal({
                       Buy
                     </button>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-400">
                     Buying {(selectedBuyAmount / currentPrice).toFixed(5)}{" "}
                     {asset.symbol} • Bank transfer • Onramp Money
                   </p>
@@ -492,7 +507,7 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Tabs */}
-              <div className="border-b border-gray-200">
+              <div className="border-b border-gray-700">
                 <div className="flex">
                   {[
                     { key: "holdings", label: "Holdings" },
@@ -504,8 +519,8 @@ export default function AssetDetailsModal({
                       onClick={() => setActiveTab(tab.key as any)}
                       className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
                         activeTab === tab.key
-                          ? "text-blue-600 border-b-2 border-blue-600"
-                          : "text-gray-600 hover:text-gray-900"
+                          ? "text-blue-500 border-b-2 border-blue-500"
+                          : "text-gray-400 hover:text-white"
                       }`}
                     >
                       {tab.label}
@@ -518,10 +533,10 @@ export default function AssetDetailsModal({
               <div className="p-4 pb-20">
                 {activeTab === "holdings" && (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <h3 className="text-lg font-semibold text-white mb-4">
                       My Balance
                     </h3>
-                    <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
+                    <div className="bg-gray-800 rounded-lg p-4 flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
                           <span className="text-white font-bold text-lg">
@@ -529,10 +544,10 @@ export default function AssetDetailsModal({
                           </span>
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900">
+                          <div className="font-semibold text-white">
                             {asset.name}
                           </div>
-                          <div className="text-gray-600">
+                          <div className="text-gray-400">
                             {asset.amount.toLocaleString("en-US", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 8,
@@ -542,7 +557,7 @@ export default function AssetDetailsModal({
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-semibold text-gray-900">
+                        <div className="font-semibold text-white">
                           $
                           {asset.value.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
@@ -556,7 +571,7 @@ export default function AssetDetailsModal({
 
                 {activeTab === "history" && (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <h3 className="text-lg font-semibold text-white mb-4">
                       Recent Transactions
                     </h3>
                     {history.length > 0 ? (
@@ -564,22 +579,22 @@ export default function AssetDetailsModal({
                         {history.map((tx) => (
                           <div
                             key={tx.id}
-                            className="bg-gray-50 rounded-lg p-4"
+                            className="bg-gray-800 rounded-lg p-4"
                           >
                             <div className="flex items-center justify-between">
                               <div>
-                                <div className="font-medium text-gray-900 capitalize">
+                                <div className="font-medium text-white capitalize">
                                   {tx.type} {asset.symbol}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-sm text-gray-400">
                                   {tx.date}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="font-medium text-gray-900">
+                                <div className="font-medium text-white">
                                   {tx.amount} {asset.symbol}
                                 </div>
-                                <div className="text-sm text-gray-600">
+                                <div className="text-sm text-gray-400">
                                   ${tx.price.toLocaleString()}
                                 </div>
                               </div>
@@ -589,13 +604,13 @@ export default function AssetDetailsModal({
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <div className="text-gray-400 mb-2">📱</div>
-                        <p className="text-gray-600 mb-2">
+                        <div className="text-gray-500 mb-2">📱</div>
+                        <p className="text-gray-400 mb-2">
                           Transactions will appear here.
                         </p>
                         <p className="text-gray-500 text-sm">
                           Cannot find your transaction?{" "}
-                          <button className="text-blue-600 hover:underline">
+                          <button className="text-blue-500 hover:underline">
                             Check explorer
                           </button>
                         </p>
@@ -610,39 +625,39 @@ export default function AssetDetailsModal({
                 {activeTab === "about" && info && (
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <h3 className="text-lg font-semibold text-white mb-2">
                         About {asset.symbol}
                       </h3>
-                      <p className="text-gray-600 leading-relaxed">
+                      <p className="text-gray-400 leading-relaxed">
                         {info.description}
                       </p>
-                      <button className="text-blue-600 hover:underline mt-2">
+                      <button className="text-blue-500 hover:underline mt-2">
                         Read more
                       </button>
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      <h3 className="text-lg font-semibold text-white mb-4">
                         Stats
                       </h3>
                       <div className="space-y-4">
-                        <div className="bg-gray-50 rounded-lg p-4 flex justify-between">
-                          <span className="text-gray-600">Market cap</span>
-                          <span className="font-medium text-gray-900">
+                        <div className="bg-gray-800 rounded-lg p-4 flex justify-between">
+                          <span className="text-gray-400">Market cap</span>
+                          <span className="font-medium text-white">
                             {info.marketCap}
                           </span>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-4 flex justify-between">
-                          <span className="text-gray-600">
+                        <div className="bg-gray-800 rounded-lg p-4 flex justify-between">
+                          <span className="text-gray-400">
                             Circulating Supply
                           </span>
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-white">
                             {info.circulatingSupply}
                           </span>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-4 flex justify-between">
-                          <span className="text-gray-600">Total Supply</span>
-                          <span className="font-medium text-gray-900">
+                        <div className="bg-gray-800 rounded-lg p-4 flex justify-between">
+                          <span className="text-gray-400">Total Supply</span>
+                          <span className="font-medium text-white">
                             {info.totalSupply}
                           </span>
                         </div>
@@ -650,7 +665,7 @@ export default function AssetDetailsModal({
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      <h3 className="text-lg font-semibold text-white mb-4">
                         Links
                       </h3>
                       <div className="grid grid-cols-2 gap-3">
@@ -660,7 +675,7 @@ export default function AssetDetailsModal({
                             href={url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline capitalize"
+                            className="text-blue-500 hover:underline capitalize"
                           >
                             {key === "website" ? "Official website" : key}
                           </a>
@@ -672,11 +687,11 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Bottom Action Bar */}
-              <div className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t border-gray-200 p-3">
+              <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-3">
                 <div className="flex justify-center gap-4 max-w-md mx-auto">
                   <button
                     onClick={handleSend}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
                   >
                     <div className="w-6 h-6 flex items-center justify-center text-lg">
                       ↑
@@ -685,7 +700,7 @@ export default function AssetDetailsModal({
                   </button>
                   <button
                     onClick={handleReceive}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
                   >
                     <div className="w-6 h-6 flex items-center justify-center text-lg">
                       ↓
@@ -694,7 +709,7 @@ export default function AssetDetailsModal({
                   </button>
                   <button
                     onClick={handleSwap}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
                   >
                     <div className="w-6 h-6 flex items-center justify-center text-lg">
                       ⇄
@@ -703,7 +718,7 @@ export default function AssetDetailsModal({
                   </button>
                   <button
                     onClick={handleBuy}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-green-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
                   >
                     <div className="w-6 h-6 flex items-center justify-center text-lg">
                       ⚡
@@ -712,7 +727,7 @@ export default function AssetDetailsModal({
                   </button>
                   <button
                     onClick={handleSell}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-1 text-gray-300 bg-gray-700 hover:text-orange-400 hover:bg-gray-600 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
                   >
                     <div className="w-6 h-6 flex items-center justify-center text-lg">
                       🏛
