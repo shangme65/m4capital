@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import BitcoinWallet from "./BitcoinWallet";
+import CryptoWallet from "./CryptoWallet";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { getCurrencySymbol } from "@/lib/currencies";
@@ -21,9 +21,13 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [showBitcoinWallet, setShowBitcoinWallet] = useState(false);
+  const [showCryptoWallet, setShowCryptoWallet] = useState(false);
   const [showCryptoSelection, setShowCryptoSelection] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState<string>("");
+  const [selectedCryptoInfo, setSelectedCryptoInfo] = useState<{
+    symbol: string;
+    name: string;
+  } | null>(null);
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
 
   // Supported cryptocurrencies from NowPayments
@@ -227,9 +231,10 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setPaymentMethod("crypto");
       setError("");
       setSuccess("");
-      setShowBitcoinWallet(false);
+      setShowCryptoWallet(false);
       setShowCryptoSelection(false);
       setSelectedCrypto("");
+      setSelectedCryptoInfo(null);
       setShowPaymentDropdown(false);
     }
   }, [isOpen]);
@@ -349,9 +354,10 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
     }
   };
 
-  const handleBitcoinWalletBack = () => {
-    setShowBitcoinWallet(false);
+  const handleCryptoWalletBack = () => {
+    setShowCryptoWallet(false);
     setShowCryptoSelection(true);
+    setSelectedCryptoInfo(null);
     setError("");
     setSuccess("");
   };
@@ -359,6 +365,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const handleCryptoSelectionBack = () => {
     setShowCryptoSelection(false);
     setSelectedCrypto("");
+    setSelectedCryptoInfo(null);
     setError("");
   };
 
@@ -367,20 +374,38 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setError("Please select a cryptocurrency");
       return;
     }
-    // For now, only Bitcoin is implemented
-    if (selectedCrypto === "btc") {
-      setShowCryptoSelection(false);
-      setShowBitcoinWallet(true);
-    } else {
-      setError(
-        "This cryptocurrency is not yet supported. Please select Bitcoin."
-      );
+
+    // Find the selected crypto info
+    const crypto = supportedCryptos.find((c) => c.id === selectedCrypto);
+    if (!crypto) {
+      setError("Invalid cryptocurrency selected");
+      return;
     }
+
+    // Check if this crypto is enabled
+    if (!crypto.enabled) {
+      setError(
+        "This cryptocurrency is currently unavailable. Please select another option."
+      );
+      return;
+    }
+
+    // Store the crypto info for the wallet component
+    setSelectedCryptoInfo({
+      symbol: crypto.symbol,
+      name: crypto.name,
+    });
+
+    // Show the crypto wallet
+    setShowCryptoSelection(false);
+    setShowCryptoWallet(true);
+    setError("");
   };
 
-  const handleBitcoinPaymentComplete = () => {
-    setShowBitcoinWallet(false);
-    // Close modal immediately since notification is handled by BitcoinWallet
+  const handleCryptoPaymentComplete = () => {
+    setShowCryptoWallet(false);
+    setSelectedCryptoInfo(null);
+    // Close modal immediately since notification is handled by CryptoWallet
     onClose();
   };
 
@@ -429,11 +454,14 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
               {/* Content */}
               <div className="flex-1 mobile:p-0 p-4 overflow-y-auto mobile:pb-0 pb-4">
-                {showBitcoinWallet ? (
-                  <BitcoinWallet
+                {showCryptoWallet && selectedCryptoInfo ? (
+                  <CryptoWallet
                     amount={amount}
-                    onBack={handleBitcoinWalletBack}
-                    onComplete={handleBitcoinPaymentComplete}
+                    cryptoCurrency={selectedCrypto}
+                    cryptoSymbol={selectedCryptoInfo.symbol}
+                    cryptoName={selectedCryptoInfo.name}
+                    onBack={handleCryptoWalletBack}
+                    onComplete={handleCryptoPaymentComplete}
                   />
                 ) : showCryptoSelection ? (
                   <div className="mobile:space-y-0 space-y-4 mobile:h-screen mobile:flex mobile:flex-col">
@@ -634,7 +662,10 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     </p>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="mobile:space-y-4 space-y-6 mobile:h-screen mobile:flex mobile:flex-col">
+                  <form
+                    onSubmit={handleSubmit}
+                    className="mobile:space-y-4 space-y-6 mobile:h-screen mobile:flex mobile:flex-col"
+                  >
                     {error && (
                       <div className="text-red-400 text-sm text-center bg-red-500/10 mobile:p-3 p-4 mobile:rounded-xl rounded-2xl border border-red-500/30">
                         {error}

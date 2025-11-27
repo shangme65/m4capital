@@ -4,9 +4,13 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
-interface BitcoinWalletProps {
+interface CryptoWalletProps {
   amount: string;
+  cryptoCurrency: string;
+  cryptoSymbol: string;
+  cryptoName: string;
   onBack: () => void;
   onComplete: () => void;
 }
@@ -17,13 +21,90 @@ interface PaymentData {
   depositId: string;
   paymentId: string;
   expiresAt?: string;
+  invoiceUrl?: string;
+  method?: string;
 }
 
-export default function BitcoinWallet({
+// Crypto-specific styling and configuration
+const CRYPTO_CONFIG: Record<
+  string,
+  { color: string; gradient: string; bgColor: string }
+> = {
+  BTC: {
+    color: "orange-500",
+    gradient: "from-orange-500 to-yellow-600",
+    bgColor: "bg-orange-500",
+  },
+  ETH: {
+    color: "blue-500",
+    gradient: "from-blue-500 to-purple-600",
+    bgColor: "bg-blue-500",
+  },
+  ETC: {
+    color: "green-500",
+    gradient: "from-green-500 to-teal-600",
+    bgColor: "bg-green-500",
+  },
+  LTC: {
+    color: "gray-400",
+    gradient: "from-gray-400 to-gray-600",
+    bgColor: "bg-gray-500",
+  },
+  XRP: {
+    color: "blue-400",
+    gradient: "from-blue-400 to-cyan-600",
+    bgColor: "bg-blue-400",
+  },
+  USDC: {
+    color: "blue-500",
+    gradient: "from-blue-500 to-blue-700",
+    bgColor: "bg-blue-500",
+  },
+  USDT: {
+    color: "green-500",
+    gradient: "from-green-500 to-emerald-600",
+    bgColor: "bg-green-500",
+  },
+  SOL: {
+    color: "purple-500",
+    gradient: "from-purple-500 to-violet-600",
+    bgColor: "bg-purple-500",
+  },
+  DOGE: {
+    color: "yellow-500",
+    gradient: "from-yellow-500 to-amber-600",
+    bgColor: "bg-yellow-500",
+  },
+  BNB: {
+    color: "yellow-400",
+    gradient: "from-yellow-400 to-orange-500",
+    bgColor: "bg-yellow-400",
+  },
+  TRX: {
+    color: "red-500",
+    gradient: "from-red-500 to-pink-600",
+    bgColor: "bg-red-500",
+  },
+  BCH: {
+    color: "green-600",
+    gradient: "from-green-600 to-lime-600",
+    bgColor: "bg-green-600",
+  },
+  TON: {
+    color: "cyan-500",
+    gradient: "from-cyan-500 to-blue-600",
+    bgColor: "bg-cyan-500",
+  },
+};
+
+export default function CryptoWallet({
   amount,
+  cryptoCurrency,
+  cryptoSymbol,
+  cryptoName,
   onBack,
   onComplete,
-}: BitcoinWalletProps) {
+}: CryptoWalletProps) {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
   const [isLoading, setIsLoading] = useState(true);
@@ -33,10 +114,13 @@ export default function BitcoinWallet({
 
   const { addNotification, addTransaction } = useNotifications();
 
+  const cryptoConfig =
+    CRYPTO_CONFIG[cryptoSymbol.toUpperCase()] || CRYPTO_CONFIG.BTC;
+
   // Create payment on mount
   useEffect(() => {
     createPayment();
-  }, [amount]);
+  }, [amount, cryptoCurrency]);
 
   // Poll payment status every 10 seconds
   useEffect(() => {
@@ -54,21 +138,23 @@ export default function BitcoinWallet({
       setIsLoading(true);
       setError("");
 
-      // Use invoice API to avoid Cloudflare blocking
-      const response = await fetch("/api/payment/create-bitcoin-invoice", {
+      const response = await fetch("/api/payment/create-crypto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           amount: parseFloat(amount),
           currency: "USD",
+          cryptoCurrency: cryptoCurrency,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create payment");
+        throw new Error(
+          data.error || data.details || "Failed to create payment"
+        );
       }
 
       if (!data.success || !data.deposit) {
@@ -77,22 +163,26 @@ export default function BitcoinWallet({
 
       setPaymentData({
         paymentAddress: data.deposit.paymentAddress,
-        paymentAmount: data.deposit.paymentAmount,
+        paymentAmount: data.deposit.cryptoAmount || data.deposit.paymentAmount,
         depositId: data.deposit.id,
-        paymentId: data.deposit.paymentId,
+        paymentId: data.deposit.paymentId || data.deposit.invoiceId,
         expiresAt: data.deposit.expiresAt,
+        invoiceUrl: data.deposit.invoiceUrl,
+        method: data.deposit.method,
       });
 
       // Create transaction notification
       addTransaction({
         type: "deposit",
-        asset: "BTC",
-        amount: data.deposit.paymentAmount,
+        asset: cryptoSymbol.toUpperCase(),
+        amount: data.deposit.cryptoAmount || data.deposit.paymentAmount,
         value: parseFloat(amount),
         timestamp: new Date().toLocaleString(),
         status: "pending",
-        description: `Bitcoin deposit of ${data.deposit.paymentAmount} BTC`,
-        method: "Bitcoin (NOWPayments)",
+        description: `${cryptoName} deposit of ${
+          data.deposit.cryptoAmount || data.deposit.paymentAmount
+        } ${cryptoSymbol.toUpperCase()}`,
+        method: `${cryptoName} (NOWPayments)`,
       });
     } catch (err: any) {
       console.error("Payment creation error:", err);
@@ -121,8 +211,8 @@ export default function BitcoinWallet({
         if (status === "COMPLETED") {
           addNotification({
             type: "deposit",
-            title: "Bitcoin Deposit Confirmed!",
-            message: `Your Bitcoin deposit of $${amount} has been confirmed and credited to your account.`,
+            title: `${cryptoName} Deposit Confirmed!`,
+            message: `Your ${cryptoName} deposit of $${amount} has been confirmed and credited to your account.`,
           });
           onComplete();
         } else if (status === "FAILED" || status === "EXPIRED") {
@@ -135,9 +225,11 @@ export default function BitcoinWallet({
   };
 
   const walletAddress = paymentData?.paymentAddress || "";
-  const btcAmount = paymentData?.paymentAmount || 0;
+  const cryptoAmount = paymentData?.paymentAmount || 0;
   const qrCodeUrl = walletAddress
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=bitcoin:${walletAddress}?amount=${btcAmount}`
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+        walletAddress
+      )}`
     : "";
 
   // Countdown timer
@@ -178,18 +270,12 @@ export default function BitcoinWallet({
     return (
       <div className="space-y-6 text-center py-12">
         <div className="flex items-center justify-center mb-4">
-          <Image
-            src="/m4capitallogo1.png"
-            alt="Capital Logo"
-            width={32}
-            height={32}
-          />
-          <span className="ml-2 text-orange-500 font-medium text-xl">
-            Capital
-          </span>
+          <CryptoIcon symbol={cryptoSymbol} size="lg" />
         </div>
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-orange-500 mx-auto"></div>
-        <p className="text-gray-400">Creating your Bitcoin payment...</p>
+        <div
+          className={`animate-spin rounded-full h-16 w-16 border-b-2 border-${cryptoConfig.color} mx-auto`}
+        ></div>
+        <p className="text-gray-400">Creating your {cryptoName} payment...</p>
       </div>
     );
   }
@@ -199,15 +285,7 @@ export default function BitcoinWallet({
     return (
       <div className="space-y-6 text-center py-8">
         <div className="flex items-center justify-center mb-4">
-          <Image
-            src="/m4capitallogo1.png"
-            alt="Capital Logo"
-            width={32}
-            height={32}
-          />
-          <span className="ml-2 text-orange-500 font-medium text-xl">
-            Capital
-          </span>
+          <CryptoIcon symbol={cryptoSymbol} size="lg" />
         </div>
         <div className="text-red-500 mb-4">
           <svg
@@ -226,12 +304,20 @@ export default function BitcoinWallet({
           <h3 className="text-xl font-bold mb-2">Payment Creation Failed</h3>
           <p className="text-gray-400">{error}</p>
         </div>
-        <button
-          onClick={onBack}
-          className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-colors"
-        >
-          Go Back
-        </button>
+        <div className="flex gap-3 justify-center">
+          <button
+            onClick={onBack}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-colors"
+          >
+            Go Back
+          </button>
+          <button
+            onClick={createPayment}
+            className={`${cryptoConfig.bgColor} hover:opacity-90 text-white px-6 py-3 rounded-lg transition-colors`}
+          >
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }
@@ -262,26 +348,30 @@ export default function BitcoinWallet({
     }
   };
 
+  // Format crypto amount based on the cryptocurrency
+  const formatCryptoAmount = (amount: number) => {
+    // Stablecoins and high-precision coins
+    if (["USDC", "USDT"].includes(cryptoSymbol.toUpperCase())) {
+      return amount.toFixed(2);
+    }
+    // Standard precision for most cryptos
+    return amount.toFixed(8);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center">
         <div className="flex items-center justify-center mb-4">
-          <Image
-            src="/m4capitallogo1.png"
-            alt="Capital Logo"
-            width={32}
-            height={32}
-          />
-          <span className="ml-2 text-orange-500 font-medium text-xl">
-            Capital
-          </span>
+          <CryptoIcon symbol={cryptoSymbol} size="lg" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Bitcoin Deposit</h2>
+        <h2 className="text-2xl font-bold text-white mb-2">
+          {cryptoName} Deposit
+        </h2>
         <p className="text-gray-400 mb-3">
           Send exactly{" "}
-          <span className="text-orange-500 font-bold">
-            {btcAmount.toFixed(8)} BTC
+          <span className={`text-${cryptoConfig.color} font-bold`}>
+            {formatCryptoAmount(cryptoAmount)} {cryptoSymbol.toUpperCase()}
           </span>{" "}
           to complete your deposit
         </p>
@@ -289,8 +379,10 @@ export default function BitcoinWallet({
       </div>
 
       {/* Timer */}
-      <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4 text-center">
-        <div className="text-orange-500 text-sm font-medium mb-1">
+      <div
+        className={`bg-${cryptoConfig.color}/10 border border-${cryptoConfig.color}/30 rounded-lg p-4 text-center`}
+      >
+        <div className={`text-${cryptoConfig.color} text-sm font-medium mb-1`}>
           Time remaining to send payment
         </div>
         <div className="text-white text-2xl font-bold">
@@ -308,9 +400,9 @@ export default function BitcoinWallet({
           <span className="text-white font-medium">${amount}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-400">Bitcoin Amount</span>
-          <span className="text-orange-500 font-medium">
-            {btcAmount.toFixed(8)} BTC
+          <span className="text-gray-400">{cryptoName} Amount</span>
+          <span className={`text-${cryptoConfig.color} font-medium`}>
+            {formatCryptoAmount(cryptoAmount)} {cryptoSymbol.toUpperCase()}
           </span>
         </div>
         <div className="flex justify-between">
@@ -320,8 +412,8 @@ export default function BitcoinWallet({
         <hr className="border-gray-600" />
         <div className="flex justify-between">
           <span className="text-white font-medium">Total to Send</span>
-          <span className="text-orange-500 font-bold">
-            {btcAmount.toFixed(8)} BTC
+          <span className={`text-${cryptoConfig.color} font-bold`}>
+            {formatCryptoAmount(cryptoAmount)} {cryptoSymbol.toUpperCase()}
           </span>
         </div>
       </div>
@@ -330,20 +422,24 @@ export default function BitcoinWallet({
       <div className="text-center">
         <div className="bg-white p-4 rounded-lg inline-block mb-4">
           {qrCodeUrl ? (
-            <img src={qrCodeUrl} alt="Bitcoin QR Code" className="w-48 h-48" />
+            <img
+              src={qrCodeUrl}
+              alt={`${cryptoName} QR Code`}
+              className="w-48 h-48"
+            />
           ) : (
             <div className="w-48 h-48 bg-gray-200 animate-pulse"></div>
           )}
         </div>
         <p className="text-gray-400 text-sm">
-          Scan QR code with your Bitcoin wallet
+          Scan QR code with your {cryptoName} wallet
         </p>
       </div>
 
       {/* Wallet Address */}
       <div>
         <label className="block text-gray-400 text-sm mb-2">
-          Bitcoin Wallet Address
+          {cryptoName} Wallet Address
         </label>
         <div className="flex items-center space-x-2">
           <div className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-3 text-white font-mono text-sm break-all">
@@ -352,7 +448,7 @@ export default function BitcoinWallet({
           <button
             onClick={copyToClipboard}
             disabled={!walletAddress}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`${cryptoConfig.bgColor} hover:opacity-90 text-white px-4 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {copied ? (
               <svg
@@ -396,6 +492,33 @@ export default function BitcoinWallet({
         )}
       </div>
 
+      {/* Invoice URL button (if available) */}
+      {paymentData?.invoiceUrl && (
+        <div className="text-center">
+          <a
+            href={paymentData.invoiceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={`inline-flex items-center gap-2 ${cryptoConfig.bgColor} hover:opacity-90 text-white px-6 py-3 rounded-lg transition-colors`}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
+            </svg>
+            Open Payment Page
+          </a>
+        </div>
+      )}
+
       {/* Important Notes */}
       <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
         <div className="flex items-start space-x-3">
@@ -418,10 +541,12 @@ export default function BitcoinWallet({
             </p>
             <ul className="text-gray-300 text-xs space-y-1">
               <li>
-                • Send exactly {btcAmount.toFixed(8)} BTC to the address above
+                • Send exactly {formatCryptoAmount(cryptoAmount)}{" "}
+                {cryptoSymbol.toUpperCase()} to the address above
               </li>
               <li>
-                • Only send Bitcoin (BTC) - other cryptocurrencies will be lost
+                • Only send {cryptoName} ({cryptoSymbol.toUpperCase()}) - other
+                cryptocurrencies will be lost
               </li>
               <li>• Payment will be auto-detected when received</li>
               <li>• Your balance will be credited automatically</li>
@@ -451,7 +576,9 @@ export default function BitcoinWallet({
             : "Checking payment status..."}
         </p>
         <div className="flex items-center justify-center space-x-2">
-          <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+          <div
+            className={`w-2 h-2 ${cryptoConfig.bgColor} rounded-full animate-pulse`}
+          ></div>
           <span className="text-gray-500 text-xs">
             Auto-checking every 10 seconds
           </span>
