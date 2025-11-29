@@ -25,6 +25,7 @@
     "bcryptjs": "^3.0.2",
     "framer-motion": "^11.0.8",
     "klinecharts": "^9.8.7",
+    "lightweight-charts": "^5.0.9",
     "lucide-react": "^0.544.0",
     "next": "^15.1.4",
     "next-auth": "^4.24.11",

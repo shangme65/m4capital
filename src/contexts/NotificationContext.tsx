@@ -24,6 +24,7 @@ export interface Notification {
   message: string;
   timestamp: Date;
   read: boolean;
+  archived?: boolean;
   amount?: number;
   asset?: string;
 }
@@ -63,6 +64,8 @@ interface NotificationContextType {
   markNotificationAsRead: (id: string) => void;
   markAllAsRead: () => void;
   clearNotifications: () => void;
+  archiveNotification: (id: string) => void;
+  deleteNotification: (id: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -208,6 +211,46 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const archiveNotification = async (id: string) => {
+    // Optimistically update UI - remove from visible list
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.id === id
+          ? { ...notification, archived: true }
+          : notification
+      )
+    );
+
+    // Update on server
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId: id, archive: true }),
+      });
+    } catch (error) {
+      console.error("Failed to archive notification:", error);
+    }
+  };
+
+  const deleteNotification = async (id: string) => {
+    // Optimistically update UI - remove from list
+    setNotifications((prev) =>
+      prev.filter((notification) => notification.id !== id)
+    );
+
+    // Delete on server
+    try {
+      await fetch("/api/notifications", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId: id }),
+      });
+    } catch (error) {
+      console.error("Failed to delete notification:", error);
+    }
+  };
+
   return (
     <NotificationContext.Provider
       value={{
@@ -219,6 +262,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         markNotificationAsRead,
         markAllAsRead,
         clearNotifications,
+        archiveNotification,
+        deleteNotification,
       }}
     >
       {children}

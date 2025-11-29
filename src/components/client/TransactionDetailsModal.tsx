@@ -298,24 +298,24 @@ export default function TransactionDetailsModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/80 backdrop-blur-md z-[60] overflow-hidden"
-            style={{ touchAction: "none" }}
+            className="fixed top-0 left-0 right-0 bottom-0 bg-black/80 backdrop-blur-md z-[9998] overflow-hidden"
+            style={{ touchAction: "none", margin: 0, padding: 0 }}
           />
           <motion.div
             initial={{ opacity: 0, y: "100%" }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
-            className="fixed inset-0 z-[60] overflow-hidden"
+            className="fixed top-0 left-0 right-0 bottom-0 z-[9998] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
-            style={{ touchAction: "auto" }}
+            style={{ touchAction: "auto", margin: 0, padding: 0 }}
           >
             <div
-              className="bg-gray-900 w-full h-full min-h-screen overflow-y-auto"
-              style={{ minHeight: "100dvh" }}
+              className="bg-gray-900 w-full h-full overflow-y-auto"
+              style={{ minHeight: "100vh", height: "100%" }}
             >
               {/* Mobile Header with Back Button */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-700 sticky top-0 bg-gray-900/95 backdrop-blur-sm z-10">
+              <div className="flex items-center justify-between p-4 border-b border-gray-700 sticky top-0 bg-gray-900/95 backdrop-blur-sm z-20">
                 <button
                   onClick={onClose}
                   className="text-gray-300 hover:text-white transition-colors flex items-center gap-2"
@@ -344,7 +344,7 @@ export default function TransactionDetailsModal({
               {/* Header Section with Gradient Background */}
               <div className="relative bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 p-4 pb-8">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/50"></div>
-                <div className="relative z-10">
+                <div className="relative z-[5]">
                   <div className="flex items-start gap-3 mb-4">
                     <div className="flex-shrink-0">
                       <CryptoIcon

@@ -22,7 +22,7 @@ const colorMap: Record<string, string> = {
   BTC: "#f7931a",
   ETH: "#627eea",
   XRP: "#23292f",
-  TRX: "#eb0029",
+  TRX: "#1c1c1c", // Dark background for better red logo visibility
   TON: "#0098ea",
   LTC: "#345d9d",
   BCH: "#f7931a",
@@ -52,7 +52,7 @@ export function CryptoIcon({
   const bgColor = colorMap[symbol] || "#6b7280";
 
   const networkSymbol = networkMap[symbol];
-  const badgeSize = Math.floor(iconSize * 0.4);
+  const badgeSize = Math.floor(iconSize * 0.5); // Increased from 0.4 to 0.5 for better visibility
 
   if (failed) {
     // Fallback to colored circle with symbol
@@ -71,12 +71,13 @@ export function CryptoIcon({
         </div>
         {showNetwork && networkSymbol && (
           <div
-            className="absolute -bottom-1 -right-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-gray-900"
+            className="absolute -bottom-1 -right-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-black z-10"
             style={{
               width: `${badgeSize}px`,
               height: `${badgeSize}px`,
               padding: "2px",
               boxShadow: "0 2px 6px rgba(59,130,246,0.5)",
+              border: "1px solid black",
             }}
           >
             <img
@@ -125,12 +126,13 @@ export function CryptoIcon({
       </div>
       {showNetwork && networkSymbol && (
         <div
-          className="absolute -bottom-1 -right-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-gray-900"
+          className="absolute -bottom-1 -right-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-black z-10"
           style={{
             width: `${badgeSize}px`,
             height: `${badgeSize}px`,
             padding: "2px",
             boxShadow: "0 2px 6px rgba(59,130,246,0.5)",
+            border: "1px solid black",
           }}
         >
           <img

@@ -52,6 +52,7 @@ const DashboardHeader = () => {
           onClick={() => setIsNotificationsPanelOpen(true)}
           className="relative text-gray-400 hover:text-white transition-colors"
           title="Notifications"
+          data-tutorial="notifications"
         >
           <Bell
             size={18}
@@ -69,6 +70,7 @@ const DashboardHeader = () => {
           className="flex items-center cursor-pointer mobile:p-0.5 p-1 sm:p-2 rounded-lg transition-colors focus:outline-none"
           aria-haspopup="true"
           aria-label="Open navigation sidebar"
+          data-tutorial="profile-settings"
         >
           {session?.user?.image ? (
             <img

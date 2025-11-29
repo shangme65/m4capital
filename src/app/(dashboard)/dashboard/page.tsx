@@ -1,6 +1,7 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useModal } from "@/contexts/ModalContext";
@@ -17,6 +18,8 @@ import AddCryptoModal from "@/components/client/AddCryptoModal";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { getCurrencySymbol } from "@/lib/currencies";
+import { useVerificationGate } from "@/hooks/useVerificationGate";
+import VerificationRequiredModal from "@/components/client/VerificationRequiredModal";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -25,6 +28,8 @@ export const dynamic = "force-dynamic";
 function DashboardContent() {
   const { data: session, status } = useSession();
   const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Get portfolio first to know which symbols to fetch
   const {
@@ -53,18 +58,29 @@ function DashboardContent() {
   } = useModal();
   const { recentActivity } = useNotifications();
   const { showSuccess, showError } = useToast();
+  const {
+    requireVerification,
+    showVerificationModal,
+    setShowVerificationModal,
+    pendingAction,
+    kycStatus,
+  } = useVerificationGate();
   const [lastUpdated, setLastUpdated] = useState("Just now");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTransaction, setSelectedTransaction] =
     useState<Transaction | null>(null);
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
+  const isClosingModalRef = useRef(false);
   const [showAssetDetails, setShowAssetDetails] = useState(false);
   const [showAllAssets, setShowAllAssets] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
   const [activeView, setActiveView] = useState<"crypto" | "history">("crypto");
   const [showAddCryptoModal, setShowAddCryptoModal] = useState(false);
   const [showBalances, setShowBalances] = useState(true);
+
+  // Check URL for asset parameter on mount to restore modal state after refresh
+  const urlAssetSymbol = searchParams.get("asset");
 
   // Load activeView and showBalances from localStorage after mount to avoid hydration mismatch
   useEffect(() => {
@@ -108,6 +124,123 @@ function DashboardContent() {
       return () => clearTimeout(reloadTimer);
     }
   }, [status, session]);
+
+  // Restore asset modal from URL on page load/refresh
+  // This needs to be before any early returns to maintain hooks order
+  useEffect(() => {
+    // Skip if we're intentionally closing the modal
+    if (isClosingModalRef.current) {
+      isClosingModalRef.current = false;
+      return;
+    }
+    if (
+      urlAssetSymbol &&
+      (portfolio?.portfolio?.assets?.length ?? 0) > 0 &&
+      !selectedAsset
+    ) {
+      const portfolioAssets = portfolio!.portfolio!.assets!;
+      const assetFromUrl = portfolioAssets.find(
+        (a: any) => a.symbol.toUpperCase() === urlAssetSymbol.toUpperCase()
+      );
+      if (assetFromUrl) {
+        // Get metadata for the asset
+        const getCryptoMeta = (symbol: string) => {
+          const cryptoData: Record<
+            string,
+            { name: string; color: string; iconBg: string }
+          > = {
+            BTC: {
+              name: "Bitcoin",
+              color: "from-orange-500 to-orange-600",
+              iconBg: "#f97316",
+            },
+            ETH: {
+              name: "Ethereum",
+              color: "from-blue-500 to-purple-600",
+              iconBg: "#3b82f6",
+            },
+            XRP: {
+              name: "Ripple",
+              color: "from-blue-600 to-blue-700",
+              iconBg: "#2563eb",
+            },
+            TRX: {
+              name: "Tron",
+              color: "from-gray-800 to-gray-900",
+              iconBg: "#1c1c1c",
+            },
+            TON: {
+              name: "Toncoin",
+              color: "from-blue-500 to-cyan-600",
+              iconBg: "#3b82f6",
+            },
+            LTC: {
+              name: "Litecoin",
+              color: "from-gray-400 to-gray-500",
+              iconBg: "#9ca3af",
+            },
+            BCH: {
+              name: "Bitcoin Cash",
+              color: "from-green-500 to-green-600",
+              iconBg: "#22c55e",
+            },
+            ETC: {
+              name: "Ethereum Classic",
+              color: "from-green-600 to-teal-700",
+              iconBg: "#059669",
+            },
+            USDC: {
+              name: "USD Coin",
+              color: "from-blue-500 to-blue-600",
+              iconBg: "#3b82f6",
+            },
+            USDT: {
+              name: "Tether",
+              color: "from-green-500 to-teal-600",
+              iconBg: "#22c55e",
+            },
+          };
+          return (
+            cryptoData[symbol] || {
+              name: symbol,
+              color: "from-gray-600 to-gray-700",
+              iconBg: "#6b7280",
+            }
+          );
+        };
+        const meta = getCryptoMeta(assetFromUrl.symbol);
+        // Build asset object matching what handleAssetClick expects
+        const restoredAsset = {
+          symbol: assetFromUrl.symbol,
+          name: meta.name,
+          amount: assetFromUrl.amount,
+          currentPrice: assetFromUrl.averagePrice || 0,
+          value: (assetFromUrl.averagePrice || 0) * assetFromUrl.amount,
+          change: 0,
+          icon: "",
+          color: meta.color,
+          metadata: { iconBg: meta.iconBg },
+        };
+        setSelectedAsset(restoredAsset);
+        setShowAssetDetails(true);
+      }
+    }
+  }, [urlAssetSymbol, portfolio?.portfolio?.assets, selectedAsset]);
+
+  // Handle browser back button - close modal if open
+  useEffect(() => {
+    const handlePopState = () => {
+      // Check current URL - if no asset param, close modal
+      const currentUrl = new URL(window.location.href);
+      if (!currentUrl.searchParams.get("asset") && showAssetDetails) {
+        setShowAssetDetails(false);
+        setSelectedAsset(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [showAssetDetails]);
 
   // Removed "Just now" timer to prevent unnecessary re-renders
 
@@ -304,9 +437,9 @@ function DashboardContent() {
       TRX: {
         name: "Tron",
         icon: "T",
-        color: "from-red-500 to-red-600",
-        gradient: "from-red-500 to-red-600",
-        iconBg: "#ef4444",
+        color: "from-gray-800 to-gray-900",
+        gradient: "from-gray-800 to-gray-900",
+        iconBg: "#1c1c1c",
       },
       TON: {
         name: "Toncoin",
@@ -449,32 +582,50 @@ function DashboardContent() {
   };
 
   const handleDeposit = () => {
+    if (!requireVerification("deposit")) return;
     openDepositModal();
   };
 
   const handleWithdraw = () => {
+    if (!requireVerification("withdraw")) return;
     openWithdrawModal();
   };
 
   const handleBuy = () => {
+    if (!requireVerification("buy")) return;
     openBuyModal();
   };
 
   const handleSell = () => {
+    if (!requireVerification("sell")) return;
     openSellModal();
   };
 
   const handleTransfer = () => {
+    if (!requireVerification("transfer")) return;
     openTransferModal();
   };
 
   const handleConvert = () => {
+    if (!requireVerification("swap")) return;
     openConvertModal();
   };
 
   const handleAssetClick = (asset: any) => {
     setSelectedAsset(asset);
     setShowAssetDetails(true);
+    // Update URL with asset symbol for persistence on refresh
+    // Use replace to avoid adding to history stack
+    window.history.replaceState(null, "", `/dashboard?asset=${asset.symbol}`);
+  };
+
+  // Close asset details and clear URL parameter
+  const handleCloseAssetDetails = () => {
+    isClosingModalRef.current = true;
+    setShowAssetDetails(false);
+    setSelectedAsset(null);
+    // Remove asset param from URL using replace (no history entry)
+    window.history.replaceState(null, "", "/dashboard");
   };
 
   const handleViewAllAssets = () => {
@@ -699,7 +850,10 @@ function DashboardContent() {
   return (
     <div className="space-y-3 sm:space-y-4">
       {/* Portfolio Value Card */}
-      <div className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-4 sm:p-8 border border-gray-700/50 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_16px_rgba(59,130,246,0.15),0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25)] transition-all duration-300">
+      <div
+        data-tutorial="portfolio-balance"
+        className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-4 sm:p-8 border border-gray-700/50 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_16px_rgba(59,130,246,0.15),0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25)] transition-all duration-300"
+      >
         <div className="flex items-center justify-between mb-4 sm:mb-6">
           <h1 className="text-xl sm:text-2xl font-bold text-white">
             Portfolio Value
@@ -824,12 +978,14 @@ function DashboardContent() {
 
         <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8">
           <button
+            data-tutorial="deposit-button"
             onClick={handleDeposit}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center gap-2"
           >
             Deposit
           </button>
           <button
+            data-tutorial="withdraw-button"
             onClick={handleWithdraw}
             className="bg-gray-700 hover:bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium border border-gray-600 transition-colors text-sm sm:text-base"
           >
@@ -837,7 +993,10 @@ function DashboardContent() {
           </button>
         </div>
 
-        <div className="flex items-center justify-between">
+        <div
+          data-tutorial="available-balance"
+          className="flex items-center justify-between"
+        >
           <span className="text-gray-400 text-base sm:text-lg font-bold">
             {preferredCurrency} Balance
           </span>
@@ -918,6 +1077,7 @@ function DashboardContent() {
         </button>
 
         <button
+          data-tutorial="transfer-button"
           onClick={handleTransfer}
           className="bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white p-1 sm:p-2 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 shadow-lg hover:shadow-xl hover:shadow-purple-500/30 border border-purple-400/20 hover:scale-105 active:scale-95"
         >
@@ -963,7 +1123,7 @@ function DashboardContent() {
       </div>
 
       {/* Crypto and History Toggle View */}
-      <div className="grid grid-cols-1">
+      <div className="grid grid-cols-1" data-tutorial="crypto-assets">
         <div className="bg-gray-800/50 rounded-2xl p-1.5 sm:p-3 border border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
           {/* Header with Toggle and Add Button */}
           <div className="flex items-center justify-between gap-1.5 mb-4">
@@ -1043,7 +1203,7 @@ function DashboardContent() {
 
           {/* Crypto View */}
           {activeView === "crypto" && (
-            <div className="space-y-4">
+            <div className="space-y-4 pb-4">
               {userAssets.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -1074,10 +1234,17 @@ function DashboardContent() {
                   <div
                     key={asset.symbol}
                     onClick={() => handleAssetClick(asset)}
-                    className="flex items-center justify-between p-2.5 bg-gradient-to-br from-gray-800/80 to-gray-900/80 hover:from-gray-800 hover:to-gray-900 transition-all cursor-pointer rounded-xl border border-gray-700/50 shadow-lg hover:shadow-xl hover:shadow-blue-500/10 hover:border-blue-500/30"
+                    className="relative flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                      boxShadow:
+                        "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                    }}
                   >
                     {/* Left side: Icon and Info */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3">
                       {/* 3D Crypto Icon Container */}
                       <div
                         className={`w-10 h-10 rounded-xl bg-gradient-to-br ${asset.color} flex items-center justify-center flex-shrink-0 transition-all duration-300 relative`}
@@ -1388,7 +1555,7 @@ function DashboardContent() {
       {/* Asset Details Modal */}
       <AssetDetailsModal
         isOpen={showAssetDetails}
-        onClose={() => setShowAssetDetails(false)}
+        onClose={handleCloseAssetDetails}
         asset={selectedAsset}
         userBalance={
           portfolio?.portfolio?.balance
@@ -1397,6 +1564,14 @@ function DashboardContent() {
         }
         balanceCurrency={balanceCurrency}
         allAssets={userAssets}
+      />
+
+      {/* Verification Required Modal */}
+      <VerificationRequiredModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        action={pendingAction}
+        kycStatus={kycStatus}
       />
 
       {/* Add Crypto Modal */}
@@ -1679,7 +1854,21 @@ function DashboardContent() {
 export default function DashboardPage() {
   return (
     <CryptoMarketProvider>
-      <DashboardContent />
+      <Suspense fallback={<DashboardLoadingFallback />}>
+        <DashboardContent />
+      </Suspense>
     </CryptoMarketProvider>
+  );
+}
+
+// Loading fallback for Suspense boundary
+function DashboardLoadingFallback() {
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <p className="text-gray-400">Loading dashboard...</p>
+      </div>
+    </div>
   );
 }

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, Star } from "lucide-react";
-import RealTimeTradingChart from "@/components/client/RealTimeTradingChart";
+import LightweightChart from "@/components/client/LightweightChart";
 import BuyCryptoModal from "./BuyCryptoModal";
 import AssetSendModal from "./AssetSendModal";
 import AssetReceiveModal from "./AssetReceiveModal";
@@ -204,7 +204,7 @@ export default function AssetDetailsModal({
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
 
   // Currency context for user's preferred currency
-  const { preferredCurrency, formatAmount, convertAmount } = useCurrency();
+  const { preferredCurrency, formatAmount } = useCurrency();
 
   // Helper to format user balance - show directly if currencies match
   const formatUserBalance = (balance: number): string => {
@@ -229,32 +229,19 @@ export default function AssetDetailsModal({
     return formatAmount(balance, 2);
   };
 
-  // Prevent body scroll when modal is open and handle browser back button
+  // Prevent body scroll when modal is open
+  // Note: Browser back button is handled by the parent component via URL params
   useEffect(() => {
     if (isOpen) {
+      // Store original overflow style
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
 
-      // Push a state to handle browser back button
-      window.history.pushState({ assetModal: true }, "");
-
-      // Handle browser back button
-      const handlePopState = (event: PopStateEvent) => {
-        onClose();
-      };
-
-      window.addEventListener("popstate", handlePopState);
-
       return () => {
-        window.removeEventListener("popstate", handlePopState);
-        document.body.style.overflow = "unset";
+        document.body.style.overflow = originalOverflow || "unset";
       };
-    } else {
-      document.body.style.overflow = "unset";
     }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   // Action handlers
   const handleSend = () => {
@@ -296,6 +283,12 @@ export default function AssetDetailsModal({
     null
   );
   const [txHistory, setTxHistory] = useState<any[]>([]);
+  // Live market data (market cap, supply, etc.)
+  const [marketData, setMarketData] = useState<{
+    marketCap: string;
+    circulatingSupply: string;
+    totalSupply: string;
+  } | null>(null);
   // Chart period state (UI: 1H,1D,1W,1M,1Y,All)
   const [selectedPeriod, setSelectedPeriod] = useState<
     "1H" | "1D" | "1W" | "1M" | "1Y" | "All"
@@ -359,6 +352,85 @@ export default function AssetDetailsModal({
     };
   }, [asset?.symbol]);
 
+  // Fetch market data (market cap, supply) from CoinGecko
+  useEffect(() => {
+    if (!isOpen || !asset?.symbol) return;
+
+    let mounted = true;
+    const coinGeckoIds: Record<string, string> = {
+      BTC: "bitcoin",
+      ETH: "ethereum",
+      XRP: "ripple",
+      TRX: "tron",
+      TON: "the-open-network",
+      LTC: "litecoin",
+      BCH: "bitcoin-cash",
+      ETC: "ethereum-classic",
+      USDC: "usd-coin",
+      USDT: "tether",
+      SOL: "solana",
+      ADA: "cardano",
+      DOGE: "dogecoin",
+      DOT: "polkadot",
+      MATIC: "matic-network",
+      AVAX: "avalanche-2",
+      LINK: "chainlink",
+      UNI: "uniswap",
+      SHIB: "shiba-inu",
+      ATOM: "cosmos",
+    };
+
+    const coinId = coinGeckoIds[asset.symbol.toUpperCase()];
+    if (!coinId) {
+      setMarketData(null);
+      return;
+    }
+
+    const fetchMarketData = async () => {
+      try {
+        const res = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&community_data=false&developer_data=false`
+        );
+        const data = await res.json();
+
+        if (mounted && data?.market_data) {
+          const formatNumber = (num: number): string => {
+            if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+            if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+            if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+            return `$${num.toLocaleString()}`;
+          };
+
+          const formatSupply = (num: number, symbol: string): string => {
+            if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B ${symbol}`;
+            if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M ${symbol}`;
+            return `${num.toLocaleString()} ${symbol}`;
+          };
+
+          setMarketData({
+            marketCap: formatNumber(data.market_data.market_cap?.usd || 0),
+            circulatingSupply: formatSupply(
+              data.market_data.circulating_supply || 0,
+              asset.symbol
+            ),
+            totalSupply: data.market_data.total_supply
+              ? formatSupply(data.market_data.total_supply, asset.symbol)
+              : "∞",
+          });
+        }
+      } catch (e) {
+        console.error("Failed to fetch market data", e);
+        if (mounted) setMarketData(null);
+      }
+    };
+
+    fetchMarketData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [asset?.symbol, isOpen]);
+
   if (!isOpen || !asset) return null;
 
   const info = assetInfo[asset.symbol] || null;
@@ -382,8 +454,8 @@ export default function AssetDetailsModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
-            style={{ touchAction: "none" }}
+            className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-70 backdrop-blur-sm z-[9998] overflow-hidden"
+            style={{ touchAction: "none", margin: 0, padding: 0 }}
           />
           <motion.div
             key="asset-details-content"
@@ -391,13 +463,13 @@ export default function AssetDetailsModal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
-            className="fixed inset-0 z-50 overflow-hidden"
+            className="fixed top-0 left-0 right-0 bottom-0 z-[9998] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
-            style={{ touchAction: "auto" }}
+            style={{ touchAction: "auto", margin: 0, padding: 0 }}
           >
             <div
-              className="bg-gray-900 w-full h-full min-h-screen overflow-y-auto"
-              style={{ minHeight: "100dvh" }}
+              className="bg-gray-900 w-full h-full overflow-y-auto"
+              style={{ minHeight: "100vh", height: "100%" }}
             >
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-gray-700">
@@ -450,14 +522,14 @@ export default function AssetDetailsModal({
                         ETC: 0.1, // Ethereum Classic
                       };
                       const fee = networkFees[asset.symbol] || 0.5; // Default $0.50
-                      return formatAmount(convertAmount(fee), 2);
+                      return formatAmount(fee, 2);
                     })()}
                   </span>
                 </div>
 
                 <div className="text-center mb-6">
                   <div className="text-4xl md:text-5xl font-bold text-white mb-2">
-                    {formatAmount(convertAmount(currentPrice), 2)}
+                    {formatAmount(currentPrice, 2)}
                   </div>
                   <div
                     className={`flex items-center justify-center gap-1 ${
@@ -469,9 +541,7 @@ export default function AssetDetailsModal({
                     </span>
                     <span className="text-lg font-medium">
                       {formatAmount(
-                        convertAmount(
-                          Math.abs((currentPrice * priceChange) / 100)
-                        ),
+                        Math.abs((currentPrice * priceChange) / 100),
                         2
                       )}{" "}
                       ({priceChange >= 0 ? "+" : ""}
@@ -480,25 +550,18 @@ export default function AssetDetailsModal({
                   </div>
                 </div>
 
-                {/* Real-time chart */}
-                <div className="h-80 md:h-[420px] mb-4">
-                  <RealTimeTradingChart
+                {/* Lightweight Chart */}
+                <div
+                  className="mb-4 rounded-xl overflow-hidden"
+                  style={{
+                    boxShadow:
+                      "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5)",
+                  }}
+                >
+                  <LightweightChart
                     symbol={asset.symbol}
-                    // map selectedPeriod to an interval + limit
-                    {...(() => {
-                      const map: Record<
-                        string,
-                        { interval: string; limit: number }
-                      > = {
-                        "1H": { interval: "1m", limit: 60 },
-                        "1D": { interval: "15m", limit: 96 },
-                        "1W": { interval: "1h", limit: 168 },
-                        "1M": { interval: "4h", limit: 180 },
-                        "1Y": { interval: "1d", limit: 365 },
-                        All: { interval: "1d", limit: 1000 },
-                      };
-                      return map[selectedPeriod] || map["1D"];
-                    })()}
+                    interval={selectedPeriod}
+                    height={320}
                   />
                 </div>
 
@@ -543,7 +606,7 @@ export default function AssetDetailsModal({
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <div className="text-2xl font-bold text-white">
-                        {formatAmount(convertAmount(selectedBuyAmount), 2)}{" "}
+                        {formatAmount(selectedBuyAmount, 2)}{" "}
                         <span className="text-gray-400">
                           {preferredCurrency}
                         </span>
@@ -577,7 +640,7 @@ export default function AssetDetailsModal({
                                   }
                             }
                           >
-                            {formatAmount(convertAmount(amount), 0)}
+                            {formatAmount(amount, 0)}
                           </button>
                         ))}
                       </div>
@@ -646,7 +709,7 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Tab Content */}
-              <div className="p-4 pb-20">
+              <div className="p-4 pb-40">
                 {activeTab === "holdings" && (
                   <div>
                     <h3 className="text-lg font-semibold text-white mb-4">
@@ -700,7 +763,7 @@ export default function AssetDetailsModal({
                       </div>
                       <div className="text-right relative z-10">
                         <div className="font-bold text-white text-xl">
-                          {formatAmount(convertAmount(asset.value), 2)}
+                          {formatAmount(asset.value, 2)}
                         </div>
                         <div className="text-gray-400 text-sm">
                           {asset.amount.toLocaleString("en-US", {
@@ -711,7 +774,7 @@ export default function AssetDetailsModal({
                       </div>
                     </div>
                     {/* Bottom margin spacer */}
-                    <div className="mb-8"></div>
+                    <div className="mb-16"></div>
                   </div>
                 )}
 
@@ -901,12 +964,10 @@ export default function AssetDetailsModal({
                                   {tx.fiatValue
                                     ? formatAmount(tx.fiatValue, 2)
                                     : formatAmount(
-                                        convertAmount(
-                                          tx.price *
-                                            (typeof tx.amount === "number"
-                                              ? tx.amount
-                                              : parseFloat(tx.amount))
-                                        ),
+                                        tx.price *
+                                          (typeof tx.amount === "number"
+                                            ? tx.amount
+                                            : parseFloat(tx.amount)),
                                         2
                                       )}
                                 </div>
@@ -954,24 +1015,88 @@ export default function AssetDetailsModal({
                         Stats
                       </h3>
                       <div className="space-y-4">
-                        <div className="bg-gray-800 rounded-lg p-4 flex justify-between">
-                          <span className="text-gray-400">Market cap</span>
-                          <span className="font-medium text-white">
-                            {info.marketCap}
+                        {/* Market Cap - 3D Card */}
+                        <div
+                          className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                            boxShadow:
+                              "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                          }}
+                        >
+                          {/* Subtle glow effect */}
+                          <div
+                            className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
+                            style={{
+                              background:
+                                "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
+                            }}
+                          />
+                          <span className="text-gray-400 relative z-10">
+                            Market cap
+                          </span>
+                          <span className="font-semibold text-white relative z-10">
+                            {marketData?.marketCap || info?.marketCap || "—"}
                           </span>
                         </div>
-                        <div className="bg-gray-800 rounded-lg p-4 flex justify-between">
-                          <span className="text-gray-400">
+
+                        {/* Circulating Supply - 3D Card */}
+                        <div
+                          className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                            boxShadow:
+                              "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                          }}
+                        >
+                          {/* Subtle glow effect */}
+                          <div
+                            className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
+                            style={{
+                              background:
+                                "radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.3) 0%, transparent 50%)",
+                            }}
+                          />
+                          <span className="text-gray-400 relative z-10">
                             Circulating Supply
                           </span>
-                          <span className="font-medium text-white">
-                            {info.circulatingSupply}
+                          <span className="font-semibold text-white relative z-10">
+                            {marketData?.circulatingSupply ||
+                              info?.circulatingSupply ||
+                              "—"}
                           </span>
                         </div>
-                        <div className="bg-gray-800 rounded-lg p-4 flex justify-between">
-                          <span className="text-gray-400">Total Supply</span>
-                          <span className="font-medium text-white">
-                            {info.totalSupply}
+
+                        {/* Total Supply - 3D Card */}
+                        <div
+                          className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                            boxShadow:
+                              "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                          }}
+                        >
+                          {/* Subtle glow effect */}
+                          <div
+                            className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
+                            style={{
+                              background:
+                                "radial-gradient(ellipse at 70% 0%, rgba(168, 85, 247, 0.3) 0%, transparent 50%)",
+                            }}
+                          />
+                          <span className="text-gray-400 relative z-10">
+                            Total Supply
+                          </span>
+                          <span className="font-semibold text-white relative z-10">
+                            {marketData?.totalSupply ||
+                              info?.totalSupply ||
+                              "—"}
                           </span>
                         </div>
                       </div>
@@ -1000,7 +1125,7 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Bottom Action Bar */}
-              <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-2">
+              <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-2 z-[9999]">
                 <div className="flex justify-center gap-3 max-w-md mx-auto">
                   <button
                     onClick={handleSend}

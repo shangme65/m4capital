@@ -6,10 +6,13 @@ import { ModalProvider } from "@/contexts/ModalContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import { ToastProvider } from "@/contexts/ToastContext";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
+import { TutorialProvider } from "@/contexts/TutorialContext";
 import { DashboardModalWrapper } from "@/components/layout/DashboardModalWrapper";
 import { MarketDataProvider } from "@/components/client/MarketDataProvider";
 import CryptoMarketProvider from "@/components/client/CryptoMarketProvider";
 import { RoleChangeMonitor } from "@/components/client/RoleChangeMonitor";
+import NotificationPermissionPrompt from "@/components/client/NotificationPermissionPrompt";
+import TutorialOverlay from "@/components/client/TutorialOverlay";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -32,22 +35,26 @@ export default async function DashboardLayout({
           <NotificationProvider>
             <ToastProvider>
               <CurrencyProvider>
-                <MarketDataProvider autoConnect={false} enableNews={false}>
-                  <CryptoMarketProvider autoStart={true}>
-                    <RoleChangeMonitor />
-                    <div className="flex h-screen relative bg-gray-900">
-                      <Sidebar />
-                      <div className="flex-1 flex flex-col overflow-hidden">
-                        <DashboardHeaderWrapper />
-                        <main className="flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4">
-                          <DashboardModalWrapper>
-                            {children}
-                          </DashboardModalWrapper>
-                        </main>
+                <TutorialProvider>
+                  <MarketDataProvider autoConnect={false} enableNews={false}>
+                    <CryptoMarketProvider autoStart={true}>
+                      <RoleChangeMonitor />
+                      <NotificationPermissionPrompt />
+                      <TutorialOverlay />
+                      <div className="flex h-screen relative bg-gray-900">
+                        <Sidebar />
+                        <div className="flex-1 flex flex-col overflow-hidden">
+                          <DashboardHeaderWrapper />
+                          <main className="flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4">
+                            <DashboardModalWrapper>
+                              {children}
+                            </DashboardModalWrapper>
+                          </main>
+                        </div>
                       </div>
-                    </div>
-                  </CryptoMarketProvider>
-                </MarketDataProvider>
+                    </CryptoMarketProvider>
+                  </MarketDataProvider>
+                </TutorialProvider>
               </CurrencyProvider>
             </ToastProvider>
           </NotificationProvider>

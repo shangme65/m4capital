@@ -24,18 +24,22 @@ export async function GET(request: NextRequest) {
     });
 
     // Format notifications for frontend
-    const formattedNotifications = notifications.map((notification) => ({
-      id: notification.id,
-      type: notification.type.toLowerCase(),
-      title: notification.title,
-      message: notification.message,
-      timestamp: notification.createdAt,
-      read: notification.read,
-      amount: notification.amount
-        ? parseFloat(notification.amount.toString())
-        : undefined,
-      asset: notification.asset || undefined,
-    }));
+    const formattedNotifications = notifications.map((notification) => {
+      const metadata = notification.metadata as Record<string, any> | null;
+      return {
+        id: notification.id,
+        type: notification.type.toLowerCase(),
+        title: notification.title,
+        message: notification.message,
+        timestamp: notification.createdAt,
+        read: notification.read,
+        archived: metadata?.archived || false,
+        amount: notification.amount
+          ? parseFloat(notification.amount.toString())
+          : undefined,
+        asset: notification.asset || undefined,
+      };
+    });
 
     return NextResponse.json({
       notifications: formattedNotifications,
@@ -52,7 +56,7 @@ export async function GET(request: NextRequest) {
 
 /**
  * PATCH /api/notifications
- * Mark notifications as read
+ * Mark notifications as read or archive
  */
 export async function PATCH(request: NextRequest) {
   try {
@@ -63,7 +67,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { notificationId, markAllAsRead } = body;
+    const { notificationId, markAllAsRead, archive } = body;
 
     if (markAllAsRead) {
       // Mark all user notifications as read
@@ -82,18 +86,33 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (notificationId) {
-      // Mark specific notification as read
+      // Mark specific notification as read (or archived via metadata)
+      const updateData: { read?: boolean; metadata?: any } = {};
+
+      if (archive) {
+        // For archive, we update the metadata field
+        updateData.metadata = {
+          archived: true,
+          archivedAt: new Date().toISOString(),
+        };
+        updateData.read = true; // Also mark as read when archiving
+      } else {
+        updateData.read = true;
+      }
+
       await prisma.notification.updateMany({
         where: {
           id: notificationId,
           userId: session.user.id,
         },
-        data: { read: true },
+        data: updateData,
       });
 
       return NextResponse.json({
         success: true,
-        message: "Notification marked as read",
+        message: archive
+          ? "Notification archived"
+          : "Notification marked as read",
       });
     }
 
@@ -112,7 +131,7 @@ export async function PATCH(request: NextRequest) {
 
 /**
  * DELETE /api/notifications
- * Clear all notifications
+ * Clear all notifications or delete a specific notification
  */
 export async function DELETE(request: NextRequest) {
   try {
@@ -122,6 +141,31 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check if there's a body with a specific notification ID
+    let notificationId: string | undefined;
+    try {
+      const body = await request.json();
+      notificationId = body.notificationId;
+    } catch {
+      // No body, delete all notifications
+    }
+
+    if (notificationId) {
+      // Delete specific notification
+      await prisma.notification.deleteMany({
+        where: {
+          id: notificationId,
+          userId: session.user.id,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: "Notification deleted",
+      });
+    }
+
+    // Delete all notifications
     await prisma.notification.deleteMany({
       where: { userId: session.user.id },
     });
