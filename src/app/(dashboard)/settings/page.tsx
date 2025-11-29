@@ -825,7 +825,7 @@ export default function SettingsPage() {
     }
   };
 
-  // Modal component for full-screen settings sections
+  // Modal component for full-screen settings sections - 3D Dark Theme
   const SettingsModal = useMemo(
     () =>
       ({
@@ -842,25 +842,64 @@ export default function SettingsPage() {
         if (!isOpen) return null;
 
         return (
-          <div className="fixed inset-0 z-50 bg-gray-900">
+          <div
+            className="fixed inset-0 z-50"
+            style={{
+              background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
+            }}
+          >
             <div className="h-full overflow-y-auto">
-              {/* Header */}
-              <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700">
-                <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={onClose}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                    <h2 className="text-xl font-bold text-white">{title}</h2>
-                  </div>
+              {/* Header with 3D styling */}
+              <div
+                className="sticky top-0 z-10"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
+                }}
+              >
+                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+                  <button
+                    onClick={onClose}
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                      boxShadow:
+                        "0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                    }}
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                  <h2 className="text-xl font-bold text-white">{title}</h2>
                 </div>
               </div>
 
-              {/* Content */}
-              <div className="max-w-4xl mx-auto px-6 py-8">{children}</div>
+              {/* Content with 3D card styling */}
+              <div className="max-w-4xl mx-auto px-4 py-6">
+                <div
+                  className="relative rounded-2xl p-5 overflow-hidden"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                    boxShadow:
+                      "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  {/* Subtle glow effect */}
+                  <div
+                    className="absolute inset-0 opacity-20 rounded-2xl pointer-events-none"
+                    style={{
+                      background:
+                        "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
+                    }}
+                  />
+                  <div className="relative z-10">{children}</div>
+                </div>
+              </div>
             </div>
           </div>
         );

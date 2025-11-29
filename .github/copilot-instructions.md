@@ -99,6 +99,34 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 4. **Move to next error** - Chain fixes without commentary
 5. **Only brief status updates** - "Fixed X, building..." maximum
 
+### 📋 ALWAYS CREATE TODO LIST FOR MULTIPLE TASKS
+
+**CRITICAL RULE:** When user requests multiple tasks/changes, ALWAYS create a todo list FIRST before starting any work.
+
+**REQUIRED approach:**
+
+1. **Identify all tasks** - Parse user request for all distinct items
+2. **Create todo list immediately** - Use `manage_todo_list` tool before any edits
+3. **Mark status correctly** - Start with all "not-started", mark "in-progress" when working
+4. **Update on completion** - Mark each task "completed" as you finish it
+5. **Work sequentially** - Complete one task at a time, updating status
+
+**Examples of multiple task requests:**
+
+- "fix the button and update the modal" → 2 tasks
+- "remove X, add Y, and change Z styling" → 3 tasks
+- Numbered lists or comma-separated items → Create corresponding todos
+
+**Todo list format:**
+```json
+[
+  {"id": 1, "title": "Short task name", "description": "Detailed description", "status": "not-started"},
+  {"id": 2, "title": "Second task", "description": "Details", "status": "not-started"}
+]
+```
+
+**NEVER skip the todo list when multiple tasks are requested.**
+
 **FORBIDDEN responses:**
 
 - ❌ Long explanations of what went wrong

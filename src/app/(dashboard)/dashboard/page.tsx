@@ -78,6 +78,7 @@ function DashboardContent() {
   const [activeView, setActiveView] = useState<"crypto" | "history">("crypto");
   const [showAddCryptoModal, setShowAddCryptoModal] = useState(false);
   const [showBalances, setShowBalances] = useState(true);
+  const [traderoomBalance, setTraderoomBalance] = useState<number>(0);
 
   // Check URL for asset parameter on mount to restore modal state after refresh
   const urlAssetSymbol = searchParams.get("asset");
@@ -110,6 +111,22 @@ function DashboardContent() {
       localStorage.setItem("showBalances", showBalances.toString());
     }
   }, [showBalances]);
+
+  // Fetch traderoom (real portfolio) balance
+  useEffect(() => {
+    const fetchTraderoomBalance = async () => {
+      try {
+        const response = await fetch("/api/user/balance");
+        if (response.ok) {
+          const data = await response.json();
+          setTraderoomBalance(data.realBalance || 0);
+        }
+      } catch (error) {
+        console.error("Failed to fetch traderoom balance:", error);
+      }
+    };
+    fetchTraderoomBalance();
+  }, []);
 
   // Auto-reload if stuck on loading screen
   useEffect(() => {
@@ -1001,7 +1018,7 @@ function DashboardContent() {
             {preferredCurrency} Balance
           </span>
           <span
-            className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-400 via-white to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+            className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
             style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
           >
             {portfolioLoading ? (
@@ -1014,14 +1031,48 @@ function DashboardContent() {
           </span>
         </div>
 
-        {/* Progress bar - Dynamic based on actual balance */}
-        <div className="mt-3">
+        {/* Balance Progress bar - Blue - closer spacing */}
+        <div className="mt-1.5">
           <div className="h-1 bg-gray-700 rounded-full overflow-hidden shadow-[0_0_8px_rgba(59,130,246,0.4)]">
             <div
               className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(59,130,246,0.8)]"
               style={{
                 width: `${Math.min(
                   Math.max((availableBalance / 10000) * 100, 0),
+                  100
+                )}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Traderoom Balance */}
+        <div className="flex items-center justify-between mt-4">
+          <span className="text-gray-400 text-base sm:text-lg font-bold">
+            Traderoom Balance
+          </span>
+          <span
+            className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-400 via-green-300 to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+            style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+          >
+            {portfolioLoading ? (
+              <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
+            ) : showBalances ? (
+              formatAmount(traderoomBalance || 0, 2)
+            ) : (
+              "••••••"
+            )}
+          </span>
+        </div>
+
+        {/* Traderoom Progress bar - Green */}
+        <div className="mt-1.5">
+          <div className="h-1 bg-gray-700 rounded-full overflow-hidden shadow-[0_0_8px_rgba(34,197,94,0.4)]">
+            <div
+              className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(34,197,94,0.8)]"
+              style={{
+                width: `${Math.min(
+                  Math.max((traderoomBalance / 1000000) * 100, 0),
                   100
                 )}%`,
               }}

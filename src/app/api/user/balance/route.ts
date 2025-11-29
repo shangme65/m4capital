@@ -42,18 +42,18 @@ export async function GET() {
     }
 
     // If user doesn't have a paper portfolio, create one
-    let practiceBalance = 785440.0;
+    let practiceBalance = 10000.0;
     if (!user.PaperPortfolio) {
       const newPaperPortfolio = await prisma.paperPortfolio.create({
         data: {
           id: generateId(),
           userId: user.id,
-          balance: 785440.0,
+          balance: 10000.0,
           assets: [],
           updatedAt: new Date(),
         },
       });
-      practiceBalance = 785440.0;
+      practiceBalance = 10000.0;
     } else {
       practiceBalance = Number(user.PaperPortfolio.balance);
     }

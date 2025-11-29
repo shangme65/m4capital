@@ -1364,7 +1364,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white px-3 py-4 sm:p-6">
       {/* Popup Notification */}
       {showNotification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in-right">

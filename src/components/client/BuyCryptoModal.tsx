@@ -1,8 +1,8 @@
 "use client";
 
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { X } from "lucide-react";
-import { useState } from "react";
 import { useNotifications } from "@/contexts/NotificationContext";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 
@@ -15,6 +15,7 @@ interface BuyCryptoModalProps {
     price: number;
   };
   userBalance: number;
+  defaultAmount?: number;
 }
 
 export default function BuyCryptoModal({
@@ -22,11 +23,22 @@ export default function BuyCryptoModal({
   onClose,
   asset,
   userBalance,
+  defaultAmount,
 }: BuyCryptoModalProps) {
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState(
+    defaultAmount ? defaultAmount.toString() : ""
+  );
   const [showPaymentSelector, setShowPaymentSelector] = useState(false);
-  const [inputMode, setInputMode] = useState<"crypto" | "usd">("crypto");
+  const [inputMode, setInputMode] = useState<"crypto" | "usd">("usd");
   const { addTransaction, addNotification } = useNotifications();
+
+  // Update amount when defaultAmount changes or modal opens
+  React.useEffect(() => {
+    if (isOpen && defaultAmount) {
+      setAmount(defaultAmount.toString());
+      setInputMode("usd");
+    }
+  }, [isOpen, defaultAmount]);
 
   const cryptoAmount =
     inputMode === "crypto"

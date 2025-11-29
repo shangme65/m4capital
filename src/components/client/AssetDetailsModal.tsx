@@ -56,10 +56,9 @@ const assetInfo: AssetInfo = {
     circulatingSupply: "",
     totalSupply: "",
     description:
-      "Bitcoin is a cryptocurrency and worldwide payment system. It is the first decentralized digital currency.",
+      "Bitcoin (BTC) is the world's first and most valuable cryptocurrency, created by the pseudonymous Satoshi Nakamoto in 2009. It operates on a decentralized peer-to-peer network secured by proof-of-work consensus. Bitcoin serves as a digital store of value and medium of exchange, with a fixed supply cap of 21 million coins, making it inherently deflationary.",
     links: {
       website: "https://bitcoin.org",
-      explorer: "https://blockchair.com/bitcoin",
     },
   },
   ETH: {
@@ -67,10 +66,186 @@ const assetInfo: AssetInfo = {
     marketCap: "",
     circulatingSupply: "",
     totalSupply: "",
-    description: "Ethereum is a decentralized platform for smart contracts.",
+    description:
+      "Ethereum (ETH) is the leading smart contract platform, enabling developers to build decentralized applications (dApps), DeFi protocols, and NFTs. Founded by Vitalik Buterin in 2015, Ethereum transitioned to proof-of-stake consensus in 2022, significantly reducing energy consumption. ETH powers the network's gas fees and serves as the backbone of Web3 innovation.",
     links: {
       website: "https://ethereum.org",
-      explorer: "https://etherscan.io",
+    },
+  },
+  XRP: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "XRP is the native cryptocurrency of the XRP Ledger, designed for fast, low-cost cross-border payments. Created by Ripple Labs, XRP enables financial institutions to transfer value globally in 3-5 seconds with minimal fees. The XRP Ledger uses a unique consensus protocol that doesn't require mining, making it highly energy-efficient.",
+    links: {
+      website: "https://xrpl.org",
+    },
+  },
+  TRX: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "TRON (TRX) is a blockchain platform focused on decentralizing the entertainment industry and enabling content creators to monetize directly with audiences. Founded by Justin Sun in 2017, TRON supports high-throughput smart contracts, DeFi applications, and is one of the largest stablecoin (USDT) hosting networks.",
+    links: {
+      website: "https://tron.network",
+    },
+  },
+  TON: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Toncoin (TON) powers The Open Network, originally developed by Telegram and now maintained by the TON Foundation. Known for exceptional speed and scalability, TON supports millions of transactions per second through its multi-blockchain architecture. Deeply integrated with Telegram's ecosystem, TON enables seamless crypto payments for over 800 million users.",
+    links: {
+      website: "https://ton.org",
+    },
+  },
+  LTC: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Litecoin (LTC) is a peer-to-peer cryptocurrency created by Charlie Lee in 2011 as the 'silver to Bitcoin's gold.' With faster block times (2.5 minutes) and lower fees, Litecoin is optimized for everyday transactions. It was among the first to implement SegWit and Lightning Network, serving as a testing ground for Bitcoin upgrades.",
+    links: {
+      website: "https://litecoin.org",
+    },
+  },
+  BCH: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Bitcoin Cash (BCH) emerged in 2017 as a fork of Bitcoin, increasing block size to 32MB to enable more transactions per block. BCH focuses on being a practical peer-to-peer electronic cash system with low fees and fast confirmations, making it suitable for everyday retail payments and remittances.",
+    links: {
+      website: "https://bitcoincash.org",
+    },
+  },
+  ETC: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Ethereum Classic (ETC) is the original Ethereum blockchain that continued after the 2016 DAO hack dispute. ETC maintains the principle of 'code is law' and immutability. Unlike Ethereum, it continues to use proof-of-work consensus and has a capped supply of approximately 210 million coins.",
+    links: {
+      website: "https://ethereumclassic.org",
+    },
+  },
+  USDC: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "USD Coin (USDC) is a fully-backed stablecoin pegged 1:1 to the US dollar, issued by Circle and Coinbase. Each USDC is backed by cash and short-term US Treasury bonds held in regulated financial institutions, with regular attestations by major accounting firms. USDC is widely used in DeFi, trading, and cross-border payments.",
+    links: {
+      website: "https://www.circle.com/usdc",
+    },
+  },
+  USDT: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Tether (USDT) is the world's largest stablecoin by market cap, pegged to the US dollar. Issued by Tether Limited, USDT provides a stable digital currency for trading, transfers, and DeFi applications. Available on multiple blockchains including Ethereum, Tron, and Solana, it facilitates trillions in annual trading volume.",
+    links: {
+      website: "https://tether.to",
+    },
+  },
+  SOL: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Solana (SOL) is a high-performance blockchain supporting 65,000+ transactions per second with sub-second finality. Using its innovative Proof of History consensus combined with Proof of Stake, Solana offers extremely low fees, making it popular for DeFi, NFTs, and Web3 gaming applications.",
+    links: {
+      website: "https://solana.com",
+    },
+  },
+  BNB: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "BNB is the native cryptocurrency of the BNB Chain ecosystem, originally created by Binance. BNB is used for trading fee discounts, transaction fees on BNB Chain, participation in token sales, and various DeFi applications. Regular token burns reduce supply over time.",
+    links: {
+      website: "https://www.bnbchain.org",
+    },
+  },
+  DOGE: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Dogecoin (DOGE) started as a meme cryptocurrency in 2013 featuring the Shiba Inu dog. Despite its humorous origins, DOGE has become a legitimate payment method accepted by numerous merchants. With its active community and low transaction fees, Dogecoin is used for tipping, donations, and micropayments.",
+    links: {
+      website: "https://dogecoin.com",
+    },
+  },
+  ADA: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Cardano (ADA) is a third-generation blockchain platform founded by Ethereum co-founder Charles Hoskinson. Built on peer-reviewed research and formal verification methods, Cardano uses the energy-efficient Ouroboros proof-of-stake protocol. It supports smart contracts, DeFi, and aims to provide financial services to the unbanked.",
+    links: {
+      website: "https://cardano.org",
+    },
+  },
+  MATIC: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Polygon (MATIC) is a Layer 2 scaling solution for Ethereum, providing faster and cheaper transactions while inheriting Ethereum's security. The ecosystem includes multiple scaling technologies including Polygon PoS, zkEVM, and Supernets, making it a leading platform for DeFi, gaming, and enterprise blockchain applications.",
+    links: {
+      website: "https://polygon.technology",
+    },
+  },
+  AVAX: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Avalanche (AVAX) is a high-speed smart contracts platform that processes 4,500+ transactions per second with instant finality. Its unique three-chain architecture (X-Chain, C-Chain, P-Chain) enables both decentralized applications and custom blockchain networks called Subnets, popular for gaming and institutional DeFi.",
+    links: {
+      website: "https://www.avax.network",
+    },
+  },
+  DOT: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Polkadot (DOT) enables cross-blockchain transfers of any type of data or asset. Created by Ethereum co-founder Gavin Wood, Polkadot connects multiple specialized blockchains (parachains) into one unified network, allowing them to operate seamlessly together while maintaining their unique features and governance.",
+    links: {
+      website: "https://polkadot.network",
+    },
+  },
+  LINK: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Chainlink (LINK) is the industry-standard decentralized oracle network, providing real-world data to smart contracts on any blockchain. Chainlink enables hybrid smart contracts that can access off-chain data feeds, APIs, and payment systems, securing billions of dollars across DeFi, insurance, and gaming.",
+    links: {
+      website: "https://chain.link",
     },
   },
 };
@@ -182,9 +357,9 @@ export default function AssetDetailsModal({
     circulatingSupply: string;
     totalSupply: string;
   } | null>(null);
-  // Chart period state (UI: 1H,1D,1W,1M,1Y,All)
+  // Chart period state (UI: 1D,1W,1M,1Y)
   const [selectedPeriod, setSelectedPeriod] = useState<
-    "1H" | "1D" | "1W" | "1M" | "1Y" | "All"
+    "1D" | "1W" | "1M" | "1Y"
   >("1D");
   // Buy amount state
   const [selectedBuyAmount, setSelectedBuyAmount] = useState<number>(30);
@@ -458,12 +633,10 @@ export default function AssetDetailsModal({
                 {/* Time Period Buttons */}
                 <div className="flex justify-around mb-6">
                   {[
-                    { label: "1H", key: "1H" },
                     { label: "1D", key: "1D" },
                     { label: "1W", key: "1W" },
                     { label: "1M", key: "1M" },
                     { label: "1Y", key: "1Y" },
-                    { label: "All", key: "All" },
                   ].map((period) => (
                     <button
                       key={period.key}
@@ -553,10 +726,10 @@ export default function AssetDetailsModal({
                     Buying {(selectedBuyAmount / currentPrice).toFixed(5)}{" "}
                     {asset.symbol} from available balance:{" "}
                     <span
-                      className="font-bold bg-gradient-to-r from-green-400 via-white to-green-400 bg-clip-text text-transparent"
+                      className="font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent"
                       style={{
                         textShadow:
-                          "0 0 15px rgba(34,197,94,0.1), 0 2px 4px rgba(0,0,0,0.8)",
+                          "0 0 15px rgba(59,130,246,0.1), 0 2px 4px rgba(0,0,0,0.8)",
                         WebkitTextStroke: "0.3px rgba(255,255,255,0.1)",
                       }}
                     >
@@ -996,18 +1169,60 @@ export default function AssetDetailsModal({
                       <h3 className="text-lg font-semibold text-white mb-4">
                         Links
                       </h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        {Object.entries(info.links).map(([key, url]) => (
+                      <div className="flex flex-wrap gap-3">
+                        {info.links.website && (
                           <a
-                            key={key}
-                            href={url}
+                            href={info.links.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-500 hover:underline capitalize"
+                            className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-medium transition-all duration-200 hover:scale-105 active:scale-95 group overflow-hidden"
+                            style={{
+                              background:
+                                "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                              boxShadow:
+                                "0 8px 20px -4px rgba(0, 0, 0, 0.5), 0 4px 10px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                            }}
                           >
-                            {key === "website" ? "Official website" : key}
+                            {/* Hover glow effect */}
+                            <div
+                              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"
+                              style={{
+                                background:
+                                  "radial-gradient(ellipse at 50% 50%, rgba(59, 130, 246, 0.2) 0%, transparent 70%)",
+                              }}
+                            />
+                            <svg
+                              className="w-5 h-5 text-blue-400 relative z-10"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                              />
+                            </svg>
+                            <span className="relative z-10">
+                              Official Website
+                            </span>
+                            <svg
+                              className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors relative z-10"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
                           </a>
-                        ))}
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1116,6 +1331,7 @@ export default function AssetDetailsModal({
               price: currentPrice,
             }}
             userBalance={userBalance}
+            defaultAmount={selectedBuyAmount}
           />
 
           <AssetSellModal
