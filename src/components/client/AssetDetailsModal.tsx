@@ -75,113 +75,6 @@ const assetInfo: AssetInfo = {
   },
 };
 
-// TODO: REPLACE WITH REAL TRANSACTION HISTORY FROM DATABASE
-// This mock data needs to be replaced with actual user transaction history:
-// - Fetch from Prisma: await prisma.transaction.findMany({ where: { userId, symbol } })
-// - Include: buy/sell history, amounts, prices, dates, status
-// - Calculate real gains/losses from actual trades
-// - NEVER use this mock data in production
-const mockTransactionHistory = {
-  BTC: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 0.5,
-      price: 65000,
-      date: "2024-10-10",
-      status: "completed",
-    },
-    {
-      id: 2,
-      type: "buy",
-      amount: 0.3542,
-      price: 68500,
-      date: "2024-10-05",
-      status: "completed",
-    },
-    {
-      id: 3,
-      type: "sell",
-      amount: 0.1,
-      price: 70000,
-      date: "2024-09-28",
-      status: "completed",
-    },
-  ],
-  ETH: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 5,
-      price: 2400,
-      date: "2024-10-08",
-      status: "completed",
-    },
-    {
-      id: 2,
-      type: "buy",
-      amount: 7.67,
-      price: 2350,
-      date: "2024-09-30",
-      status: "completed",
-    },
-  ],
-  ADA: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 5000,
-      price: 0.32,
-      date: "2024-10-07",
-      status: "completed",
-    },
-    {
-      id: 2,
-      type: "buy",
-      amount: 3420.15,
-      price: 0.35,
-      date: "2024-09-25",
-      status: "completed",
-    },
-  ],
-  SOL: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 25,
-      price: 145,
-      date: "2024-10-06",
-      status: "completed",
-    },
-    {
-      id: 2,
-      type: "buy",
-      amount: 20.23,
-      price: 155,
-      date: "2024-09-28",
-      status: "completed",
-    },
-  ],
-  USDT: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 2000,
-      price: 1.0,
-      date: "2024-10-05",
-      status: "completed",
-    },
-    {
-      id: 2,
-      type: "buy",
-      amount: 3420,
-      price: 1.0,
-      date: "2024-09-20",
-      status: "completed",
-    },
-  ],
-};
-
 export default function AssetDetailsModal({
   isOpen,
   onClose,
@@ -434,11 +327,8 @@ export default function AssetDetailsModal({
   if (!isOpen || !asset) return null;
 
   const info = assetInfo[asset.symbol] || null;
-  const history = txHistory.length
-    ? txHistory
-    : mockTransactionHistory[
-        asset.symbol as keyof typeof mockTransactionHistory
-      ] || [];
+  // Use only real transaction history from API - no mock/simulated data
+  const history = txHistory;
   const currentPrice = livePrice ?? info?.price ?? 0;
   const priceChange = liveChangePercent ?? asset.change ?? 0;
 
