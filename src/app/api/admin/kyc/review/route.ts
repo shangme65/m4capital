@@ -35,9 +35,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (action !== "APPROVE" && action !== "REJECT") {
+    if (
+      action !== "APPROVE" &&
+      action !== "REJECT" &&
+      action !== "UNDER_REVIEW"
+    ) {
       return NextResponse.json(
-        { error: "Invalid action. Must be APPROVE or REJECT" },
+        { error: "Invalid action. Must be APPROVE, REJECT, or UNDER_REVIEW" },
         { status: 400 }
       );
     }
@@ -62,24 +66,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Map action to status
+    const statusMap: Record<string, string> = {
+      APPROVE: "APPROVED",
+      REJECT: "REJECTED",
+      UNDER_REVIEW: "UNDER_REVIEW",
+    };
+
     // Update KYC status
     const updatedKyc = await prisma.kycVerification.update({
       where: { id: kycId },
       data: {
-        status: action === "APPROVE" ? "APPROVED" : "REJECTED",
+        status: statusMap[action] as any,
         reviewedBy: admin.id,
         reviewedAt: new Date(),
         rejectionReason: action === "REJECT" ? rejectionReason : null,
       },
     });
 
-    // Send email notification to user
+    // Send email notification to user (only for approve/reject)
     if (action === "APPROVE") {
       await sendKycApprovedEmail(
         kycVerification.User.email!,
         kycVerification.User.name || "User"
       );
-    } else {
+    } else if (action === "REJECT") {
       await sendKycRejectedEmail(
         kycVerification.User.email!,
         kycVerification.User.name || "User",
@@ -90,7 +101,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: `KYC verification ${
-        action === "APPROVE" ? "approved" : "rejected"
+        action === "APPROVE"
+          ? "approved"
+          : action === "REJECT"
+          ? "rejected"
+          : "marked as under review"
       } successfully`,
       kycVerification: {
         id: updatedKyc.id,

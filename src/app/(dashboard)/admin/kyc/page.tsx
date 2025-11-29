@@ -15,8 +15,112 @@ import {
   Globe,
   Download,
   ChevronLeft,
+  ZoomIn,
+  X,
+  ExternalLink,
+  Sparkles,
+  AlertCircle,
 } from "lucide-react";
-import Image from "next/image";
+
+// Success Modal Component with 3D styling
+function SuccessModal({
+  isOpen,
+  onClose,
+  action,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  action: "APPROVED" | "REJECTED" | "UNDER_REVIEW";
+}) {
+  if (!isOpen) return null;
+
+  const config = {
+    APPROVED: {
+      icon: CheckCircle,
+      color: "green",
+      title: "KYC Approved!",
+      message: "The user's verification has been approved successfully.",
+      gradient: "from-green-500 to-emerald-600",
+      glow: "rgba(34, 197, 94, 0.4)",
+    },
+    REJECTED: {
+      icon: XCircle,
+      color: "red",
+      title: "KYC Rejected",
+      message: "The user's verification has been rejected.",
+      gradient: "from-red-500 to-rose-600",
+      glow: "rgba(239, 68, 68, 0.4)",
+    },
+    UNDER_REVIEW: {
+      icon: Clock,
+      color: "blue",
+      title: "Under Review",
+      message: "The KYC submission has been marked for further review.",
+      gradient: "from-blue-500 to-indigo-600",
+      glow: "rgba(59, 130, 246, 0.4)",
+    },
+  };
+
+  const { icon: Icon, title, message, gradient, glow } = config[action];
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div
+        className="relative w-full max-w-sm bg-gray-900 rounded-2xl overflow-hidden"
+        style={{
+          boxShadow: `0 25px 50px -12px ${glow}, 0 0 0 1px rgba(255,255,255,0.1)`,
+          transform: "perspective(1000px) rotateX(2deg)",
+        }}
+      >
+        {/* Animated Background */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div
+            className={`absolute -top-20 -right-20 w-40 h-40 rounded-full bg-gradient-to-br ${gradient} opacity-30 blur-3xl animate-pulse`}
+          />
+          <div
+            className={`absolute -bottom-20 -left-20 w-40 h-40 rounded-full bg-gradient-to-br ${gradient} opacity-20 blur-3xl animate-pulse delay-500`}
+          />
+        </div>
+
+        {/* Content */}
+        <div className="relative p-6 text-center">
+          {/* 3D Icon */}
+          <div className="relative mx-auto w-20 h-20 mb-4">
+            <div
+              className={`absolute inset-0 rounded-full bg-gradient-to-b ${gradient}`}
+              style={{
+                boxShadow: `0 10px 30px ${glow}, inset 0 -5px 20px rgba(0,0,0,0.3)`,
+              }}
+            />
+            <div
+              className="absolute inset-2 rounded-full bg-gray-900 flex items-center justify-center"
+              style={{ boxShadow: "inset 0 5px 15px rgba(0,0,0,0.5)" }}
+            >
+              <Icon className="w-8 h-8 text-white" />
+            </div>
+            {/* Sparkle effects */}
+            <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-400 animate-pulse" />
+          </div>
+
+          {/* Title */}
+          <h2 className="text-xl font-bold text-white mb-2">{title}</h2>
+          <p className="text-gray-400 text-sm mb-6">{message}</p>
+
+          {/* Button */}
+          <button
+            onClick={onClose}
+            className={`w-full py-3 rounded-xl font-semibold text-white bg-gradient-to-r ${gradient} transition-all hover:scale-[1.02] active:scale-[0.98]`}
+            style={{
+              boxShadow: `0 4px 15px ${glow}`,
+            }}
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface KycSubmission {
   id: string;
@@ -45,6 +149,155 @@ interface KycSubmission {
   };
 }
 
+// Helper to check if URL is base64 data URL
+const isBase64DataUrl = (url: string) => url?.startsWith("data:");
+
+// Helper to get file extension from base64 data URL
+const getFileExtension = (dataUrl: string): string => {
+  if (!dataUrl) return "file";
+  const match = dataUrl.match(/data:([^;]+)/);
+  if (match) {
+    const mimeType = match[1];
+    if (mimeType.includes("pdf")) return "pdf";
+    if (mimeType.includes("png")) return "png";
+    if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return "jpg";
+  }
+  return "file";
+};
+
+// Helper to check if it's a PDF
+const isPdf = (url: string): boolean => {
+  if (!url) return false;
+  return url.includes("application/pdf") || url.toLowerCase().endsWith(".pdf");
+};
+
+// Download handler for base64 data URLs
+const downloadBase64File = (dataUrl: string, filename: string) => {
+  const link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+// Document Preview Component
+function DocumentPreview({
+  url,
+  title,
+  onClose,
+}: {
+  url: string;
+  title: string;
+  onClose: () => void;
+}) {
+  const isPdfFile = isPdf(url);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+      <div className="relative w-full max-w-5xl max-h-[90vh] bg-gray-900 rounded-xl overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
+          <h3 className="text-lg font-semibold text-white">{title}</h3>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() =>
+                downloadBase64File(
+                  url,
+                  `${title.replace(/\s+/g, "_")}.${getFileExtension(url)}`
+                )
+              }
+              className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 rounded-lg text-sm font-medium transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Download
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="overflow-auto max-h-[calc(90vh-80px)] p-4 flex items-center justify-center">
+          {isPdfFile ? (
+            <iframe
+              src={url}
+              className="w-full h-[70vh] rounded-lg"
+              title={title}
+            />
+          ) : (
+            <img
+              src={url}
+              alt={title}
+              className="max-w-full max-h-[70vh] object-contain rounded-lg"
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Document Card Component
+function DocumentCard({
+  title,
+  url,
+  onView,
+}: {
+  title: string;
+  url: string;
+  onView: () => void;
+}) {
+  const isPdfFile = isPdf(url);
+  const filename = `${title.replace(/\s+/g, "_")}.${getFileExtension(url)}`;
+
+  return (
+    <div className="bg-gray-700/50 rounded-lg p-4">
+      <h4 className="text-sm font-semibold text-white mb-2">{title}</h4>
+      <div
+        className="relative aspect-video bg-gray-900 rounded overflow-hidden mb-3 group cursor-pointer"
+        onClick={onView}
+      >
+        {isPdfFile ? (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+            <FileText className="w-12 h-12 mb-2" />
+            <span className="text-sm">PDF Document</span>
+          </div>
+        ) : (
+          <img src={url} alt={title} className="w-full h-full object-contain" />
+        )}
+        {/* Overlay on hover */}
+        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div className="flex items-center gap-2 text-white font-medium">
+            <ZoomIn className="w-5 h-5" />
+            <span>View Full Size</span>
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          onClick={onView}
+          className="flex-1 flex items-center justify-center gap-2 text-sm text-blue-400 hover:text-blue-300 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+        >
+          <Eye className="w-4 h-4" />
+          View
+        </button>
+        <button
+          onClick={() => downloadBase64File(url, filename)}
+          className="flex-1 flex items-center justify-center gap-2 text-sm text-orange-400 hover:text-orange-300 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+        >
+          <Download className="w-4 h-4" />
+          Download
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function KycManagementPage() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -61,6 +314,14 @@ export default function KycManagementPage() {
   >("APPROVED");
   const [rejectionReason, setRejectionReason] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
+  const [previewDocument, setPreviewDocument] = useState<{
+    url: string;
+    title: string;
+  } | null>(null);
+  const [successModal, setSuccessModal] = useState<{
+    isOpen: boolean;
+    action: "APPROVED" | "REJECTED" | "UNDER_REVIEW";
+  }>({ isOpen: false, action: "APPROVED" });
 
   useEffect(() => {
     fetchSubmissions();
@@ -92,6 +353,13 @@ export default function KycManagementPage() {
       return;
     }
 
+    // Map frontend action to API action
+    const actionMap: Record<string, string> = {
+      APPROVED: "APPROVE",
+      REJECTED: "REJECT",
+      UNDER_REVIEW: "UNDER_REVIEW",
+    };
+
     setReviewing(true);
     try {
       const response = await fetch("/api/admin/kyc/review", {
@@ -99,7 +367,7 @@ export default function KycManagementPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           kycId: selectedSubmission.id,
-          status: reviewAction,
+          action: actionMap[reviewAction] || reviewAction,
           rejectionReason: reviewAction === "REJECTED" ? rejectionReason : null,
           adminNotes: adminNotes || null,
         }),
@@ -108,7 +376,7 @@ export default function KycManagementPage() {
       const data = await response.json();
 
       if (response.ok) {
-        alert(`KYC ${reviewAction.toLowerCase()} successfully!`);
+        setSuccessModal({ isOpen: true, action: reviewAction });
         setSelectedSubmission(null);
         setRejectionReason("");
         setAdminNotes("");
@@ -158,210 +426,214 @@ export default function KycManagementPage() {
 
   if (selectedSubmission) {
     return (
-      <div className="max-w-6xl mx-auto p-6 space-y-6">
-        {/* Back Button */}
-        <button
-          onClick={() => setSelectedSubmission(null)}
-          className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          <span>Back to List</span>
-        </button>
+      <div className="fixed inset-0 z-50 bg-gray-900 overflow-y-auto">
+        {/* Success Modal */}
+        <SuccessModal
+          isOpen={successModal.isOpen}
+          onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
+          action={successModal.action}
+        />
 
-        <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-2">
-                {selectedSubmission.firstName} {selectedSubmission.lastName}
-              </h2>
-              <p className="text-gray-400">{selectedSubmission.user.email}</p>
-            </div>
-            {getStatusBadge(selectedSubmission.status)}
+        {/* Document Preview Modal */}
+        {previewDocument && (
+          <DocumentPreview
+            url={previewDocument.url}
+            title={previewDocument.title}
+            onClose={() => setPreviewDocument(null)}
+          />
+        )}
+
+        {/* Mobile Header */}
+        <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 py-3 flex items-center gap-3">
+          <button
+            onClick={() => setSelectedSubmission(null)}
+            className="p-2 -ml-2 hover:bg-gray-800 rounded-lg transition-colors"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-bold text-white truncate">
+              {selectedSubmission.firstName} {selectedSubmission.lastName}
+            </h2>
+            <p className="text-xs text-gray-400 truncate">
+              {selectedSubmission.user.email}
+            </p>
           </div>
+          {getStatusBadge(selectedSubmission.status)}
+        </div>
 
-          <div className="grid md:grid-cols-2 gap-6 mb-6">
-            {/* Personal Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Personal Information
-              </h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Full Name:</span>
-                  <span className="text-white font-medium">
-                    {selectedSubmission.firstName} {selectedSubmission.lastName}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Date of Birth:</span>
-                  <span className="text-white font-medium">
-                    {new Date(
-                      selectedSubmission.dateOfBirth
-                    ).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Nationality:</span>
-                  <span className="text-white font-medium">
-                    {selectedSubmission.nationality}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Phone:</span>
-                  <span className="text-white font-medium">
-                    {selectedSubmission.phoneNumber}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Address Information */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                <MapPin className="w-5 h-5" />
-                Address Information
-              </h3>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Address:</span>
-                  <span className="text-white font-medium text-right max-w-[200px]">
-                    {selectedSubmission.address}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">City:</span>
-                  <span className="text-white font-medium">
-                    {selectedSubmission.city}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Postal Code:</span>
-                  <span className="text-white font-medium">
-                    {selectedSubmission.postalCode}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Submitted Documents */}
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Submitted Documents
+        {/* Content */}
+        <div className="p-4 space-y-4 pb-32">
+          {/* Personal Information */}
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
+              <User className="w-4 h-4 text-orange-500" />
+              Personal Information
             </h3>
-            <div className="grid md:grid-cols-3 gap-4">
-              {/* ID Document */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-white mb-2">
-                  Government ID
-                </h4>
-                <div className="relative aspect-video bg-gray-900 rounded overflow-hidden mb-2">
-                  <Image
-                    src={selectedSubmission.idDocumentUrl}
-                    alt="ID Document"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <a
-                  href={selectedSubmission.idDocumentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-sm text-orange-400 hover:text-orange-300 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </a>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between py-2 border-b border-gray-700">
+                <span className="text-gray-400">Full Name</span>
+                <span className="text-white font-medium">
+                  {selectedSubmission.firstName} {selectedSubmission.lastName}
+                </span>
               </div>
-
-              {/* Proof of Address */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-white mb-2">
-                  Proof of Address
-                </h4>
-                <div className="relative aspect-video bg-gray-900 rounded overflow-hidden mb-2">
-                  <Image
-                    src={selectedSubmission.proofOfAddressUrl}
-                    alt="Proof of Address"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <a
-                  href={selectedSubmission.proofOfAddressUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-sm text-orange-400 hover:text-orange-300 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </a>
+              <div className="flex justify-between py-2 border-b border-gray-700">
+                <span className="text-gray-400">Date of Birth</span>
+                <span className="text-white font-medium">
+                  {new Date(
+                    selectedSubmission.dateOfBirth
+                  ).toLocaleDateString()}
+                </span>
               </div>
-
-              {/* Selfie */}
-              <div className="bg-gray-700/50 rounded-lg p-4">
-                <h4 className="text-sm font-semibold text-white mb-2">
-                  Selfie with ID
-                </h4>
-                <div className="relative aspect-video bg-gray-900 rounded overflow-hidden mb-2">
-                  <Image
-                    src={selectedSubmission.selfieUrl}
-                    alt="Selfie"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
-                <a
-                  href={selectedSubmission.selfieUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 text-sm text-orange-400 hover:text-orange-300 transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  Download
-                </a>
+              <div className="flex justify-between py-2 border-b border-gray-700">
+                <span className="text-gray-400">Nationality</span>
+                <span className="text-white font-medium">
+                  {selectedSubmission.nationality}
+                </span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-gray-400">Phone</span>
+                <span className="text-white font-medium">
+                  {selectedSubmission.phoneNumber}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Review Section */}
+          {/* Address Information */}
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
+              <MapPin className="w-4 h-4 text-orange-500" />
+              Address Information
+            </h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between py-2 border-b border-gray-700">
+                <span className="text-gray-400">Address</span>
+                <span className="text-white font-medium text-right max-w-[180px]">
+                  {selectedSubmission.address}
+                </span>
+              </div>
+              <div className="flex justify-between py-2 border-b border-gray-700">
+                <span className="text-gray-400">City</span>
+                <span className="text-white font-medium">
+                  {selectedSubmission.city}
+                </span>
+              </div>
+              <div className="flex justify-between py-2">
+                <span className="text-gray-400">Postal Code</span>
+                <span className="text-white font-medium">
+                  {selectedSubmission.postalCode}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Documents */}
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
+              <FileText className="w-4 h-4 text-orange-500" />
+              Documents
+            </h3>
+            <div className="space-y-3">
+              <DocumentCard
+                title="Government ID"
+                url={selectedSubmission.idDocumentUrl}
+                onView={() =>
+                  setPreviewDocument({
+                    url: selectedSubmission.idDocumentUrl,
+                    title: "Government ID",
+                  })
+                }
+              />
+              <DocumentCard
+                title="Proof of Address"
+                url={selectedSubmission.proofOfAddressUrl}
+                onView={() =>
+                  setPreviewDocument({
+                    url: selectedSubmission.proofOfAddressUrl,
+                    title: "Proof of Address",
+                  })
+                }
+              />
+              <DocumentCard
+                title="Selfie with ID"
+                url={selectedSubmission.selfieUrl}
+                onView={() =>
+                  setPreviewDocument({
+                    url: selectedSubmission.selfieUrl,
+                    title: "Selfie with ID",
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          {/* Review Info (if already reviewed) */}
+          {selectedSubmission.reviewedAt && (
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+              <h3 className="text-base font-semibold text-white mb-3">
+                Review Information
+              </h3>
+              <div className="text-sm text-gray-300 space-y-2">
+                <p>
+                  <span className="text-gray-400">Reviewed:</span>{" "}
+                  {new Date(selectedSubmission.reviewedAt).toLocaleString()}
+                </p>
+                {selectedSubmission.rejectionReason && (
+                  <p className="text-red-400">
+                    <span className="text-gray-400">Reason:</span>{" "}
+                    {selectedSubmission.rejectionReason}
+                  </p>
+                )}
+                {selectedSubmission.adminNotes && (
+                  <p>
+                    <span className="text-gray-400">Notes:</span>{" "}
+                    {selectedSubmission.adminNotes}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Review Section (if not approved) */}
           {selectedSubmission.status !== "APPROVED" && (
-            <div className="bg-gray-700/30 rounded-lg p-6 space-y-4">
-              <h3 className="text-lg font-semibold text-white">
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+              <h3 className="text-base font-semibold text-white mb-4">
                 Review Submission
               </h3>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Action</label>
-                <div className="flex gap-3">
+              {/* Action Buttons */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  Action
+                </label>
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => setReviewAction("APPROVED")}
-                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                    className={`py-2.5 px-3 rounded-lg font-medium text-sm transition-colors ${
                       reviewAction === "APPROVED"
                         ? "bg-green-600 text-white"
-                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        : "bg-gray-700 text-gray-300"
                     }`}
                   >
                     Approve
                   </button>
                   <button
                     onClick={() => setReviewAction("UNDER_REVIEW")}
-                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                    className={`py-2.5 px-3 rounded-lg font-medium text-sm transition-colors ${
                       reviewAction === "UNDER_REVIEW"
                         ? "bg-blue-600 text-white"
-                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        : "bg-gray-700 text-gray-300"
                     }`}
                   >
-                    Under Review
+                    Review
                   </button>
                   <button
                     onClick={() => setReviewAction("REJECTED")}
-                    className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                    className={`py-2.5 px-3 rounded-lg font-medium text-sm transition-colors ${
                       reviewAction === "REJECTED"
                         ? "bg-red-600 text-white"
-                        : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                        : "bg-gray-700 text-gray-300"
                     }`}
                   >
                     Reject
@@ -370,159 +642,141 @@ export default function KycManagementPage() {
               </div>
 
               {reviewAction === "REJECTED" && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2 text-gray-300">
                     Rejection Reason <span className="text-red-400">*</span>
                   </label>
                   <textarea
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500"
+                    className="w-full bg-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 border border-gray-600"
                     rows={3}
                     placeholder="Explain why this submission is being rejected..."
                   />
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium mb-2">
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2 text-gray-300">
                   Admin Notes (Optional)
                 </label>
                 <textarea
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full bg-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-600"
                   rows={2}
                   placeholder="Internal notes..."
                 />
               </div>
-
-              <div className="flex justify-end">
-                <button
-                  onClick={handleReview}
-                  disabled={reviewing}
-                  className="bg-orange-600 hover:bg-orange-500 disabled:opacity-50 px-6 py-2.5 rounded-lg font-medium transition-colors"
-                >
-                  {reviewing ? "Submitting..." : "Submit Review"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Review Info */}
-          {selectedSubmission.reviewedAt && (
-            <div className="bg-gray-700/30 rounded-lg p-4 mt-4">
-              <h3 className="text-sm font-semibold text-white mb-2">
-                Review Information
-              </h3>
-              <div className="text-sm text-gray-300 space-y-1">
-                <p>
-                  Reviewed:{" "}
-                  {new Date(selectedSubmission.reviewedAt).toLocaleString()}
-                </p>
-                {selectedSubmission.rejectionReason && (
-                  <p className="text-red-400">
-                    Reason: {selectedSubmission.rejectionReason}
-                  </p>
-                )}
-                {selectedSubmission.adminNotes && (
-                  <p className="text-gray-400">
-                    Notes: {selectedSubmission.adminNotes}
-                  </p>
-                )}
-              </div>
             </div>
           )}
         </div>
+
+        {/* Fixed Bottom Submit Button */}
+        {selectedSubmission.status !== "APPROVED" && (
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-700">
+            <button
+              onClick={handleReview}
+              disabled={reviewing}
+              className={`w-full py-3 rounded-xl font-semibold text-white transition-colors ${
+                reviewAction === "APPROVED"
+                  ? "bg-green-600 hover:bg-green-500"
+                  : reviewAction === "REJECTED"
+                  ? "bg-red-600 hover:bg-red-500"
+                  : "bg-orange-600 hover:bg-orange-500"
+              } disabled:opacity-50`}
+            >
+              {reviewing
+                ? "Submitting..."
+                : `Submit ${reviewAction.replace("_", " ")}`}
+            </button>
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-white">KYC Management</h1>
-          <p className="text-gray-400 mt-1">
-            Review and manage user verification submissions
-          </p>
-        </div>
+    <div className="fixed inset-0 z-40 bg-gray-900 overflow-y-auto">
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
+        action={successModal.action}
+      />
+
+      {/* Mobile Header */}
+      <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 py-4">
+        <h1 className="text-xl font-bold text-white">KYC Management</h1>
+        <p className="text-sm text-gray-400 mt-1">
+          Review user verification submissions
+        </p>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 border-b border-gray-700">
-        {(
-          ["ALL", "PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED"] as const
-        ).map((status) => (
-          <button
-            key={status}
-            onClick={() => setFilter(status as any)}
-            className={`px-4 py-2 font-medium transition-colors ${
-              filter === status
-                ? "text-orange-500 border-b-2 border-orange-500"
-                : "text-gray-400 hover:text-gray-300"
-            }`}
-          >
-            {status.replace("_", " ")}
-          </button>
-        ))}
+      {/* Filter Tabs - Scrollable */}
+      <div className="sticky top-[72px] z-10 bg-gray-900 border-b border-gray-700 overflow-x-auto">
+        <div className="flex min-w-max px-2">
+          {(
+            ["ALL", "PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED"] as const
+          ).map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilter(status as any)}
+              className={`px-4 py-3 font-medium text-sm whitespace-nowrap transition-colors ${
+                filter === status
+                  ? "text-orange-500 border-b-2 border-orange-500"
+                  : "text-gray-400"
+              }`}
+            >
+              {status.replace("_", " ")}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Submissions List */}
-      {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-400 mt-4">Loading submissions...</p>
-        </div>
-      ) : !submissions || submissions.length === 0 ? (
-        <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
-          <FileText className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <p className="text-gray-400">No KYC submissions found</p>
-        </div>
-      ) : (
-        <div className="grid gap-4">
-          {submissions.map((submission) => (
-            <div
+      <div className="p-4 space-y-3">
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="inline-block w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-400 mt-4">Loading submissions...</p>
+          </div>
+        ) : !submissions || submissions.length === 0 ? (
+          <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
+            <FileText className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            <p className="text-gray-400">No KYC submissions found</p>
+          </div>
+        ) : (
+          submissions.map((submission) => (
+            <button
               key={submission.id}
-              className="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-gray-600 transition-colors"
+              onClick={() => setSelectedSubmission(submission)}
+              className="w-full bg-gray-800 rounded-xl p-4 border border-gray-700 text-left active:bg-gray-750 transition-colors"
             >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
                     {getStatusIcon(submission.status)}
-                    <h3 className="text-lg font-semibold text-white">
+                    <h3 className="text-base font-semibold text-white truncate">
                       {submission.firstName} {submission.lastName}
                     </h3>
-                    {getStatusBadge(submission.status)}
                   </div>
-                  <div className="text-sm text-gray-400 space-y-1">
-                    <p className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      {submission.user.email}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      Submitted:{" "}
-                      {new Date(submission.submittedAt).toLocaleString()}
-                    </p>
-                    <p className="flex items-center gap-2">
-                      <Globe className="w-4 h-4" />
-                      {submission.nationality} • {submission.city}
-                    </p>
-                  </div>
+                  <p className="text-sm text-gray-400 truncate">
+                    {submission.user.email}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {new Date(submission.submittedAt).toLocaleDateString()}
+                  </p>
                 </div>
-                <button
-                  onClick={() => setSelectedSubmission(submission)}
-                  className="flex items-center gap-2 bg-orange-600 hover:bg-orange-500 px-4 py-2 rounded-lg font-medium transition-colors"
-                >
-                  <Eye className="w-4 h-4" />
-                  Review
-                </button>
+                <div className="flex flex-col items-end gap-2">
+                  {getStatusBadge(submission.status)}
+                  <Eye className="w-5 h-5 text-orange-500" />
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            </button>
+          ))
+        )}
+      </div>
     </div>
   );
 }

@@ -193,7 +193,7 @@ export async function POST(req: NextRequest) {
       // Don't fail the submission if email fails
     }
 
-    // Notify admins
+    // Notify admins via email
     try {
       await sendKycAdminNotification(
         user.name || "User",
@@ -204,6 +204,42 @@ export async function POST(req: NextRequest) {
     } catch (adminEmailError) {
       console.error("Failed to send admin notification:", adminEmailError);
       // Don't fail the submission if admin email fails
+    }
+
+    // Create push notifications for all admins
+    try {
+      const admins = await prisma.user.findMany({
+        where: { role: "ADMIN" },
+        select: { id: true },
+      });
+
+      // Create notification for each admin
+      await Promise.all(
+        admins.map((admin) =>
+          prisma.notification.create({
+            data: {
+              id: generateId(),
+              userId: admin.id,
+              type: "INFO",
+              title: "🔔 New KYC Submission",
+              message: `${
+                user.name || user.email
+              } has submitted KYC verification documents. Review required.`,
+              metadata: {
+                kycId: kycVerification.id,
+                userId: user.id,
+                userName: user.name,
+                userEmail: user.email,
+              },
+            },
+          })
+        )
+      );
+
+      console.log(`✅ Push notifications created for ${admins.length} admins`);
+    } catch (pushError) {
+      console.error("Failed to create admin push notifications:", pushError);
+      // Don't fail the submission if push notification fails
     }
 
     return NextResponse.json({
