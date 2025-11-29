@@ -233,14 +233,15 @@ model PaperTrade {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Portfolio {
-  id              String       @id
-  userId          String       @unique
-  balance         Decimal      @default(0.00)
-  balanceCurrency String       @default("USD")
-  assets          Json         @default("[]")
-  Deposit         Deposit[]
-  User            User         @relation(fields: [userId], references: [id])
-  Withdrawal      Withdrawal[]
+  id               String       @id
+  userId           String       @unique
+  balance          Decimal      @default(0.00)
+  balanceCurrency  String       @default("USD")
+  traderoomBalance Decimal      @default(0.00)
+  assets           Json         @default("[]")
+  Deposit          Deposit[]
+  User             User         @relation(fields: [userId], references: [id])
+  Withdrawal       Withdrawal[]
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

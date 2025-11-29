@@ -170,47 +170,91 @@ export async function POST(request: NextRequest) {
             id: generateId(),
             userId: deposit.User.id,
             balance: 0,
+            traderoomBalance: 0,
             assets: [],
           },
         });
       }
 
-      // Add amount to balance in the deposit's currency
-      const newBalance =
-        parseFloat(portfolio.balance.toString()) +
-        parseFloat(deposit.amount.toString());
       const depositCurrency = deposit.currency || "USD";
+      const depositAmount = parseFloat(deposit.amount.toString());
 
-      await prisma.portfolio.update({
-        where: { id: portfolio.id },
-        data: {
-          balance: newBalance,
-          balanceCurrency: depositCurrency,
-        },
-      });
+      // Check if this is a traderoom deposit
+      if (deposit.targetAsset === "TRADEROOM") {
+        // Credit to traderoom balance
+        const currentTraderoomBalance = parseFloat(
+          (portfolio.traderoomBalance || 0).toString()
+        );
+        const newTraderoomBalance = currentTraderoomBalance + depositAmount;
 
-      console.log(
-        `💵 Credited ${deposit.amount} ${depositCurrency} to user ${deposit.User.email}`
-      );
-      console.log(`New balance: ${newBalance} ${depositCurrency}`);
-
-      // Create notification for successful deposit
-      await prisma.notification.create({
-        data: {
-          id: generateId(),
-          userId: deposit.User.id,
-          type: "DEPOSIT",
-          title: "Deposit Completed",
-          message: `Your deposit of $${deposit.amount} has been successfully credited to your account.`,
-          amount: deposit.amount,
-          asset: deposit.currency,
-          metadata: {
-            depositId: deposit.id,
-            transactionId: payment_id,
-            method: deposit.method,
+        await prisma.portfolio.update({
+          where: { id: portfolio.id },
+          data: {
+            traderoomBalance: newTraderoomBalance,
           },
-        },
-      });
+        });
+
+        console.log(
+          `💵 Credited ${deposit.amount} ${depositCurrency} to TRADEROOM balance for user ${deposit.User.email}`
+        );
+        console.log(
+          `New traderoom balance: ${newTraderoomBalance} ${depositCurrency}`
+        );
+
+        // Create notification for successful traderoom deposit
+        await prisma.notification.create({
+          data: {
+            id: generateId(),
+            userId: deposit.User.id,
+            type: "DEPOSIT",
+            title: "Traderoom Deposit Completed",
+            message: `Your deposit of $${deposit.amount} has been successfully credited to your Traderoom balance.`,
+            amount: deposit.amount,
+            asset: deposit.currency,
+            metadata: {
+              depositId: deposit.id,
+              transactionId: payment_id,
+              method: deposit.method,
+              target: "TRADEROOM",
+            },
+          },
+        });
+      } else {
+        // Credit to regular fiat balance
+        const newBalance =
+          parseFloat(portfolio.balance.toString()) + depositAmount;
+
+        await prisma.portfolio.update({
+          where: { id: portfolio.id },
+          data: {
+            balance: newBalance,
+            balanceCurrency: depositCurrency,
+          },
+        });
+
+        console.log(
+          `💵 Credited ${deposit.amount} ${depositCurrency} to user ${deposit.User.email}`
+        );
+        console.log(`New balance: ${newBalance} ${depositCurrency}`);
+
+        // Create notification for successful deposit
+        await prisma.notification.create({
+          data: {
+            id: generateId(),
+            userId: deposit.User.id,
+            type: "DEPOSIT",
+            title: "Deposit Completed",
+            message: `Your deposit of $${deposit.amount} has been successfully credited to your account.`,
+            amount: deposit.amount,
+            asset: deposit.currency,
+            metadata: {
+              depositId: deposit.id,
+              transactionId: payment_id,
+              method: deposit.method,
+            },
+          },
+        });
+      }
 
       console.log("✅ Notification created for deposit");
 

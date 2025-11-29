@@ -1,0 +1,350 @@
+import { generateId } from "@/lib/generate-id";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { nowPayments } from "@/lib/nowpayments";
+import { rateLimiters } from "@/lib/middleware/ratelimit";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+} from "@/lib/middleware/errorHandler";
+
+export const dynamic = "force-dynamic";
+
+// Mapping of supported cryptocurrencies to their NowPayments codes
+const SUPPORTED_CRYPTOS: Record<string, { code: string; name: string }> = {
+  btc: { code: "btc", name: "Bitcoin" },
+  eth: { code: "eth", name: "Ethereum" },
+  ltc: { code: "ltc", name: "Litecoin" },
+  usdc: { code: "usdcerc20", name: "USDC (ERC-20)" },
+  usdt: { code: "usdterc20", name: "USDT (ERC-20)" },
+  sol: { code: "sol", name: "Solana" },
+  doge: { code: "doge", name: "Dogecoin" },
+  bnb: { code: "bnbbsc", name: "BNB (BSC)" },
+  trx: { code: "trx", name: "Tron" },
+};
+
+/**
+ * POST /api/traderoom/fund-crypto
+ * Create a cryptocurrency deposit payment for traderoom balance via NOWPayments
+ */
+export async function POST(request: NextRequest) {
+  // Apply rate limiting
+  const rateLimitResult = await rateLimiters.standard(request);
+  if (rateLimitResult instanceof NextResponse) {
+    return rateLimitResult;
+  }
+
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return createErrorResponse(
+        "Unauthorized",
+        "Authentication required",
+        undefined,
+        401
+      );
+    }
+
+    const body = await request.json();
+    const { amount, currency = "USD", cryptoCurrency = "btc" } = body;
+
+    if (!amount || amount <= 0) {
+      return createErrorResponse(
+        "Invalid input",
+        "Amount must be greater than 0",
+        undefined,
+        400
+      );
+    }
+
+    // Validate cryptocurrency
+    const cryptoKey = cryptoCurrency.toLowerCase();
+    const cryptoInfo = SUPPORTED_CRYPTOS[cryptoKey];
+
+    if (!cryptoInfo) {
+      return createErrorResponse(
+        "Invalid cryptocurrency",
+        `Cryptocurrency ${cryptoCurrency} is not supported. Supported: ${Object.keys(
+          SUPPORTED_CRYPTOS
+        ).join(", ")}`,
+        undefined,
+        400
+      );
+    }
+
+    // Find user with portfolio
+    const user = await prisma.user.findUnique({
+      where: { email: session.user?.email! },
+      include: { Portfolio: true },
+    });
+
+    if (!user) {
+      return createErrorResponse("Not found", "User not found", undefined, 404);
+    }
+
+    // Get or create portfolio
+    let portfolio = user.Portfolio;
+    if (!portfolio) {
+      portfolio = await prisma.portfolio.create({
+        data: {
+          id: generateId(),
+          userId: user.id,
+          balance: 0,
+          traderoomBalance: 0,
+          assets: [],
+        },
+      });
+    }
+
+    // Try payment API first, fall back to invoice API
+    try {
+      return await createTraderoomCryptoPayment(
+        user,
+        portfolio,
+        amount,
+        currency,
+        cryptoInfo.code,
+        cryptoInfo.name
+      );
+    } catch (error: any) {
+      console.log(
+        "Payment API failed, falling back to invoice API:",
+        error?.message || error
+      );
+      try {
+        return await createTraderoomCryptoInvoice(
+          user,
+          portfolio,
+          amount,
+          currency,
+          cryptoInfo.code,
+          cryptoInfo.name
+        );
+      } catch (invoiceError: any) {
+        console.error(
+          "Invoice API also failed:",
+          invoiceError?.message || invoiceError
+        );
+        const errorMessage =
+          invoiceError?.message ||
+          error?.message ||
+          "Payment provider unavailable";
+        return createErrorResponse(
+          "Payment creation failed",
+          errorMessage.includes("API key")
+            ? "Payment service is not configured. Please contact support."
+            : errorMessage,
+          invoiceError,
+          500
+        );
+      }
+    }
+  } catch (error) {
+    console.error("Create traderoom crypto payment error:", error);
+    return createErrorResponse(
+      "Internal server error",
+      error instanceof Error ? error.message : "Failed to create payment",
+      error,
+      500
+    );
+  }
+}
+
+/**
+ * Create payment using standard NOWPayments payment API for traderoom
+ */
+async function createTraderoomCryptoPayment(
+  user: any,
+  portfolio: any,
+  amount: number,
+  currency: string,
+  payCurrency: string,
+  cryptoName: string
+) {
+  // Get minimum amount for the selected crypto
+  let minAmount = { min_amount: 0 };
+  try {
+    minAmount = await nowPayments.getMinimumAmount(payCurrency);
+    console.log(`Minimum ${payCurrency.toUpperCase()} amount:`, minAmount);
+  } catch (error) {
+    console.log("Could not get minimum amount, proceeding without check");
+  }
+
+  // Estimate crypto amount
+  const estimate = await nowPayments.estimatePrice({
+    amount: parseFloat(String(amount)),
+    currency_from: currency.toLowerCase(),
+    currency_to: payCurrency,
+  });
+
+  console.log("Traderoom payment estimate:", estimate);
+
+  // Check if amount meets minimum
+  if (
+    minAmount.min_amount > 0 &&
+    estimate.estimated_amount < minAmount.min_amount
+  ) {
+    const minUsdValue = (
+      minAmount.min_amount *
+      (parseFloat(String(amount)) / estimate.estimated_amount)
+    ).toFixed(2);
+    return createErrorResponse(
+      "Invalid amount",
+      `Amount too low. Minimum deposit is ${
+        minAmount.min_amount
+      } ${payCurrency.toUpperCase()} (~$${minUsdValue})`,
+      undefined,
+      400
+    );
+  }
+
+  // Create deposit record with TRADEROOM target
+  const deposit = await prisma.deposit.create({
+    data: {
+      id: generateId(),
+      portfolioId: portfolio.id,
+      userId: user.id,
+      amount: parseFloat(String(amount)),
+      currency: currency,
+      cryptoAmount: estimate.estimated_amount,
+      cryptoCurrency: payCurrency.toUpperCase(),
+      status: "PENDING",
+      method: `NOWPAYMENTS_${payCurrency.toUpperCase()}`,
+      targetAsset: "TRADEROOM", // This marks it as a traderoom deposit
+      updatedAt: new Date(),
+    },
+  });
+
+  // Create payment with NOWPayments
+  const callbackUrl = `${process.env.NEXTAUTH_URL}/api/payment/webhook`;
+
+  const payment = await nowPayments.createPayment({
+    price_amount: parseFloat(String(amount)),
+    price_currency: currency.toLowerCase(),
+    pay_currency: payCurrency,
+    ipn_callback_url: callbackUrl,
+    order_id: deposit.id,
+    order_description: `Traderoom ${cryptoName} deposit for user ${user.email}`,
+  });
+
+  console.log("Traderoom payment created:", payment);
+
+  // Update deposit with payment details
+  await prisma.deposit.update({
+    where: { id: deposit.id },
+    data: {
+      paymentId: payment.payment_id,
+      paymentAddress: payment.pay_address,
+      paymentAmount: payment.pay_amount,
+      paymentStatus: payment.payment_status,
+    },
+  });
+
+  return createSuccessResponse(
+    {
+      deposit: {
+        id: deposit.id,
+        amount: amount,
+        currency: currency,
+        cryptoAmount: payment.pay_amount,
+        cryptoCurrency: payCurrency.toUpperCase(),
+        paymentId: payment.payment_id,
+        paymentAddress: payment.pay_address,
+        paymentStatus: payment.payment_status,
+        status: "PENDING",
+        createdAt: deposit.createdAt,
+        expiresAt: payment.expiration_estimate_date,
+        method: "payment",
+        target: "TRADEROOM",
+      },
+    },
+    "Traderoom crypto payment created successfully"
+  );
+}
+
+/**
+ * Create payment using NOWPayments invoice API for traderoom (fallback)
+ */
+async function createTraderoomCryptoInvoice(
+  user: any,
+  portfolio: any,
+  amount: number,
+  currency: string,
+  payCurrency: string,
+  cryptoName: string
+) {
+  // Estimate crypto amount
+  const estimate = await nowPayments.estimatePrice({
+    amount: parseFloat(String(amount)),
+    currency_from: currency.toLowerCase(),
+    currency_to: payCurrency,
+  });
+
+  // Create deposit record with TRADEROOM target
+  const deposit = await prisma.deposit.create({
+    data: {
+      id: generateId(),
+      portfolioId: portfolio.id,
+      userId: user.id,
+      amount: parseFloat(String(amount)),
+      currency: currency,
+      cryptoAmount: estimate.estimated_amount,
+      cryptoCurrency: payCurrency.toUpperCase(),
+      status: "PENDING",
+      method: `NOWPAYMENTS_${payCurrency.toUpperCase()}_INVOICE`,
+      targetAsset: "TRADEROOM", // This marks it as a traderoom deposit
+      updatedAt: new Date(),
+    },
+  });
+
+  // Create invoice with NOWPayments
+  const callbackUrl = `${process.env.NEXTAUTH_URL}/api/payment/webhook`;
+
+  const invoice = await nowPayments.createInvoice({
+    price_amount: parseFloat(String(amount)),
+    price_currency: currency.toUpperCase(),
+    pay_currency: payCurrency,
+    ipn_callback_url: callbackUrl,
+    order_id: deposit.id,
+    order_description: `Traderoom ${cryptoName} deposit for user ${user.email}`,
+    success_url: `${process.env.NEXTAUTH_URL}/traderoom?payment=success`,
+    cancel_url: `${process.env.NEXTAUTH_URL}/traderoom?payment=cancelled`,
+  });
+
+  console.log("Traderoom invoice created:", invoice);
+
+  // Update deposit with invoice details
+  await prisma.deposit.update({
+    where: { id: deposit.id },
+    data: {
+      paymentId: invoice.id,
+      invoiceUrl: invoice.invoice_url,
+      paymentAddress: invoice.pay_address,
+      paymentAmount: invoice.pay_amount,
+    },
+  });
+
+  return createSuccessResponse(
+    {
+      deposit: {
+        id: deposit.id,
+        amount: amount,
+        currency: currency,
+        cryptoAmount: estimate.estimated_amount,
+        cryptoCurrency: payCurrency.toUpperCase(),
+        invoiceId: invoice.id,
+        invoiceUrl: invoice.invoice_url,
+        paymentAddress: invoice.pay_address,
+        paymentAmount: invoice.pay_amount,
+        status: "PENDING",
+        createdAt: deposit.createdAt,
+        method: "invoice",
+        target: "TRADEROOM",
+      },
+    },
+    "Traderoom crypto invoice created successfully"
+  );
+}

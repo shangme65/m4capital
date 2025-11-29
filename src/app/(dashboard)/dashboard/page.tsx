@@ -112,14 +112,15 @@ function DashboardContent() {
     }
   }, [showBalances]);
 
-  // Fetch traderoom (real portfolio) balance
+  // Fetch traderoom balance from API
   useEffect(() => {
     const fetchTraderoomBalance = async () => {
       try {
         const response = await fetch("/api/user/balance");
         if (response.ok) {
           const data = await response.json();
-          setTraderoomBalance(data.realBalance || 0);
+          // Use the dedicated traderoomBalance field (not realBalance)
+          setTraderoomBalance(data.traderoomBalance || 0);
         }
       } catch (error) {
         console.error("Failed to fetch traderoom balance:", error);
@@ -866,94 +867,57 @@ function DashboardContent() {
 
   return (
     <div className="space-y-3 sm:space-y-4">
-      {/* Portfolio Value Card */}
+      {/* Portfolio Section - Single 3D Card */}
       <div
         data-tutorial="portfolio-balance"
-        className="bg-gradient-to-br from-gray-800/80 to-gray-900/80 rounded-2xl p-4 sm:p-8 border border-gray-700/50 shadow-[0_8px_32px_rgba(0,0,0,0.4),0_0_16px_rgba(59,130,246,0.15),0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25)] transition-all duration-300"
+        className="relative rounded-2xl p-4 sm:p-6 overflow-hidden transition-all duration-300"
+        style={{
+          background:
+            "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+          boxShadow:
+            "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+        }}
       >
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-white">
-            Portfolio Value
-          </h1>
-        </div>
+        {/* Ambient glow effect */}
+        <div
+          className="absolute inset-0 opacity-30 pointer-events-none"
+          style={{
+            background:
+              "radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.2) 0%, transparent 50%)",
+          }}
+        />
 
-        <div className="mb-6 sm:mb-8">
-          <div className="flex items-center gap-2">
-            <div
-              className="text-3xl sm:text-5xl font-bold text-white mb-2 bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
-              style={{ WebkitTextStroke: "0.5px rgba(255,255,255,0.1)" }}
-            >
-              {portfolioLoading ? (
-                <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
-              ) : showBalances ? (
-                formatAmount(portfolioValue || 0, 2)
-              ) : (
-                "••••••"
-              )}
-            </div>
-            <button
-              onClick={() => setShowBalances(!showBalances)}
-              className="text-gray-400 hover:opacity-70 transition-opacity p-2 mb-2"
-              aria-label={showBalances ? "Hide balances" : "Show balances"}
-            >
-              {showBalances ? (
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                  />
-                </svg>
-              ) : (
-                <svg
-                  className="w-5 h-5 sm:w-6 sm:h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                  />
-                </svg>
-              )}
-            </button>
+        {/* Portfolio Value Header */}
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-white">
+              Portfolio Value
+            </h1>
           </div>
 
-          <div className="flex items-center gap-2">
-            {portfolioLoading ? (
-              <div className="animate-pulse bg-gray-700 h-6 w-24 rounded"></div>
-            ) : (
-              <>
-                <span
-                  className={`text-base sm:text-lg font-medium ${
-                    incomePercent >= 0 ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  {incomePercent >= 0 ? "+" : ""}
-                  {incomePercent.toFixed(2)}%
-                </span>
-                <span className="text-gray-400 text-sm sm:text-base">
-                  24hrs
-                </span>
-                {/* Info icon for tooltip */}
-                <div className="group relative">
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center gap-2">
+              <div
+                className="text-3xl sm:text-5xl font-bold text-white mb-2 bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+                style={{ WebkitTextStroke: "0.5px rgba(255,255,255,0.1)" }}
+              >
+                {portfolioLoading ? (
+                  <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
+                ) : showBalances ? (
+                  formatAmount(portfolioValue || 0, 2)
+                ) : (
+                  "••••••"
+                )}
+              </div>
+              <button
+                onClick={() => setShowBalances(!showBalances)}
+                className="text-gray-400 hover:opacity-70 transition-opacity p-2 mb-2"
+                aria-label={showBalances ? "Hide balances" : "Show balances"}
+              >
+                {showBalances ? (
                   <svg
-                    className="w-4 h-4 text-gray-400 hover:text-gray-300 cursor-help"
+                    className="w-5 h-5 sm:w-6 sm:h-6"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -962,157 +926,53 @@ function DashboardContent() {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                     />
                   </svg>
-                  {/* Tooltip */}
-                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-700">
-                    <div className="text-center">
-                      This percentage measures changes to your account balance
-                      from deposits, withdrawals and trading results (not market
-                      price movement).
-                    </div>
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                      <div className="border-4 border-transparent border-t-gray-900"></div>
-                    </div>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-          {portfolioError && (
-            <div className="text-red-400 text-sm mt-2">
-              Failed to load portfolio data: {portfolioError}
-              <button
-                onClick={() => refetch()}
-                className="ml-2 underline hover:text-red-300"
-              >
-                Retry
+                ) : (
+                  <svg
+                    className="w-5 h-5 sm:w-6 sm:h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                    />
+                  </svg>
+                )}
               </button>
             </div>
-          )}
-        </div>
 
-        <div className="flex gap-2 sm:gap-3 mb-6 sm:mb-8">
-          <button
-            data-tutorial="deposit-button"
-            onClick={handleDeposit}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors text-sm sm:text-base flex items-center gap-2"
-          >
-            Deposit
-          </button>
-          <button
-            data-tutorial="withdraw-button"
-            onClick={handleWithdraw}
-            className="bg-gray-700 hover:bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium border border-gray-600 transition-colors text-sm sm:text-base"
-          >
-            Withdraw
-          </button>
-        </div>
-
-        {/* Balance Cards Container */}
-        <div className="space-y-3">
-          {/* USD Balance Card */}
-          <div
-            data-tutorial="available-balance"
-            className="relative p-3.5 rounded-xl transition-all duration-300 overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-              boxShadow:
-                "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-              border: "1px solid rgba(59, 130, 246, 0.15)",
-            }}
-          >
-            {/* Blue glow effect */}
-            <div
-              className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.4) 0%, transparent 60%)",
-              }}
-            />
-            <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0"
-                    style={{
-                      boxShadow:
-                        "0 4px 16px rgba(59, 130, 246, 0.4), 0 2px 8px rgba(59, 130, 246, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
-                    }}
+            <div className="flex items-center gap-2">
+              {portfolioLoading ? (
+                <div className="animate-pulse bg-gray-700 h-6 w-24 rounded"></div>
+              ) : (
+                <>
+                  <span
+                    className={`text-base sm:text-lg font-medium ${
+                      incomePercent >= 0 ? "text-green-400" : "text-red-400"
+                    }`}
                   >
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
-                    <span className="text-white font-bold text-lg relative z-10">
-                      $
-                    </span>
-                  </div>
-                  <span className="text-gray-300 text-sm font-bold">
-                    {preferredCurrency} Balance
+                    {incomePercent >= 0 ? "+" : ""}
+                    {incomePercent.toFixed(2)}%
                   </span>
-                </div>
-                <span
-                  className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
-                  style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
-                >
-                  {portfolioLoading ? (
-                    <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
-                  ) : showBalances ? (
-                    formatBalanceDisplay(availableBalance || 0)
-                  ) : (
-                    "••••••"
-                  )}
-                </span>
-              </div>
-              {/* Balance Progress bar - Blue */}
-              <div className="mt-3">
-                <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(59,130,246,0.4)]">
-                  <div
-                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(59,130,246,0.8)]"
-                    style={{
-                      width: `${Math.min(
-                        Math.max((availableBalance / 10000) * 100, 0),
-                        100
-                      )}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Traderoom Balance Card */}
-          <div
-            className="relative p-3.5 rounded-xl transition-all duration-300 overflow-hidden"
-            style={{
-              background:
-                "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-              boxShadow:
-                "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-              border: "1px solid rgba(34, 197, 94, 0.15)",
-            }}
-          >
-            {/* Green glow effect */}
-            <div
-              className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(ellipse at 30% 0%, rgba(34, 197, 94, 0.4) 0%, transparent 60%)",
-              }}
-            />
-            <div className="relative z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0"
-                    style={{
-                      boxShadow:
-                        "0 4px 16px rgba(34, 197, 94, 0.4), 0 2px 8px rgba(34, 197, 94, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
-                    }}
-                  >
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                  <span className="text-gray-400 text-sm sm:text-base">
+                    24hrs
+                  </span>
+                  {/* Info icon for tooltip */}
+                  <div className="group relative">
                     <svg
-                      className="w-5 h-5 text-white relative z-10"
+                      className="w-4 h-4 text-gray-400 hover:text-gray-300 cursor-help"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1121,39 +981,232 @@ function DashboardContent() {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                       />
                     </svg>
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-700">
+                      <div className="text-center">
+                        This percentage measures changes to your account balance
+                        from deposits, withdrawals and trading results (not
+                        market price movement).
+                      </div>
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                        <div className="border-4 border-transparent border-t-gray-900"></div>
+                      </div>
+                    </div>
                   </div>
-                  <span className="text-gray-300 text-sm font-bold">
-                    Traderoom Balance
+                </>
+              )}
+            </div>
+            {portfolioError && (
+              <div className="text-red-400 text-sm mt-2">
+                Failed to load portfolio data: {portfolioError}
+                <button
+                  onClick={() => refetch()}
+                  className="ml-2 underline hover:text-red-300"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Deposit & Withdraw Buttons */}
+          <div className="flex gap-2 sm:gap-3 mb-6">
+            <button
+              data-tutorial="deposit-button"
+              onClick={handleDeposit}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-4 sm:px-6 py-3 rounded-xl font-semibold transition-all text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/30"
+              style={{
+                boxShadow:
+                  "0 4px 15px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
+              }}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                />
+              </svg>
+              Deposit
+            </button>
+            <button
+              data-tutorial="withdraw-button"
+              onClick={handleWithdraw}
+              className="flex-1 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white px-4 sm:px-6 py-3 rounded-xl font-semibold border border-gray-600/50 transition-all text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg"
+              style={{
+                boxShadow:
+                  "0 4px 15px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+              }}
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M18 12H6"
+                />
+              </svg>
+              Withdraw
+            </button>
+          </div>
+
+          {/* Balance Cards - Full Width */}
+          <div className="space-y-3">
+            {/* USD Balance Card */}
+            <div
+              data-tutorial="available-balance"
+              className="relative w-full p-4 rounded-xl transition-all duration-300 overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
+                boxShadow:
+                  "inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(59, 130, 246, 0.2)",
+              }}
+            >
+              {/* Blue glow effect */}
+              <div
+                className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.4) 0%, transparent 60%)",
+                }}
+              />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0"
+                      style={{
+                        boxShadow:
+                          "0 4px 16px rgba(59, 130, 246, 0.4), 0 2px 8px rgba(59, 130, 246, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                      }}
+                    >
+                      <span className="text-white font-bold text-lg relative z-10">
+                        $
+                      </span>
+                    </div>
+                    <span className="text-gray-300 text-sm font-bold">
+                      {preferredCurrency} Balance
+                    </span>
+                  </div>
+                  <span
+                    className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+                    style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+                  >
+                    {portfolioLoading ? (
+                      <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
+                    ) : showBalances ? (
+                      formatBalanceDisplay(availableBalance || 0)
+                    ) : (
+                      "••••••"
+                    )}
                   </span>
                 </div>
-                <span
-                  className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-400 via-green-300 to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
-                  style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
-                >
-                  {portfolioLoading ? (
-                    <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
-                  ) : showBalances ? (
-                    formatAmount(traderoomBalance || 0, 2)
-                  ) : (
-                    "••••••"
-                  )}
-                </span>
+                {/* Balance Progress bar - Blue */}
+                <div className="mt-3">
+                  <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(59,130,246,0.4)]">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(59,130,246,0.8)]"
+                      style={{
+                        width: `${Math.min(
+                          Math.max((availableBalance / 10000) * 100, 0),
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
-              {/* Traderoom Progress bar - Green */}
-              <div className="mt-3">
-                <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(34,197,94,0.4)]">
-                  <div
-                    className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(34,197,94,0.8)]"
-                    style={{
-                      width: `${Math.min(
-                        Math.max((traderoomBalance / 1000000) * 100, 0),
-                        100
-                      )}%`,
-                    }}
-                  />
+            </div>
+
+            {/* Traderoom Balance Card */}
+            <div
+              className="relative w-full p-4 rounded-xl transition-all duration-300 overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
+                boxShadow:
+                  "inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(34, 197, 94, 0.2)",
+              }}
+            >
+              {/* Green glow effect */}
+              <div
+                className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 30% 0%, rgba(34, 197, 94, 0.4) 0%, transparent 60%)",
+                }}
+              />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0"
+                      style={{
+                        boxShadow:
+                          "0 4px 16px rgba(34, 197, 94, 0.4), 0 2px 8px rgba(34, 197, 94, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                      }}
+                    >
+                      <svg
+                        className="w-5 h-5 text-white relative z-10"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-gray-300 text-sm font-bold">
+                      Traderoom Balance
+                    </span>
+                  </div>
+                  <span
+                    className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-400 via-green-300 to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+                    style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+                  >
+                    {portfolioLoading ? (
+                      <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
+                    ) : showBalances ? (
+                      formatAmount(traderoomBalance || 0, 2)
+                    ) : (
+                      "••••••"
+                    )}
+                  </span>
+                </div>
+                {/* Traderoom Progress bar - Green */}
+                <div className="mt-3">
+                  <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(34,197,94,0.4)]">
+                    <div
+                      className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(34,197,94,0.8)]"
+                      style={{
+                        width: `${Math.min(
+                          Math.max((traderoomBalance / 1000000) * 100, 0),
+                          100
+                        )}%`,
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
