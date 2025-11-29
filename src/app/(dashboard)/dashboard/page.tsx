@@ -1010,73 +1010,153 @@ function DashboardContent() {
           </button>
         </div>
 
-        <div
-          data-tutorial="available-balance"
-          className="flex items-center justify-between"
-        >
-          <span className="text-gray-400 text-base sm:text-lg font-bold">
-            {preferredCurrency} Balance
-          </span>
-          <span
-            className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
-            style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+        {/* Balance Cards Container */}
+        <div className="space-y-3">
+          {/* USD Balance Card */}
+          <div
+            data-tutorial="available-balance"
+            className="relative p-3.5 rounded-xl transition-all duration-300 overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+              boxShadow:
+                "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+              border: "1px solid rgba(59, 130, 246, 0.15)",
+            }}
           >
-            {portfolioLoading ? (
-              <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
-            ) : showBalances ? (
-              formatBalanceDisplay(availableBalance || 0)
-            ) : (
-              "••••••"
-            )}
-          </span>
-        </div>
-
-        {/* Balance Progress bar - Blue - closer spacing */}
-        <div className="mt-1.5">
-          <div className="h-1 bg-gray-700 rounded-full overflow-hidden shadow-[0_0_8px_rgba(59,130,246,0.4)]">
+            {/* Blue glow effect */}
             <div
-              className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(59,130,246,0.8)]"
+              className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
               style={{
-                width: `${Math.min(
-                  Math.max((availableBalance / 10000) * 100, 0),
-                  100
-                )}%`,
+                background:
+                  "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.4) 0%, transparent 60%)",
               }}
             />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px rgba(59, 130, 246, 0.4), 0 2px 8px rgba(59, 130, 246, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <span className="text-white font-bold text-lg relative z-10">
+                      $
+                    </span>
+                  </div>
+                  <span className="text-gray-300 text-sm font-bold">
+                    {preferredCurrency} Balance
+                  </span>
+                </div>
+                <span
+                  className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+                  style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+                >
+                  {portfolioLoading ? (
+                    <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
+                  ) : showBalances ? (
+                    formatBalanceDisplay(availableBalance || 0)
+                  ) : (
+                    "••••••"
+                  )}
+                </span>
+              </div>
+              {/* Balance Progress bar - Blue */}
+              <div className="mt-3">
+                <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(59,130,246,0.4)]">
+                  <div
+                    className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(59,130,246,0.8)]"
+                    style={{
+                      width: `${Math.min(
+                        Math.max((availableBalance / 10000) * 100, 0),
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Traderoom Balance */}
-        <div className="flex items-center justify-between mt-4">
-          <span className="text-gray-400 text-base sm:text-lg font-bold">
-            Traderoom Balance
-          </span>
-          <span
-            className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-400 via-green-300 to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
-            style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+          {/* Traderoom Balance Card */}
+          <div
+            className="relative p-3.5 rounded-xl transition-all duration-300 overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+              boxShadow:
+                "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+              border: "1px solid rgba(34, 197, 94, 0.15)",
+            }}
           >
-            {portfolioLoading ? (
-              <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
-            ) : showBalances ? (
-              formatAmount(traderoomBalance || 0, 2)
-            ) : (
-              "••••••"
-            )}
-          </span>
-        </div>
-
-        {/* Traderoom Progress bar - Green */}
-        <div className="mt-1.5">
-          <div className="h-1 bg-gray-700 rounded-full overflow-hidden shadow-[0_0_8px_rgba(34,197,94,0.4)]">
+            {/* Green glow effect */}
             <div
-              className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(34,197,94,0.8)]"
+              className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
               style={{
-                width: `${Math.min(
-                  Math.max((traderoomBalance / 1000000) * 100, 0),
-                  100
-                )}%`,
+                background:
+                  "radial-gradient(ellipse at 30% 0%, rgba(34, 197, 94, 0.4) 0%, transparent 60%)",
               }}
             />
+            <div className="relative z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px rgba(34, 197, 94, 0.4), 0 2px 8px rgba(34, 197, 94, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <svg
+                      className="w-5 h-5 text-white relative z-10"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-gray-300 text-sm font-bold">
+                    Traderoom Balance
+                  </span>
+                </div>
+                <span
+                  className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-400 via-green-300 to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+                  style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+                >
+                  {portfolioLoading ? (
+                    <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
+                  ) : showBalances ? (
+                    formatAmount(traderoomBalance || 0, 2)
+                  ) : (
+                    "••••••"
+                  )}
+                </span>
+              </div>
+              {/* Traderoom Progress bar - Green */}
+              <div className="mt-3">
+                <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(34,197,94,0.4)]">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(34,197,94,0.8)]"
+                    style={{
+                      width: `${Math.min(
+                        Math.max((traderoomBalance / 1000000) * 100, 0),
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
