@@ -66,31 +66,12 @@ export default function AdminSetupClient({
         setResult(data);
         showSuccess(data.message || "Admin initialized successfully!");
 
-        // After successful initialization, auto-login with credentials
-        if (
-          (data.action === "created" || data.action === "updated") &&
-          data.tempPassword
-        ) {
-          // Use NextAuth signIn to authenticate
-          const loginResult = await signIn("credentials", {
-            email: data.admin.email,
-            password: data.tempPassword,
-            redirect: false,
-            callbackUrl: "/dashboard",
-          });
-
-          if (loginResult?.ok) {
-            showSuccess("Auto-login successful! Redirecting...");
-            setTimeout(() => {
-              window.location.href = "/dashboard";
-            }, 1500);
-          } else {
-            setError(
-              loginResult?.error ||
-                "Admin created but auto-login failed. Please login manually."
-            );
-            showError("Auto-login failed. Please login manually.");
-          }
+        // Redirect to login page after successful initialization
+        if (data.action === "created" || data.action === "updated") {
+          showSuccess(data.message + " Redirecting to login...");
+          setTimeout(() => {
+            window.location.href = "/?login=true";
+          }, 2000);
         }
       } else {
         setError(data.error || "Failed to initialize admin");

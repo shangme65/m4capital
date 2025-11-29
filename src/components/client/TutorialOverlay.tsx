@@ -34,6 +34,13 @@ export default function TutorialOverlay() {
     if (!isActive || !currentStepData) return;
 
     const updateSpotlight = () => {
+      const isMobile = window.innerWidth < 640;
+      const tooltipWidth = isMobile
+        ? Math.min(window.innerWidth - 32, 400)
+        : 400;
+      const tooltipHeight = isMobile ? 220 : 200;
+      const margin = isMobile ? 12 : 16;
+
       // Center position for welcome/complete steps
       if (
         currentStepData.target === "center" ||
@@ -44,8 +51,8 @@ export default function TutorialOverlay() {
         setSpotlightPos(null);
         // Center the tooltip
         setTooltipPosition({
-          top: window.innerHeight / 2 - 150,
-          left: window.innerWidth / 2 - 200,
+          top: Math.max(margin, (window.innerHeight - tooltipHeight) / 2),
+          left: Math.max(margin, (window.innerWidth - tooltipWidth) / 2),
         });
         return;
       }
@@ -56,8 +63,8 @@ export default function TutorialOverlay() {
         console.warn(`Tutorial target not found: ${currentStepData.target}`);
         setSpotlightPos(null);
         setTooltipPosition({
-          top: window.innerHeight / 2 - 150,
-          left: window.innerWidth / 2 - 200,
+          top: Math.max(margin, (window.innerHeight - tooltipHeight) / 2),
+          left: Math.max(margin, (window.innerWidth - tooltipWidth) / 2),
         });
         return;
       }
@@ -73,10 +80,6 @@ export default function TutorialOverlay() {
       });
 
       // Calculate tooltip position based on preferred position
-      const tooltipWidth = 400;
-      const tooltipHeight = 200;
-      const margin = 16;
-
       let tooltipTop = 0;
       let tooltipLeft = 0;
 
@@ -217,10 +220,11 @@ export default function TutorialOverlay() {
           style={{
             top: tooltipPosition.top,
             left: tooltipPosition.left,
-            width: isCenterStep ? "min(450px, 90vw)" : "min(400px, 85vw)",
+            width: "min(400px, calc(100vw - 32px))",
+            maxWidth: "calc(100vw - 32px)",
           }}
         >
-          <div className="bg-gradient-to-br from-gray-800/98 to-gray-900/98 backdrop-blur-xl rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(59,130,246,0.4)] border border-gray-700/50">
+          <div className="bg-gradient-to-br from-gray-800/98 to-gray-900/98 backdrop-blur-xl rounded-2xl p-4 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(59,130,246,0.4)] border border-gray-700/50">
             {/* Step indicator */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -245,42 +249,42 @@ export default function TutorialOverlay() {
             </div>
 
             {/* Title */}
-            <h3 className="text-xl font-bold text-white mb-3">
+            <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
               {currentStepData.title}
             </h3>
 
             {/* Description */}
-            <p className="text-gray-300 text-sm leading-relaxed mb-6">
+            <p className="text-gray-300 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
               {currentStepData.description}
             </p>
 
             {/* Navigation buttons */}
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
               <button
                 onClick={goPrevious}
                 disabled={isFirstStep}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all ${
+                className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-medium transition-all text-sm sm:text-base ${
                   isFirstStep
                     ? "bg-gray-700/30 text-gray-500 cursor-not-allowed"
                     : "bg-gray-700/50 text-white hover:bg-gray-600/50 border border-gray-600/50"
                 }`}
               >
                 <ChevronLeft className="w-4 h-4" />
-                Previous
+                <span className="hidden xs:inline">Previous</span>
               </button>
 
               {isLastStep ? (
                 <button
                   onClick={completeTutorial}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-[0_4px_16px_rgba(34,197,94,0.4)]"
+                  className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-[0_4px_16px_rgba(34,197,94,0.4)] text-sm sm:text-base"
                 >
-                  Complete & Verify Account
+                  <span className="hidden xs:inline">Complete &</span> Verify
                   <Sparkles className="w-4 h-4" />
                 </button>
               ) : (
                 <button
                   onClick={goNext}
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-[0_4px_16px_rgba(59,130,246,0.4)]"
+                  className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-[0_4px_16px_rgba(59,130,246,0.4)] text-sm sm:text-base"
                 >
                   Next
                   <ChevronRight className="w-4 h-4" />
