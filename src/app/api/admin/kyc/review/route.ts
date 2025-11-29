@@ -73,15 +73,31 @@ export async function POST(req: NextRequest) {
       UNDER_REVIEW: "UNDER_REVIEW",
     };
 
-    // Update KYC status
-    const updatedKyc = await prisma.kycVerification.update({
-      where: { id: kycId },
-      data: {
-        status: statusMap[action] as any,
-        reviewedBy: admin.id,
-        reviewedAt: new Date(),
-        rejectionReason: action === "REJECT" ? rejectionReason : null,
-      },
+    // Update KYC status and user verification status in a transaction
+    const updatedKyc = await prisma.$transaction(async (tx) => {
+      // Update KYC record
+      const kyc = await tx.kycVerification.update({
+        where: { id: kycId },
+        data: {
+          status: statusMap[action] as any,
+          reviewedBy: admin.id,
+          reviewedAt: new Date(),
+          rejectionReason: action === "REJECT" ? rejectionReason : null,
+        },
+      });
+
+      // Update user verification status when approved
+      if (action === "APPROVE") {
+        await tx.user.update({
+          where: { id: kycVerification.userId },
+          data: {
+            isVerified: true,
+            verifiedAt: new Date(),
+          },
+        });
+      }
+
+      return kyc;
     });
 
     // Send email notification to user (only for approve/reject)

@@ -16,6 +16,8 @@ export async function GET() {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: {
+        role: true,
+        isOriginAdmin: true,
         tutorialCompleted: true,
         isVerified: true,
         verifiedAt: true,
@@ -34,14 +36,20 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Admins and origin admins are always considered verified
+    const isAdmin = user.role === "ADMIN" || user.isOriginAdmin;
+    const isVerified =
+      isAdmin || user.isVerified || user.KycVerification?.status === "APPROVED";
+
     return NextResponse.json({
-      tutorialCompleted: user.tutorialCompleted ?? false,
-      isVerified: user.isVerified ?? false,
+      tutorialCompleted: isAdmin ? true : user.tutorialCompleted ?? false,
+      isVerified: isVerified,
       verifiedAt: user.verifiedAt,
       kycStatus: user.KycVerification?.status ?? null,
       kycSubmittedAt: user.KycVerification?.submittedAt ?? null,
       kycReviewedAt: user.KycVerification?.reviewedAt ?? null,
       kycRejectionReason: user.KycVerification?.rejectionReason ?? null,
+      isAdmin: isAdmin,
     });
   } catch (error) {
     console.error("Error fetching onboarding status:", error);
