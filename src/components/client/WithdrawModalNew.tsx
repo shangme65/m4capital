@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { usePortfolio } from "@/lib/usePortfolio";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import Image from "next/image";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -48,9 +50,30 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [loading, setLoading] = useState(false);
   const [withdrawalId, setWithdrawalId] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [showMethodDropdown, setShowMethodDropdown] = useState(false);
+  const [showCryptoDropdown, setShowCryptoDropdown] = useState(false);
+  const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const { addNotification } = useNotifications();
+  const { formatAmount, preferredCurrency } = useCurrency();
 
   const availableBalance = portfolio?.portfolio?.balance || 0;
+  
+  // Get crypto assets from portfolio
+  const cryptoAssets = portfolio?.portfolio?.assets || [];
+  
+  // Helper to get crypto balance
+  const getCryptoBalance = (symbol: string) => {
+    const asset = cryptoAssets.find((a: { symbol: string; amount: number }) => a.symbol === symbol);
+    return asset?.amount || 0;
+  };
+
+  // Crypto prices for conversion (these would ideally come from API)
+  const cryptoPrices: Record<string, number> = {
+    BTC: 95000,
+    ETH: 3500,
+    USDT: 1,
+    LTC: 85,
+  };
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -70,12 +93,27 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       setFees(null);
       setWithdrawalId(null);
       setErrors({});
+      setShowMethodDropdown(false);
+      setShowCryptoDropdown(false);
+      setSelectedCrypto("BTC");
+    }
+
+    // Add mobile back button handler
+    const handleBackButton = (e: PopStateEvent) => {
+      e.preventDefault();
+      onClose();
+    };
+
+    if (isOpen) {
+      window.history.pushState({ modal: true }, "");
+      window.addEventListener("popstate", handleBackButton);
     }
 
     return () => {
       document.body.style.overflow = "unset";
+      window.removeEventListener("popstate", handleBackButton);
     };
-  }, [isOpen]);
+  }, [isOpen, onClose]);
 
   // Calculate fees when amount or method changes
   useEffect(() => {
@@ -242,6 +280,28 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-3xl" />
           </div>
 
+          {/* Mobile back button - top left */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50 md:hidden"
+            style={card3DStyle}
+            aria-label="Back"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+
           {/* Close button - top right */}
           <button
             onClick={onClose}
@@ -376,11 +436,11 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       }}
                     >
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-300 font-medium">
+                        <span className="text-gray-400 text-xs font-medium">
                           Available Balance:
                         </span>
-                        <span className="text-2xl font-bold text-white">
-                          ${availableBalance.toFixed(2)}
+                        <span className="text-lg font-bold text-white">
+                          {formatAmount(availableBalance, 2)}
                         </span>
                       </div>
                     </div>
@@ -390,28 +450,450 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       <label className="block text-sm font-semibold text-gray-300 mb-3">
                         Withdrawal Method
                       </label>
-                      <select
-                        value={withdrawData.withdrawalMethod}
-                        onChange={(e) =>
-                          setWithdrawData((prev) => ({
-                            ...prev,
-                            withdrawalMethod: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded-xl px-4 py-3 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all appearance-none cursor-pointer"
-                        style={inputStyle}
-                      >
-                        <option value="CRYPTO_BTC">Bitcoin (BTC)</option>
-                        <option value="CRYPTO_ETH">Ethereum (ETH)</option>
-                        <option value="BANK_TRANSFER">Bank Transfer</option>
-                        <option value="WIRE_TRANSFER">Wire Transfer</option>
-                      </select>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowMethodDropdown(!showMethodDropdown)
+                          }
+                          className="w-full px-4 py-3 rounded-xl text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all flex items-center justify-between"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                            boxShadow:
+                              "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)",
+                            border: "1px solid rgba(239, 68, 68, 0.3)",
+                          }}
+                        >
+                          <span className="flex items-center gap-2">
+                            {withdrawData.withdrawalMethod.startsWith(
+                              "CRYPTO"
+                            ) ? (
+                              <>
+                                <div className="flex items-center -space-x-2">
+                                  <Image
+                                    src="/crypto/btc.svg"
+                                    alt="BTC"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-10"
+                                  />
+                                  <Image
+                                    src="/crypto/eth.svg"
+                                    alt="ETH"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-20"
+                                  />
+                                  <Image
+                                    src="/crypto/usdt.svg"
+                                    alt="USDT"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-30"
+                                  />
+                                  <Image
+                                    src="/crypto/ltc.svg"
+                                    alt="LTC"
+                                    width={24}
+                                    height={24}
+                                    className="w-6 h-6 rounded-full border-2 border-gray-800 relative z-40"
+                                  />
+                                </div>
+                                <span>Withdraw via Crypto</span>
+                              </>
+                            ) : withdrawData.withdrawalMethod === "PIX" ? (
+                              <>
+                                <Image
+                                  src="/payments/pix-logo.svg"
+                                  alt="PIX"
+                                  width={60}
+                                  height={24}
+                                  className="w-15 h-6 object-contain"
+                                />
+                                <span>Withdraw via PIX</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>🏦</span>
+                                <span>Bank Transfer</span>
+                              </>
+                            )}
+                          </span>
+                          <svg
+                            className={`w-4 h-4 text-gray-400 transition-transform ${
+                              showMethodDropdown ? "rotate-180" : ""
+                            }`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
+                          </svg>
+                        </button>
+
+                        <AnimatePresence>
+                          {showMethodDropdown && (
+                            <motion.div
+                              initial={{ opacity: 0, y: -10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -10 }}
+                              className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl z-20 overflow-hidden"
+                              style={{
+                                background:
+                                  "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                                border: "1px solid rgba(255, 255, 255, 0.1)",
+                              }}
+                            >
+                              <div className="py-2 px-2 space-y-2">
+                                {/* Crypto Option */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setWithdrawData((prev) => ({
+                                      ...prev,
+                                      withdrawalMethod: "CRYPTO_BTC",
+                                    }));
+                                    setShowMethodDropdown(false);
+                                  }}
+                                  className="w-full text-left transition-all duration-300 rounded-xl p-3"
+                                  style={{
+                                    background:
+                                      withdrawData.withdrawalMethod.startsWith(
+                                        "CRYPTO"
+                                      )
+                                        ? "linear-gradient(145deg, rgba(239, 68, 68, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%)"
+                                        : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
+                                    boxShadow:
+                                      "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                    border:
+                                      withdrawData.withdrawalMethod.startsWith(
+                                        "CRYPTO"
+                                      )
+                                        ? "1px solid rgba(239, 68, 68, 0.3)"
+                                        : "1px solid rgba(255, 255, 255, 0.05)",
+                                  }}
+                                >
+                                  <div className="flex items-center gap-3 w-full">
+                                    <div className="flex flex-col gap-1.5 w-full">
+                                      <div className="flex items-center justify-between">
+                                        <div className="text-sm font-semibold text-white flex items-center gap-1.5">
+                                          Withdraw via Crypto
+                                          {withdrawData.withdrawalMethod.startsWith(
+                                            "CRYPTO"
+                                          ) && (
+                                            <svg
+                                              className="w-4 h-4 text-green-400"
+                                              fill="currentColor"
+                                              viewBox="0 0 20 20"
+                                            >
+                                              <path
+                                                fillRule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                clipRule="evenodd"
+                                              />
+                                            </svg>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center -space-x-3">
+                                          <Image
+                                            src="/crypto/btc.svg"
+                                            alt="BTC"
+                                            width={28}
+                                            height={28}
+                                            className="w-7 h-7 rounded-full border-2 border-gray-800 relative z-10"
+                                          />
+                                          <Image
+                                            src="/crypto/eth.svg"
+                                            alt="ETH"
+                                            width={28}
+                                            height={28}
+                                            className="w-7 h-7 rounded-full border-2 border-gray-800 relative z-20"
+                                          />
+                                          <Image
+                                            src="/crypto/usdt.svg"
+                                            alt="USDT"
+                                            width={28}
+                                            height={28}
+                                            className="w-7 h-7 rounded-full border-2 border-gray-800 relative z-30"
+                                          />
+                                          <Image
+                                            src="/crypto/ltc.svg"
+                                            alt="LTC"
+                                            width={28}
+                                            height={28}
+                                            className="w-7 h-7 rounded-full border-2 border-gray-800 relative z-40"
+                                          />
+                                        </div>
+                                      </div>
+                                      <p className="text-[10px] text-gray-400">
+                                        Fast withdrawals to BTC, ETH, USDT, LTC
+                                        wallets. Network fees apply.
+                                      </p>
+                                    </div>
+                                  </div>
+                                </button>
+
+                                {/* PIX Option */}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setWithdrawData((prev) => ({
+                                      ...prev,
+                                      withdrawalMethod: "PIX",
+                                    }));
+                                    setShowMethodDropdown(false);
+                                  }}
+                                  className="w-full text-left transition-all duration-300 rounded-xl p-3"
+                                  style={{
+                                    background:
+                                      withdrawData.withdrawalMethod === "PIX"
+                                        ? "linear-gradient(145deg, rgba(239, 68, 68, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%)"
+                                        : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
+                                    boxShadow:
+                                      "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                    border:
+                                      withdrawData.withdrawalMethod === "PIX"
+                                        ? "1px solid rgba(239, 68, 68, 0.3)"
+                                        : "1px solid rgba(255, 255, 255, 0.05)",
+                                  }}
+                                >
+                                  <div className="flex flex-col gap-1 w-full">
+                                    <div className="flex items-center justify-between">
+                                      <div className="text-sm font-semibold text-white flex items-center gap-1.5">
+                                        Withdraw via PIX
+                                        {withdrawData.withdrawalMethod ===
+                                          "PIX" && (
+                                          <svg
+                                            className="w-4 h-4 text-green-400"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                          >
+                                            <path
+                                              fillRule="evenodd"
+                                              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                              clipRule="evenodd"
+                                            />
+                                          </svg>
+                                        )}
+                                      </div>
+                                      <Image
+                                        src="/payments/pix-logo.svg"
+                                        alt="PIX"
+                                        width={100}
+                                        height={40}
+                                        className="w-25 h-10 object-contain"
+                                      />
+                                    </div>
+                                    <p className="text-[10px] text-gray-400">
+                                      Instant withdrawal for Brazilian
+                                      customers. Available 24/7.
+                                    </p>
+                                  </div>
+                                </button>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
                     </div>
+
+                    {/* Select Crypto - Only show when crypto is selected */}
+                    {withdrawData.withdrawalMethod.startsWith("CRYPTO") && (
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-300 mb-3">
+                          Select Crypto
+                        </label>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowCryptoDropdown(!showCryptoDropdown)
+                            }
+                            className="w-full px-4 py-3 rounded-xl text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all flex items-center justify-between"
+                            style={{
+                              background:
+                                "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                              boxShadow:
+                                "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)",
+                              border: "1px solid rgba(239, 68, 68, 0.3)",
+                            }}
+                          >
+                            <span className="flex items-center gap-3">
+                              {/* 3D Crypto Logo */}
+                              <div
+                                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                style={{
+                                  background: selectedCrypto === "BTC" 
+                                    ? "linear-gradient(145deg, #f7931a 0%, #c77800 100%)"
+                                    : selectedCrypto === "ETH"
+                                    ? "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)"
+                                    : selectedCrypto === "USDT"
+                                    ? "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)"
+                                    : "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                                  boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
+                                }}
+                              >
+                                <Image
+                                  src={`/crypto/${selectedCrypto.toLowerCase()}.svg`}
+                                  alt={selectedCrypto}
+                                  width={20}
+                                  height={20}
+                                  className="w-5 h-5"
+                                />
+                              </div>
+                              <div className="text-left">
+                                <span className="block">
+                                  {selectedCrypto === "BTC" && "Bitcoin (BTC)"}
+                                  {selectedCrypto === "ETH" && "Ethereum (ETH)"}
+                                  {selectedCrypto === "USDT" && "Tether (USDT)"}
+                                  {selectedCrypto === "LTC" && "Litecoin (LTC)"}
+                                </span>
+                                <span className="text-[10px] text-gray-400 block">
+                                  Balance: {getCryptoBalance(selectedCrypto).toFixed(getCryptoBalance(selectedCrypto) < 0.01 ? 6 : 4)} {selectedCrypto}
+                                </span>
+                              </div>
+                            </span>
+                            <svg
+                              className={`w-4 h-4 text-gray-400 transition-transform ${
+                                showCryptoDropdown ? "rotate-180" : ""
+                              }`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 9l-7 7-7-7"
+                              />
+                            </svg>
+                          </button>
+
+                          <AnimatePresence>
+                            {showCryptoDropdown && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl z-20 overflow-hidden"
+                                style={{
+                                  background:
+                                    "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                                }}
+                              >
+                                <div className="py-2 px-2 space-y-1">
+                                  {["BTC", "ETH", "USDT", "LTC"].map(
+                                    (crypto) => {
+                                      const balance = getCryptoBalance(crypto);
+                                      const valueInUSD = balance * (cryptoPrices[crypto] || 0);
+                                      return (
+                                      <button
+                                        key={crypto}
+                                        type="button"
+                                        onClick={() => {
+                                          setSelectedCrypto(crypto);
+                                          setWithdrawData((prev) => ({
+                                            ...prev,
+                                            withdrawalMethod: `CRYPTO_${crypto}`,
+                                          }));
+                                          setShowCryptoDropdown(false);
+                                        }}
+                                        className="w-full text-left transition-all duration-300 rounded-xl p-3"
+                                        style={{
+                                          background:
+                                            selectedCrypto === crypto
+                                              ? "linear-gradient(145deg, rgba(239, 68, 68, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%)"
+                                              : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
+                                          boxShadow:
+                                            "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                          border:
+                                            selectedCrypto === crypto
+                                              ? "1px solid rgba(239, 68, 68, 0.3)"
+                                              : "1px solid rgba(255, 255, 255, 0.05)",
+                                        }}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <div className="flex items-center gap-3">
+                                            {/* 3D Crypto Logo */}
+                                            <div
+                                              className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                              style={{
+                                                background: crypto === "BTC" 
+                                                  ? "linear-gradient(145deg, #f7931a 0%, #c77800 100%)"
+                                                  : crypto === "ETH"
+                                                  ? "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)"
+                                                  : crypto === "USDT"
+                                                  ? "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)"
+                                                  : "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                                                boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
+                                              }}
+                                            >
+                                              <Image
+                                                src={`/crypto/${crypto.toLowerCase()}.svg`}
+                                                alt={crypto}
+                                                width={24}
+                                                height={24}
+                                                className="w-6 h-6"
+                                              />
+                                            </div>
+                                            <div>
+                                              <div className="text-sm font-semibold text-white">
+                                                {crypto === "BTC" && "Bitcoin"}
+                                                {crypto === "ETH" && "Ethereum"}
+                                                {crypto === "USDT" && "Tether"}
+                                                {crypto === "LTC" && "Litecoin"}
+                                              </div>
+                                              <div className="text-[10px] text-gray-400">
+                                                {crypto}
+                                              </div>
+                                            </div>
+                                          </div>
+                                          <div className="text-right">
+                                            <div className="text-sm font-semibold text-white">
+                                              {balance.toFixed(balance < 0.01 ? 6 : 4)} {crypto}
+                                            </div>
+                                            <div className="text-[10px] text-gray-400">
+                                              {formatAmount(valueInUSD, 2)}
+                                            </div>
+                                          </div>
+                                          {selectedCrypto === crypto && (
+                                            <svg
+                                              className="w-5 h-5 text-green-400 ml-2"
+                                              fill="currentColor"
+                                              viewBox="0 0 20 20"
+                                            >
+                                              <path
+                                                fillRule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                clipRule="evenodd"
+                                              />
+                                            </svg>
+                                          )}
+                                        </div>
+                                      </button>
+                                    );
+                                  }
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Amount */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-300 mb-2">
-                        Amount (USD)
+                        Amount ({preferredCurrency})
                       </label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">
@@ -628,7 +1110,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                             Important Notice
                           </p>
                           <p className="text-yellow-300/80 text-xs mt-0.5">
-                            Verify all details carefully. Withdrawals may be irreversible.
+                            Verify all details carefully. Withdrawals may be
+                            irreversible.
                           </p>
                         </div>
                       </div>
@@ -713,10 +1196,11 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         {fees.breakdown.map((item, index) => {
                           const [label, amount] = item.split(": $");
                           return (
-                            <div key={index} className="flex justify-between text-xs">
-                              <span className="text-gray-300">
-                                {label}
-                              </span>
+                            <div
+                              key={index}
+                              className="flex justify-between text-xs"
+                            >
+                              <span className="text-gray-300">{label}</span>
                               <span className="text-white font-medium">
                                 ${amount}
                               </span>
@@ -775,7 +1259,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         By proceeding, you agree to:
                       </p>
                       <ul className="list-disc list-inside space-y-0.5 pl-1 text-[10px]">
-                        <li>Deduction of ${totalRequired.toFixed(2)} from balance</li>
+                        <li>
+                          Deduction of ${totalRequired.toFixed(2)} from balance
+                        </li>
                         <li>Processing fees for regulatory compliance</li>
                         <li>1-3 business days processing time</li>
                         <li>Additional verification may be required</li>
