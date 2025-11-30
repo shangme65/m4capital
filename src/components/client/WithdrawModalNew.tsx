@@ -57,13 +57,15 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const { formatAmount, preferredCurrency } = useCurrency();
 
   const availableBalance = portfolio?.portfolio?.balance || 0;
-  
+
   // Get crypto assets from portfolio
   const cryptoAssets = portfolio?.portfolio?.assets || [];
-  
+
   // Helper to get crypto balance
   const getCryptoBalance = (symbol: string) => {
-    const asset = cryptoAssets.find((a: { symbol: string; amount: number }) => a.symbol === symbol);
+    const asset = cryptoAssets.find(
+      (a: { symbol: string; amount: number }) => a.symbol === symbol
+    );
     return asset?.amount || 0;
   };
 
@@ -74,6 +76,27 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     USDT: 1,
     LTC: 85,
   };
+
+  // Available cryptos for withdrawal (only those with balance)
+  const cryptoOptions = ["BTC", "ETH", "USDT", "LTC"];
+  const availableCryptos = cryptoOptions.filter(
+    (crypto) => getCryptoBalance(crypto) > 0
+  );
+
+  // Auto-select first crypto with balance
+  useEffect(() => {
+    if (
+      isOpen &&
+      availableCryptos.length > 0 &&
+      !availableCryptos.includes(selectedCrypto)
+    ) {
+      setSelectedCrypto(availableCryptos[0]);
+      setWithdrawData((prev) => ({
+        ...prev,
+        withdrawalMethod: `CRYPTO_${availableCryptos[0]}`,
+      }));
+    }
+  }, [isOpen, availableCryptos, selectedCrypto]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -729,13 +752,14 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               <div
                                 className="w-8 h-8 rounded-lg flex items-center justify-center"
                                 style={{
-                                  background: selectedCrypto === "BTC" 
-                                    ? "linear-gradient(145deg, #f7931a 0%, #c77800 100%)"
-                                    : selectedCrypto === "ETH"
-                                    ? "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)"
-                                    : selectedCrypto === "USDT"
-                                    ? "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)"
-                                    : "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                                  background:
+                                    selectedCrypto === "BTC"
+                                      ? "linear-gradient(145deg, #f7931a 0%, #c77800 100%)"
+                                      : selectedCrypto === "ETH"
+                                      ? "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)"
+                                      : selectedCrypto === "USDT"
+                                      ? "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)"
+                                      : "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
                                   boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
                                 }}
                               >
@@ -755,7 +779,13 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                   {selectedCrypto === "LTC" && "Litecoin (LTC)"}
                                 </span>
                                 <span className="text-[10px] text-gray-400 block">
-                                  Balance: {getCryptoBalance(selectedCrypto).toFixed(getCryptoBalance(selectedCrypto) < 0.01 ? 6 : 4)} {selectedCrypto}
+                                  Balance:{" "}
+                                  {getCryptoBalance(selectedCrypto).toFixed(
+                                    getCryptoBalance(selectedCrypto) < 0.01
+                                      ? 6
+                                      : 4
+                                  )}{" "}
+                                  {selectedCrypto}
                                 </span>
                               </div>
                             </span>
@@ -790,11 +820,11 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 }}
                               >
                                 <div className="py-2 px-2 space-y-1">
-                                  {["BTC", "ETH", "USDT", "LTC"].map(
-                                    (crypto) => {
-                                      const balance = getCryptoBalance(crypto);
-                                      const valueInUSD = balance * (cryptoPrices[crypto] || 0);
-                                      return (
+                                  {availableCryptos.map((crypto) => {
+                                    const balance = getCryptoBalance(crypto);
+                                    const valueInUSD =
+                                      balance * (cryptoPrices[crypto] || 0);
+                                    return (
                                       <button
                                         key={crypto}
                                         type="button"
@@ -826,13 +856,14 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                             <div
                                               className="w-10 h-10 rounded-xl flex items-center justify-center"
                                               style={{
-                                                background: crypto === "BTC" 
-                                                  ? "linear-gradient(145deg, #f7931a 0%, #c77800 100%)"
-                                                  : crypto === "ETH"
-                                                  ? "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)"
-                                                  : crypto === "USDT"
-                                                  ? "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)"
-                                                  : "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                                                background:
+                                                  crypto === "BTC"
+                                                    ? "linear-gradient(145deg, #f7931a 0%, #c77800 100%)"
+                                                    : crypto === "ETH"
+                                                    ? "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)"
+                                                    : crypto === "USDT"
+                                                    ? "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)"
+                                                    : "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
                                                 boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
                                               }}
                                             >
@@ -856,32 +887,36 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                               </div>
                                             </div>
                                           </div>
-                                          <div className="text-right">
-                                            <div className="text-sm font-semibold text-white">
-                                              {balance.toFixed(balance < 0.01 ? 6 : 4)} {crypto}
+                                          <div className="flex items-center gap-2">
+                                            <div className="text-right">
+                                              <div className="text-sm font-semibold text-white">
+                                                {balance.toFixed(
+                                                  balance < 0.01 ? 6 : 4
+                                                )}{" "}
+                                                {crypto}
+                                              </div>
+                                              <div className="text-[10px] text-gray-400">
+                                                {formatAmount(valueInUSD, 2)}
+                                              </div>
                                             </div>
-                                            <div className="text-[10px] text-gray-400">
-                                              {formatAmount(valueInUSD, 2)}
-                                            </div>
+                                            {selectedCrypto === crypto && (
+                                              <svg
+                                                className="w-5 h-5 text-green-400"
+                                                fill="currentColor"
+                                                viewBox="0 0 20 20"
+                                              >
+                                                <path
+                                                  fillRule="evenodd"
+                                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                                  clipRule="evenodd"
+                                                />
+                                              </svg>
+                                            )}
                                           </div>
-                                          {selectedCrypto === crypto && (
-                                            <svg
-                                              className="w-5 h-5 text-green-400 ml-2"
-                                              fill="currentColor"
-                                              viewBox="0 0 20 20"
-                                            >
-                                              <path
-                                                fillRule="evenodd"
-                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                clipRule="evenodd"
-                                              />
-                                            </svg>
-                                          )}
                                         </div>
                                       </button>
                                     );
-                                  }
-                                  )}
+                                  })}
                                 </div>
                               </motion.div>
                             )}
