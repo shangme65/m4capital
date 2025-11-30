@@ -245,12 +245,12 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
           {/* Close button - top right */}
           <button
             onClick={onClose}
-            className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center text-gray-400 hover:text-white rounded-2xl transition-all z-50"
+            className="absolute top-4 right-4 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50"
             style={card3DStyle}
             aria-label="Close"
           >
             <svg
-              className="w-6 h-6"
+              className="w-5 h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -265,27 +265,28 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
           </button>
 
           {/* Main content container */}
-          <div className="h-full w-full overflow-y-auto py-8 px-4 md:px-8">
-            <div className="max-w-2xl mx-auto relative z-10">
+          <div className="h-full w-full overflow-y-auto py-4 px-3 md:px-6">
+            <div className="max-w-lg mx-auto relative z-10">
               {/* Header Card */}
               <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="rounded-3xl p-8 mb-6"
+                className="rounded-2xl p-4 mb-4"
                 style={card3DStyle}
               >
-                <div className="flex items-center justify-center mb-4">
+                {/* Icon and Title in same row */}
+                <div className="flex items-center justify-center gap-3 mb-3">
                   <div
-                    className="w-16 h-16 rounded-2xl flex items-center justify-center"
+                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                     style={{
                       background:
                         "linear-gradient(145deg, #dc2626 0%, #ea580c 100%)",
-                      boxShadow: "0 10px 30px -5px rgba(220, 38, 38, 0.5)",
+                      boxShadow: "0 8px 20px -5px rgba(220, 38, 38, 0.5)",
                     }}
                   >
                     <svg
-                      className="w-8 h-8 text-white"
+                      className="w-6 h-6 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -298,27 +299,26 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       />
                     </svg>
                   </div>
+                  <h2 className="text-2xl font-bold text-white">
+                    Withdraw Funds
+                  </h2>
                 </div>
 
-                <h2 className="text-4xl font-bold text-white mb-3 text-center">
-                  Withdraw Funds
-                </h2>
-
                 {/* Progress Steps */}
-                <div className="flex items-center justify-center gap-3 mt-6">
+                <div className="flex items-center justify-center gap-2 mt-3">
                   {[1, 2, 3].map((s) => (
-                    <div key={s} className="flex items-center gap-3">
+                    <div key={s} className="flex items-center gap-2">
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-all ${
                           step >= s
-                            ? "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-lg shadow-red-500/30"
+                            ? "bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-md shadow-red-500/30"
                             : "bg-gray-800/50 text-gray-500"
                         }`}
                         style={step >= s ? {} : inputStyle}
                       >
                         {step > s ? (
                           <svg
-                            className="w-5 h-5"
+                            className="w-4 h-4"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                           >
@@ -334,7 +334,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       </div>
                       {s < 3 && (
                         <div
-                          className={`w-12 h-1 rounded-full ${
+                          className={`w-8 h-0.5 rounded-full ${
                             step > s
                               ? "bg-gradient-to-r from-red-500 to-orange-500"
                               : "bg-gray-700"
@@ -344,8 +344,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     </div>
                   ))}
                 </div>
-                <div className="flex justify-center mt-3">
-                  <span className="text-gray-400 text-sm">
+                <div className="flex justify-center mt-2">
+                  <span className="text-gray-400 text-xs">
                     {step === 1 && "Enter Details"}
                     {step === 2 && "Review"}
                     {step === 3 && "Fee Payment"}
@@ -358,15 +358,15 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="rounded-3xl p-8"
+                className="rounded-2xl p-4"
                 style={card3DStyle}
               >
                 {/* Step 1: Withdrawal Details */}
                 {step === 1 && (
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {/* Available Balance - 3D Card */}
                     <div
-                      className="rounded-2xl p-5"
+                      className="rounded-xl p-3"
                       style={{
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
@@ -398,7 +398,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                             withdrawalMethod: e.target.value,
                           }))
                         }
-                        className="w-full rounded-2xl px-5 py-4 text-white text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all appearance-none cursor-pointer"
+                        className="w-full rounded-xl px-4 py-3 text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all appearance-none cursor-pointer"
                         style={inputStyle}
                       >
                         <option value="CRYPTO_BTC">Bitcoin (BTC)</option>
@@ -410,11 +410,11 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                     {/* Amount */}
                     <div>
-                      <label className="block text-sm font-semibold text-gray-300 mb-3">
+                      <label className="block text-xs font-semibold text-gray-300 mb-2">
                         Amount (USD)
                       </label>
                       <div className="relative">
-                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 text-lg font-semibold">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">
                           $
                         </span>
                         <input
@@ -427,7 +427,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               amount: e.target.value,
                             }))
                           }
-                          className="w-full rounded-2xl px-5 py-4 pl-10 text-white text-lg font-medium focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all"
+                          className="w-full rounded-xl px-4 py-3 pl-8 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all"
                           style={inputStyle}
                           placeholder="0.00"
                         />
@@ -455,7 +455,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     {withdrawData.withdrawalMethod.startsWith("CRYPTO") && (
                       <>
                         <div>
-                          <label className="block text-sm font-semibold text-gray-300 mb-3">
+                          <label className="block text-xs font-semibold text-gray-300 mb-2">
                             Destination Wallet Address
                           </label>
                           <input
@@ -467,7 +467,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 address: e.target.value,
                               }))
                             }
-                            className="w-full rounded-2xl px-5 py-4 text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all"
+                            className="w-full rounded-xl px-4 py-3 text-white font-mono text-xs focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all"
                             style={inputStyle}
                             placeholder="Enter wallet address"
                           />
@@ -479,7 +479,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         </div>
 
                         <div>
-                          <label className="block text-sm font-semibold text-gray-300 mb-3">
+                          <label className="block text-xs font-semibold text-gray-300 mb-2">
                             Memo/Tag (Optional)
                           </label>
                           <input
@@ -491,7 +491,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 memo: e.target.value,
                               }))
                             }
-                            className="w-full rounded-2xl px-5 py-4 text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all"
+                            className="w-full rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-transparent transition-all"
                             style={inputStyle}
                             placeholder="Optional"
                           />
@@ -502,26 +502,26 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     {/* Fee Preview - 3D Card */}
                     {fees && (
                       <div
-                        className="rounded-2xl p-5"
+                        className="rounded-xl p-3"
                         style={{
                           background:
                             "linear-gradient(145deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)",
                           boxShadow:
-                            "0 10px 30px -5px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                            "0 8px 20px -5px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                           border: "1px solid rgba(59, 130, 246, 0.2)",
                         }}
                       >
-                        <h4 className="text-blue-300 font-medium mb-3">
+                        <h4 className="text-blue-300 text-sm font-medium mb-2">
                           Estimated Fees
                         </h4>
-                        <div className="space-y-1 text-sm">
+                        <div className="space-y-1 text-xs">
                           {fees.breakdown.map((item, index) => (
                             <div key={index} className="text-blue-200">
                               {item}
                             </div>
                           ))}
                           <div className="border-t border-blue-500/30 mt-2 pt-2">
-                            <div className="flex justify-between font-medium text-blue-100">
+                            <div className="flex justify-between font-medium text-blue-100 text-xs">
                               <span>Total Fees:</span>
                               <span>${fees.totalFees.toFixed(2)}</span>
                             </div>
@@ -533,12 +533,12 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                     <button
                       onClick={handleNext}
                       disabled={!fees || loading}
-                      className="w-full py-4 text-white rounded-2xl font-bold transition-all text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full py-3 text-white rounded-xl font-bold transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         background:
                           "linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #dc2626 100%)",
                         boxShadow:
-                          "0 10px 30px -5px rgba(220, 38, 38, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                          "0 8px 20px -5px rgba(220, 38, 38, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                       }}
                     >
                       Continue
@@ -548,22 +548,22 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                 {/* Step 2: Review */}
                 {step === 2 && fees && (
-                  <div className="space-y-6">
+                  <div className="space-y-4">
                     {/* Withdrawal Summary - 3D Card */}
                     <div
-                      className="rounded-2xl p-6 space-y-4"
+                      className="rounded-xl p-4 space-y-3"
                       style={{
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
                         boxShadow:
-                          "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                          "0 8px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
                         border: "1px solid rgba(255, 255, 255, 0.08)",
                       }}
                     >
-                      <h3 className="text-white font-semibold text-lg mb-4">
+                      <h3 className="text-white font-semibold text-sm mb-2">
                         Withdrawal Summary
                       </h3>
-                      <div className="space-y-3">
+                      <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span className="text-gray-400">Method:</span>
                           <span className="text-white">
@@ -584,14 +584,14 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                             </span>
                           </div>
                         )}
-                        <hr className="border-gray-700 my-3" />
-                        <div className="flex justify-between text-yellow-400">
+                        <hr className="border-gray-700 my-2" />
+                        <div className="flex justify-between text-yellow-400 text-sm">
                           <span>Total Fees:</span>
                           <span className="font-medium">
                             ${fees.totalFees.toFixed(2)}
                           </span>
                         </div>
-                        <div className="flex justify-between text-lg font-bold text-white border-t border-gray-600 pt-3 mt-2">
+                        <div className="flex justify-between text-base font-bold text-white border-t border-gray-600 pt-2 mt-2">
                           <span>Total Deduction:</span>
                           <span>${totalRequired.toFixed(2)}</span>
                         </div>
@@ -600,18 +600,18 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                     {/* Warning - 3D Card */}
                     <div
-                      className="rounded-2xl p-5"
+                      className="rounded-xl p-3"
                       style={{
                         background:
                           "linear-gradient(145deg, rgba(234, 179, 8, 0.1) 0%, rgba(161, 98, 7, 0.1) 100%)",
                         boxShadow:
-                          "0 10px 30px -5px rgba(234, 179, 8, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                          "0 8px 20px -5px rgba(234, 179, 8, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                         border: "1px solid rgba(234, 179, 8, 0.2)",
                       }}
                     >
                       <div className="flex">
                         <svg
-                          className="w-5 h-5 text-yellow-400 mt-0.5 mr-3 flex-shrink-0"
+                          className="w-4 h-4 text-yellow-400 mt-0.5 mr-2 flex-shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -624,22 +624,21 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           />
                         </svg>
                         <div>
-                          <p className="text-yellow-400 text-sm font-medium">
+                          <p className="text-yellow-400 text-xs font-medium">
                             Important Notice
                           </p>
-                          <p className="text-yellow-300/80 text-sm mt-1">
-                            Please verify all details carefully. Withdrawals are
-                            subject to processing times and may be irreversible.
+                          <p className="text-yellow-300/80 text-xs mt-0.5">
+                            Verify all details carefully. Withdrawals may be irreversible.
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => setStep(1)}
                         disabled={loading}
-                        className="flex-1 py-4 px-4 rounded-2xl font-semibold transition-all text-white disabled:opacity-50"
+                        className="flex-1 py-3 px-3 rounded-xl font-semibold transition-all text-white text-sm disabled:opacity-50"
                         style={card3DStyle}
                       >
                         Back
@@ -647,12 +646,12 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       <button
                         onClick={handleNext}
                         disabled={loading}
-                        className="flex-1 py-4 px-4 rounded-2xl font-bold transition-all text-white disabled:opacity-50"
+                        className="flex-1 py-3 px-3 rounded-xl font-bold transition-all text-white text-sm disabled:opacity-50"
                         style={{
                           background:
                             "linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #dc2626 100%)",
                           boxShadow:
-                            "0 10px 30px -5px rgba(220, 38, 38, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                            "0 8px 20px -5px rgba(220, 38, 38, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                         }}
                       >
                         {loading ? "Processing..." : "Confirm"}
@@ -663,19 +662,19 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                 {/* Step 3: Fee Payment */}
                 {step === 3 && fees && (
-                  <div className="space-y-6">
-                    <div className="text-center py-4">
+                  <div className="space-y-4">
+                    <div className="text-center py-2">
                       <div
-                        className="w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                        className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-3"
                         style={{
                           background:
                             "linear-gradient(145deg, #2563eb 0%, #4f46e5 100%)",
                           boxShadow:
-                            "0 15px 40px -5px rgba(37, 99, 235, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.2)",
+                            "0 10px 30px -5px rgba(37, 99, 235, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.2)",
                         }}
                       >
                         <svg
-                          className="w-10 h-10 text-white"
+                          className="w-7 h-7 text-white"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -688,35 +687,34 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           />
                         </svg>
                       </div>
-                      <h3 className="text-2xl font-bold text-white mb-2">
+                      <h3 className="text-lg font-bold text-white mb-1">
                         Fee Payment Required
                       </h3>
-                      <p className="text-gray-400">
-                        To process your withdrawal, please review and authorize
-                        the fee deduction
+                      <p className="text-gray-400 text-xs">
+                        Review and authorize the fee deduction
                       </p>
                     </div>
 
                     {/* Fee Breakdown - 3D Card */}
                     <div
-                      className="rounded-2xl p-6"
+                      className="rounded-xl p-4"
                       style={{
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
                         boxShadow:
-                          "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                          "0 8px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
                         border: "1px solid rgba(255, 255, 255, 0.08)",
                       }}
                     >
-                      <h4 className="text-white font-semibold mb-4">
+                      <h4 className="text-white text-sm font-semibold mb-3">
                         Fee Breakdown
                       </h4>
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {fees.breakdown.map((item, index) => {
                           const [label, amount] = item.split(": $");
                           return (
-                            <div key={index} className="flex justify-between">
-                              <span className="text-gray-300 text-sm">
+                            <div key={index} className="flex justify-between text-xs">
+                              <span className="text-gray-300">
                                 {label}
                               </span>
                               <span className="text-white font-medium">
@@ -726,7 +724,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           );
                         })}
                         <hr className="border-gray-700 my-2" />
-                        <div className="flex justify-between text-lg">
+                        <div className="flex justify-between text-sm">
                           <span className="text-gray-200 font-semibold">
                             Total Fees
                           </span>
@@ -739,25 +737,25 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                     {/* Total Summary - 3D Card */}
                     <div
-                      className="rounded-2xl p-5"
+                      className="rounded-xl p-3"
                       style={{
                         background:
                           "linear-gradient(145deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)",
                         boxShadow:
-                          "0 10px 30px -5px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                          "0 8px 20px -5px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                         border: "1px solid rgba(59, 130, 246, 0.2)",
                       }}
                     >
                       <div className="flex justify-between items-center">
                         <div>
-                          <p className="text-blue-300 text-sm">
+                          <p className="text-blue-300 text-xs">
                             Total Amount to be Deducted
                           </p>
-                          <p className="text-blue-200 text-xs mt-1">
+                          <p className="text-blue-200 text-[10px] mt-0.5">
                             (Withdrawal + Fees)
                           </p>
                         </div>
-                        <p className="text-2xl font-bold text-white">
+                        <p className="text-xl font-bold text-white">
                           ${totalRequired.toFixed(2)}
                         </p>
                       </div>
@@ -765,7 +763,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                     {/* Legal Notice - 3D Card */}
                     <div
-                      className="rounded-2xl p-5 text-sm text-gray-400 space-y-3"
+                      className="rounded-xl p-3 text-xs text-gray-400 space-y-2"
                       style={{
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -773,34 +771,22 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         border: "1px solid rgba(255, 255, 255, 0.05)",
                       }}
                     >
-                      <p className="font-medium text-gray-300">
+                      <p className="font-medium text-gray-300 text-xs">
                         By proceeding, you agree to:
                       </p>
-                      <ul className="list-disc list-inside space-y-1 pl-2">
-                        <li>
-                          The deduction of ${totalRequired.toFixed(2)} from your
-                          account balance
-                        </li>
-                        <li>
-                          Processing fees as outlined above for regulatory
-                          compliance
-                        </li>
-                        <li>
-                          A processing time of 1-3 business days for your
-                          withdrawal
-                        </li>
-                        <li>
-                          That withdrawals may be subject to additional
-                          verification
-                        </li>
+                      <ul className="list-disc list-inside space-y-0.5 pl-1 text-[10px]">
+                        <li>Deduction of ${totalRequired.toFixed(2)} from balance</li>
+                        <li>Processing fees for regulatory compliance</li>
+                        <li>1-3 business days processing time</li>
+                        <li>Additional verification may be required</li>
                       </ul>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => setStep(2)}
                         disabled={loading}
-                        className="flex-1 py-4 px-4 rounded-2xl font-semibold transition-all text-white disabled:opacity-50"
+                        className="flex-1 py-3 px-3 rounded-xl font-semibold transition-all text-white text-sm disabled:opacity-50"
                         style={card3DStyle}
                       >
                         Back
@@ -808,12 +794,12 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       <button
                         onClick={handleFeePayment}
                         disabled={loading}
-                        className="flex-1 py-4 px-4 rounded-2xl font-bold transition-all text-white disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="flex-1 py-3 px-3 rounded-xl font-bold transition-all text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                         style={{
                           background:
                             "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",
                           boxShadow:
-                            "0 10px 30px -5px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                            "0 8px 20px -5px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                         }}
                       >
                         {loading ? (
