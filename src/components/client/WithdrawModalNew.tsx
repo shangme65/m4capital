@@ -75,13 +75,47 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     ETH: 3500,
     USDT: 1,
     LTC: 85,
+    XRP: 2.5,
+    SOL: 200,
+    DOGE: 0.4,
+    ADA: 1,
+    DOT: 8,
+    MATIC: 0.9,
   };
 
-  // Available cryptos for withdrawal (only those with balance)
-  const cryptoOptions = ["BTC", "ETH", "USDT", "LTC"];
-  const availableCryptos = cryptoOptions.filter(
-    (crypto) => getCryptoBalance(crypto) > 0
-  );
+  // Crypto names mapping
+  const cryptoNames: Record<string, string> = {
+    BTC: "Bitcoin",
+    ETH: "Ethereum",
+    USDT: "Tether",
+    LTC: "Litecoin",
+    XRP: "Ripple",
+    SOL: "Solana",
+    DOGE: "Dogecoin",
+    ADA: "Cardano",
+    DOT: "Polkadot",
+    MATIC: "Polygon",
+  };
+
+  // Crypto gradient colors
+  const cryptoGradients: Record<string, string> = {
+    BTC: "linear-gradient(145deg, #f7931a 0%, #c77800 100%)",
+    ETH: "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)",
+    USDT: "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)",
+    LTC: "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+    XRP: "linear-gradient(145deg, #23292f 0%, #1a1e23 100%)",
+    SOL: "linear-gradient(145deg, #9945ff 0%, #14f195 100%)",
+    DOGE: "linear-gradient(145deg, #c2a633 0%, #8b7724 100%)",
+    ADA: "linear-gradient(145deg, #0033ad 0%, #002280 100%)",
+    DOT: "linear-gradient(145deg, #e6007a 0%, #b30060 100%)",
+    MATIC: "linear-gradient(145deg, #8247e5 0%, #5a2fa0 100%)",
+  };
+
+  // Available cryptos for withdrawal (only those with balance from user's portfolio)
+  // Get all cryptos from portfolio that have balance > 0
+  const availableCryptos = cryptoAssets
+    .filter((asset: { symbol: string; amount: number }) => asset.amount > 0)
+    .map((asset: { symbol: string; amount: number }) => asset.symbol);
 
   // Auto-select first crypto with balance
   useEffect(() => {
@@ -857,13 +891,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                               className="w-10 h-10 rounded-xl flex items-center justify-center"
                                               style={{
                                                 background:
-                                                  crypto === "BTC"
-                                                    ? "linear-gradient(145deg, #f7931a 0%, #c77800 100%)"
-                                                    : crypto === "ETH"
-                                                    ? "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)"
-                                                    : crypto === "USDT"
-                                                    ? "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)"
-                                                    : "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                                                  cryptoGradients[crypto] ||
+                                                  "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
                                                 boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
                                               }}
                                             >
@@ -877,10 +906,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                             </div>
                                             <div>
                                               <div className="text-sm font-semibold text-white">
-                                                {crypto === "BTC" && "Bitcoin"}
-                                                {crypto === "ETH" && "Ethereum"}
-                                                {crypto === "USDT" && "Tether"}
-                                                {crypto === "LTC" && "Litecoin"}
+                                                {cryptoNames[crypto] || crypto}
                                               </div>
                                               <div className="text-[10px] text-gray-400">
                                                 {crypto}
