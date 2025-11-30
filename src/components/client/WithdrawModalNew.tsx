@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { CURRENCIES } from "@/lib/currencies";
 import Image from "next/image";
 
 interface WithdrawModalProps {
@@ -55,6 +56,11 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const { addNotification } = useNotifications();
   const { formatAmount, preferredCurrency } = useCurrency();
+  const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
+
+  // Get currency symbol for preferred currency
+  const currencySymbol =
+    CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
 
   const availableBalance = portfolio?.portfolio?.balance || 0;
 
@@ -69,19 +75,35 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     return asset?.amount || 0;
   };
 
-  // Crypto prices for conversion (these would ideally come from API)
-  const cryptoPrices: Record<string, number> = {
-    BTC: 95000,
-    ETH: 3500,
-    USDT: 1,
-    LTC: 85,
-    XRP: 2.5,
-    SOL: 200,
-    DOGE: 0.4,
-    ADA: 1,
-    DOT: 8,
-    MATIC: 0.9,
-  };
+  // Fetch real crypto prices from API
+  useEffect(() => {
+    const fetchPrices = async () => {
+      try {
+        const symbols = cryptoAssets
+          .filter((a: { symbol: string; amount: number }) => a.amount > 0)
+          .map((a: { symbol: string }) => a.symbol)
+          .join(",");
+
+        if (!symbols) return;
+
+        const response = await fetch(`/api/crypto/prices?symbols=${symbols}`);
+        if (response.ok) {
+          const data = await response.json();
+          const priceMap: Record<string, number> = {};
+          data.prices?.forEach((p: { symbol: string; price: number }) => {
+            priceMap[p.symbol] = p.price;
+          });
+          setCryptoPrices(priceMap);
+        }
+      } catch (error) {
+        console.error("Failed to fetch crypto prices:", error);
+      }
+    };
+
+    if (isOpen && cryptoAssets.length > 0) {
+      fetchPrices();
+    }
+  }, [isOpen, cryptoAssets]);
 
   // Crypto names mapping
   const cryptoNames: Record<string, string> = {
@@ -95,6 +117,15 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     ADA: "Cardano",
     DOT: "Polkadot",
     MATIC: "Polygon",
+    TRX: "Tron",
+    TON: "Toncoin",
+    BCH: "Bitcoin Cash",
+    ETC: "Ethereum Classic",
+    USDC: "USD Coin",
+    BNB: "Binance Coin",
+    AVAX: "Avalanche",
+    LINK: "Chainlink",
+    SHIB: "Shiba Inu",
   };
 
   // Crypto gradient colors
@@ -109,6 +140,15 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     ADA: "linear-gradient(145deg, #0033ad 0%, #002280 100%)",
     DOT: "linear-gradient(145deg, #e6007a 0%, #b30060 100%)",
     MATIC: "linear-gradient(145deg, #8247e5 0%, #5a2fa0 100%)",
+    TRX: "linear-gradient(145deg, #ff0013 0%, #b3000d 100%)",
+    TON: "linear-gradient(145deg, #0098ea 0%, #006bb3 100%)",
+    BCH: "linear-gradient(145deg, #8dc351 0%, #5a8033 100%)",
+    ETC: "linear-gradient(145deg, #328332 0%, #1f511f 100%)",
+    USDC: "linear-gradient(145deg, #2775ca 0%, #1a4d8a 100%)",
+    BNB: "linear-gradient(145deg, #f3ba2f 0%, #c99520 100%)",
+    AVAX: "linear-gradient(145deg, #e84142 0%, #b33333 100%)",
+    LINK: "linear-gradient(145deg, #2a5ada 0%, #1c3d99 100%)",
+    SHIB: "linear-gradient(145deg, #ffa409 0%, #cc8307 100%)",
   };
 
   // Available cryptos for withdrawal (only those with balance from user's portfolio)
@@ -958,7 +998,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       </label>
                       <div className="relative">
                         <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">
-                          $
+                          {currencySymbol}
                         </span>
                         <input
                           type="number"
@@ -1060,13 +1100,16 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         <div className="space-y-1 text-xs">
                           {fees.breakdown.map((item, index) => (
                             <div key={index} className="text-blue-200">
-                              {item}
+                              {item.replace(/\$/g, currencySymbol)}
                             </div>
                           ))}
                           <div className="border-t border-blue-500/30 mt-2 pt-2">
                             <div className="flex justify-between font-medium text-blue-100 text-xs">
                               <span>Total Fees:</span>
-                              <span>${fees.totalFees.toFixed(2)}</span>
+                              <span>
+                                {currencySymbol}
+                                {fees.totalFees.toFixed(2)}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -1116,7 +1159,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         <div className="flex justify-between">
                           <span className="text-gray-400">Amount:</span>
                           <span className="text-white font-medium">
-                            ${parseFloat(withdrawData.amount).toFixed(2)}
+                            {currencySymbol}
+                            {parseFloat(withdrawData.amount).toFixed(2)}
                           </span>
                         </div>
                         {withdrawData.address && (
@@ -1131,12 +1175,16 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         <div className="flex justify-between text-yellow-400 text-sm">
                           <span>Total Fees:</span>
                           <span className="font-medium">
-                            ${fees.totalFees.toFixed(2)}
+                            {currencySymbol}
+                            {fees.totalFees.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between text-base font-bold text-white border-t border-gray-600 pt-2 mt-2">
                           <span>Total Deduction:</span>
-                          <span>${totalRequired.toFixed(2)}</span>
+                          <span>
+                            {currencySymbol}
+                            {totalRequired.toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1263,7 +1311,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                             >
                               <span className="text-gray-300">{label}</span>
                               <span className="text-white font-medium">
-                                ${amount}
+                                {currencySymbol}
+                                {amount}
                               </span>
                             </div>
                           );
@@ -1274,7 +1323,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                             Total Fees
                           </span>
                           <span className="text-orange-400 font-bold">
-                            ${fees.totalFees.toFixed(2)}
+                            {currencySymbol}
+                            {fees.totalFees.toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -1301,7 +1351,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           </p>
                         </div>
                         <p className="text-xl font-bold text-white">
-                          ${totalRequired.toFixed(2)}
+                          {currencySymbol}
+                          {totalRequired.toFixed(2)}
                         </p>
                       </div>
                     </div>
