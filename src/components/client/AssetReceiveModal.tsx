@@ -112,215 +112,336 @@ export default function AssetReceiveModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-          onClick={onClose}
+          className="fixed inset-0 z-50 overflow-hidden"
+          style={{
+            background:
+              "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #1e1b4b 50%, #0f172a 75%, #0a0a0f 100%)",
+          }}
         >
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0, y: 20 }}
-            animate={{ scale: 1, opacity: 1, y: 0 }}
-            exit={{ scale: 0.95, opacity: 0, y: 20 }}
-            className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-teal-600 to-cyan-600 p-6 text-white">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                    <Download className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">
-                      Receive {asset.symbol}
-                    </h2>
-                    <p className="text-teal-100 text-sm">
-                      Deposit via NowPayments
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={onClose}
-                  className="text-white/80 hover:text-white transition-colors"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-            </div>
+          {/* Animated background elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+          </div>
 
-            <div className="p-6">
-              {step === "amount" && (
-                <div className="space-y-5">
-                  {/* Current Balance */}
-                  <div className="bg-white rounded-2xl p-4 shadow-sm border border-teal-100">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <CryptoIcon symbol={asset.symbol} size="sm" />
-                        <div>
-                          <p className="text-sm text-gray-600">
-                            Current Balance
-                          </p>
-                          <p className="text-lg font-bold text-gray-900">
-                            {asset.amount.toFixed(8)} {asset.symbol}
-                          </p>
+          {/* Mobile back button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50 md:hidden"
+            style={{
+              background:
+                "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+              boxShadow:
+                "0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+            }}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+          </button>
+
+          {/* Close button - desktop */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-10 h-10 hidden md:flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50"
+            style={{
+              background:
+                "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+              boxShadow:
+                "0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+            }}
+          >
+            <X className="w-5 h-5" />
+          </button>
+
+          <div className="h-full overflow-y-auto">
+            <div className="min-h-full flex flex-col items-center justify-start py-16 px-4">
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                className="w-full max-w-md"
+              >
+                {/* Header */}
+                <div className="text-center mb-6">
+                  <div
+                    className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #14b8a6 0%, #06b6d4 100%)",
+                      boxShadow:
+                        "0 10px 30px -5px rgba(20, 184, 166, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    <Download className="w-8 h-8 text-white" />
+                  </div>
+                  <h2 className="text-2xl font-bold text-white">
+                    Receive {asset.symbol}
+                  </h2>
+                  <p className="text-gray-400 text-sm mt-1">
+                    Deposit via NowPayments
+                  </p>
+                </div>
+
+                {/* Main Card */}
+                <div
+                  className="rounded-2xl p-5"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                    boxShadow:
+                      "0 20px 50px -10px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.1)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  {step === "amount" && (
+                    <div className="space-y-5">
+                      {/* Current Balance */}
+                      <div
+                        className="rounded-xl p-4"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(20, 184, 166, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%)",
+                          border: "1px solid rgba(20, 184, 166, 0.2)",
+                        }}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <CryptoIcon symbol={asset.symbol} size="sm" />
+                            <div>
+                              <p className="text-xs text-gray-400">
+                                Current Balance
+                              </p>
+                              <p className="text-lg font-bold text-white">
+                                {asset.amount.toFixed(8)} {asset.symbol}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-400">
+                              {preferredCurrency === "USD"
+                                ? "$"
+                                : preferredCurrency === "EUR"
+                                ? "€"
+                                : preferredCurrency === "GBP"
+                                ? "£"
+                                : preferredCurrency}
+                              {convertAmount(
+                                asset.amount * asset.price
+                              ).toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm text-gray-600">
-                          {preferredCurrency === "USD"
-                            ? "$"
-                            : preferredCurrency === "EUR"
-                            ? "€"
-                            : preferredCurrency === "GBP"
-                            ? "£"
-                            : preferredCurrency}
-                          {convertAmount(asset.amount * asset.price).toFixed(2)}
-                        </p>
+
+                      {/* Amount Input */}
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-300 mb-2">
+                          Amount to Deposit
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            step="0.00000001"
+                            value={depositAmount}
+                            onChange={(e) => setDepositAmount(e.target.value)}
+                            placeholder="0.00000000"
+                            className="w-full px-4 py-3 pr-16 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                            style={{
+                              background:
+                                "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                              boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)",
+                              border: "1px solid rgba(255, 255, 255, 0.1)",
+                            }}
+                          />
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
+                            {asset.symbol}
+                          </span>
+                        </div>
+                        {depositAmount && parseFloat(depositAmount) > 0 && (
+                          <p className="text-sm text-gray-400 mt-2">
+                            ≈{" "}
+                            {preferredCurrency === "USD"
+                              ? "$"
+                              : preferredCurrency === "EUR"
+                              ? "€"
+                              : preferredCurrency === "GBP"
+                              ? "£"
+                              : preferredCurrency}
+                            {convertAmount(
+                              parseFloat(depositAmount) * asset.price
+                            ).toFixed(2)}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                  </div>
 
-                  {/* Amount Input */}
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Amount to Deposit
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        step="0.00000001"
-                        value={depositAmount}
-                        onChange={(e) => setDepositAmount(e.target.value)}
-                        placeholder="0.00000000"
-                        className="w-full px-4 py-3 pr-20 bg-white border border-gray-300 rounded-xl text-gray-900 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200 transition-all"
-                      />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">
-                        {asset.symbol}
-                      </span>
-                    </div>
-                    {depositAmount && parseFloat(depositAmount) > 0 && (
-                      <p className="text-sm text-gray-600 mt-2">
-                        ≈{" "}
-                        {preferredCurrency === "USD"
-                          ? "$"
-                          : preferredCurrency === "EUR"
-                          ? "€"
-                          : preferredCurrency === "GBP"
-                          ? "£"
-                          : preferredCurrency}
-                        {convertAmount(
-                          parseFloat(depositAmount) * asset.price
-                        ).toFixed(2)}
-                      </p>
-                    )}
-                  </div>
+                      {error && (
+                        <div
+                          className="rounded-xl p-4 flex items-start gap-3"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%)",
+                            border: "1px solid rgba(239, 68, 68, 0.2)",
+                          }}
+                        >
+                          <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                          <p className="text-sm text-red-400">{error}</p>
+                        </div>
+                      )}
 
-                  {error && (
-                    <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3">
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-red-700">{error}</p>
+                      {/* Create Deposit Button */}
+                      <button
+                        onClick={createDeposit}
+                        disabled={
+                          !depositAmount ||
+                          parseFloat(depositAmount) <= 0 ||
+                          loading
+                        }
+                        className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #14b8a6 0%, #06b6d4 50%, #14b8a6 100%)",
+                          boxShadow:
+                            "0 8px 20px -5px rgba(20, 184, 166, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                        }}
+                      >
+                        {loading
+                          ? "Creating Deposit..."
+                          : "Create Deposit Address"}
+                      </button>
                     </div>
                   )}
 
-                  {/* Create Deposit Button */}
-                  <button
-                    onClick={createDeposit}
-                    disabled={
-                      !depositAmount ||
-                      parseFloat(depositAmount) <= 0 ||
-                      loading
-                    }
-                    className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg shadow-lg transition-all"
-                  >
-                    {loading ? "Creating Deposit..." : "Create Deposit Address"}
-                  </button>
-                </div>
-              )}
-
-              {step === "deposit" && paymentData && (
-                <div className="space-y-5">
-                  {/* Success Message */}
-                  <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-semibold text-green-900">
-                        Deposit Address Created
-                      </p>
-                      <p className="text-xs text-green-700 mt-1">
-                        Send exactly {paymentData.payAmount.toFixed(8)}{" "}
-                        {paymentData.payCurrency} to the address below
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Payment Details */}
-                  <div className="bg-white rounded-2xl p-4 shadow-sm border border-teal-100 space-y-3">
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Payment ID</p>
-                      <p className="text-sm font-mono text-gray-900 break-all">
-                        {paymentData.paymentId}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">
-                        Amount to Send
-                      </p>
-                      <p className="text-lg font-bold text-teal-600">
-                        {paymentData.payAmount.toFixed(8)}{" "}
-                        {paymentData.payCurrency}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs text-gray-600 mb-2">
-                        Deposit Address
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={paymentData.payAddress}
-                          readOnly
-                          className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm font-mono text-gray-900"
-                        />
-                        <button
-                          onClick={copyAddress}
-                          className="p-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
-                        >
-                          {copied ? (
-                            <CheckCircle className="w-5 h-5" />
-                          ) : (
-                            <Copy className="w-5 h-5" />
-                          )}
-                        </button>
+                  {step === "deposit" && paymentData && (
+                    <div className="space-y-5">
+                      {/* Success Message */}
+                      <div
+                        className="rounded-xl p-4 flex items-start gap-3"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)",
+                          border: "1px solid rgba(34, 197, 94, 0.2)",
+                        }}
+                      >
+                        <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-green-400">
+                            Deposit Address Created
+                          </p>
+                          <p className="text-xs text-green-400/80 mt-1">
+                            Send exactly {paymentData.payAmount.toFixed(8)}{" "}
+                            {paymentData.payCurrency} to the address below
+                          </p>
+                        </div>
                       </div>
-                      {copied && (
-                        <p className="text-xs text-green-600 mt-1">
-                          Address copied!
+
+                      {/* Payment Details */}
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1">
+                            Payment ID
+                          </p>
+                          <p className="text-sm font-mono text-white break-all">
+                            {paymentData.paymentId}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-gray-400 mb-1">
+                            Amount to Send
+                          </p>
+                          <p className="text-lg font-bold text-teal-400">
+                            {paymentData.payAmount.toFixed(8)}{" "}
+                            {paymentData.payCurrency}
+                          </p>
+                        </div>
+
+                        <div>
+                          <p className="text-xs text-gray-400 mb-2">
+                            Deposit Address
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={paymentData.payAddress}
+                              readOnly
+                              className="flex-1 px-3 py-2 rounded-lg text-sm font-mono text-white"
+                              style={{
+                                background:
+                                  "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                                border: "1px solid rgba(255, 255, 255, 0.1)",
+                              }}
+                            />
+                            <button
+                              onClick={copyAddress}
+                              className="p-2 rounded-lg text-white transition-colors"
+                              style={{
+                                background:
+                                  "linear-gradient(145deg, #14b8a6 0%, #06b6d4 100%)",
+                              }}
+                            >
+                              {copied ? (
+                                <CheckCircle className="w-5 h-5" />
+                              ) : (
+                                <Copy className="w-5 h-5" />
+                              )}
+                            </button>
+                          </div>
+                          {copied && (
+                            <p className="text-xs text-green-400 mt-1">
+                              Address copied!
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Warning */}
+                      <div
+                        className="rounded-xl p-4"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(234, 179, 8, 0.1) 0%, rgba(202, 138, 4, 0.1) 100%)",
+                          border: "1px solid rgba(234, 179, 8, 0.2)",
+                        }}
+                      >
+                        <p className="text-xs text-yellow-400">
+                          <strong>Important:</strong> Only send{" "}
+                          {paymentData.payCurrency} to this address. Sending any
+                          other currency will result in loss of funds.
                         </p>
-                      )}
+                      </div>
+
+                      {/* Done Button */}
+                      <button
+                        onClick={onClose}
+                        className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #14b8a6 0%, #06b6d4 50%, #14b8a6 100%)",
+                          boxShadow:
+                            "0 8px 20px -5px rgba(20, 184, 166, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                        }}
+                      >
+                        Done
+                      </button>
                     </div>
-                  </div>
-
-                  {/* Warning */}
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-                    <p className="text-xs text-yellow-800">
-                      <strong>Important:</strong> Only send{" "}
-                      {paymentData.payCurrency} to this address. Sending any
-                      other currency will result in loss of funds.
-                    </p>
-                  </div>
-
-                  {/* Done Button */}
-                  <button
-                    onClick={onClose}
-                    className="w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white py-4 rounded-xl font-bold text-lg shadow-lg transition-all"
-                  >
-                    Done
-                  </button>
+                  )}
                 </div>
-              )}
+              </motion.div>
             </div>
-          </motion.div>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

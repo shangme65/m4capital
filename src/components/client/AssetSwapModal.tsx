@@ -191,176 +191,272 @@ export default function AssetSwapModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={onClose}
+            className="fixed inset-0 z-50 overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #1e1b4b 50%, #0f172a 75%, #0a0a0f 100%)",
+            }}
           >
-            <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-3xl shadow-2xl w-full max-w-md overflow-hidden"
-              onClick={(e) => e.stopPropagation()}
+            {/* Animated background elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+            </div>
+
+            {/* Mobile back button */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50 md:hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                boxShadow:
+                  "0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+              }}
             >
-              {/* Header */}
-              <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 text-white">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <RefreshCw className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-2xl font-bold">Swap Crypto</h2>
-                      <p className="text-purple-100 text-sm">
-                        Exchange between assets
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={onClose}
-                    className="text-white/80 hover:text-white transition-colors"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-              </div>
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+            </button>
 
-              <div className="p-6 space-y-5">
-                {/* From Asset */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    From
-                  </label>
-                  <div className="bg-white rounded-2xl p-4 shadow-sm border border-purple-100">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <CryptoIcon symbol={asset.symbol} size="sm" />
-                        <div>
-                          <p className="font-bold text-gray-900">
-                            {asset.symbol}
-                          </p>
-                          <p className="text-xs text-gray-600">{asset.name}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-gray-600">Balance</p>
-                        <p className="text-sm font-medium text-gray-900">
-                          {asset.amount.toFixed(8)}
-                        </p>
-                      </div>
-                    </div>
+            {/* Close button - desktop */}
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 w-10 h-10 hidden md:flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                boxShadow:
+                  "0 4px 12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+              }}
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-                    <input
-                      type="number"
-                      step="0.00000001"
-                      value={fromAmount}
-                      onChange={(e) => setFromAmount(e.target.value)}
-                      placeholder="0.00000000"
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all"
-                    />
-
-                    <button
-                      onClick={() => setFromAmount(asset.amount.toString())}
-                      className="text-sm text-purple-600 hover:text-purple-700 font-medium mt-2"
+            <div className="h-full overflow-y-auto">
+              <div className="min-h-full flex flex-col items-center justify-start py-16 px-4">
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                  animate={{ scale: 1, opacity: 1, y: 0 }}
+                  exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                  className="w-full max-w-md"
+                >
+                  {/* Header */}
+                  <div className="text-center mb-6">
+                    <div
+                      className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #9333ea 0%, #ec4899 100%)",
+                        boxShadow:
+                          "0 10px 30px -5px rgba(147, 51, 234, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.2)",
+                      }}
                     >
-                      Use Max
+                      <RefreshCw className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">
+                      Swap Crypto
+                    </h2>
+                    <p className="text-gray-400 text-sm mt-1">
+                      Exchange between assets
+                    </p>
+                  </div>
+
+                  {/* Main Card */}
+                  <div
+                    className="rounded-2xl p-5 space-y-5"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                      boxShadow:
+                        "0 20px 50px -10px rgba(0, 0, 0, 0.7), inset 0 2px 0 rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                    }}
+                  >
+                    {/* From Asset */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-2">
+                        From
+                      </label>
+                      <div
+                        className="rounded-xl p-4"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, rgba(147, 51, 234, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)",
+                          border: "1px solid rgba(147, 51, 234, 0.2)",
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <CryptoIcon symbol={asset.symbol} size="sm" />
+                            <div>
+                              <p className="font-bold text-white">
+                                {asset.symbol}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {asset.name}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-gray-400">Balance</p>
+                            <p className="text-sm font-medium text-white">
+                              {asset.amount.toFixed(8)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <input
+                          type="number"
+                          step="0.00000001"
+                          value={fromAmount}
+                          onChange={(e) => setFromAmount(e.target.value)}
+                          placeholder="0.00000000"
+                          className="w-full px-4 py-3 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                            boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)",
+                            border: "1px solid rgba(255, 255, 255, 0.1)",
+                          }}
+                        />
+
+                        <button
+                          onClick={() => setFromAmount(asset.amount.toString())}
+                          className="text-sm text-purple-400 hover:text-purple-300 font-medium mt-2"
+                        >
+                          Use Max
+                        </button>
+
+                        {fromAmount && parseFloat(fromAmount) > 0 && (
+                          <p className="text-sm text-gray-400 mt-2">
+                            ≈{" "}
+                            {preferredCurrency === "USD"
+                              ? "$"
+                              : preferredCurrency === "EUR"
+                              ? "€"
+                              : preferredCurrency === "GBP"
+                              ? "£"
+                              : preferredCurrency}
+                            {convertAmount(
+                              parseFloat(fromAmount) * asset.price
+                            ).toFixed(2)}
+                          </p>
+                        )}
+
+                        {errors.fromAmount && (
+                          <p className="text-sm text-red-400 mt-2 flex items-center gap-1">
+                            <AlertCircle className="w-4 h-4" />
+                            {errors.fromAmount}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Swap Arrow */}
+                    <div className="flex justify-center">
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, #9333ea 0%, #ec4899 100%)",
+                        }}
+                      >
+                        <RefreshCw className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
+
+                    {/* To Asset */}
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-300 mb-2">
+                        To
+                      </label>
+                      <CryptoDropdown
+                        value={toAsset}
+                        onChange={setToAsset}
+                        options={availableAssets
+                          .filter((a) => a.symbol !== asset.symbol)
+                          .map((a) => ({
+                            symbol: a.symbol,
+                            name: a.name,
+                            price: a.price,
+                          }))}
+                        showPrices={true}
+                      />
+
+                      {toAsset && toAmount > 0 && (
+                        <div
+                          className="rounded-xl p-4 mt-3"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, rgba(147, 51, 234, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%)",
+                            border: "1px solid rgba(147, 51, 234, 0.2)",
+                          }}
+                        >
+                          <p className="text-sm text-gray-400 mb-1">
+                            You will receive
+                          </p>
+                          <p className="text-2xl font-bold text-purple-400">
+                            {toAmount.toFixed(8)} {toAsset}
+                          </p>
+                          <p className="text-sm text-gray-400 mt-2">
+                            ≈{" "}
+                            {preferredCurrency === "USD"
+                              ? "$"
+                              : preferredCurrency === "EUR"
+                              ? "€"
+                              : preferredCurrency === "GBP"
+                              ? "£"
+                              : preferredCurrency}
+                            {convertAmount(
+                              toAmount * (toAssetData?.price || 0)
+                            ).toFixed(2)}
+                          </p>
+                        </div>
+                      )}
+
+                      {errors.toAsset && (
+                        <p className="text-sm text-red-400 mt-2 flex items-center gap-1">
+                          <AlertCircle className="w-4 h-4" />
+                          {errors.toAsset}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Swap Button */}
+                    <button
+                      onClick={handleSwap}
+                      disabled={!fromAmount || !toAsset}
+                      className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #9333ea 0%, #ec4899 50%, #9333ea 100%)",
+                        boxShadow:
+                          "0 8px 20px -5px rgba(147, 51, 234, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      Swap Now
                     </button>
 
-                    {fromAmount && parseFloat(fromAmount) > 0 && (
-                      <p className="text-sm text-gray-600 mt-2">
-                        ≈{" "}
-                        {preferredCurrency === "USD"
-                          ? "$"
-                          : preferredCurrency === "EUR"
-                          ? "€"
-                          : preferredCurrency === "GBP"
-                          ? "£"
-                          : preferredCurrency}
-                        {convertAmount(
-                          parseFloat(fromAmount) * asset.price
-                        ).toFixed(2)}
-                      </p>
-                    )}
-
-                    {errors.fromAmount && (
-                      <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                        <AlertCircle className="w-4 h-4" />
-                        {errors.fromAmount}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Swap Arrow */}
-                <div className="flex justify-center">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center shadow-lg">
-                    <RefreshCw className="w-5 h-5 text-white" />
-                  </div>
-                </div>
-
-                {/* To Asset */}
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    To
-                  </label>
-                  <CryptoDropdown
-                    value={toAsset}
-                    onChange={setToAsset}
-                    options={availableAssets
-                      .filter((a) => a.symbol !== asset.symbol)
-                      .map((a) => ({
-                        symbol: a.symbol,
-                        name: a.name,
-                        price: a.price,
-                      }))}
-                    showPrices={true}
-                  />
-
-                  {toAsset && toAmount > 0 && (
-                    <div className="bg-white rounded-2xl p-4 mt-3 shadow-sm border border-purple-100">
-                      <p className="text-sm text-gray-600 mb-1">
-                        You will receive
-                      </p>
-                      <p className="text-2xl font-bold text-purple-600">
-                        {toAmount.toFixed(8)} {toAsset}
-                      </p>
-                      <p className="text-sm text-gray-600 mt-2">
-                        ≈{" "}
-                        {preferredCurrency === "USD"
-                          ? "$"
-                          : preferredCurrency === "EUR"
-                          ? "€"
-                          : preferredCurrency === "GBP"
-                          ? "£"
-                          : preferredCurrency}
-                        {convertAmount(
-                          toAmount * (toAssetData?.price || 0)
-                        ).toFixed(2)}
-                      </p>
-                    </div>
-                  )}
-
-                  {errors.toAsset && (
-                    <p className="text-sm text-red-600 mt-2 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.toAsset}
+                    <p className="text-xs text-center text-gray-500">
+                      No fees for crypto swaps
                     </p>
-                  )}
-                </div>
-
-                {/* Swap Button */}
-                <button
-                  onClick={handleSwap}
-                  disabled={!fromAmount || !toAsset}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg shadow-lg transition-all"
-                >
-                  Swap Now
-                </button>
-
-                <p className="text-xs text-center text-gray-500">
-                  No fees for crypto swaps
-                </p>
+                  </div>
+                </motion.div>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

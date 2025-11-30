@@ -663,54 +663,13 @@ export default function AssetDetailsModal({
                     border: "1px solid rgba(255, 255, 255, 0.06)",
                   }}
                 >
-                  <h3 className="text-lg font-semibold text-white mb-4">
-                    Buy now
-                  </h3>
-                  <div className="flex items-center justify-between mb-4">
-                    <div>
-                      <div className="text-2xl font-bold text-white">
-                        {formatAmount(selectedBuyAmount, 2)}{" "}
-                        <span className="text-gray-400">
-                          {preferredCurrency}
-                        </span>
-                      </div>
-                      <div className="flex gap-2 mt-2">
-                        {quickBuyAmounts.map((amount) => (
-                          <button
-                            key={amount}
-                            onClick={() => setSelectedBuyAmount(amount)}
-                            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                              selectedBuyAmount === amount
-                                ? "text-white"
-                                : "text-gray-300 hover:text-white"
-                            }`}
-                            style={
-                              selectedBuyAmount === amount
-                                ? {
-                                    background:
-                                      "linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%)",
-                                    boxShadow:
-                                      "0 4px 12px -2px rgba(37, 99, 235, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
-                                    border: "1px solid rgba(59, 130, 246, 0.4)",
-                                  }
-                                : {
-                                    background:
-                                      "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                                    boxShadow:
-                                      "0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                                    border:
-                                      "1px solid rgba(255, 255, 255, 0.06)",
-                                  }
-                            }
-                          >
-                            {formatAmount(amount, 0)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-semibold text-white">
+                      Buy now
+                    </h3>
                     <button
                       onClick={handleBuy}
-                      className="text-white px-6 py-3 rounded-full font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
+                      className="text-white px-5 py-2 rounded-full font-semibold text-sm transition-all duration-200 hover:scale-105 active:scale-95 flex-shrink-0"
                       style={{
                         background:
                           "linear-gradient(145deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)",
@@ -721,6 +680,44 @@ export default function AssetDetailsModal({
                     >
                       Buy
                     </button>
+                  </div>
+                  <div className="mb-4">
+                    <div className="text-2xl font-bold text-white">
+                      {formatAmount(selectedBuyAmount, 2)}{" "}
+                      <span className="text-gray-400">{preferredCurrency}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {quickBuyAmounts.map((amount) => (
+                        <button
+                          key={amount}
+                          onClick={() => setSelectedBuyAmount(amount)}
+                          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                            selectedBuyAmount === amount
+                              ? "text-white"
+                              : "text-gray-300 hover:text-white"
+                          }`}
+                          style={
+                            selectedBuyAmount === amount
+                              ? {
+                                  background:
+                                    "linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%)",
+                                  boxShadow:
+                                    "0 4px 12px -2px rgba(37, 99, 235, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
+                                  border: "1px solid rgba(59, 130, 246, 0.4)",
+                                }
+                              : {
+                                  background:
+                                    "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                                  boxShadow:
+                                    "0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                                }
+                          }
+                        >
+                          {formatAmount(amount, 0)}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                   <p className="text-sm text-gray-400">
                     Buying {(selectedBuyAmount / currentPrice).toFixed(5)}{" "}
@@ -1068,9 +1065,6 @@ export default function AssetDetailsModal({
                       <p className="text-gray-400 leading-relaxed">
                         {info.description}
                       </p>
-                      <button className="text-blue-500 hover:underline mt-2">
-                        Read more
-                      </button>
                     </div>
 
                     <div>

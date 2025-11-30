@@ -54,6 +54,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [showMethodDropdown, setShowMethodDropdown] = useState(false);
   const [showCryptoDropdown, setShowCryptoDropdown] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const { addNotification } = useNotifications();
   const { formatAmount, preferredCurrency } = useCurrency();
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
@@ -297,11 +298,15 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         title: "Withdrawal Request Created",
         message: "Please review and pay the required fees to proceed.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create withdrawal request";
       addNotification({
         type: "warning",
         title: "Withdrawal Failed",
-        message: error.message || "Failed to create withdrawal request",
+        message: errorMessage,
       });
     } finally {
       setLoading(false);
@@ -328,26 +333,29 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         throw new Error(data.error || "Failed to process fee payment");
       }
 
-      addNotification({
-        type: "success",
-        title: "Withdrawal Processing",
-        message: `Your withdrawal of $${withdrawData.amount} is being processed. Estimated completion: 1-3 business days.`,
-      });
-
       // Refresh portfolio
       refetch();
 
-      // Close modal
-      onClose();
-    } catch (error: any) {
+      // Show success modal instead of closing immediately
+      setShowSuccessModal(true);
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to process fee payment";
       addNotification({
         type: "warning",
         title: "Fee Payment Failed",
-        message: error.message || "Failed to process fee payment",
+        message: errorMessage,
       });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -1022,12 +1030,26 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                       )}
 
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          // Calculate withdraw all amount based on method
+                          let maxAmount = availableBalance;
+
+                          if (
+                            withdrawData.withdrawalMethod.startsWith("CRYPTO")
+                          ) {
+                            // For crypto, calculate the value of selected crypto in user's currency
+                            const cryptoBalance =
+                              getCryptoBalance(selectedCrypto);
+                            const cryptoPrice =
+                              cryptoPrices[selectedCrypto] || 0;
+                            maxAmount = cryptoBalance * cryptoPrice;
+                          }
+
                           setWithdrawData((prev) => ({
                             ...prev,
-                            amount: availableBalance.toString(),
-                          }))
-                        }
+                            amount: maxAmount.toFixed(2),
+                          }));
+                        }}
                         className="text-orange-400 text-sm mt-2 hover:text-orange-300 transition-colors font-semibold"
                       >
                         Withdraw All
@@ -1448,6 +1470,140 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
               </motion.div>
             </div>
           </div>
+
+          {/* Success Modal */}
+          <AnimatePresence>
+            {showSuccessModal && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-60 flex items-center justify-center p-4"
+                style={{
+                  background: "rgba(0, 0, 0, 0.8)",
+                  backdropFilter: "blur(8px)",
+                }}
+              >
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  className="w-full max-w-sm rounded-2xl p-6"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                    boxShadow:
+                      "0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 2px 0 rgba(255, 255, 255, 0.1)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                  }}
+                >
+                  {/* Success Icon */}
+                  <div className="flex justify-center mb-4">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{
+                        delay: 0.2,
+                        type: "spring",
+                        stiffness: 200,
+                      }}
+                      className="w-20 h-20 rounded-full flex items-center justify-center"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
+                        boxShadow:
+                          "0 10px 40px -10px rgba(34, 197, 94, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      <motion.svg
+                        initial={{ pathLength: 0 }}
+                        animate={{ pathLength: 1 }}
+                        transition={{ delay: 0.4, duration: 0.5 }}
+                        className="w-10 h-10 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </motion.svg>
+                    </motion.div>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-xl font-bold text-white text-center mb-2">
+                    Withdrawal Submitted!
+                  </h3>
+
+                  {/* Description */}
+                  <p className="text-gray-400 text-sm text-center mb-4">
+                    Your withdrawal request has been successfully submitted and
+                    is being processed.
+                  </p>
+
+                  {/* Details Card */}
+                  <div
+                    className="rounded-xl p-4 mb-4"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)",
+                      border: "1px solid rgba(34, 197, 94, 0.2)",
+                    }}
+                  >
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Amount:</span>
+                        <span className="text-white font-semibold">
+                          {currencySymbol}
+                          {parseFloat(withdrawData.amount).toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Method:</span>
+                        <span className="text-white">
+                          {withdrawData.withdrawalMethod.replace("CRYPTO_", "")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Status:</span>
+                        <span className="text-green-400 font-medium">
+                          Processing
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Est. Time:</span>
+                        <span className="text-white">1-3 business days</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Info */}
+                  <p className="text-gray-500 text-xs text-center mb-4">
+                    You will receive a notification once your withdrawal is
+                    completed.
+                  </p>
+
+                  {/* Close Button */}
+                  <button
+                    onClick={handleCloseSuccessModal}
+                    className="w-full py-3 rounded-xl font-bold text-white transition-all"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",
+                      boxShadow:
+                        "0 8px 20px -5px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                    }}
+                  >
+                    Done
+                  </button>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
