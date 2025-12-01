@@ -1,4 +1,5 @@
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -60,22 +61,37 @@ export async function POST(req: NextRequest) {
       });
 
       if (existingNotification) {
+        const notifCurrency =
+          deposit.User?.preferredCurrency || deposit.currency || "USD";
+        const getNotifCurrSymbol = (currency: string): string => {
+          const symbols: { [key: string]: string } = {
+            USD: "$",
+            EUR: "€",
+            GBP: "£",
+            NGN: "₦",
+            ZAR: "R",
+            KES: "KSh",
+            GHS: "₵",
+            BRL: "R$",
+          };
+          return symbols[currency] || "$";
+        };
         await prisma.notification.update({
           where: { id: existingNotification.id },
           data: {
             title: isComplete
-              ? `${deposit.targetAsset || "USD"} Deposit Confirmed`
-              : `Incoming ${deposit.targetAsset || "USD"} Deposit`,
+              ? `${deposit.targetAsset || notifCurrency} Deposit Confirmed`
+              : `Incoming ${deposit.targetAsset || notifCurrency} Deposit`,
             message: isComplete
               ? `Your deposit of ${
                   deposit.targetAsset
                     ? `${deposit.amount} ${deposit.targetAsset}`
-                    : `$${deposit.amount}`
+                    : `${getNotifCurrSymbol(notifCurrency)}${deposit.amount}`
                 } has been confirmed and credited to your account.`
               : `Your deposit of ${
                   deposit.targetAsset
                     ? `${deposit.amount} ${deposit.targetAsset}`
-                    : `$${deposit.amount}`
+                    : `${getNotifCurrSymbol(notifCurrency)}${deposit.amount}`
                 } is being processed. Confirmations: ${newConfirmations}/6`,
             metadata: {
               ...((existingNotification.metadata as any) || {}),
@@ -137,19 +153,21 @@ export async function POST(req: NextRequest) {
         }
 
         // Create completion notification
+        const userCurrency =
+          deposit.User.preferredCurrency || deposit.currency || "USD";
         await prisma.notification.create({
           data: {
             id: generateId(),
             userId: deposit.User.id,
             type: "SUCCESS",
-            title: "Deposit Completed!",
+            title: `${deposit.targetAsset || userCurrency} Deposit Completed!`,
             message: `Your deposit of ${
               deposit.targetAsset
                 ? `${deposit.amount} ${deposit.targetAsset}`
-                : `$${deposit.amount}`
+                : `${getCurrencySymbol(userCurrency)}${deposit.amount}`
             } has been successfully credited to your account.`,
             amount: deposit.amount,
-            asset: deposit.targetAsset || deposit.currency,
+            asset: deposit.targetAsset || userCurrency,
             metadata: {
               depositId: deposit.id,
               transactionId: deposit.transactionId,

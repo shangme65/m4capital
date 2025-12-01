@@ -1,4 +1,6 @@
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
+import { SUPPORTED_CRYPTOS } from "@/lib/crypto-constants";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -11,26 +13,6 @@ import {
 } from "@/lib/middleware/errorHandler";
 
 export const dynamic = "force-dynamic";
-
-// Mapping of supported cryptocurrencies to their NowPayments codes
-const SUPPORTED_CRYPTOS: Record<string, { code: string; name: string }> = {
-  btc: { code: "btc", name: "Bitcoin" },
-  eth: { code: "eth", name: "Ethereum" },
-  etc: { code: "etc", name: "Ethereum Classic" },
-  ltc: { code: "ltc", name: "Litecoin" },
-  xrp: { code: "xrp", name: "Ripple" },
-  usdc: { code: "usdcerc20", name: "USDC (ERC-20)" },
-  usdcerc20: { code: "usdcerc20", name: "USDC (ERC-20)" },
-  sol: { code: "sol", name: "Solana" },
-  doge: { code: "doge", name: "Dogecoin" },
-  bnb: { code: "bnbbsc", name: "BNB (BSC)" },
-  trx: { code: "trx", name: "Tron" },
-  usdt: { code: "usdterc20", name: "USDT (ERC-20)" },
-  usdterc20: { code: "usdterc20", name: "USDT (ERC-20)" },
-  usdttrc20: { code: "usdttrc20", name: "USDT (TRC-20)" },
-  bch: { code: "bch", name: "Bitcoin Cash" },
-  ton: { code: "ton", name: "Toncoin" },
-};
 
 /**
  * POST /api/payment/create-crypto
@@ -199,11 +181,13 @@ async function createCryptoPayment(
       minAmount.min_amount *
       (parseFloat(String(amount)) / estimate.estimated_amount)
     ).toFixed(2);
+    const userCurr = user.preferredCurrency || "USD";
+    const currSym = getCurrencySymbol(userCurr);
     return createErrorResponse(
       "Invalid amount",
       `Amount too low. Minimum deposit is ${
         minAmount.min_amount
-      } ${payCurrency.toUpperCase()} (~$${minUsdValue})`,
+      } ${payCurrency.toUpperCase()} (~${currSym}${minUsdValue})`,
       undefined,
       400
     );

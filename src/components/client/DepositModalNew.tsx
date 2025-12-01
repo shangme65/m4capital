@@ -252,7 +252,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
     }
 
     if (numAmount < 10) {
-      setError("Minimum deposit amount is $10");
+      setError(`Minimum deposit amount is ${currencySymbol}10`);
       setIsLoading(false);
       return;
     }

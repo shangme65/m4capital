@@ -1,4 +1,5 @@
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
@@ -364,10 +365,22 @@ export async function POST(req: NextRequest) {
         // Telegram Stars: 1 Star ≈ $0.01, so multiply by 100
         const starsAmount = Math.round(amount * 100);
 
+        // Get user's preferred currency
+        const callbackUserId = callbackQuery.from.id;
+        const { PrismaClient } = await import("@prisma/client");
+        const prisma = new PrismaClient();
+        const callbackUser = await prisma.user.findFirst({
+          where: { linkedTelegramId: BigInt(callbackUserId) },
+          select: { preferredCurrency: true },
+        });
+        await prisma.$disconnect();
+        const userCurr = callbackUser?.preferredCurrency || "USD";
+        const currSym = getCurrencySymbol(userCurr);
+
         const success = await sendStarsInvoice(
           chatId,
           starsAmount,
-          `Deposit $${amount.toFixed(2)} to M4Capital`
+          `Deposit ${currSym}${amount.toFixed(2)} to M4Capital`
         );
 
         if (!success) {
@@ -379,6 +392,18 @@ export async function POST(req: NextRequest) {
       } else if (callbackData.startsWith("pay_bitcoin_")) {
         const amount = parseFloat(callbackData.replace("pay_bitcoin_", ""));
 
+        // Get user's preferred currency
+        const callbackUserId = callbackQuery.from.id;
+        const { PrismaClient } = await import("@prisma/client");
+        const prisma = new PrismaClient();
+        const callbackUser = await prisma.user.findFirst({
+          where: { linkedTelegramId: BigInt(callbackUserId) },
+          select: { preferredCurrency: true },
+        });
+        await prisma.$disconnect();
+        const userCurr = callbackUser?.preferredCurrency || "USD";
+        const currSym = getCurrencySymbol(userCurr);
+
         await sendTelegramMessage(
           chatId,
           "⏳ Creating Bitcoin payment invoice..."
@@ -389,7 +414,7 @@ export async function POST(req: NextRequest) {
         if (invoice.success && invoice.invoiceUrl) {
           await sendInlineKeyboard(
             chatId,
-            `₿ **Bitcoin Payment**\n\nAmount: $${amount.toFixed(
+            `₿ **Bitcoin Payment**\n\nAmount: ${currSym}${amount.toFixed(
               2
             )}\n\nClick the button below to complete your payment:`,
             [[{ text: "Pay with Bitcoin", url: invoice.invoiceUrl }]]
@@ -444,6 +469,9 @@ export async function POST(req: NextRequest) {
         });
 
         if (user && user.Portfolio) {
+          const payUserCurrency = user.preferredCurrency || "USD";
+          const payCurrSymbol = getCurrencySymbol(payUserCurrency);
+
           // Create deposit transaction
           await prisma.deposit.create({
             data: {
@@ -467,14 +495,14 @@ export async function POST(req: NextRequest) {
 
           await sendTelegramMessage(
             chatId,
-            `✅ **Payment Successful!**\n\nAmount: $${amountUSD.toFixed(
+            `✅ **Payment Successful!**\n\nAmount: ${payCurrSymbol}${amountUSD.toFixed(
               2
             )}\nMethod: Telegram Stars\n\nYour balance has been updated. Check your dashboard for details!`
           );
         } else {
           await sendTelegramMessage(
             chatId,
-            `✅ Payment received ($${amountUSD.toFixed(
+            `✅ Payment received (${amountUSD.toFixed(
               2
             )})!\n\n⚠️ Please link your Telegram account to your M4Capital account using /link to credit your balance.`
           );
@@ -509,7 +537,7 @@ export async function POST(req: NextRequest) {
     if (text === "/start") {
       await sendTelegramMessage(
         chatId,
-        `Welcome to M4Capital! 🚀\n\nI am your personal trading assistant. Here's what I can help you with:\n\n*💼 Account Management*\n/link - Link your M4Capital account\n/balance - View your cash balance\n/portfolio - View detailed holdings\n\n*💸 Transactions*\n/deposit AMOUNT - Deposit funds (in your currency)\n/send @user AMOUNT - Send money to another user\n/buy CRYPTO AMOUNT - Buy cryptocurrency\n\n*📊 Market Data*\nAsk about crypto prices for top 320 coins\nExample: "What's the price of Bitcoin?"\n\n*🎨 AI Features*\n• Ask me to generate images\n• Natural conversation\n• Investment advice\n\n*Examples:*\n\`/deposit 100\` - Deposit $100\n\`/send @victor 50\` - Send $50 to Victor\n\`/buy BTC 100\` - Buy $100 of Bitcoin\n\n*💡 Note:* All amounts use your preferred currency!\n\nType /clear to reset conversation.`
+        `Welcome to M4Capital! 🚀\n\nI am your personal trading assistant. Here's what I can help you with:\n\n*💼 Account Management*\n/link - Link your M4Capital account\n/balance - View your cash balance\n/portfolio - View detailed holdings\n\n*💸 Transactions*\n/deposit AMOUNT - Deposit funds (in your currency)\n/send @user AMOUNT - Send money to another user\n/buy CRYPTO AMOUNT - Buy cryptocurrency\n\n*📊 Market Data*\nAsk about crypto prices for top 320 coins\nExample: "What's the price of Bitcoin?"\n\n*🎨 AI Features*\n• Ask me to generate images\n• Natural conversation\n• Investment advice\n\n*Examples:*\n\`/deposit 100\` - Deposit 100 units\n\`/send @victor 50\` - Send 50 to Victor\n\`/buy BTC 100\` - Buy 100 worth of Bitcoin\n\n*💡 Note:* All amounts use your preferred currency!\n\nType /clear to reset conversation.`
       );
       return NextResponse.json({ ok: true });
     }
@@ -688,6 +716,8 @@ export async function POST(req: NextRequest) {
 
         const balance = Number(user.Portfolio.balance);
         const assets = user.Portfolio.assets as any[];
+        const userCurrency = user.preferredCurrency || "USD";
+        const currSymbol = getCurrencySymbol(userCurrency);
 
         // Calculate total portfolio value
         let totalValue = balance;
@@ -702,11 +732,14 @@ export async function POST(req: NextRequest) {
         const responseMessage =
           `💼 **Account Balance**\n\n` +
           `👤 **Account:** ${user.name || user.email}\n` +
-          `💵 **Cash Balance:** $${balance.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}\n` +
-          `📊 **Total Portfolio Value:** $${totalValue.toLocaleString(
+          `💵 **Cash Balance:** ${currSymbol}${balance.toLocaleString(
+            undefined,
+            {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }
+          )}\n` +
+          `📊 **Total Portfolio Value:** ${currSymbol}${totalValue.toLocaleString(
             undefined,
             { minimumFractionDigits: 2, maximumFractionDigits: 2 }
           )}\n\n` +
@@ -772,10 +805,12 @@ export async function POST(req: NextRequest) {
 
         const balance = Number(user.Portfolio.balance);
         const assets = user.Portfolio.assets as any[];
+        const userCurrency = user.preferredCurrency || "USD";
+        const currSymbol = getCurrencySymbol(userCurrency);
 
         let responseMessage = `📊 **Your Portfolio**\n\n`;
         responseMessage += `👤 **Account:** ${user.name || user.email}\n`;
-        responseMessage += `💵 **Cash Balance:** $${balance.toLocaleString(
+        responseMessage += `💵 **Cash Balance:** ${currSymbol}${balance.toLocaleString(
           undefined,
           { minimumFractionDigits: 2, maximumFractionDigits: 2 }
         )}\n\n`;
@@ -795,15 +830,18 @@ export async function POST(req: NextRequest) {
             responseMessage += `**${asset.symbol}**\n`;
             responseMessage += `  Amount: ${amount.toFixed(8)}\n`;
             responseMessage += `  Price: $${price.toLocaleString()}\n`;
-            responseMessage += `  Value: $${value.toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}\n\n`;
+            responseMessage += `  Value: ${currSymbol}${value.toLocaleString(
+              undefined,
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }
+            )}\n\n`;
           }
 
           const totalValue = balance + totalAssetValue;
           responseMessage += `━━━━━━━━━━━━━━━━\n`;
-          responseMessage += `**Total Portfolio Value:** $${totalValue.toLocaleString(
+          responseMessage += `**Total Portfolio Value:** ${currSymbol}${totalValue.toLocaleString(
             undefined,
             { minimumFractionDigits: 2, maximumFractionDigits: 2 }
           )}`;
@@ -846,16 +884,28 @@ export async function POST(req: NextRequest) {
         // Show payment options with buttons
         await sendInlineKeyboard(
           chatId,
-          "💳 **Make a Deposit**\n\nChoose your preferred payment method:\n\n⭐ **Telegram Stars** - Quick and easy payment using Telegram Stars\n₿ **Bitcoin** - Pay with Bitcoin via NowPayments\n\n*Please enter amount:* `/deposit <amount>`\nExample: `/deposit 100` (for $100)",
+          "💳 **Make a Deposit**\n\nChoose your preferred payment method:\n\n⭐ **Telegram Stars** - Quick and easy payment using Telegram Stars\n₿ **Bitcoin** - Pay with Bitcoin via NowPayments\n\n*Please enter amount:* `/deposit <amount>`\nExample: `/deposit 100` (in your preferred currency)",
           []
         );
         return NextResponse.json({ ok: true });
       }
 
+      // Try to get user's preferred currency
+      const { PrismaClient } = await import("@prisma/client");
+      const prisma = new PrismaClient();
+      const user = await prisma.user.findFirst({
+        where: { linkedTelegramId: BigInt(userId) },
+        select: { preferredCurrency: true },
+      });
+      await prisma.$disconnect();
+
+      const userCurrency = user?.preferredCurrency || "USD";
+      const currSymbol = getCurrencySymbol(userCurrency);
+
       // Show payment method selection
       await sendInlineKeyboard(
         chatId,
-        `💰 **Deposit Amount:** $${amount.toFixed(
+        `💰 **Deposit Amount:** ${currSymbol}${amount.toFixed(
           2
         )}\n\nSelect your payment method:`,
         [

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatTimeAgo } from "@/lib/crypto-constants";
 import {
   Search,
   TrendingUp,
@@ -198,24 +199,6 @@ const NewsPage = () => {
       default:
         return "bg-gradient-to-br from-gray-700/50 to-gray-800/50 border-gray-600/30";
     }
-  };
-
-  const formatTimeAgo = (timestamp: string | number) => {
-    const timestampMs =
-      typeof timestamp === "string" ? new Date(timestamp).getTime() : timestamp;
-    const now = Date.now();
-    const diff = now - timestampMs;
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (seconds < 30) return "Just now";
-    if (seconds < 60) return `${seconds}s ago`;
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
-    return new Date(timestampMs).toLocaleDateString();
   };
 
   const toggleSaveArticle = (articleId: string) => {

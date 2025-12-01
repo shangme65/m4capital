@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
  * Hook to periodically check if user's role has changed
  * and automatically refresh the session + redirect if needed
  */
-export function useRoleChangeDetection(checkInterval = 5000) {
+export function useRoleChangeDetection(checkInterval = 60000) {
   const { data: session, update } = useSession();
   const router = useRouter();
   const lastRoleRef = useRef(session?.user?.role);

@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface BalanceCardProps {
   title: string;
@@ -15,11 +16,9 @@ const BalanceCard = ({
   change,
   isCurrency = true,
 }: BalanceCardProps) => {
+  const { formatAmount } = useCurrency();
   const formattedAmount = isCurrency
-    ? `$${amount.toLocaleString("en-US", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`
+    ? formatAmount(amount, 2)
     : amount.toLocaleString();
 
   return (

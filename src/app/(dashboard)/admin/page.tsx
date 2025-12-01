@@ -30,12 +30,18 @@ import {
   Trash2,
   AlertCircle,
   Check,
+  CheckCircle,
   X,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
-import { getCurrencySymbol } from "@/lib/currencies";
+import {
+  getCurrencySymbol,
+  convertCurrency,
+  getExchangeRates,
+} from "@/lib/currencies";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -569,6 +575,12 @@ const TransactionHistoryView = () => {
 const AdminDashboard = () => {
   const { data: session } = useSession();
   const router = useRouter();
+  const {
+    convertAmount,
+    formatAmount,
+    exchangeRates,
+    preferredCurrency: adminCurrency,
+  } = useCurrency();
   const [users, setUsers] = useState<User[]>([]);
   const [deletedUsers, setDeletedUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -619,6 +631,14 @@ const AdminDashboard = () => {
     "usd"
   );
   const [showCryptoDropdown, setShowCryptoDropdown] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successDetails, setSuccessDetails] = useState<{
+    amount: string;
+    currency: string;
+    userEmail: string;
+    transactionHash?: string;
+    type: string;
+  } | null>(null);
 
   // System stats state
   const [systemStats, setSystemStats] = useState({
@@ -1000,6 +1020,7 @@ const AdminDashboard = () => {
       // Calculate the actual amount based on input type
       let finalAmount = amountNum;
       let cryptoAmount = 0;
+      let amountInUserCurrency = amountNum;
 
       if (
         amountInputType === "crypto" &&
@@ -1008,26 +1029,64 @@ const AdminDashboard = () => {
         // User entered crypto amount, calculate fiat value
         const cryptoPrice = prices[cryptoAsset.toLowerCase()]?.price || 0;
         if (cryptoPrice > 0) {
-          finalAmount = amountNum * cryptoPrice; // Convert to fiat
+          finalAmount = amountNum * cryptoPrice; // Convert to USD
           cryptoAmount = amountNum;
+          // Convert from USD to user's preferred currency
+          amountInUserCurrency = convertCurrency(
+            finalAmount,
+            selectedUser?.preferredCurrency || "USD",
+            exchangeRates
+          );
         }
       } else if (
         amountInputType === "usd" &&
         (depositType === "crypto" || paymentMethodType === "crypto")
       ) {
-        // User entered fiat amount, calculate crypto amount
+        // User entered fiat amount in admin's currency
         const cryptoPrice = prices[cryptoAsset.toLowerCase()]?.price || 0;
         if (cryptoPrice > 0) {
-          cryptoAmount = amountNum / cryptoPrice; // Convert to crypto
-          finalAmount = amountNum;
+          // First convert admin currency to USD
+          const amountInUSD = convertAmount(amountNum, true);
+          cryptoAmount = amountInUSD / cryptoPrice; // Convert USD to crypto
+          finalAmount = amountInUSD;
+          // Convert from USD to user's preferred currency
+          amountInUserCurrency = convertCurrency(
+            finalAmount,
+            selectedUser?.preferredCurrency || "USD",
+            exchangeRates
+          );
+        } else {
+          // If crypto price is not available, show error
+          showPopupNotification(
+            `Failed to get ${cryptoAsset} price. Please try again.`,
+            "error"
+          );
+          setLoading(false);
+          return;
         }
+      } else if (depositType === "fiat" && amountInputType === "usd") {
+        // Fiat deposit: convert from admin's currency to user's preferred currency
+        // First convert admin currency amount to USD
+        const amountInUSD = convertAmount(amountNum, true);
+        // Then convert USD to user's preferred currency
+        amountInUserCurrency = convertCurrency(
+          amountInUSD,
+          selectedUser?.preferredCurrency || "USD",
+          exchangeRates
+        );
+        finalAmount = amountInUSD; // Keep USD for backend
       }
 
       // Prepare the payment details for the transaction
       const transactionData = {
         userId: selectedUser!.id,
-        amount: depositType === "fiat" ? finalAmount : cryptoAmount,
-        fiatAmount: finalAmount,
+        amount:
+          depositType === "crypto"
+            ? cryptoAmount > 0
+              ? cryptoAmount
+              : amountNum
+            : amountInUserCurrency,
+        fiatAmount: amountInUserCurrency,
         cryptoAmount: cryptoAmount > 0 ? cryptoAmount : undefined,
         paymentMethod: paymentMethodName,
         paymentDetails: {
@@ -1047,7 +1106,14 @@ const AdminDashboard = () => {
             : null,
         isAdminManual: true, // Flag to indicate this is admin manual payment
         preferredCurrency: selectedUser?.preferredCurrency || "USD",
+        adminCurrency: adminCurrency || "USD",
+        adminInputAmount: amountNum,
       };
+
+      console.log("Transaction Data:", transactionData);
+      console.log("Crypto Amount:", cryptoAmount);
+      console.log("Final Amount:", finalAmount);
+      console.log("Amount in User Currency:", amountInUserCurrency);
 
       const res = await fetch("/api/admin/top-up", {
         method: "POST",
@@ -1057,41 +1123,34 @@ const AdminDashboard = () => {
 
       if (res.ok) {
         const data = await res.json();
-        const currencySymbol = getCurrencySymbol(
+        const currencySymbol = getCurrencySymbol(adminCurrency || "USD");
+        const userCurrencySymbol = getCurrencySymbol(
           selectedUser?.preferredCurrency || "USD"
         );
 
-        showPopupNotification(
-          `✅ Successfully initiated ${
+        // Set success modal data
+        setSuccessDetails({
+          amount:
             depositType === "crypto"
               ? `${cryptoAmount.toFixed(8)} ${cryptoAsset}`
-              : `${currencySymbol}${finalAmount.toFixed(2)}`
-          } deposit for ${selectedUser!.email}.\n\n` +
-            `📊 Status: ${generatedHash ? "PENDING" : "COMPLETED"}\n` +
-            (generatedHash ? `⏱️ Confirmations: 0/6 (≈20 minutes)\n` : "") +
-            (generatedHash
-              ? `🔗 Hash: ${generatedHash.substring(
-                  0,
-                  16
-                )}...${generatedHash.substring(48)}\n`
-              : "") +
-            (calculatedFee > 0
-              ? `💰 Fee: ${calculatedFee.toFixed(8)} ${cryptoAsset}\n\n`
-              : "\n") +
-            `User will receive:\n` +
-            `• Email notification\n` +
-            `• Push notification (if enabled)\n` +
-            (generatedHash ? `• Real-time confirmation updates\n` : "") +
-            `• ${
-              depositType === "crypto"
-                ? `${cryptoAmount.toFixed(8)} ${cryptoAsset}`
-                : `${currencySymbol}${finalAmount.toFixed(2)}`
-            } added to their account`,
-          "success"
-        );
+              : `${currencySymbol}${amountNum.toFixed(
+                  2
+                )} → ${userCurrencySymbol}${amountInUserCurrency.toFixed(2)}`,
+          currency:
+            depositType === "crypto"
+              ? cryptoAsset
+              : selectedUser?.preferredCurrency || "USD",
+          userEmail: selectedUser!.email || "",
+          transactionHash: generatedHash,
+          type: depositType === "crypto" ? "Crypto Deposit" : "Fiat Deposit",
+        });
+        setShowSuccessModal(true);
+
+        // Clear form
         setAmount("");
         setPaymentDetails({});
         setNotificationMessage("");
+        setSelectedUser(null);
 
         // Send immediate notification to user about incoming deposit
         if (generatedHash) {
@@ -2474,17 +2533,17 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Payment Modal */}
+      {/* Payment Modal - Fullscreen */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-gray-900 z-50 overflow-y-auto">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-gray-900 rounded-2xl border border-gray-700 w-full max-w-6xl max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="min-h-screen"
           >
             {/* Modal Header with Close Button */}
-            <div className="sticky top-0 bg-gray-900 border-b border-gray-700 p-3 xs:p-4 sm:p-6 flex items-center justify-between z-10">
+            <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700 p-3 xs:p-4 sm:p-6 flex items-center justify-between z-10">
               <div className="flex items-center gap-3">
                 {selectedUser && (
                   <button
@@ -2520,7 +2579,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Modal Content */}
-            <div className="p-3 xs:p-4 sm:p-6">
+            <div className="max-w-7xl mx-auto p-3 xs:p-4 sm:p-6 lg:p-8">
               {/* User Selection */}
               {!selectedUser && (
                 <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
@@ -2546,16 +2605,13 @@ const AdminDashboard = () => {
                                 {user.email}
                               </p>
                               <p className="text-xs sm:text-sm text-gray-400 truncate">
-                                {user.name || "No name"} • Balance: $
-                                {typeof user.balance === "number"
-                                  ? user.balance.toFixed(2)
-                                  : "0.00"}
+                                {user.name || "No name"}
                               </p>
                             </div>
                             <span
                               className={`px-2 py-1 rounded text-xs font-medium ml-2 ${
                                 user.role === "ADMIN"
-                                  ? "bg-orange-500/20 text-orange-400"
+                                  ? "bg-green-500/20 text-green-400"
                                   : user.role === "STAFF_ADMIN"
                                   ? "bg-green-500/20 text-green-400"
                                   : "bg-gray-500/20 text-gray-400"
@@ -2890,8 +2946,11 @@ const AdminDashboard = () => {
                             </button>
 
                             {showCryptoDropdown && (
-                              <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto">
-                                {cryptoAssets.map((asset) => {
+                              <div
+                                className="absolute top-full left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-2xl z-50 max-h-80 overflow-y-auto p-2"
+                                style={{ perspective: "1000px" }}
+                              >
+                                {cryptoAssets.map((asset, index) => {
                                   const cryptoPrice =
                                     prices[asset.symbol.toLowerCase()];
                                   const price = cryptoPrice?.price || 0;
@@ -2903,53 +2962,123 @@ const AdminDashboard = () => {
                                     cryptoAsset === asset.symbol;
 
                                   return (
-                                    <button
+                                    <motion.button
                                       key={asset.symbol}
                                       type="button"
+                                      initial={{ opacity: 0, y: -10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      transition={{ delay: index * 0.05 }}
+                                      whileHover={{
+                                        scale: 1.02,
+                                        z: 50,
+                                        rotateY: 2,
+                                        transition: { duration: 0.2 },
+                                      }}
                                       onClick={() => {
                                         setCryptoAsset(asset.symbol);
                                         setShowCryptoDropdown(false);
                                       }}
-                                      className={`w-full p-3 flex items-center gap-3 hover:bg-gray-700/50 transition-colors ${
+                                      className={`w-full p-4 mb-2 flex items-center gap-3 rounded-xl transition-all relative group overflow-hidden ${
                                         isSelected
-                                          ? "bg-orange-500/10 border-l-4 border-orange-500"
-                                          : ""
+                                          ? "bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-2 border-orange-500/60 shadow-lg shadow-orange-500/20"
+                                          : "bg-gradient-to-br from-gray-800/80 to-gray-800/40 border border-gray-700/50 hover:border-gray-600 hover:shadow-xl"
                                       }`}
+                                      style={{
+                                        transformStyle: "preserve-3d",
+                                        transform: isSelected
+                                          ? "translateZ(20px)"
+                                          : "translateZ(0px)",
+                                      }}
                                     >
-                                      <CryptoIcon
-                                        symbol={asset.symbol}
-                                        className="w-8 h-8 flex-shrink-0"
+                                      {/* 3D Depth Background Layer */}
+                                      <div
+                                        className={`absolute inset-0 rounded-xl opacity-50 ${
+                                          isSelected
+                                            ? "bg-gradient-to-br from-orange-500/10 to-transparent"
+                                            : "bg-gradient-to-br from-gray-700/20 to-transparent group-hover:from-gray-600/30"
+                                        }`}
+                                        style={{
+                                          transform: "translateZ(-10px)",
+                                        }}
                                       />
-                                      <div className="flex-1 text-left">
-                                        <div className="flex items-center justify-between">
-                                          <p className="font-semibold text-white">
-                                            {asset.symbol}
-                                          </p>
-                                          <span
-                                            className={`text-xs font-medium ${
-                                              change >= 0
-                                                ? "text-green-400"
-                                                : "text-red-400"
-                                            }`}
-                                          >
-                                            {change >= 0 ? "+" : ""}
-                                            {change.toFixed(2)}%
-                                          </span>
+
+                                      {/* Shine Effect */}
+                                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+
+                                      <div
+                                        className={`relative z-10 w-10 h-10 rounded-lg flex items-center justify-center ${
+                                          isSelected
+                                            ? "bg-orange-500/20 shadow-lg shadow-orange-500/20"
+                                            : "bg-gray-700/50 group-hover:bg-gray-600/50"
+                                        }`}
+                                        style={{
+                                          transform: "translateZ(15px)",
+                                        }}
+                                      >
+                                        <CryptoIcon
+                                          symbol={asset.symbol}
+                                          className="w-6 h-6"
+                                        />
+                                      </div>
+
+                                      <div
+                                        className="flex-1 text-left relative z-10"
+                                        style={{
+                                          transform: "translateZ(10px)",
+                                        }}
+                                      >
+                                        <div className="flex items-center justify-between mb-1">
+                                          <div className="flex items-center gap-2">
+                                            <p className="font-bold text-white text-base">
+                                              {asset.symbol}
+                                            </p>
+                                            <span
+                                              className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                                change >= 0
+                                                  ? "bg-green-500/20 text-green-400"
+                                                  : "bg-red-500/20 text-red-400"
+                                              }`}
+                                            >
+                                              {change >= 0 ? "+" : ""}
+                                              {change.toFixed(2)}%
+                                            </span>
+                                          </div>
+                                          {isSelected && (
+                                            <motion.div
+                                              initial={{ scale: 0 }}
+                                              animate={{ scale: 1 }}
+                                              className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/50"
+                                              style={{
+                                                transform: "translateZ(20px)",
+                                              }}
+                                            >
+                                              <Check className="w-4 h-4 text-white" />
+                                            </motion.div>
+                                          )}
                                         </div>
-                                        <div className="flex items-center justify-between mt-1">
-                                          <p className="text-xs text-gray-400">
+                                        <div className="flex items-center justify-between">
+                                          <p className="text-xs text-gray-400 font-medium">
                                             {asset.name}
                                           </p>
-                                          <p className="text-sm font-medium text-white">
+                                          <p className="text-sm font-bold text-white">
                                             {currencySymbol}
                                             {price.toLocaleString()}
                                           </p>
                                         </div>
                                       </div>
-                                      {isSelected && (
-                                        <Check className="w-5 h-5 text-orange-500 flex-shrink-0" />
-                                      )}
-                                    </button>
+
+                                      {/* Bottom Depth Edge */}
+                                      <div
+                                        className={`absolute bottom-0 left-0 right-0 h-1 ${
+                                          isSelected
+                                            ? "bg-gradient-to-r from-orange-500/40 via-orange-600/60 to-orange-500/40"
+                                            : "bg-gradient-to-r from-gray-700/40 via-gray-600/40 to-gray-700/40"
+                                        }`}
+                                        style={{
+                                          transform: "translateZ(-5px)",
+                                        }}
+                                      />
+                                    </motion.button>
                                   );
                                 })}
                               </div>
@@ -2971,7 +3100,7 @@ const AdminDashboard = () => {
                                       : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
                                   }`}
                                 >
-                                  {selectedUser?.preferredCurrency || "USD"}
+                                  {adminCurrency || "USD"}
                                 </button>
                                 <button
                                   onClick={() => setAmountInputType("crypto")}
@@ -2995,7 +3124,7 @@ const AdminDashboard = () => {
                                     : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
                                 }`}
                               >
-                                {selectedUser?.preferredCurrency || "USD"} Value
+                                {adminCurrency || "USD"} Value
                               </button>
                               <button
                                 onClick={() => setAmountInputType("crypto")}
@@ -3016,9 +3145,7 @@ const AdminDashboard = () => {
                             className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                             placeholder={
                               amountInputType === "usd"
-                                ? `0.00 ${
-                                    selectedUser?.preferredCurrency || "USD"
-                                  }`
+                                ? `0.00 ${adminCurrency || "USD"}`
                                 : `0.00000000 ${cryptoAsset}`
                             }
                             disabled={loading}
@@ -3030,6 +3157,20 @@ const AdminDashboard = () => {
                               <p className="text-[10px] text-gray-500 mt-1">
                                 Equivalent crypto amount will be calculated
                                 automatically
+                              </p>
+                            )}
+                          {depositType === "fiat" &&
+                            amountInputType === "usd" &&
+                            selectedUser &&
+                            selectedUser.preferredCurrency !==
+                              adminCurrency && (
+                              <p className="text-[10px] text-blue-400 mt-1">
+                                ℹ️ Amount will be converted to{" "}
+                                {selectedUser.preferredCurrency} (
+                                {getCurrencySymbol(
+                                  selectedUser.preferredCurrency || "USD"
+                                )}
+                                ) for the user
                               </p>
                             )}
                         </div>
@@ -3076,9 +3217,7 @@ const AdminDashboard = () => {
                               <span className="text-gray-400">Amount:</span>
                               <span className="font-semibold text-green-400">
                                 {amountInputType === "usd"
-                                  ? `${amount || "0"} ${
-                                      selectedUser?.preferredCurrency || "USD"
-                                    }`
+                                  ? `${amount || "0"} ${adminCurrency || "USD"}`
                                   : `${amount || "0"} ${cryptoAsset}`}
                               </span>
                             </div>
@@ -3094,7 +3233,7 @@ const AdminDashboard = () => {
                               </span>
                               <span className="text-blue-400 font-semibold">
                                 {depositType === "fiat"
-                                  ? "Fiat Balance"
+                                  ? `Fiat Balance`
                                   : `${cryptoAsset} Holdings`}
                               </span>
                             </div>
@@ -3121,9 +3260,7 @@ const AdminDashboard = () => {
                                 ? `This ${cryptoAsset} deposit will be converted to ${
                                     selectedUser?.preferredCurrency || "USD"
                                   } and added to the user's fiat balance.`
-                                : `This will add funds to the user's fiat balance in their preferred currency (${
-                                    selectedUser?.preferredCurrency || "USD"
-                                  }).`
+                                : `This will add funds to the user's fiat balance in their preferred currency.`
                               : `This will add ${cryptoAsset} directly to the user's cryptocurrency portfolio, not their fiat balance.`}
                           </p>
                         </div>
@@ -4031,6 +4168,123 @@ const AdminDashboard = () => {
               <div className="mt-6 text-center text-xs text-gray-500">
                 Stats auto-refresh every 30 seconds
               </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Success Modal */}
+      {showSuccessModal && successDetails && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl border border-green-500/30"
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-6 border-b border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+                    <CheckCircle className="text-green-400" size={24} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">
+                      Deposit Successful!
+                    </h3>
+                    <p className="text-sm text-gray-400">
+                      Transaction completed
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    setSuccessDetails(null);
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              {/* Deposit Type */}
+              <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700">
+                <p className="text-sm text-gray-400 mb-1">Deposit Type</p>
+                <p className="text-lg font-semibold text-white">
+                  {successDetails.type}
+                </p>
+              </div>
+
+              {/* Amount */}
+              <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700">
+                <p className="text-sm text-gray-400 mb-1">Amount</p>
+                <p className="text-2xl font-bold text-green-400">
+                  {successDetails.amount}
+                </p>
+              </div>
+
+              {/* User */}
+              <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700">
+                <p className="text-sm text-gray-400 mb-1">Credited To</p>
+                <p className="text-base font-medium text-white">
+                  {successDetails.userEmail}
+                </p>
+              </div>
+
+              {/* Transaction Hash (if crypto) */}
+              {successDetails.transactionHash && (
+                <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700">
+                  <p className="text-sm text-gray-400 mb-1">Transaction Hash</p>
+                  <p className="text-xs font-mono text-gray-300 break-all">
+                    {successDetails.transactionHash}
+                  </p>
+                  <p className="text-xs text-yellow-400 mt-2">
+                    ⏱️ Awaiting confirmations (0/6)
+                  </p>
+                </div>
+              )}
+
+              {/* Notifications Sent */}
+              <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/30">
+                <p className="text-sm font-medium text-blue-400 mb-2">
+                  📬 Notifications Sent
+                </p>
+                <ul className="text-sm text-gray-300 space-y-1">
+                  <li>✓ Email notification</li>
+                  <li>✓ Push notification (if enabled)</li>
+                  {successDetails.transactionHash && (
+                    <li>✓ Real-time confirmation tracking</li>
+                  )}
+                </ul>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-700 flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  setSuccessDetails(null);
+                  setShowPaymentModal(true);
+                }}
+                className="flex-1 bg-blue-500/20 border border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-3 px-4 rounded-xl transition-all font-semibold"
+              >
+                Process Another
+              </button>
+              <button
+                onClick={() => {
+                  setShowSuccessModal(false);
+                  setSuccessDetails(null);
+                }}
+                className="flex-1 bg-green-500/20 border border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-3 px-4 rounded-xl transition-all font-semibold"
+              >
+                Done
+              </button>
             </div>
           </motion.div>
         </div>

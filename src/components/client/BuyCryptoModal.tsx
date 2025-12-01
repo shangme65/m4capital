@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, TrendingUp } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import PaymentMethodSelector from "./PaymentMethodSelector";
 
@@ -31,15 +32,16 @@ export default function BuyCryptoModal({
     defaultAmount ? defaultAmount.toString() : ""
   );
   const [showPaymentSelector, setShowPaymentSelector] = useState(false);
-  const [inputMode, setInputMode] = useState<"crypto" | "usd">("usd");
+  const [inputMode, setInputMode] = useState<"crypto" | "fiat">("fiat");
   const { addTransaction, addNotification } = useNotifications();
-  const { formatAmount } = useCurrency();
+  const { formatAmount, preferredCurrency } = useCurrency();
+  const currencySymbol = getCurrencySymbol(preferredCurrency);
 
   // Update amount when defaultAmount changes or modal opens
   useEffect(() => {
     if (isOpen && defaultAmount) {
       setAmount(defaultAmount.toString());
-      setInputMode("usd");
+      setInputMode("fiat");
     }
   }, [isOpen, defaultAmount]);
 
@@ -64,7 +66,7 @@ export default function BuyCryptoModal({
       ? parseFloat(amount) / asset.price
       : 0;
   const usdValue =
-    inputMode === "usd"
+    inputMode === "fiat"
       ? amount
         ? parseFloat(amount)
         : 0
@@ -90,7 +92,7 @@ export default function BuyCryptoModal({
       method: "Crypto Purchase",
       description: `Purchased ${cryptoAmount.toFixed(8)} ${
         asset.symbol
-      } for $${usdValue.toFixed(2)}`,
+      } for ${formatAmount(usdValue, 2)}`,
     };
 
     addTransaction(transaction);
@@ -101,7 +103,7 @@ export default function BuyCryptoModal({
       title: `${asset.symbol} Purchase Successful`,
       message: `You have successfully purchased ${cryptoAmount.toFixed(8)} ${
         asset.symbol
-      } for $${usdValue.toFixed(2)}`,
+      } for ${formatAmount(usdValue, 2)}`,
       amount: usdValue,
       asset: asset.symbol,
     });
@@ -249,23 +251,23 @@ export default function BuyCryptoModal({
                   </button>
                   <button
                     onClick={() => {
-                      setInputMode("usd");
+                      setInputMode("fiat");
                       setAmount("");
                     }}
                     className="flex-1 px-4 py-3 rounded-lg font-semibold transition-all duration-200"
                     style={{
                       background:
-                        inputMode === "usd"
+                        inputMode === "fiat"
                           ? "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)"
                           : "transparent",
-                      color: inputMode === "usd" ? "#ffffff" : "#9ca3af",
+                      color: inputMode === "fiat" ? "#ffffff" : "#9ca3af",
                       boxShadow:
-                        inputMode === "usd"
+                        inputMode === "fiat"
                           ? "0 4px 12px -2px rgba(34, 197, 94, 0.4)"
                           : "none",
                     }}
                   >
-                    USD
+                    {preferredCurrency}
                   </button>
                 </div>
 
@@ -281,7 +283,8 @@ export default function BuyCryptoModal({
                   }}
                 >
                   <label className="block text-sm font-semibold text-gray-300 mb-3">
-                    Amount ({inputMode === "crypto" ? asset.symbol : "USD"})
+                    Amount (
+                    {inputMode === "crypto" ? asset.symbol : preferredCurrency})
                   </label>
                   <div className="relative mb-4">
                     <input
@@ -291,7 +294,7 @@ export default function BuyCryptoModal({
                       placeholder={
                         inputMode === "crypto"
                           ? `0.00 ${asset.symbol}`
-                          : "$0.00"
+                          : `${currencySymbol}0.00`
                       }
                       className="w-full px-4 py-4 pr-20 rounded-xl text-white text-2xl font-bold focus:outline-none transition-all"
                       style={{
@@ -303,7 +306,9 @@ export default function BuyCryptoModal({
                       }}
                     />
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-                      {inputMode === "crypto" ? asset.symbol : "USD"}
+                      {inputMode === "crypto"
+                        ? asset.symbol
+                        : preferredCurrency}
                     </span>
                   </div>
 
@@ -338,10 +343,7 @@ export default function BuyCryptoModal({
                     <div className="text-right text-gray-400">
                       ≈{" "}
                       {inputMode === "crypto"
-                        ? `$${usdValue.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}`
+                        ? formatAmount(usdValue, 2)
                         : `${cryptoAmount.toFixed(8)} ${asset.symbol}`}
                     </div>
                   )}
@@ -404,7 +406,7 @@ export default function BuyCryptoModal({
                               textShadow: "0 0 20px rgba(34, 197, 94, 0.3)",
                             }}
                           >
-                            ${usdValue.toFixed(2)}
+                            {formatAmount(usdValue, 2)}
                           </span>
                         </div>
                       </div>

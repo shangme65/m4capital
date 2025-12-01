@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   Calculator,
   TrendingUp,
@@ -84,6 +85,7 @@ export function BudgetingCashFlow() {
   const [showProjections, setShowProjections] = useState(false);
   const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { formatAmount } = useCurrency();
 
   useEffect(() => {
     const fetchBudgetData = async () => {
@@ -337,12 +339,12 @@ export function BudgetingCashFlow() {
 
                   <div className="text-right">
                     <p className="text-white font-medium">
-                      ${category.spent.toLocaleString()} / $
-                      {category.budgeted.toLocaleString()}
+                      {formatAmount(category.spent, 0)} /{" "}
+                      {formatAmount(category.budgeted, 0)}
                     </p>
                     <p className={`text-sm ${status.color}`}>
                       {category.remaining > 0
-                        ? "$" + category.remaining.toLocaleString() + " left"
+                        ? formatAmount(category.remaining, 0) + " left"
                         : "Over budget"}
                     </p>
                   </div>
@@ -496,24 +498,24 @@ export function BudgetingCashFlow() {
                         {month.month}
                       </td>
                       <td className="p-3 text-right text-green-400">
-                        ${month.income.toLocaleString()}
+                        {formatAmount(month.income, 0)}
                       </td>
                       <td className="p-3 text-right text-red-400">
-                        ${month.expenses.toLocaleString()}
+                        {formatAmount(month.expenses, 0)}
                       </td>
                       <td className="p-3 text-right text-blue-400">
-                        ${month.savings.toLocaleString()}
+                        {formatAmount(month.savings, 0)}
                       </td>
                       <td
                         className={`p-3 text-right font-medium ${
                           month.netFlow >= 0 ? "text-green-400" : "text-red-400"
                         }`}
                       >
-                        {month.netFlow >= 0 ? "+" : ""}$
-                        {month.netFlow.toLocaleString()}
+                        {month.netFlow >= 0 ? "+" : ""}
+                        {formatAmount(month.netFlow, 0)}
                       </td>
                       <td className="p-3 text-right text-white font-medium">
-                        ${month.balance.toLocaleString()}
+                        {formatAmount(month.balance, 0)}
                       </td>
                     </tr>
                   ))}

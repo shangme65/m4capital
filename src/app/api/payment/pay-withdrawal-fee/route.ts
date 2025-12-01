@@ -1,4 +1,5 @@
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -40,6 +41,10 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
+
+    // Get user's preferred currency
+    const userCurrency = user.preferredCurrency || "USD";
+    const currSymbol = getCurrencySymbol(userCurrency);
 
     // Get withdrawal
     const withdrawal = await prisma.withdrawal.findUnique({
@@ -117,15 +122,15 @@ export async function POST(request: NextRequest) {
       // Create notification
       prisma.notification.create({
         data: {
-            id: generateId(),
+          id: generateId(),
           userId: user.id,
           type: "WITHDRAW",
           title: "Withdrawal Processing",
-          message: `Your withdrawal of $${withdrawAmount.toLocaleString()} is being processed. Fees of $${totalFees.toFixed(
+          message: `Your withdrawal of ${currSymbol}${withdrawAmount.toLocaleString()} is being processed. Fees of ${currSymbol}${totalFees.toFixed(
             2
           )} have been deducted.`,
           amount: withdrawal.amount,
-          asset: withdrawal.currency,
+          asset: userCurrency,
           metadata: {
             withdrawalId: withdrawal.id,
             fees: totalFees,

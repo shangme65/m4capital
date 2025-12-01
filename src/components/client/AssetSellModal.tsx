@@ -86,7 +86,7 @@ export default function AssetSellModal({
           method: "Instant Sale",
           description: `Sold ${amount.toFixed(8)} ${
             asset.symbol
-          } for $${value.toFixed(2)}`,
+          } for ${formatAmount(value, 2)}`,
         };
 
         addTransaction(transaction);
@@ -94,7 +94,7 @@ export default function AssetSellModal({
         const notificationTitle = `${asset.symbol} Sold`;
         const notificationMessage = `Successfully sold ${amount.toFixed(8)} ${
           asset.symbol
-        } for $${value.toFixed(2)}`;
+        } for ${formatAmount(value, 2)}`;
 
         addNotification({
           type: "transaction",

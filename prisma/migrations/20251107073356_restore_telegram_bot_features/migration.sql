@@ -430,3 +430,56 @@ ALTER TABLE "ScheduledMessage" ADD CONSTRAINT "ScheduledMessage_userId_fkey" FOR
 
 -- AddForeignKey
 ALTER TABLE "FileStorage" ADD CONSTRAINT "FileStorage_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- Enable Row-Level Security for all new tables
+ALTER TABLE "Trade" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "PaperPortfolio" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "PaperTrade" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Strategy" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "StrategyComment" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "StrategyLike" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "CourseProgress" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "TelegramUser" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "CryptoWatchlist" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "PriceAlert" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "UserStatistics" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ScheduledMessage" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "FileStorage" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "ModerationRule" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "TradingSignal" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "Quiz" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "NewsArticle" ENABLE ROW LEVEL SECURITY;
+
+-- Force RLS for user-owned tables
+ALTER TABLE "PaperPortfolio" FORCE ROW LEVEL SECURITY;
+ALTER TABLE "PaperTrade" FORCE ROW LEVEL SECURITY;
+
+-- Paper Portfolio policies
+CREATE POLICY "Users can view own paper portfolio" ON "PaperPortfolio"
+  FOR SELECT
+  USING ("userId" = current_user_id());
+
+CREATE POLICY "Users can manage own paper portfolio" ON "PaperPortfolio"
+  FOR ALL
+  USING ("userId" = current_user_id())
+  WITH CHECK ("userId" = current_user_id());
+
+-- Paper Trade policies
+CREATE POLICY "Users can view own paper trades" ON "PaperTrade"
+  FOR SELECT
+  USING ("userId" = current_user_id());
+
+CREATE POLICY "Users can manage own paper trades" ON "PaperTrade"
+  FOR ALL
+  USING ("userId" = current_user_id())
+  WITH CHECK ("userId" = current_user_id());
+
+-- Strategy policies (public read)
+CREATE POLICY "Anyone can view published strategies" ON "Strategy"
+  FOR SELECT
+  USING ("isPublished" = true OR "userId" = current_user_id());
+
+CREATE POLICY "Users can manage own strategies" ON "Strategy"
+  FOR ALL
+  USING ("userId" = current_user_id())
+  WITH CHECK ("userId" = current_user_id());

@@ -222,7 +222,10 @@ export default function CryptoWallet({
           addNotification({
             type: "deposit",
             title: `${cryptoName} Deposit Confirmed!`,
-            message: `Your ${cryptoName} deposit of $${amount} has been confirmed and credited to your account.`,
+            message: `Your ${cryptoName} deposit of ${formatAmount(
+              parseFloat(amount),
+              2
+            )} has been confirmed and credited to your account.`,
           });
           onComplete();
         } else if (status === "FAILED" || status === "EXPIRED") {

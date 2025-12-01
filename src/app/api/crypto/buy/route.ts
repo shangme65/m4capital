@@ -1,4 +1,5 @@
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -303,7 +304,7 @@ export async function POST(request: NextRequest) {
 
       // Convert amount to user's preferred currency
       let displayAmount = totalCost;
-      let currencySymbol = "$";
+      const currencySymbol = getCurrencySymbol(userCurrency);
 
       if (userCurrency !== "USD") {
         // Fetch exchange rate
@@ -314,14 +315,6 @@ export async function POST(request: NextRequest) {
           const ratesData = await ratesResponse.json();
           const rate = ratesData.rates[userCurrency] || 1;
           displayAmount = totalCost * rate;
-          currencySymbol =
-            userCurrency === "EUR"
-              ? "€"
-              : userCurrency === "GBP"
-              ? "£"
-              : userCurrency === "JPY"
-              ? "¥"
-              : userCurrency;
         }
       }
 

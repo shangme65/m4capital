@@ -5,6 +5,7 @@ import { X, CreditCard, Wallet, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
 import { useToast } from "@/contexts/ToastContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import CustomWalletDeposit from "./CustomWalletDeposit";
 
 interface PaymentMethodSelectorProps {
@@ -98,11 +99,13 @@ export default function PaymentMethodSelector({
     }
   };
 
+  const { formatAmount, preferredCurrency } = useCurrency();
+
   const paymentMethods = [
     {
-      id: "usd-balance",
-      name: "USD Balance",
-      description: `Available: $${userBalance.toLocaleString()}`,
+      id: "balance",
+      name: `${preferredCurrency} Balance`,
+      description: `Available: ${formatAmount(userBalance, 2)}`,
       icon: <Wallet className="w-6 h-6" />,
       enabled: userBalance >= usdValue,
       type: "balance",
@@ -349,27 +352,27 @@ export default function PaymentMethodSelector({
                   Confirm Purchase
                 </h3>
                 <p className="text-gray-400 mb-4">
-                  ${usdValue.toLocaleString()} will be deducted from your USD
-                  balance
+                  {formatAmount(usdValue, 2)} will be deducted from your{" "}
+                  {preferredCurrency} balance
                 </p>
                 <div className="bg-gray-900 rounded-lg p-4 mb-4">
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-400">Current Balance:</span>
                     <span className="text-white font-medium">
-                      ${userBalance.toLocaleString()}
+                      {formatAmount(userBalance, 2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-400">Purchase Amount:</span>
                     <span className="text-red-400 font-medium">
-                      -${usdValue.toLocaleString()}
+                      -{formatAmount(usdValue, 2)}
                     </span>
                   </div>
                   <div className="border-t border-gray-700 my-2" />
                   <div className="flex justify-between">
                     <span className="text-gray-400">New Balance:</span>
                     <span className="text-green-400 font-bold">
-                      ${(userBalance - usdValue).toLocaleString()}
+                      {formatAmount(userBalance - usdValue, 2)}
                     </span>
                   </div>
                 </div>

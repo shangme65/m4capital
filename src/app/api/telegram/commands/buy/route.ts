@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrencySymbol } from "@/lib/currencies";
 import {
   sendTelegramMessage,
   sendInlineKeyboard,
@@ -52,11 +53,11 @@ export async function POST(req: NextRequest) {
     const parts = command.trim().split(/\s+/);
 
     if (parts.length < 3) {
+      const userCurrency = user.preferredCurrency || "USD";
+      const currSymbol = getCurrencySymbol(userCurrency);
       await sendTelegramMessage(
         chatId,
-        `💎 *Buy Cryptocurrency*\n\nUsage:\n\`/buy SYMBOL AMOUNT\`\n\nExamples:\n\`/buy BTC 100\` - Buy $100 worth of Bitcoin\n\`/buy ETH 50\` - Buy $50 worth of Ethereum\n\`/buy bitcoin 200\` - Buy $200 worth of Bitcoin\n\n*Supported:* BTC, ETH, XRP, TRX, TON, LTC, BCH, ETC, USDT, USDC\n\n*Note:* Amount is in your preferred currency (${
-          user.preferredCurrency || "USD"
-        })`
+        `💎 *Buy Cryptocurrency*\n\nUsage:\n\`/buy SYMBOL AMOUNT\`\n\nExamples:\n\`/buy BTC 100\` - Buy ${currSymbol}100 worth of Bitcoin\n\`/buy ETH 50\` - Buy ${currSymbol}50 worth of Ethereum\n\`/buy bitcoin 200\` - Buy ${currSymbol}200 worth of Bitcoin\n\n*Supported:* BTC, ETH, XRP, TRX, TON, LTC, BCH, ETC, USDT, USDC\n\n*Note:* Amount is in your preferred currency (${userCurrency})`
       );
       return NextResponse.json({ success: true });
     }

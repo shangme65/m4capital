@@ -1,4 +1,6 @@
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
+import { SUPPORTED_CRYPTOS } from "@/lib/crypto-constants";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -11,19 +13,6 @@ import {
 } from "@/lib/middleware/errorHandler";
 
 export const dynamic = "force-dynamic";
-
-// Mapping of supported cryptocurrencies to their NowPayments codes
-const SUPPORTED_CRYPTOS: Record<string, { code: string; name: string }> = {
-  btc: { code: "btc", name: "Bitcoin" },
-  eth: { code: "eth", name: "Ethereum" },
-  ltc: { code: "ltc", name: "Litecoin" },
-  usdc: { code: "usdcerc20", name: "USDC (ERC-20)" },
-  usdt: { code: "usdterc20", name: "USDT (ERC-20)" },
-  sol: { code: "sol", name: "Solana" },
-  doge: { code: "doge", name: "Dogecoin" },
-  bnb: { code: "bnbbsc", name: "BNB (BSC)" },
-  trx: { code: "trx", name: "Tron" },
-};
 
 /**
  * POST /api/traderoom/fund-crypto
@@ -191,11 +180,13 @@ async function createTraderoomCryptoPayment(
       minAmount.min_amount *
       (parseFloat(String(amount)) / estimate.estimated_amount)
     ).toFixed(2);
+    const userCurr = user.preferredCurrency || "USD";
+    const currSym = getCurrencySymbol(userCurr);
     return createErrorResponse(
       "Invalid amount",
       `Amount too low. Minimum deposit is ${
         minAmount.min_amount
-      } ${payCurrency.toUpperCase()} (~$${minUsdValue})`,
+      } ${payCurrency.toUpperCase()} (~${currSym}${minUsdValue})`,
       undefined,
       400
     );

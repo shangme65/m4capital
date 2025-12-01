@@ -53,9 +53,11 @@ import RealTimeTradingChart from "@/components/client/RealTimeTradingChart";
 import ChartGrid from "@/components/client/ChartGrid";
 import ErrorBoundary from "@/components/client/ErrorBoundary";
 import { useSession } from "next-auth/react";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 function TradingInterface() {
   const { data: session, status } = useSession();
+  const { formatAmount, preferredCurrency } = useCurrency();
   const [amount, setAmount] = useState(10000);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState("USD/CAD");
@@ -366,7 +368,8 @@ function TradingInterface() {
     }
     if (amount > realAccountBalance) {
       setFundingError(
-        `Insufficient balance. You have $${realAccountBalance.toFixed(
+        `Insufficient balance. You have ${formatAmount(
+          realAccountBalance,
           2
         )} available.`
       );
@@ -391,7 +394,8 @@ function TradingInterface() {
         setFundAmount("");
         setShowFundModal(false);
         alert(
-          `Successfully transferred $${amount.toFixed(
+          `Successfully transferred ${formatAmount(
+            amount,
             2
           )} to your Traderoom balance!`
         );
@@ -3527,8 +3531,8 @@ function TradingInterface() {
                                   className="text-sm"
                                   style={{ color: "#afadac" }}
                                 >
-                                  Amount: ${trade.amount} • Entry: $
-                                  {trade.entryPrice}
+                                  Amount: {formatAmount(trade.amount, 2)} •
+                                  Entry: ${trade.entryPrice}
                                   {trade.exitPrice &&
                                     ` • Exit: $${trade.exitPrice}`}
                                 </div>
@@ -3541,8 +3545,8 @@ function TradingInterface() {
                                       : "text-red-400"
                                   }`}
                                 >
-                                  {trade.profit >= 0 ? "+" : ""}$
-                                  {trade.profit.toFixed(2)}
+                                  {trade.profit >= 0 ? "+" : ""}
+                                  {formatAmount(trade.profit, 2)}
                                 </div>
                                 <div
                                   className="text-sm"

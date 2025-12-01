@@ -11,22 +11,22 @@ ALTER TABLE "Portfolio" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Deposit" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Withdrawal" ENABLE ROW LEVEL SECURITY;
 -- ALTER TABLE "Trade" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "PaperPortfolio" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "PaperTrade" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "Strategy" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "StrategyComment" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "StrategyLike" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "CourseProgress" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "TelegramUser" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "CryptoWatchlist" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "PriceAlert" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "UserStatistics" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "ScheduledMessage" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "FileStorage" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "ModerationRule" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "TradingSignal" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "Quiz" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "NewsArticle" ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE "PaperPortfolio" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "PaperTrade" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "Strategy" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "StrategyComment" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "StrategyLike" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "CourseProgress" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "TelegramUser" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "CryptoWatchlist" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "PriceAlert" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "UserStatistics" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "ScheduledMessage" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "FileStorage" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "ModerationRule" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "TradingSignal" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "Quiz" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "NewsArticle" ENABLE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
 
 -- Helper function to get current user ID from session variable
 CREATE OR REPLACE FUNCTION current_user_id() RETURNS TEXT AS $$
@@ -48,8 +48,8 @@ ALTER TABLE "Portfolio" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Deposit" FORCE ROW LEVEL SECURITY;
 ALTER TABLE "Withdrawal" FORCE ROW LEVEL SECURITY;
 -- ALTER TABLE "Trade" FORCE ROW LEVEL SECURITY;
-ALTER TABLE "PaperPortfolio" FORCE ROW LEVEL SECURITY;
-ALTER TABLE "PaperTrade" FORCE ROW LEVEL SECURITY;
+-- ALTER TABLE "PaperPortfolio" FORCE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
+-- ALTER TABLE "PaperTrade" FORCE ROW LEVEL SECURITY; -- Moved to 20251107073356_restore_telegram_bot_features
 ALTER TABLE "KycVerification" FORCE ROW LEVEL SECURITY;
 
 -- User policies
@@ -116,35 +116,35 @@ CREATE POLICY "Admins can manage all withdrawals" ON "Withdrawal"
 --   USING ("userId" = current_user_id())
 --   WITH CHECK ("userId" = current_user_id());
 
--- Paper Portfolio policies
-CREATE POLICY "Users can view own paper portfolio" ON "PaperPortfolio"
-  FOR SELECT
-  USING ("userId" = current_user_id());
+-- Paper Portfolio policies (moved to 20251107073356_restore_telegram_bot_features)
+-- CREATE POLICY "Users can view own paper portfolio" ON "PaperPortfolio"
+--   FOR SELECT
+--   USING ("userId" = current_user_id());
 
-CREATE POLICY "Users can manage own paper portfolio" ON "PaperPortfolio"
-  FOR ALL
-  USING ("userId" = current_user_id())
-  WITH CHECK ("userId" = current_user_id());
+-- CREATE POLICY "Users can manage own paper portfolio" ON "PaperPortfolio"
+--   FOR ALL
+--   USING ("userId" = current_user_id())
+--   WITH CHECK ("userId" = current_user_id());
 
--- Paper Trade policies
-CREATE POLICY "Users can view own paper trades" ON "PaperTrade"
-  FOR SELECT
-  USING ("userId" = current_user_id());
+-- Paper Trade policies (moved to 20251107073356_restore_telegram_bot_features)
+-- CREATE POLICY "Users can view own paper trades" ON "PaperTrade"
+--   FOR SELECT
+--   USING ("userId" = current_user_id());
 
-CREATE POLICY "Users can manage own paper trades" ON "PaperTrade"
-  FOR ALL
-  USING ("userId" = current_user_id())
-  WITH CHECK ("userId" = current_user_id());
+-- CREATE POLICY "Users can manage own paper trades" ON "PaperTrade"
+--   FOR ALL
+--   USING ("userId" = current_user_id())
+--   WITH CHECK ("userId" = current_user_id());
 
--- Strategy policies (public read)
-CREATE POLICY "Anyone can view published strategies" ON "Strategy"
-  FOR SELECT
-  USING ("isPublished" = true OR "userId" = current_user_id());
+-- Strategy policies (moved to 20251107073356_restore_telegram_bot_features)
+-- CREATE POLICY "Anyone can view published strategies" ON "Strategy"
+--   FOR SELECT
+--   USING ("isPublished" = true OR "userId" = current_user_id());
 
-CREATE POLICY "Users can manage own strategies" ON "Strategy"
-  FOR ALL
-  USING ("userId" = current_user_id())
-  WITH CHECK ("userId" = current_user_id());
+-- CREATE POLICY "Users can manage own strategies" ON "Strategy"
+--   FOR ALL
+--   USING ("userId" = current_user_id())
+--   WITH CHECK ("userId" = current_user_id());
 
 -- KYC policies
 CREATE POLICY "Users can view own KYC" ON "KycVerification"

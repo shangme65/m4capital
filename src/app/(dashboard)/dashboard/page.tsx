@@ -18,6 +18,7 @@ import AddCryptoModal from "@/components/client/AddCryptoModal";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { getCurrencySymbol } from "@/lib/currencies";
+import { getCryptoMetadata } from "@/lib/crypto-constants";
 import { useVerificationGate } from "@/hooks/useVerificationGate";
 import VerificationRequiredModal from "@/components/client/VerificationRequiredModal";
 
@@ -161,72 +162,7 @@ function DashboardContent() {
         (a: any) => a.symbol.toUpperCase() === urlAssetSymbol.toUpperCase()
       );
       if (assetFromUrl) {
-        // Get metadata for the asset
-        const getCryptoMeta = (symbol: string) => {
-          const cryptoData: Record<
-            string,
-            { name: string; color: string; iconBg: string }
-          > = {
-            BTC: {
-              name: "Bitcoin",
-              color: "from-orange-500 to-orange-600",
-              iconBg: "#f97316",
-            },
-            ETH: {
-              name: "Ethereum",
-              color: "from-blue-500 to-purple-600",
-              iconBg: "#3b82f6",
-            },
-            XRP: {
-              name: "Ripple",
-              color: "from-blue-600 to-blue-700",
-              iconBg: "#2563eb",
-            },
-            TRX: {
-              name: "Tron",
-              color: "from-gray-800 to-gray-900",
-              iconBg: "#1c1c1c",
-            },
-            TON: {
-              name: "Toncoin",
-              color: "from-blue-500 to-cyan-600",
-              iconBg: "#3b82f6",
-            },
-            LTC: {
-              name: "Litecoin",
-              color: "from-gray-400 to-gray-500",
-              iconBg: "#9ca3af",
-            },
-            BCH: {
-              name: "Bitcoin Cash",
-              color: "from-green-500 to-green-600",
-              iconBg: "#22c55e",
-            },
-            ETC: {
-              name: "Ethereum Classic",
-              color: "from-green-600 to-teal-700",
-              iconBg: "#059669",
-            },
-            USDC: {
-              name: "USD Coin",
-              color: "from-blue-500 to-blue-600",
-              iconBg: "#3b82f6",
-            },
-            USDT: {
-              name: "Tether",
-              color: "from-green-500 to-teal-600",
-              iconBg: "#22c55e",
-            },
-          };
-          return (
-            cryptoData[symbol] || {
-              name: symbol,
-              color: "from-gray-600 to-gray-700",
-              iconBg: "#6b7280",
-            }
-          );
-        };
-        const meta = getCryptoMeta(assetFromUrl.symbol);
+        const meta = getCryptoMetadata(assetFromUrl.symbol);
         // Build asset object matching what handleAssetClick expects
         const restoredAsset = {
           symbol: assetFromUrl.symbol,
@@ -235,8 +171,8 @@ function DashboardContent() {
           currentPrice: assetFromUrl.averagePrice || 0,
           value: (assetFromUrl.averagePrice || 0) * assetFromUrl.amount,
           change: 0,
-          icon: "",
-          color: meta.color,
+          icon: meta.icon,
+          color: meta.gradient,
           metadata: { iconBg: meta.iconBg },
         };
         setSelectedAsset(restoredAsset);
@@ -418,102 +354,6 @@ function DashboardContent() {
     setShowTransactionDetails(true);
   };
 
-  // Cryptocurrency metadata helper
-  const getCryptoMetadata = (symbol: string) => {
-    const cryptoData: Record<
-      string,
-      {
-        name: string;
-        icon: string;
-        color: string;
-        gradient: string;
-        iconBg: string;
-        network?: string;
-      }
-    > = {
-      BTC: {
-        name: "Bitcoin",
-        icon: "₿",
-        color: "from-orange-500 to-orange-600",
-        gradient: "from-orange-500 to-yellow-600",
-        iconBg: "#f97316",
-      },
-      ETH: {
-        name: "Ethereum",
-        icon: "Ξ",
-        color: "from-blue-500 to-purple-600",
-        gradient: "from-blue-500 to-cyan-600",
-        iconBg: "#3b82f6",
-      },
-      XRP: {
-        name: "Ripple",
-        icon: "✕",
-        color: "from-blue-600 to-blue-700",
-        gradient: "from-blue-600 to-indigo-600",
-        iconBg: "#2563eb",
-      },
-      TRX: {
-        name: "Tron",
-        icon: "T",
-        color: "from-gray-800 to-gray-900",
-        gradient: "from-gray-800 to-gray-900",
-        iconBg: "#1c1c1c",
-      },
-      TON: {
-        name: "Toncoin",
-        icon: "💎",
-        color: "from-blue-500 to-cyan-600",
-        gradient: "from-blue-500 to-cyan-600",
-        iconBg: "#3b82f6",
-      },
-      LTC: {
-        name: "Litecoin",
-        icon: "Ł",
-        color: "from-gray-400 to-gray-500",
-        gradient: "from-gray-400 to-gray-600",
-        iconBg: "#9ca3af",
-      },
-      BCH: {
-        name: "Bitcoin Cash",
-        icon: "₿",
-        color: "from-green-500 to-green-600",
-        gradient: "from-green-500 to-green-600",
-        iconBg: "#22c55e",
-      },
-      ETC: {
-        name: "Ethereum Classic",
-        icon: "ᗐ",
-        color: "from-green-600 to-teal-700",
-        gradient: "from-green-600 to-emerald-600",
-        iconBg: "#059669",
-      },
-      USDC: {
-        name: "Ethereum",
-        icon: "$",
-        color: "from-blue-500 to-blue-600",
-        gradient: "from-blue-500 to-blue-600",
-        iconBg: "#3b82f6",
-      },
-      USDT: {
-        name: "Ethereum",
-        icon: "₮",
-        color: "from-green-500 to-teal-600",
-        gradient: "from-green-500 to-teal-600",
-        iconBg: "#22c55e",
-        network: "Ethereum",
-      },
-    };
-    return (
-      cryptoData[symbol] || {
-        name: symbol,
-        icon: "○",
-        color: "from-gray-600 to-gray-700",
-        gradient: "from-gray-600 to-gray-700",
-        iconBg: "#6b7280",
-      }
-    );
-  };
-
   // Dynamic user assets with real-time prices for ALL cryptocurrencies
   // Only show actual portfolio assets - no mock/default data
   const userAssets =
@@ -537,7 +377,7 @@ function DashboardContent() {
               value: currentPrice * asset.amount,
               change: priceChange,
               icon: metadata.icon,
-              color: metadata.color,
+              color: metadata.gradient,
               metadata: metadata,
             };
           })
@@ -1078,28 +918,9 @@ function DashboardContent() {
                 border: "1px solid rgba(59, 130, 246, 0.2)",
               }}
             >
-              {/* Blue glow effect */}
-              <div
-                className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.4) 0%, transparent 60%)",
-                }}
-              />
               <div className="relative z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0"
-                      style={{
-                        boxShadow:
-                          "0 2px 8px rgba(59, 130, 246, 0.4), inset 0 1px 2px rgba(255,255,255,0.2)",
-                      }}
-                    >
-                      <span className="text-white font-bold text-xs relative z-10">
-                        $
-                      </span>
-                    </div>
                     <span className="text-gray-300 text-xs font-semibold">
                       {preferredCurrency} Balance
                     </span>
@@ -1119,9 +940,9 @@ function DashboardContent() {
                 </div>
                 {/* Balance Progress bar - Blue */}
                 <div className="mt-2">
-                  <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(59,130,246,0.4)]">
+                  <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(59,130,246,0.8)]"
+                      className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
                       style={{
                         width: `${Math.min(
                           Math.max((availableBalance / 10000) * 100, 0),
@@ -1145,38 +966,9 @@ function DashboardContent() {
                 border: "1px solid rgba(34, 197, 94, 0.2)",
               }}
             >
-              {/* Green glow effect */}
-              <div
-                className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at 30% 0%, rgba(34, 197, 94, 0.4) 0%, transparent 60%)",
-                }}
-              />
               <div className="relative z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-6 h-6 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0"
-                      style={{
-                        boxShadow:
-                          "0 2px 8px rgba(34, 197, 94, 0.4), inset 0 1px 2px rgba(255,255,255,0.2)",
-                      }}
-                    >
-                      <svg
-                        className="w-3 h-3 text-white relative z-10"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                        />
-                      </svg>
-                    </div>
                     <span className="text-gray-300 text-xs font-semibold">
                       Traderoom Balance
                     </span>
@@ -1196,9 +988,9 @@ function DashboardContent() {
                 </div>
                 {/* Traderoom Progress bar - Green */}
                 <div className="mt-2">
-                  <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(34,197,94,0.4)]">
+                  <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(34,197,94,0.8)]"
+                      className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out"
                       style={{
                         width: `${Math.min(
                           Math.max((traderoomBalance / 1000000) * 100, 0),
@@ -1934,10 +1726,7 @@ function DashboardContent() {
                       activity.type === "deposit" ||
                       activity.type === "withdraw"
                     ) {
-                      return `$${amount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}`;
+                      return formatAmount(amount, 2);
                     }
                     return `${amount.toFixed(8)} ${asset}`;
                   };

@@ -6,6 +6,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { getCryptoMetadata } from "@/lib/crypto-constants";
 
 interface Cryptocurrency {
   symbol: string;
@@ -205,61 +206,6 @@ export default function AddCryptoModal({
                       (a) => a.symbol === crypto.symbol
                     );
                     const hasBalance = asset && asset.amount > 0;
-
-                    // Get crypto metadata for 3D styling
-                    const getCryptoMetadata = (symbol: string) => {
-                      const cryptoData: Record<
-                        string,
-                        { gradient: string; iconBg: string }
-                      > = {
-                        BTC: {
-                          gradient: "from-orange-500 to-yellow-600",
-                          iconBg: "#f97316",
-                        },
-                        ETH: {
-                          gradient: "from-blue-500 to-cyan-600",
-                          iconBg: "#3b82f6",
-                        },
-                        XRP: {
-                          gradient: "from-blue-600 to-indigo-600",
-                          iconBg: "#2563eb",
-                        },
-                        TRX: {
-                          gradient: "from-red-500 to-red-600",
-                          iconBg: "#ef4444",
-                        },
-                        TON: {
-                          gradient: "from-blue-500 to-cyan-600",
-                          iconBg: "#3b82f6",
-                        },
-                        LTC: {
-                          gradient: "from-gray-400 to-gray-600",
-                          iconBg: "#9ca3af",
-                        },
-                        BCH: {
-                          gradient: "from-green-500 to-green-600",
-                          iconBg: "#22c55e",
-                        },
-                        ETC: {
-                          gradient: "from-green-600 to-emerald-600",
-                          iconBg: "#059669",
-                        },
-                        USDC: {
-                          gradient: "from-blue-500 to-blue-600",
-                          iconBg: "#3b82f6",
-                        },
-                        USDT: {
-                          gradient: "from-green-500 to-teal-600",
-                          iconBg: "#22c55e",
-                        },
-                      };
-                      return (
-                        cryptoData[symbol] || {
-                          gradient: "from-gray-600 to-gray-700",
-                          iconBg: "#6b7280",
-                        }
-                      );
-                    };
 
                     const metadata = getCryptoMetadata(crypto.symbol);
 

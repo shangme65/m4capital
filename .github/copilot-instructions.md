@@ -118,10 +118,21 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 - Numbered lists or comma-separated items → Create corresponding todos
 
 **Todo list format:**
+
 ```json
 [
-  {"id": 1, "title": "Short task name", "description": "Detailed description", "status": "not-started"},
-  {"id": 2, "title": "Second task", "description": "Details", "status": "not-started"}
+  {
+    "id": 1,
+    "title": "Short task name",
+    "description": "Detailed description",
+    "status": "not-started"
+  },
+  {
+    "id": 2,
+    "title": "Second task",
+    "description": "Details",
+    "status": "not-started"
+  }
 ]
 ```
 
@@ -151,6 +162,63 @@ Before making any changes, verify:
 - [ ] All sensitive data is properly encrypted (bcrypt for passwords)
 - [ ] NOT performing automatic git operations without user request
 - [ ] NOT performing automatic build operations without user request
+
+### 🔍 ALWAYS CHECK EXISTING CODE BEFORE CREATING NEW
+
+**CRITICAL RULE:** Before creating any new component, function, constant, or utility, ALWAYS search the codebase first.
+
+**REQUIRED approach:**
+
+1. **Search first** - Use `grep_search` or `semantic_search` to find existing implementations
+2. **Check shared utilities** - Look in `src/lib/` for existing utility functions
+3. **Check shared components** - Look in `src/components/` for reusable components
+4. **Check constants** - Look for existing constant files before creating duplicates
+5. **Reuse existing code** - Import and use existing implementations instead of recreating
+
+**Shared utility locations:**
+
+| Category           | Location                             | Examples                                                                     |
+| ------------------ | ------------------------------------ | ---------------------------------------------------------------------------- |
+| Currency utilities | `src/lib/currencies.ts`              | `getCurrencySymbol`, `formatCurrency`, `convertCurrency`, `getExchangeRates` |
+| Crypto constants   | `src/lib/crypto-constants.ts`        | `SUPPORTED_CRYPTOS`, `CRYPTO_METADATA`, `getCryptoMetadata`, `formatTimeAgo` |
+| API responses      | `src/lib/middleware/errorHandler.ts` | `createSuccessResponse`, `createErrorResponse`                               |
+| Rate limiting      | `src/lib/middleware/ratelimit.ts`    | `rateLimiters`                                                               |
+| Prisma client      | `src/lib/prisma.ts`                  | `prisma`                                                                     |
+| Auth config        | `src/lib/auth.ts`                    | `authOptions`                                                                |
+| Telegram helpers   | `src/lib/telegram-bot-helper.ts`     | `formatCurrency`, `convertCurrency` (async)                                  |
+
+**Before creating:**
+
+```typescript
+// ❌ WRONG - Creating local duplicate
+const getCryptoMetadata = (symbol: string) => { ... }
+const formatTimeAgo = (date: Date) => { ... }
+const SUPPORTED_CRYPTOS = { btc: {...}, eth: {...} }
+
+// ✅ CORRECT - Import from shared location
+import { getCryptoMetadata, formatTimeAgo, SUPPORTED_CRYPTOS } from "@/lib/crypto-constants";
+import { getCurrencySymbol, formatCurrency } from "@/lib/currencies";
+```
+
+**FORBIDDEN patterns:**
+
+- ❌ Creating local `getCurrencySymbol` when `@/lib/currencies` exists
+- ❌ Creating local `formatTimeAgo` when `@/lib/crypto-constants` exists
+- ❌ Defining `SUPPORTED_CRYPTOS` locally when shared constant exists
+- ❌ Creating local crypto metadata objects when `CRYPTO_METADATA` exists
+- ❌ Creating utility functions without first checking if they exist
+
+**Search commands before creating:**
+
+```bash
+# Check for existing functions
+grep -rn "function functionName" src/
+grep -rn "const functionName" src/
+grep -rn "export.*functionName" src/lib/
+
+# Check for existing constants
+grep -rn "CONSTANT_NAME" src/
+```
 
 ## 1. The Big Picture: Architecture & Stack
 
@@ -835,10 +903,12 @@ Fix: Add a null check: `if (existingAssetIndex >= 0 && assets[existingAssetIndex
 ### Database Storage
 
 **Portfolio balance stores ORIGINAL currency:**
+
 - `balance` - The amount in the user's original currency
 - `balanceCurrency` - The currency code (e.g., "EUR", "USD", "GBP")
 
 **Example:**
+
 - User deposits €100 → `balance: 100, balanceCurrency: "EUR"`
 - Balance does NOT fluctuate with exchange rates
 - User always sees their original deposited amount
@@ -849,23 +919,24 @@ Fix: Add a null check: `if (existingAssetIndex >= 0 && assets[existingAssetIndex
 
 ```typescript
 // ✅ CORRECT - formatAmount handles conversion
-formatAmount(valueInUSD, 2)
+formatAmount(valueInUSD, 2);
 
 // ❌ WRONG - Double conversion!
-formatAmount(convertAmount(valueInUSD), 2)
+formatAmount(convertAmount(valueInUSD), 2);
 ```
 
 **Function Reference:**
 
-| Function | Input | Output | Use Case |
-|----------|-------|--------|----------|
-| `formatAmount(amountUSD, decimals)` | USD number | Formatted string (e.g., "€100.00") | Display values to user |
-| `convertAmount(amountUSD)` | USD number | Number in preferred currency | When you need raw number |
-| `convertAmount(amount, true)` | Preferred currency | USD number | Converting user input to USD |
+| Function                            | Input              | Output                             | Use Case                     |
+| ----------------------------------- | ------------------ | ---------------------------------- | ---------------------------- |
+| `formatAmount(amountUSD, decimals)` | USD number         | Formatted string (e.g., "€100.00") | Display values to user       |
+| `convertAmount(amountUSD)`          | USD number         | Number in preferred currency       | When you need raw number     |
+| `convertAmount(amount, true)`       | Preferred currency | USD number                         | Converting user input to USD |
 
 ### Display Logic
 
 **When showing portfolio balance:**
+
 1. If `balanceCurrency` matches user's `preferredCurrency` → show `balance` directly
 2. If different → convert from `balanceCurrency` to `preferredCurrency`
 
@@ -875,16 +946,21 @@ formatAmount(convertAmount(valueInUSD), 2)
 
 ```typescript
 // ❌ WRONG - Double conversion
-{formatAmount(convertAmount(userBalance), 2)}
+{
+  formatAmount(convertAmount(userBalance), 2);
+}
 
 // ✅ CORRECT - formatAmount already converts
-{formatAmount(userBalance, 2)}
+{
+  formatAmount(userBalance, 2);
+}
 
 // ❌ WRONG - Assuming all values are USD
 const total = balance1 + balance2; // If different currencies!
 
 // ✅ CORRECT - Convert to common currency first
-const total = convertToUSD(balance1, currency1) + convertToUSD(balance2, currency2);
+const total =
+  convertToUSD(balance1, currency1) + convertToUSD(balance2, currency2);
 ```
 
 ---

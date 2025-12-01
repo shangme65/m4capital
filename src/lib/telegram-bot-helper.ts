@@ -5,6 +5,10 @@
 
 import { prisma } from "@/lib/prisma";
 import { generateId } from "@/lib/generate-id";
+import { formatCurrency } from "@/lib/currencies";
+
+// Re-export formatCurrency from currencies.ts for backward compatibility
+export { formatCurrency } from "@/lib/currencies";
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
@@ -155,32 +159,6 @@ export async function convertCurrency(
     return amount * rate;
   }
   return amount;
-}
-
-/**
- * Format currency amount
- */
-export function formatCurrency(
-  amount: number,
-  currency: string = "USD",
-  decimals: number = 2
-): string {
-  const currencySymbols: Record<string, string> = {
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
-    JPY: "¥",
-    CNY: "¥",
-    INR: "₹",
-    NGN: "₦",
-    ZAR: "R",
-  };
-
-  const symbol = currencySymbols[currency] || currency + " ";
-  return `${symbol}${amount.toLocaleString(undefined, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  })}`;
 }
 
 /**

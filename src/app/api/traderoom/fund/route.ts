@@ -1,4 +1,5 @@
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -70,13 +71,19 @@ export async function POST(request: NextRequest) {
       user.Portfolio.traderoomBalance || 0
     );
 
+    // Get user's preferred currency
+    const userCurrency = user.preferredCurrency || "USD";
+    const currSymbol = getCurrencySymbol(userCurrency);
+
     // Check if user has sufficient balance
     if (currentBalance < amount) {
       return createErrorResponse(
         "Insufficient funds",
-        `You only have $${currentBalance.toFixed(
+        `You only have ${currSymbol}${currentBalance.toFixed(
           2
-        )} available. Cannot transfer $${amount.toFixed(2)} to Traderoom.`,
+        )} available. Cannot transfer ${currSymbol}${amount.toFixed(
+          2
+        )} to Traderoom.`,
         undefined,
         400
       );
@@ -98,7 +105,7 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         type: "TRANSACTION",
         title: "Traderoom Funded",
-        message: `Successfully transferred $${amount.toFixed(
+        message: `Successfully transferred ${currSymbol}${amount.toFixed(
           2
         )} to your Traderoom balance`,
         metadata: {
@@ -111,7 +118,7 @@ export async function POST(request: NextRequest) {
     });
 
     console.log(
-      `✅ Traderoom funded: User ${user.email} transferred $${amount} to traderoom`
+      `✅ Traderoom funded: User ${user.email} transferred ${currSymbol}${amount} to traderoom`
     );
 
     return createSuccessResponse(

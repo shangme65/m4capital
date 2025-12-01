@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 export const dynamic = "force-dynamic";
 
@@ -130,7 +131,8 @@ export async function POST(request: NextRequest) {
  */
 function calculateWithdrawalFees(
   amount: number,
-  method: string
+  method: string,
+  currency: string = "USD"
 ): {
   processingFee: number;
   networkFee: number;
@@ -139,6 +141,7 @@ function calculateWithdrawalFees(
   totalFees: number;
   breakdown: string[];
 } {
+  const currSymbol = getCurrencySymbol(currency);
   let processingFee = 0;
   let networkFee = 0;
   let serviceFee = 0;
@@ -188,14 +191,14 @@ function calculateWithdrawalFees(
         : method === "BANK_TRANSFER"
         ? "2%"
         : "2.5%"
-    }): $${processingFee.toFixed(2)}`,
+    }): ${currSymbol}${processingFee.toFixed(2)}`,
     networkFee > 0
-      ? `Network Fee: $${networkFee.toFixed(2)}`
-      : "Network Fee: $0.00",
-    `Service Fee: $${serviceFee.toFixed(2)}`,
+      ? `Network Fee: ${currSymbol}${networkFee.toFixed(2)}`
+      : `Network Fee: ${currSymbol}0.00`,
+    `Service Fee: ${currSymbol}${serviceFee.toFixed(2)}`,
     `Compliance & Security Fee (${
       method === "BANK_TRANSFER" || method === "WIRE_TRANSFER" ? "1%" : "0.5%"
-    }): $${complianceFee.toFixed(2)}`,
+    }): ${currSymbol}${complianceFee.toFixed(2)}`,
   ];
 
   return {
@@ -214,15 +217,26 @@ function calculateWithdrawalFees(
  */
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
     const { searchParams } = new URL(request.url);
     const amount = parseFloat(searchParams.get("amount") || "0");
     const method = searchParams.get("method") || "CRYPTO_BTC";
+
+    // Get user's preferred currency
+    let userCurrency = "USD";
+    if (session?.user?.email) {
+      const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { preferredCurrency: true },
+      });
+      userCurrency = user?.preferredCurrency || "USD";
+    }
 
     if (amount <= 0) {
       return NextResponse.json({ error: "Invalid amount" }, { status: 400 });
     }
 
-    const fees = calculateWithdrawalFees(amount, method);
+    const fees = calculateWithdrawalFees(amount, method, userCurrency);
 
     return NextResponse.json({
       amount,

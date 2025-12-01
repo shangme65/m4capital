@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMarketNews, useMarketData } from "./MarketDataProvider";
 import { NewsItem } from "@/lib/marketData";
+import { formatTimeAgo } from "@/lib/crypto-constants";
 import {
   Clock,
   TrendingUp,
@@ -49,19 +50,6 @@ const MarketNews: React.FC<MarketNewsProps> = ({
     } finally {
       setIsRefreshing(false);
     }
-  };
-
-  const formatTimeAgo = (timestamp: number) => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (days > 0) return `${days}d ago`;
-    if (hours > 0) return `${hours}h ago`;
-    if (minutes > 0) return `${minutes}m ago`;
-    return "Just now";
   };
 
   const getSentimentIcon = (sentiment?: string) => {

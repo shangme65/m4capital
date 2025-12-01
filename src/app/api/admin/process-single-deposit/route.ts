@@ -1,4 +1,5 @@
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
@@ -63,6 +64,7 @@ export async function POST(req: NextRequest) {
 
       // Send progress notification ONLY at 1/6
       if (targetConfirmation === 1 && deposit.Portfolio?.User) {
+        const userCurrency = deposit.Portfolio.User.preferredCurrency || "USD";
         await prisma.notification.create({
           data: {
             id: generateId(),
@@ -72,7 +74,9 @@ export async function POST(req: NextRequest) {
             message: `Your deposit confirmation is in progress: 1/6 confirmations received.`,
             amount: Number(deposit.amount),
             asset:
-              metadata.depositType === "crypto" ? metadata.cryptoAsset : "USD",
+              metadata.depositType === "crypto"
+                ? metadata.cryptoAsset
+                : userCurrency,
             metadata: {
               depositId,
               confirmations: 1,
@@ -182,17 +186,22 @@ async function completeDeposit(deposit: any, metadata: any) {
 
     // Send completion notification
     if (user) {
+      const userCurrency = user.preferredCurrency || "USD";
       await prisma.notification.create({
         data: {
           id: generateId(),
           userId: user.id,
           type: "DEPOSIT",
-          title: "Deposit Completed!",
+          title: `${
+            depositType === "crypto" ? cryptoAsset : userCurrency
+          } Deposit Completed!`,
           message: `Your deposit of ${
-            depositType === "crypto" ? `${amount} ${cryptoAsset}` : `$${amount}`
+            depositType === "crypto"
+              ? `${amount} ${cryptoAsset}`
+              : `${getCurrencySymbol(userCurrency)}${amount}`
           } has been confirmed and credited to your account.`,
           amount: amount,
-          asset: depositType === "crypto" ? cryptoAsset : "USD",
+          asset: depositType === "crypto" ? cryptoAsset : userCurrency,
           metadata: {
             depositId: deposit.id,
             confirmations: 6,
@@ -205,7 +214,9 @@ async function completeDeposit(deposit: any, metadata: any) {
       if (user.email && user.isEmailVerified) {
         await sendEmail({
           to: user.email,
-          subject: "Deposit Confirmed & Credited",
+          subject: `${
+            depositType === "crypto" ? cryptoAsset : userCurrency
+          } Deposit Confirmed & Credited`,
           html: `
             <!DOCTYPE html>
             <html>
@@ -228,7 +239,7 @@ async function completeDeposit(deposit: any, metadata: any) {
                     <p style="margin: 5px 0;"><strong>Amount:</strong> ${
                       depositType === "crypto"
                         ? `${amount} ${cryptoAsset}`
-                        : `$${amount}`
+                        : `${getCurrencySymbol(userCurrency)}${amount}`
                     }</p>
                     <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #10b981;">COMPLETED</span></p>
                     <p style="margin: 5px 0;"><strong>Date:</strong> ${new Date().toLocaleString()}</p>

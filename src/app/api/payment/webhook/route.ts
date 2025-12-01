@@ -1,4 +1,5 @@
 import { generateId } from "@/lib/generate-id";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { nowPayments } from "@/lib/nowpayments";
@@ -75,6 +76,8 @@ export async function POST(request: NextRequest) {
         newStatus = "PENDING";
         // Create initial notification when payment is detected
         if (deposit.status !== "PENDING" && deposit.User) {
+          const userCurr = deposit.User.preferredCurrency || "USD";
+          const currSym = getCurrencySymbol(userCurr);
           await prisma.notification.create({
             data: {
               id: generateId(),
@@ -83,7 +86,7 @@ export async function POST(request: NextRequest) {
               title: `Incoming ${deposit.cryptoCurrency || "BTC"} Deposit`,
               message: `Your deposit of ${actually_paid || pay_amount} ${
                 deposit.cryptoCurrency || "BTC"
-              } ($${price_amount}) has been detected and is awaiting confirmations.`,
+              } (${currSym}${price_amount}) has been detected and is awaiting confirmations.`,
               amount: price_amount,
               asset: deposit.cryptoCurrency || "BTC",
               metadata: {
@@ -201,16 +204,20 @@ export async function POST(request: NextRequest) {
           `New traderoom balance: ${newTraderoomBalance} ${depositCurrency}`
         );
 
+        const userCurrency = deposit.User.preferredCurrency || depositCurrency;
+
         // Create notification for successful traderoom deposit
         await prisma.notification.create({
           data: {
             id: generateId(),
             userId: deposit.User.id,
             type: "DEPOSIT",
-            title: "Traderoom Deposit Completed",
-            message: `Your deposit of $${deposit.amount} has been successfully credited to your Traderoom balance.`,
+            title: `${userCurrency} Traderoom Deposit Completed`,
+            message: `Your deposit of ${getCurrencySymbol(userCurrency)}${
+              deposit.amount
+            } has been successfully credited to your Traderoom balance.`,
             amount: deposit.amount,
-            asset: deposit.currency,
+            asset: userCurrency,
             metadata: {
               depositId: deposit.id,
               transactionId: payment_id,
@@ -238,15 +245,18 @@ export async function POST(request: NextRequest) {
         console.log(`New balance: ${newBalance} ${depositCurrency}`);
 
         // Create notification for successful deposit
+        const userCurrency2 = deposit.User.preferredCurrency || depositCurrency;
         await prisma.notification.create({
           data: {
             id: generateId(),
             userId: deposit.User.id,
             type: "DEPOSIT",
-            title: "Deposit Completed",
-            message: `Your deposit of $${deposit.amount} has been successfully credited to your account.`,
+            title: `${userCurrency2} Deposit Completed`,
+            message: `Your deposit of ${getCurrencySymbol(userCurrency2)}${
+              deposit.amount
+            } has been successfully credited to your account.`,
             amount: deposit.amount,
-            asset: deposit.currency,
+            asset: userCurrency2,
             metadata: {
               depositId: deposit.id,
               transactionId: payment_id,

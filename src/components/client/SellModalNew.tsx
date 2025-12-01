@@ -154,7 +154,15 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
       setErrors({});
     }
 
-    // Add mobile back button handler
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  // Handle mobile back button separately
+  useEffect(() => {
+    if (!isOpen) return;
+
     const handleBackButton = (e: PopStateEvent) => {
       e.preventDefault();
       if (step === 4) {
@@ -167,16 +175,13 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
       }
     };
 
-    if (isOpen) {
-      window.history.pushState({ modal: true }, "");
-      window.addEventListener("popstate", handleBackButton);
-    }
+    window.history.pushState({ modal: true }, "");
+    window.addEventListener("popstate", handleBackButton);
 
     return () => {
-      document.body.style.overflow = "unset";
       window.removeEventListener("popstate", handleBackButton);
     };
-  }, [isOpen, onClose, step, availableAssets]);
+  }, [isOpen, step, onClose]);
 
   const validateAmount = () => {
     const newErrors: { [key: string]: string } = {};

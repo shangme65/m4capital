@@ -18,7 +18,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
+    // Safely parse JSON with error handling
+    let body;
+    try {
+      body = await request.json();
+    } catch (jsonError) {
+      console.error("Failed to parse JSON:", jsonError);
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
     const { subscription } = body;
 
     if (!subscription || !subscription.endpoint || !subscription.keys) {
@@ -36,6 +44,17 @@ export async function POST(request: NextRequest) {
         { error: "Missing subscription keys" },
         { status: 400 }
       );
+    }
+
+    // Verify user exists in database before creating subscription
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { id: true },
+    });
+
+    if (!userExists) {
+      console.error(`User ${session.user.id} not found in database`);
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Get user agent from request

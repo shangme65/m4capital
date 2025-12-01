@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, memo } from "react";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 interface ChartDataPoint {
   timestamp: number;
@@ -16,27 +17,6 @@ interface CurrencyAwareChartProps {
   interval?: "1H" | "1D" | "1W" | "1M" | "1Y" | "All";
   height?: number;
 }
-
-// Currency symbol mapping
-const getCurrencySymbol = (currency: string): string => {
-  const symbols: Record<string, string> = {
-    USD: "$",
-    EUR: "€",
-    GBP: "£",
-    NGN: "₦",
-    ZAR: "R",
-    KES: "KSh",
-    GHS: "₵",
-    JPY: "¥",
-    CNY: "¥",
-    INR: "₹",
-    AUD: "A$",
-    CAD: "C$",
-    CHF: "CHF",
-    BRL: "R$",
-  };
-  return symbols[currency] || "$";
-};
 
 // Map interval to Binance kline interval
 const getKlineInterval = (

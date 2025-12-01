@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatTimeAgo } from "@/lib/crypto-constants";
 import {
   X,
   Bell,
@@ -149,19 +150,6 @@ export default function NotificationsPanel({
         </div>
       </div>
     );
-  };
-
-  const formatTimeAgo = (timestamp: Date) => {
-    const now = new Date();
-    const diff = now.getTime() - timestamp.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return "Just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
   };
 
   // Don't render on server

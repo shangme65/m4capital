@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getCurrencySymbol } from "@/lib/currencies";
 import { Decimal } from "@prisma/client/runtime/library";
 
 export const dynamic = "force-dynamic";
@@ -25,9 +26,11 @@ async function sendTransferEmail(
   senderName: string,
   amount: number,
   asset: string,
-  memo?: string
+  memo?: string,
+  currencySymbol?: string
 ) {
   try {
+    const currSym = currencySymbol || (asset === "USD" ? "$" : "");
     const response = await fetch(
       `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/send-email`,
       {
@@ -36,7 +39,9 @@ async function sendTransferEmail(
         body: JSON.stringify({
           to: recipientEmail,
           subject: `You received ${
-            asset === "USD" ? `$${amount.toFixed(2)}` : `${amount} ${asset}`
+            asset === "USD"
+              ? `${currSym}${amount.toFixed(2)}`
+              : `${amount} ${asset}`
           } from ${senderName}`,
           template: "transfer-received",
           data: {
@@ -44,6 +49,7 @@ async function sendTransferEmail(
             amount,
             asset,
             memo,
+            currencySymbol: currSym,
           },
         }),
       }
@@ -149,6 +155,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get user's preferred currency
+    const userCurrency = sender.preferredCurrency || "USD";
+    const currSymbol = getCurrencySymbol(userCurrency);
+
     // Find recipient by email or account number
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destination);
     const recipient = await prisma.user.findFirst({
@@ -186,11 +196,11 @@ export async function POST(request: NextRequest) {
       if (currentBalance < totalDeducted) {
         return NextResponse.json(
           {
-            error: `Insufficient balance. You have $${currentBalance.toFixed(
+            error: `Insufficient balance. You have ${currSymbol}${currentBalance.toFixed(
               2
-            )} but need $${totalDeducted.toFixed(
+            )} but need ${currSymbol}${totalDeducted.toFixed(
               2
-            )} (including $${transferFee.toFixed(4)} fee)`,
+            )} (including ${currSymbol}${transferFee.toFixed(4)} fee)`,
           },
           { status: 400 }
         );
@@ -238,28 +248,33 @@ export async function POST(request: NextRequest) {
       ]);
 
       // Send email notification to recipient
+      const recipientCurrency = recipient.preferredCurrency || "USD";
       if (recipient.email) {
         sendTransferEmail(
           recipient.email,
           sender.name || sender.email || "Someone",
           amount,
           asset,
-          memo
+          memo,
+          recipientCurrency
         );
       }
 
       // Send push notification to recipient
+      const recipientCurrSym = getCurrencySymbol(recipientCurrency);
       sendPushNotification(
         recipient.id,
         "Transfer Received!",
-        `You received $${amount.toFixed(2)} from ${sender.name || sender.email}`
+        `You received ${recipientCurrSym}${amount.toFixed(2)} from ${
+          sender.name || sender.email
+        }`
       );
 
       return NextResponse.json({
         success: true,
-        message: `Successfully transferred $${amount.toFixed(2)} USD to ${
-          recipient.name || destination
-        }`,
+        message: `Successfully transferred ${currSymbol}${amount.toFixed(
+          2
+        )} ${userCurrency} to ${recipient.name || destination}`,
         transactionId,
         asset,
         amount,

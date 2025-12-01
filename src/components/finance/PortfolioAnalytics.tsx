@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   TrendingUp,
   TrendingDown,
@@ -179,14 +180,14 @@ export function PortfolioAnalytics({
     ? (portfolioData.recentActivity.netChange / (totalValue || 1)) * 100
     : 0;
 
+  // Get currency formatting
+  const { formatAmount } = useCurrency();
+
   // Create performance metrics with real data
   const performanceMetrics: PerformanceMetric[] = [
     {
       label: "Total Value",
-      value: `$${totalValue.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
+      value: formatAmount(totalValue, 2),
       change:
         totalChangePercent >= 0
           ? `+${totalChangePercent.toFixed(1)}%`
@@ -196,17 +197,14 @@ export function PortfolioAnalytics({
     },
     {
       label: "Cash Balance",
-      value: `$${cashBalance.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
+      value: formatAmount(cashBalance, 2),
       description: "Available cash balance",
     },
     {
       label: "Net Trading Profit",
-      value: `${netProfit >= 0 ? "+" : ""}$${Math.abs(netProfit).toLocaleString(
-        undefined,
-        { minimumFractionDigits: 2, maximumFractionDigits: 2 }
+      value: `${netProfit >= 0 ? "+" : "-"}${formatAmount(
+        Math.abs(netProfit),
+        2
       )}`,
       isPositive: netProfit >= 0,
       description: "Total trading profit after fees",

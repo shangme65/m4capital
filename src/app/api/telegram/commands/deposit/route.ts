@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getCurrencySymbol } from "@/lib/currencies";
 import {
   sendTelegramMessage,
   sendInlineKeyboard,
@@ -96,9 +97,10 @@ export async function POST(req: NextRequest) {
     const parts = command.trim().split(/\s+/);
 
     if (parts.length < 2) {
+      const currSymbol = getCurrencySymbol(user.preferredCurrency || "USD");
       await sendTelegramMessage(
         chatId,
-        `💳 *Deposit Funds*\n\nUsage:\n\`/deposit AMOUNT\`\n\nExample:\n\`/deposit 100\` - Deposit $100\n\n*Note:* Amount is in your preferred currency (${
+        `💳 *Deposit Funds*\n\nUsage:\n\`/deposit AMOUNT\`\n\nExample:\n\`/deposit 100\` - Deposit ${currSymbol}100\n\n*Note:* Amount is in your preferred currency (${
           user.preferredCurrency || "USD"
         })\n\n*Available Methods:*\n₿ Bitcoin (BTC)\n📱 Cryptocurrency\n\n_Deposits are credited to your ${
           user.preferredCurrency || "USD"
