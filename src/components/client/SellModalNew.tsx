@@ -113,10 +113,20 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   const currentPrice = assetPrices[sellData.asset] || 0;
   const currentBalance = currentAsset?.amount || 0;
 
+  // Amount input is now in user's preferred currency
+  // This calculates how much crypto they will sell based on EUR/USD input
+  const getCryptoAmountFromCurrency = () => {
+    if (!sellData.amount || !currentPrice) return 0;
+    const currencyAmount = parseFloat(sellData.amount);
+    // Convert from preferred currency to USD, then to crypto
+    const usdAmount = convertAmount(currencyAmount, true); // true = convert FROM preferred TO USD
+    return usdAmount / currentPrice;
+  };
+
   const getEstimatedValue = () => {
     if (!sellData.amount) return 0;
-    const inputAmount = parseFloat(sellData.amount);
-    return convertAmount(inputAmount * currentPrice);
+    // The input is already in preferred currency, so just return it
+    return parseFloat(sellData.amount);
   };
 
   // Handle back button navigation
@@ -171,11 +181,14 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   const validateAmount = () => {
     const newErrors: { [key: string]: string } = {};
     const inputAmount = parseFloat(sellData.amount);
+    const cryptoAmount = getCryptoAmountFromCurrency();
 
     if (!sellData.amount || inputAmount <= 0) {
       newErrors.amount = "Please enter a valid amount";
-    } else if (inputAmount > currentBalance) {
-      newErrors.amount = "Insufficient balance";
+    } else if (cryptoAmount > currentBalance) {
+      newErrors.amount = `Insufficient balance. Max: ${currencySymbol}${convertAmount(
+        currentBalance * currentPrice
+      ).toFixed(2)}`;
     }
 
     setErrors(newErrors);
@@ -195,15 +208,19 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   const confirmSell = async () => {
     setLoading(true);
     try {
-      const inputAmount = parseFloat(sellData.amount);
-      const usdValue = inputAmount * currentPrice;
+      const cryptoAmount = getCryptoAmountFromCurrency();
+      const currencyValue = parseFloat(sellData.amount);
+      const fee = currencyValue * 0.015;
+      const receivedValue = currencyValue - fee; // Amount after fee in preferred currency
+      // Convert the received amount to USD for storage
+      const usdValue = convertAmount(receivedValue, true); // true = convert FROM preferred TO USD
 
       const response = await fetch("/api/crypto/sell", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           symbol: sellData.asset,
-          amount: inputAmount,
+          amount: cryptoAmount,
           price: currentPrice,
         }),
       });
@@ -213,14 +230,15 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
         throw new Error(errorData.error || "Failed to process sale");
       }
 
+      // Store the received value (after fee) in USD
       addTransaction({
         type: "sell" as const,
         asset: sellData.asset,
-        amount: inputAmount,
-        value: usdValue,
+        amount: cryptoAmount,
+        value: usdValue, // This is the received amount after fee in USD
         timestamp: new Date().toLocaleString(),
         status: "completed" as const,
-        fee: usdValue * 0.015,
+        fee: convertAmount(fee, true), // Store fee in USD
         method: `${preferredCurrency} Balance`,
         description: `Market sell order for ${sellData.asset}`,
         rate: currentPrice,
@@ -228,8 +246,8 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
 
       setSuccessData({
         asset: sellData.asset,
-        amount: inputAmount,
-        value: usdValue,
+        amount: cryptoAmount,
+        value: receivedValue, // Store in preferred currency for display
       });
       setStep(4);
     } catch (error) {
@@ -565,14 +583,14 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       </div>
                     </div>
 
-                    {/* Amount Input */}
+                    {/* Amount Input - in user's preferred currency */}
                     <div>
                       <label className="block text-xs font-semibold text-gray-300 mb-2">
-                        Amount ({sellData.asset})
+                        Amount ({preferredCurrency})
                       </label>
                       <input
                         type="number"
-                        step="0.00000001"
+                        step="0.01"
                         value={sellData.amount}
                         onChange={(e) =>
                           setSellData((prev) => ({
@@ -582,25 +600,29 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         }
                         className="w-full rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500/50"
                         style={inputStyle}
-                        placeholder={`Enter ${sellData.asset} amount`}
+                        placeholder={`Enter ${preferredCurrency} amount`}
                       />
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          // Calculate max value in preferred currency
+                          const maxValue = convertAmount(
+                            currentBalance * currentPrice
+                          );
                           setSellData((prev) => ({
                             ...prev,
-                            amount: currentBalance.toString(),
-                          }))
-                        }
+                            amount: maxValue.toFixed(2),
+                          }));
+                        }}
                         className="text-red-400 text-sm mt-2 hover:text-red-300 font-semibold"
                       >
                         Sell All ({currentBalance.toFixed(6)} {sellData.asset})
                       </button>
                     </div>
 
-                    {/* You will receive */}
-                    {sellData.amount && (
+                    {/* Crypto amount and You will receive */}
+                    {sellData.amount && parseFloat(sellData.amount) > 0 && (
                       <div
-                        className="rounded-xl p-3"
+                        className="rounded-xl p-3 space-y-2"
                         style={{
                           background:
                             "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%)",
@@ -609,10 +631,20 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       >
                         <div className="flex justify-between items-center">
                           <span className="text-gray-400 text-xs">
-                            You will receive:
+                            You will sell:
+                          </span>
+                          <span className="text-white font-bold">
+                            {getCryptoAmountFromCurrency().toFixed(8)}{" "}
+                            {sellData.asset}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400 text-xs">
+                            You will receive (after 1.5% fee):
                           </span>
                           <span className="text-red-400 font-bold">
-                            {formatAmount(getEstimatedValue(), 2)}
+                            {currencySymbol}
+                            {(getEstimatedValue() * 0.985).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -665,7 +697,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         You&apos;re selling
                       </p>
                       <p className="text-2xl font-bold text-white">
-                        {parseFloat(sellData.amount).toFixed(8)}
+                        {getCryptoAmountFromCurrency().toFixed(8)}
                       </p>
                       <p className="text-red-400 font-semibold">
                         {sellData.asset}
@@ -693,14 +725,15 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Amount:</span>
                         <span className="text-white font-medium">
-                          {parseFloat(sellData.amount).toFixed(8)}{" "}
+                          {getCryptoAmountFromCurrency().toFixed(8)}{" "}
                           {sellData.asset}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Fee (1.5%):</span>
                         <span className="text-white font-medium">
-                          {formatAmount(getEstimatedValue() * 0.015, 2)}
+                          {currencySymbol}
+                          {(getEstimatedValue() * 0.015).toFixed(2)}
                         </span>
                       </div>
                       <hr className="border-gray-700" />
@@ -709,7 +742,8 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                           You&apos;ll receive:
                         </span>
                         <span className="text-red-400">
-                          {formatAmount(getEstimatedValue() * 0.985, 2)}
+                          {currencySymbol}
+                          {(getEstimatedValue() * 0.985).toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -833,7 +867,8 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Amount Received:</span>
                         <span className="text-red-400 font-bold">
-                          {formatAmount(successData.value * 0.985, 2)}
+                          {currencySymbol}
+                          {successData.value.toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">

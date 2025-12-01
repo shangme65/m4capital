@@ -913,8 +913,12 @@ export default function TransferModalNew({
                       </p>
                       <p className="text-2xl font-bold text-white">
                         {transferData.asset === "USD"
-                          ? formatAmount(parseFloat(transferData.amount), 2)
-                          : parseFloat(transferData.amount).toFixed(8)}
+                          ? `${currencySymbol}${parseFloat(
+                              transferData.amount
+                            ).toFixed(2)}`
+                          : getAssetAmount(
+                              parseFloat(transferData.amount)
+                            ).toFixed(8)}
                       </p>
                       <p className="text-purple-400 font-semibold">
                         {transferData.asset === "USD"
@@ -946,18 +950,18 @@ export default function TransferModalNew({
                         <span className="text-gray-400">Amount:</span>
                         <span className="text-white font-medium">
                           {transferData.asset === "USD"
-                            ? formatAmount(parseFloat(transferData.amount), 2)
-                            : `${parseFloat(transferData.amount).toFixed(8)} ${
-                                transferData.asset
-                              }`}
+                            ? `${currencySymbol}${parseFloat(
+                                transferData.amount
+                              ).toFixed(2)}`
+                            : `${getAssetAmount(
+                                parseFloat(transferData.amount)
+                              ).toFixed(8)} ${transferData.asset}`}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Network Fee:</span>
                         <span className="text-white font-medium">
-                          {transferData.asset === "USD"
-                            ? formatAmount(transferFee, 4)
-                            : `${transferFee} ${transferData.asset}`}
+                          {formatAmount(transferFee, 4)}
                         </span>
                       </div>
                       {transferData.memo && (
@@ -973,12 +977,11 @@ export default function TransferModalNew({
                         <span className="text-gray-300">Total:</span>
                         <span className="text-purple-400">
                           {transferData.asset === "USD"
-                            ? formatAmount(
-                                parseFloat(transferData.amount) + transferFee,
-                                2
-                              )
-                            : `${(
-                                parseFloat(transferData.amount) + transferFee
+                            ? `${currencySymbol}${parseFloat(
+                                transferData.amount
+                              ).toFixed(2)}`
+                            : `${getAssetAmount(
+                                parseFloat(transferData.amount)
                               ).toFixed(8)} ${transferData.asset}`}
                         </span>
                       </div>
@@ -1106,7 +1109,8 @@ export default function TransferModalNew({
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Amount Sent:</span>
                         <span className="text-purple-400 font-bold">
-                          {formatAmount(successData.value, 2)}
+                          {currencySymbol}
+                          {parseFloat(transferData.amount).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">

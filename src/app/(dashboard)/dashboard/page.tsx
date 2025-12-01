@@ -1588,15 +1588,12 @@ function DashboardContent() {
                   };
 
                   const getFiatValue = () => {
-                    if (
-                      activity.type === "deposit" ||
-                      activity.type === "withdraw"
-                    ) {
-                      // Use activity.value which is the USD amount for deposits/withdrawals
-                      return convertAmount(
-                        activity.value || activity.amount || 0
-                      );
+                    // Use stored transaction value (USD at time of transaction)
+                    // This ensures historical transactions show correct value, not recalculated from current price
+                    if (activity.value) {
+                      return convertAmount(activity.value);
                     }
+                    // Fallback: calculate from current price if value not stored
                     const price = getCryptoPrice();
                     const usdValue = (activity.amount || 0) * price;
                     return convertAmount(usdValue);
