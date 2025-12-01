@@ -113,20 +113,22 @@ const CryptoPriceCard: React.FC<{
       <div className="flex items-center justify-center w-full">
         <div className="flex items-center space-x-1.5">
           {/* Crypto Icon - 3D styled */}
-          <div
-            className="rounded-md flex items-center justify-center"
-            style={{
-              background: "linear-gradient(145deg, #2a2724 0%, #1a1816 100%)",
-              boxShadow:
-                "0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-              padding: compact ? "4px" : "8px",
-            }}
-          >
-            <CryptoIcon
-              symbol={symbol}
-              size={compact ? "sm" : "md"}
-              className="inline-block"
-            />
+          <div className="relative">
+            <div
+              className="rounded-md flex items-center justify-center"
+              style={{
+                background: "linear-gradient(145deg, #2a2724 0%, #1a1816 100%)",
+                boxShadow:
+                  "0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                padding: compact ? "4px" : "8px",
+              }}
+            >
+              <CryptoIcon
+                symbol={symbol}
+                size={compact ? "sm" : "md"}
+                className="inline-block"
+              />
+            </div>
           </div>
 
           <div>
@@ -273,8 +275,8 @@ export const CryptoPriceTicker: React.FC<CryptoPriceTickerProps> = ({
           {[...symbols, ...symbols, ...symbols].map((symbol, index) => (
             <div
               key={`${symbol}-${index}`}
-              className="flex-shrink-0 px-0.5"
-              style={{ minWidth: "140px" }}
+              className="flex-shrink-0 px-1"
+              style={{ minWidth: "145px" }}
             >
               <CryptoPriceCard
                 symbol={symbol}

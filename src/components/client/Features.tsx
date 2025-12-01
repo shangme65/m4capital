@@ -13,24 +13,28 @@ const features = [
     description:
       "Your funds and data are protected by industry-leading security protocols.",
     icon: FaShieldAlt,
+    gradient: "from-indigo-600 to-purple-600",
   },
   {
     name: "Real-Time Analytics",
     description:
       "Access up-to-the-minute market data and powerful analytics tools.",
     icon: FaChartLine,
+    gradient: "from-orange-500 to-red-500",
   },
   {
     name: "Blazing-Fast Execution",
     description:
       "Execute trades in milliseconds with our high-performance infrastructure.",
     icon: FaTachometerAlt,
+    gradient: "from-emerald-500 to-teal-500",
   },
   {
     name: "Community Driven",
     description:
       "Join a thriving community of traders and share insights and strategies.",
     icon: FaUsers,
+    gradient: "from-blue-500 to-cyan-500",
   },
 ];
 
@@ -39,7 +43,7 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.2,
+      staggerChildren: 0.15,
     },
   },
 };
@@ -50,7 +54,7 @@ const itemVariants = {
     y: 0,
     opacity: 1,
     transition: {
-      duration: 0.5,
+      duration: 0.4,
     },
   },
 };
@@ -58,64 +62,91 @@ const itemVariants = {
 export default function Features() {
   return (
     <motion.div
-      className="bg-white dark:bg-gray-900 py-16 sm:py-24"
+      className="bg-white dark:bg-gray-900 py-10 sm:py-14"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.2 }}
       variants={containerVariants}
     >
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 lg:px-8">
         <motion.div
-          className="mx-auto max-w-2xl lg:text-center"
+          className="mx-auto max-w-2xl lg:text-center mb-8"
           variants={itemVariants}
         >
-          <h2 className="text-base font-semibold leading-7 text-indigo-600 dark:text-indigo-400">
+          <h2 className="text-sm font-semibold leading-6 text-orange-500">
             Trade Smarter
           </h2>
-          <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl">
+          <p className="mt-1 text-2xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-3xl">
             Everything you need to succeed in the market
           </p>
-          <p className="mt-6 text-lg leading-8 text-gray-600 dark:text-gray-300">
+          <p className="mt-3 text-base leading-7 text-gray-600 dark:text-gray-300">
             Our platform is designed from the ground up to provide you with the
             tools, speed, and security required for modern Forex trading.
           </p>
         </motion.div>
-        <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-5xl">
+        <div className="mx-auto max-w-5xl">
           <motion.div
-            className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-10 lg:max-w-none lg:grid-cols-2 lg:gap-y-16"
+            className="grid grid-cols-1 gap-4 sm:grid-cols-2"
             variants={containerVariants}
           >
             {features.map((feature) => (
               <motion.div
                 key={feature.name}
-                className="group relative rounded-2xl p-8 bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 hover:border-indigo-500 transition-all duration-300 overflow-hidden"
+                className="group relative rounded-xl p-5 cursor-pointer"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 10px 40px -10px rgba(0, 0, 0, 0.7), 0 4px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.05)",
+                }}
                 variants={itemVariants}
                 whileHover={{
-                  y: -8,
-                  boxShadow: "0 20px 50px rgba(99, 102, 241, 0.2)",
+                  y: -6,
+                  scale: 1.02,
+                  boxShadow:
+                    "0 20px 60px -15px rgba(249, 115, 22, 0.3), 0 10px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
                 }}
+                transition={{ duration: 0.3 }}
               >
-                {/* 3D Background Effect */}
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                {/* 3D Shine Effect */}
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/5 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                {/* Content */}
+                {/* Glow Border on Hover */}
+                <div
+                  className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, rgba(249, 115, 22, 0.2) 0%, transparent 50%, rgba(249, 115, 22, 0.1) 100%)",
+                  }}
+                />
+
+                {/* Content - Icon and Title on same row */}
                 <div className="relative z-10">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <feature.icon
-                      className="h-7 w-7 text-white"
-                      aria-hidden="true"
-                    />
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} group-hover:scale-110 transition-all duration-300`}
+                      style={{
+                        boxShadow:
+                          "0 8px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.2)",
+                      }}
+                    >
+                      <feature.icon
+                        className="h-6 w-6 text-white drop-shadow-lg"
+                        aria-hidden="true"
+                      />
+                    </div>
+                    <h3 className="text-base font-bold text-white group-hover:text-orange-400 transition-colors duration-300">
+                      {feature.name}
+                    </h3>
                   </div>
-                  <dt className="mt-6 text-lg font-semibold leading-7 text-white">
-                    {feature.name}
-                  </dt>
-                  <dd className="mt-3 text-base leading-7 text-gray-400 group-hover:text-gray-300 transition-colors duration-300">
+                  <p className="mt-3 text-sm leading-6 text-gray-400 group-hover:text-gray-300 transition-colors duration-300 pl-16">
                     {feature.description}
-                  </dd>
+                  </p>
                 </div>
 
-                {/* Glow Effect */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-indigo-500/20 via-transparent to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl -z-10"></div>
+                {/* Bottom Glow */}
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-orange-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
               </motion.div>
             ))}
           </motion.div>

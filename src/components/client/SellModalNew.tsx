@@ -136,7 +136,10 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
       document.body.style.overflow = "unset";
       // Reset on close
       setStep(1);
-      setSellData({ asset: availableAssets[0]?.symbol || "", amount: "" });
+      setSellData((prev) => ({
+        asset: prev.asset || "",
+        amount: "",
+      }));
       setSuccessData(null);
       setErrors({});
     }

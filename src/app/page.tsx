@@ -396,30 +396,30 @@ function Hero() {
             <>
               <button
                 onClick={openSignupModal}
-                className="text-white font-bold text-sm transition-all duration-200 transform hover:scale-105"
+                className="text-white font-bold text-sm transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
                 style={{
                   background:
                     "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
                   boxShadow:
                     "0 12px 30px -6px rgba(249, 115, 22, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.25), inset 0 -4px 0 rgba(0, 0, 0, 0.3)",
                   border: "1px solid rgba(255, 255, 255, 0.15)",
-                  padding: "14px 28px",
-                  borderRadius: "14px",
+                  padding: "12px 24px",
+                  borderRadius: "12px",
                 }}
               >
                 Get Started
               </button>
               <button
                 onClick={handleTryDemo}
-                className="text-white font-bold text-sm transition-all duration-200 transform hover:scale-105"
+                className="text-white font-bold text-sm transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
                 style={{
                   background:
                     "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
                   boxShadow:
                     "0 12px 30px -6px rgba(0, 0, 0, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.15), inset 0 -4px 0 rgba(0, 0, 0, 0.4)",
                   border: "1px solid rgba(255, 255, 255, 0.12)",
-                  padding: "14px 28px",
-                  borderRadius: "14px",
+                  padding: "12px 24px",
+                  borderRadius: "12px",
                 }}
               >
                 Try Free Demo

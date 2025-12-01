@@ -1418,7 +1418,7 @@ function DashboardContent() {
                   <div
                     key={asset.symbol}
                     onClick={() => handleAssetClick(asset)}
-                    className="relative flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]"
+                    className="relative flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
@@ -1431,7 +1431,7 @@ function DashboardContent() {
                     <div className="flex items-center gap-3">
                       {/* 3D Crypto Icon Container */}
                       <div
-                        className={`w-10 h-10 rounded-xl bg-gradient-to-br ${asset.color} flex items-center justify-center flex-shrink-0 transition-all duration-300 relative`}
+                        className={`w-10 h-10 rounded-xl bg-gradient-to-br ${asset.color} flex items-center justify-center flex-shrink-0 transition-all duration-300 relative overflow-visible`}
                         style={{
                           boxShadow: `0 4px 16px ${
                             asset.metadata?.iconBg || "#6b7280"
