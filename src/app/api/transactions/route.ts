@@ -49,6 +49,21 @@ export async function GET(req: NextRequest) {
       take: 50,
     });
 
+    // Fetch P2P transfers (both sent and received)
+    const sentTransfers = await prisma.p2PTransfer.findMany({
+      where: { senderId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { Receiver: { select: { name: true, email: true } } },
+    });
+
+    const receivedTransfers = await prisma.p2PTransfer.findMany({
+      where: { receiverId: session.user.id },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      include: { Sender: { select: { name: true, email: true } } },
+    });
+
     // Transform deposits into transaction format
     const depositTransactions = deposits.map((d) => ({
       id: d.id,
@@ -66,10 +81,10 @@ export async function GET(req: NextRequest) {
       fee: d.fee ? Number(d.fee) : undefined,
       method: d.method || "Manual",
       description: d.cryptoCurrency
-        ? `deposit ${d.cryptoCurrency}`
+        ? `Deposit ${d.cryptoCurrency}`
         : d.targetAsset
-        ? `${d.targetAsset} deposit to your portfolio`
-        : "Balance deposit to your account",
+        ? `${d.targetAsset} Deposit to your portfolio`
+        : "Balance Deposit to your account",
       date: d.createdAt,
       confirmations: d.confirmations,
       maxConfirmations: 6,
@@ -114,11 +129,59 @@ export async function GET(req: NextRequest) {
       date: t.createdAt,
     }));
 
+    // Transform sent transfers into transaction format
+    const sentTransferTransactions = sentTransfers.map((t) => ({
+      id: t.id,
+      type: "transfer" as const,
+      asset: t.currency || "USD",
+      amount: Number(t.amount),
+      value: Number(t.amount),
+      timestamp: t.createdAt.toISOString(),
+      status:
+        t.status === "COMPLETED"
+          ? ("completed" as const)
+          : t.status === "PENDING"
+          ? ("pending" as const)
+          : ("failed" as const),
+      fee: 0.0001,
+      method: "P2P Transfer",
+      description: `Transfer to ${
+        t.Receiver?.name || t.receiverName || t.receiverEmail
+      }`,
+      date: t.createdAt,
+      hash: t.transactionReference,
+    }));
+
+    // Transform received transfers into transaction format
+    const receivedTransferTransactions = receivedTransfers.map((t) => ({
+      id: t.id,
+      type: "deposit" as const, // Show received transfers as deposits
+      asset: t.currency || "USD",
+      amount: Number(t.amount),
+      value: Number(t.amount),
+      timestamp: t.createdAt.toISOString(),
+      status:
+        t.status === "COMPLETED"
+          ? ("completed" as const)
+          : t.status === "PENDING"
+          ? ("pending" as const)
+          : ("failed" as const),
+      fee: 0,
+      method: "P2P Transfer",
+      description: `Transfer from ${
+        t.Sender?.name || t.Sender?.email || "User"
+      }`,
+      date: t.createdAt,
+      hash: t.transactionReference,
+    }));
+
     // Combine and sort all transactions by date
     const allTransactions = [
       ...depositTransactions,
       ...withdrawalTransactions,
       ...tradeTransactions,
+      ...sentTransferTransactions,
+      ...receivedTransferTransactions,
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return NextResponse.json({

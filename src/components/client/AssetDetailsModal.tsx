@@ -2,12 +2,17 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowLeft, Star } from "lucide-react";
-import RealTimeTradingChart from "@/components/client/RealTimeTradingChart";
+import LightweightChart from "@/components/client/LightweightChart";
 import BuyCryptoModal from "./BuyCryptoModal";
 import AssetSendModal from "./AssetSendModal";
 import AssetReceiveModal from "./AssetReceiveModal";
 import AssetSwapModal from "./AssetSwapModal";
 import AssetSellModal from "./AssetSellModal";
+import TransactionDetailsModal, {
+  DetailedTransaction,
+} from "./TransactionDetailsModal";
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface Asset {
   symbol: string;
@@ -23,6 +28,7 @@ interface AssetDetailsModalProps {
   onClose: () => void;
   asset: Asset | null;
   userBalance: number;
+  balanceCurrency?: string;
   allAssets?: Asset[];
 }
 
@@ -50,10 +56,9 @@ const assetInfo: AssetInfo = {
     circulatingSupply: "",
     totalSupply: "",
     description:
-      "Bitcoin is a cryptocurrency and worldwide payment system. It is the first decentralized digital currency.",
+      "Bitcoin (BTC) is the world's first and most valuable cryptocurrency, created by the pseudonymous Satoshi Nakamoto in 2009. It operates on a decentralized peer-to-peer network secured by proof-of-work consensus. Bitcoin serves as a digital store of value and medium of exchange, with a fixed supply cap of 21 million coins, making it inherently deflationary.",
     links: {
       website: "https://bitcoin.org",
-      explorer: "https://blockchair.com/bitcoin",
     },
   },
   ETH: {
@@ -61,119 +66,188 @@ const assetInfo: AssetInfo = {
     marketCap: "",
     circulatingSupply: "",
     totalSupply: "",
-    description: "Ethereum is a decentralized platform for smart contracts.",
+    description:
+      "Ethereum (ETH) is the leading smart contract platform, enabling developers to build decentralized applications (dApps), DeFi protocols, and NFTs. Founded by Vitalik Buterin in 2015, Ethereum transitioned to proof-of-stake consensus in 2022, significantly reducing energy consumption. ETH powers the network's gas fees and serves as the backbone of Web3 innovation.",
     links: {
       website: "https://ethereum.org",
-      explorer: "https://etherscan.io",
     },
   },
-};
-
-// TODO: REPLACE WITH REAL TRANSACTION HISTORY FROM DATABASE
-// This mock data needs to be replaced with actual user transaction history:
-// - Fetch from Prisma: await prisma.transaction.findMany({ where: { userId, symbol } })
-// - Include: buy/sell history, amounts, prices, dates, status
-// - Calculate real gains/losses from actual trades
-// - NEVER use this mock data in production
-const mockTransactionHistory = {
-  BTC: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 0.5,
-      price: 65000,
-      date: "2024-10-10",
-      status: "completed",
+  XRP: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "XRP is the native cryptocurrency of the XRP Ledger, designed for fast, low-cost cross-border payments. Created by Ripple Labs, XRP enables financial institutions to transfer value globally in 3-5 seconds with minimal fees. The XRP Ledger uses a unique consensus protocol that doesn't require mining, making it highly energy-efficient.",
+    links: {
+      website: "https://xrpl.org",
     },
-    {
-      id: 2,
-      type: "buy",
-      amount: 0.3542,
-      price: 68500,
-      date: "2024-10-05",
-      status: "completed",
+  },
+  TRX: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "TRON (TRX) is a blockchain platform focused on decentralizing the entertainment industry and enabling content creators to monetize directly with audiences. Founded by Justin Sun in 2017, TRON supports high-throughput smart contracts, DeFi applications, and is one of the largest stablecoin (USDT) hosting networks.",
+    links: {
+      website: "https://tron.network",
     },
-    {
-      id: 3,
-      type: "sell",
-      amount: 0.1,
-      price: 70000,
-      date: "2024-09-28",
-      status: "completed",
+  },
+  TON: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Toncoin (TON) powers The Open Network, originally developed by Telegram and now maintained by the TON Foundation. Known for exceptional speed and scalability, TON supports millions of transactions per second through its multi-blockchain architecture. Deeply integrated with Telegram's ecosystem, TON enables seamless crypto payments for over 800 million users.",
+    links: {
+      website: "https://ton.org",
     },
-  ],
-  ETH: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 5,
-      price: 2400,
-      date: "2024-10-08",
-      status: "completed",
+  },
+  LTC: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Litecoin (LTC) is a peer-to-peer cryptocurrency created by Charlie Lee in 2011 as the 'silver to Bitcoin's gold.' With faster block times (2.5 minutes) and lower fees, Litecoin is optimized for everyday transactions. It was among the first to implement SegWit and Lightning Network, serving as a testing ground for Bitcoin upgrades.",
+    links: {
+      website: "https://litecoin.org",
     },
-    {
-      id: 2,
-      type: "buy",
-      amount: 7.67,
-      price: 2350,
-      date: "2024-09-30",
-      status: "completed",
+  },
+  BCH: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Bitcoin Cash (BCH) emerged in 2017 as a fork of Bitcoin, increasing block size to 32MB to enable more transactions per block. BCH focuses on being a practical peer-to-peer electronic cash system with low fees and fast confirmations, making it suitable for everyday retail payments and remittances.",
+    links: {
+      website: "https://bitcoincash.org",
     },
-  ],
-  ADA: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 5000,
-      price: 0.32,
-      date: "2024-10-07",
-      status: "completed",
+  },
+  ETC: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Ethereum Classic (ETC) is the original Ethereum blockchain that continued after the 2016 DAO hack dispute. ETC maintains the principle of 'code is law' and immutability. Unlike Ethereum, it continues to use proof-of-work consensus and has a capped supply of approximately 210 million coins.",
+    links: {
+      website: "https://ethereumclassic.org",
     },
-    {
-      id: 2,
-      type: "buy",
-      amount: 3420.15,
-      price: 0.35,
-      date: "2024-09-25",
-      status: "completed",
+  },
+  USDC: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "USD Coin (USDC) is a fully-backed stablecoin pegged 1:1 to the US dollar, issued by Circle and Coinbase. Each USDC is backed by cash and short-term US Treasury bonds held in regulated financial institutions, with regular attestations by major accounting firms. USDC is widely used in DeFi, trading, and cross-border payments.",
+    links: {
+      website: "https://www.circle.com/usdc",
     },
-  ],
-  SOL: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 25,
-      price: 145,
-      date: "2024-10-06",
-      status: "completed",
+  },
+  USDT: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Tether (USDT) is the world's largest stablecoin by market cap, pegged to the US dollar. Issued by Tether Limited, USDT provides a stable digital currency for trading, transfers, and DeFi applications. Available on multiple blockchains including Ethereum, Tron, and Solana, it facilitates trillions in annual trading volume.",
+    links: {
+      website: "https://tether.to",
     },
-    {
-      id: 2,
-      type: "buy",
-      amount: 20.23,
-      price: 155,
-      date: "2024-09-28",
-      status: "completed",
+  },
+  SOL: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Solana (SOL) is a high-performance blockchain supporting 65,000+ transactions per second with sub-second finality. Using its innovative Proof of History consensus combined with Proof of Stake, Solana offers extremely low fees, making it popular for DeFi, NFTs, and Web3 gaming applications.",
+    links: {
+      website: "https://solana.com",
     },
-  ],
-  USDT: [
-    {
-      id: 1,
-      type: "buy",
-      amount: 2000,
-      price: 1.0,
-      date: "2024-10-05",
-      status: "completed",
+  },
+  BNB: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "BNB is the native cryptocurrency of the BNB Chain ecosystem, originally created by Binance. BNB is used for trading fee discounts, transaction fees on BNB Chain, participation in token sales, and various DeFi applications. Regular token burns reduce supply over time.",
+    links: {
+      website: "https://www.bnbchain.org",
     },
-    {
-      id: 2,
-      type: "buy",
-      amount: 3420,
-      price: 1.0,
-      date: "2024-09-20",
-      status: "completed",
+  },
+  DOGE: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Dogecoin (DOGE) started as a meme cryptocurrency in 2013 featuring the Shiba Inu dog. Despite its humorous origins, DOGE has become a legitimate payment method accepted by numerous merchants. With its active community and low transaction fees, Dogecoin is used for tipping, donations, and micropayments.",
+    links: {
+      website: "https://dogecoin.com",
     },
-  ],
+  },
+  ADA: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Cardano (ADA) is a third-generation blockchain platform founded by Ethereum co-founder Charles Hoskinson. Built on peer-reviewed research and formal verification methods, Cardano uses the energy-efficient Ouroboros proof-of-stake protocol. It supports smart contracts, DeFi, and aims to provide financial services to the unbanked.",
+    links: {
+      website: "https://cardano.org",
+    },
+  },
+  MATIC: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Polygon (MATIC) is a Layer 2 scaling solution for Ethereum, providing faster and cheaper transactions while inheriting Ethereum's security. The ecosystem includes multiple scaling technologies including Polygon PoS, zkEVM, and Supernets, making it a leading platform for DeFi, gaming, and enterprise blockchain applications.",
+    links: {
+      website: "https://polygon.technology",
+    },
+  },
+  AVAX: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Avalanche (AVAX) is a high-speed smart contracts platform that processes 4,500+ transactions per second with instant finality. Its unique three-chain architecture (X-Chain, C-Chain, P-Chain) enables both decentralized applications and custom blockchain networks called Subnets, popular for gaming and institutional DeFi.",
+    links: {
+      website: "https://www.avax.network",
+    },
+  },
+  DOT: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Polkadot (DOT) enables cross-blockchain transfers of any type of data or asset. Created by Ethereum co-founder Gavin Wood, Polkadot connects multiple specialized blockchains (parachains) into one unified network, allowing them to operate seamlessly together while maintaining their unique features and governance.",
+    links: {
+      website: "https://polkadot.network",
+    },
+  },
+  LINK: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Chainlink (LINK) is the industry-standard decentralized oracle network, providing real-world data to smart contracts on any blockchain. Chainlink enables hybrid smart contracts that can access off-chain data feeds, APIs, and payment systems, securing billions of dollars across DeFi, insurance, and gaming.",
+    links: {
+      website: "https://chain.link",
+    },
+  },
 };
 
 export default function AssetDetailsModal({
@@ -181,6 +255,7 @@ export default function AssetDetailsModal({
   onClose,
   asset,
   userBalance,
+  balanceCurrency = "USD",
   allAssets = [],
 }: AssetDetailsModalProps) {
   const [activeTab, setActiveTab] = useState<"holdings" | "history" | "about">(
@@ -192,17 +267,48 @@ export default function AssetDetailsModal({
   const [showSwapModal, setShowSwapModal] = useState(false);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [showSellModal, setShowSellModal] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] =
+    useState<DetailedTransaction | null>(null);
+  const [showTransactionDetails, setShowTransactionDetails] = useState(false);
+
+  // Currency context for user's preferred currency
+  const { preferredCurrency, formatAmount } = useCurrency();
+
+  // Helper to format user balance - show directly if currencies match
+  const formatUserBalance = (balance: number): string => {
+    if (balanceCurrency === preferredCurrency) {
+      // Same currency - show directly without conversion
+      const symbols: { [key: string]: string } = {
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        NGN: "₦",
+        ZAR: "R",
+        KES: "KSh",
+        GHS: "₵",
+      };
+      const symbol = symbols[preferredCurrency] || "$";
+      return `${symbol}${balance.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+    // Different currency - formatAmount converts from USD to preferred
+    return formatAmount(balance, 2);
+  };
 
   // Prevent body scroll when modal is open
+  // Note: Browser back button is handled by the parent component via URL params
   useEffect(() => {
     if (isOpen) {
+      // Store original overflow style
+      const originalOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
+
+      return () => {
+        document.body.style.overflow = originalOverflow || "unset";
+      };
     }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
   }, [isOpen]);
 
   // Action handlers
@@ -245,9 +351,15 @@ export default function AssetDetailsModal({
     null
   );
   const [txHistory, setTxHistory] = useState<any[]>([]);
-  // Chart period state (UI: 1H,1D,1W,1M,1Y,All)
+  // Live market data (market cap, supply, etc.)
+  const [marketData, setMarketData] = useState<{
+    marketCap: string;
+    circulatingSupply: string;
+    totalSupply: string;
+  } | null>(null);
+  // Chart period state (UI: 1D,1W,1M,1Y)
   const [selectedPeriod, setSelectedPeriod] = useState<
-    "1H" | "1D" | "1W" | "1M" | "1Y" | "All"
+    "1D" | "1W" | "1M" | "1Y"
   >("1D");
   // Buy amount state
   const [selectedBuyAmount, setSelectedBuyAmount] = useState<number>(30);
@@ -308,14 +420,90 @@ export default function AssetDetailsModal({
     };
   }, [asset?.symbol]);
 
+  // Fetch market data (market cap, supply) from CoinGecko
+  useEffect(() => {
+    if (!isOpen || !asset?.symbol) return;
+
+    let mounted = true;
+    const coinGeckoIds: Record<string, string> = {
+      BTC: "bitcoin",
+      ETH: "ethereum",
+      XRP: "ripple",
+      TRX: "tron",
+      TON: "the-open-network",
+      LTC: "litecoin",
+      BCH: "bitcoin-cash",
+      ETC: "ethereum-classic",
+      USDC: "usd-coin",
+      USDT: "tether",
+      SOL: "solana",
+      ADA: "cardano",
+      DOGE: "dogecoin",
+      DOT: "polkadot",
+      MATIC: "matic-network",
+      AVAX: "avalanche-2",
+      LINK: "chainlink",
+      UNI: "uniswap",
+      SHIB: "shiba-inu",
+      ATOM: "cosmos",
+    };
+
+    const coinId = coinGeckoIds[asset.symbol.toUpperCase()];
+    if (!coinId) {
+      setMarketData(null);
+      return;
+    }
+
+    const fetchMarketData = async () => {
+      try {
+        const res = await fetch(
+          `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=false&community_data=false&developer_data=false`
+        );
+        const data = await res.json();
+
+        if (mounted && data?.market_data) {
+          const formatNumber = (num: number): string => {
+            if (num >= 1e12) return `$${(num / 1e12).toFixed(2)}T`;
+            if (num >= 1e9) return `$${(num / 1e9).toFixed(2)}B`;
+            if (num >= 1e6) return `$${(num / 1e6).toFixed(2)}M`;
+            return `$${num.toLocaleString()}`;
+          };
+
+          const formatSupply = (num: number, symbol: string): string => {
+            if (num >= 1e9) return `${(num / 1e9).toFixed(2)}B ${symbol}`;
+            if (num >= 1e6) return `${(num / 1e6).toFixed(2)}M ${symbol}`;
+            return `${num.toLocaleString()} ${symbol}`;
+          };
+
+          setMarketData({
+            marketCap: formatNumber(data.market_data.market_cap?.usd || 0),
+            circulatingSupply: formatSupply(
+              data.market_data.circulating_supply || 0,
+              asset.symbol
+            ),
+            totalSupply: data.market_data.total_supply
+              ? formatSupply(data.market_data.total_supply, asset.symbol)
+              : "∞",
+          });
+        }
+      } catch (e) {
+        console.error("Failed to fetch market data", e);
+        if (mounted) setMarketData(null);
+      }
+    };
+
+    fetchMarketData();
+
+    return () => {
+      mounted = false;
+    };
+  }, [asset?.symbol, isOpen]);
+
   if (!isOpen || !asset) return null;
 
   const info = assetInfo[asset.symbol] || null;
-  const history = txHistory.length
-    ? txHistory
-    : mockTransactionHistory[
-        asset.symbol as keyof typeof mockTransactionHistory
-      ] || [];
+  // Use only real transaction history from API - no mock/simulated data
+  const history = txHistory;
   const currentPrice = livePrice ?? info?.price ?? 0;
   const priceChange = liveChangePercent ?? asset.change ?? 0;
 
@@ -331,39 +519,42 @@ export default function AssetDetailsModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50 overflow-hidden"
-            style={{ touchAction: "none" }}
+            className="fixed top-0 left-0 right-0 bottom-0 bg-black bg-opacity-70 backdrop-blur-sm z-[9998] overflow-hidden"
+            style={{ touchAction: "none", margin: 0, padding: 0 }}
           />
           <motion.div
             key="asset-details-content"
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", duration: 0.4, bounce: 0.2 }}
-            className="fixed inset-0 z-50 flex items-start justify-center p-0 overflow-auto"
+            initial={{ opacity: 0, y: "100%" }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: "100%" }}
+            transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
+            className="fixed top-0 left-0 right-0 bottom-0 z-[9998] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
-            style={{ touchAction: "auto" }}
+            style={{ touchAction: "auto", margin: 0, padding: 0 }}
           >
-            <div className="bg-white w-full h-full overflow-y-auto">
+            <div
+              className="bg-gray-900 w-full h-full overflow-y-auto"
+              style={{ minHeight: "100vh", height: "100%" }}
+            >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between p-4 border-b border-gray-700">
                 <button
                   onClick={onClose}
-                  className="text-gray-600 hover:text-gray-800 transition-colors"
+                  className="text-gray-300 hover:text-white transition-colors"
                   aria-label="Go back"
                 >
                   <ArrowLeft size={24} />
                 </button>
                 <div className="text-center">
-                  <h1 className="text-xl font-bold text-gray-900">
+                  <h1 className="text-xl font-bold text-white">
                     {asset.symbol}
                   </h1>
-                  <p className="text-sm text-gray-500">COIN | {asset.name}</p>
+                  <p className="text-sm text-gray-400">COIN | {asset.name}</p>
                 </div>
                 <button
                   onClick={() => setIsStarred(!isStarred)}
                   className={`transition-colors ${
-                    isStarred ? "text-yellow-500" : "text-gray-400"
+                    isStarred ? "text-yellow-500" : "text-gray-500"
                   }`}
                   aria-label="Add to favorites"
                 >
@@ -372,21 +563,38 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Price Section */}
-              <div className="p-4 bg-white">
+              <div className="p-4 bg-gray-900">
+                {/* Network Fee Indicator - Shows estimated transfer fee for this asset */}
                 <div className="flex items-center gap-2 mb-4">
-                  <div className="w-6 h-6 bg-green-500 rounded flex items-center justify-center">
-                    <span className="text-white text-xs">⛽</span>
-                  </div>
-                  <span className="text-gray-600">$2.23</span>
+                  <span className="text-gray-400 text-sm">⛽</span>
+                  <span className="text-gray-400 text-sm">
+                    {(() => {
+                      // Estimated network fees per asset (in USD equivalent)
+                      const networkFees: { [key: string]: number } = {
+                        BTC: 2.5, // Bitcoin average fee
+                        ETH: 3.0, // Ethereum gas fee
+                        LTC: 0.05, // Litecoin low fee
+                        BCH: 0.01, // Bitcoin Cash low fee
+                        XRP: 0.001, // Ripple very low
+                        TRX: 0.001, // Tron very low
+                        TON: 0.01, // Toncoin low
+                        SOL: 0.001, // Solana very low
+                        DOGE: 0.5, // Dogecoin
+                        ADA: 0.2, // Cardano
+                        DOT: 0.1, // Polkadot
+                        USDT: 1.0, // Tether (depends on network)
+                        USDC: 1.0, // USD Coin
+                        ETC: 0.1, // Ethereum Classic
+                      };
+                      const fee = networkFees[asset.symbol] || 0.5; // Default $0.50
+                      return formatAmount(fee, 2);
+                    })()}
+                  </span>
                 </div>
 
                 <div className="text-center mb-6">
-                  <div className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
-                    $
-                    {currentPrice.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                  <div className="text-4xl md:text-5xl font-bold text-white mb-2">
+                    {formatAmount(currentPrice, 2)}
                   </div>
                   <div
                     className={`flex items-center justify-center gap-1 ${
@@ -397,52 +605,46 @@ export default function AssetDetailsModal({
                       {priceChange >= 0 ? "↑" : "↓"}
                     </span>
                     <span className="text-lg font-medium">
-                      ${Math.abs((currentPrice * priceChange) / 100).toFixed(2)}{" "}
+                      {formatAmount(
+                        Math.abs((currentPrice * priceChange) / 100),
+                        2
+                      )}{" "}
                       ({priceChange >= 0 ? "+" : ""}
                       {priceChange.toFixed(2)}%)
                     </span>
                   </div>
                 </div>
 
-                {/* Real-time chart */}
-                <div className="h-80 md:h-[420px] mb-4">
-                  <RealTimeTradingChart
+                {/* Lightweight Chart */}
+                <div
+                  className="mb-4 rounded-xl overflow-hidden"
+                  style={{
+                    boxShadow:
+                      "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5)",
+                  }}
+                >
+                  <LightweightChart
                     symbol={asset.symbol}
-                    // map selectedPeriod to an interval + limit
-                    {...(() => {
-                      const map: Record<
-                        string,
-                        { interval: string; limit: number }
-                      > = {
-                        "1H": { interval: "1m", limit: 60 },
-                        "1D": { interval: "15m", limit: 96 },
-                        "1W": { interval: "1h", limit: 168 },
-                        "1M": { interval: "4h", limit: 180 },
-                        "1Y": { interval: "1d", limit: 365 },
-                        All: { interval: "1d", limit: 1000 },
-                      };
-                      return map[selectedPeriod] || map["1D"];
-                    })()}
+                    interval={selectedPeriod}
+                    height={320}
                   />
                 </div>
 
                 {/* Time Period Buttons */}
                 <div className="flex justify-around mb-6">
                   {[
-                    { label: "1H", key: "1H" },
                     { label: "1D", key: "1D" },
                     { label: "1W", key: "1W" },
                     { label: "1M", key: "1M" },
                     { label: "1Y", key: "1Y" },
-                    { label: "All", key: "All" },
                   ].map((period) => (
                     <button
                       key={period.key}
                       onClick={() => setSelectedPeriod(period.key as any)}
                       className={`px-3 py-1 text-sm transition-colors rounded ${
                         selectedPeriod === period.key
-                          ? "bg-gray-900 text-white"
-                          : "text-gray-600 hover:text-gray-900"
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-400 hover:text-white"
                       }`}
                     >
                       {period.label}
@@ -450,49 +652,105 @@ export default function AssetDetailsModal({
                   ))}
                 </div>
 
-                {/* Buy Now Section */}
-                <div className="bg-gray-50 rounded-lg p-4 mb-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Buy now
-                  </h3>
-                  <div className="flex items-center justify-between mb-4">
+                {/* Buy Now Section - 3D Card Style */}
+                <div
+                  className="rounded-xl p-4 mb-6"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                    boxShadow:
+                      "0 15px 30px -8px rgba(0, 0, 0, 0.6), 0 8px 16px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                  }}
+                >
+                  {/* Header row with amount and Buy button */}
+                  <div className="flex items-center justify-between mb-3">
                     <div>
-                      <div className="text-2xl font-bold text-gray-900">
-                        ${selectedBuyAmount.toFixed(2)}{" "}
-                        <span className="text-gray-500">USD</span>
-                      </div>
-                      <div className="flex gap-2 mt-2">
-                        {quickBuyAmounts.map((amount) => (
-                          <button
-                            key={amount}
-                            onClick={() => setSelectedBuyAmount(amount)}
-                            className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                              selectedBuyAmount === amount
-                                ? "bg-blue-600 text-white"
-                                : "bg-blue-100 text-blue-600 hover:bg-blue-200"
-                            }`}
-                          >
-                            ${amount}
-                          </button>
-                        ))}
+                      <h3 className="text-sm font-medium text-gray-400 mb-1">
+                        Buy now
+                      </h3>
+                      <div className="text-2xl font-bold text-white">
+                        {formatAmount(selectedBuyAmount, 2)}{" "}
+                        <span className="text-gray-400 text-lg font-medium">
+                          {preferredCurrency}
+                        </span>
                       </div>
                     </div>
                     <button
                       onClick={handleBuy}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold transition-colors"
+                      className="text-white px-6 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 hover:scale-105 active:scale-95 flex-shrink-0"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%)",
+                        boxShadow:
+                          "0 8px 20px -4px rgba(37, 99, 235, 0.6), 0 4px 10px -2px rgba(0, 0, 0, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.2)",
+                        border: "1px solid rgba(59, 130, 246, 0.5)",
+                      }}
                     >
                       Buy
                     </button>
                   </div>
-                  <p className="text-sm text-gray-600">
+                  {/* Quick amount buttons */}
+                  <div className="flex flex-wrap gap-2 mb-3">
+                    {quickBuyAmounts.map((amount) => (
+                      <button
+                        key={amount}
+                        onClick={() => setSelectedBuyAmount(amount)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                          selectedBuyAmount === amount
+                            ? "text-white"
+                            : "text-gray-300 hover:text-white"
+                        }`}
+                        style={
+                          selectedBuyAmount === amount
+                            ? {
+                                background:
+                                  "linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%)",
+                                boxShadow:
+                                  "0 4px 12px -2px rgba(37, 99, 235, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
+                                border: "1px solid rgba(59, 130, 246, 0.4)",
+                              }
+                            : {
+                                background:
+                                  "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                                boxShadow:
+                                  "0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                                border: "1px solid rgba(255, 255, 255, 0.06)",
+                              }
+                        }
+                      >
+                        {formatAmount(amount, 0)}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-sm text-gray-400">
                     Buying {(selectedBuyAmount / currentPrice).toFixed(5)}{" "}
-                    {asset.symbol} • Bank transfer • Onramp Money
+                    {asset.symbol} from available balance:{" "}
+                    <span
+                      className="font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent"
+                      style={{
+                        textShadow:
+                          "0 0 15px rgba(59,130,246,0.1), 0 2px 4px rgba(0,0,0,0.8)",
+                        WebkitTextStroke: "0.3px rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      {formatUserBalance(userBalance)}
+                    </span>
                   </p>
                 </div>
               </div>
 
-              {/* Tabs */}
-              <div className="border-b border-gray-200">
+              {/* 3D Tabs Card */}
+              <div
+                className="mx-4 rounded-xl overflow-hidden"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                  boxShadow:
+                    "0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                }}
+              >
                 <div className="flex">
                   {[
                     { key: "holdings", label: "Holdings" },
@@ -502,10 +760,10 @@ export default function AssetDetailsModal({
                     <button
                       key={tab.key}
                       onClick={() => setActiveTab(tab.key as any)}
-                      className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
+                      className={`flex-1 py-3 px-4 text-center font-medium transition-all duration-200 ${
                         activeTab === tab.key
-                          ? "text-blue-600 border-b-2 border-blue-600"
-                          : "text-gray-600 hover:text-gray-900"
+                          ? "text-blue-400 border-b-2 border-blue-500 shadow-[0_2px_8px_rgba(59,130,246,0.3)]"
+                          : "text-gray-400 hover:text-white"
                       }`}
                     >
                       {tab.label}
@@ -515,72 +773,267 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Tab Content */}
-              <div className="p-4 pb-20">
+              <div className="p-4 pb-40">
                 {activeTab === "holdings" && (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <h3 className="text-lg font-semibold text-white mb-4">
                       My Balance
                     </h3>
-                    <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center">
-                          <span className="text-white font-bold text-lg">
-                            {asset.icon}
-                          </span>
+                    {/* 3D Card with depth effect */}
+                    <div
+                      className="relative rounded-xl p-3 flex items-center justify-between overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                        boxShadow:
+                          "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                      }}
+                    >
+                      {/* Subtle glow effect */}
+                      <div
+                        className="absolute inset-0 opacity-20 rounded-xl"
+                        style={{
+                          background:
+                            "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
+                        }}
+                      />
+
+                      <div className="flex items-center gap-3 relative z-10">
+                        {/* 3D Logo matching dashboard style */}
+                        <div
+                          className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                          style={{
+                            boxShadow: `0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)`,
+                          }}
+                        >
+                          {/* Inner glow */}
+                          <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                          <CryptoIcon
+                            symbol={asset.symbol}
+                            size="md"
+                            showNetwork={true}
+                            className="relative z-10 drop-shadow-lg"
+                          />
                         </div>
                         <div>
-                          <div className="font-semibold text-gray-900">
+                          <div className="font-bold text-white text-lg">
                             {asset.name}
                           </div>
-                          <div className="text-gray-600">
-                            {asset.amount.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 8,
-                            })}{" "}
+                          <div className="text-gray-400 text-sm">
                             {asset.symbol}
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold text-gray-900">
-                          $
-                          {asset.value.toLocaleString("en-US", {
+                      <div className="text-right relative z-10">
+                        <div className="font-bold text-white text-xl">
+                          {formatAmount(asset.value, 2)}
+                        </div>
+                        <div className="text-gray-400 text-sm">
+                          {asset.amount.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
+                            maximumFractionDigits: 8,
                           })}
                         </div>
-                        <div className="text-gray-500">-</div>
                       </div>
                     </div>
+                    {/* Bottom margin spacer */}
+                    <div className="mb-16"></div>
                   </div>
                 )}
 
                 {activeTab === "history" && (
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    <h3 className="text-lg font-semibold text-white mb-4">
                       Recent Transactions
                     </h3>
                     {history.length > 0 ? (
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         {history.map((tx) => (
                           <div
                             key={tx.id}
-                            className="bg-gray-50 rounded-lg p-4"
+                            onClick={() => {
+                              // Convert to DetailedTransaction format
+                              const detailedTx: DetailedTransaction = {
+                                id:
+                                  tx.id?.toString() ||
+                                  tx.paymentId ||
+                                  `tx-${Date.now()}`,
+                                type: tx.type as
+                                  | "buy"
+                                  | "sell"
+                                  | "deposit"
+                                  | "withdraw"
+                                  | "convert"
+                                  | "transfer",
+                                asset: tx.cryptoCurrency || asset.symbol,
+                                amount:
+                                  typeof tx.amount === "number"
+                                    ? tx.amount
+                                    : parseFloat(tx.amount) || 0,
+                                value:
+                                  tx.fiatValue ||
+                                  tx.price *
+                                    (typeof tx.amount === "number"
+                                      ? tx.amount
+                                      : parseFloat(tx.amount) || 0),
+                                timestamp: new Date(tx.date).toLocaleString(),
+                                status: (tx.status?.toLowerCase() ===
+                                  "completed" ||
+                                tx.status?.toLowerCase() === "closed"
+                                  ? "completed"
+                                  : tx.status?.toLowerCase() === "pending" ||
+                                    tx.status?.toLowerCase() === "confirming"
+                                  ? "pending"
+                                  : "failed") as
+                                  | "completed"
+                                  | "pending"
+                                  | "failed",
+                                fee: tx.fee || undefined,
+                                method:
+                                  tx.method || tx.paymentMethod || undefined,
+                                date: new Date(tx.date),
+                                currency: tx.currency || preferredCurrency,
+                                rate: tx.price || undefined,
+                                hash: tx.hash || tx.txHash || undefined,
+                                network: tx.network || undefined,
+                                address:
+                                  tx.address || tx.payAddress || undefined,
+                                confirmations: tx.confirmations,
+                                maxConfirmations: tx.maxConfirmations || 6,
+                              };
+                              setSelectedTransaction(detailedTx);
+                              setShowTransactionDetails(true);
+                            }}
+                            className="rounded-xl p-4 transition-all duration-200 hover:scale-[1.01] cursor-pointer active:scale-[0.99]"
+                            style={{
+                              background:
+                                "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                              boxShadow:
+                                "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                              border: "1px solid rgba(255, 255, 255, 0.06)",
+                            }}
                           >
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <div className="font-medium text-gray-900 capitalize">
-                                  {tx.type} {asset.symbol}
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                    tx.type === "buy" || tx.type === "deposit"
+                                      ? "bg-green-500/20"
+                                      : tx.type === "sell"
+                                      ? "bg-red-500/20"
+                                      : "bg-blue-500/20"
+                                  }`}
+                                >
+                                  <span
+                                    className={`text-lg ${
+                                      tx.type === "buy" || tx.type === "deposit"
+                                        ? "text-green-400"
+                                        : tx.type === "sell"
+                                        ? "text-red-400"
+                                        : "text-blue-400"
+                                    }`}
+                                  >
+                                    {tx.type === "buy" || tx.type === "deposit"
+                                      ? "↓"
+                                      : tx.type === "sell"
+                                      ? "↑"
+                                      : "↔"}
+                                  </span>
                                 </div>
-                                <div className="text-sm text-gray-600">
-                                  {tx.date}
+                                <div>
+                                  <div className="font-semibold text-white capitalize text-base">
+                                    {tx.type}{" "}
+                                    {tx.cryptoCurrency || asset.symbol}
+                                  </div>
+                                  <div className="text-xs text-gray-500">
+                                    {new Date(tx.date).toLocaleDateString(
+                                      "en-US",
+                                      {
+                                        year: "numeric",
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      }
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    tx.status?.toLowerCase() === "completed" ||
+                                    tx.status?.toLowerCase() === "closed"
+                                      ? "bg-green-500/20 text-green-400"
+                                      : tx.status?.toLowerCase() ===
+                                          "pending" ||
+                                        tx.status?.toLowerCase() ===
+                                          "confirming"
+                                      ? "bg-yellow-500/20 text-yellow-400"
+                                      : "bg-gray-500/20 text-gray-400"
+                                  }`}
+                                >
+                                  {tx.status || "completed"}
+                                </div>
+                                {/* Chevron indicator for clickable */}
+                                <svg
+                                  className="w-4 h-4 text-gray-500"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+
+                            <div className="flex items-end justify-between pt-2 border-t border-gray-700/50">
+                              <div>
+                                <div className="text-xs text-gray-500 mb-1">
+                                  Amount
+                                </div>
+                                <div
+                                  className={`font-bold text-lg ${
+                                    tx.type === "buy" || tx.type === "deposit"
+                                      ? "text-green-400"
+                                      : tx.type === "sell"
+                                      ? "text-red-400"
+                                      : "text-white"
+                                  }`}
+                                >
+                                  {tx.type === "buy" || tx.type === "deposit"
+                                    ? "+"
+                                    : tx.type === "sell"
+                                    ? "-"
+                                    : ""}
+                                  {typeof tx.amount === "number"
+                                    ? tx.amount.toLocaleString(undefined, {
+                                        maximumFractionDigits: 8,
+                                      })
+                                    : tx.amount}{" "}
+                                  {tx.cryptoCurrency || asset.symbol}
                                 </div>
                               </div>
                               <div className="text-right">
-                                <div className="font-medium text-gray-900">
-                                  {tx.amount} {asset.symbol}
+                                <div className="text-xs text-gray-500 mb-1">
+                                  Value
                                 </div>
-                                <div className="text-sm text-gray-600">
-                                  ${tx.price.toLocaleString()}
+                                <div className="font-semibold text-white">
+                                  {tx.fiatValue
+                                    ? formatAmount(tx.fiatValue, 2)
+                                    : formatAmount(
+                                        tx.price *
+                                          (typeof tx.amount === "number"
+                                            ? tx.amount
+                                            : parseFloat(tx.amount)),
+                                        2
+                                      )}
                                 </div>
                               </div>
                             </div>
@@ -589,13 +1042,13 @@ export default function AssetDetailsModal({
                       </div>
                     ) : (
                       <div className="text-center py-8">
-                        <div className="text-gray-400 mb-2">📱</div>
-                        <p className="text-gray-600 mb-2">
+                        <div className="text-gray-500 mb-2">📱</div>
+                        <p className="text-gray-400 mb-2">
                           Transactions will appear here.
                         </p>
                         <p className="text-gray-500 text-sm">
                           Cannot find your transaction?{" "}
-                          <button className="text-blue-600 hover:underline">
+                          <button className="text-blue-500 hover:underline">
                             Check explorer
                           </button>
                         </p>
@@ -610,61 +1063,164 @@ export default function AssetDetailsModal({
                 {activeTab === "about" && info && (
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      <h3 className="text-lg font-semibold text-white mb-2">
                         About {asset.symbol}
                       </h3>
-                      <p className="text-gray-600 leading-relaxed">
+                      <p className="text-gray-400 leading-relaxed">
                         {info.description}
                       </p>
-                      <button className="text-blue-600 hover:underline mt-2">
-                        Read more
-                      </button>
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      <h3 className="text-lg font-semibold text-white mb-4">
                         Stats
                       </h3>
                       <div className="space-y-4">
-                        <div className="bg-gray-50 rounded-lg p-4 flex justify-between">
-                          <span className="text-gray-600">Market cap</span>
-                          <span className="font-medium text-gray-900">
-                            {info.marketCap}
+                        {/* Market Cap - 3D Card */}
+                        <div
+                          className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                            boxShadow:
+                              "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                          }}
+                        >
+                          {/* Subtle glow effect */}
+                          <div
+                            className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
+                            style={{
+                              background:
+                                "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
+                            }}
+                          />
+                          <span className="text-gray-400 relative z-10">
+                            Market cap
+                          </span>
+                          <span className="font-semibold text-white relative z-10">
+                            {marketData?.marketCap || info?.marketCap || "—"}
                           </span>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-4 flex justify-between">
-                          <span className="text-gray-600">
+
+                        {/* Circulating Supply - 3D Card */}
+                        <div
+                          className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                            boxShadow:
+                              "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                          }}
+                        >
+                          {/* Subtle glow effect */}
+                          <div
+                            className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
+                            style={{
+                              background:
+                                "radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.3) 0%, transparent 50%)",
+                            }}
+                          />
+                          <span className="text-gray-400 relative z-10">
                             Circulating Supply
                           </span>
-                          <span className="font-medium text-gray-900">
-                            {info.circulatingSupply}
+                          <span className="font-semibold text-white relative z-10">
+                            {marketData?.circulatingSupply ||
+                              info?.circulatingSupply ||
+                              "—"}
                           </span>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-4 flex justify-between">
-                          <span className="text-gray-600">Total Supply</span>
-                          <span className="font-medium text-gray-900">
-                            {info.totalSupply}
+
+                        {/* Total Supply - 3D Card */}
+                        <div
+                          className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                            boxShadow:
+                              "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                          }}
+                        >
+                          {/* Subtle glow effect */}
+                          <div
+                            className="absolute inset-0 opacity-20 rounded-xl pointer-events-none"
+                            style={{
+                              background:
+                                "radial-gradient(ellipse at 70% 0%, rgba(168, 85, 247, 0.3) 0%, transparent 50%)",
+                            }}
+                          />
+                          <span className="text-gray-400 relative z-10">
+                            Total Supply
+                          </span>
+                          <span className="font-semibold text-white relative z-10">
+                            {marketData?.totalSupply ||
+                              info?.totalSupply ||
+                              "—"}
                           </span>
                         </div>
                       </div>
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                      <h3 className="text-lg font-semibold text-white mb-4">
                         Links
                       </h3>
-                      <div className="grid grid-cols-2 gap-3">
-                        {Object.entries(info.links).map(([key, url]) => (
+                      <div className="flex flex-wrap gap-3">
+                        {info.links.website && (
                           <a
-                            key={key}
-                            href={url}
+                            href={info.links.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-blue-600 hover:underline capitalize"
+                            className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-medium transition-all duration-200 hover:scale-105 active:scale-95 group overflow-hidden"
+                            style={{
+                              background:
+                                "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                              boxShadow:
+                                "0 8px 20px -4px rgba(0, 0, 0, 0.5), 0 4px 10px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                            }}
                           >
-                            {key === "website" ? "Official website" : key}
+                            {/* Hover glow effect */}
+                            <div
+                              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"
+                              style={{
+                                background:
+                                  "radial-gradient(ellipse at 50% 50%, rgba(59, 130, 246, 0.2) 0%, transparent 70%)",
+                              }}
+                            />
+                            <svg
+                              className="w-5 h-5 text-blue-400 relative z-10"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"
+                              />
+                            </svg>
+                            <span className="relative z-10">
+                              Official Website
+                            </span>
+                            <svg
+                              className="w-4 h-4 text-gray-400 group-hover:text-blue-400 transition-colors relative z-10"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                              />
+                            </svg>
                           </a>
-                        ))}
+                        )}
                       </div>
                     </div>
                   </div>
@@ -672,52 +1228,52 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Bottom Action Bar */}
-              <div className="fixed bottom-0 left-0 right-0 bg-gray-50 border-t border-gray-200 p-3">
-                <div className="flex justify-center gap-4 max-w-md mx-auto">
+              <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-2 z-[9999]">
+                <div className="flex justify-center gap-3 max-w-md mx-auto">
                   <button
                     onClick={handleSend}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       ↑
                     </div>
-                    <span className="text-xs font-medium">Send</span>
+                    <span className="text-[10px] font-medium">Send</span>
                   </button>
                   <button
                     onClick={handleReceive}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       ↓
                     </div>
-                    <span className="text-xs font-medium">Receive</span>
+                    <span className="text-[10px] font-medium">Receive</span>
                   </button>
                   <button
                     onClick={handleSwap}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       ⇄
                     </div>
-                    <span className="text-xs font-medium">Swap</span>
+                    <span className="text-[10px] font-medium">Swap</span>
                   </button>
                   <button
                     onClick={handleBuy}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-green-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       ⚡
                     </div>
-                    <span className="text-xs font-medium">Buy</span>
+                    <span className="text-[10px] font-medium">Buy</span>
                   </button>
                   <button
                     onClick={handleSell}
-                    className="flex flex-col items-center justify-center gap-1 text-gray-600 bg-gray-200 hover:text-blue-600 hover:bg-blue-50 hover:scale-110 hover:-translate-y-1 transition-all duration-300 rounded-xl w-16 h-16 transform"
+                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-orange-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
                   >
-                    <div className="w-6 h-6 flex items-center justify-center text-lg">
+                    <div className="w-5 h-5 flex items-center justify-center text-base">
                       🏛
                     </div>
-                    <span className="text-xs font-medium">Sell</span>
+                    <span className="text-[10px] font-medium">Sell</span>
                   </button>
                 </div>
               </div>
@@ -773,6 +1329,7 @@ export default function AssetDetailsModal({
               price: currentPrice,
             }}
             userBalance={userBalance}
+            defaultAmount={selectedBuyAmount}
           />
 
           <AssetSellModal
@@ -784,6 +1341,16 @@ export default function AssetDetailsModal({
               amount: asset?.amount || 0,
               price: currentPrice,
             }}
+          />
+
+          {/* Transaction Details Modal */}
+          <TransactionDetailsModal
+            isOpen={showTransactionDetails}
+            onClose={() => {
+              setShowTransactionDetails(false);
+              setSelectedTransaction(null);
+            }}
+            transaction={selectedTransaction}
           />
         </>
       )}

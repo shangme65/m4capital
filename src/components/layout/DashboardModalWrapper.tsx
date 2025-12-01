@@ -1,12 +1,12 @@
 "use client";
 
 import { useModal } from "@/contexts/ModalContext";
-import DepositModal from "../client/DepositModal";
+import DepositModal from "../client/DepositModalNew";
 import WithdrawModalNew from "../client/WithdrawModalNew";
-import BuyModal from "../client/BuyModal";
-import SellModal from "../client/SellModal";
-import TransferModal from "../client/TransferModal";
-import ConvertModal from "../client/ConvertModal";
+import BuyModalNew from "../client/BuyModalNew";
+import SellModalNew from "../client/SellModalNew";
+import TransferModalNew from "../client/TransferModalNew";
+import ConvertModalNew from "../client/ConvertModalNew";
 
 export function DashboardModalWrapper({
   children,
@@ -38,13 +38,16 @@ export function DashboardModalWrapper({
         isOpen={isWithdrawModalOpen}
         onClose={closeWithdrawModal}
       />
-      <BuyModal isOpen={isBuyModalOpen} onClose={closeBuyModal} />
-      <SellModal isOpen={isSellModalOpen} onClose={closeSellModal} />
-      <TransferModal
+      <BuyModalNew isOpen={isBuyModalOpen} onClose={closeBuyModal} />
+      <SellModalNew isOpen={isSellModalOpen} onClose={closeSellModal} />
+      <TransferModalNew
         isOpen={isTransferModalOpen}
         onClose={closeTransferModal}
       />
-      <ConvertModal isOpen={isConvertModalOpen} onClose={closeConvertModal} />
+      <ConvertModalNew
+        isOpen={isConvertModalOpen}
+        onClose={closeConvertModal}
+      />
     </>
   );
 }

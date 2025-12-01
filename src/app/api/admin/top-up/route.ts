@@ -194,20 +194,24 @@ export async function POST(req: NextRequest) {
         }`
       );
     } else {
-      // Credit USD/fiat balance
+      // Credit fiat balance in user's preferred currency
+      // The balance is stored in the user's original currency (not converted)
+      const depositCurrency = preferredCurrency || "USD";
+
       await prisma.portfolio.update({
         where: { id: portfolio.id },
         data: {
           balance: {
             increment: fiatAmount || amount,
           },
+          balanceCurrency: depositCurrency,
         },
       });
 
       console.log(
-        `✅ Credited ${getCurrencySymbol(preferredCurrency || "USD")}${
+        `✅ Credited ${getCurrencySymbol(depositCurrency)}${
           fiatAmount || amount
-        } to user ${user.email}`
+        } to user ${user.email} (currency: ${depositCurrency})`
       );
     }
 

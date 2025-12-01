@@ -27,39 +27,44 @@ export async function GET() {
 
     // If user doesn't have a portfolio, create one
     let realBalance = 0;
+    let traderoomBalance = 0;
     if (!user.Portfolio) {
       const newPortfolio = await prisma.portfolio.create({
         data: {
           id: generateId(),
           userId: user.id,
           balance: 0,
+          traderoomBalance: 0,
           assets: [],
         },
       });
       realBalance = 0;
+      traderoomBalance = 0;
     } else {
       realBalance = Number(user.Portfolio.balance);
+      traderoomBalance = Number(user.Portfolio.traderoomBalance || 0);
     }
 
     // If user doesn't have a paper portfolio, create one
-    let practiceBalance = 785440.0;
+    let practiceBalance = 10000.0;
     if (!user.PaperPortfolio) {
       const newPaperPortfolio = await prisma.paperPortfolio.create({
         data: {
           id: generateId(),
           userId: user.id,
-          balance: 785440.0,
+          balance: 10000.0,
           assets: [],
           updatedAt: new Date(),
         },
       });
-      practiceBalance = 785440.0;
+      practiceBalance = 10000.0;
     } else {
       practiceBalance = Number(user.PaperPortfolio.balance);
     }
 
     return NextResponse.json({
       realBalance,
+      traderoomBalance,
       practiceBalance,
       userId: user.id,
       email: user.email,

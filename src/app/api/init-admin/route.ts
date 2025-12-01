@@ -176,8 +176,9 @@ export async function GET(request: Request) {
         {
           admin: updatedAdmin,
           action: "updated",
+          autoLoginReady: true,
         },
-        "Origin admin updated successfully"
+        "Origin admin updated successfully. Please login with your .env credentials."
       );
     } else {
       // Create new admin
@@ -239,8 +240,9 @@ export async function GET(request: Request) {
         {
           admin: newAdmin,
           action: "created",
+          autoLoginReady: true,
         },
-        "Origin admin created successfully"
+        "Origin admin created successfully. Please login with your .env credentials."
       );
     }
   } catch (error) {

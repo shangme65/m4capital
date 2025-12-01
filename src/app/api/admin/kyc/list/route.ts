@@ -49,11 +49,8 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      kycVerifications: kycVerifications.map((kyc) => ({
+      submissions: kycVerifications.map((kyc) => ({
         id: kyc.id,
-        userId: kyc.userId,
-        userName: kyc.User.name,
-        userEmail: kyc.User.email,
         firstName: kyc.firstName,
         lastName: kyc.lastName,
         dateOfBirth: kyc.dateOfBirth,
@@ -67,11 +64,16 @@ export async function GET(req: NextRequest) {
         proofOfAddressUrl: kyc.proofOfAddressUrl,
         selfieUrl: kyc.selfieUrl,
         status: kyc.status,
-        reviewedBy: kyc.reviewedBy,
+        submittedAt: kyc.submittedAt,
         reviewedAt: kyc.reviewedAt,
         rejectionReason: kyc.rejectionReason,
-        submittedAt: kyc.submittedAt,
-        updatedAt: kyc.updatedAt,
+        adminNotes: null,
+        user: {
+          id: kyc.userId,
+          name: kyc.User.name,
+          email: kyc.User.email,
+          accountType: "INVESTOR",
+        },
       })),
     });
   } catch (error) {

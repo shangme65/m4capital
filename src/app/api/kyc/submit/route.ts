@@ -7,8 +7,23 @@ import {
   sendKycSubmissionEmail,
   sendKycAdminNotification,
 } from "@/lib/kyc-emails";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+
+// Maximum file size: 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
+// Allowed file types
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "application/pdf",
+];
+
+async function fileToBase64DataUrl(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const base64 = Buffer.from(buffer).toString("base64");
+  return `data:${file.type};base64,${base64}`;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,59 +64,89 @@ export async function POST(req: NextRequest) {
     const postalCode = formData.get("postalCode") as string;
     const country = formData.get("country") as string;
 
-    // Extract files
-    const idDocument = formData.get("idDocument") as File;
-    const proofOfAddress = formData.get("proofOfAddress") as File;
-    const selfie = formData.get("selfie") as File;
-
-    if (!idDocument || !proofOfAddress || !selfie) {
+    // Validate required fields
+    if (
+      !firstName ||
+      !lastName ||
+      !dateOfBirth ||
+      !nationality ||
+      !phoneNumber ||
+      !address ||
+      !city ||
+      !postalCode ||
+      !country
+    ) {
       return NextResponse.json(
-        { error: "All documents are required" },
+        { error: "All personal information fields are required" },
         { status: 400 }
       );
     }
 
-    // Create upload directory if it doesn't exist
-    const uploadDir = path.join(
-      process.cwd(),
-      "public",
-      "kyc-documents",
-      user.id
-    );
-    await mkdir(uploadDir, { recursive: true });
+    // Extract files
+    const idDocument = formData.get("idDocument") as File | null;
+    const proofOfAddress = formData.get("proofOfAddress") as File | null;
+    const selfie = formData.get("selfie") as File | null;
 
-    // Save files
-    const idDocumentBuffer = Buffer.from(await idDocument.arrayBuffer());
-    const idDocumentPath = path.join(
-      uploadDir,
-      `id-${Date.now()}-${idDocument.name}`
-    );
-    await writeFile(idDocumentPath, idDocumentBuffer);
+    if (!idDocument || !proofOfAddress || !selfie) {
+      return NextResponse.json(
+        { error: "All documents are required (ID, Proof of Address, Selfie)" },
+        { status: 400 }
+      );
+    }
 
-    const proofOfAddressBuffer = Buffer.from(
-      await proofOfAddress.arrayBuffer()
-    );
-    const proofOfAddressPath = path.join(
-      uploadDir,
-      `proof-${Date.now()}-${proofOfAddress.name}`
-    );
-    await writeFile(proofOfAddressPath, proofOfAddressBuffer);
+    // Validate file sizes
+    if (idDocument.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "ID document file is too large. Maximum size is 10MB." },
+        { status: 400 }
+      );
+    }
+    if (proofOfAddress.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "Proof of address file is too large. Maximum size is 10MB." },
+        { status: 400 }
+      );
+    }
+    if (selfie.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "Selfie file is too large. Maximum size is 10MB." },
+        { status: 400 }
+      );
+    }
 
-    const selfieBuffer = Buffer.from(await selfie.arrayBuffer());
-    const selfiePath = path.join(
-      uploadDir,
-      `selfie-${Date.now()}-${selfie.name}`
-    );
-    await writeFile(selfiePath, selfieBuffer);
+    // Validate file types
+    if (!ALLOWED_TYPES.includes(idDocument.type)) {
+      return NextResponse.json(
+        {
+          error: "Invalid ID document format. Allowed: PNG, JPG, JPEG, or PDF.",
+        },
+        { status: 400 }
+      );
+    }
+    if (!ALLOWED_TYPES.includes(proofOfAddress.type)) {
+      return NextResponse.json(
+        {
+          error:
+            "Invalid proof of address format. Allowed: PNG, JPG, JPEG, or PDF.",
+        },
+        { status: 400 }
+      );
+    }
+    if (
+      !ALLOWED_TYPES.includes(selfie.type) ||
+      selfie.type === "application/pdf"
+    ) {
+      return NextResponse.json(
+        { error: "Invalid selfie format. Allowed: PNG, JPG, or JPEG only." },
+        { status: 400 }
+      );
+    }
 
-    // Generate public URLs for documents
-    const idDocumentUrl = `/kyc-documents/${user.id}/${path.basename(
-      idDocumentPath
-    )}`;
-    const proofOfAddressUrl = `/kyc-documents/${user.id}/${path.basename(
-      proofOfAddressPath
-    )}`;
-    const selfieUrl = `/kyc-documents/${user.id}/${path.basename(selfiePath)}`;
+    // Convert files to base64 data URLs for storage
+    // This works on serverless platforms like Vercel where filesystem is read-only
+    const idDocumentUrl = await fileToBase64DataUrl(idDocument);
+    const proofOfAddressUrl = await fileToBase64DataUrl(proofOfAddress);
+    const selfieUrl = await fileToBase64DataUrl(selfie);
 
     // Create or update KYC verification
     const kycData = {
@@ -119,6 +164,7 @@ export async function POST(req: NextRequest) {
       selfieUrl,
       status: "PENDING" as const,
       submittedAt: new Date(),
+      updatedAt: new Date(),
     };
 
     let kycVerification;
@@ -135,21 +181,66 @@ export async function POST(req: NextRequest) {
           id: generateId(),
           ...kycData,
           userId: user.id,
-          updatedAt: new Date(),
         },
       });
     }
 
     // Send confirmation email to user
-    await sendKycSubmissionEmail(user.email!, user.name || "User");
+    try {
+      await sendKycSubmissionEmail(user.email!, user.name || "User");
+    } catch (emailError) {
+      console.error("Failed to send KYC submission email:", emailError);
+      // Don't fail the submission if email fails
+    }
 
-    // Notify admins
-    await sendKycAdminNotification(
-      user.name || "User",
-      user.email!,
-      user.id,
-      kycVerification.id
-    );
+    // Notify admins via email
+    try {
+      await sendKycAdminNotification(
+        user.name || "User",
+        user.email!,
+        user.id,
+        kycVerification.id
+      );
+    } catch (adminEmailError) {
+      console.error("Failed to send admin notification:", adminEmailError);
+      // Don't fail the submission if admin email fails
+    }
+
+    // Create push notifications for all admins
+    try {
+      const admins = await prisma.user.findMany({
+        where: { role: "ADMIN" },
+        select: { id: true },
+      });
+
+      // Create notification for each admin
+      await Promise.all(
+        admins.map((admin) =>
+          prisma.notification.create({
+            data: {
+              id: generateId(),
+              userId: admin.id,
+              type: "INFO",
+              title: "🔔 New KYC Submission",
+              message: `${
+                user.name || user.email
+              } has submitted KYC verification documents. Review required.`,
+              metadata: {
+                kycId: kycVerification.id,
+                userId: user.id,
+                userName: user.name,
+                userEmail: user.email,
+              },
+            },
+          })
+        )
+      );
+
+      console.log(`✅ Push notifications created for ${admins.length} admins`);
+    } catch (pushError) {
+      console.error("Failed to create admin push notifications:", pushError);
+      // Don't fail the submission if push notification fails
+    }
 
     return NextResponse.json({
       success: true,
@@ -162,8 +253,25 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("KYC submission error:", error);
+
+    // Provide more specific error messages
+    if (error instanceof Error) {
+      if (
+        error.message.includes("PayloadTooLarge") ||
+        error.message.includes("body exceeded")
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Files are too large. Please reduce the file sizes and try again.",
+          },
+          { status: 413 }
+        );
+      }
+    }
+
     return NextResponse.json(
-      { error: "Failed to submit KYC verification" },
+      { error: "Failed to submit KYC verification. Please try again." },
       { status: 500 }
     );
   }

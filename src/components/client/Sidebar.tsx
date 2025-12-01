@@ -108,6 +108,7 @@ const Sidebar = () => {
             {/* Sidebar */}
             <motion.div
               key="sidebar-content"
+              data-tutorial="sidebar"
               className="fixed left-0 top-0 h-full bg-gray-800 text-white w-60 sm:w-72 p-4 sm:p-6 flex flex-col z-50"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}

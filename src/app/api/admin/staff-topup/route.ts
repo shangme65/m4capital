@@ -95,14 +95,17 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Update portfolio balance
+    // Update portfolio balance - store in user's original currency
     const currentBalance = user.Portfolio?.balance || 0;
     const newBalance =
       parseFloat(currentBalance.toString()) + parseFloat(amount.toString());
 
     await prisma.portfolio.update({
       where: { id: portfolioId },
-      data: { balance: newBalance },
+      data: {
+        balance: newBalance,
+        balanceCurrency: currency,
+      },
     });
 
     // Create notification for user

@@ -22,7 +22,7 @@ const colorMap: Record<string, string> = {
   BTC: "#f7931a",
   ETH: "#627eea",
   XRP: "#23292f",
-  TRX: "#eb0029",
+  TRX: "#1c1c1c", // Dark background for better red logo visibility
   TON: "#0098ea",
   LTC: "#345d9d",
   BCH: "#f7931a",
@@ -32,27 +32,17 @@ const colorMap: Record<string, string> = {
   USD: "#ffd700",
 };
 
-// Map tokens to their network
-const networkMap: Record<string, string> = {
-  USDT: "ETH", // USDT ERC-20
-  USDC: "ETH", // USDC ERC-20
-};
-
 export function CryptoIcon({
   symbol,
   size = "md",
   className = "",
   alt,
-  showNetwork = false,
 }: CryptoIconProps) {
   const [failed, setFailed] = useState(false);
   const iconSize = sizeMap[size];
   const normalizedSymbol = symbol.toLowerCase();
   const iconPath = `/crypto/${normalizedSymbol}.svg`;
   const bgColor = colorMap[symbol] || "#6b7280";
-
-  const networkSymbol = networkMap[symbol];
-  const badgeSize = Math.floor(iconSize * 0.4);
 
   if (failed) {
     // Fallback to colored circle with symbol
@@ -69,28 +59,6 @@ export function CryptoIcon({
         >
           {symbol.substring(0, 1)}
         </div>
-        {showNetwork && networkSymbol && (
-          <div
-            className="absolute -bottom-1 -right-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-gray-900"
-            style={{
-              width: `${badgeSize}px`,
-              height: `${badgeSize}px`,
-              padding: "2px",
-              boxShadow: "0 2px 6px rgba(59,130,246,0.5)",
-            }}
-          >
-            <img
-              src={`/crypto/${networkSymbol.toLowerCase()}.svg`}
-              alt={`${networkSymbol} network`}
-              className="rounded-full"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-              }}
-            />
-          </div>
-        )}
       </div>
     );
   }
@@ -123,28 +91,6 @@ export function CryptoIcon({
           }}
         />
       </div>
-      {showNetwork && networkSymbol && (
-        <div
-          className="absolute -bottom-1 -right-1 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-gray-900"
-          style={{
-            width: `${badgeSize}px`,
-            height: `${badgeSize}px`,
-            padding: "2px",
-            boxShadow: "0 2px 6px rgba(59,130,246,0.5)",
-          }}
-        >
-          <img
-            src={`/crypto/${networkSymbol.toLowerCase()}.svg`}
-            alt={`${networkSymbol} network`}
-            className="rounded-full"
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-            }}
-          />
-        </div>
-      )}
     </div>
   );
 }

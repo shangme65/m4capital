@@ -242,6 +242,7 @@ export async function GET(request: NextRequest) {
       },
       portfolio: {
         balance: portfolioValue,
+        balanceCurrency: portfolio.balanceCurrency || "USD",
         assets: assets,
         totalDeposited,
         totalWithdrawn,

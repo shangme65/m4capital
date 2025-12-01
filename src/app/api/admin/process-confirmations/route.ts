@@ -119,18 +119,20 @@ export async function POST(req: NextRequest) {
             `✅ Credited ${deposit.amount} ${deposit.targetAsset} to user ${deposit.User.email}`
           );
         } else {
-          // Update USD balance
+          // Update balance in the deposit currency
+          const depositCurrency = deposit.currency || "USD";
           await prisma.portfolio.update({
             where: { id: portfolio.id },
             data: {
               balance: {
                 increment: deposit.amount,
               },
+              balanceCurrency: depositCurrency,
             },
           });
 
           console.log(
-            `✅ Credited $${deposit.amount} to user ${deposit.User.email} balance`
+            `✅ Credited ${depositCurrency} ${deposit.amount} to user ${deposit.User.email} balance`
           );
         }
 

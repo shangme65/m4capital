@@ -99,6 +99,34 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 4. **Move to next error** - Chain fixes without commentary
 5. **Only brief status updates** - "Fixed X, building..." maximum
 
+### 📋 ALWAYS CREATE TODO LIST FOR MULTIPLE TASKS
+
+**CRITICAL RULE:** When user requests multiple tasks/changes, ALWAYS create a todo list FIRST before starting any work.
+
+**REQUIRED approach:**
+
+1. **Identify all tasks** - Parse user request for all distinct items
+2. **Create todo list immediately** - Use `manage_todo_list` tool before any edits
+3. **Mark status correctly** - Start with all "not-started", mark "in-progress" when working
+4. **Update on completion** - Mark each task "completed" as you finish it
+5. **Work sequentially** - Complete one task at a time, updating status
+
+**Examples of multiple task requests:**
+
+- "fix the button and update the modal" → 2 tasks
+- "remove X, add Y, and change Z styling" → 3 tasks
+- Numbered lists or comma-separated items → Create corresponding todos
+
+**Todo list format:**
+```json
+[
+  {"id": 1, "title": "Short task name", "description": "Detailed description", "status": "not-started"},
+  {"id": 2, "title": "Second task", "description": "Details", "status": "not-started"}
+]
+```
+
+**NEVER skip the todo list when multiple tasks are requested.**
+
 **FORBIDDEN responses:**
 
 - ❌ Long explanations of what went wrong
@@ -802,80 +830,61 @@ Fix: Add a null check: `if (existingAssetIndex >= 0 && assets[existingAssetIndex
 
 ---
 
-## 11. Build Error Reporting Protocol
+## 12. Currency System Rules
 
-**CRITICAL INSTRUCTION FOR BUILD FAILURES:**
+### Database Storage
 
-When a build fails (`npm run build`, `npm run lint`, or similar), you MUST:
+**Portfolio balance stores ORIGINAL currency:**
+- `balance` - The amount in the user's original currency
+- `balanceCurrency` - The currency code (e.g., "EUR", "USD", "GBP")
 
-### Step-by-Step Process:
+**Example:**
+- User deposits €100 → `balance: 100, balanceCurrency: "EUR"`
+- Balance does NOT fluctuate with exchange rates
+- User always sees their original deposited amount
 
-1. **STOP and ANALYZE** the error output first
+### Currency Context Functions
 
-   - Read the complete error message
-   - Identify ALL files and line numbers with errors
-   - Note the type of each error (syntax, type, import, etc.)
+**CRITICAL: `formatAmount()` already converts USD → preferred currency internally!**
 
-2. **EXPLAIN to the user** what is causing the build to fail:
+```typescript
+// ✅ CORRECT - formatAmount handles conversion
+formatAmount(valueInUSD, 2)
 
-   ```
-   **Build Error Found:**
-   The build is failing in `src/app/api/example/route.ts` at line 42 because
-   TypeScript is reporting "Property 'name' does not exist on type 'User'".
-   This occurs because we're trying to access a property that isn't defined
-   in the User type definition.
-   ```
-
-3. **ONLY AFTER explaining**, proceed to fix the error
-
-   - Fix all related errors in one batch if possible
-   - Use `multi_replace_string_in_file` for multiple independent fixes
-
-4. **Then run the build again** to verify the fix worked
-
-### What to Report:
-
-- **File path and line number** where error occurs
-- **Type of error**: Syntax error, type error, import error, null check, etc.
-- **Root cause**: What the code is trying to do that's invalid
-- **Impact**: Why this is breaking the build
-
-### Example:
-
-**CORRECT:**
-
-```
-**Build Error Analysis:**
-The build is failing because of a TypeScript null safety check in
-`src/app/api/cron/process-confirmations/route.ts` at line 119.
-
-Error: "Object is possibly 'null'"
-
-Cause: We're accessing `assets[existingAssetIndex].amount` without checking
-if the array element exists. TypeScript's strict null checking requires we
-verify the element isn't null before accessing its properties.
-
-Fix: Add a null check: `if (existingAssetIndex >= 0 && assets[existingAssetIndex])`
+// ❌ WRONG - Double conversion!
+formatAmount(convertAmount(valueInUSD), 2)
 ```
 
-**INCORRECT:**
+**Function Reference:**
 
+| Function | Input | Output | Use Case |
+|----------|-------|--------|----------|
+| `formatAmount(amountUSD, decimals)` | USD number | Formatted string (e.g., "€100.00") | Display values to user |
+| `convertAmount(amountUSD)` | USD number | Number in preferred currency | When you need raw number |
+| `convertAmount(amount, true)` | Preferred currency | USD number | Converting user input to USD |
+
+### Display Logic
+
+**When showing portfolio balance:**
+1. If `balanceCurrency` matches user's `preferredCurrency` → show `balance` directly
+2. If different → convert from `balanceCurrency` to `preferredCurrency`
+
+**NEVER double-convert. Check if value is already in user's currency first.**
+
+### Common Mistakes to Avoid
+
+```typescript
+// ❌ WRONG - Double conversion
+{formatAmount(convertAmount(userBalance), 2)}
+
+// ✅ CORRECT - formatAmount already converts
+{formatAmount(userBalance, 2)}
+
+// ❌ WRONG - Assuming all values are USD
+const total = balance1 + balance2; // If different currencies!
+
+// ✅ CORRECT - Convert to common currency first
+const total = convertToUSD(balance1, currency1) + convertToUSD(balance2, currency2);
 ```
-[Immediately runs fix without explaining]
-```
-
-### Never:
-
-- Immediately fix errors without explanation
-- Run multiple build attempts without diagnosing the issue first
-- Ignore warning messages that might become errors
-- Fix errors one at a time when they could be batched
-- Skip explaining the root cause to the user
-
-### Build Warnings:
-
-- Always report warnings even if build succeeds
-- Explain which warnings are safe to ignore vs which need fixing
-- Prioritize fixing import warnings (often become errors in production)
 
 ---

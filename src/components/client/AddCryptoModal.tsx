@@ -285,26 +285,10 @@ export default function AddCryptoModal({
                               <CryptoIcon
                                 symbol={crypto.symbol}
                                 size="md"
-                                showNetwork={false}
+                                showNetwork={true}
                                 className="relative z-10 drop-shadow-lg"
                               />
                             </div>
-                            {/* Network badge for USDT/USDC */}
-                            {(crypto.symbol === "USDT" ||
-                              crypto.symbol === "USDC") && (
-                              <div
-                                className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center ring-2 ring-gray-900"
-                                style={{
-                                  boxShadow: "0 2px 6px rgba(59,130,246,0.5)",
-                                }}
-                              >
-                                <CryptoIcon
-                                  symbol="ETH"
-                                  size="xs"
-                                  className="w-2.5 h-2.5"
-                                />
-                              </div>
-                            )}
                           </div>
                           <div className="text-left">
                             <div className="text-white font-semibold flex items-center gap-2">

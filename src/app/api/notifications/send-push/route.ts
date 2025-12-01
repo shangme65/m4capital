@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendWebPushToUser } from "@/lib/push-notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,8 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { type, title, message, amount, asset } = body;
+    const { type, title, message, amount, asset, icon, data, targetUserId } =
+      body;
 
     if (!type || !title || !message) {
       return NextResponse.json(
@@ -27,11 +29,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Determine which user to send to (default to current user)
+    const userId = targetUserId || session.user.id;
+
     // Check if user has push notifications enabled
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       select: {
         emailNotifications: true,
+        name: true,
       },
     });
 
@@ -49,7 +55,7 @@ export async function POST(request: NextRequest) {
     const notification = await prisma.notification.create({
       data: {
         id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        userId: session.user.id,
+        userId: userId,
         type: "TRANSACTION" as any,
         title,
         message,
@@ -59,10 +65,32 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log(`🔔 Push notification created for user ${userId}`);
+
+    // Send web push notification
+    const pushPayload = {
+      title,
+      body: message,
+      icon: icon || "/icons/icon-192.png",
+      badge: "/icons/icon-96.png",
+      tag: `m4capital-${type}-${Date.now()}`,
+      data: {
+        url: "/dashboard",
+        notificationId: notification.id,
+        type,
+        ...data,
+      },
+      vibrate: [200, 100, 200],
+      requireInteraction: type === "deposit" || type === "withdrawal",
+    };
+
+    const { sent, failed } = await sendWebPushToUser(userId, pushPayload);
+
     return NextResponse.json({
       success: true,
       message: "Push notification sent successfully",
       notification,
+      pushStats: { sent, failed },
     });
   } catch (error) {
     console.error("Error sending push notification:", error);

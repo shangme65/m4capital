@@ -8,6 +8,7 @@ interface PortfolioAsset {
 
 interface Portfolio {
   balance: number;
+  balanceCurrency?: string;
   assets: PortfolioAsset[];
   recentDeposits: Array<{
     id: string;

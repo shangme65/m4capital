@@ -97,16 +97,28 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         isScrolled ? "bg-black" : "bg-black bg-opacity-0"
       }`}
     >
-      <nav className="container mx-auto px-4 sm:px-12 md:px-20 py-3 flex justify-between items-center">
+      <nav className="container mx-auto px-4 sm:px-8 md:px-16 py-2 flex justify-between items-center">
         <Link href="/" className="flex items-center group">
-          <Image
-            src="/m4capitallogo1.png"
-            alt="M4 Capital Logo"
-            width={140}
-            height={47}
-            className="transition-transform duration-300 group-hover:scale-110 group-hover:animate-bounce object-contain w-32 md:w-auto"
-            priority
-          />
+          <div
+            className="rounded-lg transition-all duration-300 group-hover:scale-110"
+            style={{
+              background:
+                "linear-gradient(145deg, #1f2937 0%, #111827 50%, #1f2937 100%)",
+              boxShadow:
+                "0 8px 20px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.05), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
+              border: "1px solid rgba(255, 255, 255, 0.05)",
+              padding: "4px 6px",
+            }}
+          >
+            <Image
+              src="/m4capitallogo1.png"
+              alt="M4 Capital Logo"
+              width={100}
+              height={34}
+              className="object-contain w-20 md:w-auto"
+              priority
+            />
+          </div>
         </Link>
 
         {/* Widescreen Menu */}
@@ -210,25 +222,52 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {session ? (
               <button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center space-x-2 bg-orange-600 px-10 py-3.5 rounded-xl hover:bg-orange-700 hover:scale-105 transition-all duration-300 transform text-sm font-bold"
+                className="flex items-center space-x-2 hover:scale-105 transition-all duration-300 transform text-sm font-bold"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #f97316 0%, #c2410c 50%, #f97316 100%)",
+                  boxShadow:
+                    "0 10px 25px -5px rgba(249, 115, 22, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.2), inset 0 -3px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  padding: "10px 20px",
+                  borderRadius: "12px",
+                }}
                 aria-label="Go to Dashboard"
               >
-                <LayoutDashboard size={22} />
-                <span>Go to Dashboard</span>
+                <LayoutDashboard size={20} />
+                <span>Dashboard</span>
               </button>
             ) : (
               <>
                 <button
                   onClick={onLoginClick}
-                  className="flex items-center space-x-2 bg-gray-800/70 px-5 py-2.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-sm font-bold"
+                  className="flex items-center space-x-2 hover:scale-105 active:scale-95 transition-all duration-300 transform text-sm font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                    boxShadow:
+                      "0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -3px 0 rgba(0, 0, 0, 0.4)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    padding: "10px 18px",
+                    borderRadius: "12px",
+                  }}
                   aria-label="Login"
                 >
-                  <LogIn size={18} />
+                  <LogIn size={16} />
                   <span>Log in</span>
                 </button>
                 <button
                   onClick={onSignupClick}
-                  className="bg-orange-600 px-5 py-2.5 text-sm font-bold rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
+                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-sm font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
+                    boxShadow:
+                      "0 10px 25px -5px rgba(249, 115, 22, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.25), inset 0 -3px 0 rgba(0, 0, 0, 0.3)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    padding: "10px 18px",
+                    borderRadius: "12px",
+                  }}
                 >
                   Sign Up
                 </button>
@@ -241,26 +280,53 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {session ? (
               <button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center space-x-1 bg-orange-600 px-4 py-2.5 rounded-lg hover:bg-orange-700 transition-all duration-300"
+                className="flex items-center space-x-1 hover:scale-105 transition-all duration-300"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #f97316 0%, #c2410c 50%, #f97316 100%)",
+                  boxShadow:
+                    "0 6px 16px -4px rgba(249, 115, 22, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  padding: "6px 12px",
+                  borderRadius: "10px",
+                }}
                 aria-label="Go to Dashboard"
               >
-                <LayoutDashboard size={18} />
+                <LayoutDashboard size={16} />
                 <span className="text-xs font-bold">Dashboard</span>
               </button>
             ) : (
               <>
                 <button
                   onClick={onLoginClick}
-                  className="flex items-center space-x-1 bg-gray-800/70 px-2 sm:px-3 py-2 sm:py-2 rounded-lg sm:rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs font-bold"
+                  className="flex items-center space-x-1 hover:scale-105 active:scale-95 transition-all duration-300 transform text-xs font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                    boxShadow:
+                      "0 8px 18px -4px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    padding: "8px 12px",
+                    borderRadius: "10px",
+                  }}
                   aria-label="Login"
                 >
-                  <LogIn size={16} className="sm:w-5 sm:h-5" />
+                  <LogIn size={14} className="sm:w-4 sm:h-4" />
                   <span className="hidden xs:inline">Log in</span>
                   <span className="xs:hidden">Login</span>
                 </button>
                 <button
                   onClick={onSignupClick}
-                  className="bg-orange-600 px-2 sm:px-3 py-2 sm:py-2 text-xs font-bold rounded-lg sm:rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
+                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-xs font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
+                    boxShadow:
+                      "0 8px 18px -4px rgba(249, 115, 22, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.25), inset 0 -2px 0 rgba(0, 0, 0, 0.3)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    padding: "8px 12px",
+                    borderRadius: "10px",
+                  }}
                 >
                   Sign Up
                 </button>
@@ -268,13 +334,22 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             )}
             <button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-              className="bg-gray-800/50 px-2 sm:px-3 py-2 sm:py-2 rounded-lg sm:rounded-xl hover:bg-gray-800/50 hover:scale-105 hover:rotate-180 active:bg-purple-800 active:scale-90 active:text-yellow-300 transition-all duration-300 transform"
+              className="hover:scale-105 hover:rotate-180 active:scale-90 transition-all duration-300 transform"
+              style={{
+                background:
+                  "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                boxShadow:
+                  "0 8px 18px -4px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                padding: "8px 12px",
+                borderRadius: "10px",
+              }}
               aria-label="Open menu"
             >
               {isMobileMenuOpen ? (
-                <X size={14} className="sm:w-4 sm:h-4" />
+                <X size={16} className="sm:w-5 sm:h-5" />
               ) : (
-                <Menu size={14} className="sm:w-4 sm:h-4" />
+                <Menu size={16} className="sm:w-5 sm:h-5" />
               )}
             </button>
           </div>
@@ -283,67 +358,340 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
       {/* Full-screen Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-95 z-30 flex flex-col items-center justify-center md:hidden">
-          <button
-            onClick={() => setMobileMenuOpen(false)}
-            className="absolute top-6 right-6 text-white"
-            aria-label="Close menu"
-          >
-            <X size={30} />
-          </button>
-          <nav className="flex flex-col items-center space-y-8">
-            <ul className="flex flex-col items-center space-y-8">
-              {navLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    className="text-2xl font-semibold hover:text-indigo-300 transition-colors"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    {link.text}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-8 flex flex-col items-center space-y-4">
-              {session ? (
-                <button
-                  onClick={() => {
-                    router.push("/dashboard");
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center justify-center space-x-2 bg-orange-600 px-8 py-3 rounded-2xl hover:bg-orange-700 hover:scale-105 transition-all duration-300 transform w-full"
-                  aria-label="Go to Dashboard"
-                >
-                  <LayoutDashboard size={22} />
-                  <span className="font-bold">Go to Dashboard</span>
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={() => {
-                      onLoginClick?.();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="flex items-center justify-center space-x-2 bg-gray-800/70 px-6 py-3 rounded-2xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform w-full"
-                    aria-label="Login"
-                  >
-                    <LogIn size={18} />
-                    <span>Log in</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      onSignupClick?.();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="bg-orange-600 px-6 py-3 text-sm font-bold rounded-2xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform w-full whitespace-nowrap"
-                  >
-                    Sign Up
-                  </button>
-                </>
-              )}
+        <div className="fixed inset-0 bg-gray-900 z-30 flex flex-col md:hidden overflow-y-auto">
+          {/* Header with logo and close button */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 sticky top-0 bg-gray-900 z-10">
+            <Link
+              href="/"
+              className="flex items-center"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <div
+                className="rounded-lg"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1f2937 0%, #111827 50%, #1f2937 100%)",
+                  padding: "4px 6px",
+                }}
+              >
+                <Image
+                  src="/m4capitallogo1.png"
+                  alt="M4 Capital Logo"
+                  width={80}
+                  height={27}
+                  className="object-contain"
+                />
+              </div>
+            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onLoginClick}
+                className="flex items-center space-x-1 text-xs font-bold"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                  padding: "8px 12px",
+                  borderRadius: "10px",
+                }}
+              >
+                <LogIn size={14} />
+              </button>
+              <button
+                onClick={onSignupClick}
+                className="text-xs font-bold text-white"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
+                  padding: "8px 14px",
+                  borderRadius: "10px",
+                }}
+              >
+                Sign Up
+              </button>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                  borderRadius: "10px",
+                }}
+                aria-label="Close menu"
+              >
+                <X size={18} />
+              </button>
             </div>
-          </nav>
+          </div>
+
+          {/* Menu Content */}
+          <div className="flex-1 px-4 py-6 space-y-8">
+            {/* Choose Language */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
+                CHOOSE LANGUAGE
+              </h3>
+              <button className="w-full flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3.5 text-white font-semibold">
+                <span>English</span>
+                <ChevronDown size={18} className="text-orange-500 -rotate-90" />
+              </button>
+            </div>
+
+            {/* Download App */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
+                DOWNLOAD APP
+              </h3>
+              <div className="space-y-2">
+                <a
+                  href="#"
+                  className="flex items-center gap-3 bg-gray-800 rounded-xl px-4 py-3"
+                >
+                  <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
+                    <svg
+                      className="w-6 h-6 text-orange-500"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.61 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">
+                      Get it on Google Play
+                    </p>
+                    <p className="text-gray-500 text-xs">
+                      74 MB · Android 7.0 or later
+                    </p>
+                  </div>
+                </a>
+                <a
+                  href="#"
+                  className="flex items-center gap-3 bg-gray-800 rounded-xl px-4 py-3"
+                >
+                  <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
+                    <svg
+                      className="w-6 h-6 text-orange-500"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M6,18c0,0.55 0.45,1 1,1h1v3.5c0,0.83 0.67,1.5 1.5,1.5s1.5-0.67 1.5-1.5V19h2v3.5c0,0.83 0.67,1.5 1.5,1.5s1.5-0.67 1.5-1.5V19h1c0.55,0 1-0.45 1-1V8H6v10zM3.5,8C2.67,8 2,8.67 2,9.5v7c0,0.83 0.67,1.5 1.5,1.5S5,17.33 5,16.5v-7C5,8.67 4.33,8 3.5,8zM20.5,8c-0.83,0-1.5,0.67-1.5,1.5v7c0,0.83 0.67,1.5 1.5,1.5s1.5-0.67 1.5-1.5v-7C22,8.67 21.33,8 20.5,8zM15.53,2.16l1.3-1.3c0.2-0.2 0.2-0.51 0-0.71s-0.51-0.2-0.71,0l-1.48,1.48C13.85,1.23 12.95,1 12,1c-0.96,0-1.86,0.23-2.66,0.63L7.85,0.15c-0.2-0.2-0.51-0.2-0.71,0s-0.2,0.51 0,0.71l1.31,1.31C6.97,3.26 6,5.01 6,7h12C18,5.01 17.03,3.25 15.53,2.16zM10,5H9V4h1V5zM15,5h-1V4h1V5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">
+                      Android APK
+                    </p>
+                    <p className="text-gray-500 text-xs">
+                      74 MB · Android 5.1 or later
+                    </p>
+                  </div>
+                </a>
+              </div>
+              <button className="mt-3 text-orange-500 font-semibold text-sm flex items-center gap-1">
+                All available apps
+                <ChevronDown size={16} className="-rotate-90" />
+              </button>
+            </div>
+
+            {/* Markets & Assets */}
+            <div>
+              <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
+                MARKETS & ASSETS
+              </h3>
+              <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+                <Link
+                  href="/crypto"
+                  className="text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Crypto
+                </Link>
+                <Link
+                  href="/etfs"
+                  className="text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  ETFs
+                </Link>
+                <Link
+                  href="/commodities"
+                  className="text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Commodities
+                </Link>
+                <Link
+                  href="/forex"
+                  className="text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Forex
+                </Link>
+                <Link
+                  href="/indices"
+                  className="text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Indices
+                </Link>
+                <Link
+                  href="/stocks"
+                  className="text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Stocks
+                </Link>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-800 pt-6">
+              <div className="grid grid-cols-2 gap-8">
+                {/* Analytics Column */}
+                <div>
+                  <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
+                    ANALYTICS
+                  </h3>
+                  <div className="space-y-3">
+                    <Link
+                      href="/historical-quotes"
+                      className="block text-white font-semibold hover:text-orange-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Historical Quotes
+                    </Link>
+                    <Link
+                      href="/calendars"
+                      className="block text-white font-semibold hover:text-orange-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Calendars
+                    </Link>
+                    <Link
+                      href="/trading-specifications"
+                      className="block text-white font-semibold hover:text-orange-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Trading specifications
+                    </Link>
+                  </div>
+                </div>
+                {/* Education Column */}
+                <div>
+                  <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
+                    EDUCATION
+                  </h3>
+                  <div className="space-y-3">
+                    <Link
+                      href="/video-tutorials"
+                      className="block text-white font-semibold hover:text-orange-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Video tutorials
+                    </Link>
+                    <Link
+                      href="/margin-trading-basics"
+                      className="block text-white font-semibold hover:text-orange-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      The basics of margin trading
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-800 pt-6">
+              <div className="grid grid-cols-2 gap-8">
+                {/* Community Column */}
+                <div>
+                  <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
+                    COMMUNITY
+                  </h3>
+                  <div className="space-y-3">
+                    <Link
+                      href="/tournaments"
+                      className="block text-white font-semibold hover:text-orange-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Tournaments
+                    </Link>
+                    <Link
+                      href="/blog"
+                      className="block text-white font-semibold hover:text-orange-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Our blog
+                    </Link>
+                  </div>
+                </div>
+                {/* Services Column */}
+                <div>
+                  <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
+                    SERVICES
+                  </h3>
+                  <div className="space-y-3">
+                    <Link
+                      href="/help"
+                      className="block text-white font-semibold hover:text-orange-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Help
+                    </Link>
+                    <Link
+                      href="/deposits-withdrawals"
+                      className="block text-white font-semibold hover:text-orange-500"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Deposits & withdrawals
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-800 pt-6">
+              <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
+                ABOUT US
+              </h3>
+              <div className="space-y-3">
+                <Link
+                  href="/in-numbers"
+                  className="block text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  In Numbers
+                </Link>
+                <Link
+                  href="/press"
+                  className="block text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  In the Press
+                </Link>
+                <Link
+                  href="/contact"
+                  className="block text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Contact Us
+                </Link>
+                <Link
+                  href="/awards"
+                  className="block text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Awards
+                </Link>
+                <Link
+                  href="/licenses-and-safeguards"
+                  className="block text-white font-semibold hover:text-orange-500"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Licenses and Safeguards
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </header>

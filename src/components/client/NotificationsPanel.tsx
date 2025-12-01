@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -17,6 +18,7 @@ import {
   MailOpen,
   Circle,
   ChevronDown,
+  Archive,
 } from "lucide-react";
 import { useNotifications, Notification } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -30,15 +32,30 @@ export default function NotificationsPanel({
   isOpen,
   onClose,
 }: NotificationsPanelProps) {
-  const { notifications, unreadCount, markNotificationAsRead } =
-    useNotifications();
-  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
+  const {
+    notifications,
+    unreadCount,
+    markNotificationAsRead,
+    archiveNotification,
+    deleteNotification,
+  } = useNotifications();
+  const { formatAmount } = useCurrency();
 
-  const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [filter, setFilter] = useState<"all" | "unread" | "archived">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  const filteredNotifications =
-    filter === "unread" ? notifications.filter((n) => !n.read) : notifications;
+  // Ensure we only render portal on client
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Filter notifications based on selected filter
+  const filteredNotifications = notifications.filter((n) => {
+    if (filter === "archived") return n.archived;
+    if (filter === "unread") return !n.read && !n.archived;
+    return !n.archived; // "all" shows non-archived
+  });
 
   const getNotificationIcon = (notification: Notification) => {
     // Smaller icons with gradient backgrounds
@@ -147,17 +164,37 @@ export default function NotificationsPanel({
     return `${days}d ago`;
   };
 
-  return (
+  // Don't render on server
+  if (!mounted) return null;
+
+  const panelContent = (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop with blur */}
+        <div
+          className="fixed inset-0 z-[99999]"
+          style={{
+            isolation: "isolate",
+            transform: "translateZ(0)",
+            willChange: "transform",
+          }}
+        >
+          {/* Solid backdrop layer to block everything - fully opaque */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.7 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black"
+            style={{ zIndex: 1 }}
+          />
+
+          {/* Backdrop with blur - clickable to close */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+            className="absolute inset-0 backdrop-blur-md"
+            style={{ zIndex: 2 }}
           />
 
           {/* Enhanced Panel */}
@@ -166,7 +203,8 @@ export default function NotificationsPanel({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 400, scale: 0.9 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-l border-gray-700/50 z-50 flex flex-col shadow-2xl"
+            className="absolute right-0 top-0 h-full w-full sm:w-[480px] bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-l border-gray-700/50 flex flex-col shadow-2xl"
+            style={{ zIndex: 3 }}
           >
             {/* Smaller Header */}
             <div className="relative overflow-hidden">
@@ -255,6 +293,30 @@ export default function NotificationsPanel({
                         {unreadCount}
                       </span>
                     )}
+                  </span>
+                </button>
+                <button
+                  onClick={() => setFilter("archived")}
+                  className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    filter === "archived"
+                      ? "text-white"
+                      : "text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {filter === "archived" && (
+                    <motion.div
+                      layoutId="filterBg"
+                      className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-purple-500/20 rounded-lg border border-orange-500/30"
+                      transition={{
+                        type: "spring",
+                        damping: 25,
+                        stiffness: 300,
+                      }}
+                    />
+                  )}
+                  <span className="relative flex items-center space-x-1.5">
+                    <Archive className="w-3 h-3" />
+                    <span>Archived</span>
                   </span>
                 </button>
               </div>
@@ -419,7 +481,7 @@ export default function NotificationsPanel({
                                   )}
                                 </AnimatePresence>
 
-                                {/* Status Indicator */}
+                                {/* Status Indicator and Actions */}
                                 <div className="flex items-center justify-between mt-1">
                                   <div className="flex items-center space-x-1.5">
                                     {!notification.read ? (
@@ -437,6 +499,32 @@ export default function NotificationsPanel({
                                         </span>
                                       </div>
                                     )}
+                                  </div>
+
+                                  {/* Archive and Delete Actions */}
+                                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    {!notification.archived && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          archiveNotification(notification.id);
+                                        }}
+                                        className="p-1.5 rounded-md hover:bg-gray-700/50 text-gray-400 hover:text-yellow-400 transition-colors"
+                                        title="Archive"
+                                      >
+                                        <Archive className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteNotification(notification.id);
+                                      }}
+                                      className="p-1.5 rounded-md hover:bg-gray-700/50 text-gray-400 hover:text-red-400 transition-colors"
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </button>
                                   </div>
                                 </div>
                               </div>
@@ -478,8 +566,11 @@ export default function NotificationsPanel({
               );
             }
           `}</style>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );
+
+  // Use portal to render outside of normal DOM hierarchy
+  return createPortal(panelContent, document.body);
 }

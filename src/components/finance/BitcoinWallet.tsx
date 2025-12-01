@@ -48,10 +48,28 @@ export default function BitcoinWallet() {
     }
   };
 
+  // UUID fallback for browsers that don't support crypto.randomUUID
+  const generateUUID = (): string => {
+    if (
+      typeof crypto !== "undefined" &&
+      typeof crypto.randomUUID === "function"
+    ) {
+      return crypto.randomUUID();
+    }
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
+      /[xy]/g,
+      function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === "x" ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      }
+    );
+  };
+
   const handleDeposit = async (amount: number) => {
     // In production, this would integrate with a real Bitcoin payment processor
     const newDeposit: BitcoinDeposit = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       amount,
       txHash: "", // Will be populated by real payment processor
       status: "PENDING",

@@ -1364,7 +1364,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white px-3 py-4 sm:p-6">
       {/* Popup Notification */}
       {showNotification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
@@ -1429,93 +1429,598 @@ const AdminDashboard = () => {
       {/* Tab Content */}
       {activeTab === "dashboard" && (
         <div className="space-y-3 sm:space-y-8">
-          {/* Quick Actions */}
-          <div className="grid grid-cols-1 gap-2 xs:gap-3">
-            <button
-              onClick={() => {
-                setShowPaymentModal(true);
-                fetchUsers();
-              }}
-              className="w-full bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <CreditCard className="flex-shrink-0" size={18} />
-              <span className="text-left">Process Manual Payment</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("users")}
-              className="w-full bg-blue-500/20 border-2 border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <Users className="flex-shrink-0" size={18} />
-              <span className="text-left">Manage Users</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("bin")}
-              className="w-full bg-red-500/20 border-2 border-red-500/40 hover:bg-red-500/30 hover:border-red-500/60 text-red-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg relative"
-            >
-              <Trash2 className="flex-shrink-0" size={18} />
-              <span className="text-left">Deleted Users Bin</span>
-              {deletedUsersCount > 0 && (
-                <span className="absolute top-1 right-1 bg-red-500 text-white rounded-full px-1.5 py-0.5 text-[10px] font-bold shadow-lg">
-                  {deletedUsersCount}
-                </span>
-              )}
-            </button>
-            <button
-              onClick={() => (window.location.href = "/admin/kyc")}
-              className="w-full bg-orange-500/20 border-2 border-orange-500/40 hover:bg-orange-500/30 hover:border-orange-500/60 text-orange-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <Shield className="flex-shrink-0" size={18} />
-              <span className="text-left">KYC Verification</span>
-            </button>
-            <button
-              onClick={() => router.push("/admin/analytics")}
-              className="w-full bg-cyan-500/20 border-2 border-cyan-500/40 hover:bg-cyan-500/30 hover:border-cyan-500/60 text-cyan-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <BarChart3 className="flex-shrink-0" size={18} />
-              <span className="text-left">Analytics Dashboard</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("notifications")}
-              className="w-full bg-purple-500/20 border-2 border-purple-500/40 hover:bg-purple-500/30 hover:border-purple-500/60 text-purple-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <Bell className="flex-shrink-0" size={18} />
-              <span className="text-left">Send Notifications</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("transactions")}
-              className="w-full bg-indigo-500/20 border-2 border-indigo-500/40 hover:bg-indigo-500/30 hover:border-indigo-500/60 text-indigo-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <History className="flex-shrink-0" size={18} />
-              <span className="text-left">Transaction History</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("system")}
-              className="w-full bg-gray-500/20 border-2 border-gray-500/40 hover:bg-gray-500/30 hover:border-gray-500/60 text-gray-300 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <Settings className="flex-shrink-0" size={18} />
-              <span className="text-left">System Settings</span>
-            </button>
-            <button
-              onClick={() => setActiveTab("reports")}
-              className="w-full bg-yellow-500/20 border-2 border-yellow-500/40 hover:bg-yellow-500/30 hover:border-yellow-500/60 text-yellow-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <FileText className="flex-shrink-0" size={18} />
-              <span className="text-left">Reports</span>
-            </button>
-            <button
-              onClick={() => setShowDatabaseModal(true)}
-              className="w-full bg-pink-500/20 border-2 border-pink-500/40 hover:bg-pink-500/30 hover:border-pink-500/60 text-pink-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <Database className="flex-shrink-0" size={18} />
-              <span className="text-left">Database</span>
-            </button>
-            <button
-              onClick={() => setShowActivityModal(true)}
-              className="w-full bg-teal-500/20 border-2 border-teal-500/40 hover:bg-teal-500/30 hover:border-teal-500/60 text-teal-400 py-2.5 sm:py-4 px-3 rounded-xl transition-all text-sm sm:text-base font-semibold flex items-center space-x-2.5 shadow-lg"
-            >
-              <Activity className="flex-shrink-0" size={18} />
-              <span className="text-left">Activity Logs</span>
-            </button>
+          {/* Quick Actions - 3D Crypto Card Style */}
+          <div className="bg-gray-800/50 rounded-2xl p-3 border border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+            <div className="space-y-2.5">
+              {/* Process Manual Payment */}
+              <button
+                onClick={() => {
+                  setShowPaymentModal(true);
+                  fetchUsers();
+                }}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(34,197,94,0.25),0_0_30px_rgba(34,197,94,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #22c55e40, 0 2px 8px #22c55e60, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <CreditCard
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      Manual Payment
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      Process user deposits
+                    </span>
+                  </div>
+                </div>
+                <div className="text-green-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Manage Users */}
+              <button
+                onClick={() => setActiveTab("users")}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #3b82f640, 0 2px 8px #3b82f660, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <Users
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      Manage Users
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      View and edit user accounts
+                    </span>
+                  </div>
+                </div>
+                <div className="text-blue-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Deleted Users Bin */}
+              <button
+                onClick={() => setActiveTab("bin")}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(239,68,68,0.25),0_0_30px_rgba(239,68,68,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #ef444440, 0 2px 8px #ef444460, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <Trash2
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      Deleted Users Bin
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      Restore or permanently delete
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {deletedUsersCount > 0 && (
+                    <span className="bg-red-500 text-white rounded-full px-2 py-0.5 text-xs font-bold shadow-lg">
+                      {deletedUsersCount}
+                    </span>
+                  )}
+                  <div className="text-red-400">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </button>
+
+              {/* KYC Verification */}
+              <button
+                onClick={() => (window.location.href = "/admin/kyc")}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(249,115,22,0.25),0_0_30px_rgba(249,115,22,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #f9731640, 0 2px 8px #f9731660, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <Shield
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      KYC Verification
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      Review identity documents
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {pendingKycCount > 0 && (
+                    <span className="bg-orange-500 text-white rounded-full px-2 py-0.5 text-xs font-bold shadow-lg">
+                      {pendingKycCount}
+                    </span>
+                  )}
+                  <div className="text-orange-400">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+              </button>
+
+              {/* Analytics Dashboard */}
+              <button
+                onClick={() => router.push("/admin/analytics")}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(6,182,212,0.25),0_0_30px_rgba(6,182,212,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #06b6d440, 0 2px 8px #06b6d460, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <BarChart3
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      Analytics Dashboard
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      View platform statistics
+                    </span>
+                  </div>
+                </div>
+                <div className="text-cyan-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Send Notifications */}
+              <button
+                onClick={() => setActiveTab("notifications")}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(168,85,247,0.25),0_0_30px_rgba(168,85,247,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #a855f740, 0 2px 8px #a855f760, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <Bell
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      Send Notifications
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      Broadcast to users
+                    </span>
+                  </div>
+                </div>
+                <div className="text-purple-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Transaction History */}
+              <button
+                onClick={() => setActiveTab("transactions")}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(99,102,241,0.25),0_0_30px_rgba(99,102,241,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #6366f140, 0 2px 8px #6366f160, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <History
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      Transaction History
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      View all transactions
+                    </span>
+                  </div>
+                </div>
+                <div className="text-indigo-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* System Settings */}
+              <button
+                onClick={() => setActiveTab("system")}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(107,114,128,0.25),0_0_30px_rgba(107,114,128,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #6b728040, 0 2px 8px #6b728060, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <Settings
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      System Settings
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      Configure platform
+                    </span>
+                  </div>
+                </div>
+                <div className="text-gray-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Reports */}
+              <button
+                onClick={() => setActiveTab("reports")}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(234,179,8,0.25),0_0_30px_rgba(234,179,8,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #eab30840, 0 2px 8px #eab30860, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <FileText
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      Reports
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      Generate reports
+                    </span>
+                  </div>
+                </div>
+                <div className="text-yellow-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Database */}
+              <button
+                onClick={() => setShowDatabaseModal(true)}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(236,72,153,0.25),0_0_30px_rgba(236,72,153,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #ec489940, 0 2px 8px #ec489960, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <Database
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      Database
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      Manage database
+                    </span>
+                  </div>
+                </div>
+                <div className="text-pink-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Activity Logs */}
+              <button
+                onClick={() => setShowActivityModal(true)}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(20,184,166,0.25),0_0_30px_rgba(20,184,166,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #14b8a640, 0 2px 8px #14b8a660, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <Activity
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-white font-bold text-sm">
+                      Activity Logs
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      View system activity
+                    </span>
+                  </div>
+                </div>
+                <div className="text-teal-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
