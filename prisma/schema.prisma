@@ -244,6 +244,21 @@ model Portfolio {
   Withdrawal       Withdrawal[]
 }
 
+/// Push notification subscriptions for Web Push API
+model PushSubscription {
+  id        String   @id
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model PriceAlert {
   id          String    @id
@@ -499,6 +514,7 @@ model User {
   Withdrawal             Withdrawal[]
   SentTransfers          P2PTransfer[]      @relation("SentTransfers")
   ReceivedTransfers      P2PTransfer[]      @relation("ReceivedTransfers")
+  PushSubscription       PushSubscription[]
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

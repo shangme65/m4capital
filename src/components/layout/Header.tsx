@@ -97,16 +97,28 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
         isScrolled ? "bg-black" : "bg-black bg-opacity-0"
       }`}
     >
-      <nav className="container mx-auto px-4 sm:px-12 md:px-20 py-3 flex justify-between items-center">
+      <nav className="container mx-auto px-4 sm:px-8 md:px-16 py-2 flex justify-between items-center">
         <Link href="/" className="flex items-center group">
-          <Image
-            src="/m4capitallogo1.png"
-            alt="M4 Capital Logo"
-            width={140}
-            height={47}
-            className="transition-transform duration-300 group-hover:scale-110 group-hover:animate-bounce object-contain w-32 md:w-auto"
-            priority
-          />
+          <div
+            className="rounded-lg transition-all duration-300 group-hover:scale-110"
+            style={{
+              background:
+                "linear-gradient(145deg, #1f2937 0%, #111827 50%, #1f2937 100%)",
+              boxShadow:
+                "0 8px 20px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.05), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
+              border: "1px solid rgba(255, 255, 255, 0.05)",
+              padding: "6px 10px",
+            }}
+          >
+            <Image
+              src="/m4capitallogo1.png"
+              alt="M4 Capital Logo"
+              width={100}
+              height={34}
+              className="object-contain w-20 md:w-auto"
+              priority
+            />
+          </div>
         </Link>
 
         {/* Widescreen Menu */}
@@ -210,25 +222,52 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {session ? (
               <button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center space-x-2 bg-orange-600 px-10 py-3.5 rounded-xl hover:bg-orange-700 hover:scale-105 transition-all duration-300 transform text-sm font-bold"
+                className="flex items-center space-x-2 hover:scale-105 transition-all duration-300 transform text-sm font-bold"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #f97316 0%, #c2410c 50%, #f97316 100%)",
+                  boxShadow:
+                    "0 10px 25px -5px rgba(249, 115, 22, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.2), inset 0 -3px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  padding: "10px 20px",
+                  borderRadius: "12px",
+                }}
                 aria-label="Go to Dashboard"
               >
-                <LayoutDashboard size={22} />
-                <span>Go to Dashboard</span>
+                <LayoutDashboard size={20} />
+                <span>Dashboard</span>
               </button>
             ) : (
               <>
                 <button
                   onClick={onLoginClick}
-                  className="flex items-center space-x-2 bg-gray-800/70 px-5 py-2.5 rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-sm font-bold"
+                  className="flex items-center space-x-2 hover:scale-105 active:scale-95 transition-all duration-300 transform text-sm font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                    boxShadow:
+                      "0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -3px 0 rgba(0, 0, 0, 0.4)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    padding: "10px 18px",
+                    borderRadius: "12px",
+                  }}
                   aria-label="Login"
                 >
-                  <LogIn size={18} />
+                  <LogIn size={16} />
                   <span>Log in</span>
                 </button>
                 <button
                   onClick={onSignupClick}
-                  className="bg-orange-600 px-5 py-2.5 text-sm font-bold rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
+                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-sm font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
+                    boxShadow:
+                      "0 10px 25px -5px rgba(249, 115, 22, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.25), inset 0 -3px 0 rgba(0, 0, 0, 0.3)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    padding: "10px 18px",
+                    borderRadius: "12px",
+                  }}
                 >
                   Sign Up
                 </button>
@@ -241,26 +280,53 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {session ? (
               <button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center space-x-1 bg-orange-600 px-4 py-2.5 rounded-lg hover:bg-orange-700 transition-all duration-300"
+                className="flex items-center space-x-1 hover:scale-105 transition-all duration-300"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #f97316 0%, #c2410c 50%, #f97316 100%)",
+                  boxShadow:
+                    "0 6px 16px -4px rgba(249, 115, 22, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -2px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  padding: "6px 12px",
+                  borderRadius: "10px",
+                }}
                 aria-label="Go to Dashboard"
               >
-                <LayoutDashboard size={18} />
+                <LayoutDashboard size={16} />
                 <span className="text-xs font-bold">Dashboard</span>
               </button>
             ) : (
               <>
                 <button
                   onClick={onLoginClick}
-                  className="flex items-center space-x-1 bg-gray-800/70 px-2 sm:px-3 py-2 sm:py-2 rounded-lg sm:rounded-xl hover:bg-blue-600 hover:scale-105 active:bg-blue-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform text-xs font-bold"
+                  className="flex items-center space-x-1 hover:scale-105 active:scale-95 transition-all duration-300 transform text-xs font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                    boxShadow:
+                      "0 8px 18px -4px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    padding: "8px 12px",
+                    borderRadius: "10px",
+                  }}
                   aria-label="Login"
                 >
-                  <LogIn size={16} className="sm:w-5 sm:h-5" />
+                  <LogIn size={14} className="sm:w-4 sm:h-4" />
                   <span className="hidden xs:inline">Log in</span>
                   <span className="xs:hidden">Login</span>
                 </button>
                 <button
                   onClick={onSignupClick}
-                  className="bg-orange-600 px-2 sm:px-3 py-2 sm:py-2 text-xs font-bold rounded-lg sm:rounded-xl hover:bg-green-600 hover:scale-105 active:bg-green-800 active:scale-95 active:text-yellow-300 transition-all duration-300 transform whitespace-nowrap"
+                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-xs font-bold"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
+                    boxShadow:
+                      "0 8px 18px -4px rgba(249, 115, 22, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.25), inset 0 -2px 0 rgba(0, 0, 0, 0.3)",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    padding: "8px 12px",
+                    borderRadius: "10px",
+                  }}
                 >
                   Sign Up
                 </button>
@@ -268,13 +334,22 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             )}
             <button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-              className="bg-gray-800/50 px-2 sm:px-3 py-2 sm:py-2 rounded-lg sm:rounded-xl hover:bg-gray-800/50 hover:scale-105 hover:rotate-180 active:bg-purple-800 active:scale-90 active:text-yellow-300 transition-all duration-300 transform"
+              className="hover:scale-105 hover:rotate-180 active:scale-90 transition-all duration-300 transform"
+              style={{
+                background:
+                  "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                boxShadow:
+                  "0 8px 18px -4px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+                padding: "8px 12px",
+                borderRadius: "10px",
+              }}
               aria-label="Open menu"
             >
               {isMobileMenuOpen ? (
-                <X size={14} className="sm:w-4 sm:h-4" />
+                <X size={16} className="sm:w-5 sm:h-5" />
               ) : (
-                <Menu size={14} className="sm:w-4 sm:h-4" />
+                <Menu size={16} className="sm:w-5 sm:h-5" />
               )}
             </button>
           </div>

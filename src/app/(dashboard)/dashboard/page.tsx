@@ -1065,11 +1065,11 @@ function DashboardContent() {
           </div>
 
           {/* Balance Cards - Full Width */}
-          <div className="space-y-3">
+          <div className="space-y-2">
             {/* USD Balance Card */}
             <div
               data-tutorial="available-balance"
-              className="relative w-full p-4 rounded-xl transition-all duration-300 overflow-hidden"
+              className="relative w-full p-3 rounded-xl transition-all duration-300 overflow-hidden"
               style={{
                 background:
                   "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
@@ -1088,28 +1088,28 @@ function DashboardContent() {
               />
               <div className="relative z-10">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <div
-                      className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0"
+                      className="w-6 h-6 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0"
                       style={{
                         boxShadow:
-                          "0 4px 16px rgba(59, 130, 246, 0.4), 0 2px 8px rgba(59, 130, 246, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                          "0 2px 8px rgba(59, 130, 246, 0.4), inset 0 1px 2px rgba(255,255,255,0.2)",
                       }}
                     >
-                      <span className="text-white font-bold text-lg relative z-10">
+                      <span className="text-white font-bold text-xs relative z-10">
                         $
                       </span>
                     </div>
-                    <span className="text-gray-300 text-sm font-bold">
+                    <span className="text-gray-300 text-xs font-semibold">
                       {preferredCurrency} Balance
                     </span>
                   </div>
                   <span
-                    className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+                    className="text-sm sm:text-base font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
                     style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
                   >
                     {portfolioLoading ? (
-                      <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
+                      <div className="animate-pulse bg-gray-700 h-4 w-16 rounded"></div>
                     ) : showBalances ? (
                       formatBalanceDisplay(availableBalance || 0)
                     ) : (
@@ -1118,8 +1118,8 @@ function DashboardContent() {
                   </span>
                 </div>
                 {/* Balance Progress bar - Blue */}
-                <div className="mt-3">
-                  <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(59,130,246,0.4)]">
+                <div className="mt-2">
+                  <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(59,130,246,0.4)]">
                     <div
                       className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(59,130,246,0.8)]"
                       style={{
@@ -1136,7 +1136,7 @@ function DashboardContent() {
 
             {/* Traderoom Balance Card */}
             <div
-              className="relative w-full p-4 rounded-xl transition-all duration-300 overflow-hidden"
+              className="relative w-full p-3 rounded-xl transition-all duration-300 overflow-hidden"
               style={{
                 background:
                   "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
@@ -1155,16 +1155,16 @@ function DashboardContent() {
               />
               <div className="relative z-10">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     <div
-                      className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0"
+                      className="w-6 h-6 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0"
                       style={{
                         boxShadow:
-                          "0 4px 16px rgba(34, 197, 94, 0.4), 0 2px 8px rgba(34, 197, 94, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                          "0 2px 8px rgba(34, 197, 94, 0.4), inset 0 1px 2px rgba(255,255,255,0.2)",
                       }}
                     >
                       <svg
-                        className="w-5 h-5 text-white relative z-10"
+                        className="w-3 h-3 text-white relative z-10"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1177,16 +1177,16 @@ function DashboardContent() {
                         />
                       </svg>
                     </div>
-                    <span className="text-gray-300 text-sm font-bold">
+                    <span className="text-gray-300 text-xs font-semibold">
                       Traderoom Balance
                     </span>
                   </div>
                   <span
-                    className="text-lg sm:text-xl font-bold bg-gradient-to-r from-green-400 via-green-300 to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+                    className="text-sm sm:text-base font-bold bg-gradient-to-r from-green-400 via-green-300 to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
                     style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
                   >
                     {portfolioLoading ? (
-                      <div className="animate-pulse bg-gray-700 h-6 w-20 rounded"></div>
+                      <div className="animate-pulse bg-gray-700 h-4 w-16 rounded"></div>
                     ) : showBalances ? (
                       formatAmount(traderoomBalance || 0, 2)
                     ) : (
@@ -1195,8 +1195,8 @@ function DashboardContent() {
                   </span>
                 </div>
                 {/* Traderoom Progress bar - Green */}
-                <div className="mt-3">
-                  <div className="h-1.5 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(34,197,94,0.4)]">
+                <div className="mt-2">
+                  <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden shadow-[0_0_8px_rgba(34,197,94,0.4)]">
                     <div
                       className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out shadow-[0_0_12px_rgba(34,197,94,0.8)]"
                       style={{

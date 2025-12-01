@@ -3,6 +3,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/contexts/ToastContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import ConfirmModal from "@/components/client/ConfirmModal";
 import CurrencySelector from "@/components/client/CurrencySelector";
 import Image from "next/image";
@@ -30,6 +31,9 @@ import {
   Smartphone,
   Lock,
   Loader2,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 
 // Full-screen KYC Submission Loading Modal
@@ -140,6 +144,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const router = useRouter();
   const { showSuccess, showError, showWarning, showInfo } = useToast();
+  const { theme, setTheme, resolvedTheme } = useTheme();
 
   // Modal state
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -2636,6 +2641,53 @@ export default function SettingsPage() {
           title="Preferences"
         >
           <div className="space-y-6">
+            {/* Theme Preference */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Theme
+              </label>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => setTheme("light")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 ${
+                    theme === "light"
+                      ? "bg-blue-500/20 border-2 border-blue-500 text-white"
+                      : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                  }`}
+                >
+                  <Sun className="w-6 h-6" />
+                  <span className="text-xs font-medium">Light</span>
+                </button>
+                <button
+                  onClick={() => setTheme("dark")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 ${
+                    theme === "dark"
+                      ? "bg-blue-500/20 border-2 border-blue-500 text-white"
+                      : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                  }`}
+                >
+                  <Moon className="w-6 h-6" />
+                  <span className="text-xs font-medium">Dark</span>
+                </button>
+                <button
+                  onClick={() => setTheme("system")}
+                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 ${
+                    theme === "system"
+                      ? "bg-blue-500/20 border-2 border-blue-500 text-white"
+                      : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                  }`}
+                >
+                  <Monitor className="w-6 h-6" />
+                  <span className="text-xs font-medium">System</span>
+                </button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                {theme === "system"
+                  ? `Using system preference (currently ${resolvedTheme})`
+                  : `Currently using ${theme} theme`}
+              </p>
+            </div>
+
             {/* Currency Preference */}
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-3">
@@ -2662,7 +2714,6 @@ export default function SettingsPage() {
                 Coming Soon
               </h4>
               <ul className="space-y-2 text-sm text-gray-500">
-                <li>• Theme customization (light/dark/auto)</li>
                 <li>• Default dashboard layout</li>
                 <li>• Data refresh interval</li>
               </ul>

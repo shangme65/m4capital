@@ -83,27 +83,51 @@ const CryptoPriceCard: React.FC<{
     return `$${marketCap.toLocaleString()}`;
   };
 
+  // Determine glow color based on price change
+  const glowColor = isPositive
+    ? "rgba(34, 197, 94, 0.4)" // green glow
+    : "rgba(239, 68, 68, 0.4)"; // red glow
+  const borderColor = isPositive
+    ? "rgba(34, 197, 94, 0.6)"
+    : "rgba(239, 68, 68, 0.6)";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className={`${
         compact
-          ? "p-2 h-full flex items-center justify-center"
+          ? "py-1.5 px-2 flex items-center justify-center"
           : "p-4 min-w-[200px]"
-      } transition-all duration-300`}
+      } transition-all duration-300 rounded-lg`}
       style={{
-        backgroundColor: "transparent",
+        background: compact
+          ? "linear-gradient(145deg, #252320 0%, #1b1817 50%, #252320 100%)"
+          : "transparent",
+        boxShadow: compact
+          ? `0 0 12px ${glowColor}, 0 4px 12px -3px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.3)`
+          : "none",
+        border: compact ? `1px solid ${borderColor}` : "none",
       }}
     >
       <div className="flex items-center justify-center w-full">
         <div className="flex items-center space-x-1.5">
-          {/* Crypto Icon - Use actual logo */}
-          <CryptoIcon
-            symbol={symbol}
-            size={compact ? "sm" : "md"}
-            className="inline-block"
-          />
+          {/* Crypto Icon - 3D styled */}
+          <div
+            className="rounded-md flex items-center justify-center"
+            style={{
+              background: "linear-gradient(145deg, #2a2724 0%, #1a1816 100%)",
+              boxShadow:
+                "0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+              padding: compact ? "4px" : "8px",
+            }}
+          >
+            <CryptoIcon
+              symbol={symbol}
+              size={compact ? "sm" : "md"}
+              className="inline-block"
+            />
+          </div>
 
           <div>
             <div className="flex items-center gap-2">
@@ -235,16 +259,22 @@ export const CryptoPriceTicker: React.FC<CryptoPriceTickerProps> = ({
     <div className={`${className}`}>
       {/* Horizontal Scrolling Ticker */}
       <div
-        className="relative overflow-hidden"
-        style={{ backgroundColor: "#1b1817", borderRadius: "0.5rem" }}
+        className="relative overflow-hidden py-1"
+        style={{
+          background:
+            "linear-gradient(180deg, #0f0e0d 0%, #1b1817 50%, #0f0e0d 100%)",
+          borderRadius: "0.5rem",
+          boxShadow:
+            "inset 0 1px 6px rgba(0, 0, 0, 0.5), inset 0 -1px 6px rgba(0, 0, 0, 0.3)",
+        }}
       >
         <div className="flex animate-scroll" style={{ width: "max-content" }}>
           {/* Triple the symbols array for seamless infinite loop */}
           {[...symbols, ...symbols, ...symbols].map((symbol, index) => (
             <div
               key={`${symbol}-${index}`}
-              className="flex-shrink-0 border-r"
-              style={{ borderColor: "#38312e", width: "140px" }}
+              className="flex-shrink-0 px-0.5"
+              style={{ minWidth: "140px" }}
             >
               <CryptoPriceCard
                 symbol={symbol}
