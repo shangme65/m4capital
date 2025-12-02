@@ -41,11 +41,14 @@ export async function GET(request: NextRequest) {
       take: 100,
     });
 
-    // Fetch deposits where cryptoCurrency matches symbol (if field exists)
+    // Fetch deposits where cryptoCurrency or targetAsset matches symbol
     const deposits = await prisma.deposit.findMany({
       where: {
         userId,
-        cryptoCurrency: { equals: symbol },
+        OR: [
+          { cryptoCurrency: { equals: symbol } },
+          { targetAsset: { equals: symbol } },
+        ],
       },
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -73,18 +76,34 @@ export async function GET(request: NextRequest) {
         status: t.status.toLowerCase(),
         source: "trade",
       })),
-      ...deposits.map((d) => ({
-        id: d.id,
-        type: "deposit",
-        symbol: d.cryptoCurrency || d.currency,
-        amount: Number(d.cryptoAmount || 0),
-        price: d.paymentAmount
-          ? Number(d.paymentAmount)
-          : Number(d.amount || 0),
-        date: d.createdAt,
-        status: d.status.toLowerCase(),
-        source: "deposit",
-      })),
+      ...deposits.map((d) => {
+        // Get cryptoAmount from field or metadata
+        const metadata = d.metadata as {
+          cryptoAmount?: number;
+          fiatAmount?: number;
+        } | null;
+        const cryptoAmt = d.cryptoAmount
+          ? Number(d.cryptoAmount)
+          : metadata?.cryptoAmount || 0;
+        const fiatAmt = metadata?.fiatAmount || Number(d.amount || 0);
+
+        return {
+          id: d.id,
+          type: "deposit",
+          symbol: d.cryptoCurrency || d.currency,
+          cryptoCurrency: d.cryptoCurrency,
+          amount: cryptoAmt,
+          price: fiatAmt, // Use fiat amount for the value display
+          fiatValue: fiatAmt,
+          date: d.createdAt,
+          status: d.status.toLowerCase(),
+          source: "deposit",
+          hash: d.transactionHash,
+          confirmations: d.confirmations,
+          maxConfirmations: 6,
+          method: d.method,
+        };
+      }),
       ...withdrawals.map((w) => ({
         id: w.id,
         type: "withdrawal",

@@ -478,14 +478,16 @@ export default function TransactionDetailsModal({
                       Amount
                     </label>
                     <div className="text-white text-xl font-bold">
-                      {transaction.type === "deposit" ||
-                      transaction.type === "withdraw"
+                      {/* For fiat currencies, show 2 decimals; for crypto, show up to 8 */}
+                      {FIAT_CURRENCIES.has(
+                        transaction.asset?.toUpperCase() || ""
+                      )
                         ? transaction.amount.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })
                         : transaction.amount.toLocaleString("en-US", {
-                            minimumFractionDigits: 8,
+                            minimumFractionDigits: 2,
                             maximumFractionDigits: 8,
                           })}
                       <span className="text-gray-400 text-base ml-2">

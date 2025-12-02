@@ -108,6 +108,10 @@ export async function POST(req: NextRequest) {
             : fiatAmount || amount,
         currency:
           depositType === "crypto" ? cryptoAsset : userPreferredCurrency,
+        // Store crypto-specific fields for crypto deposits
+        cryptoAmount:
+          depositType === "crypto" ? cryptoAmount || amount : undefined,
+        cryptoCurrency: depositType === "crypto" ? cryptoAsset : undefined,
         status: "COMPLETED", // Admin manual deposits complete immediately
         method: paymentMethod || "ADMIN_MANUAL",
         type:

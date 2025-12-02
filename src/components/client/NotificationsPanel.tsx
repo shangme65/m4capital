@@ -485,7 +485,7 @@ export default function NotificationsPanel({
                                                 ? "-"
                                                 : "+"}
                                               {/* For fiat currencies, display as-is without conversion */}
-                                              {/* For crypto, use formatAmount which converts from USD */}
+                                              {/* For crypto, amount is the crypto quantity - display directly */}
                                               {FIAT_CURRENCIES.has(
                                                 notification.asset?.toUpperCase() ||
                                                   ""
@@ -497,12 +497,12 @@ export default function NotificationsPanel({
                                                     notification.asset || "USD",
                                                     2
                                                   )
-                                                : formatAmount(
-                                                    Math.abs(
-                                                      notification.amount
-                                                    ),
-                                                    2
-                                                  )}
+                                                : Math.abs(
+                                                    notification.amount
+                                                  ).toLocaleString("en-US", {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 8,
+                                                  })}
                                             </span>
                                             <span
                                               className={`text-xs font-bold ${

@@ -65,35 +65,48 @@ export async function GET(req: NextRequest) {
     });
 
     // Transform deposits into transaction format
-    const depositTransactions = deposits.map((d) => ({
-      id: d.id,
-      type: "deposit" as const,
-      asset: d.targetAsset || d.cryptoCurrency || d.currency || "USD",
-      amount: Number(d.cryptoAmount || d.amount),
-      value: Number(d.amount),
-      timestamp: d.createdAt.toISOString(),
-      status:
-        d.status === "COMPLETED"
-          ? ("completed" as const)
-          : d.status === "PENDING"
-          ? ("pending" as const)
-          : ("failed" as const),
-      fee: d.fee ? Number(d.fee) : undefined,
-      method: d.method || "Manual",
-      description: d.cryptoCurrency
-        ? `Deposit ${d.cryptoCurrency}`
-        : d.targetAsset
-        ? `${d.targetAsset} Deposit to your portfolio`
-        : "Balance Deposit to your account",
-      date: d.createdAt,
-      confirmations: d.confirmations,
-      maxConfirmations: 6,
-      hash: d.transactionHash || undefined,
-      network:
-        d.cryptoCurrency || d.targetAsset
-          ? `${d.cryptoCurrency || d.targetAsset} Network`
-          : undefined,
-    }));
+    const depositTransactions = deposits.map((d) => {
+      // Determine if this is a crypto deposit
+      const isCryptoDeposit = d.targetAsset || d.cryptoCurrency;
+      // Get fiat value from metadata if available, otherwise use amount
+      const metadata = d.metadata as { fiatAmount?: number } | null;
+      const fiatValue = metadata?.fiatAmount || Number(d.amount);
+
+      return {
+        id: d.id,
+        type: "deposit" as const,
+        asset: d.targetAsset || d.cryptoCurrency || d.currency || "USD",
+        // For crypto deposits, use cryptoAmount; for fiat, use amount
+        amount: isCryptoDeposit
+          ? Number(d.cryptoAmount || d.amount)
+          : Number(d.amount),
+        // For crypto deposits, use fiatAmount from metadata (USD value at time of deposit)
+        // For fiat deposits, the amount is already in user's currency
+        value: isCryptoDeposit ? fiatValue : Number(d.amount),
+        timestamp: d.createdAt.toISOString(),
+        status:
+          d.status === "COMPLETED"
+            ? ("completed" as const)
+            : d.status === "PENDING"
+            ? ("pending" as const)
+            : ("failed" as const),
+        fee: d.fee ? Number(d.fee) : undefined,
+        method: d.method || "Manual",
+        description: d.cryptoCurrency
+          ? `Deposit ${d.cryptoCurrency}`
+          : d.targetAsset
+          ? `${d.targetAsset} Deposit to your portfolio`
+          : "Balance Deposit to your account",
+        date: d.createdAt,
+        confirmations: d.confirmations,
+        maxConfirmations: 6,
+        hash: d.transactionHash || undefined,
+        network:
+          d.cryptoCurrency || d.targetAsset
+            ? `${d.cryptoCurrency || d.targetAsset} Network`
+            : undefined,
+      };
+    });
 
     // Transform withdrawals into transaction format
     const withdrawalTransactions = withdrawals.map((w) => ({
