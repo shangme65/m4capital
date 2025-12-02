@@ -1085,7 +1085,10 @@ const AdminDashboard = () => {
               ? cryptoAmount
               : amountNum
             : amountInUserCurrency,
-        fiatAmount: amountInUserCurrency,
+        // For crypto deposits, fiatAmount should be USD value for proper conversion in history
+        // For fiat deposits, fiatAmount is in user's currency
+        fiatAmount:
+          depositType === "crypto" ? finalAmount : amountInUserCurrency,
         cryptoAmount: cryptoAmount > 0 ? cryptoAmount : undefined,
         paymentMethod: paymentMethodName,
         paymentDetails: {

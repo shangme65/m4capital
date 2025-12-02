@@ -50,7 +50,7 @@ export default function TransferModalNew({
 }: TransferModalNewProps) {
   const [step, setStep] = useState(1); // 1 = select asset, 2 = enter details, 3 = confirm, 4 = success
   const [transferData, setTransferData] = useState({
-    asset: "USD",
+    asset: "FIAT",
     amount: "",
     destination: "",
     memo: "",
@@ -74,6 +74,25 @@ export default function TransferModalNew({
   const currencySymbol =
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
 
+  // Get balance and its stored currency
+  const availableBalance = portfolio?.portfolio?.balance
+    ? parseFloat(portfolio.portfolio.balance.toString())
+    : 0;
+  const balanceCurrency = portfolio?.portfolio?.balanceCurrency || "USD";
+
+  // Format balance display - only convert if currencies don't match
+  const formatBalanceDisplay = (balance: number): string => {
+    if (balanceCurrency === preferredCurrency) {
+      // Same currency - show directly without conversion
+      return `${currencySymbol}${balance.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+    // Different currencies - convert using formatAmount (USD to preferred)
+    return formatAmount(balance, 2);
+  };
+
   // Fetch real-time crypto prices
   const cryptoSymbols = [
     "BTC",
@@ -89,13 +108,14 @@ export default function TransferModalNew({
   ];
   const cryptoPrices = useCryptoPrices(cryptoSymbols);
 
-  // Get supported assets - USD balance first, then crypto assets sorted by amount
+  // Get supported assets - Fiat balance first, then crypto assets sorted by amount
   const supportedAssets = (() => {
     const assets = [
       {
-        symbol: "USD",
-        name: "USD Balance",
-        amount: portfolio?.portfolio?.balance || 0,
+        symbol: "FIAT", // Use FIAT to distinguish from crypto
+        name: `${preferredCurrency} Balance`,
+        amount: availableBalance,
+        isFiat: true,
       },
     ];
 
@@ -106,6 +126,7 @@ export default function TransferModalNew({
         symbol: asset.symbol,
         name: asset.symbol,
         amount: asset.amount || 0,
+        isFiat: false,
       }));
 
     return [...assets, ...cryptoAssets];
@@ -116,7 +137,7 @@ export default function TransferModalNew({
   );
   const currentBalance = currentAsset?.amount || 0;
   const currentPrice =
-    transferData.asset === "USD"
+    transferData.asset === "FIAT"
       ? 1
       : cryptoPrices[transferData.asset]?.price || 0;
 
@@ -140,7 +161,7 @@ export default function TransferModalNew({
       // Reset on close
       setStep(1);
       setTransferData({
-        asset: "USD",
+        asset: "FIAT",
         amount: "",
         destination: "",
         memo: "",
@@ -207,7 +228,7 @@ export default function TransferModalNew({
     // Convert from preferred currency to USD first
     const usdAmount = convertAmount(preferredCurrencyAmount, true);
     // Then convert USD to asset amount
-    if (transferData.asset === "USD") {
+    if (transferData.asset === "FIAT") {
       return usdAmount;
     }
     return currentPrice > 0 ? usdAmount / currentPrice : 0;
@@ -216,7 +237,7 @@ export default function TransferModalNew({
   // Get the equivalent amount in preferred currency for display
   const getPreferredCurrencyAmount = (assetAmount: number) => {
     const usdAmount =
-      transferData.asset === "USD" ? assetAmount : assetAmount * currentPrice;
+      transferData.asset === "FIAT" ? assetAmount : assetAmount * currentPrice;
     return convertAmount(usdAmount);
   };
 
@@ -326,7 +347,7 @@ export default function TransferModalNew({
 
   const handleDone = () => {
     setTransferData({
-      asset: "USD",
+      asset: "FIAT",
       amount: "",
       destination: "",
       memo: "",
@@ -491,12 +512,14 @@ export default function TransferModalNew({
                       Select Asset to Send
                     </label>
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                      {supportedAssets.map((asset) => {
-                        const price =
-                          asset.symbol === "USD"
-                            ? 1
-                            : cryptoPrices[asset.symbol]?.price || 0;
-                        const value = asset.amount * price;
+                      {supportedAssets.map((asset: any) => {
+                        // For fiat, use formatBalanceDisplay; for crypto, calculate USD value
+                        const isFiat = asset.isFiat || asset.symbol === "FIAT";
+                        const price = isFiat
+                          ? 1
+                          : cryptoPrices[asset.symbol]?.price || 0;
+                        const cryptoValue = isFiat ? 0 : asset.amount * price;
+
                         return (
                           <button
                             key={asset.symbol}
@@ -526,14 +549,16 @@ export default function TransferModalNew({
                                 <div
                                   className="w-10 h-10 rounded-xl flex items-center justify-center"
                                   style={{
-                                    background:
-                                      cryptoGradients[asset.symbol] ||
-                                      "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                                    background: isFiat
+                                      ? cryptoGradients["USD"] ||
+                                        "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
+                                      : cryptoGradients[asset.symbol] ||
+                                        "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
                                     boxShadow:
                                       "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)",
                                   }}
                                 >
-                                  {asset.symbol === "USD" ? (
+                                  {isFiat ? (
                                     <span className="text-white font-bold text-sm">
                                       {currencySymbol}
                                     </span>
@@ -546,19 +571,23 @@ export default function TransferModalNew({
                                 </div>
                                 <div>
                                   <div className="text-sm font-semibold text-white">
-                                    {asset.symbol === "USD"
+                                    {isFiat
                                       ? `${preferredCurrency} Balance`
                                       : asset.symbol}
                                   </div>
                                   <div className="text-[10px] text-gray-400">
-                                    {formatAmount(value, 2)}
+                                    {isFiat
+                                      ? formatBalanceDisplay(asset.amount)
+                                      : formatAmount(cryptoValue, 2)}
                                   </div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="text-right">
                                   <div className="text-sm font-semibold text-white">
-                                    {formatAmount(value, 2)}
+                                    {isFiat
+                                      ? formatBalanceDisplay(asset.amount)
+                                      : formatAmount(cryptoValue, 2)}
                                   </div>
                                 </div>
                                 {transferData.asset === asset.symbol && (
@@ -631,7 +660,7 @@ export default function TransferModalNew({
                           boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
                         }}
                       >
-                        {transferData.asset === "USD" ? (
+                        {transferData.asset === "FIAT" ? (
                           <span className="text-white font-bold text-sm">
                             {currencySymbol}
                           </span>
@@ -645,7 +674,7 @@ export default function TransferModalNew({
                       <div>
                         <div className="text-sm font-semibold text-white">
                           Sending{" "}
-                          {transferData.asset === "USD"
+                          {transferData.asset === "FIAT"
                             ? preferredCurrency
                             : transferData.asset}
                         </div>
@@ -771,7 +800,7 @@ export default function TransferModalNew({
                         onClick={() => {
                           // Calculate max amount in preferred currency
                           const maxInUSD =
-                            transferData.asset === "USD"
+                            transferData.asset === "FIAT"
                               ? Math.max(0, currentBalance - transferFee)
                               : Math.max(
                                   0,
@@ -787,7 +816,7 @@ export default function TransferModalNew({
                       >
                         Send Max (
                         {formatAmount(
-                          transferData.asset === "USD"
+                          transferData.asset === "FIAT"
                             ? currentBalance
                             : currentBalance * currentPrice,
                           2
@@ -833,7 +862,7 @@ export default function TransferModalNew({
                             {parseFloat(transferData.amount).toFixed(2)}
                           </span>
                         </div>
-                        {transferData.asset !== "USD" && (
+                        {transferData.asset !== "FIAT" && (
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-gray-400 text-xs">
                               You send:
@@ -897,7 +926,7 @@ export default function TransferModalNew({
                           boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.5)",
                         }}
                       >
-                        {transferData.asset === "USD" ? (
+                        {transferData.asset === "FIAT" ? (
                           <span className="text-white font-bold text-xl">
                             {currencySymbol}
                           </span>
@@ -912,7 +941,7 @@ export default function TransferModalNew({
                         You&apos;re sending
                       </p>
                       <p className="text-2xl font-bold text-white">
-                        {transferData.asset === "USD"
+                        {transferData.asset === "FIAT"
                           ? `${currencySymbol}${parseFloat(
                               transferData.amount
                             ).toFixed(2)}`
@@ -921,7 +950,7 @@ export default function TransferModalNew({
                             ).toFixed(8)}
                       </p>
                       <p className="text-purple-400 font-semibold">
-                        {transferData.asset === "USD"
+                        {transferData.asset === "FIAT"
                           ? preferredCurrency
                           : transferData.asset}
                       </p>
@@ -949,7 +978,7 @@ export default function TransferModalNew({
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Amount:</span>
                         <span className="text-white font-medium">
-                          {transferData.asset === "USD"
+                          {transferData.asset === "FIAT"
                             ? `${currencySymbol}${parseFloat(
                                 transferData.amount
                               ).toFixed(2)}`
@@ -976,7 +1005,7 @@ export default function TransferModalNew({
                       <div className="flex justify-between font-bold">
                         <span className="text-gray-300">Total:</span>
                         <span className="text-purple-400">
-                          {transferData.asset === "USD"
+                          {transferData.asset === "FIAT"
                             ? `${currencySymbol}${parseFloat(
                                 transferData.amount
                               ).toFixed(2)}`
@@ -1101,7 +1130,7 @@ export default function TransferModalNew({
                       <div className="flex justify-between text-sm">
                         <span className="text-gray-400">Asset:</span>
                         <span className="text-white font-semibold">
-                          {successData.asset === "USD"
+                          {successData.asset === "FIAT"
                             ? preferredCurrency
                             : successData.asset}
                         </span>
