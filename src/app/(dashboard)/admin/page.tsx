@@ -1027,7 +1027,7 @@ const AdminDashboard = () => {
         (depositType === "crypto" || paymentMethodType === "crypto")
       ) {
         // User entered crypto amount, calculate fiat value
-        const cryptoPrice = prices[cryptoAsset.toLowerCase()]?.price || 0;
+        const cryptoPrice = prices[cryptoAsset]?.price || 0;
         if (cryptoPrice > 0) {
           finalAmount = amountNum * cryptoPrice; // Convert to USD
           cryptoAmount = amountNum;
@@ -1043,7 +1043,7 @@ const AdminDashboard = () => {
         (depositType === "crypto" || paymentMethodType === "crypto")
       ) {
         // User entered fiat amount in admin's currency
-        const cryptoPrice = prices[cryptoAsset.toLowerCase()]?.price || 0;
+        const cryptoPrice = prices[cryptoAsset]?.price || 0;
         if (cryptoPrice > 0) {
           // First convert admin currency to USD
           const amountInUSD = convertAmount(amountNum, true);
@@ -2791,8 +2791,7 @@ const AdminDashboard = () => {
                                                 "USD"
                                             )}
                                             {(
-                                              prices[cryptoAsset.toLowerCase()]
-                                                ?.price || 0
+                                              prices[cryptoAsset]?.price || 0
                                             ).toLocaleString()}
                                           </p>
                                         </div>
@@ -2818,7 +2817,7 @@ const AdminDashboard = () => {
                                       <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto">
                                         {cryptoPaymentMethods.map((method) => {
                                           const cryptoPrice =
-                                            prices[method.name.toLowerCase()];
+                                            prices[method.name];
                                           const price = cryptoPrice?.price || 0;
                                           const change =
                                             cryptoPrice?.change24h || 0;
@@ -2922,8 +2921,7 @@ const AdminDashboard = () => {
                                       selectedUser?.preferredCurrency || "USD"
                                     )}
                                     {(
-                                      prices[cryptoAsset.toLowerCase()]
-                                        ?.price || 0
+                                      prices[cryptoAsset]?.price || 0
                                     ).toLocaleString()}
                                   </p>
                                 </div>
@@ -2952,7 +2950,7 @@ const AdminDashboard = () => {
                               >
                                 {cryptoAssets.map((asset, index) => {
                                   const cryptoPrice =
-                                    prices[asset.symbol.toLowerCase()];
+                                    prices[asset.symbol];
                                   const price = cryptoPrice?.price || 0;
                                   const change = cryptoPrice?.change24h || 0;
                                   const currencySymbol = getCurrencySymbol(

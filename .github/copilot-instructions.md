@@ -149,6 +149,28 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 
 - Error detected → Tool call to fix → Next error → Done
 
+### 🐛 ALWAYS FIX DISCOVERED BUGS
+
+**CRITICAL RULE:** When you discover bugs, errors, or issues during any task, ALWAYS add them to your todo list and fix them.
+
+**REQUIRED approach:**
+
+1. **Add discovered bugs to todo list** - Even if not part of original request
+2. **Fix bugs immediately** - Don't leave bugs behind
+3. **Track all issues** - Update todo list with discovered problems
+4. **Complete all fixes** - Don't mark task complete until all related bugs are fixed
+5. **Report fixes** - Briefly mention discovered and fixed bugs to user
+
+**Examples of discovered bugs:**
+
+- Wrong function signature causing errors
+- Double-conversion issues in currency handling
+- Case sensitivity bugs (lowercase vs uppercase keys)
+- Missing null checks or validation
+- Type mismatches
+
+**NEVER leave discovered bugs unfixed. Always add them to the todo list and resolve them.**
+
 ### 📋 Code Review Checklist
 
 Before making any changes, verify:
