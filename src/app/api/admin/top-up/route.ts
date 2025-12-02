@@ -188,26 +188,37 @@ export async function POST(req: NextRequest) {
     } else {
       // Credit fiat balance in user's preferred currency
       // The balance is stored in the user's original currency (not converted)
+      // Round to 2 decimal places for fiat currencies
       const depositCurrency = userPreferredCurrency;
+      const roundedFiatAmount = Math.round((fiatAmount || amount) * 100) / 100;
 
       await prisma.portfolio.update({
         where: { id: portfolio.id },
         data: {
           balance: {
-            increment: fiatAmount || amount,
+            increment: roundedFiatAmount,
           },
           balanceCurrency: depositCurrency,
         },
       });
 
       console.log(
-        `✅ Credited ${getCurrencySymbol(depositCurrency)}${
-          fiatAmount || amount
-        } to user ${user.email} (currency: ${depositCurrency})`
+        `✅ Credited ${getCurrencySymbol(
+          depositCurrency
+        )}${roundedFiatAmount.toFixed(2)} to user ${
+          user.email
+        } (currency: ${depositCurrency})`
       );
     }
 
     // Create in-app notification for COMPLETED deposit
+    // Round fiat amounts to 2 decimal places for display
+    const roundedFiatAmountForNotification =
+      depositType === "fiat"
+        ? Math.round((fiatAmount || amount) * 100) / 100
+        : amount;
+    const displayFiatAmount = roundedFiatAmountForNotification.toFixed(2);
+
     await prisma.notification.create({
       data: {
         id: generateId(),
@@ -219,11 +230,10 @@ export async function POST(req: NextRequest) {
         message: `Your deposit of ${
           depositType === "crypto"
             ? `${cryptoAmount || amount} ${cryptoAsset}`
-            : `${getCurrencySymbol(userPreferredCurrency)}${
-                fiatAmount || amount
-              }`
+            : `${getCurrencySymbol(userPreferredCurrency)}${displayFiatAmount}`
         } has been confirmed and credited to your account.`,
-        amount: amount,
+        amount:
+          depositType === "fiat" ? roundedFiatAmountForNotification : amount,
         asset: depositType === "crypto" ? cryptoAsset : userPreferredCurrency,
         metadata: {
           depositId: deposit.id,
@@ -268,9 +278,9 @@ export async function POST(req: NextRequest) {
                     <p style="margin: 5px 0;"><strong>Amount:</strong> ${
                       depositType === "crypto"
                         ? `${cryptoAmount || amount} ${cryptoAsset}`
-                        : `${getCurrencySymbol(userPreferredCurrency)}${
-                            fiatAmount || amount
-                          }`
+                        : `${getCurrencySymbol(userPreferredCurrency)}${(
+                            Math.round((fiatAmount || amount) * 100) / 100
+                          ).toFixed(2)}`
                     }</p>
                     <p style="margin: 5px 0;"><strong>Type:</strong> ${
                       depositType === "crypto"

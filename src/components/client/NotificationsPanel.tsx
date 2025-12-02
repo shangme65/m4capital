@@ -5,6 +5,10 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatTimeAgo } from "@/lib/crypto-constants";
 import {
+  formatCurrency as formatCurrencyUtil,
+  getCurrencySymbol,
+} from "@/lib/currencies";
+import {
   X,
   Bell,
   DollarSign,
@@ -23,6 +27,37 @@ import {
 } from "lucide-react";
 import { useNotifications, Notification } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+
+// Common fiat currency codes
+const FIAT_CURRENCIES = new Set([
+  "USD",
+  "EUR",
+  "GBP",
+  "BRL",
+  "JPY",
+  "CAD",
+  "AUD",
+  "CHF",
+  "CNY",
+  "INR",
+  "MXN",
+  "KRW",
+  "SGD",
+  "HKD",
+  "NOK",
+  "SEK",
+  "DKK",
+  "NZD",
+  "ZAR",
+  "RUB",
+  "TRY",
+  "PLN",
+  "THB",
+  "IDR",
+  "MYR",
+  "PHP",
+  "VND",
+]);
 
 interface NotificationsPanelProps {
   isOpen: boolean;
@@ -449,10 +484,25 @@ export default function NotificationsPanel({
                                               {notification.amount < 0
                                                 ? "-"
                                                 : "+"}
-                                              {formatAmount(
-                                                Math.abs(notification.amount),
-                                                2
-                                              )}
+                                              {/* For fiat currencies, display as-is without conversion */}
+                                              {/* For crypto, use formatAmount which converts from USD */}
+                                              {FIAT_CURRENCIES.has(
+                                                notification.asset?.toUpperCase() ||
+                                                  ""
+                                              )
+                                                ? formatCurrencyUtil(
+                                                    Math.abs(
+                                                      notification.amount
+                                                    ),
+                                                    notification.asset || "USD",
+                                                    2
+                                                  )
+                                                : formatAmount(
+                                                    Math.abs(
+                                                      notification.amount
+                                                    ),
+                                                    2
+                                                  )}
                                             </span>
                                             <span
                                               className={`text-xs font-bold ${

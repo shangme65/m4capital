@@ -1065,16 +1065,18 @@ const AdminDashboard = () => {
           return;
         }
       } else if (depositType === "fiat" && amountInputType === "usd") {
-        // Fiat deposit: convert from admin's currency to user's preferred currency
-        // First convert admin currency amount to USD
-        const amountInUSD = convertAmount(amountNum, true);
-        // Then convert USD to user's preferred currency
-        amountInUserCurrency = convertCurrency(
-          amountInUSD,
-          selectedUser?.preferredCurrency || "USD",
-          exchangeRates
-        );
-        finalAmount = amountInUSD; // Keep USD for backend
+        // Fiat deposit: the admin enters the amount directly in user's preferred currency
+        // No conversion needed - the input IS the amount in user's currency
+        amountInUserCurrency = Math.round(amountNum * 100) / 100;
+        // Convert to USD for backend reference (finalAmount)
+        const userCurrency = selectedUser?.preferredCurrency || "USD";
+        if (userCurrency === "USD") {
+          finalAmount = amountNum;
+        } else {
+          // Convert from user's currency to USD for reference
+          const rate = exchangeRates[userCurrency] || 1;
+          finalAmount = amountNum / rate;
+        }
       }
 
       // Prepare the payment details for the transaction
@@ -1129,17 +1131,15 @@ const AdminDashboard = () => {
         );
 
         // Set success modal data
+        const userCurr = selectedUser?.preferredCurrency || "USD";
         setSuccessDetails({
           amount:
             depositType === "crypto"
               ? `${cryptoAmount.toFixed(8)} ${cryptoAsset}`
-              : `${currencySymbol}${amountNum.toFixed(
+              : `${getCurrencySymbol(userCurr)}${amountInUserCurrency.toFixed(
                   2
-                )} → ${userCurrencySymbol}${amountInUserCurrency.toFixed(2)}`,
-          currency:
-            depositType === "crypto"
-              ? cryptoAsset
-              : selectedUser?.preferredCurrency || "USD",
+                )}`,
+          currency: depositType === "crypto" ? cryptoAsset : userCurr,
           userEmail: selectedUser!.email || "",
           transactionHash: generatedHash,
           type: depositType === "crypto" ? "Crypto Deposit" : "Fiat Deposit",
@@ -3139,17 +3139,33 @@ const AdminDashboard = () => {
                             </div>
                           )}
                           <input
-                            type="text"
+                            type="number"
+                            step="0.01"
+                            min="0"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
                             className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
                             placeholder={
                               amountInputType === "usd"
-                                ? `0.00 ${adminCurrency || "USD"}`
-                                : `0.00000000 ${cryptoAsset}`
+                                ? depositType === "fiat"
+                                  ? "0.00"
+                                  : "0.00"
+                                : "0.00000000"
                             }
                             disabled={loading}
                           />
+                          {depositType === "fiat" &&
+                            amountInputType === "usd" &&
+                            selectedUser && (
+                              <p className="text-[10px] text-blue-400 mt-1">
+                                💰 Enter the amount in{" "}
+                                {selectedUser.preferredCurrency || "USD"} (
+                                {getCurrencySymbol(
+                                  selectedUser.preferredCurrency || "USD"
+                                )}
+                                ) - user&apos;s preferred currency
+                              </p>
+                            )}
                           {amountInputType === "usd" &&
                             (depositType === "crypto" ||
                               (depositType === "fiat" &&
@@ -3157,20 +3173,6 @@ const AdminDashboard = () => {
                               <p className="text-[10px] text-gray-500 mt-1">
                                 Equivalent crypto amount will be calculated
                                 automatically
-                              </p>
-                            )}
-                          {depositType === "fiat" &&
-                            amountInputType === "usd" &&
-                            selectedUser &&
-                            selectedUser.preferredCurrency !==
-                              adminCurrency && (
-                              <p className="text-[10px] text-blue-400 mt-1">
-                                ℹ️ Amount will be converted to{" "}
-                                {selectedUser.preferredCurrency} (
-                                {getCurrencySymbol(
-                                  selectedUser.preferredCurrency || "USD"
-                                )}
-                                ) for the user
                               </p>
                             )}
                         </div>
@@ -3216,7 +3218,11 @@ const AdminDashboard = () => {
                             <div className="flex justify-between">
                               <span className="text-gray-400">Amount:</span>
                               <span className="font-semibold text-green-400">
-                                {amountInputType === "usd"
+                                {depositType === "fiat"
+                                  ? `${amount || "0"} ${
+                                      selectedUser?.preferredCurrency || "USD"
+                                    }`
+                                  : amountInputType === "usd"
                                   ? `${amount || "0"} ${adminCurrency || "USD"}`
                                   : `${amount || "0"} ${cryptoAsset}`}
                               </span>

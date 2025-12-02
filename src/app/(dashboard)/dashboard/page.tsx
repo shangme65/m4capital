@@ -17,7 +17,10 @@ import AssetDetailsModal from "@/components/client/AssetDetailsModal";
 import AddCryptoModal from "@/components/client/AddCryptoModal";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { getCurrencySymbol } from "@/lib/currencies";
+import {
+  getCurrencySymbol,
+  formatCurrency as formatCurrencyUtil,
+} from "@/lib/currencies";
 import { getCryptoMetadata } from "@/lib/crypto-constants";
 import { useVerificationGate } from "@/hooks/useVerificationGate";
 import VerificationRequiredModal from "@/components/client/VerificationRequiredModal";
@@ -1379,7 +1382,30 @@ function DashboardContent() {
                     return cryptoPrices[assetSymbol]?.price || 0;
                   };
 
+                  // Check if this is a fiat currency deposit (value already in user's currency)
+                  const FIAT_CURRENCIES = new Set([
+                    "USD",
+                    "EUR",
+                    "GBP",
+                    "BRL",
+                    "JPY",
+                    "CAD",
+                    "AUD",
+                    "CHF",
+                    "INR",
+                    "CNY",
+                    "KRW",
+                    "NGN",
+                  ]);
+                  const assetSymbol =
+                    activity.asset?.split(" ")[0]?.toUpperCase() || "";
+                  const isFiatDeposit = FIAT_CURRENCIES.has(assetSymbol);
+
                   const getFiatValue = () => {
+                    // For fiat deposits, value is already in user's currency - don't convert
+                    if (isFiatDeposit && activity.value) {
+                      return activity.value;
+                    }
                     // Use stored transaction value (USD at time of transaction)
                     // This ensures historical transactions show correct value, not recalculated from current price
                     if (activity.value) {
@@ -1479,7 +1505,14 @@ function DashboardContent() {
                               </span>
                             </div>
                             <span className="font-medium text-xs text-white px-2 py-0.5 rounded-md bg-gray-700/50">
-                              {formatAmount(getFiatValue(), 2)}
+                              {/* For fiat deposits, show in original currency without re-conversion */}
+                              {isFiatDeposit
+                                ? formatCurrencyUtil(
+                                    getFiatValue(),
+                                    assetSymbol,
+                                    2
+                                  )
+                                : formatAmount(getFiatValue(), 2)}
                             </span>
                           </div>
 

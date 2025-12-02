@@ -5,6 +5,23 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/currencies";
+
+// Fiat currencies that should NOT be converted (already in user's currency)
+const FIAT_CURRENCIES = new Set([
+  "USD",
+  "EUR",
+  "GBP",
+  "BRL",
+  "JPY",
+  "CAD",
+  "AUD",
+  "CHF",
+  "INR",
+  "CNY",
+  "KRW",
+  "NGN",
+]);
 
 export interface DetailedTransaction {
   id: string;
@@ -492,9 +509,22 @@ export default function TransactionDetailsModal({
                       Value
                     </label>
                     <div className="text-white text-xl font-bold">
-                      {formatAmount(transaction.value, 2)}
+                      {/* For fiat deposits, value is already in user's currency - don't convert */}
+                      {FIAT_CURRENCIES.has(
+                        transaction.asset?.toUpperCase() || ""
+                      )
+                        ? formatCurrencyUtil(
+                            transaction.value,
+                            transaction.asset?.toUpperCase() || "BRL",
+                            2
+                          )
+                        : formatAmount(transaction.value, 2)}
                       <span className="text-gray-400 text-base ml-2">
-                        {preferredCurrency}
+                        {FIAT_CURRENCIES.has(
+                          transaction.asset?.toUpperCase() || ""
+                        )
+                          ? transaction.asset?.toUpperCase()
+                          : preferredCurrency}
                       </span>
                     </div>
                   </div>
