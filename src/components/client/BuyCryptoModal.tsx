@@ -34,7 +34,7 @@ export default function BuyCryptoModal({
   const [showPaymentSelector, setShowPaymentSelector] = useState(false);
   const [inputMode, setInputMode] = useState<"crypto" | "fiat">("fiat");
   const { addTransaction, addNotification } = useNotifications();
-  const { formatAmount, preferredCurrency } = useCurrency();
+  const { formatAmount, preferredCurrency, convertAmount } = useCurrency();
   const currencySymbol = getCurrencySymbol(preferredCurrency);
 
   // Update amount when defaultAmount changes or modal opens
@@ -57,20 +57,23 @@ export default function BuyCryptoModal({
     };
   }, [isOpen]);
 
+  // In fiat mode, user enters amount in their preferred currency
+  // asset.price is always in USD from the market API
+  // We need to convert user's currency to USD first, then calculate crypto amount
+  const userInputAmount = amount ? parseFloat(amount) : 0;
+
   const cryptoAmount =
     inputMode === "crypto"
-      ? amount
-        ? parseFloat(amount)
-        : 0
-      : amount
-      ? parseFloat(amount) / asset.price
+      ? userInputAmount
+      : userInputAmount > 0
+      ? convertAmount(userInputAmount, true) / asset.price // Convert user currency → USD, then divide by USD price
       : 0;
+
+  // usdValue should ALWAYS be in USD for API calls and storage
   const usdValue =
     inputMode === "fiat"
-      ? amount
-        ? parseFloat(amount)
-        : 0
-      : cryptoAmount * asset.price;
+      ? convertAmount(userInputAmount, true) // Convert user's currency to USD
+      : cryptoAmount * asset.price; // Crypto mode: amount × USD price
 
   const handleProceedToPayment = () => {
     if (cryptoAmount > 0) {

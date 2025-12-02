@@ -346,6 +346,8 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Store the pre-converted display amount and user's currency as asset
+      // This ensures notifications display correctly without re-conversion
       await prisma.notification.create({
         data: {
           id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -355,8 +357,8 @@ export async function POST(request: NextRequest) {
           message: `Successfully sold ${amount.toFixed(
             8
           )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`,
-          amount: -netReceived, // Negative to indicate sell
-          asset: symbol,
+          amount: -(Math.round(displayAmount * 100) / 100), // Store pre-converted amount (negative for sell)
+          asset: userCurrency, // Store user's currency, not crypto symbol
           read: false,
         },
       });

@@ -964,3 +964,149 @@ const total =
 ```
 
 ---
+
+## 13. Amount Input & API Storage Rules
+
+### ⚠️ CRITICAL: All API Storage Must Use USD
+
+**All monetary values stored in the database or sent to APIs MUST be in USD.**
+
+This is because:
+1. Crypto prices from APIs (Binance, etc.) are always in USD
+2. Trade records store `entryPrice` in USD
+3. Transactions API returns `value` in USD for proper conversion on frontend
+
+### User Input Handling
+
+**When user enters an amount in their preferred currency (e.g., R$10,000):**
+
+```typescript
+// ✅ CORRECT - Convert user input to USD before using
+const userInputAmount = parseFloat(amount);  // e.g., 10000 (BRL)
+const usdValue = convertAmount(userInputAmount, true);  // Convert BRL → USD
+
+// Send USD values to API
+fetch('/api/crypto/buy', {
+  body: JSON.stringify({
+    symbol: 'BTC',
+    amount: cryptoAmount,  // Amount of crypto to buy
+    price: currentPrice,   // USD price per unit (from market API)
+  })
+});
+
+// ❌ WRONG - Sending user's currency as if it were USD
+const usdValue = parseFloat(amount);  // This is BRL, not USD!
+price: usdValue / cryptoAmount  // Wrong! This calculates price in BRL, not USD
+```
+
+### Crypto Amount Calculation
+
+**When calculating how much crypto to buy/sell:**
+
+```typescript
+// ✅ CORRECT - Convert user's currency to USD, then divide by USD price
+const userInputAmount = parseFloat(amount);  // User's input in their currency
+const usdAmount = convertAmount(userInputAmount, true);  // Convert to USD
+const cryptoAmount = usdAmount / usdPrice;  // Divide USD by USD price
+
+// ❌ WRONG - Dividing user's currency by USD price (mixing currencies!)
+const cryptoAmount = parseFloat(amount) / usdPrice;  // BRL / USD = nonsense!
+```
+
+### Notification Storage
+
+**When creating notifications for crypto transactions:**
+
+```typescript
+// ✅ CORRECT - Store pre-converted display amount with user's currency as asset
+const displayAmount = Math.round(convertedAmount * 100) / 100;
+await prisma.notification.create({
+  data: {
+    amount: displayAmount,     // Pre-converted to user's currency
+    asset: userCurrency,       // "BRL", "EUR", etc. (NOT "BTC"!)
+    message: `Purchased 0.01 BTC for R$500.00`,
+  }
+});
+
+// ❌ WRONG - Storing USD amount with crypto symbol (causes double-conversion)
+await prisma.notification.create({
+  data: {
+    amount: usdAmount,  // USD value
+    asset: 'BTC',       // Crypto symbol - frontend will try to convert USD again!
+  }
+});
+```
+
+### Trade Record Storage
+
+**Trade records store USD values for proper historical tracking:**
+
+```typescript
+// ✅ CORRECT - Store USD price and quantity
+prisma.trade.create({
+  data: {
+    entryPrice: new Decimal(usdPrice),  // USD price per unit
+    quantity: new Decimal(cryptoAmount),
+    // value = entryPrice × quantity = USD value
+  }
+});
+```
+
+### Frontend Display Rules
+
+**History Tab and Transaction Details:**
+
+```typescript
+// For FIAT deposits (BRL, EUR, USD, etc.) - value is already in user's currency
+if (FIAT_CURRENCIES.has(assetSymbol)) {
+  return formatCurrencyUtil(activity.value, assetSymbol, 2);  // No conversion
+}
+
+// For CRYPTO transactions - value is in USD, needs conversion
+return formatAmount(activity.value, 2);  // Converts USD → user's currency
+```
+
+### Variable Naming Convention
+
+**ALWAYS name variables according to their actual currency:**
+
+```typescript
+// ✅ CORRECT - Clear naming
+const userInputBRL = parseFloat(amount);  // User's input in BRL
+const valueUSD = convertAmount(userInputBRL, true);  // Converted to USD
+const priceUSD = getCurrentPrice();  // Price from API is always USD
+
+// ❌ WRONG - Misleading names
+const usdValue = parseFloat(amount);  // This is NOT USD if user's currency is BRL!
+const price = userInputBRL / cryptoAmount;  // This is BRL/crypto, not USD/crypto!
+```
+
+### Checklist for Buy/Sell Modals
+
+Before submitting to API, verify:
+
+- [ ] User's input amount is converted to USD using `convertAmount(input, true)`
+- [ ] Crypto price is from market API (always USD)
+- [ ] Crypto amount = USD value / USD price
+- [ ] API receives USD values for `price` and calculates `totalCost` in USD
+- [ ] Notification stores pre-converted display amount with user's currency code
+
+### Common Bugs to Avoid
+
+1. **Wrong crypto amount calculation:**
+   - Bug: `cryptoAmount = parseFloat(userInput) / usdPrice`
+   - Fix: `cryptoAmount = convertAmount(parseFloat(userInput), true) / usdPrice`
+
+2. **Wrong price stored in trades:**
+   - Bug: `price: userCurrencyValue / cryptoAmount` (stores BRL price as USD)
+   - Fix: `price: usdPrice` (use the actual USD price from market API)
+
+3. **Double-conversion in display:**
+   - Bug: `formatAmount(convertAmount(value), 2)` (converts twice)
+   - Fix: `formatAmount(value, 2)` or `convertAmount(value)` (pick one)
+
+4. **Notification shows wrong currency:**
+   - Bug: Storing `asset: 'BTC'` with USD amount (frontend converts again)
+   - Fix: Store `asset: userCurrency` with pre-converted display amount
+
+---
