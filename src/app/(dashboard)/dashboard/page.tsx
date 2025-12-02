@@ -403,17 +403,18 @@ function DashboardContent() {
   // Convert available balance to USD for portfolio calculation
   // cryptoAssetsValue is already in USD (crypto prices are in USD)
   // We need to convert availableBalance to USD before adding
-  const availableBalanceInUSD = useMemo(() => {
+  const getAvailableBalanceInUSD = (): number => {
     if (balanceCurrency === "USD") {
       return availableBalance;
     }
-    // Convert from user's currency to USD
-    const rate = exchangeRates[balanceCurrency] || 1;
-    return availableBalance / rate;
-  }, [availableBalance, balanceCurrency, exchangeRates]);
+    // Convert from balance currency to USD
+    // exchangeRates is { "BRL": 5.36, "EUR": 0.95, ... } (rate to convert 1 USD to that currency)
+    const rate = exchangeRates?.[balanceCurrency] ?? 1;
+    return rate > 0 ? availableBalance / rate : availableBalance;
+  };
 
   // Portfolio value in USD (for conversion to user's preferred currency)
-  const portfolioValueInUSD = cryptoAssetsValue + availableBalanceInUSD;
+  const portfolioValueInUSD = cryptoAssetsValue + getAvailableBalanceInUSD();
 
   // Helper function to format balance correctly
   // If stored currency matches preferred currency, show directly (no conversion)
