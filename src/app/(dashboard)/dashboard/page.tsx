@@ -31,7 +31,8 @@ export const dynamic = "force-dynamic";
 // Dashboard content component with crypto integration
 function DashboardContent() {
   const { data: session, status } = useSession();
-  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
+  const { preferredCurrency, convertAmount, formatAmount, exchangeRates } =
+    useCurrency();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -399,7 +400,20 @@ function DashboardContent() {
     : 0;
   const balanceCurrency = portfolio?.portfolio?.balanceCurrency || "USD";
 
-  const portfolioValue = cryptoAssetsValue + availableBalance;
+  // Convert available balance to USD for portfolio calculation
+  // cryptoAssetsValue is already in USD (crypto prices are in USD)
+  // We need to convert availableBalance to USD before adding
+  const availableBalanceInUSD = useMemo(() => {
+    if (balanceCurrency === "USD") {
+      return availableBalance;
+    }
+    // Convert from user's currency to USD
+    const rate = exchangeRates[balanceCurrency] || 1;
+    return availableBalance / rate;
+  }, [availableBalance, balanceCurrency, exchangeRates]);
+
+  // Portfolio value in USD (for conversion to user's preferred currency)
+  const portfolioValueInUSD = cryptoAssetsValue + availableBalanceInUSD;
 
   // Helper function to format balance correctly
   // If stored currency matches preferred currency, show directly (no conversion)
@@ -748,7 +762,7 @@ function DashboardContent() {
                 {portfolioLoading ? (
                   <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
                 ) : showBalances ? (
-                  formatAmount(portfolioValue || 0, 2)
+                  formatAmount(portfolioValueInUSD || 0, 2)
                 ) : (
                   "••••••"
                 )}
