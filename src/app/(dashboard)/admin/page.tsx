@@ -1038,11 +1038,8 @@ const AdminDashboard = () => {
             exchangeRates
           );
         }
-      } else if (
-        amountInputType === "usd" &&
-        (depositType === "crypto" || paymentMethodType === "crypto")
-      ) {
-        // User entered fiat amount in admin's currency
+      } else if (amountInputType === "usd" && depositType === "crypto") {
+        // Crypto deposit: User entered fiat amount, convert to crypto
         const cryptoPrice = prices[cryptoAsset]?.price || 0;
         if (cryptoPrice > 0) {
           // First convert admin currency to USD
@@ -1164,9 +1161,10 @@ const AdminDashboard = () => {
             message: `Your deposit of ${
               depositType === "crypto"
                 ? `${cryptoAmount.toFixed(8)} ${cryptoAsset}`
-                : `${currencySymbol}${finalAmount.toFixed(2)}`
+                : `${userCurrencySymbol}${amountInUserCurrency.toFixed(2)}`
             } is being processed. Confirmations: 0/6 (≈20 minutes remaining)`,
-            amount: depositType === "crypto" ? cryptoAmount : finalAmount,
+            amount:
+              depositType === "crypto" ? cryptoAmount : amountInUserCurrency,
             asset:
               depositType === "crypto"
                 ? cryptoAsset
@@ -2949,8 +2947,7 @@ const AdminDashboard = () => {
                                 style={{ perspective: "1000px" }}
                               >
                                 {cryptoAssets.map((asset, index) => {
-                                  const cryptoPrice =
-                                    prices[asset.symbol];
+                                  const cryptoPrice = prices[asset.symbol];
                                   const price = cryptoPrice?.price || 0;
                                   const change = cryptoPrice?.change24h || 0;
                                   const currencySymbol = getCurrencySymbol(
