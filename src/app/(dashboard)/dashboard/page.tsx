@@ -430,9 +430,10 @@ function DashboardContent() {
         }
       )}`;
     }
-    // Different currency - formatAmount will convert from USD to preferred
-    // Note: If balanceCurrency is not USD, this may need additional conversion logic
-    return formatAmount(balance, 2);
+    // Different currency - need to convert from balanceCurrency to preferredCurrency
+    // First convert from balanceCurrency to USD, then formatAmount converts USD to preferredCurrency
+    const balanceInUSD = getAvailableBalanceInUSD();
+    return formatAmount(balanceInUSD, 2);
   };
 
   // Income percent: measure change of user's money (deposits + received + earnings)
