@@ -171,6 +171,64 @@ This is a **PRODUCTION APPLICATION**. Follow these rules strictly:
 
 **NEVER leave discovered bugs unfixed. Always add them to the todo list and resolve them.**
 
+### 🏆 ALWAYS USE FIRST-CLASS SOLUTIONS
+
+**CRITICAL RULE:** Always respond and fix issues with first-class, most advanced, and production-ready solutions.
+
+**REQUIRED approach:**
+
+1. **Research best practices** - Check how similar problems are solved in the codebase first
+2. **Use modern patterns** - Prefer latest Next.js, React, and TypeScript patterns
+3. **Write maintainable code** - Code should be readable, documented, and easy to extend
+4. **Consider edge cases** - Handle null, undefined, empty arrays, and error states
+5. **Test your changes** - Mentally trace through the code flow to catch issues early
+
+**Examples of first-class solutions:**
+
+- Using TypeScript strict typing instead of `any`
+- Proper error handling with try/catch and user feedback
+- Optimistic UI updates with proper rollback
+- Debouncing expensive operations
+- Using React Query/SWR patterns for data fetching
+
+### 🔒 NEVER BREAK EXISTING CODE
+
+**CRITICAL RULE:** Before making ANY changes, understand the impact on other parts of the codebase.
+
+**REQUIRED approach:**
+
+1. **Check dependencies** - Use `grep_search` to find all usages of code you're modifying
+2. **Understand the flow** - Trace how data flows through components and APIs
+3. **Test in isolation** - Make sure your changes don't break existing functionality
+4. **Use backward-compatible changes** - Add optional parameters, don't remove required ones
+5. **Maintain type contracts** - Don't change return types or function signatures without updating callers
+
+**Before modifying a function, always check:**
+
+```bash
+# Find all usages
+grep -rn "functionName" src/
+grep -rn "ComponentName" src/
+
+# Find imports
+grep -rn "import.*functionName" src/
+```
+
+**WARNING patterns to avoid:**
+
+- ❌ Changing function parameters without updating all callers
+- ❌ Modifying API response shape without updating frontend consumers
+- ❌ Removing fields from types that are used elsewhere
+- ❌ Changing default values that other code depends on
+- ❌ Breaking existing working code to "improve" it
+
+**CORRECT approach:**
+
+- Add new parameters with default values
+- Extend types with optional fields
+- Create new functions instead of modifying widely-used ones
+- Test changes against existing use cases
+
 ### 📋 Code Review Checklist
 
 Before making any changes, verify:

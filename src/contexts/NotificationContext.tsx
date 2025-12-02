@@ -66,6 +66,8 @@ interface NotificationContextType {
   clearNotifications: () => void;
   archiveNotification: (id: string) => void;
   deleteNotification: (id: string) => void;
+  refetchTransactions: () => Promise<void>;
+  refetchNotifications: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
@@ -283,6 +285,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         clearNotifications,
         archiveNotification,
         deleteNotification,
+        refetchTransactions: fetchTransactions,
+        refetchNotifications: fetchNotifications,
       }}
     >
       {children}

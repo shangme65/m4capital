@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
         accountType: true,
         country: true,
         isOriginAdmin: true,
+        preferredCurrency: true,
         Portfolio: {
           select: {
             balance: true,
@@ -42,6 +43,7 @@ export async function GET(req: NextRequest) {
     const usersWithBalance = users.map((user) => ({
       ...user,
       balance: user.Portfolio?.balance || 0,
+      preferredCurrency: user.preferredCurrency || "USD",
       portfolio: undefined, // Remove nested portfolio object
     }));
 

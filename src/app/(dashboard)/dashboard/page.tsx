@@ -60,7 +60,7 @@ function DashboardContent() {
     openConvertModal,
     openSellModal,
   } = useModal();
-  const { recentActivity } = useNotifications();
+  const { recentActivity, refetchTransactions } = useNotifications();
   const { showSuccess, showError } = useToast();
   const {
     requireVerification,
@@ -432,7 +432,7 @@ function DashboardContent() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
-      await refetch();
+      await Promise.all([refetch(), refetchTransactions()]);
       setLastUpdated("Just now");
       showSuccess("Portfolio data refreshed");
     } catch (error) {

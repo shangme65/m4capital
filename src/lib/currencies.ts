@@ -229,7 +229,19 @@ export function formatCurrency(
   });
 
   // For currencies with symbols that typically go before the amount
-  const symbolBeforeAmount = ["$", "£", "€", "¥", "₹", "₦", "₱", "₩", "₪"];
+  // Note: R$ (BRL) traditionally goes before the amount in Brazilian format
+  const symbolBeforeAmount = [
+    "$",
+    "£",
+    "€",
+    "¥",
+    "₹",
+    "₦",
+    "₱",
+    "₩",
+    "₪",
+    "R$",
+  ];
   if (symbolBeforeAmount.includes(symbol)) {
     return `${symbol}${formattedAmount}`;
   }
