@@ -18,6 +18,7 @@ interface BuyCryptoModalProps {
     price: number;
   };
   userBalance: number;
+  balanceCurrency?: string;
   defaultAmount?: number;
 }
 
@@ -26,6 +27,7 @@ export default function BuyCryptoModal({
   onClose,
   asset,
   userBalance,
+  balanceCurrency = "USD",
   defaultAmount,
 }: BuyCryptoModalProps) {
   const [amount, setAmount] = useState(
@@ -469,6 +471,7 @@ export default function BuyCryptoModal({
           amount={cryptoAmount}
           usdValue={usdValue}
           userBalance={userBalance}
+          balanceCurrency={balanceCurrency}
         />
       )}
     </>

@@ -16,6 +16,7 @@ interface PaymentMethodSelectorProps {
   amount: number;
   usdValue: number;
   userBalance: number;
+  balanceCurrency?: string;
 }
 
 export default function PaymentMethodSelector({
@@ -26,6 +27,7 @@ export default function PaymentMethodSelector({
   amount,
   usdValue,
   userBalance,
+  balanceCurrency = "USD",
 }: PaymentMethodSelectorProps) {
   const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
@@ -101,11 +103,35 @@ export default function PaymentMethodSelector({
 
   const { formatAmount, preferredCurrency } = useCurrency();
 
+  // Format balance display - only convert if currencies don't match
+  const formatBalanceDisplay = (balance: number): string => {
+    if (balanceCurrency === preferredCurrency) {
+      // Same currency - show directly without conversion
+      const symbols: { [key: string]: string } = {
+        USD: "$",
+        EUR: "€",
+        GBP: "£",
+        NGN: "₦",
+        ZAR: "R",
+        KES: "KSh",
+        GHS: "₵",
+        BRL: "R$",
+      };
+      const symbol = symbols[preferredCurrency] || "$";
+      return `${symbol}${balance.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+    // Different currency - formatAmount converts from USD to preferred
+    return formatAmount(balance, 2);
+  };
+
   const paymentMethods = [
     {
       id: "balance",
       name: `${preferredCurrency} Balance`,
-      description: `Available: ${formatAmount(userBalance, 2)}`,
+      description: `Available: ${formatBalanceDisplay(userBalance)}`,
       icon: <Wallet className="w-6 h-6" />,
       enabled: userBalance >= usdValue,
       type: "balance",
@@ -359,7 +385,7 @@ export default function PaymentMethodSelector({
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-400">Current Balance:</span>
                     <span className="text-white font-medium">
-                      {formatAmount(userBalance, 2)}
+                      {formatBalanceDisplay(userBalance)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm mb-2">
@@ -372,7 +398,7 @@ export default function PaymentMethodSelector({
                   <div className="flex justify-between">
                     <span className="text-gray-400">New Balance:</span>
                     <span className="text-green-400 font-bold">
-                      {formatAmount(userBalance - usdValue, 2)}
+                      {formatBalanceDisplay(userBalance - usdValue)}
                     </span>
                   </div>
                 </div>

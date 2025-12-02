@@ -1329,6 +1329,7 @@ export default function AssetDetailsModal({
               price: currentPrice,
             }}
             userBalance={userBalance}
+            balanceCurrency={balanceCurrency}
             defaultAmount={selectedBuyAmount}
           />
 

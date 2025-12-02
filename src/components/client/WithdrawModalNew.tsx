@@ -64,6 +64,20 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
 
   const availableBalance = portfolio?.portfolio?.balance || 0;
+  const balanceCurrency = portfolio?.portfolio?.balanceCurrency || "USD";
+
+  // Format balance display - only convert if currencies don't match
+  const formatBalanceDisplay = (balance: number): string => {
+    if (balanceCurrency === preferredCurrency) {
+      // Same currency - show directly without conversion
+      return `${currencySymbol}${balance.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+    }
+    // Different currencies - convert using formatAmount (USD to preferred)
+    return formatAmount(balance, 2);
+  };
 
   // Get crypto assets from portfolio
   const cryptoAssets = portfolio?.portfolio?.assets || [];
@@ -546,7 +560,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                             Available Balance:
                           </span>
                           <span className="text-lg font-bold text-white">
-                            {formatAmount(availableBalance, 2)}
+                            {formatBalanceDisplay(availableBalance)}
                           </span>
                         </div>
                       </div>
