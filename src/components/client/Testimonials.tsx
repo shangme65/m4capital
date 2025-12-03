@@ -183,76 +183,347 @@ const testimonials = [
   },
 ];
 
-const TrustpilotRating = ({ rating }: { rating: number }) => (
-  <div className="flex items-center justify-center gap-2 text-lg text-gray-300">
-    <SiTrustpilot className="text-green-500" size={24} />
-    <span className="font-bold">{rating.toFixed(1)}</span>
-    <FaStar className="text-gray-300" size={18} />
-    <span>on Trustpilot</span>
-  </div>
-);
+// Deterministic pseudo-random rating in [4.5, 5.0] based on index
+const seededRating = (i: number) => {
+  const x = Math.sin(i * 9301 + 49297) * 233280;
+  const frac = x - Math.floor(x);
+  return Math.round((4.5 + frac * 0.5) * 10) / 10;
+};
+
+interface Testimonial {
+  quote: string;
+  author: string;
+  title: string;
+  country: string;
+  rating: number;
+  image: string;
+}
+
+const TestimonialCard3D = ({
+  testimonial,
+  index,
+  direction,
+}: {
+  testimonial: Testimonial;
+  index: number;
+  direction: "left" | "right";
+}) => {
+  const [rotateX, setRotateX] = useState(0);
+  const [rotateY, setRotateY] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = e.currentTarget;
+    const rect = card.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const mouseX = e.clientX - centerX;
+    const mouseY = e.clientY - centerY;
+
+    const rotateXValue = (mouseY / (rect.height / 2)) * -8;
+    const rotateYValue = (mouseX / (rect.width / 2)) * 8;
+
+    setRotateX(rotateXValue);
+    setRotateY(rotateYValue);
+  };
+
+  const handleMouseLeave = () => {
+    setRotateX(0);
+    setRotateY(0);
+    setIsHovered(false);
+  };
+
+  const rating = seededRating(index);
+  const gradientColors =
+    direction === "left"
+      ? {
+          from: "from-blue-500",
+          to: "to-cyan-400",
+          glow: "rgba(59, 130, 246, 0.3)",
+        }
+      : {
+          from: "from-purple-500",
+          to: "to-pink-400",
+          glow: "rgba(168, 85, 247, 0.3)",
+        };
+
+  return (
+    <motion.div
+      className="relative w-full"
+      style={{ perspective: "1000px" }}
+      initial={{
+        opacity: 0,
+        x: direction === "left" ? 100 : -100,
+      }}
+      animate={{
+        opacity: 1,
+        x: 0,
+      }}
+      exit={{
+        opacity: 0,
+        x: direction === "left" ? -100 : 100,
+      }}
+      transition={{ duration: 0.6, ease: "easeInOut" }}
+    >
+      <div
+        className="relative cursor-pointer group"
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+          transformStyle: "preserve-3d",
+          transition: "transform 0.15s ease-out",
+        }}
+      >
+        {/* Glow effect */}
+        <div
+          className="absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500"
+          style={{
+            background: `radial-gradient(ellipse at center, ${gradientColors.glow} 0%, transparent 70%)`,
+          }}
+        />
+
+        {/* Card border gradient */}
+        <div
+          className="relative rounded-2xl p-[1px] overflow-hidden"
+          style={{
+            background: isHovered
+              ? `linear-gradient(135deg, ${gradientColors.glow}, transparent 50%, ${gradientColors.glow})`
+              : "linear-gradient(135deg, rgba(255,255,255,0.08), transparent 50%, rgba(255,255,255,0.04))",
+            transition: "background 0.3s ease",
+          }}
+        >
+          {/* Card content */}
+          <div
+            className="relative rounded-2xl p-5 overflow-hidden"
+            style={{
+              background:
+                "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a1f35 100%)",
+              boxShadow: isHovered
+                ? `0 20px 40px -12px rgba(0, 0, 0, 0.7), 0 0 30px -8px ${gradientColors.glow}`
+                : "0 15px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+              transition: "box-shadow 0.3s ease",
+            }}
+          >
+            {/* Light reflection */}
+            <div
+              className="absolute top-0 left-0 right-0 h-20 opacity-20 pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%)",
+              }}
+            />
+
+            {/* Rating badge */}
+            <div
+              className="absolute -top-1 -right-1"
+              style={{ transform: "translateZ(25px)" }}
+            >
+              <div
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r ${gradientColors.from} ${gradientColors.to} text-white text-xs font-semibold shadow-lg`}
+              >
+                <SiTrustpilot size={12} />
+                <span>{rating}</span>
+              </div>
+            </div>
+
+            {/* Profile section */}
+            <div className="flex items-center gap-3 mb-3 relative z-10">
+              <div
+                className="relative"
+                style={{
+                  transform: isHovered ? "translateZ(15px)" : "translateZ(0)",
+                  transition: "transform 0.3s ease",
+                }}
+              >
+                <div
+                  className={`absolute -inset-1 rounded-full bg-gradient-to-r ${gradientColors.from} ${gradientColors.to} opacity-60 blur-sm`}
+                />
+                <Image
+                  src={testimonial.image}
+                  alt={testimonial.author}
+                  width={48}
+                  height={48}
+                  className="relative rounded-full border-2 border-white/20 shadow-lg"
+                />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-white font-semibold text-sm truncate">
+                    {testimonial.author}
+                  </span>
+                  <VscVerifiedFilled
+                    className="text-blue-400 flex-shrink-0"
+                    size={14}
+                  />
+                </div>
+                <span className="text-gray-400 text-xs block truncate">
+                  {testimonial.title}, {testimonial.country}
+                </span>
+              </div>
+            </div>
+
+            {/* Stars */}
+            <div className="flex gap-0.5 mb-2 relative z-10">
+              {[...Array(5)].map((_, i) => (
+                <FaStar
+                  key={i}
+                  size={12}
+                  className={
+                    i < testimonial.rating ? "text-yellow-400" : "text-gray-600"
+                  }
+                />
+              ))}
+            </div>
+
+            {/* Quote */}
+            <blockquote
+              className="text-gray-300 text-sm leading-relaxed relative z-10 line-clamp-3"
+              style={{ transform: "translateZ(10px)" }}
+            >
+              &ldquo;{testimonial.quote}&rdquo;
+            </blockquote>
+
+            {/* Bottom accent */}
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 overflow-hidden rounded-b-2xl">
+              <div
+                className={`h-full bg-gradient-to-r ${gradientColors.from} ${gradientColors.to} transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500`}
+              />
+            </div>
+
+            {/* Floating particles on hover */}
+            {isHovered && (
+              <>
+                <div
+                  className="absolute w-1.5 h-1.5 rounded-full"
+                  style={{
+                    background: gradientColors.glow,
+                    top: "25%",
+                    right: "15%",
+                    filter: "blur(1px)",
+                    animation: "float 2s ease-in-out infinite",
+                  }}
+                />
+                <div
+                  className="absolute w-1 h-1 rounded-full"
+                  style={{
+                    background: gradientColors.glow,
+                    bottom: "20%",
+                    left: "10%",
+                    filter: "blur(1px)",
+                    animation: "float 2.5s ease-in-out infinite 0.3s",
+                  }}
+                />
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 const Testimonials: React.FC = () => {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentPairIndex, setCurrentPairIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % testimonials.length);
-    }, 7000); // Change testimonial every 7 seconds
+      setCurrentPairIndex((prev) => (prev + 2) % testimonials.length);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const currentTestimonial = testimonials[currentIndex];
-
-  // Deterministic pseudo-random rating in [4.5, 5.0] based on index to avoid hydration mismatch
-  const seededRating = (i: number) => {
-    const x = Math.sin(i * 9301 + 49297) * 233280; // simple deterministic noise
-    const frac = x - Math.floor(x);
-    return Math.round((4.5 + frac * 0.5) * 10) / 10; // one decimal between 4.5 and 5.0
-  };
-  const displayRating = seededRating(currentIndex);
+  const leftTestimonial = testimonials[currentPairIndex];
+  const rightTestimonial =
+    testimonials[(currentPairIndex + 1) % testimonials.length];
 
   return (
-    <div className="bg-gray-900 text-white py-16 sm:py-24">
-      <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-12">
-          What Our Traders Say
-        </h2>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentIndex}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.5 }}
-            className="flex flex-col items-center"
-          >
-            <Image
-              src={currentTestimonial.image}
-              alt={currentTestimonial.author}
-              width={100}
-              height={100}
-              className="rounded-full mb-4 border-4 border-indigo-500 shadow-lg"
+    <div className="relative bg-gray-900 text-white py-12 sm:py-16 overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute top-1/4 left-0 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl" />
+
+      <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <motion.div
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 mb-4">
+            <SiTrustpilot className="text-green-500" size={14} />
+            <span className="text-xs font-medium text-green-400">
+              4.8 Rating on Trustpilot
+            </span>
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+            What Our{" "}
+            <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Traders Say
+            </span>
+          </h2>
+          <p className="mt-2 text-sm text-gray-400 max-w-md mx-auto">
+            Join thousands of satisfied traders worldwide
+          </p>
+        </motion.div>
+
+        {/* Dual testimonial cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+          <AnimatePresence mode="wait">
+            <TestimonialCard3D
+              key={`left-${currentPairIndex}`}
+              testimonial={leftTestimonial}
+              index={currentPairIndex}
+              direction="left"
             />
-            <div className="mb-4">
-              <TrustpilotRating rating={displayRating} />
-            </div>
-            <blockquote className="text-xl italic leading-8 mb-6">
-              <p>"{currentTestimonial.quote}"</p>
-            </blockquote>
-            <figcaption className="text-lg font-semibold">
-              <div className="flex items-center justify-center gap-x-2">
-                <span>{currentTestimonial.author}</span>
-                <VscVerifiedFilled className="text-blue-500" />
-              </div>
-              <span className="block text-base font-normal text-gray-400">
-                {currentTestimonial.title}, {currentTestimonial.country}
-              </span>
-            </figcaption>
-          </motion.div>
-        </AnimatePresence>
+          </AnimatePresence>
+          <AnimatePresence mode="wait">
+            <TestimonialCard3D
+              key={`right-${currentPairIndex + 1}`}
+              testimonial={rightTestimonial}
+              index={currentPairIndex + 1}
+              direction="right"
+            />
+          </AnimatePresence>
+        </div>
+
+        {/* Progress indicators */}
+        <div className="flex justify-center gap-1.5 mt-6">
+          {Array.from({ length: Math.ceil(testimonials.length / 2) }).map(
+            (_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPairIndex(i * 2)}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  Math.floor(currentPairIndex / 2) === i
+                    ? "w-6 bg-gradient-to-r from-blue-500 to-purple-500"
+                    : "w-1.5 bg-gray-600 hover:bg-gray-500"
+                }`}
+                aria-label={`Go to testimonials ${i * 2 + 1} and ${i * 2 + 2}`}
+              />
+            )
+          )}
+        </div>
       </div>
+
+      {/* Float animation keyframes */}
+      <style jsx>{`
+        @keyframes float {
+          0%,
+          100% {
+            transform: translateY(0px);
+            opacity: 0.5;
+          }
+          50% {
+            transform: translateY(-8px);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };

@@ -1041,20 +1041,49 @@ export default function AssetDetailsModal({
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8">
-                        <div className="text-gray-500 mb-2">📱</div>
-                        <p className="text-gray-400 mb-2">
-                          Transactions will appear here.
+                      <div className="text-center py-12">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-slate-700/50 to-slate-800/50 flex items-center justify-center border border-slate-600/30">
+                          <svg
+                            className="w-8 h-8 text-gray-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                            />
+                          </svg>
+                        </div>
+                        <h4 className="text-white font-medium mb-2">
+                          No {asset.symbol} Transactions Yet
+                        </h4>
+                        <p className="text-gray-400 text-sm mb-1">
+                          Your {asset.name} transaction history will appear here
                         </p>
-                        <p className="text-gray-500 text-sm">
-                          Cannot find your transaction?{" "}
-                          <button className="text-blue-500 hover:underline">
-                            Check explorer
-                          </button>
+                        <p className="text-gray-500 text-xs mb-6">
+                          Start trading to see your buy, sell, send, and receive
+                          activity
                         </p>
-                        <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold mt-4 transition-colors">
+                        <button
+                          onClick={handleBuy}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg shadow-blue-600/25"
+                        >
                           Buy {asset.symbol}
                         </button>
+                        <p className="text-gray-500 text-xs mt-4">
+                          Looking for a specific transaction?{" "}
+                          <a
+                            href={`https://blockchain.com/explorer/search?search=${asset.symbol}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 hover:underline"
+                          >
+                            Check blockchain explorer
+                          </a>
+                        </p>
                       </div>
                     )}
                   </div>

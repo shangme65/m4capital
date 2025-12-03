@@ -435,6 +435,7 @@ function Hero() {
 function CallToAction() {
   const { openSignupModal } = useModal();
   const { data: session } = useSession();
+  const [isHovered, setIsHovered] = React.useState(false);
 
   // Hide CallToAction section when user is logged in
   if (session) {
@@ -442,22 +443,172 @@ function CallToAction() {
   }
 
   return (
-    <div className="bg-gray-800">
-      <div className="mx-auto max-w-7xl px-6 py-24 sm:py-32 lg:flex lg:items-center lg:justify-between lg:px-8">
-        <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-          Ready to dive in?
-          <br />
-          Start your trading journey today.
-        </h2>
-        <div className="mt-10 flex items-center gap-x-6 lg:mt-0 lg:flex-shrink-0">
-          <button
-            onClick={openSignupModal}
-            className="rounded-lg bg-orange-500 px-6 py-3 text-base font-semibold text-white shadow-sm hover:bg-orange-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 transition-all duration-200 transform hover:scale-105"
+    <div className="relative bg-gray-900 py-12 sm:py-16 overflow-hidden">
+      {/* Background effects */}
+      <div className="absolute top-0 left-1/4 w-72 h-72 bg-orange-500/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-amber-500/5 rounded-full blur-3xl" />
+
+      <div className="relative mx-auto max-w-2xl px-4 sm:px-6">
+        {/* 3D Card */}
+        <div
+          className="relative group"
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+        >
+          {/* Glow effect */}
+          <div
+            className="absolute -inset-2 rounded-2xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity duration-500"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, rgba(249, 115, 22, 0.2) 0%, transparent 70%)",
+            }}
+          />
+
+          {/* Card border gradient */}
+          <div
+            className="relative rounded-2xl p-[1px] overflow-hidden transition-all duration-300"
+            style={{
+              background: isHovered
+                ? "linear-gradient(135deg, rgba(249, 115, 22, 0.4), transparent 50%, rgba(251, 191, 36, 0.4))"
+                : "linear-gradient(135deg, rgba(255,255,255,0.08), transparent 50%, rgba(255,255,255,0.04))",
+            }}
           >
-            Create an account
-          </button>
+            {/* Card content */}
+            <div
+              className="relative rounded-2xl p-6 sm:p-8 overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a1f35 100%)",
+                boxShadow: isHovered
+                  ? "0 20px 40px -12px rgba(0, 0, 0, 0.7), 0 0 30px -8px rgba(249, 115, 22, 0.2)"
+                  : "0 15px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+                transition: "box-shadow 0.3s ease",
+              }}
+            >
+              {/* Light reflection */}
+              <div
+                className="absolute top-0 left-0 right-0 h-24 opacity-20 pointer-events-none"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%)",
+                }}
+              />
+
+              {/* Decorative icon */}
+              <div className="absolute -top-2 -right-2 w-20 h-20 opacity-10">
+                <svg
+                  className="w-full h-full text-orange-500"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                {/* Text content */}
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 mb-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
+                    <span className="text-xs font-medium text-orange-400">
+                      Get Started
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                    Ready to dive in?
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-400">
+                    Start your trading journey today with M4Capital
+                  </p>
+                </div>
+
+                {/* CTA Button */}
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={openSignupModal}
+                    className="relative group/btn w-full sm:w-auto"
+                  >
+                    {/* Button glow */}
+                    <div className="absolute -inset-1 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 opacity-50 blur group-hover/btn:opacity-75 transition-opacity duration-300" />
+                    <div
+                      className="relative flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold text-sm transition-all duration-300 hover:scale-105 active:scale-95"
+                      style={{
+                        boxShadow:
+                          "0 8px 20px -4px rgba(249, 115, 22, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      <span>Create an account</span>
+                      <svg
+                        className="w-4 h-4 transition-transform group-hover/btn:translate-x-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom accent line */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden rounded-b-2xl">
+                <div
+                  className={`h-full bg-gradient-to-r from-orange-500 to-amber-500 transform transition-transform duration-700 ${
+                    isHovered ? "translate-x-0" : "-translate-x-full"
+                  }`}
+                />
+              </div>
+
+              {/* Floating particles */}
+              {isHovered && (
+                <>
+                  <div
+                    className="absolute w-2 h-2 rounded-full"
+                    style={{
+                      background: "rgba(249, 115, 22, 0.4)",
+                      top: "20%",
+                      right: "25%",
+                      filter: "blur(1px)",
+                      animation: "float 2s ease-in-out infinite",
+                    }}
+                  />
+                  <div
+                    className="absolute w-1.5 h-1.5 rounded-full"
+                    style={{
+                      background: "rgba(251, 191, 36, 0.4)",
+                      bottom: "30%",
+                      left: "20%",
+                      filter: "blur(1px)",
+                      animation: "float 2.5s ease-in-out infinite 0.3s",
+                    }}
+                  />
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Float animation */}
+      <style jsx>{`
+        @keyframes float {
+          0%,
+          100% {
+            transform: translateY(0px);
+            opacity: 0.5;
+          }
+          50% {
+            transform: translateY(-8px);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }

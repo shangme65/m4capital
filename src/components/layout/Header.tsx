@@ -93,8 +93,10 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 text-white transition-all duration-300 ${
-        isScrolled ? "bg-black" : "bg-black bg-opacity-0"
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-white dark:bg-black text-gray-900 dark:text-white shadow-md dark:shadow-none"
+          : "bg-transparent text-white"
       }`}
     >
       <nav className="container mx-auto px-4 sm:px-8 md:px-16 py-2 flex justify-between items-center">
