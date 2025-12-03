@@ -436,14 +436,129 @@ function CallToAction() {
   const { openSignupModal } = useModal();
   const { data: session } = useSession();
   const [isHovered, setIsHovered] = React.useState(false);
+  const [isDarkMode, setIsDarkMode] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    };
+    checkDarkMode();
+
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Hide CallToAction section when user is logged in
   if (session) {
     return null;
   }
 
+  // Light mode card
+  if (!isDarkMode) {
+    return (
+      <div className="relative bg-gray-100 py-12 sm:py-16 overflow-hidden">
+        {/* Background effects */}
+        <div className="absolute top-0 left-1/4 w-72 h-72 bg-orange-500/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-amber-500/5 rounded-full blur-3xl" />
+
+        <div className="relative mx-auto max-w-2xl px-4 sm:px-6">
+          <div
+            className="relative group"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            {/* Card */}
+            <div
+              className="relative rounded-2xl bg-white p-6 sm:p-8 overflow-hidden transition-all duration-300 group-hover:-translate-y-1"
+              style={{
+                boxShadow: isHovered
+                  ? "0 30px 50px -15px rgba(0, 0, 0, 0.25), 0 15px 30px -10px rgba(0, 0, 0, 0.15)"
+                  : "0 20px 40px -15px rgba(0, 0, 0, 0.15), 0 10px 20px -5px rgba(0, 0, 0, 0.08)",
+              }}
+            >
+              {/* Decorative icon */}
+              <div className="absolute -top-2 -right-2 w-20 h-20 opacity-10">
+                <svg
+                  className="w-full h-full text-orange-500"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+
+              <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6">
+                {/* Text content */}
+                <div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 mb-3">
+                    <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                    <span className="text-xs font-medium text-orange-600">
+                      Get Started
+                    </span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
+                    Ready to dive in?
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Start your trading journey today with M4Capital
+                  </p>
+                </div>
+
+                {/* CTA Button */}
+                <div className="flex-shrink-0">
+                  <button
+                    onClick={openSignupModal}
+                    className="relative group/btn w-full sm:w-auto"
+                  >
+                    <div
+                      className="relative flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-semibold text-sm transition-all duration-300 hover:scale-105 active:scale-95"
+                      style={{
+                        boxShadow:
+                          "0 8px 20px -4px rgba(249, 115, 22, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      <span>Create an account</span>
+                      <svg
+                        className="w-4 h-4 transition-transform group-hover/btn:translate-x-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Bottom accent line */}
+              <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden rounded-b-2xl">
+                <div
+                  className={`h-full bg-gradient-to-r from-orange-500 to-amber-500 transform transition-transform duration-700 ${
+                    isHovered ? "translate-x-0" : "-translate-x-full"
+                  }`}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Dark mode card
   return (
-    <div className="relative bg-gray-100 dark:bg-gray-900 py-12 sm:py-16 overflow-hidden">
+    <div className="relative bg-gray-900 py-12 sm:py-16 overflow-hidden">
       {/* Background effects */}
       <div className="absolute top-0 left-1/4 w-72 h-72 bg-orange-500/5 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-amber-500/5 rounded-full blur-3xl" />
@@ -631,8 +746,8 @@ export default function Home() {
         <Hero />
         <CryptoPriceTicker />
         <Features />
-        <HowItWorks />
         <Testimonials />
+        <HowItWorks />
         <FAQ />
         <CallToAction />
       </main>

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const faqs = [
@@ -90,14 +90,123 @@ const FAQItem = ({
   index,
   isActive,
   onToggle,
+  isDarkMode,
 }: {
   faq: (typeof faqs)[0];
   index: number;
   isActive: boolean;
   onToggle: () => void;
+  isDarkMode: boolean;
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
+  // Light mode card
+  if (!isDarkMode) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.4, delay: index * 0.1 }}
+        className="relative group"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Card */}
+        <div
+          className="relative rounded-xl bg-white overflow-hidden transition-all duration-300"
+          style={{
+            boxShadow:
+              isHovered || isActive
+                ? "0 20px 40px -10px rgba(0, 0, 0, 0.2), 0 10px 20px -5px rgba(0, 0, 0, 0.1)"
+                : "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 4px 10px -3px rgba(0, 0, 0, 0.05)",
+          }}
+        >
+          {/* Question button */}
+          <button
+            onClick={onToggle}
+            className="flex items-center gap-3 w-full text-left p-4 relative z-10"
+          >
+            {/* Icon */}
+            <div
+              className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                isActive
+                  ? "bg-gradient-to-br from-indigo-500 to-purple-500 text-white"
+                  : "bg-gray-100 text-gray-500 group-hover:bg-gray-200"
+              }`}
+              style={{
+                boxShadow: isActive
+                  ? "0 4px 12px -2px rgba(99, 102, 241, 0.4)"
+                  : "none",
+              }}
+            >
+              {faq.icon}
+            </div>
+
+            {/* Question text */}
+            <span className="flex-1 text-sm font-medium text-gray-900">
+              {faq.question}
+            </span>
+
+            {/* Arrow */}
+            <motion.div
+              animate={{ rotate: isActive ? 180 : 0 }}
+              transition={{ duration: 0.3 }}
+              className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-colors duration-300 ${
+                isActive
+                  ? "bg-indigo-100 text-indigo-600"
+                  : "bg-gray-100 text-gray-500"
+              }`}
+            >
+              <svg
+                className="w-3.5 h-3.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </motion.div>
+          </button>
+
+          {/* Answer */}
+          <AnimatePresence>
+            {isActive && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 pb-4 pt-0">
+                  <div className="pl-11 text-gray-600 text-sm leading-relaxed">
+                    {faq.answer}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Bottom accent line */}
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 overflow-hidden">
+            <div
+              className={`h-full bg-gradient-to-r from-indigo-500 to-purple-500 transform transition-transform duration-500 ${
+                isActive ? "translate-x-0" : "-translate-x-full"
+              }`}
+            />
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Dark mode card
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -235,6 +344,22 @@ const FAQItem = ({
 
 const FAQ = () => {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    };
+    checkDarkMode();
+
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const toggleFAQ = (index: number) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -291,6 +416,7 @@ const FAQ = () => {
               index={index}
               isActive={activeIndex === index}
               onToggle={() => toggleFAQ(index)}
+              isDarkMode={isDarkMode}
             />
           ))}
         </div>

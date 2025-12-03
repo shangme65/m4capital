@@ -200,19 +200,34 @@ interface Testimonial {
 }
 
 const TestimonialCard3D = ({
-  testimonial,
-  index,
-  direction,
+  testimonialIndex,
+  cardPosition,
+  isDarkMode,
+  isPaused,
+  onPause,
+  onResume,
+  onNext,
+  onPrev,
 }: {
-  testimonial: Testimonial;
-  index: number;
-  direction: "left" | "right";
+  testimonialIndex: number;
+  cardPosition: "left" | "right" | "center";
+  isDarkMode: boolean;
+  isPaused: boolean;
+  onPause: () => void;
+  onResume: () => void;
+  onNext: () => void;
+  onPrev: () => void;
 }) => {
   const [rotateX, setRotateX] = useState(0);
   const [rotateY, setRotateY] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [dragStartX, setDragStartX] = useState<number | null>(null);
+  const [dragDelta, setDragDelta] = useState(0);
+
+  const testimonial = testimonials[testimonialIndex % testimonials.length];
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDarkMode || dragStartX !== null) return; // Only 3D tilt in dark mode, not while dragging
     const card = e.currentTarget;
     const rect = card.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
@@ -231,45 +246,198 @@ const TestimonialCard3D = ({
     setRotateX(0);
     setRotateY(0);
     setIsHovered(false);
+    onResume();
+    setDragStartX(null);
+    setDragDelta(0);
   };
 
-  const rating = seededRating(index);
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    onPause();
+  };
+
+  // Touch/drag handlers for swipe navigation
+  const handleDragStart = (clientX: number) => {
+    setDragStartX(clientX);
+    onPause();
+  };
+
+  const handleDragMove = (clientX: number) => {
+    if (dragStartX !== null) {
+      setDragDelta(clientX - dragStartX);
+    }
+  };
+
+  const handleDragEnd = () => {
+    if (dragStartX !== null) {
+      if (dragDelta > 50) {
+        onPrev();
+      } else if (dragDelta < -50) {
+        onNext();
+      }
+    }
+    setDragStartX(null);
+    setDragDelta(0);
+  };
+
+  const rating = seededRating(testimonialIndex);
   const gradientColors =
-    direction === "left"
+    cardPosition === "left"
       ? {
           from: "from-blue-500",
           to: "to-cyan-400",
           glow: "rgba(59, 130, 246, 0.3)",
         }
-      : {
+      : cardPosition === "right"
+      ? {
           from: "from-purple-500",
           to: "to-pink-400",
           glow: "rgba(168, 85, 247, 0.3)",
+        }
+      : {
+          from: "from-emerald-500",
+          to: "to-teal-400",
+          glow: "rgba(16, 185, 129, 0.3)",
         };
+
+  // Light mode card
+  if (!isDarkMode) {
+    return (
+      <motion.div
+        className="relative w-full group select-none"
+        key={testimonialIndex}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{
+          opacity: 1,
+          scale: 1,
+          x: dragDelta * 0.5,
+        }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+      >
+        <div
+          className="relative cursor-grab active:cursor-grabbing rounded-2xl bg-white p-5 overflow-hidden transition-all duration-300 group-hover:-translate-y-2"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onMouseDown={(e) => handleDragStart(e.clientX)}
+          onMouseMove={(e) => handleDragMove(e.clientX)}
+          onMouseUp={handleDragEnd}
+          onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+          onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
+          onTouchEnd={handleDragEnd}
+          style={{
+            boxShadow: isHovered
+              ? "0 35px 60px -15px rgba(0, 0, 0, 0.4), 0 20px 40px -10px rgba(0, 0, 0, 0.3), 0 10px 20px -5px rgba(0, 0, 0, 0.2)"
+              : "0 20px 50px -15px rgba(0, 0, 0, 0.2), 0 10px 30px -10px rgba(0, 0, 0, 0.15), 0 4px 15px -5px rgba(0, 0, 0, 0.1)",
+          }}
+        >
+          {/* Swipe hint indicators */}
+          <div className="absolute top-1/2 left-2 -translate-y-1/2 opacity-0 group-hover:opacity-40 transition-opacity">
+            <div className="text-gray-400 text-lg">‹</div>
+          </div>
+          <div className="absolute top-1/2 right-2 -translate-y-1/2 opacity-0 group-hover:opacity-40 transition-opacity">
+            <div className="text-gray-400 text-lg">›</div>
+          </div>
+
+          {/* Rating badge */}
+          <div className="absolute top-3 right-3">
+            <div
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg bg-gradient-to-r ${gradientColors.from} ${gradientColors.to} text-white text-xs font-semibold`}
+              style={{
+                boxShadow:
+                  "0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 6px 15px -3px rgba(0, 0, 0, 0.25)",
+              }}
+            >
+              <SiTrustpilot size={12} />
+              <span>{rating}</span>
+            </div>
+          </div>
+
+          {/* Profile section */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="relative">
+              <div
+                className={`absolute -inset-1 rounded-full bg-gradient-to-r ${gradientColors.from} ${gradientColors.to} opacity-60 blur-sm`}
+              />
+              <Image
+                src={testimonial.image}
+                alt={testimonial.author}
+                width={48}
+                height={48}
+                className="relative rounded-full border-2 border-white shadow-lg"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-900 font-semibold text-sm truncate">
+                  {testimonial.author}
+                </span>
+                <VscVerifiedFilled
+                  className="text-blue-500 flex-shrink-0"
+                  size={14}
+                />
+              </div>
+              <span className="text-gray-500 text-xs block truncate">
+                {testimonial.title}, {testimonial.country}
+              </span>
+            </div>
+          </div>
+
+          {/* Stars */}
+          <div className="flex gap-0.5 mb-2">
+            {[...Array(5)].map((_, i) => (
+              <FaStar
+                key={i}
+                size={12}
+                className={
+                  i < testimonial.rating ? "text-yellow-400" : "text-gray-300"
+                }
+              />
+            ))}
+          </div>
+
+          {/* Quote */}
+          <blockquote className="text-gray-600 text-sm leading-relaxed line-clamp-3">
+            &ldquo;{testimonial.quote}&rdquo;
+          </blockquote>
+
+          {/* Bottom accent */}
+          <div className="absolute bottom-0 left-0 right-0 h-1 overflow-hidden rounded-b-2xl">
+            <div
+              className={`h-full bg-gradient-to-r ${gradientColors.from} ${gradientColors.to} transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500`}
+            />
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // Dark mode card (existing 3D style)
 
   return (
     <motion.div
-      className="relative w-full"
+      className="relative w-full select-none"
       style={{ perspective: "1000px" }}
-      initial={{
-        opacity: 0,
-        x: direction === "left" ? 100 : -100,
-      }}
+      key={testimonialIndex}
+      initial={{ opacity: 0, scale: 0.95 }}
       animate={{
         opacity: 1,
-        x: 0,
+        scale: 1,
+        x: dragDelta * 0.5,
       }}
-      exit={{
-        opacity: 0,
-        x: direction === "left" ? -100 : 100,
-      }}
-      transition={{ duration: 0.6, ease: "easeInOut" }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
     >
       <div
-        className="relative cursor-pointer group"
+        className="relative cursor-grab active:cursor-grabbing group"
         onMouseMove={handleMouseMove}
-        onMouseEnter={() => setIsHovered(true)}
+        onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
+        onMouseDown={(e) => handleDragStart(e.clientX)}
+        onMouseUp={handleDragEnd}
+        onTouchStart={(e) => handleDragStart(e.touches[0].clientX)}
+        onTouchMove={(e) => handleDragMove(e.touches[0].clientX)}
+        onTouchEnd={handleDragEnd}
         style={{
           transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
           transformStyle: "preserve-3d",
@@ -425,19 +593,62 @@ const TestimonialCard3D = ({
 };
 
 const Testimonials: React.FC = () => {
-  const [currentPairIndex, setCurrentPairIndex] = useState(0);
+  // Independent indices for each card position
+  const [leftIndex, setLeftIndex] = useState(0);
+  const [rightIndex, setRightIndex] = useState(1);
+  const [centerIndex, setCenterIndex] = useState(2);
+
+  // Pause states for each card
+  const [leftPaused, setLeftPaused] = useState(false);
+  const [rightPaused, setRightPaused] = useState(false);
+  const [centerPaused, setCenterPaused] = useState(false);
+
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // Check initial dark mode
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    };
+    checkDarkMode();
+
+    // Watch for dark mode changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  // Independent auto-rotation for each card
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!leftPaused) {
+        setLeftIndex((prev) => (prev + 3) % testimonials.length);
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [leftPaused]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentPairIndex((prev) => (prev + 2) % testimonials.length);
+      if (!rightPaused) {
+        setRightIndex((prev) => (prev + 3) % testimonials.length);
+      }
     }, 5000);
-
     return () => clearInterval(interval);
-  }, []);
+  }, [rightPaused]);
 
-  const leftTestimonial = testimonials[currentPairIndex];
-  const rightTestimonial =
-    testimonials[(currentPairIndex + 1) % testimonials.length];
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!centerPaused) {
+        setCenterIndex((prev) => (prev + 3) % testimonials.length);
+      }
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [centerPaused]);
 
   return (
     <div className="relative bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white py-12 sm:py-16 overflow-hidden">
@@ -445,7 +656,7 @@ const Testimonials: React.FC = () => {
       <div className="absolute top-1/4 left-0 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl" />
 
-      <div className="relative mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           className="text-center mb-8"
@@ -454,7 +665,14 @@ const Testimonials: React.FC = () => {
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 mb-4">
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20 mb-4"
+            style={{
+              boxShadow: isDarkMode
+                ? "0 8px 20px -5px rgba(34, 197, 94, 0.3), 0 4px 12px -2px rgba(0, 0, 0, 0.2)"
+                : "0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 6px 15px -3px rgba(0, 0, 0, 0.15)",
+            }}
+          >
             <SiTrustpilot className="text-green-500" size={14} />
             <span className="text-xs font-medium text-green-400">
               4.8 Rating on Trustpilot
@@ -471,42 +689,74 @@ const Testimonials: React.FC = () => {
           </p>
         </motion.div>
 
-        {/* Dual testimonial cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        {/* Top row - 2 cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
           <AnimatePresence mode="wait">
             <TestimonialCard3D
-              key={`left-${currentPairIndex}`}
-              testimonial={leftTestimonial}
-              index={currentPairIndex}
-              direction="left"
+              key={`left-${leftIndex}`}
+              testimonialIndex={leftIndex}
+              cardPosition="left"
+              isDarkMode={isDarkMode}
+              isPaused={leftPaused}
+              onPause={() => setLeftPaused(true)}
+              onResume={() => setLeftPaused(false)}
+              onNext={() =>
+                setLeftIndex((prev) => (prev + 1) % testimonials.length)
+              }
+              onPrev={() =>
+                setLeftIndex(
+                  (prev) =>
+                    (prev - 1 + testimonials.length) % testimonials.length
+                )
+              }
             />
           </AnimatePresence>
           <AnimatePresence mode="wait">
             <TestimonialCard3D
-              key={`right-${currentPairIndex + 1}`}
-              testimonial={rightTestimonial}
-              index={currentPairIndex + 1}
-              direction="right"
+              key={`right-${rightIndex}`}
+              testimonialIndex={rightIndex}
+              cardPosition="right"
+              isDarkMode={isDarkMode}
+              isPaused={rightPaused}
+              onPause={() => setRightPaused(true)}
+              onResume={() => setRightPaused(false)}
+              onNext={() =>
+                setRightIndex((prev) => (prev + 1) % testimonials.length)
+              }
+              onPrev={() =>
+                setRightIndex(
+                  (prev) =>
+                    (prev - 1 + testimonials.length) % testimonials.length
+                )
+              }
             />
           </AnimatePresence>
         </div>
 
-        {/* Progress indicators */}
-        <div className="flex justify-center gap-1.5 mt-6">
-          {Array.from({ length: Math.ceil(testimonials.length / 2) }).map(
-            (_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentPairIndex(i * 2)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  Math.floor(currentPairIndex / 2) === i
-                    ? "w-6 bg-gradient-to-r from-blue-500 to-purple-500"
-                    : "w-1.5 bg-gray-600 hover:bg-gray-500"
-                }`}
-                aria-label={`Go to testimonials ${i * 2 + 1} and ${i * 2 + 2}`}
+        {/* Bottom row - 1 centered card */}
+        <div className="flex justify-center">
+          <div className="w-full md:w-1/2 lg:w-1/3">
+            <AnimatePresence mode="wait">
+              <TestimonialCard3D
+                key={`center-${centerIndex}`}
+                testimonialIndex={centerIndex}
+                cardPosition="center"
+                isDarkMode={isDarkMode}
+                isPaused={centerPaused}
+                onPause={() => setCenterPaused(true)}
+                onResume={() => setCenterPaused(false)}
+                onNext={() =>
+                  setCenterIndex((prev) => (prev + 1) % testimonials.length)
+                }
+                onPrev={() =>
+                  setCenterIndex(
+                    (prev) =>
+                      (prev - 1 + testimonials.length) % testimonials.length
+                  )
+                }
               />
-            )
-          )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
 
