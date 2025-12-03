@@ -6,6 +6,7 @@ import { createVerificationToken } from "@/lib/verification";
 import { sendEmail } from "@/lib/email";
 import { emailTemplate, verificationCodeTemplate } from "@/lib/email-templates";
 import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
+import { COUNTRY_LANGUAGE_MAP } from "@/contexts/LanguageContext";
 import { countries } from "@/lib/countries";
 import { generateAccountNumber } from "@/lib/p2p-transfer-utils";
 
@@ -66,10 +67,16 @@ export async function POST(req: Request) {
     // Determine preferred currency based on country
     // Find the country code from the country name
     let preferredCurrency = "USD"; // Default
+    let preferredLanguage = "en"; // Default
     if (country) {
       const countryData = countries.find((c) => c.name === country);
-      if (countryData && COUNTRY_CURRENCY_MAP[countryData.code]) {
-        preferredCurrency = COUNTRY_CURRENCY_MAP[countryData.code];
+      if (countryData) {
+        if (COUNTRY_CURRENCY_MAP[countryData.code]) {
+          preferredCurrency = COUNTRY_CURRENCY_MAP[countryData.code];
+        }
+        if (COUNTRY_LANGUAGE_MAP[countryData.code]) {
+          preferredLanguage = COUNTRY_LANGUAGE_MAP[countryData.code];
+        }
       }
     }
 
@@ -82,6 +89,7 @@ export async function POST(req: Request) {
         accountType: normalizedAccountType,
         country: country || undefined,
         preferredCurrency,
+        preferredLanguage,
         accountNumber: generateAccountNumber(),
         isEmailVerified: false,
         updatedAt: new Date(),

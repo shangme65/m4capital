@@ -443,7 +443,7 @@ function CallToAction() {
   }
 
   return (
-    <div className="relative bg-gray-900 py-12 sm:py-16 overflow-hidden">
+    <div className="relative bg-gray-100 dark:bg-gray-900 py-12 sm:py-16 overflow-hidden">
       {/* Background effects */}
       <div className="absolute top-0 left-1/4 w-72 h-72 bg-orange-500/5 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-72 h-72 bg-amber-500/5 rounded-full blur-3xl" />

@@ -241,7 +241,7 @@ const FAQ = () => {
   };
 
   return (
-    <div className="relative bg-gray-900 py-12 sm:py-16 overflow-hidden">
+    <div className="relative bg-gray-100 dark:bg-gray-900 py-12 sm:py-16 overflow-hidden">
       {/* Background effects */}
       <div className="absolute top-1/3 left-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-3xl" />
       <div className="absolute bottom-1/3 right-0 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl" />
@@ -271,13 +271,13 @@ const FAQ = () => {
             </svg>
             <span className="text-xs font-medium text-indigo-400">FAQ</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
             Frequently Asked{" "}
             <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
               Questions
             </span>
           </h2>
-          <p className="mt-2 text-sm text-gray-400 max-w-md mx-auto">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
             Find answers to common questions about our platform
           </p>
         </motion.div>

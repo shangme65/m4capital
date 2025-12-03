@@ -266,7 +266,7 @@ const Card3D = ({
 
 const HowItWorks = () => {
   return (
-    <div className="relative bg-gray-900 py-24 sm:py-32 overflow-hidden">
+    <div className="relative bg-gray-100 dark:bg-gray-900 py-12 sm:py-16 overflow-hidden">
       {/* Background gradient orbs */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
       <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
@@ -274,7 +274,7 @@ const HowItWorks = () => {
       <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
         {/* Header section with enhanced styling */}
         <motion.div
-          className="mx-auto max-w-2xl lg:text-center mb-20"
+          className="mx-auto max-w-2xl lg:text-center mb-10"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -287,14 +287,14 @@ const HowItWorks = () => {
             </span>
           </div>
 
-          <h2 className="text-4xl font-bold tracking-tight text-white sm:text-5xl mb-6">
+          <h2 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl mb-6">
             Get Started in{" "}
             <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
               3 Simple Steps
             </span>
           </h2>
 
-          <p className="text-lg leading-8 text-gray-400 max-w-xl mx-auto">
+          <p className="text-lg leading-8 text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
             Our streamlined process makes it easy for you to start trading in no
             time. Join thousands of traders worldwide.
           </p>

@@ -440,7 +440,7 @@ const Testimonials: React.FC = () => {
     testimonials[(currentPairIndex + 1) % testimonials.length];
 
   return (
-    <div className="relative bg-gray-900 text-white py-12 sm:py-16 overflow-hidden">
+    <div className="relative bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white py-12 sm:py-16 overflow-hidden">
       {/* Background effects */}
       <div className="absolute top-1/4 left-0 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-0 w-72 h-72 bg-purple-500/5 rounded-full blur-3xl" />
@@ -466,7 +466,7 @@ const Testimonials: React.FC = () => {
               Traders Say
             </span>
           </h2>
-          <p className="mt-2 text-sm text-gray-400 max-w-md mx-auto">
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
             Join thousands of satisfied traders worldwide
           </p>
         </motion.div>

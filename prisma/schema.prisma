@@ -470,6 +470,7 @@ model User {
   accountType            AccountType        @default(INVESTOR)
   country                String?
   preferredCurrency      String             @default("USD")
+  preferredLanguage      String             @default("en")
   isEmailVerified        Boolean            @default(false)
   isDeleted              Boolean            @default(false)
   emailNotifications     Boolean            @default(true)

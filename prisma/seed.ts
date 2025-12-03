@@ -60,7 +60,7 @@ async function main() {
       password: adminPassword,
       role: "ADMIN",
       isEmailVerified: true,
-      accountType: "INVESTOR",
+      accountType: "TRADER",
       country: adminCountry,
       preferredCurrency: adminCurrency,
       accountNumber: adminAccountNumber,

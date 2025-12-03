@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import ConfirmModal from "@/components/client/ConfirmModal";
 import CurrencySelector from "@/components/client/CurrencySelector";
 import Image from "next/image";
@@ -34,6 +35,7 @@ import {
   Sun,
   Moon,
   Monitor,
+  Globe,
 } from "lucide-react";
 
 // Full-screen KYC Submission Loading Modal
@@ -145,6 +147,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { showSuccess, showError, showWarning, showInfo } = useToast();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { language, setLanguage, languages, currentLanguage } = useLanguage();
 
   // Modal state
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -2685,6 +2688,34 @@ export default function SettingsPage() {
                 {theme === "system"
                   ? `Using system preference (currently ${resolvedTheme})`
                   : `Currently using ${theme} theme`}
+              </p>
+            </div>
+
+            {/* Language Preference */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-3">
+                Preferred Language
+              </label>
+              <div className="relative">
+                <select
+                  value={language}
+                  onChange={(e) => {
+                    setLanguage(e.target.value);
+                    showSuccess("Language preference updated");
+                  }}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white appearance-none cursor-pointer focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                >
+                  {languages.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.flag} {lang.name} ({lang.nativeName})
+                    </option>
+                  ))}
+                </select>
+                <Globe className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+              </div>
+              <p className="text-xs text-gray-400 mt-2">
+                This will be used for displaying content throughout the
+                platform.
               </p>
             </div>
 

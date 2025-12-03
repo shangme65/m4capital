@@ -15,6 +15,7 @@ export async function GET(req: NextRequest) {
       where: { email: session.user.email },
       select: {
         preferredCurrency: true,
+        preferredLanguage: true,
       },
     });
 
@@ -24,6 +25,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       preferredCurrency: user.preferredCurrency,
+      preferredLanguage: user.preferredLanguage || "en",
     });
   } catch (error) {
     console.error("Error fetching user preferences:", error);
@@ -43,29 +45,46 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { preferredCurrency } = body;
+    const { preferredCurrency, preferredLanguage } = body;
 
-    if (!preferredCurrency || typeof preferredCurrency !== "string") {
-      return NextResponse.json({ error: "Invalid currency" }, { status: 400 });
+    // Build update data object
+    const updateData: {
+      preferredCurrency?: string;
+      preferredLanguage?: string;
+    } = {};
+
+    if (preferredCurrency && typeof preferredCurrency === "string") {
+      updateData.preferredCurrency = preferredCurrency;
     }
 
-    // Update user's preferred currency
+    if (preferredLanguage && typeof preferredLanguage === "string") {
+      updateData.preferredLanguage = preferredLanguage;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: "No valid preferences provided" },
+        { status: 400 }
+      );
+    }
+
+    // Update user's preferences
     const updatedUser = await prisma.user.update({
       where: { email: session.user.email },
-      data: {
-        preferredCurrency,
-      },
+      data: updateData,
       select: {
         preferredCurrency: true,
+        preferredLanguage: true,
       },
     });
 
     return NextResponse.json({
-      message: "Currency preference updated successfully",
+      message: "Preferences updated successfully",
       preferredCurrency: updatedUser.preferredCurrency,
+      preferredLanguage: updatedUser.preferredLanguage,
     });
   } catch (error) {
-    console.error("Error updating currency preference:", error);
+    console.error("Error updating preferences:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

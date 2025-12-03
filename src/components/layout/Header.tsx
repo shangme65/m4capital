@@ -4,10 +4,19 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Menu, X, LogIn, ChevronDown, LayoutDashboard } from "lucide-react";
+import {
+  Menu,
+  X,
+  LogIn,
+  ChevronDown,
+  LayoutDashboard,
+  Check,
+  Globe,
+} from "lucide-react";
 import ForTradersDropdown from "../client/ForTradersDropdown";
 import AboutUsDropdown from "../client/AboutUsDropdown";
 import LanguageDropdown from "../client/LanguageDropdown";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface HeaderProps {
   onLoginClick?: () => void;
@@ -19,6 +28,8 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [isDropdownLocked, setIsDropdownLocked] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+  const { language, setLanguage, languages, currentLanguage } = useLanguage();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const router = useRouter();
@@ -386,30 +397,51 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               </div>
             </Link>
             <div className="flex items-center gap-2">
-              <button
-                onClick={onLoginClick}
-                className="flex items-center space-x-1 text-xs font-bold"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
-                  padding: "8px 12px",
-                  borderRadius: "10px",
-                }}
-              >
-                <LogIn size={14} />
-              </button>
-              <button
-                onClick={onSignupClick}
-                className="text-xs font-bold text-white"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
-                  padding: "8px 14px",
-                  borderRadius: "10px",
-                }}
-              >
-                Sign Up
-              </button>
+              {session ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-2 text-xs font-bold text-white"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
+                      padding: "8px 14px",
+                      borderRadius: "10px",
+                    }}
+                  >
+                    <LayoutDashboard size={14} />
+                    Dashboard
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={onLoginClick}
+                    className="flex items-center space-x-1 text-xs font-bold"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                      padding: "8px 12px",
+                      borderRadius: "10px",
+                    }}
+                  >
+                    <LogIn size={14} />
+                  </button>
+                  <button
+                    onClick={onSignupClick}
+                    className="text-xs font-bold text-white"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
+                      padding: "8px 14px",
+                      borderRadius: "10px",
+                    }}
+                  >
+                    Sign Up
+                  </button>
+                </>
+              )}
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-2"
@@ -432,10 +464,52 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
                 CHOOSE LANGUAGE
               </h3>
-              <button className="w-full flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3.5 text-white font-semibold">
-                <span>English</span>
-                <ChevronDown size={18} className="text-orange-500 -rotate-90" />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() =>
+                    setIsLanguageDropdownOpen(!isLanguageDropdownOpen)
+                  }
+                  className="w-full flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3.5 text-white font-semibold"
+                >
+                  <span className="flex items-center gap-2">
+                    <span>{currentLanguage.flag}</span>
+                    <span>{currentLanguage.name}</span>
+                  </span>
+                  <ChevronDown
+                    size={18}
+                    className={`text-orange-500 transition-transform duration-200 ${
+                      isLanguageDropdownOpen ? "rotate-180" : "-rotate-90"
+                    }`}
+                  />
+                </button>
+                {isLanguageDropdownOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 rounded-xl overflow-hidden shadow-lg z-50 max-h-64 overflow-y-auto">
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          setLanguage(lang.code);
+                          setIsLanguageDropdownOpen(false);
+                        }}
+                        className={`w-full flex items-center justify-between px-4 py-3 hover:bg-gray-700 transition-colors ${
+                          language === lang.code ? "bg-gray-700" : ""
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <span className="text-lg">{lang.flag}</span>
+                          <span className="text-white">{lang.name}</span>
+                          <span className="text-gray-400 text-sm">
+                            ({lang.nativeName})
+                          </span>
+                        </span>
+                        {language === lang.code && (
+                          <Check size={16} className="text-orange-500" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Download App */}
