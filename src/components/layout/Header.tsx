@@ -235,7 +235,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {session ? (
               <button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center space-x-2 hover:scale-105 transition-all duration-300 transform text-sm font-bold"
+                className="flex items-center space-x-2 hover:scale-105 transition-all duration-300 transform text-sm font-bold text-white"
                 style={{
                   background:
                     "linear-gradient(135deg, #f97316 0%, #c2410c 50%, #f97316 100%)",
@@ -254,7 +254,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               <>
                 <button
                   onClick={onLoginClick}
-                  className="flex items-center space-x-2 hover:scale-105 active:scale-95 transition-all duration-300 transform text-sm font-bold"
+                  className="flex items-center space-x-2 hover:scale-105 active:scale-95 transition-all duration-300 transform text-sm font-bold text-white"
                   style={{
                     background:
                       "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
@@ -271,7 +271,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 </button>
                 <button
                   onClick={onSignupClick}
-                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-sm font-bold"
+                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-sm font-bold text-white"
                   style={{
                     background:
                       "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
@@ -293,7 +293,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {session ? (
               <button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center space-x-1 hover:scale-105 transition-all duration-300"
+                className="flex items-center space-x-1 hover:scale-105 transition-all duration-300 text-white"
                 style={{
                   background:
                     "linear-gradient(135deg, #f97316 0%, #c2410c 50%, #f97316 100%)",
@@ -312,7 +312,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               <>
                 <button
                   onClick={onLoginClick}
-                  className="flex items-center space-x-1 hover:scale-105 active:scale-95 transition-all duration-300 transform text-xs font-bold"
+                  className="flex items-center space-x-1 hover:scale-105 active:scale-95 transition-all duration-300 transform text-xs font-bold text-white"
                   style={{
                     background:
                       "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
@@ -330,7 +330,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 </button>
                 <button
                   onClick={onSignupClick}
-                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-xs font-bold"
+                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-xs font-bold text-white"
                   style={{
                     background:
                       "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
@@ -347,7 +347,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             )}
             <button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-              className="hover:scale-105 hover:rotate-180 active:scale-90 transition-all duration-300 transform"
+              className="hover:scale-105 hover:rotate-180 active:scale-90 transition-all duration-300 transform text-white"
               style={{
                 background:
                   "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",

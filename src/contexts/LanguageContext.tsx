@@ -87,14 +87,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const { data: session, status } = useSession();
   const [language, setLanguageState] = useState<string>("en");
   const [isLoading, setIsLoading] = useState(true);
+  const [isMounted, setIsMounted] = useState(false);
 
   // Get current language object
   const currentLanguage =
     SUPPORTED_LANGUAGES.find((lang) => lang.code === language) ||
     SUPPORTED_LANGUAGES[0];
 
+  // Set mounted state
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   // Fetch user's preferred language on mount
   useEffect(() => {
+    if (!isMounted) return;
+
     const fetchLanguage = async () => {
       if (status === "loading") return;
 
@@ -112,29 +120,37 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         }
       } else {
         // Check localStorage for non-logged-in users
-        const savedLanguage = localStorage.getItem("preferredLanguage");
-        if (savedLanguage) {
-          setLanguageState(savedLanguage);
-        } else {
-          // Try to detect from browser
-          const browserLang = navigator.language.split("-")[0];
-          if (SUPPORTED_LANGUAGES.find((l) => l.code === browserLang)) {
-            setLanguageState(browserLang);
+        try {
+          const savedLanguage = localStorage.getItem("preferredLanguage");
+          if (savedLanguage) {
+            setLanguageState(savedLanguage);
+          } else {
+            // Try to detect from browser
+            const browserLang = navigator.language.split("-")[0];
+            if (SUPPORTED_LANGUAGES.find((l) => l.code === browserLang)) {
+              setLanguageState(browserLang);
+            }
           }
+        } catch {
+          // localStorage not available (SSR)
         }
       }
       setIsLoading(false);
     };
 
     fetchLanguage();
-  }, [session, status]);
+  }, [session, status, isMounted]);
 
   // Function to update language
   const setLanguage = async (code: string) => {
     setLanguageState(code);
 
     // Save to localStorage for non-logged-in users
-    localStorage.setItem("preferredLanguage", code);
+    try {
+      localStorage.setItem("preferredLanguage", code);
+    } catch {
+      // localStorage not available
+    }
 
     // If user is logged in, save to database
     if (session?.user) {
