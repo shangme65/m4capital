@@ -8,17 +8,58 @@ import { ToastProvider } from "@/contexts/ToastContext";
 // Force dynamic rendering to avoid static generation errors
 export const dynamic = "force-dynamic";
 
-export default async function AdminSetupPage() {
-  // Check if any admin exists in the database
-  const adminExists = await prisma.user.findFirst({
-    where: {
-      role: "ADMIN",
-      isDeleted: false,
-    },
-  });
+// Client component for database error retry
+function DatabaseErrorPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-2xl p-8 text-center">
+        <h1 className="text-2xl font-bold text-amber-600 mb-4">
+          Database Connection Issue
+        </h1>
+        <p className="text-gray-600 mb-6">
+          Unable to connect to the database. This may be a temporary issue with
+          serverless cold starts.
+        </p>
+        <a
+          href="/setup-admin"
+          className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold"
+        >
+          Try Again
+        </a>
+      </div>
+    </div>
+  );
+}
 
-  // Get current session
-  const session = await getServerSession(authOptions);
+export default async function AdminSetupPage() {
+  let adminExists = null;
+  let session = null;
+  let dbError = false;
+
+  // Try to check if admin exists in database
+  try {
+    adminExists = await prisma.user.findFirst({
+      where: {
+        role: "ADMIN",
+        isDeleted: false,
+      },
+    });
+  } catch (error) {
+    console.error("Database connection error:", error);
+    dbError = true;
+  }
+
+  // Try to get current session
+  try {
+    session = await getServerSession(authOptions);
+  } catch (error) {
+    console.error("Session error:", error);
+  }
+
+  // If database error, show a retry option
+  if (dbError) {
+    return <DatabaseErrorPage />;
+  }
 
   // SECURITY: If admin exists, ONLY allow current admin to access
   if (adminExists) {
