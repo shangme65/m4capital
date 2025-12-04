@@ -1406,11 +1406,12 @@ function DashboardContent() {
                     if (flag) {
                       return (
                         <div
-                          className="inline-flex items-center justify-center rounded-full bg-gray-700 flex-shrink-0"
+                          className="inline-flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
                           style={{
                             width: "24px",
                             height: "24px",
-                            fontSize: "14px",
+                            fontSize: "18px",
+                            lineHeight: "1",
                           }}
                         >
                           {flag}
