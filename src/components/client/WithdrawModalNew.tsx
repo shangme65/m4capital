@@ -823,11 +823,11 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         </div>
                       </div>
 
-                      {/* Select Crypto - Only show when crypto is selected */}
+                      {/* Select Crypto Network - Only show when crypto is selected */}
                       {withdrawData.withdrawalMethod.startsWith("CRYPTO") && (
                         <div>
                           <label className="block text-sm font-semibold text-gray-300 mb-3">
-                            Select Crypto
+                            Select Crypto Network
                           </label>
                           <div className="relative">
                             <button
@@ -880,13 +880,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                       "Litecoin (LTC)"}
                                   </span>
                                   <span className="text-[10px] text-gray-400 block">
-                                    Balance:{" "}
-                                    {getCryptoBalance(selectedCrypto).toFixed(
-                                      getCryptoBalance(selectedCrypto) < 0.01
-                                        ? 6
-                                        : 4
-                                    )}{" "}
-                                    {selectedCrypto}
+                                    Withdrawal Network
                                   </span>
                                 </div>
                               </span>
@@ -1052,19 +1046,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                         <button
                           onClick={() => {
-                            // Calculate withdraw all amount based on method
-                            let maxAmount = availableBalance;
-
-                            if (
-                              withdrawData.withdrawalMethod.startsWith("CRYPTO")
-                            ) {
-                              // For crypto, calculate the value of selected crypto in user's currency
-                              const cryptoBalance =
-                                getCryptoBalance(selectedCrypto);
-                              const cryptoPrice =
-                                cryptoPrices[selectedCrypto] || 0;
-                              maxAmount = cryptoBalance * cryptoPrice;
-                            }
+                            // Withdrawals always come from fiat balance
+                            // Crypto selection is just for the withdrawal network
+                            const maxAmount = availableBalance;
 
                             setWithdrawData((prev) => ({
                               ...prev,
