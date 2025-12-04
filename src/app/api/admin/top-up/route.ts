@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
       amount,
       fiatAmount,
       cryptoAmount,
+      cryptoPrice, // Price per unit at time of deposit (USD)
       paymentMethod,
       paymentDetails,
       adminNote,
@@ -131,6 +132,7 @@ export async function POST(req: NextRequest) {
           isAdminManual: true,
           fiatAmount: fiatAmount || amount,
           cryptoAmount: cryptoAmount,
+          cryptoPrice: cryptoPrice, // Store price per unit at time of deposit (USD)
         },
       },
     });

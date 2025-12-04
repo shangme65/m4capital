@@ -1077,6 +1077,7 @@ const AdminDashboard = () => {
       }
 
       // Prepare the payment details for the transaction
+      const cryptoPriceUSD = prices[cryptoAsset]?.price || 0;
       const transactionData = {
         userId: selectedUser!.id,
         amount:
@@ -1090,6 +1091,7 @@ const AdminDashboard = () => {
         fiatAmount:
           depositType === "crypto" ? finalAmount : amountInUserCurrency,
         cryptoAmount: cryptoAmount > 0 ? cryptoAmount : undefined,
+        cryptoPrice: depositType === "crypto" ? cryptoPriceUSD : undefined, // Send current crypto price
         paymentMethod: paymentMethodName,
         paymentDetails: {
           transactionHash: generatedHash || undefined,

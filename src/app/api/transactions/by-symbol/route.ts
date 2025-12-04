@@ -102,11 +102,16 @@ export async function GET(request: NextRequest) {
         const metadata = d.metadata as {
           cryptoAmount?: number;
           fiatAmount?: number;
+          cryptoPrice?: number;
         } | null;
         const cryptoAmt = d.cryptoAmount
           ? Number(d.cryptoAmount)
           : metadata?.cryptoAmount || 0;
         const fiatAmt = metadata?.fiatAmount || Number(d.amount || 0);
+        // Calculate price per unit: if we have cryptoPrice in metadata use it,
+        // otherwise calculate from fiatAmount / cryptoAmount
+        const pricePerUnit =
+          metadata?.cryptoPrice || (cryptoAmt > 0 ? fiatAmt / cryptoAmt : 0);
 
         return {
           id: d.id,
@@ -114,8 +119,8 @@ export async function GET(request: NextRequest) {
           symbol: d.cryptoCurrency || d.currency,
           cryptoCurrency: d.cryptoCurrency,
           amount: cryptoAmt,
-          price: fiatAmt, // Use fiat amount for the value display
-          fiatValue: fiatAmt,
+          price: pricePerUnit, // Price per unit (exchange rate)
+          fiatValue: fiatAmt, // Total fiat value
           date: d.createdAt,
           status: d.status.toLowerCase(),
           source: "deposit",
