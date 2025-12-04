@@ -276,16 +276,24 @@ export async function POST(request: NextRequest) {
             balanceCurrency: recipientCurrency, // Ensure recipient's currency is set
           },
         }),
-        // Record the transfer - store in recipient's currency for history display
+        // Record the transfer - store original amount in sender's currency
+        // The description field contains JSON metadata for cross-currency transfers
         prisma.p2PTransfer.create({
           data: {
             id: transactionId,
             senderId: sender.id,
             receiverId: recipient.id,
-            amount: new Decimal(convertedAmount), // Store converted amount
-            currency: recipientCurrency, // Store in recipient's currency for proper display
+            amount: new Decimal(amount), // Store original sender amount
+            currency: userCurrency, // Store in sender's currency
             status: "COMPLETED",
-            description: memo || `P2P Transfer`,
+            // Store conversion metadata in description for receiver's history
+            description: JSON.stringify({
+              memo: memo || "P2P Transfer",
+              senderAmount: amount,
+              senderCurrency: userCurrency,
+              receiverAmount: convertedAmount,
+              receiverCurrency: recipientCurrency,
+            }),
             senderAccountNumber: sender.accountNumber || sender.id,
             receiverAccountNumber: recipient.accountNumber || recipient.id,
             receiverEmail: recipient.email || "",

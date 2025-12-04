@@ -143,50 +143,82 @@ export async function GET(req: NextRequest) {
     }));
 
     // Transform sent transfers into transaction format
-    const sentTransferTransactions = sentTransfers.map((t) => ({
-      id: t.id,
-      type: "transfer" as const,
-      asset: t.currency || "USD",
-      amount: Number(t.amount),
-      value: Number(t.amount),
-      timestamp: t.createdAt.toISOString(),
-      status:
-        t.status === "COMPLETED"
-          ? ("completed" as const)
-          : t.status === "PENDING"
-          ? ("pending" as const)
-          : ("failed" as const),
-      fee: 0.0001,
-      method: "P2P Transfer",
-      description: `Transfer to ${
-        t.Receiver?.name || t.receiverName || t.receiverEmail
-      }`,
-      date: t.createdAt,
-      hash: t.transactionReference,
-    }));
+    // For sent transfers, always show in sender's currency (stored in t.currency and t.amount)
+    const sentTransferTransactions = sentTransfers.map((t) => {
+      // Parse description for memo (description may contain JSON metadata)
+      let displayMemo = "P2P Transfer";
+      try {
+        const metadata = JSON.parse(t.description || "{}");
+        displayMemo = metadata.memo || "P2P Transfer";
+      } catch {
+        displayMemo = t.description || "P2P Transfer";
+      }
+
+      return {
+        id: t.id,
+        type: "transfer" as const,
+        asset: t.currency || "USD", // Sender's currency
+        amount: Number(t.amount), // Sender's amount
+        value: Number(t.amount),
+        timestamp: t.createdAt.toISOString(),
+        status:
+          t.status === "COMPLETED"
+            ? ("completed" as const)
+            : t.status === "PENDING"
+            ? ("pending" as const)
+            : ("failed" as const),
+        fee: 0.0001,
+        method: "P2P Transfer",
+        description: `Transfer to ${
+          t.Receiver?.name || t.receiverName || t.receiverEmail
+        }`,
+        date: t.createdAt,
+        hash: t.transactionReference,
+      };
+    });
 
     // Transform received transfers into transaction format
-    const receivedTransferTransactions = receivedTransfers.map((t) => ({
-      id: t.id,
-      type: "deposit" as const, // Show received transfers as deposits
-      asset: t.currency || "USD",
-      amount: Number(t.amount),
-      value: Number(t.amount),
-      timestamp: t.createdAt.toISOString(),
-      status:
-        t.status === "COMPLETED"
-          ? ("completed" as const)
-          : t.status === "PENDING"
-          ? ("pending" as const)
-          : ("failed" as const),
-      fee: 0,
-      method: "P2P Transfer",
-      description: `Transfer from ${
-        t.Sender?.name || t.Sender?.email || "User"
-      }`,
-      date: t.createdAt,
-      hash: t.transactionReference,
-    }));
+    // For received transfers, show in receiver's currency (from metadata if available)
+    const receivedTransferTransactions = receivedTransfers.map((t) => {
+      // Parse description for receiver's amount and currency
+      let receiverAmount = Number(t.amount);
+      let receiverCurrency = t.currency || "USD";
+      let displayMemo = "P2P Transfer";
+
+      try {
+        const metadata = JSON.parse(t.description || "{}");
+        if (metadata.receiverAmount && metadata.receiverCurrency) {
+          receiverAmount = Number(metadata.receiverAmount);
+          receiverCurrency = metadata.receiverCurrency;
+        }
+        displayMemo = metadata.memo || "P2P Transfer";
+      } catch {
+        // If description is not JSON, use default values
+        displayMemo = t.description || "P2P Transfer";
+      }
+
+      return {
+        id: t.id,
+        type: "deposit" as const, // Show received transfers as deposits
+        asset: receiverCurrency, // Receiver's currency
+        amount: receiverAmount, // Receiver's amount
+        value: receiverAmount,
+        timestamp: t.createdAt.toISOString(),
+        status:
+          t.status === "COMPLETED"
+            ? ("completed" as const)
+            : t.status === "PENDING"
+            ? ("pending" as const)
+            : ("failed" as const),
+        fee: 0,
+        method: "P2P Transfer",
+        description: `Transfer from ${
+          t.Sender?.name || t.Sender?.email || "User"
+        }`,
+        date: t.createdAt,
+        hash: t.transactionReference,
+      };
+    });
 
     // Combine and sort all transactions by date
     const allTransactions = [
