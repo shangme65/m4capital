@@ -17,6 +17,7 @@ import ForTradersDropdown from "../client/ForTradersDropdown";
 import AboutUsDropdown from "../client/AboutUsDropdown";
 import LanguageDropdown from "../client/LanguageDropdown";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useTranslation } from "@/lib/translations";
 
 interface HeaderProps {
   onLoginClick?: () => void;
@@ -30,6 +31,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const { language, setLanguage, languages, currentLanguage } = useLanguage();
+  const { t } = useTranslation();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const router = useRouter();
@@ -371,9 +373,9 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
       {/* Full-screen Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-gray-900 z-30 flex flex-col md:hidden overflow-y-auto">
+        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-30 flex flex-col md:hidden overflow-y-auto">
           {/* Header with logo and close button */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800 sticky top-0 bg-gray-900 z-10">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
             <Link
               href="/"
               className="flex items-center"
@@ -462,14 +464,14 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {/* Choose Language */}
             <div>
               <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-                CHOOSE LANGUAGE
+                {t("common.chooseLanguage").toUpperCase()}
               </h3>
               <div className="relative">
                 <button
                   onClick={() =>
                     setIsLanguageDropdownOpen(!isLanguageDropdownOpen)
                   }
-                  className="w-full flex items-center justify-between bg-gray-800 rounded-xl px-4 py-3.5 text-white font-semibold"
+                  className="w-full flex items-center justify-between bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white font-semibold"
                 >
                   <span className="flex items-center gap-2">
                     <span>{currentLanguage.flag}</span>
@@ -483,7 +485,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   />
                 </button>
                 {isLanguageDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 rounded-xl overflow-hidden shadow-lg z-50 max-h-64 overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg z-50 max-h-64 overflow-y-auto border border-gray-200 dark:border-transparent">
                     {languages.map((lang) => (
                       <button
                         key={lang.code}
@@ -491,14 +493,18 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                           setLanguage(lang.code);
                           setIsLanguageDropdownOpen(false);
                         }}
-                        className={`w-full flex items-center justify-between px-4 py-3 hover:bg-gray-700 transition-colors ${
-                          language === lang.code ? "bg-gray-700" : ""
+                        className={`w-full flex items-center justify-between px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                          language === lang.code
+                            ? "bg-gray-100 dark:bg-gray-700"
+                            : ""
                         }`}
                       >
                         <span className="flex items-center gap-3">
                           <span className="text-lg">{lang.flag}</span>
-                          <span className="text-white">{lang.name}</span>
-                          <span className="text-gray-400 text-sm">
+                          <span className="text-gray-900 dark:text-white">
+                            {lang.name}
+                          </span>
+                          <span className="text-gray-500 dark:text-gray-400 text-sm">
                             ({lang.nativeName})
                           </span>
                         </span>
@@ -515,14 +521,14 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {/* Download App */}
             <div>
               <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-                DOWNLOAD APP
+                {t("common.downloadApp").toUpperCase()}
               </h3>
               <div className="space-y-2">
                 <a
                   href="#"
-                  className="flex items-center gap-3 bg-gray-800 rounded-xl px-4 py-3"
+                  className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3"
                 >
-                  <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                     <svg
                       className="w-6 h-6 text-orange-500"
                       viewBox="0 0 24 24"
@@ -532,7 +538,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-white font-semibold text-sm">
+                    <p className="text-gray-900 dark:text-white font-semibold text-sm">
                       Get it on Google Play
                     </p>
                     <p className="text-gray-500 text-xs">
@@ -542,9 +548,9 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 </a>
                 <a
                   href="#"
-                  className="flex items-center gap-3 bg-gray-800 rounded-xl px-4 py-3"
+                  className="flex items-center gap-3 bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3"
                 >
-                  <div className="w-10 h-10 bg-gray-700 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
                     <svg
                       className="w-6 h-6 text-orange-500"
                       viewBox="0 0 24 24"
@@ -554,7 +560,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-white font-semibold text-sm">
+                    <p className="text-gray-900 dark:text-white font-semibold text-sm">
                       Android APK
                     </p>
                     <p className="text-gray-500 text-xs">
@@ -572,198 +578,198 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             {/* Markets & Assets */}
             <div>
               <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-                MARKETS & ASSETS
+                {t("common.marketsAssets").toUpperCase()}
               </h3>
               <div className="grid grid-cols-2 gap-x-8 gap-y-3">
                 <Link
                   href="/crypto"
-                  className="text-white font-semibold hover:text-orange-500"
+                  className="text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Crypto
+                  {t("nav.crypto")}
                 </Link>
                 <Link
                   href="/etfs"
-                  className="text-white font-semibold hover:text-orange-500"
+                  className="text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  ETFs
+                  {t("nav.etfs")}
                 </Link>
                 <Link
                   href="/commodities"
-                  className="text-white font-semibold hover:text-orange-500"
+                  className="text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Commodities
+                  {t("nav.commodities")}
                 </Link>
                 <Link
                   href="/forex"
-                  className="text-white font-semibold hover:text-orange-500"
+                  className="text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Forex
+                  {t("nav.forex")}
                 </Link>
                 <Link
                   href="/indices"
-                  className="text-white font-semibold hover:text-orange-500"
+                  className="text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Indices
+                  {t("nav.indices")}
                 </Link>
                 <Link
                   href="/stocks"
-                  className="text-white font-semibold hover:text-orange-500"
+                  className="text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Stocks
+                  {t("nav.stocks")}
                 </Link>
               </div>
             </div>
 
-            <div className="border-t border-gray-800 pt-6">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
               <div className="grid grid-cols-2 gap-8">
                 {/* Analytics Column */}
                 <div>
                   <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-                    ANALYTICS
+                    {t("nav.analytics").toUpperCase()}
                   </h3>
                   <div className="space-y-3">
                     <Link
                       href="/historical-quotes"
-                      className="block text-white font-semibold hover:text-orange-500"
+                      className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Historical Quotes
+                      {t("menu.historicalQuotes")}
                     </Link>
                     <Link
                       href="/calendars"
-                      className="block text-white font-semibold hover:text-orange-500"
+                      className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Calendars
+                      {t("menu.calendars")}
                     </Link>
                     <Link
                       href="/trading-specifications"
-                      className="block text-white font-semibold hover:text-orange-500"
+                      className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Trading specifications
+                      {t("menu.tradingSpecs")}
                     </Link>
                   </div>
                 </div>
                 {/* Education Column */}
                 <div>
                   <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-                    EDUCATION
+                    {t("nav.education").toUpperCase()}
                   </h3>
                   <div className="space-y-3">
                     <Link
                       href="/video-tutorials"
-                      className="block text-white font-semibold hover:text-orange-500"
+                      className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Video tutorials
+                      {t("menu.videoTutorials")}
                     </Link>
                     <Link
                       href="/margin-trading-basics"
-                      className="block text-white font-semibold hover:text-orange-500"
+                      className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      The basics of margin trading
+                      {t("menu.marginTrading")}
                     </Link>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-800 pt-6">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
               <div className="grid grid-cols-2 gap-8">
                 {/* Community Column */}
                 <div>
                   <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-                    COMMUNITY
+                    {t("nav.community").toUpperCase()}
                   </h3>
                   <div className="space-y-3">
                     <Link
                       href="/tournaments"
-                      className="block text-white font-semibold hover:text-orange-500"
+                      className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Tournaments
+                      {t("menu.tournaments")}
                     </Link>
                     <Link
                       href="/blog"
-                      className="block text-white font-semibold hover:text-orange-500"
+                      className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Our blog
+                      {t("menu.blog")}
                     </Link>
                   </div>
                 </div>
                 {/* Services Column */}
                 <div>
                   <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-                    SERVICES
+                    {t("nav.services").toUpperCase()}
                   </h3>
                   <div className="space-y-3">
                     <Link
                       href="/help"
-                      className="block text-white font-semibold hover:text-orange-500"
+                      className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Help
+                      {t("nav.help")}
                     </Link>
                     <Link
                       href="/deposits-withdrawals"
-                      className="block text-white font-semibold hover:text-orange-500"
+                      className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Deposits & withdrawals
+                      {t("menu.depositsWithdrawals")}
                     </Link>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-800 pt-6">
+            <div className="border-t border-gray-200 dark:border-gray-800 pt-6">
               <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-                ABOUT US
+                {t("nav.about").toUpperCase()}
               </h3>
               <div className="space-y-3">
                 <Link
                   href="/in-numbers"
-                  className="block text-white font-semibold hover:text-orange-500"
+                  className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  In Numbers
+                  {t("menu.inNumbers")}
                 </Link>
                 <Link
                   href="/press"
-                  className="block text-white font-semibold hover:text-orange-500"
+                  className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  In the Press
+                  {t("menu.press")}
                 </Link>
                 <Link
                   href="/contact"
-                  className="block text-white font-semibold hover:text-orange-500"
+                  className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Contact Us
+                  {t("nav.contact")}
                 </Link>
                 <Link
                   href="/awards"
-                  className="block text-white font-semibold hover:text-orange-500"
+                  className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Awards
+                  {t("menu.awards")}
                 </Link>
                 <Link
                   href="/licenses-and-safeguards"
-                  className="block text-white font-semibold hover:text-orange-500"
+                  className="block text-gray-900 dark:text-white font-semibold hover:text-orange-500"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Licenses and Safeguards
+                  {t("menu.licenses")}
                 </Link>
               </div>
             </div>

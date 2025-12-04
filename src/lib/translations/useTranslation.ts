@@ -1,0 +1,37 @@
+"use client";
+
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getTranslation, TranslationKey } from "./translations";
+import { useCallback } from "react";
+
+/**
+ * Hook for translating text in components
+ * @returns t function that translates keys to current language
+ *
+ * Usage:
+ * const { t } = useTranslation();
+ * <h1>{t("hero.title1")}</h1>
+ */
+export function useTranslation() {
+  const { language } = useLanguage();
+
+  const t = useCallback(
+    (key: TranslationKey): string => {
+      return getTranslation(language, key);
+    },
+    [language]
+  );
+
+  return { t, language };
+}
+
+/**
+ * Helper function for translating text outside of React components
+ * Note: This requires the language to be passed manually
+ *
+ * Usage:
+ * translate("en", "hero.title1")
+ */
+export function translate(language: string, key: TranslationKey): string {
+  return getTranslation(language, key);
+}

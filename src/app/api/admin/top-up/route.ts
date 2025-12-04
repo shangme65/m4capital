@@ -223,6 +223,12 @@ export async function POST(req: NextRequest) {
         : amount;
     const displayFiatAmount = roundedFiatAmountForNotification.toFixed(2);
 
+    // For crypto notifications, format the cryptoAmount to 8 decimal places
+    const formattedCryptoAmount =
+      depositType === "crypto" && cryptoAmount
+        ? parseFloat(cryptoAmount.toString()).toFixed(8)
+        : amount;
+
     await prisma.notification.create({
       data: {
         id: generateId(),
@@ -233,11 +239,14 @@ export async function POST(req: NextRequest) {
         } Deposit Completed`,
         message: `Your deposit of ${
           depositType === "crypto"
-            ? `${cryptoAmount || amount} ${cryptoAsset}`
+            ? `${formattedCryptoAmount} ${cryptoAsset}`
             : `${getCurrencySymbol(userPreferredCurrency)}${displayFiatAmount}`
         } has been confirmed and credited to your account.`,
+        // For crypto deposits, store the actual crypto amount; for fiat, use rounded fiat amount
         amount:
-          depositType === "fiat" ? roundedFiatAmountForNotification : amount,
+          depositType === "crypto"
+            ? parseFloat((cryptoAmount || amount).toString())
+            : roundedFiatAmountForNotification,
         asset: depositType === "crypto" ? cryptoAsset : userPreferredCurrency,
         metadata: {
           depositId: deposit.id,

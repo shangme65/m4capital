@@ -1372,20 +1372,12 @@ function DashboardContent() {
                     );
                   };
 
-                  // Format amount with 8 decimals for crypto
+                  // Format amount with 8 decimals for all crypto assets
                   const formatCryptoAmount = (
                     amount: number,
                     asset: string
                   ) => {
-                    if (
-                      activity.type === "deposit" ||
-                      activity.type === "withdraw"
-                    ) {
-                      return `${amount.toLocaleString("en-US", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}`;
-                    }
+                    // Always use 8 decimal places for crypto amounts
                     return amount.toLocaleString("en-US", {
                       minimumFractionDigits: 8,
                       maximumFractionDigits: 8,
@@ -1522,13 +1514,18 @@ function DashboardContent() {
                             </div>
                             <span className="font-medium text-xs text-white px-2 py-0.5 rounded-md bg-gray-700/50">
                               {/* For fiat deposits, show in original currency without re-conversion */}
+                              {/* For crypto deposits, getFiatValue already converts to user's currency */}
                               {isFiatDeposit
                                 ? formatCurrencyUtil(
                                     getFiatValue(),
                                     assetSymbol,
                                     2
                                   )
-                                : formatAmount(getFiatValue(), 2)}
+                                : formatCurrencyUtil(
+                                    getFiatValue(),
+                                    preferredCurrency,
+                                    2
+                                  )}
                             </span>
                           </div>
 
