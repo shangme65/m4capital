@@ -180,6 +180,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get recipient's preferred currency
+    const recipientCurrency = recipient.preferredCurrency || "USD";
+    const recipientCurrSymbol = getCurrencySymbol(recipientCurrency);
+
+    // Fetch exchange rates for currency conversion
+    let exchangeRates: { [key: string]: number } = { USD: 1 };
+    try {
+      const ratesRes = await fetch(
+        `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/forex/rates`
+      );
+      if (ratesRes.ok) {
+        const ratesData = await ratesRes.json();
+        exchangeRates = ratesData.rates || { USD: 1 };
+      }
+    } catch (e) {
+      console.error("Error fetching exchange rates:", e);
+    }
+
+    // Helper function to convert between currencies
+    const convertCurrency = (
+      amount: number,
+      fromCurrency: string,
+      toCurrency: string
+    ): number => {
+      if (fromCurrency === toCurrency) return amount;
+      // Convert to USD first, then to target currency
+      const fromRate = exchangeRates[fromCurrency] || 1;
+      const toRate = exchangeRates[toCurrency] || 1;
+      const usdAmount = amount / fromRate;
+      return usdAmount * toRate;
+    };
+
     if (!recipient.Portfolio) {
       return NextResponse.json(
         { error: "Recipient portfolio not found" },
@@ -214,14 +246,21 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Deduct from sender's balance
+      // Convert amount from sender's currency to recipient's currency
+      const convertedAmount = convertCurrency(
+        amount,
+        userCurrency,
+        recipientCurrency
+      );
+
+      // Deduct from sender's balance (in sender's currency)
       const newSenderBalance = new Decimal(senderPortfolio.balance).minus(
         totalDeducted
       );
 
-      // Add to recipient's balance
+      // Add converted amount to recipient's balance (in recipient's currency)
       const newRecipientBalance = new Decimal(recipientPortfolio.balance).plus(
-        amount
+        convertedAmount
       );
 
       // Update both portfolios and create P2PTransfer record in a transaction
@@ -232,16 +271,19 @@ export async function POST(request: NextRequest) {
         }),
         prisma.portfolio.update({
           where: { id: recipientPortfolio.id },
-          data: { balance: newRecipientBalance },
+          data: {
+            balance: newRecipientBalance,
+            balanceCurrency: recipientCurrency, // Ensure recipient's currency is set
+          },
         }),
-        // Record the transfer
+        // Record the transfer - store in recipient's currency for history display
         prisma.p2PTransfer.create({
           data: {
             id: transactionId,
             senderId: sender.id,
             receiverId: recipient.id,
-            amount: new Decimal(amount),
-            currency: userCurrency, // Use user's currency, not "FIAT" or "BALANCE"
+            amount: new Decimal(convertedAmount), // Store converted amount
+            currency: recipientCurrency, // Store in recipient's currency for proper display
             status: "COMPLETED",
             description: memo || `P2P Transfer`,
             senderAccountNumber: sender.accountNumber || sender.id,
@@ -255,27 +297,25 @@ export async function POST(request: NextRequest) {
         }),
       ]);
 
-      // Send email notification to recipient
-      const recipientCurrency = recipient.preferredCurrency || "USD";
+      // Send email notification to recipient with converted amount
       if (recipient.email) {
         sendTransferEmail(
           recipient.email,
           sender.name || sender.email || "Someone",
-          amount,
-          asset,
+          convertedAmount, // Use converted amount
+          recipientCurrency, // Use recipient's currency
           memo,
-          recipientCurrency
+          recipientCurrSymbol
         );
       }
 
-      // Send push notification to recipient
-      const recipientCurrSym = getCurrencySymbol(recipientCurrency);
+      // Send push notification to recipient with converted amount
       sendPushNotification(
         recipient.id,
         "Transfer Received!",
-        `You received ${recipientCurrSym}${amount.toFixed(2)} from ${
-          sender.name || sender.email
-        }`
+        `You received ${recipientCurrSymbol}${convertedAmount.toFixed(
+          2
+        )} from ${sender.name || sender.email}`
       );
 
       return NextResponse.json({
@@ -284,8 +324,10 @@ export async function POST(request: NextRequest) {
           2
         )} ${userCurrency} to ${recipient.name || destination}`,
         transactionId,
-        asset: userCurrency, // Return actual currency
+        asset: userCurrency, // Return sender's currency
         amount,
+        convertedAmount,
+        recipientCurrency,
         fee: feeInUSD,
         totalDeducted,
         destination,

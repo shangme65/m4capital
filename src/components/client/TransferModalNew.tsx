@@ -680,7 +680,9 @@ export default function TransferModalNew({
                         </div>
                         <div className="text-[10px] text-gray-400">
                           Balance:{" "}
-                          {formatAmount(currentBalance * currentPrice, 2)}
+                          {transferData.asset === "FIAT"
+                            ? formatBalanceDisplay(currentBalance)
+                            : formatAmount(currentBalance * currentPrice, 2)}
                         </div>
                       </div>
                     </div>
@@ -798,29 +800,32 @@ export default function TransferModalNew({
                       </div>
                       <button
                         onClick={() => {
-                          // Calculate max amount in preferred currency
-                          const maxInUSD =
-                            transferData.asset === "FIAT"
-                              ? Math.max(0, currentBalance - transferFee)
-                              : Math.max(
-                                  0,
-                                  (currentBalance - transferFee) * currentPrice
-                                );
-                          const maxInPreferred = convertAmount(maxInUSD);
-                          setTransferData((prev) => ({
-                            ...prev,
-                            amount: maxInPreferred.toFixed(2),
-                          }));
+                          // For FIAT, use balance directly (it's already in user's currency)
+                          // For crypto, convert to preferred currency via USD
+                          if (transferData.asset === "FIAT") {
+                            const maxAmount = Math.max(0, currentBalance - 0.01); // Small fee buffer
+                            setTransferData((prev) => ({
+                              ...prev,
+                              amount: maxAmount.toFixed(2),
+                            }));
+                          } else {
+                            const maxInUSD = Math.max(
+                              0,
+                              (currentBalance - transferFee) * currentPrice
+                            );
+                            const maxInPreferred = convertAmount(maxInUSD);
+                            setTransferData((prev) => ({
+                              ...prev,
+                              amount: maxInPreferred.toFixed(2),
+                            }));
+                          }
                         }}
                         className="text-purple-400 text-sm mt-2 hover:text-purple-300 font-semibold"
                       >
                         Send Max (
-                        {formatAmount(
-                          transferData.asset === "FIAT"
-                            ? currentBalance
-                            : currentBalance * currentPrice,
-                          2
-                        )}
+                        {transferData.asset === "FIAT"
+                          ? formatBalanceDisplay(currentBalance)
+                          : formatAmount(currentBalance * currentPrice, 2)}
                         )
                       </button>
                     </div>
