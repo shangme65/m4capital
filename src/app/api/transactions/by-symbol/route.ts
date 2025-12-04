@@ -64,6 +64,27 @@ export async function GET(request: NextRequest) {
       take: 100,
     });
 
+    // Fetch P2P transfers where the crypto asset matches (both sent and received)
+    const sentTransfers = await prisma.p2PTransfer.findMany({
+      where: {
+        senderId: userId,
+        currency: { equals: symbol, mode: "insensitive" },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: { Receiver: { select: { name: true, email: true } } },
+    });
+
+    const receivedTransfers = await prisma.p2PTransfer.findMany({
+      where: {
+        receiverId: userId,
+        currency: { equals: symbol, mode: "insensitive" },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+      include: { Sender: { select: { name: true, email: true } } },
+    });
+
     // Normalize into a common format
     const normalized = [
       ...trades.map((t) => ({
@@ -114,6 +135,55 @@ export async function GET(request: NextRequest) {
         status: w.status.toLowerCase(),
         source: "withdrawal",
       })),
+      // P2P transfers sent (crypto)
+      ...sentTransfers.map((t) => {
+        // For crypto transfers, description contains the actual crypto amount sent
+        // The amount field stores USD value, so we need to parse description for crypto amount
+        let cryptoAmount = 0;
+        const descMatch = t.description?.match(
+          /P2P Transfer of ([\d.]+) [A-Z]+/
+        );
+        if (descMatch) {
+          cryptoAmount = parseFloat(descMatch[1]);
+        }
+
+        return {
+          id: t.id,
+          type: "send",
+          symbol: t.currency,
+          amount: cryptoAmount,
+          price: Number(t.amount), // USD value
+          date: t.createdAt,
+          status: t.status.toLowerCase(),
+          source: "transfer",
+          recipient: t.Receiver?.name || t.receiverEmail || "User",
+          hash: t.transactionReference,
+        };
+      }),
+      // P2P transfers received (crypto)
+      ...receivedTransfers.map((t) => {
+        // For crypto transfers, description contains the actual crypto amount received
+        let cryptoAmount = 0;
+        const descMatch = t.description?.match(
+          /P2P Transfer of ([\d.]+) [A-Z]+/
+        );
+        if (descMatch) {
+          cryptoAmount = parseFloat(descMatch[1]);
+        }
+
+        return {
+          id: t.id,
+          type: "receive",
+          symbol: t.currency,
+          amount: cryptoAmount,
+          price: Number(t.amount), // USD value
+          date: t.createdAt,
+          status: t.status.toLowerCase(),
+          source: "transfer",
+          sender: t.Sender?.name || t.Sender?.email || "User",
+          hash: t.transactionReference,
+        };
+      }),
     ];
 
     // Sort by date desc

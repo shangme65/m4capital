@@ -25,7 +25,15 @@ const FIAT_CURRENCIES = new Set([
 
 export interface DetailedTransaction {
   id: string;
-  type: "buy" | "sell" | "deposit" | "withdraw" | "convert" | "transfer";
+  type:
+    | "buy"
+    | "sell"
+    | "deposit"
+    | "withdraw"
+    | "convert"
+    | "transfer"
+    | "send"
+    | "receive";
   asset: string;
   amount: number;
   value: number;
@@ -121,6 +129,8 @@ export default function TransactionDetailsModal({
       withdraw: "Withdrew",
       convert: "Converted",
       transfer: "Transferred",
+      send: "Sent",
+      receive: "Received",
     };
     return `${typeMap[transaction.type] || transaction.type} ${crypto.name}`;
   };
@@ -258,6 +268,46 @@ export default function TransactionDetailsModal({
                 strokeLinejoin="round"
                 strokeWidth={2.5}
                 d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              />
+            </svg>
+          </div>
+        );
+      case "send":
+        return (
+          <div
+            className={`${baseClasses} bg-gradient-to-br from-red-500 to-red-600`}
+          >
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+              />
+            </svg>
+          </div>
+        );
+      case "receive":
+        return (
+          <div
+            className={`${baseClasses} bg-gradient-to-br from-green-500 to-green-600`}
+          >
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M12 4v16m0 0l-4-4m4 4l4-4"
               />
             </svg>
           </div>

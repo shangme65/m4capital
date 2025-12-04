@@ -865,7 +865,9 @@ export default function AssetDetailsModal({
                                   | "deposit"
                                   | "withdraw"
                                   | "convert"
-                                  | "transfer",
+                                  | "transfer"
+                                  | "send"
+                                  | "receive",
                                 asset: tx.cryptoCurrency || asset.symbol,
                                 amount:
                                   typeof tx.amount === "number"
@@ -918,25 +920,32 @@ export default function AssetDetailsModal({
                               <div className="flex items-center gap-3">
                                 <div
                                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                                    tx.type === "buy" || tx.type === "deposit"
+                                    tx.type === "buy" ||
+                                    tx.type === "deposit" ||
+                                    tx.type === "receive"
                                       ? "bg-green-500/20"
-                                      : tx.type === "sell"
+                                      : tx.type === "sell" || tx.type === "send"
                                       ? "bg-red-500/20"
                                       : "bg-blue-500/20"
                                   }`}
                                 >
                                   <span
                                     className={`text-lg ${
-                                      tx.type === "buy" || tx.type === "deposit"
+                                      tx.type === "buy" ||
+                                      tx.type === "deposit" ||
+                                      tx.type === "receive"
                                         ? "text-green-400"
-                                        : tx.type === "sell"
+                                        : tx.type === "sell" ||
+                                          tx.type === "send"
                                         ? "text-red-400"
                                         : "text-blue-400"
                                     }`}
                                   >
-                                    {tx.type === "buy" || tx.type === "deposit"
+                                    {tx.type === "buy" ||
+                                    tx.type === "deposit" ||
+                                    tx.type === "receive"
                                       ? "↓"
-                                      : tx.type === "sell"
+                                      : tx.type === "sell" || tx.type === "send"
                                       ? "↑"
                                       : "↔"}
                                   </span>
@@ -1000,16 +1009,20 @@ export default function AssetDetailsModal({
                                 </div>
                                 <div
                                   className={`font-bold text-lg ${
-                                    tx.type === "buy" || tx.type === "deposit"
+                                    tx.type === "buy" ||
+                                    tx.type === "deposit" ||
+                                    tx.type === "receive"
                                       ? "text-green-400"
-                                      : tx.type === "sell"
+                                      : tx.type === "sell" || tx.type === "send"
                                       ? "text-red-400"
                                       : "text-white"
                                   }`}
                                 >
-                                  {tx.type === "buy" || tx.type === "deposit"
+                                  {tx.type === "buy" ||
+                                  tx.type === "deposit" ||
+                                  tx.type === "receive"
                                     ? "+"
-                                    : tx.type === "sell"
+                                    : tx.type === "sell" || tx.type === "send"
                                     ? "-"
                                     : ""}
                                   {typeof tx.amount === "number"
