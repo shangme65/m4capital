@@ -442,16 +442,25 @@ export async function POST(request: NextRequest) {
         where: { id: recipientPortfolio.id },
         data: { assets: updatedRecipientAssets as any },
       }),
-      // Record the transfer
+      // Record the transfer with crypto amount and price in JSON metadata
       prisma.p2PTransfer.create({
         data: {
           id: transactionId,
           senderId: sender.id,
           receiverId: recipient.id,
-          amount: new Decimal(usdValue),
-          currency: asset,
+          amount: new Decimal(usdValue), // Store USD value in amount field
+          currency: asset, // Store crypto symbol
           status: "COMPLETED",
-          description: memo || `P2P Transfer of ${amount} ${asset}`,
+          // Store all details in JSON for proper display
+          description: JSON.stringify({
+            type: "crypto",
+            memo: memo || "P2P Transfer",
+            cryptoAmount: amount, // Actual crypto amount transferred
+            cryptoPrice: cryptoPrice, // Price at time of transfer
+            usdValue: usdValue, // Total USD value
+            feeInCrypto: feeInCrypto, // Fee in crypto
+            feeInUSD: feeInUSD, // Fee in USD
+          }),
           senderAccountNumber: sender.accountNumber || sender.id,
           receiverAccountNumber: recipient.accountNumber || recipient.id,
           receiverEmail: recipient.email || "",

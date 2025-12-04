@@ -145,21 +145,67 @@ export async function GET(req: NextRequest) {
     // Transform sent transfers into transaction format
     // For sent transfers, always show in sender's currency (stored in t.currency and t.amount)
     const sentTransferTransactions = sentTransfers.map((t) => {
-      // Parse description for memo (description may contain JSON metadata)
+      // Parse description for memo and crypto details (description may contain JSON metadata)
       let displayMemo = "P2P Transfer";
+      let isCryptoTransfer = false;
+      let cryptoAmount = 0;
+      let cryptoPrice = 0;
+      let usdValue = Number(t.amount);
+
       try {
         const metadata = JSON.parse(t.description || "{}");
         displayMemo = metadata.memo || "P2P Transfer";
+        if (metadata.type === "crypto" && metadata.cryptoAmount) {
+          isCryptoTransfer = true;
+          cryptoAmount = metadata.cryptoAmount;
+          cryptoPrice = metadata.cryptoPrice || 0;
+          usdValue = metadata.usdValue || Number(t.amount);
+        }
       } catch {
+        // Old format: "P2P Transfer of X BTC" or plain memo
+        const descMatch = t.description?.match(
+          /P2P Transfer of ([\d.]+) ([A-Z]+)/
+        );
+        if (descMatch) {
+          isCryptoTransfer = true;
+          cryptoAmount = parseFloat(descMatch[1]);
+        }
         displayMemo = t.description || "P2P Transfer";
+      }
+
+      // Check if this is a crypto transfer (currency is a crypto symbol, not fiat)
+      const FIAT_CURRENCIES = [
+        "USD",
+        "EUR",
+        "GBP",
+        "BRL",
+        "JPY",
+        "CAD",
+        "AUD",
+        "CHF",
+        "INR",
+        "CNY",
+        "KRW",
+        "NGN",
+      ];
+      const isFiatCurrency = FIAT_CURRENCIES.includes(t.currency || "USD");
+
+      if (!isFiatCurrency && !isCryptoTransfer) {
+        // It's a crypto currency but no metadata - treat amount as USD value
+        isCryptoTransfer = true;
       }
 
       return {
         id: t.id,
         type: "transfer" as const,
-        asset: t.currency || "USD", // Sender's currency
-        amount: Number(t.amount), // Sender's amount
-        value: Number(t.amount),
+        asset: t.currency || "USD",
+        // For crypto transfers, show the crypto amount; for fiat, show the fiat amount
+        amount:
+          isCryptoTransfer && cryptoAmount > 0
+            ? cryptoAmount
+            : Number(t.amount),
+        // Value is USD value for crypto, or fiat amount for fiat transfers
+        value: isCryptoTransfer ? usdValue : Number(t.amount),
         timestamp: t.createdAt.toISOString(),
         status:
           t.status === "COMPLETED"
@@ -174,6 +220,9 @@ export async function GET(req: NextRequest) {
         }`,
         date: t.createdAt,
         hash: t.transactionReference,
+        // Include crypto-specific data for proper display
+        isCrypto: isCryptoTransfer && !isFiatCurrency,
+        cryptoPrice: cryptoPrice,
       };
     });
 
@@ -184,25 +233,63 @@ export async function GET(req: NextRequest) {
       let receiverAmount = Number(t.amount);
       let receiverCurrency = t.currency || "USD";
       let displayMemo = "P2P Transfer";
+      let isCryptoTransfer = false;
+      let cryptoAmount = 0;
+      let cryptoPrice = 0;
+      let usdValue = Number(t.amount);
 
       try {
         const metadata = JSON.parse(t.description || "{}");
-        if (metadata.receiverAmount && metadata.receiverCurrency) {
+        displayMemo = metadata.memo || "P2P Transfer";
+
+        // Check if it's a crypto transfer
+        if (metadata.type === "crypto" && metadata.cryptoAmount) {
+          isCryptoTransfer = true;
+          cryptoAmount = metadata.cryptoAmount;
+          cryptoPrice = metadata.cryptoPrice || 0;
+          usdValue = metadata.usdValue || Number(t.amount);
+          receiverAmount = cryptoAmount;
+        } else if (metadata.receiverAmount && metadata.receiverCurrency) {
+          // Fiat cross-currency transfer
           receiverAmount = Number(metadata.receiverAmount);
           receiverCurrency = metadata.receiverCurrency;
         }
-        displayMemo = metadata.memo || "P2P Transfer";
       } catch {
-        // If description is not JSON, use default values
+        // Old format: "P2P Transfer of X BTC"
+        const descMatch = t.description?.match(
+          /P2P Transfer of ([\d.]+) ([A-Z]+)/
+        );
+        if (descMatch) {
+          isCryptoTransfer = true;
+          cryptoAmount = parseFloat(descMatch[1]);
+          receiverAmount = cryptoAmount;
+        }
         displayMemo = t.description || "P2P Transfer";
       }
+
+      // Check if currency is crypto (not fiat)
+      const FIAT_CURRENCIES = [
+        "USD",
+        "EUR",
+        "GBP",
+        "BRL",
+        "JPY",
+        "CAD",
+        "AUD",
+        "CHF",
+        "INR",
+        "CNY",
+        "KRW",
+        "NGN",
+      ];
+      const isFiatCurrency = FIAT_CURRENCIES.includes(receiverCurrency);
 
       return {
         id: t.id,
         type: "deposit" as const, // Show received transfers as deposits
-        asset: receiverCurrency, // Receiver's currency
-        amount: receiverAmount, // Receiver's amount
-        value: receiverAmount,
+        asset: receiverCurrency, // Receiver's currency or crypto symbol
+        amount: receiverAmount,
+        value: isCryptoTransfer ? usdValue : receiverAmount,
         timestamp: t.createdAt.toISOString(),
         status:
           t.status === "COMPLETED"
@@ -217,6 +304,8 @@ export async function GET(req: NextRequest) {
         }`,
         date: t.createdAt,
         hash: t.transactionReference,
+        isCrypto: isCryptoTransfer && !isFiatCurrency,
+        cryptoPrice: cryptoPrice,
       };
     });
 

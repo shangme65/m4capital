@@ -137,14 +137,26 @@ export async function GET(request: NextRequest) {
       })),
       // P2P transfers sent (crypto)
       ...sentTransfers.map((t) => {
-        // For crypto transfers, description contains the actual crypto amount sent
-        // The amount field stores USD value, so we need to parse description for crypto amount
+        // Parse JSON metadata from description for crypto details
         let cryptoAmount = 0;
-        const descMatch = t.description?.match(
-          /P2P Transfer of ([\d.]+) [A-Z]+/
-        );
-        if (descMatch) {
-          cryptoAmount = parseFloat(descMatch[1]);
+        let cryptoPrice = 0;
+        let usdValue = Number(t.amount);
+
+        try {
+          const metadata = JSON.parse(t.description || "{}");
+          if (metadata.type === "crypto" && metadata.cryptoAmount) {
+            cryptoAmount = metadata.cryptoAmount;
+            cryptoPrice = metadata.cryptoPrice || 0;
+            usdValue = metadata.usdValue || Number(t.amount);
+          }
+        } catch {
+          // Old format: "P2P Transfer of X BTC"
+          const descMatch = t.description?.match(
+            /P2P Transfer of ([\d.]+) [A-Z]+/
+          );
+          if (descMatch) {
+            cryptoAmount = parseFloat(descMatch[1]);
+          }
         }
 
         return {
@@ -152,7 +164,8 @@ export async function GET(request: NextRequest) {
           type: "send",
           symbol: t.currency,
           amount: cryptoAmount,
-          price: Number(t.amount), // USD value
+          price: cryptoPrice, // Price per unit at time of transfer
+          fiatValue: usdValue, // Total USD value
           date: t.createdAt,
           status: t.status.toLowerCase(),
           source: "transfer",
@@ -162,13 +175,26 @@ export async function GET(request: NextRequest) {
       }),
       // P2P transfers received (crypto)
       ...receivedTransfers.map((t) => {
-        // For crypto transfers, description contains the actual crypto amount received
+        // Parse JSON metadata from description for crypto details
         let cryptoAmount = 0;
-        const descMatch = t.description?.match(
-          /P2P Transfer of ([\d.]+) [A-Z]+/
-        );
-        if (descMatch) {
-          cryptoAmount = parseFloat(descMatch[1]);
+        let cryptoPrice = 0;
+        let usdValue = Number(t.amount);
+
+        try {
+          const metadata = JSON.parse(t.description || "{}");
+          if (metadata.type === "crypto" && metadata.cryptoAmount) {
+            cryptoAmount = metadata.cryptoAmount;
+            cryptoPrice = metadata.cryptoPrice || 0;
+            usdValue = metadata.usdValue || Number(t.amount);
+          }
+        } catch {
+          // Old format: "P2P Transfer of X BTC"
+          const descMatch = t.description?.match(
+            /P2P Transfer of ([\d.]+) [A-Z]+/
+          );
+          if (descMatch) {
+            cryptoAmount = parseFloat(descMatch[1]);
+          }
         }
 
         return {
@@ -176,7 +202,8 @@ export async function GET(request: NextRequest) {
           type: "receive",
           symbol: t.currency,
           amount: cryptoAmount,
-          price: Number(t.amount), // USD value
+          price: cryptoPrice, // Price per unit at time of transfer
+          fiatValue: usdValue, // Total USD value
           date: t.createdAt,
           status: t.status.toLowerCase(),
           source: "transfer",
