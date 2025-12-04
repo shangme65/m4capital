@@ -1372,15 +1372,34 @@ function DashboardContent() {
                     );
                   };
 
-                  // Format amount with 8 decimals for all crypto assets
+                  // Format amount - 8 decimals for crypto, 2 for fiat
                   const formatCryptoAmount = (
                     amount: number,
                     asset: string
                   ) => {
-                    // Always use 8 decimal places for crypto amounts
+                    // Check if this is a fiat currency
+                    const fiatCurrencies = new Set([
+                      "USD",
+                      "EUR",
+                      "GBP",
+                      "BRL",
+                      "JPY",
+                      "CAD",
+                      "AUD",
+                      "CHF",
+                      "INR",
+                      "CNY",
+                      "KRW",
+                      "NGN",
+                    ]);
+                    const isFiat = fiatCurrencies.has(
+                      asset?.toUpperCase() || ""
+                    );
+                    const decimals = isFiat ? 2 : 8;
+
                     return amount.toLocaleString("en-US", {
-                      minimumFractionDigits: 8,
-                      maximumFractionDigits: 8,
+                      minimumFractionDigits: decimals,
+                      maximumFractionDigits: decimals,
                     });
                   };
 
