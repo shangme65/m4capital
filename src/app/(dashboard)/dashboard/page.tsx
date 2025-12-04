@@ -1358,9 +1358,67 @@ function DashboardContent() {
                     )} ${fullName}`;
                   };
 
+                  // Currency to country flag emoji mapping
+                  const CURRENCY_FLAGS: Record<string, string> = {
+                    USD: "🇺🇸",
+                    EUR: "🇪🇺",
+                    GBP: "🇬🇧",
+                    BRL: "🇧🇷",
+                    JPY: "🇯🇵",
+                    CAD: "🇨🇦",
+                    AUD: "🇦🇺",
+                    CHF: "🇨🇭",
+                    INR: "🇮🇳",
+                    CNY: "🇨🇳",
+                    KRW: "🇰🇷",
+                    NGN: "🇳🇬",
+                    MXN: "🇲🇽",
+                    ZAR: "🇿🇦",
+                    RUB: "🇷🇺",
+                    SGD: "🇸🇬",
+                    HKD: "🇭🇰",
+                    NZD: "🇳🇿",
+                    SEK: "🇸🇪",
+                    NOK: "🇳🇴",
+                    DKK: "🇩🇰",
+                    PLN: "🇵🇱",
+                    THB: "🇹🇭",
+                    IDR: "🇮🇩",
+                    MYR: "🇲🇾",
+                    PHP: "🇵🇭",
+                    VND: "🇻🇳",
+                    AED: "🇦🇪",
+                    SAR: "🇸🇦",
+                    TRY: "🇹🇷",
+                    COP: "🇨🇴",
+                    ARS: "🇦🇷",
+                    CLP: "🇨🇱",
+                    PEN: "🇵🇪",
+                  };
+
                   // Get transaction type icon and color
                   const getTransactionIcon = () => {
-                    const assetSymbol = activity.asset?.split(" ")[0] || "";
+                    const assetSymbol =
+                      activity.asset?.split(" ")[0]?.toUpperCase() || "";
+                    const flag = CURRENCY_FLAGS[assetSymbol];
+
+                    // If it's a fiat currency, show the country flag
+                    if (flag) {
+                      return (
+                        <div
+                          className="inline-flex items-center justify-center rounded-full bg-gray-700 flex-shrink-0"
+                          style={{
+                            width: "24px",
+                            height: "24px",
+                            fontSize: "14px",
+                          }}
+                        >
+                          {flag}
+                        </div>
+                      );
+                    }
+
+                    // Otherwise show crypto icon
                     return (
                       <div className="relative">
                         <CryptoIcon
