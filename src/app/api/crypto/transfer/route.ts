@@ -113,11 +113,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Normalize asset - treat FIAT as balance transfer
+    const normalizedAsset = asset === "FIAT" ? "BALANCE" : asset;
+    const isFiatTransfer = normalizedAsset === "BALANCE";
+
     // Dynamic network fees based on asset type (in USD equivalent)
-    const getNetworkFee = (symbol: string): number => {
+    // For fiat/balance transfers, fee is minimal
+    // For crypto, fee is in USD and will be converted to crypto equivalent
+    const getNetworkFeeUSD = (symbol: string): number => {
       const networkFees: { [key: string]: number } = {
-        BTC: 2.5, // Bitcoin average fee
-        ETH: 3.0, // Ethereum gas fee
+        BTC: 2.5, // Bitcoin average fee in USD
+        ETH: 3.0, // Ethereum gas fee in USD
         LTC: 0.05, // Litecoin low fee
         BCH: 0.01, // Bitcoin Cash low fee
         XRP: 0.001, // Ripple very low
@@ -131,12 +137,13 @@ export async function POST(request: NextRequest) {
         USDC: 1.0, // USD Coin
         ETC: 0.1, // Ethereum Classic
         USD: 0.0001, // Minimal fiat transfer fee
+        BALANCE: 0.0001, // Minimal balance transfer fee
       };
       return networkFees[symbol] || 0.5; // Default $0.50
     };
 
-    const transferFee = getNetworkFee(asset);
-    const totalDeducted = amount + transferFee;
+    // Get the USD fee amount
+    const feeInUSD = getNetworkFeeUSD(normalizedAsset);
 
     // Find sender with portfolio
     const sender = await prisma.user.findUnique({
@@ -189,9 +196,10 @@ export async function POST(request: NextRequest) {
       .substring(2, 9)
       .toUpperCase()}`;
 
-    // Handle USD transfers (deduct from balance)
-    if (asset === "USD") {
+    // Handle fiat/balance transfers (deduct from balance)
+    if (isFiatTransfer) {
       const currentBalance = parseFloat(senderPortfolio.balance.toString());
+      const totalDeducted = amount + feeInUSD;
 
       if (currentBalance < totalDeducted) {
         return NextResponse.json(
@@ -200,7 +208,7 @@ export async function POST(request: NextRequest) {
               2
             )} but need ${currSymbol}${totalDeducted.toFixed(
               2
-            )} (including ${currSymbol}${transferFee.toFixed(4)} fee)`,
+            )} (including ${currSymbol}${feeInUSD.toFixed(4)} fee)`,
           },
           { status: 400 }
         );
@@ -233,7 +241,7 @@ export async function POST(request: NextRequest) {
             senderId: sender.id,
             receiverId: recipient.id,
             amount: new Decimal(amount),
-            currency: asset,
+            currency: userCurrency, // Use user's currency, not "FIAT" or "BALANCE"
             status: "COMPLETED",
             description: memo || `P2P Transfer`,
             senderAccountNumber: sender.accountNumber || sender.id,
@@ -276,9 +284,9 @@ export async function POST(request: NextRequest) {
           2
         )} ${userCurrency} to ${recipient.name || destination}`,
         transactionId,
-        asset,
+        asset: userCurrency, // Return actual currency
         amount,
-        fee: transferFee,
+        fee: feeInUSD,
         totalDeducted,
         destination,
         recipientName: recipient.name,
@@ -304,11 +312,35 @@ export async function POST(request: NextRequest) {
 
     const senderAsset: Asset = senderAssets[assetIndex];
 
-    // Check if sender has enough (including fee)
+    // Get current crypto price to convert USD fee to crypto
+    let cryptoPrice = 1;
+    try {
+      const priceRes = await fetch(
+        `${
+          process.env.NEXTAUTH_URL || "http://localhost:3000"
+        }/api/crypto/prices?symbols=${asset}`
+      );
+      const priceData = await priceRes.json();
+      if (priceData.prices && priceData.prices[0]) {
+        cryptoPrice = priceData.prices[0].price;
+      }
+    } catch (e) {
+      console.error("Error fetching crypto price for fee calculation:", e);
+    }
+
+    // Convert USD fee to crypto equivalent
+    const feeInCrypto = cryptoPrice > 0 ? feeInUSD / cryptoPrice : 0;
+    const totalDeducted = amount + feeInCrypto;
+
+    // Check if sender has enough (including fee converted to crypto)
     if (senderAsset.amount < totalDeducted) {
       return NextResponse.json(
         {
-          error: `Insufficient ${asset}. You have ${senderAsset.amount} but need ${totalDeducted} (including ${transferFee} fee)`,
+          error: `Insufficient ${asset}. You have ${senderAsset.amount.toFixed(
+            8
+          )} but need ${totalDeducted.toFixed(
+            8
+          )} (including ~$${feeInUSD.toFixed(2)} fee)`,
         },
         { status: 400 }
       );
@@ -347,21 +379,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get current crypto price for USD value
-    let usdValue = amount;
-    try {
-      const priceRes = await fetch(
-        `${
-          process.env.NEXTAUTH_URL || "http://localhost:3000"
-        }/api/crypto/prices?symbols=${asset}`
-      );
-      const priceData = await priceRes.json();
-      if (priceData.prices && priceData.prices[0]) {
-        usdValue = amount * priceData.prices[0].price;
-      }
-    } catch (e) {
-      console.error("Error fetching crypto price:", e);
-    }
+    // Calculate USD value using the price we already fetched
+    const usdValue = amount * cryptoPrice;
 
     // Update both portfolios and create P2PTransfer record in a transaction
     await prisma.$transaction([
@@ -409,18 +428,21 @@ export async function POST(request: NextRequest) {
     sendPushNotification(
       recipient.id,
       "Transfer Received!",
-      `You received ${amount} ${asset} from ${sender.name || sender.email}`
+      `You received ${amount.toFixed(8)} ${asset} from ${
+        sender.name || sender.email
+      }`
     );
 
     return NextResponse.json({
       success: true,
-      message: `Successfully transferred ${amount} ${asset} to ${
+      message: `Successfully transferred ${amount.toFixed(8)} ${asset} to ${
         recipient.name || destination
       }`,
       transactionId,
       asset,
       amount,
-      fee: transferFee,
+      fee: feeInCrypto,
+      feeUSD: feeInUSD,
       totalDeducted,
       destination,
       recipientName: recipient.name,
