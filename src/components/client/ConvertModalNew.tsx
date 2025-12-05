@@ -138,7 +138,10 @@ export default function ConvertModalNew({
 
   // Initialize fromAsset with first owned crypto if available
   useEffect(() => {
-    if (userOwnedCrypto.length > 0 && !userOwnedCrypto.includes(convertData.fromAsset)) {
+    if (
+      userOwnedCrypto.length > 0 &&
+      !userOwnedCrypto.includes(convertData.fromAsset)
+    ) {
       setConvertData((prev) => ({
         ...prev,
         fromAsset: userOwnedCrypto[0],
@@ -284,10 +287,8 @@ export default function ConvertModalNew({
         body: JSON.stringify({
           fromAsset: convertData.fromAsset,
           toAsset: convertData.toAsset,
-          fromAmount: cryptoAmount,
-          toAmount: receiveAmount,
+          amount: cryptoAmount,
           rate: rate,
-          fee: feeAmount,
         }),
       });
 
@@ -542,8 +543,12 @@ export default function ConvertModalNew({
                             />
                           </svg>
                         </div>
-                        <p className="text-gray-400 text-sm">No crypto assets to swap</p>
-                        <p className="text-gray-500 text-xs mt-1">Buy crypto first to start swapping</p>
+                        <p className="text-gray-400 text-sm">
+                          No crypto assets to swap
+                        </p>
+                        <p className="text-gray-500 text-xs mt-1">
+                          Buy crypto first to start swapping
+                        </p>
                       </div>
                     ) : (
                       <div
