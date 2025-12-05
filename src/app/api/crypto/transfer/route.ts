@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { Decimal } from "@prisma/client/runtime/library";
+import { sendEmail } from "@/lib/email";
+import { sendPushNotification as sendPushNotificationLib } from "@/lib/push-notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -20,9 +22,114 @@ interface Asset {
   name?: string;
 }
 
-// Helper function to send email notification
-async function sendTransferEmail(
+// Helper function to generate transfer email HTML
+function generateTransferEmailHtml(
+  recipientName: string,
+  senderName: string,
+  amount: number,
+  asset: string,
+  direction: "sent" | "received",
+  memo?: string,
+  currencySymbol?: string
+) {
+  const currSym = currencySymbol || (asset === "USD" ? "$" : "");
+  const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN"].includes(asset);
+  const amountDisplay = isCrypto
+    ? `${amount.toFixed(8)} ${asset}`
+    : `${currSym}${amount.toFixed(2)}`;
+
+  const titleText =
+    direction === "received"
+      ? `You received ${amountDisplay}`
+      : `Transfer Sent Successfully`;
+  const subtitleText =
+    direction === "received"
+      ? `from ${senderName}`
+      : `${amountDisplay} to ${recipientName}`;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 40px 20px;">
+        <tr>
+          <td align="center">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+              <!-- Header -->
+              <tr>
+                <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, ${
+                  direction === "received" ? "#22c55e20" : "#3b82f620"
+                } 0%, transparent 100%);">
+                  <div style="display: inline-block; width: 80px; height: 80px; background: linear-gradient(135deg, ${
+                    direction === "received" ? "#22c55e" : "#3b82f6"
+                  } 0%, ${
+    direction === "received" ? "#16a34a" : "#2563eb"
+  } 100%); border-radius: 50%; margin-bottom: 20px; line-height: 80px; font-size: 36px;">
+                    ${direction === "received" ? "📥" : "📤"}
+                  </div>
+                  <h1 style="margin: 0; color: white; font-size: 28px; font-weight: 700;">${titleText}</h1>
+                  <p style="margin: 10px 0 0; color: #9ca3af; font-size: 16px;">${subtitleText}</p>
+                </td>
+              </tr>
+              <!-- Content -->
+              <tr>
+                <td style="padding: 30px 40px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px;">
+                    <tr>
+                      <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">Amount</td>
+                      <td align="right" style="padding: 12px 0; color: white; font-size: 18px; font-weight: 700;">${amountDisplay}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">${
+                        direction === "received" ? "From" : "To"
+                      }</td>
+                      <td align="right" style="padding: 12px 0; color: white; font-size: 16px;">${
+                        direction === "received" ? senderName : recipientName
+                      }</td>
+                    </tr>
+                    ${
+                      memo
+                        ? `
+                    <tr>
+                      <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">Memo</td>
+                      <td align="right" style="padding: 12px 0; color: white; font-size: 16px;">${memo}</td>
+                    </tr>
+                    `
+                        : ""
+                    }
+                    <tr>
+                      <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">Status</td>
+                      <td align="right" style="padding: 12px 0;">
+                        <span style="display: inline-block; background: #22c55e20; color: #22c55e; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">Completed</span>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <!-- Footer -->
+              <tr>
+                <td style="padding: 20px 40px 40px; text-align: center;">
+                  <p style="margin: 0; color: #6b7280; font-size: 13px;">This is an automated notification from M4Capital.</p>
+                  <p style="margin: 10px 0 0; color: #6b7280; font-size: 12px;">© ${new Date().getFullYear()} M4Capital. All rights reserved.</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+}
+
+// Helper function to send email notification to recipient
+async function sendTransferReceivedEmail(
   recipientEmail: string,
+  recipientName: string,
   senderName: string,
   amount: number,
   asset: string,
@@ -31,61 +138,92 @@ async function sendTransferEmail(
 ) {
   try {
     const currSym = currencySymbol || (asset === "USD" ? "$" : "");
-    const response = await fetch(
-      `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/send-email`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          to: recipientEmail,
-          subject: `You received ${
-            asset === "USD"
-              ? `${currSym}${amount.toFixed(2)}`
-              : `${amount} ${asset}`
-          } from ${senderName}`,
-          template: "transfer-received",
-          data: {
-            senderName,
-            amount,
-            asset,
-            memo,
-            currencySymbol: currSym,
-          },
-        }),
-      }
+    const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN"].includes(
+      asset
     );
-    if (!response.ok) {
-      console.error("Failed to send transfer email");
-    }
+    const amountDisplay = isCrypto
+      ? `${amount.toFixed(8)} ${asset}`
+      : `${currSym}${amount.toFixed(2)}`;
+
+    await sendEmail({
+      to: recipientEmail,
+      subject: `📥 You received ${amountDisplay} from ${senderName} - M4Capital`,
+      html: generateTransferEmailHtml(
+        recipientName,
+        senderName,
+        amount,
+        asset,
+        "received",
+        memo,
+        currencySymbol
+      ),
+      text: `You received ${amountDisplay} from ${senderName}${
+        memo ? `. Memo: ${memo}` : ""
+      }. Thank you for using M4Capital!`,
+    });
+    console.log(`📧 Transfer received email sent to ${recipientEmail}`);
   } catch (error) {
-    console.error("Error sending transfer email:", error);
+    console.error("Error sending transfer received email:", error);
   }
 }
 
-// Helper function to send push notification
-async function sendPushNotification(
-  userId: string,
-  title: string,
-  message: string
+// Helper function to send email notification to sender
+async function sendTransferSentEmail(
+  senderEmail: string,
+  senderName: string,
+  recipientName: string,
+  amount: number,
+  asset: string,
+  memo?: string,
+  currencySymbol?: string
 ) {
   try {
-    const response = await fetch(
-      `${
-        process.env.NEXTAUTH_URL || "http://localhost:3000"
-      }/api/notifications/push`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          title,
-          message,
-        }),
-      }
+    const currSym = currencySymbol || (asset === "USD" ? "$" : "");
+    const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN"].includes(
+      asset
     );
-    if (!response.ok) {
-      console.error("Failed to send push notification");
-    }
+    const amountDisplay = isCrypto
+      ? `${amount.toFixed(8)} ${asset}`
+      : `${currSym}${amount.toFixed(2)}`;
+
+    await sendEmail({
+      to: senderEmail,
+      subject: `📤 Transfer Sent: ${amountDisplay} to ${recipientName} - M4Capital`,
+      html: generateTransferEmailHtml(
+        recipientName,
+        senderName,
+        amount,
+        asset,
+        "sent",
+        memo,
+        currencySymbol
+      ),
+      text: `You sent ${amountDisplay} to ${recipientName}${
+        memo ? `. Memo: ${memo}` : ""
+      }. Thank you for using M4Capital!`,
+    });
+    console.log(`📧 Transfer sent email sent to ${senderEmail}`);
+  } catch (error) {
+    console.error("Error sending transfer sent email:", error);
+  }
+}
+
+// Helper function to send push notification using the library
+async function sendTransferPushNotification(
+  userId: string,
+  title: string,
+  message: string,
+  amount: number,
+  asset: string
+) {
+  try {
+    await sendPushNotificationLib(userId, title, message, {
+      type: "transfer",
+      amount,
+      asset,
+      url: "/dashboard",
+    });
+    console.log(`🔔 Push notification sent to user ${userId}`);
   } catch (error) {
     console.error("Error sending push notification:", error);
   }
@@ -306,9 +444,10 @@ export async function POST(request: NextRequest) {
       ]);
 
       // Send email notification to recipient with converted amount
-      if (recipient.email) {
-        sendTransferEmail(
+      if (recipient.email && recipient.emailNotifications !== false) {
+        sendTransferReceivedEmail(
           recipient.email,
+          recipient.name || "User",
           sender.name || sender.email || "Someone",
           convertedAmount, // Use converted amount
           recipientCurrency, // Use recipient's currency
@@ -317,13 +456,39 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      // Send email notification to sender
+      if (sender.email && sender.emailNotifications !== false) {
+        sendTransferSentEmail(
+          sender.email,
+          sender.name || "User",
+          recipient.name || destination,
+          amount,
+          userCurrency,
+          memo,
+          currSymbol
+        );
+      }
+
       // Send push notification to recipient with converted amount
-      sendPushNotification(
+      sendTransferPushNotification(
         recipient.id,
-        "Transfer Received!",
+        "💰 Transfer Received!",
         `You received ${recipientCurrSymbol}${convertedAmount.toFixed(
           2
-        )} from ${sender.name || sender.email}`
+        )} from ${sender.name || sender.email}`,
+        convertedAmount,
+        recipientCurrency
+      );
+
+      // Send push notification to sender
+      sendTransferPushNotification(
+        sender.id,
+        "📤 Transfer Sent",
+        `You sent ${currSymbol}${amount.toFixed(2)} to ${
+          recipient.name || destination
+        }`,
+        amount,
+        userCurrency
       );
 
       return NextResponse.json({
@@ -473,9 +638,10 @@ export async function POST(request: NextRequest) {
     ]);
 
     // Send email notification to recipient
-    if (recipient.email) {
-      sendTransferEmail(
+    if (recipient.email && recipient.emailNotifications !== false) {
+      sendTransferReceivedEmail(
         recipient.email,
+        recipient.name || "User",
         sender.name || sender.email || "Someone",
         amount,
         asset,
@@ -483,13 +649,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Send email notification to sender
+    if (sender.email && sender.emailNotifications !== false) {
+      sendTransferSentEmail(
+        sender.email,
+        sender.name || "User",
+        recipient.name || destination,
+        amount,
+        asset,
+        memo
+      );
+    }
+
     // Send push notification to recipient
-    sendPushNotification(
+    sendTransferPushNotification(
       recipient.id,
-      "Transfer Received!",
+      "💰 Transfer Received!",
       `You received ${amount.toFixed(8)} ${asset} from ${
         sender.name || sender.email
-      }`
+      }`,
+      amount,
+      asset
+    );
+
+    // Send push notification to sender
+    sendTransferPushNotification(
+      sender.id,
+      "📤 Transfer Sent",
+      `You sent ${amount.toFixed(8)} ${asset} to ${
+        recipient.name || destination
+      }`,
+      amount,
+      asset
     );
 
     return NextResponse.json({

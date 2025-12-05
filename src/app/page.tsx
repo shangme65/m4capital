@@ -333,100 +333,108 @@ function Hero() {
   }, [contentIndex, heroContent.length, titleAnimation]);
 
   return (
-    <div className="relative h-[calc(100vh-60px)] sm:h-screen w-full flex items-center justify-center overflow-hidden">
+    <div className="relative h-[calc(100vh-60px)] sm:h-screen w-full flex flex-col overflow-hidden">
       <BackgroundSlider images={images} />
       <div className="absolute inset-0 bg-black bg-opacity-50" />
 
-      <div className="relative z-10 text-center text-white px-4 sm:px-6 md:px-8 overflow-hidden max-w-7xl mx-auto">
-        <AnimatePresence mode="wait">
-          <motion.h1
-            key={`title-${contentIndex}`}
-            variants={animationVariants[titleAnimation]}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.7, ease: "circOut" }}
-            className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 xs:mb-6 sm:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 leading-tight"
-            style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.5)" }}
-          >
-            {title}
-          </motion.h1>
-        </AnimatePresence>
-        <div className="h-16 xs:h-20 sm:h-28 md:h-32 flex items-center justify-center mb-4 xs:mb-6 sm:mb-8">
+      {/* Main content - centered */}
+      <div className="relative z-10 flex-1 flex items-center justify-center text-center text-white px-4 sm:px-6 md:px-8 overflow-hidden max-w-7xl mx-auto w-full">
+        <div>
           <AnimatePresence mode="wait">
-            <motion.p
-              key={`desc-${contentIndex}`}
-              variants={animationVariants[descAnimation]}
+            <motion.h1
+              key={`title-${contentIndex}`}
+              variants={animationVariants[titleAnimation]}
               initial="initial"
               animate="animate"
               exit="exit"
               transition={{ duration: 0.7, ease: "circOut" }}
-              className="text-sm xs:text-base sm:text-xl md:text-2xl drop-shadow-md max-w-xs xs:max-w-md sm:max-w-2xl md:max-w-3xl mx-auto px-2"
+              className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 xs:mb-6 sm:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 leading-tight"
+              style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.5)" }}
             >
-              {description}
-            </motion.p>
+              {title}
+            </motion.h1>
           </AnimatePresence>
-        </div>
-        <div className="flex flex-col xs:flex-row gap-2 xs:gap-4 mt-6 sm:mt-12 items-center justify-center px-4">
-          {session ? (
-            // Logged in - Show "Go to Traderoom" button (defaults to real account)
-            <button
-              onClick={() => {
-                // Ensure real account is selected when logged in user clicks
-                if (typeof window !== "undefined") {
-                  localStorage.setItem("selectedAccountType", "real");
-                }
-                router.push("/traderoom");
-              }}
-              className="w-full xs:w-auto text-white font-bold text-sm xs:text-base transition-all duration-200 transform hover:scale-105"
-              style={{
-                background:
-                  "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
-                boxShadow:
-                  "0 12px 30px -6px rgba(249, 115, 22, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.25), inset 0 -4px 0 rgba(0, 0, 0, 0.3)",
-                border: "1px solid rgba(255, 255, 255, 0.15)",
-                padding: "12px 24px",
-                borderRadius: "12px",
-              }}
-            >
-              Go to Traderoom
-            </button>
-          ) : (
-            // Not logged in - Show "Get Started" and "Try Free Demo" buttons
-            <>
+          <div className="h-16 xs:h-20 sm:h-28 md:h-32 flex items-center justify-center mb-4 xs:mb-6 sm:mb-8">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={`desc-${contentIndex}`}
+                variants={animationVariants[descAnimation]}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.7, ease: "circOut" }}
+                className="text-sm xs:text-base sm:text-xl md:text-2xl drop-shadow-md max-w-xs xs:max-w-md sm:max-w-2xl md:max-w-3xl mx-auto px-2"
+              >
+                {description}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+          <div className="flex flex-col xs:flex-row gap-2 xs:gap-4 mt-6 sm:mt-12 items-center justify-center px-4">
+            {session ? (
+              // Logged in - Show "Go to Traderoom" button (defaults to real account)
               <button
-                onClick={openSignupModal}
-                className="text-white font-bold text-xs xs:text-sm transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
+                onClick={() => {
+                  // Ensure real account is selected when logged in user clicks
+                  if (typeof window !== "undefined") {
+                    localStorage.setItem("selectedAccountType", "real");
+                  }
+                  router.push("/traderoom");
+                }}
+                className="w-full xs:w-auto text-white font-bold text-sm xs:text-base transition-all duration-200 transform hover:scale-105"
                 style={{
                   background:
                     "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
                   boxShadow:
                     "0 12px 30px -6px rgba(249, 115, 22, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.25), inset 0 -4px 0 rgba(0, 0, 0, 0.3)",
                   border: "1px solid rgba(255, 255, 255, 0.15)",
-                  padding: "10px 20px",
-                  borderRadius: "10px",
+                  padding: "12px 24px",
+                  borderRadius: "12px",
                 }}
               >
-                Get Started
+                Go to Traderoom
               </button>
-              <button
-                onClick={handleTryDemo}
-                className="text-white font-bold text-xs xs:text-sm transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
-                  boxShadow:
-                    "0 12px 30px -6px rgba(0, 0, 0, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.15), inset 0 -4px 0 rgba(0, 0, 0, 0.4)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  padding: "10px 20px",
-                  borderRadius: "10px",
-                }}
-              >
-                Try Free Demo
-              </button>
-            </>
-          )}
+            ) : (
+              // Not logged in - Show "Get Started" and "Try Free Demo" buttons
+              <>
+                <button
+                  onClick={openSignupModal}
+                  className="text-white font-bold text-xs xs:text-sm transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
+                    boxShadow:
+                      "0 12px 30px -6px rgba(249, 115, 22, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.25), inset 0 -4px 0 rgba(0, 0, 0, 0.3)",
+                    border: "1px solid rgba(255, 255, 255, 0.15)",
+                    padding: "10px 20px",
+                    borderRadius: "10px",
+                  }}
+                >
+                  Get Started
+                </button>
+                <button
+                  onClick={handleTryDemo}
+                  className="text-white font-bold text-xs xs:text-sm transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
+                    boxShadow:
+                      "0 12px 30px -6px rgba(0, 0, 0, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.15), inset 0 -4px 0 rgba(0, 0, 0, 0.4)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    padding: "10px 20px",
+                    borderRadius: "10px",
+                  }}
+                >
+                  Try Free Demo
+                </button>
+              </>
+            )}
+          </div>
         </div>
+      </div>
+
+      {/* Crypto Price Ticker at bottom of hero */}
+      <div className="relative z-10 w-full pb-4">
+        <CryptoPriceTicker />
       </div>
     </div>
   );
@@ -744,7 +752,6 @@ export default function Home() {
     <CryptoMarketProvider>
       <main>
         <Hero />
-        <CryptoPriceTicker />
         <Features />
         <Testimonials />
         <HowItWorks />

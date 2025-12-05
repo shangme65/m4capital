@@ -46,6 +46,12 @@ export interface DetailedTransaction {
   currency?: string;
   fromAsset?: string;
   toAsset?: string;
+  fromAmount?: number;
+  toAmount?: number;
+  fromPriceUSD?: number;
+  toPriceUSD?: number;
+  fromValueUSD?: number;
+  toValueUSD?: number;
   rate?: number;
   confirmations?: number;
   maxConfirmations?: number;
@@ -373,13 +379,13 @@ export default function TransactionDetailsModal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
-            className="fixed top-0 left-0 right-0 bottom-0 z-[9998] overflow-hidden"
+            className="fixed top-0 left-0 right-0 bottom-0 z-[9998] flex flex-col"
             onClick={(e) => e.stopPropagation()}
             style={{ touchAction: "auto", margin: 0, padding: 0 }}
           >
             <div
-              className="bg-gray-900 w-full h-full overflow-y-auto"
-              style={{ minHeight: "100vh", height: "100%" }}
+              className="bg-gray-900 w-full flex-1 overflow-y-auto"
+              style={{ minHeight: 0 }}
             >
               {/* Mobile Header with Back Button */}
               <div className="flex items-center justify-between p-4 border-b border-gray-700 sticky top-0 bg-gray-900/95 backdrop-blur-sm z-20">
@@ -414,14 +420,36 @@ export default function TransactionDetailsModal({
                 <div className="relative z-[5]">
                   <div className="flex items-start gap-3 mb-4">
                     <div className="flex-shrink-0">
-                      <CryptoIcon
-                        symbol={transaction.asset}
-                        size="lg"
-                        showNetwork={
-                          transaction.asset === "USDT" ||
-                          transaction.asset === "USDC"
-                        }
-                      />
+                      {/* For swap/convert transactions, show overlapping asset icons */}
+                      {transaction.type === "convert" &&
+                      transaction.fromAsset &&
+                      transaction.toAsset ? (
+                        <div className="relative w-14 h-10">
+                          <div className="absolute left-0 top-0">
+                            <CryptoIcon
+                              symbol={transaction.fromAsset}
+                              size="md"
+                              showNetwork={false}
+                            />
+                          </div>
+                          <div className="absolute left-5 top-0">
+                            <CryptoIcon
+                              symbol={transaction.toAsset}
+                              size="md"
+                              showNetwork={false}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <CryptoIcon
+                          symbol={transaction.asset}
+                          size="lg"
+                          showNetwork={
+                            transaction.asset === "USDT" ||
+                            transaction.asset === "USDC"
+                          }
+                        />
+                      )}
                     </div>
                     <div className="flex-1">
                       <h2 className="text-xl font-bold text-white mb-2">
@@ -513,73 +541,217 @@ export default function TransactionDetailsModal({
               <div className="p-4 pt-0">
                 {/* Main Transaction Details */}
                 <div className="space-y-3 mb-4 -mt-4">
-                  {/* Amount Card */}
-                  <div
-                    className="rounded-xl p-4"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                      boxShadow:
-                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                      border: "1px solid rgba(59, 130, 246, 0.2)",
-                    }}
-                  >
-                    <label className="block text-blue-400 text-xs font-semibold mb-2 uppercase tracking-wider">
-                      Amount
-                    </label>
-                    <div className="text-white text-xl font-bold">
-                      {/* For fiat currencies, show 2 decimals; for crypto, show up to 8 */}
-                      {FIAT_CURRENCIES.has(
-                        transaction.asset?.toUpperCase() || ""
-                      )
-                        ? transaction.amount.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })
-                        : transaction.amount.toLocaleString("en-US", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 8,
-                          })}
-                      <span className="text-gray-400 text-base ml-2">
-                        {transaction.asset}
-                      </span>
-                    </div>
-                  </div>
+                  {/* For Convert/Swap transactions, show FROM and TO cards separately */}
+                  {transaction.type === "convert" &&
+                  transaction.fromAsset &&
+                  transaction.toAsset ? (
+                    <>
+                      {/* FROM Card */}
+                      <div
+                        className="rounded-xl p-3"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                          boxShadow:
+                            "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(239, 68, 68, 0.2)",
+                        }}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center">
+                            <svg
+                              className="w-3.5 h-3.5 text-red-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 10l7-7m0 0l7 7m-7-7v18"
+                              />
+                            </svg>
+                          </div>
+                          <label className="text-red-400 text-xs font-semibold uppercase tracking-wider">
+                            From
+                          </label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CryptoIcon
+                            symbol={transaction.fromAsset}
+                            size="sm"
+                          />
+                          <div>
+                            <div className="text-white text-lg font-bold">
+                              {(
+                                transaction.fromAmount ||
+                                transaction.amount ||
+                                0
+                              ).toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 8,
+                              })}
+                              <span className="text-gray-400 text-base ml-2">
+                                {transaction.fromAsset}
+                              </span>
+                            </div>
+                            <div className="text-gray-400 text-sm">
+                              ≈{" "}
+                              {formatAmount(
+                                transaction.fromValueUSD ||
+                                  transaction.value ||
+                                  0,
+                                2
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-                  {/* Value Card */}
-                  <div
-                    className="rounded-xl p-4"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                      boxShadow:
-                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                      border: "1px solid rgba(168, 85, 247, 0.2)",
-                    }}
-                  >
-                    <label className="block text-purple-400 text-xs font-semibold mb-2 uppercase tracking-wider">
-                      Value
-                    </label>
-                    <div className="text-white text-xl font-bold">
-                      {/* For fiat deposits, value is already in user's currency - don't convert */}
-                      {FIAT_CURRENCIES.has(
-                        transaction.asset?.toUpperCase() || ""
-                      )
-                        ? formatCurrencyUtil(
-                            transaction.value,
-                            transaction.asset?.toUpperCase() || "BRL",
-                            2
+                      {/* Arrow indicator */}
+                      <div className="flex justify-center -my-1">
+                        <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                          <svg
+                            className="w-4 h-4 text-cyan-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* TO Card */}
+                      <div
+                        className="rounded-xl p-3"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                          boxShadow:
+                            "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(34, 197, 94, 0.2)",
+                        }}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <svg
+                              className="w-3.5 h-3.5 text-green-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                              />
+                            </svg>
+                          </div>
+                          <label className="text-green-400 text-xs font-semibold uppercase tracking-wider">
+                            To
+                          </label>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CryptoIcon symbol={transaction.toAsset} size="sm" />
+                          <div>
+                            <div className="text-white text-lg font-bold">
+                              {(transaction.toAmount || 0).toLocaleString(
+                                "en-US",
+                                {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 8,
+                                }
+                              )}
+                              <span className="text-gray-400 text-base ml-2">
+                                {transaction.toAsset}
+                              </span>
+                            </div>
+                            <div className="text-gray-400 text-sm">
+                              ≈ {formatAmount(transaction.toValueUSD || 0, 2)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Amount Card (for non-convert transactions) */}
+                      <div
+                        className="rounded-xl p-4"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                          boxShadow:
+                            "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(59, 130, 246, 0.2)",
+                        }}
+                      >
+                        <label className="block text-blue-400 text-xs font-semibold mb-2 uppercase tracking-wider">
+                          Amount
+                        </label>
+                        <div className="text-white text-xl font-bold">
+                          {/* For fiat currencies, show 2 decimals; for crypto, show up to 8 */}
+                          {FIAT_CURRENCIES.has(
+                            transaction.asset?.toUpperCase() || ""
                           )
-                        : formatAmount(transaction.value, 2)}
-                      <span className="text-gray-400 text-base ml-2">
-                        {FIAT_CURRENCIES.has(
-                          transaction.asset?.toUpperCase() || ""
-                        )
-                          ? transaction.asset?.toUpperCase()
-                          : preferredCurrency}
-                      </span>
-                    </div>
-                  </div>
+                            ? transaction.amount.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })
+                            : transaction.amount.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 8,
+                              })}
+                          <span className="text-gray-400 text-base ml-2">
+                            {transaction.asset}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Value Card (for non-convert transactions) */}
+                      <div
+                        className="rounded-xl p-4"
+                        style={{
+                          background:
+                            "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                          boxShadow:
+                            "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                          border: "1px solid rgba(168, 85, 247, 0.2)",
+                        }}
+                      >
+                        <label className="block text-purple-400 text-xs font-semibold mb-2 uppercase tracking-wider">
+                          Value
+                        </label>
+                        <div className="text-white text-xl font-bold">
+                          {/* For fiat deposits, value is already in user's currency - don't convert */}
+                          {FIAT_CURRENCIES.has(
+                            transaction.asset?.toUpperCase() || ""
+                          )
+                            ? formatCurrencyUtil(
+                                transaction.value,
+                                transaction.asset?.toUpperCase() || "BRL",
+                                2
+                              )
+                            : formatAmount(transaction.value, 2)}
+                          <span className="text-gray-400 text-base ml-2">
+                            {FIAT_CURRENCIES.has(
+                              transaction.asset?.toUpperCase() || ""
+                            )
+                              ? transaction.asset?.toUpperCase()
+                              : preferredCurrency}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Additional Details Grid */}
@@ -964,49 +1136,51 @@ export default function TransactionDetailsModal({
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-2 pb-8">
+            {/* Action Buttons - Fixed at bottom */}
+            <div className="flex-shrink-0 bg-gray-900 border-t border-gray-700/50 p-3">
+              <div className="flex gap-2">
+                <button
+                  onClick={onClose}
+                  className="flex-1 py-2 px-3 rounded-lg font-medium text-xs transition-all active:scale-95 text-white"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                    boxShadow:
+                      "0 2px 8px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  Close
+                </button>
+                {transaction.hash && (
                   <button
-                    onClick={onClose}
-                    className="flex-1 py-4 px-6 rounded-xl font-semibold transition-all active:scale-95 text-white"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                      boxShadow:
-                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    }}
+                    onClick={() =>
+                      window.open(
+                        `https://blockchain.info/tx/${transaction.hash}`,
+                        "_blank"
+                      )
+                    }
+                    className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2 px-3 rounded-lg font-medium text-xs transition-all active:scale-95 shadow-sm hover:shadow-blue-500/40 flex items-center justify-center gap-1"
                   >
-                    Close
-                  </button>
-                  {transaction.hash && (
-                    <button
-                      onClick={() =>
-                        window.open(
-                          `https://blockchain.info/tx/${transaction.hash}`,
-                          "_blank"
-                        )
-                      }
-                      className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-4 px-6 rounded-xl font-semibold transition-all active:scale-95 shadow-lg hover:shadow-blue-500/50 flex items-center justify-center gap-2"
+                    <svg
+                      className="w-3.5 h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
                     >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                        />
-                      </svg>
-                      View on Explorer
-                    </button>
-                  )}
-                </div>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
+                    </svg>
+                    View on Explorer
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>

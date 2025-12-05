@@ -94,6 +94,7 @@ export default function ConvertModalNew({
     value: number;
     toAsset: string;
     toAmount: number;
+    toValue: number;
     timestamp?: Date;
   } | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -103,7 +104,8 @@ export default function ConvertModalNew({
 
   const { portfolio, refetch } = usePortfolio();
   const { formatAmount, preferredCurrency, convertAmount } = useCurrency();
-  const { addTransaction, addNotification } = useNotifications();
+  const { addTransaction, addNotification, refetchTransactions } =
+    useNotifications();
 
   const currencySymbol =
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
@@ -170,7 +172,8 @@ export default function ConvertModalNew({
     setStep(1);
     onClose();
     refetch();
-  }, [onClose, refetch]);
+    refetchTransactions();
+  }, [onClose, refetch, refetchTransactions]);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -300,6 +303,8 @@ export default function ConvertModalNew({
       const usdValue = getUsdValue();
       const rate = getConversionRate();
       const feeAmount = cryptoAmount * rate * (conversionFee / 100);
+      const fromPriceUSD = cryptoPrices[convertData.fromAsset]?.price || 0;
+      const toPriceUSD = cryptoPrices[convertData.toAsset]?.price || 0;
 
       const response = await fetch("/api/crypto/convert", {
         method: "POST",
@@ -309,6 +314,8 @@ export default function ConvertModalNew({
           toAsset: convertData.toAsset,
           amount: cryptoAmount,
           rate: rate,
+          fromPriceUSD,
+          toPriceUSD,
         }),
       });
 
@@ -356,6 +363,7 @@ export default function ConvertModalNew({
         value: usdValue,
         toAsset: convertData.toAsset,
         toAmount: receiveAmount,
+        toValue: receiveAmount * toPriceUSD,
         timestamp: new Date(),
       });
       setStep(4);
@@ -1302,9 +1310,14 @@ export default function ConvertModalNew({
                         </div>
                         <span className="text-gray-400 text-sm">Sold</span>
                       </div>
-                      <span className="text-white font-bold">
-                        -{successData.amount.toFixed(8)} {successData.asset}
-                      </span>
+                      <div className="text-right">
+                        <span className="text-white font-bold block">
+                          -{successData.amount.toFixed(8)} {successData.asset}
+                        </span>
+                        <span className="text-gray-400 text-xs">
+                          ≈ {formatAmount(successData.value, 2)}
+                        </span>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
@@ -1323,9 +1336,15 @@ export default function ConvertModalNew({
                         </div>
                         <span className="text-gray-400 text-sm">Received</span>
                       </div>
-                      <span className="text-cyan-400 font-bold">
-                        +{successData.toAmount.toFixed(8)} {successData.toAsset}
-                      </span>
+                      <div className="text-right">
+                        <span className="text-cyan-400 font-bold block">
+                          +{successData.toAmount.toFixed(8)}{" "}
+                          {successData.toAsset}
+                        </span>
+                        <span className="text-gray-400 text-xs">
+                          ≈ {formatAmount(successData.toValue, 2)}
+                        </span>
+                      </div>
                     </div>
                   </div>
 

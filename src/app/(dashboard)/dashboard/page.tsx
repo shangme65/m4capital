@@ -1121,63 +1121,15 @@ function DashboardContent() {
       <div className="grid grid-cols-1" data-tutorial="crypto-assets">
         <div className="bg-gray-800/50 rounded-2xl p-1.5 sm:p-3 border border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
           {/* Header with Toggle and Add Button */}
-          <div className="flex items-center justify-between gap-1.5 mb-4">
-            <div className="flex items-center gap-1.5 flex-1 min-w-0">
-              {/* Crypto Tab */}
-              <button
-                onClick={() => setActiveView("crypto")}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap text-xs ${
-                  activeView === "crypto"
-                    ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
-                    : "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
-                }`}
-              >
-                <svg
-                  className="w-3.5 h-3.5 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Crypto
-              </button>
-
-              {/* History Tab */}
-              <button
-                onClick={() => setActiveView("history")}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg font-semibold transition-all whitespace-nowrap text-xs ${
-                  activeView === "history"
-                    ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
-                    : "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
-                }`}
-              >
-                <svg
-                  className="w-3.5 h-3.5 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                History
-              </button>
-            </div>
-
-            {/* Add Crypto Button */}
+          <div className="flex items-center gap-1.5 mb-4">
+            {/* Crypto Tab */}
             <button
-              onClick={handleAddCrypto}
-              className="flex items-center gap-1 px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors text-xs whitespace-nowrap flex-shrink-0"
+              onClick={() => setActiveView("crypto")}
+              className={`flex-1 flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg font-semibold transition-all text-xs ${
+                activeView === "crypto"
+                  ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
+                  : "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
+              }`}
             >
               <svg
                 className="w-3.5 h-3.5 flex-shrink-0"
@@ -1189,6 +1141,57 @@ function DashboardContent() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              Crypto
+            </button>
+
+            {/* History Tab */}
+            <button
+              onClick={() => setActiveView("history")}
+              className={`flex-1 flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg font-semibold transition-all text-xs ${
+                activeView === "history"
+                  ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
+                  : "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
+              }`}
+            >
+              <svg
+                className="w-3.5 h-3.5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              History
+            </button>
+
+            {/* Add Crypto Button - 3D Style */}
+            <button
+              onClick={handleAddCrypto}
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-white rounded-lg font-semibold transition-all text-xs active:scale-95"
+              style={{
+                background: "linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%)",
+                boxShadow:
+                  "0 3px 0 #1e40af, 0 4px 8px rgba(59, 130, 246, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+              }}
+            >
+              <svg
+                className="w-3.5 h-3.5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2.5}
                   d="M12 4v16m8-8H4"
                 />
               </svg>
@@ -1398,6 +1401,41 @@ function DashboardContent() {
 
                   // Get transaction type icon and color
                   const getTransactionIcon = () => {
+                    // For swap/convert transactions, show both asset icons vertically
+                    if (
+                      activity.type === "convert" &&
+                      activity.fromAsset &&
+                      activity.toAsset
+                    ) {
+                      return (
+                        <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
+                          <CryptoIcon
+                            symbol={activity.fromAsset}
+                            size="sm"
+                            showNetwork={false}
+                          />
+                          <svg
+                            className="w-3 h-3 text-cyan-400"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                            />
+                          </svg>
+                          <CryptoIcon
+                            symbol={activity.toAsset}
+                            size="sm"
+                            showNetwork={false}
+                          />
+                        </div>
+                      );
+                    }
+
                     const assetSymbol =
                       activity.asset?.split(" ")[0]?.toUpperCase() || "";
                     const flag = CURRENCY_FLAGS[assetSymbol];

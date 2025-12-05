@@ -129,18 +129,72 @@ export async function GET(req: NextRequest) {
     }));
 
     // Transform trades into transaction format
-    const tradeTransactions = trades.map((t) => ({
-      id: t.id,
-      type: t.side === "BUY" ? ("buy" as const) : ("sell" as const),
-      asset: t.symbol,
-      amount: Number(t.quantity),
-      value: Number(t.entryPrice) * Number(t.quantity),
-      timestamp: t.createdAt.toISOString(),
-      status: "completed" as const,
-      fee: t.commission ? Number(t.commission) : undefined,
-      description: `${t.side} ${t.quantity} ${t.symbol} at $${t.entryPrice}`,
-      date: t.createdAt,
-    }));
+    const tradeTransactions = trades.map((t) => {
+      // Check if this is a swap transaction from metadata
+      const metadata = t.metadata as {
+        type?: string;
+        fromAsset?: string;
+        toAsset?: string;
+        fromAmount?: number;
+        toAmount?: number;
+        fromPriceUSD?: number;
+        toPriceUSD?: number;
+        fromValueUSD?: number;
+        toValueUSD?: number;
+        rate?: number;
+      } | null;
+      const isSwap = metadata?.type === "SWAP";
+
+      if (isSwap) {
+        // Swap transaction - use stored USD value, or calculate from amount * price
+        const fromValueUSD =
+          metadata?.fromValueUSD ||
+          (metadata?.fromAmount || 0) * (metadata?.fromPriceUSD || 0);
+        const toValueUSD =
+          metadata?.toValueUSD ||
+          (metadata?.toAmount || 0) * (metadata?.toPriceUSD || 0);
+
+        return {
+          id: t.id,
+          type: "convert" as const,
+          asset: t.symbol, // e.g., "BTC/ETH"
+          amount: metadata?.fromAmount || Number(t.quantity),
+          value: fromValueUSD, // USD value of from amount (for display in user's currency)
+          timestamp: t.createdAt.toISOString(),
+          status: "completed" as const,
+          fee: t.commission ? Number(t.commission) : undefined,
+          description: `Swapped ${
+            metadata?.fromAmount?.toFixed(8) || t.quantity
+          } ${metadata?.fromAsset || ""} to ${
+            metadata?.toAmount?.toFixed(8) || ""
+          } ${metadata?.toAsset || ""}`,
+          date: t.createdAt,
+          fromAsset: metadata?.fromAsset,
+          toAsset: metadata?.toAsset,
+          fromAmount: metadata?.fromAmount,
+          toAmount: metadata?.toAmount,
+          fromPriceUSD: metadata?.fromPriceUSD,
+          toPriceUSD: metadata?.toPriceUSD,
+          fromValueUSD,
+          toValueUSD,
+          rate: metadata?.rate,
+        };
+      }
+
+      // Regular buy/sell transaction
+      return {
+        id: t.id,
+        type: t.side === "BUY" ? ("buy" as const) : ("sell" as const),
+        asset: t.symbol,
+        amount: Number(t.quantity),
+        value: Number(t.entryPrice) * Number(t.quantity),
+        timestamp: t.createdAt.toISOString(),
+        status: "completed" as const,
+        fee: t.commission ? Number(t.commission) : undefined,
+        description: `${t.side} ${t.quantity} ${t.symbol} at $${t.entryPrice}`,
+        date: t.createdAt,
+      };
+    });
 
     // Transform sent transfers into transaction format
     // For sent transfers, always show in sender's currency (stored in t.currency and t.amount)

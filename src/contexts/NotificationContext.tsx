@@ -44,6 +44,12 @@ export interface Transaction {
   currency?: string;
   fromAsset?: string;
   toAsset?: string;
+  fromAmount?: number;
+  toAmount?: number;
+  fromPriceUSD?: number;
+  toPriceUSD?: number;
+  fromValueUSD?: number;
+  toValueUSD?: number;
   rate?: number;
   confirmations?: number;
   maxConfirmations?: number;

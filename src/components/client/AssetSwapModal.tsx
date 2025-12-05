@@ -52,12 +52,14 @@ export default function AssetSwapModal({
     fromAmount: number;
     toAmount: number;
     value: number;
+    toValue: number;
     timestamp?: Date;
   } | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const { addTransaction, addNotification } = useNotifications();
-  const { preferredCurrency, convertAmount } = useCurrency();
+  const { addTransaction, addNotification, refetchTransactions } =
+    useNotifications();
+  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
   const [conversionFee] = useState(0.5); // 0.5% fee
   const [userCountry, setUserCountry] = useState<string>("US");
 
@@ -260,6 +262,8 @@ export default function AssetSwapModal({
       const value = fromAmt * asset.price;
       const rate = getConversionRate();
       const feeAmount = fromAmt * rate * (conversionFee / 100);
+      const fromPriceUSD = asset.price;
+      const toPriceUSD = toAssetData?.price || 0;
 
       // Call API to process swap
       const portfolioResponse = await fetch("/api/crypto/convert", {
@@ -270,6 +274,8 @@ export default function AssetSwapModal({
           toAsset: toAsset,
           amount: fromAmt,
           rate: rate,
+          fromPriceUSD,
+          toPriceUSD,
         }),
       });
 
@@ -317,6 +323,7 @@ export default function AssetSwapModal({
         fromAmount: fromAmt,
         toAmount: toAmt,
         value: value,
+        toValue: toAmt * (toAssetData?.price || 0),
         timestamp: new Date(),
       });
       setStep(4);
@@ -340,6 +347,7 @@ export default function AssetSwapModal({
     setErrors({});
     setStep(1);
     onClose();
+    refetchTransactions();
   };
 
   const setMaxAmount = () => {
@@ -1068,19 +1076,25 @@ export default function AssetSwapModal({
                       border: "1px solid rgba(6, 182, 212, 0.2)",
                     }}
                   >
-                    <div className="flex items-center justify-center gap-3 mb-3">
+                    <div className="flex items-center justify-center gap-3 mb-1">
                       <CryptoIcon symbol={successData.fromAsset} size="md" />
                       <span className="text-white text-xl font-medium">
                         {successData.fromAmount.toFixed(8)}{" "}
                         {successData.fromAsset}
                       </span>
                     </div>
+                    <div className="text-gray-400 text-sm mb-3">
+                      ≈ {formatAmount(successData.value, 2)}
+                    </div>
                     <div className="text-cyan-400 text-2xl my-2">↓</div>
-                    <div className="flex items-center justify-center gap-3">
+                    <div className="flex items-center justify-center gap-3 mb-1">
                       <CryptoIcon symbol={successData.toAsset} size="md" />
                       <span className="text-cyan-400 text-xl font-bold">
                         {successData.toAmount.toFixed(8)} {successData.toAsset}
                       </span>
+                    </div>
+                    <div className="text-gray-400 text-sm">
+                      ≈ {formatAmount(successData.toValue, 2)}
                     </div>
                   </div>
 

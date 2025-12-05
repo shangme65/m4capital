@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
+import { sendWebPushToUser } from "@/lib/push-notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -348,21 +349,42 @@ export async function POST(request: NextRequest) {
 
       // Store the pre-converted display amount and user's currency as asset
       // This ensures notifications display correctly without re-conversion
+      const notificationId = `notif_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`;
+      const notificationTitle = `You've sold ${assetName}`;
+      const notificationMessage = `Successfully sold ${amount.toFixed(
+        8
+      )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`;
+
       await prisma.notification.create({
         data: {
-          id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: notificationId,
           userId: user.id,
           type: "TRANSACTION" as any,
-          title: `You've sold ${assetName}`,
-          message: `Successfully sold ${amount.toFixed(
-            8
-          )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`,
+          title: notificationTitle,
+          message: notificationMessage,
           amount: -(Math.round(displayAmount * 100) / 100), // Store pre-converted amount (negative for sell)
           asset: userCurrency, // Store user's currency, not crypto symbol
           read: false,
         },
       });
-      console.log(`🔔 Push notification created for user ${user.id}`);
+
+      // Send web push notification to user's devices
+      await sendWebPushToUser(user.id, {
+        title: `💵 ${notificationTitle}`,
+        body: notificationMessage,
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-96.png",
+        tag: `m4capital-sell-${Date.now()}`,
+        data: {
+          url: "/dashboard",
+          notificationId,
+          type: "sell",
+        },
+        vibrate: [200, 100, 200],
+      });
+      console.log(`🔔 Push notification sent for user ${user.id}`);
     } catch (notifError) {
       console.error("Failed to create push notification:", notifError);
     }
