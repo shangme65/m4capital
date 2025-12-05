@@ -798,12 +798,39 @@ export default function TransferModalNew({
                           placeholder="0.00"
                         />
                       </div>
+                      {/* Preset amounts */}
+                      <div className="flex gap-2 mt-2">
+                        {[50, 100, 250, 500].map((amount) => (
+                          <button
+                            key={amount}
+                            onClick={() =>
+                              setTransferData((prev) => ({
+                                ...prev,
+                                amount: amount.toString(),
+                              }))
+                            }
+                            className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-300 hover:text-white transition-all"
+                            style={{
+                              background:
+                                "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                              boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.4)",
+                              border: "1px solid rgba(255, 255, 255, 0.06)",
+                            }}
+                          >
+                            {currencySymbol}
+                            {amount}
+                          </button>
+                        ))}
+                      </div>
                       <button
                         onClick={() => {
                           // For FIAT, use balance directly (it's already in user's currency)
                           // For crypto, convert to preferred currency via USD
                           if (transferData.asset === "FIAT") {
-                            const maxAmount = Math.max(0, currentBalance - 0.01); // Small fee buffer
+                            const maxAmount = Math.max(
+                              0,
+                              currentBalance - 0.01
+                            ); // Small fee buffer
                             setTransferData((prev) => ({
                               ...prev,
                               amount: maxAmount.toFixed(2),

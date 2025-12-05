@@ -607,6 +607,30 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         style={inputStyle}
                         placeholder={`Enter ${preferredCurrency} amount`}
                       />
+                      {/* Preset amounts */}
+                      <div className="flex gap-2 mt-2">
+                        {[50, 100, 250, 500].map((amount) => (
+                          <button
+                            key={amount}
+                            onClick={() =>
+                              setSellData((prev) => ({
+                                ...prev,
+                                amount: amount.toString(),
+                              }))
+                            }
+                            className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-300 hover:text-white transition-all"
+                            style={{
+                              background:
+                                "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                              boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.4)",
+                              border: "1px solid rgba(255, 255, 255, 0.06)",
+                            }}
+                          >
+                            {currencySymbol}
+                            {amount}
+                          </button>
+                        ))}
+                      </div>
                       <button
                         onClick={() => {
                           // Calculate max value in preferred currency

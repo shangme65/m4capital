@@ -7,6 +7,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
+import { CURRENCIES } from "@/lib/currencies";
 
 interface ConvertModalNewProps {
   isOpen: boolean;
@@ -98,10 +99,14 @@ export default function ConvertModalNew({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [conversionFee] = useState(0.5); // 0.5% fee
+  const [inputMode, setInputMode] = useState<"crypto" | "fiat">("crypto");
 
   const { portfolio, refetch } = usePortfolio();
-  const { formatAmount } = useCurrency();
+  const { formatAmount, preferredCurrency, convertAmount } = useCurrency();
   const { addTransaction, addNotification } = useNotifications();
+
+  const currencySymbol =
+    CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
 
   // Fetch real-time crypto prices
   const cryptoSymbols = [
@@ -212,21 +217,36 @@ export default function ConvertModalNew({
     return fromPrice / toPrice;
   };
 
-  // Calculate receive amount
-  const getReceiveAmount = () => {
+  // Get crypto amount from input (handles fiat mode conversion)
+  const getCryptoAmountFromInput = () => {
     if (!convertData.amount) return 0;
     const inputAmount = parseFloat(convertData.amount);
+    if (inputMode === "fiat") {
+      // Convert fiat to crypto: fiat amount / price
+      const fromPrice = cryptoPrices[convertData.fromAsset]?.price || 0;
+      if (fromPrice === 0) return 0;
+      // First convert from preferred currency to USD
+      const usdAmount = convertAmount(inputAmount, true);
+      return usdAmount / fromPrice;
+    }
+    return inputAmount;
+  };
+
+  // Calculate receive amount
+  const getReceiveAmount = () => {
+    const cryptoAmount = getCryptoAmountFromInput();
+    if (cryptoAmount <= 0) return 0;
     const rate = getConversionRate();
     const feePercent = conversionFee / 100;
-    return inputAmount * rate * (1 - feePercent);
+    return cryptoAmount * rate * (1 - feePercent);
   };
 
   // Get USD value of the from amount
   const getUsdValue = () => {
-    if (!convertData.amount) return 0;
-    const inputAmount = parseFloat(convertData.amount);
+    const cryptoAmount = getCryptoAmountFromInput();
+    if (cryptoAmount <= 0) return 0;
     const fromPrice = cryptoPrices[convertData.fromAsset]?.price || 0;
-    return inputAmount * fromPrice;
+    return cryptoAmount * fromPrice;
   };
 
   // Swap from and to assets
@@ -248,12 +268,12 @@ export default function ConvertModalNew({
         newErrors.general = "Please select different assets to swap";
       }
     } else if (step === 2) {
-      const amount = parseFloat(convertData.amount);
+      const cryptoAmount = getCryptoAmountFromInput();
       const available = availableBalances[convertData.fromAsset] || 0;
 
-      if (!convertData.amount || amount <= 0) {
+      if (!convertData.amount || cryptoAmount <= 0) {
         newErrors.amount = "Please enter a valid amount";
-      } else if (amount > available) {
+      } else if (cryptoAmount > available) {
         newErrors.amount = `Insufficient ${convertData.fromAsset} balance`;
       }
     }
@@ -275,7 +295,7 @@ export default function ConvertModalNew({
 
     setIsProcessing(true);
     try {
-      const cryptoAmount = parseFloat(convertData.amount);
+      const cryptoAmount = getCryptoAmountFromInput();
       const receiveAmount = getReceiveAmount();
       const usdValue = getUsdValue();
       const rate = getConversionRate();
@@ -352,10 +372,21 @@ export default function ConvertModalNew({
 
   const setMaxAmount = () => {
     const maxAvailable = availableBalances[convertData.fromAsset] || 0;
-    setConvertData((prev) => ({
-      ...prev,
-      amount: maxAvailable.toFixed(8),
-    }));
+    if (inputMode === "fiat") {
+      // Convert crypto to fiat for display
+      const fromPrice = cryptoPrices[convertData.fromAsset]?.price || 0;
+      const usdValue = maxAvailable * fromPrice;
+      const fiatValue = convertAmount(usdValue);
+      setConvertData((prev) => ({
+        ...prev,
+        amount: fiatValue.toFixed(2),
+      }));
+    } else {
+      setConvertData((prev) => ({
+        ...prev,
+        amount: maxAvailable.toFixed(8),
+      }));
+    }
   };
 
   if (!isOpen) return null;
@@ -552,7 +583,7 @@ export default function ConvertModalNew({
                       </div>
                     ) : (
                       <div
-                        className="rounded-2xl p-3 space-y-2 max-h-[200px] overflow-y-auto"
+                        className="rounded-xl p-2 space-y-1 max-h-[180px] overflow-y-auto"
                         style={dropdown3DStyle}
                       >
                         {userOwnedCrypto.map((symbol) => {
@@ -570,45 +601,42 @@ export default function ConvertModalNew({
                                   fromAsset: symbol,
                                 }))
                               }
-                              className="w-full text-left transition-all duration-300 rounded-xl p-3 hover:scale-[1.01]"
+                              className="w-full text-left transition-all duration-200 rounded-lg p-2 hover:scale-[1.01]"
                               style={cardItem3DStyle(isSelected)}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                   <div
-                                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                                    className="w-10 h-10 rounded-lg flex items-center justify-center"
                                     style={{
                                       background:
                                         cryptoGradients[symbol] ||
                                         "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
                                       boxShadow:
-                                        "0 6px 15px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.25), inset 0 -2px 0 rgba(0,0,0,0.3)",
+                                        "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
                                     }}
                                   >
                                     <CryptoIcon
                                       symbol={symbol}
-                                      className="w-7 h-7 text-white"
+                                      className="w-5 h-5 text-white"
                                     />
                                   </div>
                                   <div>
-                                    <div className="text-base font-bold text-white">
+                                    <div className="text-sm font-bold text-white">
                                       {symbol}
                                     </div>
-                                    <div className="text-xs text-gray-400">
-                                      Balance: {balance.toFixed(8)}
+                                    <div className="text-[10px] text-gray-400">
+                                      {balance.toFixed(8)}
                                     </div>
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <div className="text-sm font-semibold text-white">
+                                <div className="flex items-center gap-2">
+                                  <div className="text-xs font-semibold text-white">
                                     {formatAmount(value, 2)}
-                                  </div>
-                                  <div className="text-xs text-gray-400">
-                                    {formatAmount(price, 2)}/unit
                                   </div>
                                   {isSelected && (
                                     <svg
-                                      className="w-5 h-5 text-cyan-400 ml-auto mt-1"
+                                      className="w-4 h-4 text-cyan-400"
                                       fill="currentColor"
                                       viewBox="0 0 20 20"
                                     >
@@ -662,7 +690,7 @@ export default function ConvertModalNew({
                       To
                     </label>
                     <div
-                      className="rounded-2xl p-3 space-y-2 max-h-[200px] overflow-y-auto"
+                      className="rounded-xl p-2 space-y-1 max-h-[180px] overflow-y-auto"
                       style={dropdown3DStyle}
                     >
                       {cryptoSymbols
@@ -680,45 +708,42 @@ export default function ConvertModalNew({
                                   toAsset: symbol,
                                 }))
                               }
-                              className="w-full text-left transition-all duration-300 rounded-xl p-3 hover:scale-[1.01]"
+                              className="w-full text-left transition-all duration-200 rounded-lg p-2 hover:scale-[1.01]"
                               style={cardItem3DStyle(isSelected)}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                   <div
-                                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                                    className="w-10 h-10 rounded-lg flex items-center justify-center"
                                     style={{
                                       background:
                                         cryptoGradients[symbol] ||
                                         "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
                                       boxShadow:
-                                        "0 6px 15px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.25), inset 0 -2px 0 rgba(0,0,0,0.3)",
+                                        "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
                                     }}
                                   >
                                     <CryptoIcon
                                       symbol={symbol}
-                                      className="w-7 h-7 text-white"
+                                      className="w-5 h-5 text-white"
                                     />
                                   </div>
                                   <div>
-                                    <div className="text-base font-bold text-white">
+                                    <div className="text-sm font-bold text-white">
                                       {symbol}
                                     </div>
-                                    <div className="text-xs text-cyan-400 font-medium">
+                                    <div className="text-[10px] text-cyan-400 font-medium">
                                       You will receive
                                     </div>
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <div className="text-sm font-semibold text-white">
+                                <div className="flex items-center gap-2">
+                                  <div className="text-xs font-semibold text-white">
                                     {formatAmount(price, 2)}
-                                  </div>
-                                  <div className="text-xs text-gray-400">
-                                    per unit
                                   </div>
                                   {isSelected && (
                                     <svg
-                                      className="w-5 h-5 text-cyan-400 ml-auto mt-1"
+                                      className="w-4 h-4 text-cyan-400"
                                       fill="currentColor"
                                       viewBox="0 0 20 20"
                                     >
@@ -880,19 +905,54 @@ export default function ConvertModalNew({
                       <span className="text-gray-400 text-xs font-medium">
                         Available {convertData.fromAsset}:
                       </span>
-                      <span className="text-lg font-bold text-white">
-                        {(
-                          availableBalances[convertData.fromAsset] || 0
-                        ).toFixed(8)}
-                      </span>
+                      <div className="text-right">
+                        <span className="text-lg font-bold text-white">
+                          {(
+                            availableBalances[convertData.fromAsset] || 0
+                          ).toFixed(8)}
+                        </span>
+                        <div className="text-xs text-gray-400">
+                          ≈{" "}
+                          {formatAmount(
+                            (availableBalances[convertData.fromAsset] || 0) *
+                              (cryptoPrices[convertData.fromAsset]?.price || 0),
+                            2
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
                   {/* Amount Input */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">
-                      Amount to Swap
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="text-sm font-semibold text-gray-300">
+                        Amount to Swap
+                      </label>
+                      {/* Fiat/Crypto Toggle */}
+                      <div className="flex items-center gap-1 p-0.5 rounded-lg bg-slate-800/50">
+                        <button
+                          onClick={() => setInputMode("crypto")}
+                          className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                            inputMode === "crypto"
+                              ? "bg-cyan-500 text-white"
+                              : "text-gray-400 hover:text-white"
+                          }`}
+                        >
+                          {convertData.fromAsset}
+                        </button>
+                        <button
+                          onClick={() => setInputMode("fiat")}
+                          className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                            inputMode === "fiat"
+                              ? "bg-cyan-500 text-white"
+                              : "text-gray-400 hover:text-white"
+                          }`}
+                        >
+                          {preferredCurrency}
+                        </button>
+                      </div>
+                    </div>
                     <div className="relative">
                       <input
                         type="number"
@@ -904,16 +964,53 @@ export default function ConvertModalNew({
                             amount: e.target.value,
                           }))
                         }
-                        placeholder="0.00000000"
-                        className="w-full rounded-xl p-4 pr-20 text-white text-lg font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                        placeholder={
+                          inputMode === "crypto" ? "0.00000000" : "0.00"
+                        }
+                        className="w-full rounded-xl p-4 pr-24 text-white text-lg font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
                         style={inputStyle}
                       />
-                      <button
-                        onClick={setMaxAmount}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 rounded-lg text-xs font-bold text-cyan-400 bg-cyan-500/20 hover:bg-cyan-500/30 transition-colors"
-                      >
-                        MAX
-                      </button>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        <span className="text-xs text-gray-400">
+                          {inputMode === "crypto"
+                            ? convertData.fromAsset
+                            : currencySymbol}
+                        </span>
+                        <button
+                          onClick={setMaxAmount}
+                          className="px-2 py-1 rounded-lg text-xs font-bold text-cyan-400 bg-cyan-500/20 hover:bg-cyan-500/30 transition-colors"
+                        >
+                          MAX
+                        </button>
+                      </div>
+                    </div>
+                    {/* Preset amounts */}
+                    <div className="flex gap-2 mt-2">
+                      {(inputMode === "fiat"
+                        ? [50, 100, 250, 500]
+                        : [0.001, 0.005, 0.01, 0.05]
+                      ).map((amount) => (
+                        <button
+                          key={amount}
+                          onClick={() =>
+                            setConvertData((prev) => ({
+                              ...prev,
+                              amount: amount.toString(),
+                            }))
+                          }
+                          className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-300 hover:text-white transition-all"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                            boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.4)",
+                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                        >
+                          {inputMode === "fiat"
+                            ? `${currencySymbol}${amount}`
+                            : amount}
+                        </button>
+                      ))}
                     </div>
                     {errors.amount && (
                       <p className="text-red-400 text-xs mt-2">
@@ -1089,7 +1186,9 @@ export default function ConvertModalNew({
                         <span className="text-white">{conversionFee}%</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">USD Value</span>
+                        <span className="text-gray-400">
+                          {preferredCurrency} Value
+                        </span>
                         <span className="text-white">
                           {formatAmount(getUsdValue(), 2)}
                         </span>
