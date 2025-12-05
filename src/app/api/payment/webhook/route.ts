@@ -78,6 +78,24 @@ export async function POST(request: NextRequest) {
         if (deposit.status !== "PENDING" && deposit.User) {
           const userCurr = deposit.User.preferredCurrency || "USD";
           const currSym = getCurrencySymbol(userCurr);
+          
+          // Convert price_amount (likely in USD) to user's currency
+          let displayAmount = price_amount;
+          if (userCurr !== "USD") {
+            try {
+              const ratesResponse = await fetch(
+                "https://api.frankfurter.app/latest?from=USD"
+              );
+              if (ratesResponse.ok) {
+                const ratesData = await ratesResponse.json();
+                const rate = ratesData.rates[userCurr] || 1;
+                displayAmount = price_amount * rate;
+              }
+            } catch (err) {
+              console.error("Error fetching exchange rate:", err);
+            }
+          }
+          
           await prisma.notification.create({
             data: {
               id: generateId(),
@@ -86,9 +104,9 @@ export async function POST(request: NextRequest) {
               title: `Incoming ${deposit.cryptoCurrency || "BTC"} Deposit`,
               message: `Your deposit of ${actually_paid || pay_amount} ${
                 deposit.cryptoCurrency || "BTC"
-              } (${currSym}${price_amount}) has been detected and is awaiting confirmations.`,
-              amount: price_amount,
-              asset: deposit.cryptoCurrency || "BTC",
+              } (${currSym}${displayAmount.toFixed(2)}) has been detected and is awaiting confirmations.`,
+              amount: Math.round(displayAmount * 100) / 100, // Store pre-converted fiat amount
+              asset: userCurr, // Use user's currency for proper display
               metadata: {
                 depositId: deposit.id,
                 paymentId: payment_id,

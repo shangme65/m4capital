@@ -337,14 +337,17 @@ export default function ConvertModalNew({
 
       addTransaction(transaction);
 
+      // Convert USD value to user's preferred currency for notification display
+      const displayAmount = convertAmount(usdValue);
+
       addNotification({
         type: "transaction",
         title: "Swap Completed",
         message: `Successfully swapped ${cryptoAmount.toFixed(8)} ${
           convertData.fromAsset
         } to ${receiveAmount.toFixed(8)} ${convertData.toAsset}`,
-        amount: usdValue,
-        asset: convertData.fromAsset,
+        amount: Math.round(displayAmount * 100) / 100,
+        asset: preferredCurrency,
       });
 
       setSuccessData({

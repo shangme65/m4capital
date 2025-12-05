@@ -65,6 +65,40 @@ export async function POST(req: NextRequest) {
       // Send progress notification ONLY at 1/6
       if (targetConfirmation === 1 && deposit.Portfolio?.User) {
         const userCurrency = deposit.Portfolio.User.preferredCurrency || "USD";
+        const cryptoAmount = Number(deposit.amount);
+        let displayAmount = cryptoAmount;
+        
+        // For crypto deposits, convert to fiat value for notification display
+        if (metadata.depositType === "crypto" && metadata.cryptoAsset) {
+          try {
+            // Get crypto price in USD from Binance
+            const symbol = metadata.cryptoAsset.toUpperCase();
+            const priceResponse = await fetch(
+              `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`
+            );
+            if (priceResponse.ok) {
+              const priceData = await priceResponse.json();
+              const usdPrice = parseFloat(priceData.price);
+              const usdValue = cryptoAmount * usdPrice;
+              
+              // Convert USD to user's preferred currency
+              displayAmount = usdValue;
+              if (userCurrency !== "USD") {
+                const ratesResponse = await fetch(
+                  "https://api.frankfurter.app/latest?from=USD"
+                );
+                if (ratesResponse.ok) {
+                  const ratesData = await ratesResponse.json();
+                  const rate = ratesData.rates[userCurrency] || 1;
+                  displayAmount = usdValue * rate;
+                }
+              }
+            }
+          } catch (err) {
+            console.error("Error fetching crypto price for notification:", err);
+          }
+        }
+        
         await prisma.notification.create({
           data: {
             id: generateId(),
@@ -72,11 +106,8 @@ export async function POST(req: NextRequest) {
             type: "DEPOSIT",
             title: "Deposit Confirmation Progress",
             message: `Your deposit confirmation is in progress: 1/6 confirmations received.`,
-            amount: Number(deposit.amount),
-            asset:
-              metadata.depositType === "crypto"
-                ? metadata.cryptoAsset
-                : userCurrency,
+            amount: Math.round(displayAmount * 100) / 100,
+            asset: userCurrency, // Always use user's currency for proper display
             metadata: {
               depositId,
               confirmations: 1,
@@ -187,6 +218,40 @@ async function completeDeposit(deposit: any, metadata: any) {
     // Send completion notification
     if (user) {
       const userCurrency = user.preferredCurrency || "USD";
+      let displayAmount = amount;
+      const currencySymbol = getCurrencySymbol(userCurrency);
+      
+      // For crypto deposits, convert to fiat value for notification display
+      if (depositType === "crypto" && cryptoAsset) {
+        try {
+          // Get crypto price in USD from Binance
+          const symbol = cryptoAsset.toUpperCase();
+          const priceResponse = await fetch(
+            `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}USDT`
+          );
+          if (priceResponse.ok) {
+            const priceData = await priceResponse.json();
+            const usdPrice = parseFloat(priceData.price);
+            const usdValue = amount * usdPrice;
+            
+            // Convert USD to user's preferred currency
+            displayAmount = usdValue;
+            if (userCurrency !== "USD") {
+              const ratesResponse = await fetch(
+                "https://api.frankfurter.app/latest?from=USD"
+              );
+              if (ratesResponse.ok) {
+                const ratesData = await ratesResponse.json();
+                const rate = ratesData.rates[userCurrency] || 1;
+                displayAmount = usdValue * rate;
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching crypto price for notification:", err);
+        }
+      }
+      
       await prisma.notification.create({
         data: {
           id: generateId(),
@@ -198,10 +263,10 @@ async function completeDeposit(deposit: any, metadata: any) {
           message: `Your deposit of ${
             depositType === "crypto"
               ? `${amount} ${cryptoAsset}`
-              : `${getCurrencySymbol(userCurrency)}${amount}`
+              : `${currencySymbol}${amount}`
           } has been confirmed and credited to your account.`,
-          amount: amount,
-          asset: depositType === "crypto" ? cryptoAsset : userCurrency,
+          amount: Math.round(displayAmount * 100) / 100, // Store pre-converted fiat amount
+          asset: userCurrency, // Always use user's currency for proper display
           metadata: {
             depositId: deposit.id,
             confirmations: 6,
