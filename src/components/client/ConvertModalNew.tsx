@@ -409,7 +409,7 @@ export default function ConvertModalNew({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] overflow-hidden"
+        className="fixed inset-0 z-[10000] overflow-hidden"
         style={{
           background:
             "linear-gradient(180deg, #0a0f1a 0%, #0d1929 30%, #0f2235 50%, #0d1929 70%, #0a0f1a 100%)",

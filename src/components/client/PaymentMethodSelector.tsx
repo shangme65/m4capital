@@ -129,7 +129,7 @@ export default function PaymentMethodSelector({
 
   const paymentMethods = [
     {
-      id: "balance",
+      id: "usd-balance",
       name: `${preferredCurrency} Balance`,
       description: `Available: ${formatBalanceDisplay(userBalance)}`,
       icon: <Wallet className="w-6 h-6" />,
@@ -184,7 +184,7 @@ export default function PaymentMethodSelector({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[100] p-4"
+      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[10001] p-4"
       onClick={onClose}
     >
       <motion.div
@@ -439,7 +439,7 @@ export default function PaymentMethodSelector({
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[110]"
+          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[10002]"
         >
           <motion.div
             initial={{ scale: 0.5, opacity: 0 }}

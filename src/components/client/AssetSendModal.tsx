@@ -205,7 +205,7 @@ export default function AssetSendModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 overflow-hidden"
+            className="fixed inset-0 z-[10000] overflow-hidden"
             style={{
               background:
                 "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #1e1b4b 50%, #0f172a 75%, #0a0a0f 100%)",

@@ -68,81 +68,86 @@ export default function AssetSellModal({
     return Object.keys(newErrors).length === 0;
   };
 
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const handleSell = async () => {
-    if (validateForm()) {
-      try {
-        const amount = parseFloat(sellAmount);
-        const value = calculateUSDValue();
+    if (!validateForm()) return;
 
-        const transaction = {
-          id: `sell_${Date.now()}`,
-          type: "sell" as const,
-          asset: asset.symbol,
+    setIsProcessing(true);
+
+    try {
+      const amount = parseFloat(sellAmount);
+      const usdValue = calculateUSDValue();
+
+      // Call the sell crypto API - this actually updates the database
+      const response = await fetch("/api/crypto/sell", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          symbol: asset.symbol,
           amount: amount,
-          value: value,
-          timestamp: new Date().toLocaleString(),
-          status: "pending" as const,
-          fee: 0,
-          method: "Instant Sale",
-          description: `Sold ${amount.toFixed(8)} ${
-            asset.symbol
-          } for ${formatAmount(value, 2)}`,
-        };
+          price: asset.price, // USD price per unit
+        }),
+      });
 
-        addTransaction(transaction);
+      const data = await response.json();
 
-        const notificationTitle = `${asset.symbol} Sold`;
-        const notificationMessage = `Successfully sold ${amount.toFixed(8)} ${
-          asset.symbol
-        } for ${formatAmount(value, 2)}`;
-
-        addNotification({
-          type: "transaction",
-          title: notificationTitle,
-          message: notificationMessage,
-          amount: value,
-          asset: asset.symbol,
-        });
-
-        // Send email notification
-        await fetch("/api/notifications/send-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "crypto_sale",
-            title: notificationTitle,
-            message: notificationMessage,
-            amount: value,
-            asset: asset.symbol,
-          }),
-        });
-
-        // Send push notification
-        await fetch("/api/notifications/send-push", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "crypto_sale",
-            title: notificationTitle,
-            message: notificationMessage,
-            amount: value,
-            asset: asset.symbol,
-          }),
-        });
-
-        setSuccessData({
-          asset: asset.symbol,
-          amount: amount,
-          value: value,
-        });
-        setShowSuccessModal(true);
-
-        setSellAmount("");
-        setErrors({});
-        onClose();
-      } catch (error) {
-        console.error("Error processing sale:", error);
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to sell crypto");
       }
+
+      // API handles email/push notifications, but we add to local context for UI
+      const transaction = {
+        id: `sell_${Date.now()}`,
+        type: "sell" as const,
+        asset: asset.symbol,
+        amount: amount,
+        value: usdValue,
+        timestamp: new Date().toLocaleString(),
+        status: "completed" as const,
+        fee: usdValue * 0.015,
+        method: "Instant Sale",
+        description: `Sold ${amount.toFixed(8)} ${
+          asset.symbol
+        } for ${formatAmount(usdValue, 2)}`,
+      };
+
+      addTransaction(transaction);
+
+      addNotification({
+        type: "transaction",
+        title: `${asset.symbol} Sold`,
+        message: `Successfully sold ${amount.toFixed(8)} ${
+          asset.symbol
+        } for ${formatAmount(usdValue, 2)}`,
+        amount: usdValue,
+        asset: asset.symbol,
+      });
+
+      // Show success with data from API response
+      setSuccessData({
+        asset: asset.symbol,
+        amount: amount,
+        value: data.netReceived || usdValue * 0.985, // Use net received after fee
+      });
+      setShowSuccessModal(true);
+      setSellAmount("");
+      setErrors({});
+
+      // Close modal after delay and refresh page
+      setTimeout(() => {
+        setShowSuccessModal(false);
+        onClose();
+        window.location.reload();
+      }, 3000);
+    } catch (error) {
+      console.error("Error processing sale:", error);
+      setErrors({
+        sellAmount:
+          error instanceof Error ? error.message : "Failed to process sale",
+      });
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -161,7 +166,7 @@ export default function AssetSellModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50"
+            className="fixed inset-0 z-[10000]"
             style={{
               background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
             }}
@@ -429,6 +434,7 @@ export default function AssetSellModal({
                 <button
                   onClick={handleSell}
                   disabled={
+                    isProcessing ||
                     !sellAmount ||
                     parseFloat(sellAmount) <= 0 ||
                     !!errors.sellAmount
@@ -436,12 +442,14 @@ export default function AssetSellModal({
                   className="w-full py-4 rounded-xl font-bold text-lg text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   style={{
                     background:
+                      isProcessing ||
                       !sellAmount ||
                       parseFloat(sellAmount) <= 0 ||
                       !!errors.sellAmount
                         ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
                         : "linear-gradient(145deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%)",
                     boxShadow:
+                      isProcessing ||
                       !sellAmount ||
                       parseFloat(sellAmount) <= 0 ||
                       !!errors.sellAmount
@@ -450,14 +458,16 @@ export default function AssetSellModal({
                     border: "1px solid rgba(255, 255, 255, 0.1)",
                   }}
                 >
-                  {sellAmount && parseFloat(sellAmount) > 0
+                  {isProcessing
+                    ? "Processing..."
+                    : sellAmount && parseFloat(sellAmount) > 0
                     ? `Sell ${parseFloat(sellAmount).toFixed(8)} ${
                         asset.symbol
                       }`
                     : `Sell ${asset.symbol}`}
                 </button>
                 <p className="text-xs text-center text-gray-500 mt-3">
-                  No fees • Instant settlement to balance
+                  1.5% fee • Instant settlement to balance
                 </p>
               </div>
             </motion.div>

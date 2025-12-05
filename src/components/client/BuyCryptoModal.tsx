@@ -126,7 +126,7 @@ export default function BuyCryptoModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50"
+            className="fixed inset-0 z-[10000]"
             style={{
               background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
             }}
@@ -317,7 +317,7 @@ export default function BuyCryptoModal({
                     </span>
                   </div>
 
-                  {/* Quick Amount Buttons */}
+                  {/* Quick Amount Buttons - amounts are in user's preferred currency */}
                   <div className="grid grid-cols-4 gap-2 mb-4">
                     {[100, 250, 500, 1000].map((value) => (
                       <button
@@ -325,8 +325,10 @@ export default function BuyCryptoModal({
                         onClick={() =>
                           setAmount(
                             inputMode === "crypto"
-                              ? (value / asset.price).toFixed(8)
-                              : value.toString()
+                              ? (
+                                  convertAmount(value, true) / asset.price
+                                ).toFixed(8) // Convert user currency to USD, then to crypto
+                              : value.toString() // In fiat mode, user enters in their currency
                           )
                         }
                         className="py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
@@ -339,7 +341,8 @@ export default function BuyCryptoModal({
                           color: "#9ca3af",
                         }}
                       >
-                        ${value}
+                        {currencySymbol}
+                        {value}
                       </button>
                     ))}
                   </div>

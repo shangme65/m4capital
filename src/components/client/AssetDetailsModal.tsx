@@ -13,6 +13,7 @@ import TransactionDetailsModal, {
 } from "./TransactionDetailsModal";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { formatCurrency as formatCurrencyUtil } from "@/lib/currencies";
 
 interface Asset {
   symbol: string;
@@ -311,7 +312,7 @@ export default function AssetDetailsModal({
     }
   }, [isOpen]);
 
-  // Action handlers
+  // Action handlers - use asset-specific modals for the selected crypto
   const handleSend = () => {
     setShowSendModal(true);
     console.log(`Opening send modal for ${asset?.symbol}`);
@@ -1038,8 +1039,22 @@ export default function AssetDetailsModal({
                                   Value
                                 </div>
                                 <div className="font-semibold text-white">
-                                  {tx.fiatValue
-                                    ? formatAmount(tx.fiatValue, 2)
+                                  {/* For deposits/transfers with fiatCurrency, show in that currency without conversion */}
+                                  {/* For trades (no fiatCurrency), price is in USD so use formatAmount to convert */}
+                                  {tx.fiatCurrency && tx.fiatValue
+                                    ? tx.fiatCurrency === preferredCurrency
+                                      ? formatCurrencyUtil(
+                                          tx.fiatValue,
+                                          tx.fiatCurrency,
+                                          2
+                                        )
+                                      : tx.fiatValueUSD
+                                      ? formatAmount(tx.fiatValueUSD, 2)
+                                      : formatCurrencyUtil(
+                                          tx.fiatValue,
+                                          tx.fiatCurrency,
+                                          2
+                                        )
                                     : formatAmount(
                                         tx.price *
                                           (typeof tx.amount === "number"
@@ -1269,60 +1284,223 @@ export default function AssetDetailsModal({
                 )}
               </div>
 
-              {/* Bottom Action Bar */}
-              <div className="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 p-2 z-[9999]">
-                <div className="flex justify-center gap-3 max-w-md mx-auto">
+              {/* Bottom Action Bar - Unique Branded Design */}
+              <div
+                className="fixed bottom-0 left-0 right-0 z-[9999] p-3"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
+                  backdropFilter: "blur(20px)",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                  boxShadow: "0 -10px 40px -10px rgba(0, 0, 0, 0.5)",
+                }}
+              >
+                <div className="flex justify-center gap-2 max-w-lg mx-auto">
+                  {/* Send Button - Purple */}
                   <button
                     onClick={handleSend}
-                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
+                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(139, 92, 246, 0.3)",
+                    }}
                   >
-                    <div className="w-5 h-5 flex items-center justify-center text-base">
-                      ↑
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #8b5cf6 0%, #6d28d9 100%)",
+                        boxShadow:
+                          "0 4px 12px -2px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2.5}
+                          d="M7 11l5-5m0 0l5 5m-5-5v12"
+                        />
+                      </svg>
                     </div>
-                    <span className="text-[10px] font-medium">Send</span>
+                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-purple-400 transition-colors">
+                      Send
+                    </span>
                   </button>
+
+                  {/* Receive Button - Teal */}
                   <button
                     onClick={handleReceive}
-                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
+                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(20, 184, 166, 0.3)",
+                    }}
                   >
-                    <div className="w-5 h-5 flex items-center justify-center text-base">
-                      ↓
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #14b8a6 0%, #0d9488 100%)",
+                        boxShadow:
+                          "0 4px 12px -2px rgba(20, 184, 166, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2.5}
+                          d="M17 13l-5 5m0 0l-5-5m5 5V6"
+                        />
+                      </svg>
                     </div>
-                    <span className="text-[10px] font-medium">Receive</span>
+                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-teal-400 transition-colors">
+                      Receive
+                    </span>
                   </button>
+
+                  {/* Swap Button - Cyan */}
                   <button
                     onClick={handleSwap}
-                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-blue-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
+                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(6, 182, 212, 0.3)",
+                    }}
                   >
-                    <div className="w-5 h-5 flex items-center justify-center text-base">
-                      ⇄
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #06b6d4 0%, #0891b2 100%)",
+                        boxShadow:
+                          "0 4px 12px -2px rgba(6, 182, 212, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2.5}
+                          d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                        />
+                      </svg>
                     </div>
-                    <span className="text-[10px] font-medium">Swap</span>
+                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-cyan-400 transition-colors">
+                      Swap
+                    </span>
                   </button>
+
+                  {/* Buy Button - Green */}
                   <button
                     onClick={handleBuy}
-                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-green-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
+                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(34, 197, 94, 0.3)",
+                    }}
                   >
-                    <div className="w-5 h-5 flex items-center justify-center text-base">
-                      ⚡
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
+                        boxShadow:
+                          "0 4px 12px -2px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2.5}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
                     </div>
-                    <span className="text-[10px] font-medium">Buy</span>
+                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-green-400 transition-colors">
+                      Buy
+                    </span>
                   </button>
+
+                  {/* Sell Button - Orange/Red */}
                   <button
                     onClick={handleSell}
-                    className="flex flex-col items-center justify-center gap-0.5 text-gray-300 bg-gray-700 hover:text-orange-400 hover:bg-gray-600 hover:scale-105 transition-all duration-300 rounded-xl w-14 h-12 transform"
+                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(249, 115, 22, 0.3)",
+                    }}
                   >
-                    <div className="w-5 h-5 flex items-center justify-center text-base">
-                      🏛
+                    <div
+                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #f97316 0%, #ea580c 100%)",
+                        boxShadow:
+                          "0 4px 12px -2px rgba(249, 115, 22, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                      }}
+                    >
+                      <svg
+                        className="w-5 h-5 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
+                        />
+                      </svg>
                     </div>
-                    <span className="text-[10px] font-medium">Sell</span>
+                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-orange-400 transition-colors">
+                      Sell
+                    </span>
                   </button>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Action Modals */}
+          {/* Asset-Specific Action Modals */}
           <AssetSendModal
             isOpen={showSendModal}
             onClose={closeAllActionModals}

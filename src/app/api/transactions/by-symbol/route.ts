@@ -103,11 +103,18 @@ export async function GET(request: NextRequest) {
           cryptoAmount?: number;
           fiatAmount?: number;
           cryptoPrice?: number;
+          fiatAmountUSD?: number;
         } | null;
         const cryptoAmt = d.cryptoAmount
           ? Number(d.cryptoAmount)
           : metadata?.cryptoAmount || 0;
+        // fiatAmt is in the deposit currency (could be BRL, EUR, USD, etc.)
         const fiatAmt = metadata?.fiatAmount || Number(d.amount || 0);
+        // fiatAmtUSD is the USD equivalent for proper conversion
+        // If stored in metadata, use it. Otherwise, if currency is USD, use fiatAmt
+        // For non-USD deposits without USD conversion stored, we'll estimate using price
+        const fiatAmtUSD =
+          metadata?.fiatAmountUSD || (d.currency === "USD" ? fiatAmt : null);
         // Calculate price per unit: if we have cryptoPrice in metadata use it,
         // otherwise calculate from fiatAmount / cryptoAmount
         const pricePerUnit =
@@ -120,7 +127,9 @@ export async function GET(request: NextRequest) {
           cryptoCurrency: d.cryptoCurrency,
           amount: cryptoAmt,
           price: pricePerUnit, // Price per unit (exchange rate)
-          fiatValue: fiatAmt, // Total fiat value
+          fiatValue: fiatAmt, // Total fiat value in original deposit currency
+          fiatValueUSD: fiatAmtUSD, // USD equivalent if available
+          fiatCurrency: d.currency, // Original deposit currency
           date: d.createdAt,
           status: d.status.toLowerCase(),
           source: "deposit",
