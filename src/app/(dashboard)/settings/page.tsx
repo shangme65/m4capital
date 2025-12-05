@@ -1,4 +1,6 @@
 "use client";
+import React from "react";
+import ReactDOM from "react-dom";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -183,6 +185,11 @@ export default function SettingsPage() {
   // Account number state
   const [accountNumber, setAccountNumber] = useState<string | null>(null);
   const [copiedAccountNumber, setCopiedAccountNumber] = useState(false);
+
+  // Profile edit state
+  const [profileName, setProfileName] = useState("");
+  const [originalName, setOriginalName] = useState("");
+  const [showReVerifyModal, setShowReVerifyModal] = useState(false);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -385,12 +392,48 @@ export default function SettingsPage() {
     }
   };
 
-  // Placeholder handlers (extend later)
+  // Initialize profile name from session
+  useEffect(() => {
+    if (session?.user?.name) {
+      setProfileName(session.user.name);
+      setOriginalName(session.user.name);
+    }
+  }, [session?.user?.name]);
+
+  // Check if profile has been modified
+  const hasProfileChanges =
+    profileName !== originalName && profileName.trim() !== "";
+
+  // Handle profile save - shows re-verification modal
   const handleProfileSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasProfileChanges) return;
+    setShowReVerifyModal(true);
+  };
+
+  // Confirm profile save and reset KYC
+  const confirmProfileSave = async () => {
     setSaving(true);
-    // TODO: implement profile update API
-    setTimeout(() => setSaving(false), 800);
+    setShowReVerifyModal(false);
+    try {
+      const response = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: profileName, resetKyc: true }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      setOriginalName(profileName);
+      setKycStatus("NOT_STARTED");
+      showSuccess("Profile updated. Please re-submit your KYC documents.");
+    } catch (error) {
+      showError("Failed to update profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Email preferences handler
@@ -834,86 +877,102 @@ export default function SettingsPage() {
   };
 
   // Modal component for full-screen settings sections - 3D Dark Theme
-  const SettingsModal = useMemo(
-    () =>
-      ({
-        isOpen,
-        onClose,
-        title,
-        children,
-      }: {
-        isOpen: boolean;
-        onClose: () => void;
-        title: string;
-        children: React.ReactNode;
-      }) => {
-        if (!isOpen) return null;
+  const SettingsModal = ({
+    isOpen,
+    onClose,
+    title,
+    children,
+  }: {
+    isOpen: boolean;
+    onClose: () => void;
+    title: string;
+    children: React.ReactNode;
+  }) => {
+    // Handle browser back button
+    useEffect(() => {
+      if (!isOpen) return;
 
-        return (
+      const handlePopState = () => {
+        onClose();
+      };
+
+      // Push a state when modal opens
+      window.history.pushState({ modal: true }, "");
+      window.addEventListener("popstate", handlePopState);
+
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }, [isOpen, onClose]);
+
+    if (!isOpen) return null;
+
+    return ReactDOM.createPortal(
+      <div
+        className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen"
+        style={{
+          background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
+        }}
+      >
+        <div className="h-full overflow-y-auto">
+          {/* Header with 3D styling */}
           <div
-            className="fixed inset-0 z-50"
+            className="sticky top-0 z-10"
             style={{
-              background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
+              background:
+                "linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
+              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
             }}
           >
-            <div className="h-full overflow-y-auto">
-              {/* Header with 3D styling */}
-              <div
-                className="sticky top-0 z-10"
+            <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
+              <button
+                onClick={onClose}
+                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
                 style={{
                   background:
-                    "linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-                  boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
+                    "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                  boxShadow:
+                    "0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.06)",
                 }}
               >
-                <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-                  <button
-                    onClick={onClose}
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                      boxShadow:
-                        "0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
-                    }}
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                  <h2 className="text-xl font-bold text-white">{title}</h2>
-                </div>
-              </div>
-
-              {/* Content with 3D card styling */}
-              <div className="max-w-4xl mx-auto px-4 py-6">
-                <div
-                  className="relative rounded-2xl p-5 overflow-hidden"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                    boxShadow:
-                      "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                  }}
-                >
-                  {/* Subtle glow effect */}
-                  <div
-                    className="absolute inset-0 opacity-20 rounded-2xl pointer-events-none"
-                    style={{
-                      background:
-                        "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
-                    }}
-                  />
-                  <div className="relative z-10">{children}</div>
-                </div>
-              </div>
+                <X className="w-5 h-5" />
+              </button>
+              <h2 className="text-xl font-bold text-white">{title}</h2>
             </div>
           </div>
-        );
-      },
-    []
-  );
+
+          {/* Content area with card wrapper */}
+          <div className="max-w-4xl mx-auto px-4 pt-4 pb-4 space-y-4">
+            {React.Children.map(children, (child, index) => (
+              <div
+                key={index}
+                className="relative rounded-2xl p-5 overflow-hidden"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div
+                  className="absolute inset-0 opacity-20 rounded-2xl pointer-events-none"
+                  style={{
+                    background:
+                      "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
+                  }}
+                />
+                <div className="relative z-10">{child}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
 
   // Memoize close modal callback
   const closeModal = useCallback(() => setActiveModal(null), []);
@@ -970,64 +1029,168 @@ export default function SettingsPage() {
       {submittingKyc && <KycSubmissionLoadingModal />}
 
       <div className="mobile:max-w-full max-w-4xl mx-auto mobile:p-0 p-6 space-y-6">
-        <header className="mobile:px-4 mobile:pt-6 mobile:pb-4">
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <Image
-              src="/m4capitallogo1.png"
-              alt="M4Capital"
-              width={80}
-              height={80}
-              className="drop-shadow-[0_0_15px_rgba(59,130,246,0.5)]"
-            />
-          </div>
-
-          <h1 className="text-3xl font-bold text-white mb-2 text-center">
-            Settings
-          </h1>
-          <p className="text-gray-400 text-sm text-center">
+        <header className="mobile:px-4 mobile:pt-2 mobile:pb-4">
+          <h1 className="text-2xl font-bold text-white mb-1">Settings</h1>
+          <p className="text-gray-400 text-sm">
             Manage your account preferences and platform experience.
           </p>
         </header>
 
-        {/* Settings Menu */}
-        <div className="mobile:space-y-0 space-y-3 mobile:px-0">
-          {settingsItems.map((item) => {
+        {/* Settings Menu - Enhanced 3D Cards */}
+        <div className="mobile:px-3 px-0 space-y-4">
+          {settingsItems.map((item, index) => {
             const Icon = item.icon;
+            // Different gradient colors for each card
+            const gradientColors = [
+              {
+                from: "from-blue-500",
+                to: "to-cyan-500",
+                shadow: "rgba(59,130,246,0.4)",
+                glow: "rgba(59,130,246,0.2)",
+              },
+              {
+                from: "from-purple-500",
+                to: "to-pink-500",
+                shadow: "rgba(168,85,247,0.4)",
+                glow: "rgba(168,85,247,0.2)",
+              },
+              {
+                from: "from-green-500",
+                to: "to-emerald-500",
+                shadow: "rgba(34,197,94,0.4)",
+                glow: "rgba(34,197,94,0.2)",
+              },
+              {
+                from: "from-orange-500",
+                to: "to-amber-500",
+                shadow: "rgba(249,115,22,0.4)",
+                glow: "rgba(249,115,22,0.2)",
+              },
+              {
+                from: "from-cyan-500",
+                to: "to-blue-500",
+                shadow: "rgba(6,182,212,0.4)",
+                glow: "rgba(6,182,212,0.2)",
+              },
+              {
+                from: "from-indigo-500",
+                to: "to-purple-500",
+                shadow: "rgba(99,102,241,0.4)",
+                glow: "rgba(99,102,241,0.2)",
+              },
+              {
+                from: "from-rose-500",
+                to: "to-pink-500",
+                shadow: "rgba(244,63,94,0.4)",
+                glow: "rgba(244,63,94,0.2)",
+              },
+            ];
+            const colors = gradientColors[index % gradientColors.length];
+
             return (
               <button
                 key={item.id}
                 onClick={() => setActiveModal(item.id)}
-                className="group relative w-full mobile:rounded-none rounded-xl mobile:border-b-2 mobile:border-x-0 mobile:border-t-0 border-2 bg-gradient-to-br from-gray-800/80 to-gray-900/80 hover:from-gray-800 hover:to-gray-900 mobile:p-4 p-5 transition-all duration-300 transform mobile:hover:scale-100 hover:scale-[1.02] active:scale-[0.98] mobile:border-gray-700/30 border-gray-700/50 hover:border-blue-500/30 hover:shadow-xl hover:shadow-blue-500/10 flex items-center"
-                style={{
-                  transformStyle: "preserve-3d",
-                  perspective: "1000px",
-                }}
+                className="group relative w-full text-left"
               >
-                {/* 3D Glow Effect on Hover */}
-                <div className="absolute inset-0 mobile:rounded-none rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-xl -z-10" />
-
-                <div className="flex items-center gap-4 flex-1">
-                  {/* 3D Icon Container */}
+                {/* Main Card Container with 3D Effect */}
+                <div
+                  className="relative rounded-2xl p-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                    boxShadow: `
+                      0 20px 40px -15px rgba(0, 0, 0, 0.6),
+                      0 10px 20px -10px rgba(0, 0, 0, 0.4),
+                      0 4px 8px -2px rgba(0, 0, 0, 0.3),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                      inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                    `,
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                  }}
+                >
+                  {/* Top highlight edge for 3D effect */}
                   <div
-                    className="mobile:w-11 mobile:h-11 w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 relative"
+                    className="absolute top-0 left-0 right-0 h-[1px]"
                     style={{
-                      boxShadow:
-                        "0 4px 16px rgba(99,102,241,0.4), 0 2px 8px rgba(99,102,241,0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                      background:
+                        "linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)",
                     }}
-                  >
-                    {/* Inner glow */}
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
-                    <Icon className="mobile:w-5 mobile:h-5 w-6 h-6 text-white relative z-10 drop-shadow-lg" />
-                  </div>
+                  />
 
-                  <div className="text-left flex-1">
-                    <h3 className="mobile:text-sm text-base font-bold text-white group-hover:text-white transition-colors">
-                      {item.title}
-                    </h3>
-                    <p className="mobile:text-xs text-sm text-gray-400 mobile:leading-tight">
-                      {item.description}
-                    </p>
+                  {/* Glow effect on hover */}
+                  <div
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    style={{
+                      background: `radial-gradient(ellipse at 30% 0%, ${colors.glow} 0%, transparent 60%)`,
+                    }}
+                  />
+
+                  {/* Bottom shadow gradient for depth */}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+                    style={{
+                      background:
+                        "linear-gradient(to top, rgba(0,0,0,0.3), transparent)",
+                    }}
+                  />
+
+                  <div className="relative z-10 flex items-center gap-4">
+                    {/* 3D Icon Container */}
+                    <div className="relative">
+                      {/* Icon glow/shadow underneath */}
+                      <div
+                        className="absolute inset-0 rounded-xl blur-md opacity-60 group-hover:opacity-80 transition-opacity"
+                        style={{
+                          background: `linear-gradient(135deg, ${colors.shadow}, transparent)`,
+                          transform: "translateY(4px)",
+                        }}
+                      />
+                      <div
+                        className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${colors.from} ${colors.to} flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5`}
+                        style={{
+                          boxShadow: `
+                            0 8px 20px -4px ${colors.shadow},
+                            0 4px 10px -2px ${colors.shadow},
+                            inset 0 2px 4px rgba(255,255,255,0.25),
+                            inset 0 -2px 4px rgba(0,0,0,0.2)
+                          `,
+                        }}
+                      >
+                        {/* Inner shine */}
+                        <div
+                          className="absolute inset-0 rounded-xl overflow-hidden"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                          }}
+                        />
+                        <Icon className="w-5 h-5 text-white relative z-10 drop-shadow-md" />
+                      </div>
+                    </div>
+
+                    {/* Text Content */}
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-bold text-white group-hover:text-white transition-colors truncate">
+                        {item.title}
+                      </h3>
+                      <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    {/* Chevron Arrow with 3D effect */}
+                    <div
+                      className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:translate-x-1"
+                      style={{
+                        background:
+                          "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                        boxShadow:
+                          "0 2px 8px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
+                      }}
+                    >
+                      <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
+                    </div>
                   </div>
                 </div>
               </button>
@@ -1041,21 +1204,29 @@ export default function SettingsPage() {
           onClose={closeModal}
           title="Profile"
         >
+          {/* Profile Info Form - First Card */}
           <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
             <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="name">
+              <label
+                className="block text-sm font-medium text-gray-300 mb-1"
+                htmlFor="name"
+              >
                 Name
               </label>
               <input
                 id="name"
                 type="text"
-                defaultValue={session?.user?.name || ""}
-                className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                value={profileName}
+                onChange={(e) => setProfileName(e.target.value)}
+                className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
                 placeholder="Your full name"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="email">
+              <label
+                className="block text-sm font-medium text-gray-300 mb-1"
+                htmlFor="email"
+              >
                 Email
               </label>
               <input
@@ -1063,45 +1234,12 @@ export default function SettingsPage() {
                 type="email"
                 disabled
                 defaultValue={session?.user?.email || ""}
-                className="w-full bg-gray-700 rounded-lg px-3 py-2 opacity-70 cursor-not-allowed"
+                className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
               />
             </div>
             <div>
               <label
-                className="block text-sm font-medium mb-1"
-                htmlFor="accountNumber"
-              >
-                Account Number
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  id="accountNumber"
-                  type="text"
-                  disabled
-                  value={accountNumber || "Loading..."}
-                  className="flex-1 bg-gray-700 rounded-lg px-3 py-2 opacity-70 cursor-not-allowed font-mono text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={copyAccountNumber}
-                  disabled={!accountNumber}
-                  className="flex-shrink-0 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
-                  title="Copy account number"
-                >
-                  {copiedAccountNumber ? (
-                    <Check className="w-4 h-4" />
-                  ) : (
-                    <Copy className="w-4 h-4" />
-                  )}
-                </button>
-              </div>
-              <p className="text-xs text-gray-400 mt-1">
-                Share this number with others to receive P2P transfers
-              </p>
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
+                className="block text-sm font-medium text-gray-300 mb-1"
                 htmlFor="accountType"
               >
                 Account Type
@@ -1116,20 +1254,113 @@ export default function SettingsPage() {
                       session.user.accountType.slice(1).toLowerCase()
                     : "Investor"
                 }
-                className="w-full bg-gray-700 rounded-lg px-3 py-2 opacity-70 cursor-not-allowed"
+                className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-500 mt-1">
                 Account type is chosen at signup. Contact support to change.
               </p>
             </div>
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
+            {hasProfileChanges && (
+              <button
+                type="submit"
+                disabled={saving}
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors"
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            )}
           </form>
+
+          {/* Re-verification Warning Modal */}
+          {showReVerifyModal && (
+            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+              <div
+                className="mx-4 max-w-sm w-full rounded-2xl p-6"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                }}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                    <AlertCircle className="w-6 h-6 text-amber-500" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white">
+                    Re-verification Required
+                  </h3>
+                </div>
+                <p className="text-gray-300 text-sm mb-6">
+                  Changing your name requires you to re-verify your account by
+                  submitting new KYC documents. Your current verification status
+                  will be reset.
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setShowReVerifyModal(false)}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={confirmProfileSave}
+                    disabled={saving}
+                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white bg-amber-600 hover:bg-amber-500 disabled:opacity-50 transition-colors"
+                  >
+                    {saving ? "Saving..." : "Continue"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Account Number Card - Second Card */}
+          <div className="max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className="w-11 h-11 rounded-xl flex items-center justify-center"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                  boxShadow:
+                    "0 6px 16px -3px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.2)",
+                }}
+              >
+                <Copy className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-white">
+                  Account Number
+                </h3>
+                <p className="text-xs text-gray-400">
+                  Share to receive P2P transfers
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                id="accountNumber"
+                type="text"
+                disabled
+                value={accountNumber || "Loading..."}
+                className="flex-1 bg-gray-900/80 text-white rounded-lg px-3 py-2.5 cursor-not-allowed font-mono text-sm border border-gray-600/50"
+              />
+              <button
+                type="button"
+                onClick={copyAccountNumber}
+                disabled={!accountNumber}
+                className="flex-shrink-0 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-orange-500/20"
+                title="Copy account number"
+              >
+                {copiedAccountNumber ? (
+                  <Check className="w-4 h-4" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </button>
+            </div>
+          </div>
         </SettingsModal>
 
         {/* Security Modal */}

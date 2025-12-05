@@ -345,6 +345,51 @@ The primary setup and development workflow is captured in `setup.sh`.
 - **3D Scenes**: The `src/components/client/ThreeScene.tsx` is the entry point for our `react-three-fiber` 3D graphics. Any work on 3D visualizations will likely involve this component and its children.
 - **Routing**: The app uses the Next.js App Router. Pages are defined by `page.tsx` files within the `src/app` directory. Route groups like `(auth)` and `(dashboard)` are used to organize routes and share layouts.
 
+### 🖼️ Full-Screen Modals - MUST USE PORTALS
+
+**CRITICAL RULE:** Full-screen modals MUST use React Portals to render at `document.body` level.
+
+**WHY:** The dashboard layout has nested containers with overflow, padding, and stacking contexts. Modals rendered inside these containers will NOT cover the full viewport on mobile devices - they'll appear below the header area.
+
+**REQUIRED for all full-screen modals:**
+
+```typescript
+import ReactDOM from "react-dom";
+
+// ✅ CORRECT - Portal to document.body
+const FullScreenModal = ({ isOpen, onClose, children }) => {
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
+    <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900">
+      {children}
+    </div>,
+    document.body
+  );
+};
+
+// ❌ WRONG - Regular fixed positioning (won't cover header on mobile)
+const BrokenModal = ({ isOpen, children }) => {
+  if (!isOpen) return null;
+
+  return <div className="fixed inset-0 z-50 bg-gray-900">{children}</div>;
+};
+```
+
+**Key points:**
+
+1. **Import ReactDOM**: `import ReactDOM from "react-dom";`
+2. **Use createPortal**: `ReactDOM.createPortal(content, document.body)`
+3. **Explicit positioning**: Use `top-0 left-0 right-0 bottom-0` not just `inset-0`
+4. **High z-index**: Use `z-[100]` to ensure it covers all dashboard elements
+5. **Full dimensions**: Add `min-h-screen w-screen` for safety
+
+**Dashboard layout context:**
+
+- Header is rendered BEFORE main content area
+- Main has `p-2 sm:p-4` padding
+- Modals inside main won't reach viewport edges without portals
+
 ## 4. Production Security Guidelines
 
 ### Database Seeding (`prisma/seed.ts`)
