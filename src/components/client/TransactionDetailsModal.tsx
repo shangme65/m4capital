@@ -736,12 +736,21 @@ export default function TransactionDetailsModal({
                           <label className="text-gray-500 text-xs font-medium uppercase tracking-wider">
                             Exchange Rate
                           </label>
-                          <div className="text-white font-medium">
-                            $
-                            {transaction.rate.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                            })}{" "}
-                            per {transaction.asset}
+                          <div className="text-white font-medium text-sm">
+                            {transaction.type === "convert" &&
+                            transaction.fromAsset &&
+                            transaction.toAsset ? (
+                              <>
+                                1 {transaction.fromAsset} ={" "}
+                                {transaction.rate.toFixed(8)}{" "}
+                                {transaction.toAsset}
+                              </>
+                            ) : (
+                              <>
+                                {formatAmount(transaction.rate, 2)} per{" "}
+                                {transaction.asset}
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>

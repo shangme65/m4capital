@@ -1119,8 +1119,8 @@ export default function ConvertModalNew({
                             className="w-7 h-7 text-white"
                           />
                         </div>
-                        <div className="text-white font-bold">
-                          {parseFloat(convertData.amount).toFixed(8)}
+                        <div className="text-white font-bold text-sm">
+                          {getCryptoAmountFromInput().toFixed(8)}
                         </div>
                         <div className="text-gray-400 text-xs">
                           {convertData.fromAsset}
@@ -1163,7 +1163,7 @@ export default function ConvertModalNew({
                             className="w-7 h-7 text-white"
                           />
                         </div>
-                        <div className="text-cyan-400 font-bold">
+                        <div className="text-cyan-400 font-bold text-sm">
                           {getReceiveAmount().toFixed(8)}
                         </div>
                         <div className="text-gray-400 text-xs">
@@ -1174,9 +1174,9 @@ export default function ConvertModalNew({
 
                     {/* Details */}
                     <div className="space-y-2 pt-3 border-t border-gray-700/50">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex flex-col sm:flex-row sm:justify-between text-sm gap-1">
                         <span className="text-gray-400">Exchange Rate</span>
-                        <span className="text-white">
+                        <span className="text-white text-xs sm:text-sm break-all">
                           1 {convertData.fromAsset} ={" "}
                           {getConversionRate().toFixed(8)} {convertData.toAsset}
                         </span>
