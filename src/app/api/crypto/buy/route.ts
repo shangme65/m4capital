@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate total cost in USD
-    const totalCost = amount * price;
+    const totalCostUSD = amount * price;
 
     // Find user with portfolio
     const user = await prisma.user.findUnique({
@@ -82,20 +82,37 @@ export async function POST(request: NextRequest) {
           id: generateId(),
           userId: user.id,
           balance: 0.0,
+          balanceCurrency: "USD",
           assets: [],
         },
       });
     }
 
+    const balanceCurrency = portfolio.balanceCurrency || "USD";
     const currentBalance = parseFloat(portfolio.balance.toString());
 
-    // Check if user has enough balance
-    if (currentBalance < totalCost) {
+    // Convert totalCost from USD to the portfolio's balance currency for comparison and deduction
+    let totalCostInBalanceCurrency = totalCostUSD;
+    if (balanceCurrency !== "USD") {
+      const { getExchangeRates, convertCurrency } = await import(
+        "@/lib/currencies"
+      );
+      const exchangeRates = await getExchangeRates();
+      totalCostInBalanceCurrency = convertCurrency(
+        totalCostUSD,
+        balanceCurrency,
+        exchangeRates
+      );
+    }
+
+    // Check if user has enough balance (in their currency)
+    if (currentBalance < totalCostInBalanceCurrency) {
       return NextResponse.json(
         {
           error: "Insufficient balance",
-          required: totalCost,
+          required: totalCostInBalanceCurrency,
           available: currentBalance,
+          currency: balanceCurrency,
         },
         { status: 400 }
       );
@@ -123,18 +140,19 @@ export async function POST(request: NextRequest) {
           name: cryptoName,
           amount,
           averagePrice: price,
-          totalInvested: totalCost,
+          totalInvested: totalCostUSD,
         },
       ];
     }
 
     // Use transaction to atomically update portfolio and create trade record
+    // Deduct the converted amount in the portfolio's currency
     const [updatedPortfolio, trade] = await prisma.$transaction([
       prisma.portfolio.update({
         where: { id: portfolio.id },
         data: {
           balance: {
-            decrement: new Decimal(totalCost),
+            decrement: new Decimal(totalCostInBalanceCurrency),
           },
           assets: updatedAssets,
         },
@@ -158,7 +176,9 @@ export async function POST(request: NextRequest) {
             cryptoSymbol: symbol,
             cryptoAmount: amount,
             pricePerUnit: price,
-            totalCost: totalCost,
+            totalCostUSD: totalCostUSD,
+            totalCostInBalanceCurrency: totalCostInBalanceCurrency,
+            balanceCurrency: balanceCurrency,
             purchaseType: "SPOT",
           },
         },
@@ -168,9 +188,9 @@ export async function POST(request: NextRequest) {
     const newBalance = parseFloat(updatedPortfolio.balance.toString());
 
     console.log(
-      `✅ Crypto purchase: ${amount} ${symbol} for $${totalCost.toFixed(
+      `✅ Crypto purchase: ${amount} ${symbol} for ${balanceCurrency} ${totalCostInBalanceCurrency.toFixed(
         2
-      )} | New balance: $${newBalance}`
+      )} (USD $${totalCostUSD.toFixed(2)}) | New balance: ${balanceCurrency} ${newBalance}`
     );
 
     // Send email notification
@@ -212,7 +232,7 @@ export async function POST(request: NextRequest) {
 
         // Convert amounts to user's preferred currency if not USD
         let displayPrice = price;
-        let displayTotalCost = totalCost;
+        let displayTotalCost = totalCostUSD;
         let displayNewBalance = newBalance;
 
         if (preferredCurrency !== "USD") {
@@ -223,15 +243,20 @@ export async function POST(request: NextRequest) {
             exchangeRates
           );
           displayTotalCost = convertCurrency(
-            totalCost,
+            totalCostUSD,
             preferredCurrency,
             exchangeRates
           );
-          displayNewBalance = convertCurrency(
-            newBalance,
-            preferredCurrency,
-            exchangeRates
-          );
+          // Note: newBalance is already in balanceCurrency
+          if (balanceCurrency === preferredCurrency) {
+            displayNewBalance = newBalance;
+          } else {
+            displayNewBalance = convertCurrency(
+              newBalance,
+              preferredCurrency,
+              exchangeRates
+            );
+          }
         }
 
         const emailResult = await sendEmail({
@@ -304,7 +329,7 @@ export async function POST(request: NextRequest) {
           : symbol;
 
       // Convert amount to user's preferred currency
-      let displayAmount = totalCost;
+      let displayAmount = totalCostUSD;
       const currencySymbol = getCurrencySymbol(userCurrency);
 
       if (userCurrency !== "USD") {
@@ -315,7 +340,7 @@ export async function POST(request: NextRequest) {
         if (ratesResponse.ok) {
           const ratesData = await ratesResponse.json();
           const rate = ratesData.rates[userCurrency] || 1;
-          displayAmount = totalCost * rate;
+          displayAmount = totalCostUSD * rate;
         }
       }
 
@@ -369,11 +394,14 @@ export async function POST(request: NextRequest) {
         symbol,
         amount,
         price,
-        totalCost,
+        totalCost: totalCostUSD,
+        totalCostInBalanceCurrency,
+        balanceCurrency,
         status: trade.status,
       },
       portfolio: {
         balance: newBalance,
+        balanceCurrency,
         assets: updatedPortfolio.assets,
       },
     });

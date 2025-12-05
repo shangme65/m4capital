@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     // Calculate total value in USD
     const totalValue = amount * price;
     const fee = totalValue * 0.015; // 1.5% fee
-    const netReceived = totalValue - fee;
+    const netReceivedUSD = totalValue - fee;
 
     // Find user with portfolio
     const user = await prisma.user.findUnique({
@@ -66,6 +66,21 @@ export async function POST(request: NextRequest) {
     }
 
     const portfolio = user.Portfolio;
+    const balanceCurrency = portfolio.balanceCurrency || "USD";
+
+    // Convert netReceived from USD to the portfolio's balance currency
+    let netReceivedInBalanceCurrency = netReceivedUSD;
+    if (balanceCurrency !== "USD") {
+      const { getExchangeRates, convertCurrency } = await import(
+        "@/lib/currencies"
+      );
+      const exchangeRates = await getExchangeRates();
+      netReceivedInBalanceCurrency = convertCurrency(
+        netReceivedUSD,
+        balanceCurrency,
+        exchangeRates
+      );
+    }
 
     // Parse current assets with proper typing
     const currentAssets: Asset[] = Array.isArray(portfolio.assets)
@@ -106,8 +121,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update portfolio and create trade record
-    const newBalance = new Decimal(portfolio.balance).plus(netReceived);
+    // Update portfolio balance - add the converted amount in the portfolio's currency
+    const newBalance = new Decimal(portfolio.balance).plus(
+      netReceivedInBalanceCurrency
+    );
 
     const [updatedPortfolio, trade] = await prisma.$transaction([
       prisma.portfolio.update({
@@ -125,7 +142,7 @@ export async function POST(request: NextRequest) {
           side: "SELL",
           entryPrice: new Decimal(price),
           quantity: new Decimal(amount),
-          profit: new Decimal(netReceived - amount * price),
+          profit: new Decimal(netReceivedUSD - amount * price),
           commission: new Decimal(fee),
           status: "CLOSED",
           openedAt: new Date(),
@@ -138,7 +155,9 @@ export async function POST(request: NextRequest) {
             pricePerUnit: price,
             totalValue: totalValue,
             fee: fee,
-            netReceived: netReceived,
+            netReceived: netReceivedUSD,
+            netReceivedInBalanceCurrency: netReceivedInBalanceCurrency,
+            balanceCurrency: balanceCurrency,
             saleType: "SPOT",
           },
         },
@@ -146,9 +165,13 @@ export async function POST(request: NextRequest) {
     ]);
 
     console.log(
-      `✅ Crypto sale: ${amount} ${symbol} for $${totalValue.toFixed(
+      `✅ Crypto sale: ${amount} ${symbol} for ${balanceCurrency} ${netReceivedInBalanceCurrency.toFixed(
         2
-      )} | New balance: $${parseFloat(newBalance.toString())}`
+      )} (USD $${netReceivedUSD.toFixed(
+        2
+      )}) | New balance: ${balanceCurrency} ${parseFloat(
+        newBalance.toString()
+      )}`
     );
 
     // Send email notification
@@ -189,7 +212,7 @@ export async function POST(request: NextRequest) {
         let displayPrice = price;
         let displayTotalValue = totalValue;
         let displayFee = fee;
-        let displayNetReceived = netReceived;
+        let displayNetReceived = netReceivedUSD;
         let displayNewBalance = parseFloat(newBalance.toString());
 
         if (preferredCurrency !== "USD") {
@@ -206,15 +229,21 @@ export async function POST(request: NextRequest) {
           );
           displayFee = convertCurrency(fee, preferredCurrency, exchangeRates);
           displayNetReceived = convertCurrency(
-            netReceived,
+            netReceivedUSD,
             preferredCurrency,
             exchangeRates
           );
-          displayNewBalance = convertCurrency(
-            parseFloat(newBalance.toString()),
-            preferredCurrency,
-            exchangeRates
-          );
+          // Note: newBalance is already in balanceCurrency, convert from that
+          if (balanceCurrency === preferredCurrency) {
+            displayNewBalance = parseFloat(newBalance.toString());
+          } else {
+            // If balanceCurrency differs from preferredCurrency, we need to convert
+            displayNewBalance = convertCurrency(
+              parseFloat(newBalance.toString()),
+              preferredCurrency,
+              exchangeRates
+            );
+          }
         }
 
         const assetName =
@@ -333,7 +362,7 @@ export async function POST(request: NextRequest) {
           ? "Tether"
           : symbol;
 
-      let displayAmount = netReceived;
+      let displayAmount = netReceivedUSD;
       const currencySymbol = getCurrencySymbol(userCurrency);
 
       if (userCurrency !== "USD") {
@@ -343,7 +372,7 @@ export async function POST(request: NextRequest) {
         if (ratesResponse.ok) {
           const ratesData = await ratesResponse.json();
           const rate = ratesData.rates[userCurrency] || 1;
-          displayAmount = netReceived * rate;
+          displayAmount = netReceivedUSD * rate;
         }
       }
 
@@ -394,7 +423,9 @@ export async function POST(request: NextRequest) {
       message: `Successfully sold ${amount} ${symbol}`,
       totalValue,
       fee,
-      netReceived,
+      netReceived: netReceivedUSD,
+      netReceivedInBalanceCurrency,
+      balanceCurrency,
       newBalance: parseFloat(newBalance.toString()),
     });
   } catch (error) {
