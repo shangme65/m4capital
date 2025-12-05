@@ -21,6 +21,28 @@ const card3DStyle = {
   border: "1px solid rgba(255, 255, 255, 0.08)",
 };
 
+// 3D Dropdown card with depth effect
+const dropdown3DStyle = {
+  background: "linear-gradient(160deg, #1a2744 0%, #0d1829 40%, #0a1220 100%)",
+  boxShadow:
+    "0 30px 60px -15px rgba(0, 0, 0, 0.9), 0 15px 35px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.5)",
+  border: "1px solid rgba(6, 182, 212, 0.15)",
+};
+
+// 3D Card item with inset depth effect
+const cardItem3DStyle = (isSelected: boolean) => ({
+  background: isSelected
+    ? "linear-gradient(145deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.15) 50%, rgba(6, 182, 212, 0.1) 100%)"
+    : "linear-gradient(155deg, #1e2d42 0%, #162338 40%, #0f1a2a 100%)",
+  boxShadow: isSelected
+    ? "0 8px 25px -5px rgba(6, 182, 212, 0.4), inset 0 2px 0 rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)"
+    : "0 8px 20px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 2px rgba(0,0,0,0.4)",
+  border: isSelected
+    ? "1px solid rgba(6, 182, 212, 0.4)"
+    : "1px solid rgba(255, 255, 255, 0.06)",
+  transform: isSelected ? "scale(1.02)" : "scale(1)",
+});
+
 const inputStyle = {
   background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
   boxShadow:
@@ -108,6 +130,21 @@ export default function ConvertModalNew({
       },
       {} as Record<string, number>
     ) || {};
+
+  // Get user's owned crypto assets (only those with balance > 0)
+  const userOwnedCrypto = Object.entries(availableBalances)
+    .filter(([_, balance]) => balance > 0)
+    .map(([symbol]) => symbol);
+
+  // Initialize fromAsset with first owned crypto if available
+  useEffect(() => {
+    if (userOwnedCrypto.length > 0 && !userOwnedCrypto.includes(convertData.fromAsset)) {
+      setConvertData((prev) => ({
+        ...prev,
+        fromAsset: userOwnedCrypto[0],
+      }));
+    }
+  }, [userOwnedCrypto.length]);
 
   // Handle back button navigation
   const handleBack = useCallback(() => {
@@ -480,88 +517,110 @@ export default function ConvertModalNew({
                     </div>
                   )}
 
-                  {/* From Asset Selection */}
+                  {/* From Asset Selection - Only show user's owned crypto */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-300 mb-2">
                       From
                     </label>
-                    <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
-                      {cryptoSymbols.map((symbol) => {
-                        const balance = availableBalances[symbol] || 0;
-                        const price = cryptoPrices[symbol]?.price || 0;
-                        return (
-                          <button
-                            key={symbol}
-                            type="button"
-                            onClick={() =>
-                              setConvertData((prev) => ({
-                                ...prev,
-                                fromAsset: symbol,
-                              }))
-                            }
-                            className="w-full text-left transition-all duration-300 rounded-xl p-3"
-                            style={{
-                              background:
-                                convertData.fromAsset === symbol
-                                  ? "linear-gradient(145deg, rgba(6, 182, 212, 0.15) 0%, rgba(20, 184, 166, 0.15) 100%)"
-                                  : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
-                              boxShadow:
-                                "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
-                              border:
-                                convertData.fromAsset === symbol
-                                  ? "1px solid rgba(6, 182, 212, 0.3)"
-                                  : "1px solid rgba(255, 255, 255, 0.05)",
-                            }}
+                    {userOwnedCrypto.length === 0 ? (
+                      <div
+                        className="rounded-2xl p-6 text-center"
+                        style={dropdown3DStyle}
+                      >
+                        <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-gray-800/50 flex items-center justify-center">
+                          <svg
+                            className="w-8 h-8 text-gray-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                                  style={{
-                                    background:
-                                      cryptoGradients[symbol] ||
-                                      "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-                                    boxShadow:
-                                      "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)",
-                                  }}
-                                >
-                                  <CryptoIcon
-                                    symbol={symbol}
-                                    className="w-6 h-6 text-white"
-                                  />
-                                </div>
-                                <div>
-                                  <div className="text-sm font-semibold text-white">
-                                    {symbol}
-                                  </div>
-                                  <div className="text-[10px] text-gray-400">
-                                    Balance: {balance.toFixed(8)}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-[10px] text-gray-400">
-                                  {formatAmount(price, 2)}
-                                </div>
-                                {convertData.fromAsset === symbol && (
-                                  <svg
-                                    className="w-5 h-5 text-cyan-400 ml-auto"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={1.5}
+                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                        <p className="text-gray-400 text-sm">No crypto assets to swap</p>
+                        <p className="text-gray-500 text-xs mt-1">Buy crypto first to start swapping</p>
+                      </div>
+                    ) : (
+                      <div
+                        className="rounded-2xl p-3 space-y-2 max-h-[200px] overflow-y-auto"
+                        style={dropdown3DStyle}
+                      >
+                        {userOwnedCrypto.map((symbol) => {
+                          const balance = availableBalances[symbol] || 0;
+                          const price = cryptoPrices[symbol]?.price || 0;
+                          const isSelected = convertData.fromAsset === symbol;
+                          const value = balance * price;
+                          return (
+                            <button
+                              key={symbol}
+                              type="button"
+                              onClick={() =>
+                                setConvertData((prev) => ({
+                                  ...prev,
+                                  fromAsset: symbol,
+                                }))
+                              }
+                              className="w-full text-left transition-all duration-300 rounded-xl p-3 hover:scale-[1.01]"
+                              style={cardItem3DStyle(isSelected)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className="w-12 h-12 rounded-xl flex items-center justify-center"
+                                    style={{
+                                      background:
+                                        cryptoGradients[symbol] ||
+                                        "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                                      boxShadow:
+                                        "0 6px 15px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.25), inset 0 -2px 0 rgba(0,0,0,0.3)",
+                                    }}
                                   >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                      clipRule="evenodd"
+                                    <CryptoIcon
+                                      symbol={symbol}
+                                      className="w-7 h-7 text-white"
                                     />
-                                  </svg>
-                                )}
+                                  </div>
+                                  <div>
+                                    <div className="text-base font-bold text-white">
+                                      {symbol}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      Balance: {balance.toFixed(8)}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div className="text-sm font-semibold text-white">
+                                    {formatAmount(value, 2)}
+                                  </div>
+                                  <div className="text-xs text-gray-400">
+                                    {formatAmount(price, 2)}/unit
+                                  </div>
+                                  {isSelected && (
+                                    <svg
+                                      className="w-5 h-5 text-cyan-400 ml-auto mt-1"
+                                      fill="currentColor"
+                                      viewBox="0 0 20 20"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   {/* Swap Button */}
@@ -597,11 +656,15 @@ export default function ConvertModalNew({
                     <label className="block text-sm font-semibold text-gray-300 mb-2">
                       To
                     </label>
-                    <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                    <div
+                      className="rounded-2xl p-3 space-y-2 max-h-[200px] overflow-y-auto"
+                      style={dropdown3DStyle}
+                    >
                       {cryptoSymbols
                         .filter((s) => s !== convertData.fromAsset)
                         .map((symbol) => {
                           const price = cryptoPrices[symbol]?.price || 0;
+                          const isSelected = convertData.toAsset === symbol;
                           return (
                             <button
                               key={symbol}
@@ -612,53 +675,45 @@ export default function ConvertModalNew({
                                   toAsset: symbol,
                                 }))
                               }
-                              className="w-full text-left transition-all duration-300 rounded-xl p-3"
-                              style={{
-                                background:
-                                  convertData.toAsset === symbol
-                                    ? "linear-gradient(145deg, rgba(6, 182, 212, 0.15) 0%, rgba(20, 184, 166, 0.15) 100%)"
-                                    : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
-                                boxShadow:
-                                  "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
-                                border:
-                                  convertData.toAsset === symbol
-                                    ? "1px solid rgba(6, 182, 212, 0.3)"
-                                    : "1px solid rgba(255, 255, 255, 0.05)",
-                              }}
+                              className="w-full text-left transition-all duration-300 rounded-xl p-3 hover:scale-[1.01]"
+                              style={cardItem3DStyle(isSelected)}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                   <div
-                                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                    className="w-12 h-12 rounded-xl flex items-center justify-center"
                                     style={{
                                       background:
                                         cryptoGradients[symbol] ||
                                         "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
                                       boxShadow:
-                                        "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)",
+                                        "0 6px 15px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.25), inset 0 -2px 0 rgba(0,0,0,0.3)",
                                     }}
                                   >
                                     <CryptoIcon
                                       symbol={symbol}
-                                      className="w-6 h-6 text-white"
+                                      className="w-7 h-7 text-white"
                                     />
                                   </div>
                                   <div>
-                                    <div className="text-sm font-semibold text-white">
+                                    <div className="text-base font-bold text-white">
                                       {symbol}
                                     </div>
-                                    <div className="text-[10px] text-cyan-400">
+                                    <div className="text-xs text-cyan-400 font-medium">
                                       You will receive
                                     </div>
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <div className="text-[10px] text-gray-400">
+                                  <div className="text-sm font-semibold text-white">
                                     {formatAmount(price, 2)}
                                   </div>
-                                  {convertData.toAsset === symbol && (
+                                  <div className="text-xs text-gray-400">
+                                    per unit
+                                  </div>
+                                  {isSelected && (
                                     <svg
-                                      className="w-5 h-5 text-cyan-400 ml-auto"
+                                      className="w-5 h-5 text-cyan-400 ml-auto mt-1"
                                       fill="currentColor"
                                       viewBox="0 0 20 20"
                                     >
