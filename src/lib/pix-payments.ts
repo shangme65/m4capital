@@ -18,7 +18,8 @@ const API_BASE_URL =
     ? "https://www.asaas.com/api/v3"
     : "https://api.pagseguro.com";
 
-const ACCESS_TOKEN = process.env.PIX_API_TOKEN!;
+// Lazy load to avoid build-time warnings
+const getAccessToken = () => process.env.PIX_API_TOKEN || "";
 const PIX_ENABLED = process.env.PIX_ENABLED === "true";
 
 export interface PIXPaymentRequest {
@@ -50,27 +51,34 @@ export interface PIXWebhookPayload {
 }
 
 class PIXPaymentClient {
-  private accessToken: string;
   private baseUrl: string;
   private provider: string;
+  private _tokenChecked: boolean = false;
 
   constructor() {
-    this.accessToken = ACCESS_TOKEN;
     this.baseUrl = API_BASE_URL;
     this.provider = process.env.PIX_PROVIDER || "mercadopago";
+  }
 
-    if (!this.accessToken) {
-      console.warn(
-        "⚠️ PIX API token not configured. PIX payments will not work."
-      );
+  private get accessToken(): string {
+    const token = getAccessToken();
+    // Only warn once and only at runtime (not during build)
+    if (!this._tokenChecked && typeof window !== "undefined") {
+      this._tokenChecked = true;
+      if (!token) {
+        console.warn(
+          "⚠️ PIX API token not configured. PIX payments will not work."
+        );
+      }
     }
+    return token;
   }
 
   /**
    * Check if PIX is enabled and properly configured
    */
   isEnabled(): boolean {
-    return PIX_ENABLED && !!this.accessToken;
+    return PIX_ENABLED && !!getAccessToken();
   }
 
   /**
