@@ -1148,6 +1148,9 @@ const AdminDashboard = () => {
         });
         setShowSuccessModal(true);
 
+        // Refresh user data to show updated balance and transaction history
+        fetchUsers();
+
         // Clear form
         setAmount("");
         setPaymentDetails({});

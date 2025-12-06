@@ -382,6 +382,8 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const handleCloseSuccessModal = () => {
     setShowSuccessModal(false);
     onClose();
+    // Refresh page to show updated balance and transaction history
+    window.location.reload();
   };
 
   if (!isOpen) return null;

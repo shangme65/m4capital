@@ -145,6 +145,33 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, [status]); // Only depend on status, not session object (session reference changes constantly)
 
+  // Refetch on window focus (for when user returns to app after transaction)
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user?.id) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        // Refetch when app becomes visible again
+        fetchNotifications();
+        fetchTransactions();
+      }
+    };
+
+    const handleFocus = () => {
+      // Refetch when window gains focus
+      fetchNotifications();
+      fetchTransactions();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [status, session?.user?.id]);
+
   // UUID fallback for browsers that don't support crypto.randomUUID
   const generateUUID = (): string => {
     if (

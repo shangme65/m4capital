@@ -35,6 +35,17 @@ export default function AssetReceiveModal({
   const [copied, setCopied] = useState(false);
   const { preferredCurrency, convertAmount } = useCurrency();
 
+  // Handle close with optional refresh if deposit was initiated
+  const handleClose = () => {
+    // If user generated a deposit address, refresh to check for any incoming deposits
+    if (paymentData) {
+      onClose();
+      window.location.reload();
+    } else {
+      onClose();
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -126,7 +137,7 @@ export default function AssetReceiveModal({
 
           {/* Mobile back button */}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50 md:hidden"
             style={{
               background:
@@ -153,7 +164,7 @@ export default function AssetReceiveModal({
 
           {/* Close button - desktop */}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute top-4 right-4 w-10 h-10 hidden md:flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50"
             style={{
               background:
@@ -425,7 +436,7 @@ export default function AssetReceiveModal({
 
                       {/* Done Button */}
                       <button
-                        onClick={onClose}
+                        onClick={handleClose}
                         className="w-full py-3 rounded-xl font-bold text-white text-sm transition-all"
                         style={{
                           background:

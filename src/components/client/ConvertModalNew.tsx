@@ -173,6 +173,8 @@ export default function ConvertModalNew({
     onClose();
     refetch();
     refetchTransactions();
+    // Reload page to show updated balance and transaction history
+    window.location.reload();
   }, [onClose, refetch, refetchTransactions]);
 
   // Prevent body scroll when modal is open

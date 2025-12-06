@@ -194,6 +194,11 @@ export default function P2PTransferModal({
       if (onSuccess) {
         onSuccess();
       }
+
+      // Reload page after delay to show updated balance and transaction history
+      setTimeout(() => {
+        window.location.reload();
+      }, 2500);
     } catch (error: any) {
       showError(error.message || "Transfer failed");
     } finally {

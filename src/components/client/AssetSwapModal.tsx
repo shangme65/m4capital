@@ -348,6 +348,8 @@ export default function AssetSwapModal({
     setStep(1);
     onClose();
     refetchTransactions();
+    // Reload page to show updated balance and transaction history
+    window.location.reload();
   };
 
   const setMaxAmount = () => {
