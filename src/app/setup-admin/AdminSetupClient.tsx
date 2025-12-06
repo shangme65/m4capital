@@ -22,8 +22,6 @@ import {
   ArrowRight,
   Terminal,
   Database,
-  Eye,
-  EyeOff,
 } from "lucide-react";
 
 interface AdminSetupClientProps {
@@ -42,7 +40,6 @@ export default function AdminSetupClient({
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
@@ -63,19 +60,23 @@ export default function AdminSetupClient({
       const data = await response.json();
 
       if (data.success) {
-        setResult(data);
+        // Don't store the full result (contains credentials)
+        // Just store a sanitized version for display
+        setResult({ success: true, message: data.message });
         showSuccess(data.message || "Admin initialized successfully!");
 
         // Auto-login after successful initialization
+        const credentials = data.data?._credentials;
         if (
-          (data.action === "created" || data.action === "updated") &&
-          data.data?.credentials
+          (data.data?.action === "created" ||
+            data.data?.action === "updated") &&
+          credentials
         ) {
           showSuccess("Admin initialized! Logging in automatically...");
 
           const signInResult = await signIn("credentials", {
-            email: data.data.credentials.email,
-            password: data.data.credentials.password,
+            email: credentials.email,
+            password: credentials.password,
             redirect: false,
           });
 
@@ -414,7 +415,7 @@ export default function AdminSetupClient({
           {/* Result Display */}
           {result && (
             <div className="mb-4 bg-green-500/10 backdrop-blur-xl border border-green-500/20 rounded-xl p-4 shadow-xl animate-slideIn">
-              <div className="flex items-start gap-3 mb-3">
+              <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
                     <CheckCircle className="w-5 h-5 text-green-400" />
@@ -427,43 +428,6 @@ export default function AdminSetupClient({
                   <p className="text-green-200/80 text-xs">{result.message}</p>
                 </div>
               </div>
-
-              <button
-                onClick={() => setShowDetails(!showDetails)}
-                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white px-3 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 mb-3 text-sm"
-              >
-                {showDetails ? (
-                  <>
-                    <EyeOff className="w-3.5 h-3.5" />
-                    <span>Hide Details</span>
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-3.5 h-3.5" />
-                    <span>View Details</span>
-                  </>
-                )}
-              </button>
-
-              {showDetails && (
-                <div className="bg-black/30 rounded-lg p-3 overflow-auto max-h-48 animate-slideDown">
-                  <pre className="text-green-300 text-xs font-mono">
-                    {JSON.stringify(result, null, 2)}
-                  </pre>
-                </div>
-              )}
-
-              {result.action === "created" && (
-                <div className="mt-3 flex gap-2">
-                  <button
-                    onClick={() => router.push("/?login=true")}
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-green-500/50 flex items-center justify-center gap-2 text-sm"
-                  >
-                    <ArrowRight className="w-4 h-4" />
-                    <span>Go to Login</span>
-                  </button>
-                </div>
-              )}
             </div>
           )}
 

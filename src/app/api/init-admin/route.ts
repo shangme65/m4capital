@@ -174,12 +174,12 @@ export async function GET(request: Request) {
 
       return createSuccessResponse(
         {
-          admin: updatedAdmin,
           action: "updated",
           autoLoginReady: true,
-          credentials: {
+          // Credentials passed separately for auto-login, not included in visible response
+          _credentials: {
             email: email,
-            password: password, // Return plain password for auto-login (setup only)
+            password: password,
           },
         },
         "Origin admin updated successfully. Logging in..."
@@ -242,12 +242,12 @@ export async function GET(request: Request) {
 
       return createSuccessResponse(
         {
-          admin: newAdmin,
           action: "created",
           autoLoginReady: true,
-          credentials: {
+          // Credentials passed separately for auto-login, not included in visible response
+          _credentials: {
             email: email,
-            password: password, // Return plain password for auto-login (setup only)
+            password: password,
           },
         },
         "Origin admin created successfully. Logging in..."
