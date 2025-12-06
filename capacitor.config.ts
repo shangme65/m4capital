@@ -12,7 +12,7 @@ const config: CapacitorConfig = {
   },
   android: {
     allowMixedContent: false,
-    backgroundColor: "#0f172a",
+    backgroundColor: "#ffffff",
     // This ensures the app uses its internal WebView, not external browser
     webContentsDebuggingEnabled: true,
     buildOptions: {
@@ -30,8 +30,8 @@ const config: CapacitorConfig = {
       splashImmersive: false,
     },
     StatusBar: {
-      style: "light",
-      backgroundColor: "#0f172a",
+      style: "default",
+      backgroundColor: "#ffffff",
       overlaysWebView: false,
     },
   },
