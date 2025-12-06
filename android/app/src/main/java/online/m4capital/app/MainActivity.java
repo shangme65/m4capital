@@ -8,7 +8,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebView;
-import android.widget.FrameLayout;
+import android.webkit.WebViewClient;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -43,6 +43,16 @@ public class MainActivity extends BridgeActivity {
         // Get the WebView that Capacitor created
         WebView webView = getBridge().getWebView();
         if (webView != null) {
+            // CRITICAL: Prevent WebView from opening external browser
+            webView.setWebViewClient(new WebViewClient() {
+                @Override
+                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                    // Load ALL URLs inside the WebView, never open external browser
+                    view.loadUrl(url);
+                    return true;
+                }
+            });
+            
             // Get the parent container
             ViewGroup parent = (ViewGroup) webView.getParent();
             if (parent != null) {
