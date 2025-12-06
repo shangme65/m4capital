@@ -19,16 +19,15 @@ public class MainActivity extends BridgeActivity {
         
         Window window = getWindow();
         
-        // CRITICAL: Clear fullscreen flags first
+        // Clear fullscreen flags
         window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         
-        // Set status bar to be visible with our color
+        // Set status bar color
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.setStatusBarColor(Color.parseColor("#0f172a"));
         
-        // CRITICAL: Tell system to fit content within system bars
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(true);
         } else {
@@ -40,30 +39,26 @@ public class MainActivity extends BridgeActivity {
     public void onStart() {
         super.onStart();
         
-        // Get the WebView that Capacitor created
         WebView webView = getBridge().getWebView();
         if (webView != null) {
-            // CRITICAL: Prevent WebView from opening external browser
+            // Prevent external browser redirects
             webView.setWebViewClient(new WebViewClient() {
                 @Override
                 public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                    // Load ALL URLs inside the WebView, never open external browser
                     view.loadUrl(url);
                     return true;
                 }
             });
             
-            // Get the parent container
-            ViewGroup parent = (ViewGroup) webView.getParent();
-            if (parent != null) {
-                // CRITICAL: Enable fitsSystemWindows on parent container
-                parent.setFitsSystemWindows(true);
-                parent.requestApplyInsets();
+            // Get status bar height
+            int statusBarHeight = 0;
+            int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resourceId > 0) {
+                statusBarHeight = getResources().getDimensionPixelSize(resourceId);
             }
             
-            // Also set on WebView itself
-            webView.setFitsSystemWindows(true);
-            webView.requestApplyInsets();
+            // Apply top padding for status bar
+            webView.setPadding(0, statusBarHeight, 0, 0);
         }
     }
 }
