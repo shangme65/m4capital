@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Safe area insets for native app (Android/iOS status bar) */
 :root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
@@ -14,6 +19,42 @@
     --background-start-rgb: 0, 0, 0;
     --background-end-rgb: 0, 0, 0;
   }
+}
+
+/* Safe area padding for Capacitor/native apps */
+.safe-area-padding {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: constant(safe-area-inset-top, 0px); /* iOS 11.0-11.2 */
+}
+
+/* For standalone/fullscreen PWA or native app */
+@media all and (display-mode: standalone), (display-mode: fullscreen) {
+  .safe-area-padding {
+    padding-top: env(safe-area-inset-top, 24px);
+    padding-top: constant(safe-area-inset-top, 24px);
+  }
+}
+
+/* Capacitor Android app - always add status bar padding */
+html.capacitor-app body,
+html[data-capacitor="true"] body,
+html.standalone-app body {
+  padding-top: 28px !important; /* Status bar height on most Android devices */
+  background-color: #0f172a;
+}
+
+/* Ensure the status bar area has the dark background */
+html.capacitor-app::before,
+html[data-capacitor="true"]::before,
+html.standalone-app::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 28px;
+  background-color: #0f172a;
+  z-index: 99999;
 }
 
 body {

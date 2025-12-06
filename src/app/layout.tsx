@@ -78,10 +78,32 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Viewport with safe area support for native apps */}
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+        />
+        {/* Status bar styling for Android/iOS */}
+        <meta name="theme-color" content="#0f172a" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                // Detect Capacitor native app
+                if (window.Capacitor || navigator.userAgent.includes('CapacitorApp')) {
+                  document.documentElement.classList.add('capacitor-app');
+                  document.documentElement.setAttribute('data-capacitor', 'true');
+                }
+                // Detect standalone PWA mode
+                if (window.matchMedia('(display-mode: standalone)').matches || 
+                    window.navigator.standalone === true) {
+                  document.documentElement.classList.add('standalone-app');
+                }
+                // Theme handling
                 try {
                   var theme = localStorage.getItem('m4capital-theme') || 'system';
                   var resolved = theme;
@@ -98,7 +120,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} safe-area-padding`}>
         <Providers>
           <ConditionalLayout>{children}</ConditionalLayout>
           <CookieConsent />
