@@ -10,12 +10,16 @@ import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import androidx.appcompat.app.AppCompatDelegate;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
     
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Force night mode to ensure light status bar icons
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        
         super.onCreate(savedInstanceState);
         applyStatusBarSettings();
     }
@@ -25,6 +29,14 @@ public class MainActivity extends BridgeActivity {
         super.onResume();
         // Re-apply on resume to ensure settings persist
         applyStatusBarSettings();
+    }
+    
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            applyStatusBarSettings();
+        }
     }
     
     private void applyStatusBarSettings() {
