@@ -25,22 +25,23 @@ public class MainActivity extends BridgeActivity {
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.clearFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
         
-        // Set status bar color to white (like browser in light mode)
+        // Set status bar color to dark (matches app header)
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.setStatusBarColor(Color.parseColor("#ffffff"));
+        window.setStatusBarColor(Color.parseColor("#0f172a"));
         
-        // Set light status bar (dark icons on white background) like browser
+        // Force light icons (white) on dark status bar background
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             window.setDecorFitsSystemWindows(true);
+            // Clear LIGHT_STATUS_BARS to get white/light icons
             window.getInsetsController().setSystemBarsAppearance(
-                android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS,
+                0,
                 android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS
             );
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // Set the light status bar flag to get dark icons
+            // Clear the light status bar flag to get white icons
             View decorView = window.getDecorView();
             int flags = decorView.getSystemUiVisibility();
-            flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
             decorView.setSystemUiVisibility(flags | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         } else {
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
