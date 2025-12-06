@@ -7,10 +7,11 @@ import {
   generateTransactionReference,
   validateTransferPin,
 } from "@/lib/p2p-transfer-utils";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 /**
  * POST /api/p2p-transfer/send
- * Process a P2P transfer between users
+ * Process a P2P transfer between users with proper currency conversion
  */
 export async function POST(request: Request) {
   try {
@@ -78,12 +79,8 @@ export async function POST(request: Request) {
     }
 
     const senderBalance = parseFloat(sender.Portfolio.balance.toString());
-    if (senderBalance < transferAmount) {
-      return NextResponse.json(
-        { error: "Insufficient balance" },
-        { status: 400 }
-      );
-    }
+    // Note: Actual balance check happens after currency conversion below
+    // because user enters amount in preferredCurrency but balance is in balanceCurrency
 
     // Look up receiver
     const receiver = await prisma.user.findFirst({
@@ -119,41 +116,140 @@ export async function POST(request: Request) {
       );
     }
 
+    // Get currencies - IMPORTANT DISTINCTION:
+    // - preferredCurrency: what the user sees in the UI (can be changed)
+    // - balanceCurrency: what the balance is actually stored in (set at deposit time)
+    // User enters amount in preferredCurrency, but balance is in balanceCurrency
+    const senderPreferredCurrency = sender.preferredCurrency || "USD";
+    const senderBalanceCurrency =
+      sender.Portfolio.balanceCurrency || senderPreferredCurrency;
+    const receiverPreferredCurrency = receiver.preferredCurrency || "USD";
+    const receiverBalanceCurrency =
+      receiver.Portfolio.balanceCurrency || receiverPreferredCurrency;
+
+    // Fetch exchange rates for currency conversion
+    let exchangeRates: Record<string, number> = { USD: 1 };
+    try {
+      const ratesRes = await fetch(
+        "https://api.frankfurter.app/latest?from=USD",
+        { next: { revalidate: 300 } } // Cache for 5 minutes
+      );
+      if (ratesRes.ok) {
+        const ratesData = await ratesRes.json();
+        exchangeRates = { USD: 1, ...ratesData.rates };
+      }
+    } catch (e) {
+      console.error("Error fetching exchange rates:", e);
+    }
+
+    // Helper function to convert between currencies
+    const convertCurrency = (
+      amountToConvert: number,
+      fromCurrency: string,
+      toCurrency: string
+    ): number => {
+      if (fromCurrency === toCurrency) return amountToConvert;
+      // Convert to USD first, then to target currency
+      const fromRate = exchangeRates[fromCurrency] || 1;
+      const toRate = exchangeRates[toCurrency] || 1;
+      const usdAmount = amountToConvert / fromRate;
+      return usdAmount * toRate;
+    };
+
+    // Step 1: Convert input amount from preferredCurrency to balanceCurrency (for deduction)
+    // User enters "100 EUR" but balance is in BRL, need to deduct equivalent BRL
+    const amountInSenderBalanceCurrency = convertCurrency(
+      transferAmount,
+      senderPreferredCurrency,
+      senderBalanceCurrency
+    );
+    const roundedDeductAmount =
+      Math.round(amountInSenderBalanceCurrency * 100) / 100;
+
+    // Verify sender has enough balance (in their balance currency)
+    if (senderBalance < roundedDeductAmount) {
+      return NextResponse.json(
+        { error: "Insufficient balance" },
+        { status: 400 }
+      );
+    }
+
+    // Step 2: Convert from sender's balance currency to receiver's balance currency (for credit)
+    const amountInReceiverBalanceCurrency = convertCurrency(
+      roundedDeductAmount,
+      senderBalanceCurrency,
+      receiverBalanceCurrency
+    );
+    const roundedCreditAmount =
+      Math.round(amountInReceiverBalanceCurrency * 100) / 100;
+
+    // Get currency symbols for notifications (use preferred currencies for display)
+    const senderSymbol = getCurrencySymbol(senderPreferredCurrency);
+    const receiverSymbol = getCurrencySymbol(receiverPreferredCurrency);
+
+    // Calculate display amount for receiver in their preferred currency
+    const receiverDisplayAmount = convertCurrency(
+      roundedCreditAmount,
+      receiverBalanceCurrency,
+      receiverPreferredCurrency
+    );
+    const roundedReceiverDisplay =
+      Math.round(receiverDisplayAmount * 100) / 100;
+
     // Generate transaction reference
     const transactionReference = generateTransactionReference();
 
     // Perform the transfer in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Deduct from sender
+      // Deduct from sender (in sender's BALANCE currency)
       await tx.portfolio.update({
         where: { id: sender.Portfolio!.id },
         data: {
           balance: {
-            decrement: transferAmount,
+            decrement: roundedDeductAmount,
           },
         },
       });
 
-      // Add to receiver
+      // Add to receiver (in receiver's BALANCE currency)
       await tx.portfolio.update({
         where: { id: receiver.Portfolio!.id },
         data: {
           balance: {
-            increment: transferAmount,
+            increment: roundedCreditAmount,
           },
         },
       });
 
-      // Create transfer record
+      // Create transfer record with comprehensive conversion metadata
+      // This stores all the info needed to display correctly in history for both users
       const transfer = await tx.p2PTransfer.create({
         data: {
           id: transactionReference,
           senderId: sender.id,
           receiverId: receiver.id,
-          amount: transferAmount,
-          currency: sender.preferredCurrency || "USD",
+          amount: roundedDeductAmount, // Store actual deducted amount (in sender's balance currency)
+          currency: senderBalanceCurrency, // Store sender's balance currency
           status: "COMPLETED",
-          description: description || null,
+          // Store complete conversion metadata for proper history display
+          description: JSON.stringify({
+            memo: description || "P2P Transfer",
+            // Sender's perspective (for sender's history)
+            senderInputAmount: transferAmount, // What user typed
+            senderInputCurrency: senderPreferredCurrency, // User's display currency
+            senderDeductedAmount: roundedDeductAmount, // Actually deducted from balance
+            senderBalanceCurrency: senderBalanceCurrency, // Balance storage currency
+            // Receiver's perspective (for receiver's history)
+            receiverCreditedAmount: roundedCreditAmount, // Actually credited to balance
+            receiverBalanceCurrency: receiverBalanceCurrency, // Balance storage currency
+            receiverDisplayAmount: roundedReceiverDisplay, // For display in their preferred
+            receiverDisplayCurrency: receiverPreferredCurrency, // Receiver's display currency
+            // Legacy fields for backward compatibility
+            senderAmount: transferAmount,
+            senderCurrency: senderPreferredCurrency,
+            receiverAmount: roundedReceiverDisplay,
+            receiverCurrency: receiverPreferredCurrency,
+          }),
           senderAccountNumber: sender.accountNumber!,
           receiverAccountNumber: receiver.accountNumber!,
           receiverEmail: receiver.email!,
@@ -164,7 +260,7 @@ export async function POST(request: Request) {
         },
       });
 
-      // Create notifications for both users
+      // Create notifications for both users with amounts in their PREFERRED currencies
       await tx.notification.createMany({
         data: [
           {
@@ -172,9 +268,9 @@ export async function POST(request: Request) {
             userId: sender.id,
             type: "TRANSACTION",
             title: "Transfer Sent",
-            message: `You sent ${transferAmount.toFixed(2)} ${
-              sender.preferredCurrency || "USD"
-            } to ${receiver.name || receiver.email}`,
+            message: `You sent ${senderSymbol}${transferAmount.toFixed(2)} to ${
+              receiver.name || receiver.email
+            }`,
             read: false,
           },
           {
@@ -182,9 +278,9 @@ export async function POST(request: Request) {
             userId: receiver.id,
             type: "TRANSACTION",
             title: "Money Received",
-            message: `You received ${transferAmount.toFixed(2)} ${
-              sender.preferredCurrency || "USD"
-            } from ${sender.name || sender.email}`,
+            message: `You received ${receiverSymbol}${roundedReceiverDisplay.toFixed(
+              2
+            )} from ${sender.name || sender.email}`,
             read: false,
           },
         ],
@@ -197,8 +293,14 @@ export async function POST(request: Request) {
       success: true,
       transfer: {
         id: result.id,
-        amount: result.amount,
-        currency: result.currency,
+        amount: transferAmount,
+        currency: senderPreferredCurrency,
+        deductedAmount: roundedDeductAmount,
+        deductedCurrency: senderBalanceCurrency,
+        creditedAmount: roundedCreditAmount,
+        creditedCurrency: receiverBalanceCurrency,
+        receiverDisplayAmount: roundedReceiverDisplay,
+        receiverDisplayCurrency: receiverPreferredCurrency,
         receiverName: result.receiverName,
         receiverEmail: result.receiverEmail,
         transactionReference: result.transactionReference,

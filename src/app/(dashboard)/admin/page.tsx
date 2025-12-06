@@ -1090,6 +1090,9 @@ const AdminDashboard = () => {
         // For fiat deposits, fiatAmount is in user's currency
         fiatAmount:
           depositType === "crypto" ? finalAmount : amountInUserCurrency,
+        // For crypto deposits, also send the user's currency value for display
+        fiatAmountUserCurrency:
+          depositType === "crypto" ? amountInUserCurrency : undefined,
         cryptoAmount: cryptoAmount > 0 ? cryptoAmount : undefined,
         cryptoPrice: depositType === "crypto" ? cryptoPriceUSD : undefined, // Send current crypto price
         paymentMethod: paymentMethodName,

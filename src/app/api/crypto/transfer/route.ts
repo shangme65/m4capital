@@ -300,9 +300,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get user's preferred currency
-    const userCurrency = sender.preferredCurrency || "USD";
-    const currSymbol = getCurrencySymbol(userCurrency);
+    // Get user's currencies - IMPORTANT DISTINCTION:
+    // - preferredCurrency: what the user sees in the UI (can be changed)
+    // - balanceCurrency: what the balance is actually stored in (set at deposit time)
+    const userPreferredCurrency = sender.preferredCurrency || "USD";
+    const userBalanceCurrency =
+      sender.Portfolio.balanceCurrency || userPreferredCurrency;
+    const currSymbol = getCurrencySymbol(userPreferredCurrency);
 
     // Find recipient by email or account number
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(destination);
@@ -318,9 +322,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get recipient's preferred currency
-    const recipientCurrency = recipient.preferredCurrency || "USD";
-    const recipientCurrSymbol = getCurrencySymbol(recipientCurrency);
+    // Get recipient's currencies
+    const recipientPreferredCurrency = recipient.preferredCurrency || "USD";
+    const recipientBalanceCurrency =
+      recipient.Portfolio?.balanceCurrency || recipientPreferredCurrency;
+    const recipientCurrSymbol = getCurrencySymbol(recipientPreferredCurrency);
 
     // Fetch exchange rates for currency conversion
     let exchangeRates: { [key: string]: number } = { USD: 1 };
@@ -369,36 +375,70 @@ export async function POST(request: NextRequest) {
     // Handle fiat/balance transfers (deduct from balance)
     if (isFiatTransfer) {
       const currentBalance = parseFloat(senderPortfolio.balance.toString());
-      const totalDeducted = amount + feeInUSD;
+
+      // Step 1: Convert user's input from preferredCurrency to balanceCurrency
+      // User enters "100 EUR" but balance might be stored in BRL
+      const amountInSenderBalanceCurrency = convertCurrency(
+        amount,
+        userPreferredCurrency,
+        userBalanceCurrency
+      );
+
+      // Fee is in USD, convert to sender's balance currency
+      const feeInBalanceCurrency = convertCurrency(
+        feeInUSD,
+        "USD",
+        userBalanceCurrency
+      );
+      const totalDeducted =
+        amountInSenderBalanceCurrency + feeInBalanceCurrency;
 
       if (currentBalance < totalDeducted) {
+        // Show error in user's preferred currency for clarity
+        const balanceInPreferred = convertCurrency(
+          currentBalance,
+          userBalanceCurrency,
+          userPreferredCurrency
+        );
+        const neededInPreferred = convertCurrency(
+          totalDeducted,
+          userBalanceCurrency,
+          userPreferredCurrency
+        );
         return NextResponse.json(
           {
-            error: `Insufficient balance. You have ${currSymbol}${currentBalance.toFixed(
+            error: `Insufficient balance. You have ${currSymbol}${balanceInPreferred.toFixed(
               2
-            )} but need ${currSymbol}${totalDeducted.toFixed(
+            )} but need ${currSymbol}${neededInPreferred.toFixed(
               2
-            )} (including ${currSymbol}${feeInUSD.toFixed(4)} fee)`,
+            )} (including fee)`,
           },
           { status: 400 }
         );
       }
 
-      // Convert amount from sender's currency to recipient's currency
-      const convertedAmount = convertCurrency(
-        amount,
-        userCurrency,
-        recipientCurrency
+      // Step 2: Convert from sender's balance currency to recipient's balance currency
+      const amountInRecipientBalanceCurrency = convertCurrency(
+        amountInSenderBalanceCurrency,
+        userBalanceCurrency,
+        recipientBalanceCurrency
       );
 
-      // Deduct from sender's balance (in sender's currency)
+      // Deduct from sender's balance (in sender's BALANCE currency)
       const newSenderBalance = new Decimal(senderPortfolio.balance).minus(
         totalDeducted
       );
 
-      // Add converted amount to recipient's balance (in recipient's currency)
+      // Add to recipient's balance (in recipient's BALANCE currency)
       const newRecipientBalance = new Decimal(recipientPortfolio.balance).plus(
-        convertedAmount
+        amountInRecipientBalanceCurrency
+      );
+
+      // Calculate display amounts in preferred currencies for history/notifications
+      const recipientDisplayAmount = convertCurrency(
+        amountInRecipientBalanceCurrency,
+        recipientBalanceCurrency,
+        recipientPreferredCurrency
       );
 
       // Update both portfolios and create P2PTransfer record in a transaction
@@ -411,26 +451,36 @@ export async function POST(request: NextRequest) {
           where: { id: recipientPortfolio.id },
           data: {
             balance: newRecipientBalance,
-            balanceCurrency: recipientCurrency, // Ensure recipient's currency is set
+            // Don't change balanceCurrency - keep recipient's existing storage currency
           },
         }),
-        // Record the transfer - store original amount in sender's currency
-        // The description field contains JSON metadata for cross-currency transfers
+        // Record the transfer with comprehensive metadata
         prisma.p2PTransfer.create({
           data: {
             id: transactionId,
             senderId: sender.id,
             receiverId: recipient.id,
-            amount: new Decimal(amount), // Store original sender amount
-            currency: userCurrency, // Store in sender's currency
+            amount: new Decimal(amountInSenderBalanceCurrency), // Store actual deducted amount
+            currency: userBalanceCurrency, // Store sender's balance currency
             status: "COMPLETED",
-            // Store conversion metadata in description for receiver's history
+            // Store complete conversion metadata for proper history display
             description: JSON.stringify({
               memo: memo || "P2P Transfer",
+              // Sender's perspective
+              senderInputAmount: amount,
+              senderInputCurrency: userPreferredCurrency,
+              senderDeductedAmount: amountInSenderBalanceCurrency,
+              senderBalanceCurrency: userBalanceCurrency,
+              // Receiver's perspective
+              receiverCreditedAmount: amountInRecipientBalanceCurrency,
+              receiverBalanceCurrency: recipientBalanceCurrency,
+              receiverDisplayAmount: recipientDisplayAmount,
+              receiverDisplayCurrency: recipientPreferredCurrency,
+              // Legacy fields for backward compatibility
               senderAmount: amount,
-              senderCurrency: userCurrency,
-              receiverAmount: convertedAmount,
-              receiverCurrency: recipientCurrency,
+              senderCurrency: userPreferredCurrency,
+              receiverAmount: recipientDisplayAmount,
+              receiverCurrency: recipientPreferredCurrency,
             }),
             senderAccountNumber: sender.accountNumber || sender.id,
             receiverAccountNumber: recipient.accountNumber || recipient.id,
@@ -443,44 +493,44 @@ export async function POST(request: NextRequest) {
         }),
       ]);
 
-      // Send email notification to recipient with converted amount
+      // Send email notification to recipient in their preferred currency
       if (recipient.email && recipient.emailNotifications !== false) {
         sendTransferReceivedEmail(
           recipient.email,
           recipient.name || "User",
           sender.name || sender.email || "Someone",
-          convertedAmount, // Use converted amount
-          recipientCurrency, // Use recipient's currency
+          recipientDisplayAmount,
+          recipientPreferredCurrency,
           memo,
           recipientCurrSymbol
         );
       }
 
-      // Send email notification to sender
+      // Send email notification to sender in their preferred currency
       if (sender.email && sender.emailNotifications !== false) {
         sendTransferSentEmail(
           sender.email,
           sender.name || "User",
           recipient.name || destination,
           amount,
-          userCurrency,
+          userPreferredCurrency,
           memo,
           currSymbol
         );
       }
 
-      // Send push notification to recipient with converted amount
+      // Send push notification to recipient in their preferred currency
       sendTransferPushNotification(
         recipient.id,
         "💰 Transfer Received!",
-        `You received ${recipientCurrSymbol}${convertedAmount.toFixed(
+        `You received ${recipientCurrSymbol}${recipientDisplayAmount.toFixed(
           2
         )} from ${sender.name || sender.email}`,
-        convertedAmount,
-        recipientCurrency
+        recipientDisplayAmount,
+        recipientPreferredCurrency
       );
 
-      // Send push notification to sender
+      // Send push notification to sender in their preferred currency
       sendTransferPushNotification(
         sender.id,
         "📤 Transfer Sent",
@@ -488,19 +538,23 @@ export async function POST(request: NextRequest) {
           recipient.name || destination
         }`,
         amount,
-        userCurrency
+        userPreferredCurrency
       );
 
       return NextResponse.json({
         success: true,
         message: `Successfully transferred ${currSymbol}${amount.toFixed(
           2
-        )} ${userCurrency} to ${recipient.name || destination}`,
+        )} ${userPreferredCurrency} to ${recipient.name || destination}`,
         transactionId,
-        asset: userCurrency, // Return sender's currency
+        asset: userPreferredCurrency, // Return sender's preferred currency
         amount,
-        convertedAmount,
-        recipientCurrency,
+        deductedAmount: amountInSenderBalanceCurrency,
+        deductedCurrency: userBalanceCurrency,
+        creditedAmount: amountInRecipientBalanceCurrency,
+        creditedCurrency: recipientBalanceCurrency,
+        recipientDisplayAmount,
+        recipientDisplayCurrency: recipientPreferredCurrency,
         fee: feeInUSD,
         totalDeducted,
         destination,

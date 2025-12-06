@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * GET /api/p2p-transfer/history
- * Get user's transfer history (sent and received)
+ * Get user's transfer history (sent and received) with proper currency handling
  */
 export async function GET(request: Request) {
   try {
@@ -66,28 +66,57 @@ export async function GET(request: Request) {
       prisma.p2PTransfer.count({ where: whereClause }),
     ]);
 
-    const formattedTransfers = transfers.map((transfer) => ({
-      id: transfer.id,
-      amount: transfer.amount,
-      currency: transfer.currency,
-      status: transfer.status,
-      description: transfer.description,
-      transactionReference: transfer.transactionReference,
-      type: transfer.senderId === user.id ? "sent" : "received",
-      sender: {
-        name: transfer.Sender.name,
-        email: transfer.Sender.email,
-        accountNumber: transfer.Sender.accountNumber,
-      },
-      receiver: {
-        name: transfer.Receiver.name,
-        email: transfer.Receiver.email,
-        accountNumber: transfer.Receiver.accountNumber,
-      },
-      createdAt: transfer.createdAt,
-      processedAt: transfer.processedAt,
-      failureReason: transfer.failureReason,
-    }));
+    const formattedTransfers = transfers.map((transfer) => {
+      const isSender = transfer.senderId === user.id;
+
+      // Parse metadata from description for cross-currency transfers
+      let displayAmount = Number(transfer.amount);
+      let displayCurrency = transfer.currency;
+
+      try {
+        const metadata = JSON.parse(transfer.description || "{}");
+        if (metadata.senderAmount && metadata.receiverAmount) {
+          // Cross-currency transfer with conversion metadata
+          if (isSender) {
+            displayAmount = Number(metadata.senderAmount);
+            displayCurrency = metadata.senderCurrency || transfer.currency;
+          } else {
+            displayAmount = Number(metadata.receiverAmount);
+            displayCurrency = metadata.receiverCurrency || transfer.currency;
+          }
+        }
+      } catch {
+        // Old format without metadata - use stored values
+        // For old transfers, the amount/currency represents sender's values
+        // This is a best-effort fallback
+      }
+
+      return {
+        id: transfer.id,
+        amount: displayAmount,
+        currency: displayCurrency,
+        // Also provide original values for reference
+        originalAmount: Number(transfer.amount),
+        originalCurrency: transfer.currency,
+        status: transfer.status,
+        description: transfer.description,
+        transactionReference: transfer.transactionReference,
+        type: isSender ? "sent" : "received",
+        sender: {
+          name: transfer.Sender.name,
+          email: transfer.Sender.email,
+          accountNumber: transfer.Sender.accountNumber,
+        },
+        receiver: {
+          name: transfer.Receiver.name,
+          email: transfer.Receiver.email,
+          accountNumber: transfer.Receiver.accountNumber,
+        },
+        createdAt: transfer.createdAt,
+        processedAt: transfer.processedAt,
+        failureReason: transfer.failureReason,
+      };
+    });
 
     return NextResponse.json({
       success: true,

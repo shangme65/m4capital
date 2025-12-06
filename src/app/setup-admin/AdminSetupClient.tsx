@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { useToast } from "@/contexts/ToastContext";
 import ConfirmDialog from "@/components/client/ConfirmDialog";
 import {
@@ -66,12 +66,33 @@ export default function AdminSetupClient({
         setResult(data);
         showSuccess(data.message || "Admin initialized successfully!");
 
-        // Redirect to login page after successful initialization
-        if (data.action === "created" || data.action === "updated") {
-          showSuccess(data.message + " Redirecting to login...");
-          setTimeout(() => {
-            window.location.href = "/?login=true";
-          }, 2000);
+        // Auto-login after successful initialization
+        if (
+          (data.action === "created" || data.action === "updated") &&
+          data.data?.credentials
+        ) {
+          showSuccess("Admin initialized! Logging in automatically...");
+
+          const signInResult = await signIn("credentials", {
+            email: data.data.credentials.email,
+            password: data.data.credentials.password,
+            redirect: false,
+          });
+
+          if (signInResult?.ok) {
+            showSuccess("Logged in successfully! Redirecting to dashboard...");
+            setTimeout(() => {
+              router.push("/dashboard");
+            }, 1500);
+          } else {
+            // Fallback to manual login if auto-login fails
+            showError(
+              "Auto-login failed. Please login manually with your credentials."
+            );
+            setTimeout(() => {
+              window.location.href = "/?login=true";
+            }, 2000);
+          }
         }
       } else {
         setError(data.error || "Failed to initialize admin");
@@ -103,6 +124,22 @@ export default function AdminSetupClient({
       if (data.success) {
         setResult(data);
         showSuccess(data.message || "Origin admin removed successfully!");
+
+        // Clear all local storage data
+        if (typeof window !== "undefined") {
+          localStorage.clear();
+          sessionStorage.clear();
+        }
+
+        // Sign out the user and redirect to setup page
+        // This clears the NextAuth session cookie and database session
+        await signOut({ redirect: false });
+
+        // Redirect to setup page after a brief delay to show success message
+        setTimeout(() => {
+          router.push("/setup-admin");
+          router.refresh();
+        }, 1500);
       } else {
         setError(data.error || "Failed to remove origin admin");
         showError(data.error || "Failed to remove origin admin");

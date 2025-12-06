@@ -197,7 +197,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Transform sent transfers into transaction format
-    // For sent transfers, always show in sender's currency (stored in t.currency and t.amount)
+    // For sent transfers, show in sender's currency (from metadata if available, fallback to stored values)
     const sentTransferTransactions = sentTransfers.map((t) => {
       // Parse description for memo and crypto details (description may contain JSON metadata)
       let displayMemo = "P2P Transfer";
@@ -205,10 +205,19 @@ export async function GET(req: NextRequest) {
       let cryptoAmount = 0;
       let cryptoPrice = 0;
       let usdValue = Number(t.amount);
+      let senderAmount = Number(t.amount);
+      let senderCurrency = t.currency || "USD";
 
       try {
         const metadata = JSON.parse(t.description || "{}");
         displayMemo = metadata.memo || "P2P Transfer";
+
+        // Check for cross-currency fiat transfer metadata
+        if (metadata.senderAmount && metadata.senderCurrency) {
+          senderAmount = Number(metadata.senderAmount);
+          senderCurrency = metadata.senderCurrency;
+        }
+
         if (metadata.type === "crypto" && metadata.cryptoAmount) {
           isCryptoTransfer = true;
           cryptoAmount = metadata.cryptoAmount;
@@ -242,7 +251,7 @@ export async function GET(req: NextRequest) {
         "KRW",
         "NGN",
       ];
-      const isFiatCurrency = FIAT_CURRENCIES.includes(t.currency || "USD");
+      const isFiatCurrency = FIAT_CURRENCIES.includes(senderCurrency);
 
       if (!isFiatCurrency && !isCryptoTransfer) {
         // It's a crypto currency but no metadata - treat amount as USD value
@@ -252,14 +261,12 @@ export async function GET(req: NextRequest) {
       return {
         id: t.id,
         type: "transfer" as const,
-        asset: t.currency || "USD",
+        asset: senderCurrency,
         // For crypto transfers, show the crypto amount; for fiat, show the fiat amount
         amount:
-          isCryptoTransfer && cryptoAmount > 0
-            ? cryptoAmount
-            : Number(t.amount),
+          isCryptoTransfer && cryptoAmount > 0 ? cryptoAmount : senderAmount,
         // Value is USD value for crypto, or fiat amount for fiat transfers
-        value: isCryptoTransfer ? usdValue : Number(t.amount),
+        value: isCryptoTransfer ? usdValue : senderAmount,
         timestamp: t.createdAt.toISOString(),
         status:
           t.status === "COMPLETED"

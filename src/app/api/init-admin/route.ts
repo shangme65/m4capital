@@ -177,8 +177,12 @@ export async function GET(request: Request) {
           admin: updatedAdmin,
           action: "updated",
           autoLoginReady: true,
+          credentials: {
+            email: email,
+            password: password, // Return plain password for auto-login (setup only)
+          },
         },
-        "Origin admin updated successfully. Please login with your .env credentials."
+        "Origin admin updated successfully. Logging in..."
       );
     } else {
       // Create new admin
@@ -241,8 +245,12 @@ export async function GET(request: Request) {
           admin: newAdmin,
           action: "created",
           autoLoginReady: true,
+          credentials: {
+            email: email,
+            password: password, // Return plain password for auto-login (setup only)
+          },
         },
-        "Origin admin created successfully. Please login with your .env credentials."
+        "Origin admin created successfully. Logging in..."
       );
     }
   } catch (error) {

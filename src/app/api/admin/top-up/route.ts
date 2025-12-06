@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
       userId,
       amount,
       fiatAmount,
+      fiatAmountUserCurrency, // For crypto deposits: the value in user's preferred currency
       cryptoAmount,
       cryptoPrice, // Price per unit at time of deposit (USD)
       paymentMethod,
@@ -131,6 +132,8 @@ export async function POST(req: NextRequest) {
           depositType,
           isAdminManual: true,
           fiatAmount: fiatAmount || amount,
+          fiatAmountUserCurrency: fiatAmountUserCurrency, // Store value in user's preferred currency
+          fiatCurrency: userPreferredCurrency, // Store the user's preferred currency
           cryptoAmount: cryptoAmount,
           cryptoPrice: cryptoPrice, // Store price per unit at time of deposit (USD)
         },

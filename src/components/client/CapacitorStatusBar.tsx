@@ -18,11 +18,11 @@ export default function CapacitorStatusBar() {
         if (isDarkMode) {
           // Dark mode: Dark background (#0f172a) with light/white icons
           await StatusBar.setBackgroundColor({ color: "#0f172a" });
-          await StatusBar.setStyle({ style: Style.Dark }); // Light icons
+          await StatusBar.setStyle({ style: Style.Light }); // Light/white icons on dark bg
         } else {
           // Light mode: Light background (#f8fafc - slate-50) with dark icons
           await StatusBar.setBackgroundColor({ color: "#f8fafc" });
-          await StatusBar.setStyle({ style: Style.Light }); // Dark icons
+          await StatusBar.setStyle({ style: Style.Dark }); // Dark icons on light bg
         }
         await StatusBar.setOverlaysWebView({ overlay: false });
 
@@ -37,10 +37,10 @@ export default function CapacitorStatusBar() {
                 document.documentElement.classList.contains("dark");
               if (isDark) {
                 await StatusBar.setBackgroundColor({ color: "#0f172a" });
-                await StatusBar.setStyle({ style: Style.Dark });
+                await StatusBar.setStyle({ style: Style.Light }); // Light/white icons on dark bg
               } else {
                 await StatusBar.setBackgroundColor({ color: "#f8fafc" });
-                await StatusBar.setStyle({ style: Style.Light });
+                await StatusBar.setStyle({ style: Style.Dark }); // Dark icons on light bg
               }
             }
           }

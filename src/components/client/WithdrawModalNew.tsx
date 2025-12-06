@@ -41,7 +41,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [step, setStep] = useState(1);
   const [withdrawData, setWithdrawData] = useState({
     amount: "",
-    currency: "USD",
+    currency: "", // Will be set from balanceCurrency when portfolio loads
     withdrawalMethod: "CRYPTO_BTC",
     address: "",
     memo: "",
@@ -81,6 +81,16 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
   // Get crypto assets from portfolio
   const cryptoAssets = portfolio?.portfolio?.assets || [];
+
+  // Set currency from balanceCurrency when portfolio loads
+  useEffect(() => {
+    if (balanceCurrency && !withdrawData.currency) {
+      setWithdrawData((prev) => ({
+        ...prev,
+        currency: balanceCurrency,
+      }));
+    }
+  }, [balanceCurrency, withdrawData.currency]);
 
   // Helper to get crypto balance
   const getCryptoBalance = (symbol: string) => {
@@ -197,7 +207,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
       setStep(1);
       setWithdrawData({
         amount: "",
-        currency: "USD",
+        currency: "", // Will be reset from balanceCurrency when re-opened
         withdrawalMethod: "CRYPTO_BTC",
         address: "",
         memo: "",

@@ -102,6 +102,8 @@ export async function GET(request: NextRequest) {
         const metadata = d.metadata as {
           cryptoAmount?: number;
           fiatAmount?: number;
+          fiatAmountUserCurrency?: number;
+          fiatCurrency?: string;
           cryptoPrice?: number;
           fiatAmountUSD?: number;
         } | null;
@@ -109,16 +111,24 @@ export async function GET(request: NextRequest) {
           ? Number(d.cryptoAmount)
           : metadata?.cryptoAmount || 0;
         // fiatAmt is in the deposit currency (could be BRL, EUR, USD, etc.)
-        const fiatAmt = metadata?.fiatAmount || Number(d.amount || 0);
+        // For crypto deposits, prefer fiatAmountUserCurrency (actual user currency value)
+        const fiatAmt =
+          metadata?.fiatAmountUserCurrency ||
+          metadata?.fiatAmount ||
+          Number(d.amount || 0);
         // fiatAmtUSD is the USD equivalent for proper conversion
         // If stored in metadata, use it. Otherwise, if currency is USD, use fiatAmt
         // For non-USD deposits without USD conversion stored, we'll estimate using price
         const fiatAmtUSD =
-          metadata?.fiatAmountUSD || (d.currency === "USD" ? fiatAmt : null);
+          metadata?.fiatAmountUSD ||
+          metadata?.fiatAmount ||
+          (d.currency === "USD" ? fiatAmt : null);
         // Calculate price per unit: if we have cryptoPrice in metadata use it,
         // otherwise calculate from fiatAmount / cryptoAmount
         const pricePerUnit =
           metadata?.cryptoPrice || (cryptoAmt > 0 ? fiatAmt / cryptoAmt : 0);
+        // Use the stored fiat currency or deposit currency
+        const fiatCurrency = metadata?.fiatCurrency || d.currency;
 
         return {
           id: d.id,
@@ -127,9 +137,9 @@ export async function GET(request: NextRequest) {
           cryptoCurrency: d.cryptoCurrency,
           amount: cryptoAmt,
           price: pricePerUnit, // Price per unit (exchange rate)
-          fiatValue: fiatAmt, // Total fiat value in original deposit currency
+          fiatValue: fiatAmt, // Total fiat value in user's preferred currency
           fiatValueUSD: fiatAmtUSD, // USD equivalent if available
-          fiatCurrency: d.currency, // Original deposit currency
+          fiatCurrency: fiatCurrency, // User's preferred currency
           date: d.createdAt,
           status: d.status.toLowerCase(),
           source: "deposit",
