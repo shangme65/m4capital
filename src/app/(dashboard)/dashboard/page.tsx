@@ -1630,18 +1630,14 @@ function DashboardContent() {
                             </div>
                             <span className="font-medium text-xs text-white px-2 py-0.5 rounded-md bg-gray-700/50">
                               {/* For fiat deposits, show in original currency without re-conversion */}
-                              {/* For crypto deposits, getFiatValue already converts to user's currency */}
+                              {/* For crypto deposits, use formatAmount which handles USD->preferredCurrency conversion */}
                               {isFiatDeposit
                                 ? formatCurrencyUtil(
-                                    getFiatValue(),
+                                    activity.value || 0,
                                     assetSymbol,
                                     2
                                   )
-                                : formatCurrencyUtil(
-                                    getFiatValue(),
-                                    preferredCurrency,
-                                    2
-                                  )}
+                                : formatAmount(activity.value || 0, 2)}
                             </span>
                           </div>
 
