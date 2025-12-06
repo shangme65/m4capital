@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "online.m4capital.twa",
+      "sha256_cert_fingerprints": ["E3:1E:9A:45:BB:68:EF:FE:6F:69:A6:9F:A0:D8:0B:36:A2:C4:54:47:DB:80:13:60:A7:43:D3:96:AC:FC:98:1E"]
+    }
+  }
+]
