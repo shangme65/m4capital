@@ -4,6 +4,7 @@ import "./globals.css";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { Providers } from "@/components/Providers";
 import CookieConsent from "@/components/client/CookieConsent";
+import CapacitorStatusBar from "@/components/client/CapacitorStatusBar";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -122,6 +123,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} safe-area-padding`}>
         <Providers>
+          <CapacitorStatusBar />
           <ConditionalLayout>{children}</ConditionalLayout>
           <CookieConsent />
         </Providers>
