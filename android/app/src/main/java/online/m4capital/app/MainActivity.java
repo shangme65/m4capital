@@ -9,6 +9,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
@@ -57,8 +58,10 @@ public class MainActivity extends BridgeActivity {
                 statusBarHeight = getResources().getDimensionPixelSize(resourceId);
             }
             
-            // Apply top padding for status bar
-            webView.setPadding(0, statusBarHeight, 0, 0);
+            // Apply top MARGIN (not padding) to push WebView below status bar
+            ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) webView.getLayoutParams();
+            params.topMargin = statusBarHeight;
+            webView.setLayoutParams(params);
         }
     }
 }
