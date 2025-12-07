@@ -2814,14 +2814,16 @@ function TradingInterface() {
 
             {/* Chart Area with World Map Background */}
             <div
-              className="flex-1 flex items-center justify-center relative"
+              className="flex-1 relative overflow-hidden"
               style={{
                 backgroundColor: "#1b1817",
-                backgroundImage: 'url("/traderoom/backgrounds/m4capital1.svg")',
-                backgroundSize: "cover",
+                backgroundImage:
+                  'url("/traderoom/backgrounds/worldmapbackground.svg")',
+                backgroundSize: "100% 100%", // Stretch to fill entire chart area
                 backgroundPosition: "center",
                 backgroundRepeat: "no-repeat",
-                minHeight: "500px",
+                minHeight: "400px",
+                maxHeight: "calc(100vh - 150px)", // Fit within viewport minus header/controls
               }}
             >
               <ChartGrid

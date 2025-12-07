@@ -17,7 +17,7 @@ export type BinanceInterval = "1m" | "5m" | "15m" | "1h" | "4h" | "1d";
  * Fetch historical kline data from Binance
  * @param symbol Trading pair (e.g., "BTCUSDT")
  * @param interval Timeframe (e.g., "1m", "5m", "15m", "1h", "4h", "1d")
- * @param limit Number of candles to fetch (default: 100, max: 1000)
+ * @param limit Number of candles to fetch (default: 100, will make multiple requests if > 1000)
  */
 export async function fetchKlineData(
   symbol: string,
@@ -28,29 +28,75 @@ export async function fetchKlineData(
     // Normalize symbol format (BTCUSDT, ETHUSDT, etc.)
     const normalizedSymbol = symbol.toUpperCase().replace(/[^A-Z]/g, "");
 
-    // Binance API endpoint for klines
-    const url = `https://api.binance.com/api/v3/klines?symbol=${normalizedSymbol}&interval=${interval}&limit=${limit}`;
+    // Binance API max is 1000 per request, so we need multiple requests for more
+    const maxPerRequest = 1000;
+    const allCandles: KlineData[] = [];
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(
-        `Binance API error: ${response.status} ${response.statusText}`
-      );
+    if (limit <= maxPerRequest) {
+      // Single request
+      const url = `https://api.binance.com/api/v3/klines?symbol=${normalizedSymbol}&interval=${interval}&limit=${limit}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(
+          `Binance API error: ${response.status} ${response.statusText}`
+        );
+      }
+      const rawData = await response.json();
+      return rawData.map((candle: any[]) => ({
+        timestamp: candle[0],
+        open: parseFloat(candle[1]),
+        high: parseFloat(candle[2]),
+        low: parseFloat(candle[3]),
+        close: parseFloat(candle[4]),
+        volume: parseFloat(candle[5]),
+      }));
     }
 
-    const rawData = await response.json();
+    // Multiple requests needed for > 1000 candles
+    let remaining = limit;
+    let endTime: number | undefined = undefined;
 
-    // Transform Binance kline format to our KlineData format
-    // Binance format: [timestamp, open, high, low, close, volume, closeTime, ...]
-    return rawData.map((candle: any[]) => ({
-      timestamp: candle[0], // Open time
-      open: parseFloat(candle[1]),
-      high: parseFloat(candle[2]),
-      low: parseFloat(candle[3]),
-      close: parseFloat(candle[4]),
-      volume: parseFloat(candle[5]),
-    }));
+    while (remaining > 0 && allCandles.length < limit) {
+      const batchLimit = Math.min(remaining, maxPerRequest);
+      let url = `https://api.binance.com/api/v3/klines?symbol=${normalizedSymbol}&interval=${interval}&limit=${batchLimit}`;
+      if (endTime) {
+        url += `&endTime=${endTime}`;
+      }
+
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(
+          `Binance API error: ${response.status} ${response.statusText}`
+        );
+      }
+
+      const rawData = await response.json();
+      if (rawData.length === 0) break;
+
+      const batchCandles: KlineData[] = rawData.map((candle: any[]) => ({
+        timestamp: candle[0],
+        open: parseFloat(candle[1]),
+        high: parseFloat(candle[2]),
+        low: parseFloat(candle[3]),
+        close: parseFloat(candle[4]),
+        volume: parseFloat(candle[5]),
+      }));
+
+      // Add to beginning (older data)
+      allCandles.unshift(...batchCandles);
+
+      // Set endTime for next batch (1ms before oldest candle)
+      endTime = batchCandles[0].timestamp - 1;
+      remaining -= batchLimit;
+
+      // Small delay to avoid rate limiting
+      if (remaining > 0) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+
+    // Return only the requested limit, trimming from the start if we got more
+    return allCandles.slice(-limit);
   } catch (error) {
     console.error(`Failed to fetch kline data for ${symbol}:`, error);
     throw error;
