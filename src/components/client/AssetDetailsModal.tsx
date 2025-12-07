@@ -855,6 +855,21 @@ export default function AssetDetailsModal({
                             key={tx.id}
                             onClick={() => {
                               // Convert to DetailedTransaction format
+                              // Use fiatValue from API (deposit-time value) NOT current price
+                              const txAmount =
+                                typeof tx.amount === "number"
+                                  ? tx.amount
+                                  : parseFloat(tx.amount) || 0;
+                              // fiatValue is the stored deposit value in user's currency
+                              // Only fall back to calculation if fiatValue is truly not available
+                              const txValue =
+                                tx.fiatValue != null &&
+                                tx.fiatValue !== undefined
+                                  ? tx.fiatValue
+                                  : tx.price
+                                  ? tx.price * txAmount
+                                  : 0;
+
                               const detailedTx: DetailedTransaction = {
                                 id:
                                   tx.id?.toString() ||
@@ -870,16 +885,8 @@ export default function AssetDetailsModal({
                                   | "send"
                                   | "receive",
                                 asset: tx.cryptoCurrency || asset.symbol,
-                                amount:
-                                  typeof tx.amount === "number"
-                                    ? tx.amount
-                                    : parseFloat(tx.amount) || 0,
-                                value:
-                                  tx.fiatValue ||
-                                  tx.price *
-                                    (typeof tx.amount === "number"
-                                      ? tx.amount
-                                      : parseFloat(tx.amount) || 0),
+                                amount: txAmount,
+                                value: txValue,
                                 timestamp: new Date(tx.date).toLocaleString(),
                                 status: (tx.status?.toLowerCase() ===
                                   "completed" ||
