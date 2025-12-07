@@ -234,6 +234,13 @@ export async function POST(req: NextRequest) {
         ? parseFloat(cryptoAmount.toString()).toFixed(8)
         : amount;
 
+    // For crypto deposits, calculate the fiat value for the notification badge
+    // Use fiatAmountUserCurrency if provided, otherwise fallback to fiatAmount
+    const cryptoFiatValueForNotification =
+      depositType === "crypto"
+        ? Math.round((fiatAmountUserCurrency || fiatAmount || 0) * 100) / 100
+        : 0;
+
     await prisma.notification.create({
       data: {
         id: generateId(),
@@ -247,12 +254,15 @@ export async function POST(req: NextRequest) {
             ? `${formattedCryptoAmount} ${cryptoAsset}`
             : `${getCurrencySymbol(userPreferredCurrency)}${displayFiatAmount}`
         } has been confirmed and credited to your account.`,
-        // For crypto deposits, store the actual crypto amount; for fiat, use rounded fiat amount
+        // For crypto deposits, store the fiat value in user's currency for the badge display
+        // For fiat deposits, use the rounded fiat amount
         amount:
           depositType === "crypto"
-            ? parseFloat((cryptoAmount || amount).toString())
+            ? cryptoFiatValueForNotification
             : roundedFiatAmountForNotification,
-        asset: depositType === "crypto" ? cryptoAsset : userPreferredCurrency,
+        // For crypto deposits, use user's preferred currency so badge shows fiat value (e.g., R$4,000.00)
+        // For fiat deposits, use the user's preferred currency
+        asset: userPreferredCurrency,
         metadata: {
           depositId: deposit.id,
           transactionId: deposit.transactionId,

@@ -904,6 +904,7 @@ export default function AssetDetailsModal({
                                   tx.method || tx.paymentMethod || undefined,
                                 date: new Date(tx.date),
                                 currency: tx.currency || preferredCurrency,
+                                valueCurrency: tx.fiatCurrency || undefined, // Currency that fiatValue is in
                                 rate: tx.price || undefined,
                                 hash: tx.hash || tx.txHash || undefined,
                                 network: tx.network || undefined,

@@ -44,6 +44,7 @@ export interface DetailedTransaction {
   description?: string;
   date?: Date;
   currency?: string;
+  valueCurrency?: string; // The currency that 'value' is stored in (e.g., BRL, USD)
   fromAsset?: string;
   toAsset?: string;
   fromAmount?: number;
@@ -731,13 +732,22 @@ export default function TransactionDetailsModal({
                           Value
                         </label>
                         <div className="text-white text-xl font-bold">
-                          {/* For fiat deposits, value is already in user's currency - don't convert */}
+                          {/* For fiat deposits (asset is fiat), value is in that currency */}
+                          {/* For crypto deposits with valueCurrency matching preferred, don't convert */}
+                          {/* Otherwise, value is in USD, use formatAmount to convert */}
                           {FIAT_CURRENCIES.has(
                             transaction.asset?.toUpperCase() || ""
                           )
                             ? formatCurrencyUtil(
                                 transaction.value,
                                 transaction.asset?.toUpperCase() || "BRL",
+                                2
+                              )
+                            : transaction.valueCurrency &&
+                              transaction.valueCurrency === preferredCurrency
+                            ? formatCurrencyUtil(
+                                transaction.value,
+                                transaction.valueCurrency,
                                 2
                               )
                             : formatAmount(transaction.value, 2)}
