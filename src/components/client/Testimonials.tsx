@@ -593,15 +593,17 @@ const TestimonialCard3D = ({
 };
 
 const Testimonials: React.FC = () => {
-  // Independent indices for each card position
-  const [leftIndex, setLeftIndex] = useState(0);
-  const [rightIndex, setRightIndex] = useState(1);
-  const [centerIndex, setCenterIndex] = useState(2);
+  // Independent indices for each card position (4 cards for desktop)
+  const [card1Index, setCard1Index] = useState(0);
+  const [card2Index, setCard2Index] = useState(1);
+  const [card3Index, setCard3Index] = useState(2);
+  const [card4Index, setCard4Index] = useState(3);
 
   // Pause states for each card
-  const [leftPaused, setLeftPaused] = useState(false);
-  const [rightPaused, setRightPaused] = useState(false);
-  const [centerPaused, setCenterPaused] = useState(false);
+  const [card1Paused, setCard1Paused] = useState(false);
+  const [card2Paused, setCard2Paused] = useState(false);
+  const [card3Paused, setCard3Paused] = useState(false);
+  const [card4Paused, setCard4Paused] = useState(false);
 
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -625,30 +627,39 @@ const Testimonials: React.FC = () => {
   // Independent auto-rotation for each card
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!leftPaused) {
-        setLeftIndex((prev) => (prev + 3) % testimonials.length);
+      if (!card1Paused) {
+        setCard1Index((prev) => (prev + 4) % testimonials.length);
       }
     }, 4000);
     return () => clearInterval(interval);
-  }, [leftPaused]);
+  }, [card1Paused]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!rightPaused) {
-        setRightIndex((prev) => (prev + 3) % testimonials.length);
+      if (!card2Paused) {
+        setCard2Index((prev) => (prev + 4) % testimonials.length);
       }
     }, 5000);
     return () => clearInterval(interval);
-  }, [rightPaused]);
+  }, [card2Paused]);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      if (!centerPaused) {
-        setCenterIndex((prev) => (prev + 3) % testimonials.length);
+      if (!card3Paused) {
+        setCard3Index((prev) => (prev + 4) % testimonials.length);
       }
     }, 6000);
     return () => clearInterval(interval);
-  }, [centerPaused]);
+  }, [card3Paused]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!card4Paused) {
+        setCard4Index((prev) => (prev + 4) % testimonials.length);
+      }
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [card4Paused]);
 
   return (
     <div className="relative bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white py-12 sm:py-16 overflow-hidden">
@@ -689,22 +700,22 @@ const Testimonials: React.FC = () => {
           </p>
         </motion.div>
 
-        {/* Top row - 2 cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-4 md:mb-6">
+        {/* 4 cards grid - 1 column on mobile, 2x2 on desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <AnimatePresence mode="wait">
             <TestimonialCard3D
-              key={`left-${leftIndex}`}
-              testimonialIndex={leftIndex}
+              key={`card1-${card1Index}`}
+              testimonialIndex={card1Index}
               cardPosition="left"
               isDarkMode={isDarkMode}
-              isPaused={leftPaused}
-              onPause={() => setLeftPaused(true)}
-              onResume={() => setLeftPaused(false)}
+              isPaused={card1Paused}
+              onPause={() => setCard1Paused(true)}
+              onResume={() => setCard1Paused(false)}
               onNext={() =>
-                setLeftIndex((prev) => (prev + 1) % testimonials.length)
+                setCard1Index((prev) => (prev + 1) % testimonials.length)
               }
               onPrev={() =>
-                setLeftIndex(
+                setCard1Index(
                   (prev) =>
                     (prev - 1 + testimonials.length) % testimonials.length
                 )
@@ -713,50 +724,64 @@ const Testimonials: React.FC = () => {
           </AnimatePresence>
           <AnimatePresence mode="wait">
             <TestimonialCard3D
-              key={`right-${rightIndex}`}
-              testimonialIndex={rightIndex}
+              key={`card2-${card2Index}`}
+              testimonialIndex={card2Index}
               cardPosition="right"
               isDarkMode={isDarkMode}
-              isPaused={rightPaused}
-              onPause={() => setRightPaused(true)}
-              onResume={() => setRightPaused(false)}
+              isPaused={card2Paused}
+              onPause={() => setCard2Paused(true)}
+              onResume={() => setCard2Paused(false)}
               onNext={() =>
-                setRightIndex((prev) => (prev + 1) % testimonials.length)
+                setCard2Index((prev) => (prev + 1) % testimonials.length)
               }
               onPrev={() =>
-                setRightIndex(
+                setCard2Index(
                   (prev) =>
                     (prev - 1 + testimonials.length) % testimonials.length
                 )
               }
             />
           </AnimatePresence>
-        </div>
-
-        {/* Bottom row - 1 centered card */}
-        <div className="flex justify-center">
-          <div className="w-full md:w-1/2 lg:w-1/3">
-            <AnimatePresence mode="wait">
-              <TestimonialCard3D
-                key={`center-${centerIndex}`}
-                testimonialIndex={centerIndex}
-                cardPosition="center"
-                isDarkMode={isDarkMode}
-                isPaused={centerPaused}
-                onPause={() => setCenterPaused(true)}
-                onResume={() => setCenterPaused(false)}
-                onNext={() =>
-                  setCenterIndex((prev) => (prev + 1) % testimonials.length)
-                }
-                onPrev={() =>
-                  setCenterIndex(
-                    (prev) =>
-                      (prev - 1 + testimonials.length) % testimonials.length
-                  )
-                }
-              />
-            </AnimatePresence>
-          </div>
+          <AnimatePresence mode="wait">
+            <TestimonialCard3D
+              key={`card3-${card3Index}`}
+              testimonialIndex={card3Index}
+              cardPosition="center"
+              isDarkMode={isDarkMode}
+              isPaused={card3Paused}
+              onPause={() => setCard3Paused(true)}
+              onResume={() => setCard3Paused(false)}
+              onNext={() =>
+                setCard3Index((prev) => (prev + 1) % testimonials.length)
+              }
+              onPrev={() =>
+                setCard3Index(
+                  (prev) =>
+                    (prev - 1 + testimonials.length) % testimonials.length
+                )
+              }
+            />
+          </AnimatePresence>
+          <AnimatePresence mode="wait">
+            <TestimonialCard3D
+              key={`card4-${card4Index}`}
+              testimonialIndex={card4Index}
+              cardPosition="left"
+              isDarkMode={isDarkMode}
+              isPaused={card4Paused}
+              onPause={() => setCard4Paused(true)}
+              onResume={() => setCard4Paused(false)}
+              onNext={() =>
+                setCard4Index((prev) => (prev + 1) % testimonials.length)
+              }
+              onPrev={() =>
+                setCard4Index(
+                  (prev) =>
+                    (prev - 1 + testimonials.length) % testimonials.length
+                )
+              }
+            />
+          </AnimatePresence>
         </div>
       </div>
 

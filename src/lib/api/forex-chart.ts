@@ -34,24 +34,24 @@ const FOREX_BASE_PRICES: Record<string, number> = {
 };
 
 // Volatility factors for different pairs (pip movement per candle)
-// Increased 10x for more visible candles like IQ Option
+// Increased for more visible candlesticks with clear green/red bodies
 const VOLATILITY: Record<string, number> = {
-  USDCAD: 0.008,
-  EURUSD: 0.006,
-  GBPUSD: 0.01,
-  USDJPY: 0.8,
-  AUDUSD: 0.007,
-  USDCHF: 0.006,
-  NZDUSD: 0.008,
-  EURJPY: 1.0,
-  GBPJPY: 1.2,
-  EURGBP: 0.005,
-  AUDCAD: 0.007,
-  EURCAD: 0.009,
-  GBPCAD: 0.011,
-  BTCUSD: 2000,
-  ETHUSD: 100,
-  XRPUSD: 0.15,
+  USDCAD: 0.015,
+  EURUSD: 0.012,
+  GBPUSD: 0.018,
+  USDJPY: 1.5,
+  AUDUSD: 0.014,
+  USDCHF: 0.012,
+  NZDUSD: 0.015,
+  EURJPY: 1.8,
+  GBPJPY: 2.2,
+  EURGBP: 0.01,
+  AUDCAD: 0.014,
+  EURCAD: 0.016,
+  GBPCAD: 0.02,
+  BTCUSD: 3500,
+  ETHUSD: 180,
+  XRPUSD: 0.25,
 };
 
 /**
@@ -117,28 +117,29 @@ export function generateRealisticCandles(
   for (let i = count - 1; i >= 0; i--) {
     const timestamp = now - i * intervalMs;
 
-    // Update trend occasionally
-    if (seededRandom(i * 7) > 0.95) {
-      trend = (seededRandom(i * 13) - 0.5) * 2;
+    // Update trend occasionally - creates alternating up/down patterns
+    if (seededRandom(i * 7) > 0.92) {
+      trend = (seededRandom(i * 13) - 0.5) * 2.5;
     }
 
     // Calculate price movement with trend and randomness
     const trendComponent = trend * volatility * trendStrength;
-    const randomComponent = (seededRandom(i) - 0.5) * 2 * volatility;
-    const meanReversion = (basePrice - currentPrice) * 0.001;
+    const randomComponent = (seededRandom(i) - 0.5) * 2.5 * volatility;
+    const meanReversion = (basePrice - currentPrice) * 0.002;
 
-    momentum = momentum * 0.8 + (trendComponent + randomComponent) * 0.2;
+    momentum = momentum * 0.7 + (trendComponent + randomComponent) * 0.3;
 
     const priceChange = momentum + meanReversion;
 
-    // Generate OHLC
+    // Generate OHLC with more pronounced body (open-close difference)
     const open = currentPrice;
     const close = currentPrice + priceChange;
 
-    // High and low based on volatility
-    const range = Math.abs(priceChange) + volatility * seededRandom(i * 3);
-    const highOffset = range * seededRandom(i * 5);
-    const lowOffset = range * seededRandom(i * 11);
+    // High and low based on volatility - add wicks
+    const range =
+      Math.abs(priceChange) + volatility * seededRandom(i * 3) * 0.8;
+    const highOffset = range * (0.2 + seededRandom(i * 5) * 0.6);
+    const lowOffset = range * (0.2 + seededRandom(i * 11) * 0.6);
 
     const high = Math.max(open, close) + highOffset;
     const low = Math.min(open, close) - lowOffset;

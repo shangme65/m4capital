@@ -96,25 +96,25 @@ export default function RealTimeTradingChart({
         },
       },
       styles: {
-        // IQ Option style candles - THICK, solid, clear colors
+        // IQ Option style candles - THICK, solid, clear GREEN/RED colors
         candle: {
           type: "candle_solid" as any,
           bar: {
-            upColor: "#26a69a", // IQ Option green
-            downColor: "#ef5350", // IQ Option red
-            upBorderColor: "#26a69a",
-            downBorderColor: "#ef5350",
-            upWickColor: "#26a69a",
-            downWickColor: "#ef5350",
+            upColor: "#00c853", // Bright green for UP candles (close > open)
+            downColor: "#ff1744", // Bright red for DOWN candles (close < open)
+            upBorderColor: "#00c853",
+            downBorderColor: "#ff1744",
+            upWickColor: "#00c853",
+            downWickColor: "#ff1744",
           },
           priceMark: {
             show: true,
-            high: { show: true, color: "#26a69a", textFamily: "Arial" },
-            low: { show: true, color: "#ef5350", textFamily: "Arial" },
+            high: { show: true, color: "#00c853", textFamily: "Arial" },
+            low: { show: true, color: "#ff1744", textFamily: "Arial" },
             last: {
               show: true,
-              upColor: "#26a69a",
-              downColor: "#ef5350",
+              upColor: "#00c853",
+              downColor: "#ff1744",
               noChangeColor: "#888888",
               line: { show: true, style: "dashed" as any, dashedValue: [4, 4] },
               text: {
@@ -142,11 +142,15 @@ export default function RealTimeTradingChart({
             style: "dashed" as any,
           },
         },
-        // Y-axis styling
+        // Y-axis styling - enable scroll zooming on Y-axis
         yAxis: {
-          axisLine: { color: "rgba(150, 150, 150, 0.3)" },
-          tickLine: { color: "rgba(150, 150, 150, 0.3)" },
-          tickText: { color: "#9e9aa7", size: 11 },
+          type: "normal" as any,
+          position: "right" as any,
+          inside: false,
+          reverse: false,
+          axisLine: { show: true, color: "rgba(150, 150, 150, 0.3)" },
+          tickLine: { show: true, color: "rgba(150, 150, 150, 0.3)" },
+          tickText: { show: true, color: "#9e9aa7", size: 11 },
         },
         // X-axis styling
         xAxis: {
@@ -248,11 +252,13 @@ export default function RealTimeTradingChart({
           // Apply data to chart
           chartRef.current.applyNewData(forexData);
 
-          // Set scroll limit to data range - no empty areas beyond data
+          // Set scroll limit to data range - position current price in middle like IQ Option
           if (forexData.length > 0) {
-            chartRef.current.setOffsetRightDistance(80); // Padding on right for live candle visibility
+            // Large right offset to position current price in the middle of the screen
+            chartRef.current.setOffsetRightDistance(300); // Increased to center current price
             chartRef.current.setLeftMinVisibleBarCount(10); // Minimum visible bars when scrolled left
-            chartRef.current.setRightMinVisibleBarCount(10); // Minimum visible bars when scrolled right
+            chartRef.current.setRightMinVisibleBarCount(5); // Fewer bars needed on right with larger offset
+            chartRef.current.setBarSpace(12); // Default zoom level - more zoomed in
             // Scroll to show latest/current price
             chartRef.current.scrollToRealTime();
           }
@@ -305,11 +311,13 @@ export default function RealTimeTradingChart({
           // Apply data to chart
           chartRef.current.applyNewData(klineData);
 
-          // Set scroll limit to data range - no empty areas beyond data
+          // Set scroll limit to data range - position current price in middle like IQ Option
           if (klineData.length > 0) {
-            chartRef.current.setOffsetRightDistance(80); // Padding on right for live candle visibility
+            // Large right offset to position current price in the middle of the screen
+            chartRef.current.setOffsetRightDistance(300); // Increased to center current price
             chartRef.current.setLeftMinVisibleBarCount(10); // Minimum visible bars when scrolled left
-            chartRef.current.setRightMinVisibleBarCount(10); // Minimum visible bars when scrolled right
+            chartRef.current.setRightMinVisibleBarCount(5); // Fewer bars needed on right with larger offset
+            chartRef.current.setBarSpace(12); // Default zoom level - more zoomed in
             // Scroll to show latest/current price
             chartRef.current.scrollToRealTime();
           }
@@ -393,6 +401,73 @@ export default function RealTimeTradingChart({
     if (chartRef.current) chartRef.current.removeIndicator();
   };
 
+  // Focus on current price - scroll to latest candle
+  const focusOnCurrentPrice = () => {
+    if (chartRef.current) {
+      chartRef.current.scrollToRealTime();
+    }
+  };
+
+  // Zoom in - increase bar space (make candles wider/bigger)
+  const zoomIn = () => {
+    if (chartRef.current) {
+      const currentBarSpace = chartRef.current.getBarSpace() || 8;
+      chartRef.current.setBarSpace(Math.min(currentBarSpace + 2, 50)); // Max zoom
+    }
+  };
+
+  // Zoom out - decrease bar space (make candles narrower/smaller)
+  const zoomOut = () => {
+    if (chartRef.current) {
+      const currentBarSpace = chartRef.current.getBarSpace() || 8;
+      chartRef.current.setBarSpace(Math.max(currentBarSpace - 2, 3)); // Min zoom
+    }
+  };
+
+  // Y-axis zoom state for vertical price scaling
+  const [priceScaleMultiplier, setPriceScaleMultiplier] = useState(1);
+
+  // Handle Y-axis scroll for vertical price zoom
+  const handleYAxisWheel = (e: React.WheelEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!chartRef.current) return;
+
+    // Calculate zoom factor based on scroll direction
+    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1; // Scroll down = zoom out, scroll up = zoom in
+    const newMultiplier = Math.max(
+      0.3,
+      Math.min(3, priceScaleMultiplier * zoomFactor)
+    );
+
+    setPriceScaleMultiplier(newMultiplier);
+
+    // Use klinecharts API to adjust the price scale
+    // executeAction allows zooming at the Y-axis
+    try {
+      if (e.deltaY > 0) {
+        // Zoom out vertically (increase price range visible)
+        chartRef.current.executeAction("zoomOut" as any, {
+          paneId: "candle_pane",
+        });
+      } else {
+        // Zoom in vertically (decrease price range visible)
+        chartRef.current.executeAction("zoomIn" as any, {
+          paneId: "candle_pane",
+        });
+      }
+    } catch {
+      // Fallback: adjust bar space slightly to give visual feedback
+      const currentBarSpace = chartRef.current.getBarSpace() || 12;
+      if (e.deltaY > 0) {
+        chartRef.current.setBarSpace(Math.max(currentBarSpace - 0.5, 3));
+      } else {
+        chartRef.current.setBarSpace(Math.min(currentBarSpace + 0.5, 50));
+      }
+    }
+  };
+
   return (
     <div
       className="relative w-full h-full overflow-hidden"
@@ -408,6 +483,14 @@ export default function RealTimeTradingChart({
           }}
         />
       </div>
+
+      {/* Y-axis scroll zone - invisible overlay on right side for vertical zoom */}
+      <div
+        className="absolute top-0 right-0 w-16 h-full cursor-ns-resize z-10"
+        onWheel={handleYAxisWheel}
+        title="Scroll to adjust price scale"
+        style={{ background: "transparent" }}
+      />
 
       {/* Loading indicator */}
       {isLoading && (
@@ -462,6 +545,73 @@ export default function RealTimeTradingChart({
           </svg>
           Scroll to view history
         </div>
+      </div>
+
+      {/* Zoom & Focus Controls - Bottom center */}
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10">
+        {/* Zoom out button */}
+        <button
+          onClick={zoomOut}
+          className="w-8 h-8 flex items-center justify-center rounded bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white transition-colors border border-[#38312e]"
+          title="Zoom Out"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M20 12H4"
+            />
+          </svg>
+        </button>
+
+        {/* Focus on current price button */}
+        <button
+          onClick={focusOnCurrentPrice}
+          className="w-8 h-8 flex items-center justify-center rounded bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white transition-colors border border-[#38312e]"
+          title="Focus on current price"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 0v4m0-4h4m-4 0H8"
+            />
+            <circle cx="12" cy="12" r="9" strokeWidth={2} />
+          </svg>
+        </button>
+
+        {/* Zoom in button */}
+        <button
+          onClick={zoomIn}
+          className="w-8 h-8 flex items-center justify-center rounded bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white transition-colors border border-[#38312e]"
+          title="Zoom In"
+        >
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </button>
       </div>
 
       <div className="absolute top-4 left-4">
@@ -537,9 +687,9 @@ export default function RealTimeTradingChart({
           <div
             className={`px-3 py-1.5 rounded-md font-mono text-lg font-bold transition-all duration-100 ${
               livePrice.direction === "up"
-                ? "bg-[#26a69a] text-white shadow-[0_0_10px_rgba(38,166,154,0.5)]"
+                ? "bg-[#00c853] text-white shadow-[0_0_10px_rgba(0,200,83,0.5)]"
                 : livePrice.direction === "down"
-                ? "bg-[#ef5350] text-white shadow-[0_0_10px_rgba(239,83,80,0.5)]"
+                ? "bg-[#ff1744] text-white shadow-[0_0_10px_rgba(255,23,68,0.5)]"
                 : "bg-[#1b1817] text-white border border-[#38312e]"
             }`}
           >
@@ -549,9 +699,9 @@ export default function RealTimeTradingChart({
           <div
             className={`absolute -left-4 top-1/2 -translate-y-1/2 transition-all duration-100 ${
               livePrice.direction === "up"
-                ? "text-[#26a69a]"
+                ? "text-[#00c853]"
                 : livePrice.direction === "down"
-                ? "text-[#ef5350]"
+                ? "text-[#ff1744]"
                 : "text-gray-500"
             }`}
           >

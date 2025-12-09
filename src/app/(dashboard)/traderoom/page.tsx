@@ -2819,11 +2819,9 @@ function TradingInterface() {
                 backgroundColor: "#1b1817",
                 backgroundImage:
                   'url("/traderoom/backgrounds/worldmapbackground.svg")',
-                backgroundSize: "100% 100%", // Stretch to fill entire chart area
-                backgroundPosition: "center",
+                backgroundSize: "cover", // Fill entire area while maintaining aspect ratio
+                backgroundPosition: "center center",
                 backgroundRepeat: "no-repeat",
-                minHeight: "400px",
-                maxHeight: "calc(100vh - 150px)", // Fit within viewport minus header/controls
               }}
             >
               <ChartGrid
@@ -3048,155 +3046,213 @@ function TradingInterface() {
             style={{
               backgroundColor: "transparent",
               overflow: "hidden",
-              width: "165px",
+              width: "120px",
             }}
           >
-            <div className="p-3 h-full overflow-hidden">
-              {/* Grid Layout for Amount and Expiration */}
-              <div className="grid grid-cols-1 gap-2 mb-4">
-                {/* Amount Section */}
-                <div>
-                  <div
-                    className="flex items-center justify-between px-3 py-2 rounded"
-                    style={{ backgroundColor: "#3d3c4f" }}
-                  >
-                    <span
-                      className="text-xs mr-2 whitespace-nowrap"
-                      style={{ color: "#9e9aa7" }}
-                    >
+            <div className="p-1.5 h-full overflow-hidden">
+              {/* Amount Section - IQ Option Style Card */}
+              <div
+                className="rounded mb-2 overflow-hidden flex"
+                style={{
+                  backgroundColor: "#1e1d2d",
+                  border: "1px solid #3d3c4f",
+                }}
+              >
+                {/* Left side: Label and Value */}
+                <div className="flex-1">
+                  {/* Header: Amount + ? */}
+                  <div className="flex items-center justify-between px-1.5 py-0.5">
+                    <span style={{ color: "#9e9aa7", fontSize: "11px" }}>
                       Amount
                     </span>
-                    <span
-                      className="text-base font-semibold flex-1 text-right mr-2"
-                      style={{ color: "#ffffff" }}
+                    <button
+                      className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:opacity-80"
+                      style={{
+                        backgroundColor: "#3d3c4f",
+                        color: "#9e9aa7",
+                        fontSize: "8px",
+                      }}
                     >
-                      $ {amount.toLocaleString()}
-                    </span>
-                    <div className="flex items-center space-x-1">
-                      <button
-                        className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
+                      ?
+                    </button>
+                  </div>
+                  {/* Value: $ amount */}
+                  <div className="px-1.5 py-1">
+                    <div className="flex items-center">
+                      <span
+                        className="font-bold mr-1"
+                        style={{ color: "#9e9aa7", fontSize: "13px" }}
                       >
-                        ?
-                      </button>
-                      <button
-                        onClick={() =>
-                          setAmount(Math.min(amount + 1000, 100000))
-                        }
-                        className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
+                        $
+                      </span>
+                      <span
+                        className="font-bold"
+                        style={{ color: "#ffffff", fontSize: "15px" }}
                       >
-                        +
-                      </button>
-                      <button
-                        onClick={() => setAmount(Math.max(amount - 1000, 1))}
-                        className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
-                      >
-                        -
-                      </button>
+                        {amount.toLocaleString()}
+                      </span>
                     </div>
                   </div>
                 </div>
-
-                {/* Expiration Section */}
-                <div>
-                  <div
-                    className="flex items-center justify-between px-3 py-2 rounded"
-                    style={{ backgroundColor: "#3d3c4f" }}
+                {/* Right side: + and - stacked vertically */}
+                <div
+                  className="flex flex-col w-6"
+                  style={{ borderLeft: "1px solid #3d3c4f" }}
+                >
+                  <button
+                    onClick={() => setAmount(Math.min(amount + 1000, 100000))}
+                    className="flex-1 flex items-center justify-center hover:opacity-80"
+                    style={{
+                      backgroundColor: "#2d2c3d",
+                      color: "#9e9aa7",
+                      borderBottom: "1px solid #3d3c4f",
+                      fontSize: "14px",
+                    }}
                   >
-                    <span
-                      className="text-xs mr-2 whitespace-nowrap"
-                      style={{ color: "#9e9aa7" }}
-                    >
+                    +
+                  </button>
+                  <button
+                    onClick={() => setAmount(Math.max(amount - 1000, 1))}
+                    className="flex-1 flex items-center justify-center hover:opacity-80"
+                    style={{
+                      backgroundColor: "#2d2c3d",
+                      color: "#9e9aa7",
+                      fontSize: "14px",
+                    }}
+                  >
+                    -
+                  </button>
+                </div>
+              </div>
+
+              {/* Expiration Section - IQ Option Style Card */}
+              <div
+                className="rounded mb-2 overflow-hidden flex"
+                style={{
+                  backgroundColor: "#1e1d2d",
+                  border: "1px solid #3d3c4f",
+                }}
+              >
+                {/* Left side: Label and Value */}
+                <div className="flex-1">
+                  {/* Header: Expiration + ? */}
+                  <div className="flex items-center justify-between px-1.5 py-0.5">
+                    <span style={{ color: "#9e9aa7", fontSize: "11px" }}>
                       Expiration
                     </span>
-                    <div className="flex items-center flex-1 justify-end mr-2">
+                    <button
+                      className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:opacity-80"
+                      style={{
+                        backgroundColor: "#3d3c4f",
+                        color: "#9e9aa7",
+                        fontSize: "8px",
+                      }}
+                    >
+                      ?
+                    </button>
+                  </div>
+                  {/* Value: Time */}
+                  <div className="px-1.5 py-1">
+                    <div className="flex items-center">
                       <Clock
                         className="w-3 h-3 mr-1"
                         style={{ color: "#9e9aa7" }}
                       />
                       <span
-                        className="text-base font-medium whitespace-nowrap"
-                        style={{ color: "#ffffff" }}
+                        className="font-bold"
+                        style={{ color: "#ffffff", fontSize: "15px" }}
                       >
                         {expirationSeconds < 60
-                          ? `${expirationSeconds} sec`
+                          ? `${expirationSeconds}s`
                           : expirationSeconds < 3600
-                          ? `${expirationSeconds / 60} min`
-                          : `${expirationSeconds / 3600} hr`}
+                          ? `${Math.floor(expirationSeconds / 60)}:${String(
+                              expirationSeconds % 60
+                            ).padStart(2, "0")}`
+                          : `${Math.floor(expirationSeconds / 3600)}:${String(
+                              Math.floor((expirationSeconds % 3600) / 60)
+                            ).padStart(2, "0")}`}
                       </span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <button
-                        className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
-                      >
-                        ?
-                      </button>
-                      <button
-                        onClick={() => {
-                          const options = [30, 60, 300, 900, 1800, 3600];
-                          const currentIndex =
-                            options.indexOf(expirationSeconds);
-                          if (currentIndex < options.length - 1) {
-                            setExpirationSeconds(options[currentIndex + 1]);
-                          }
-                        }}
-                        className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
-                      >
-                        +
-                      </button>
-                      <button
-                        onClick={() => {
-                          const options = [30, 60, 300, 900, 1800, 3600];
-                          const currentIndex =
-                            options.indexOf(expirationSeconds);
-                          if (currentIndex > 0) {
-                            setExpirationSeconds(options[currentIndex - 1]);
-                          }
-                        }}
-                        className="w-4 h-4 rounded text-xs flex items-center justify-center hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: "#2a2730", color: "#9e9aa7" }}
-                      >
-                        -
-                      </button>
                     </div>
                   </div>
                 </div>
-              </div>{" "}
-              {/* Profit Display */}
-              <div className="py-2">
-                <div className="flex items-center justify-center mb-1">
-                  <span className="text-xs" style={{ color: "#9e9aa7" }}>
+                {/* Right side: + and - stacked vertically */}
+                <div
+                  className="flex flex-col w-6"
+                  style={{ borderLeft: "1px solid #3d3c4f" }}
+                >
+                  <button
+                    onClick={() => {
+                      const options = [30, 60, 300, 900, 1800, 3600];
+                      const currentIndex = options.indexOf(expirationSeconds);
+                      if (currentIndex < options.length - 1) {
+                        setExpirationSeconds(options[currentIndex + 1]);
+                      }
+                    }}
+                    className="flex-1 flex items-center justify-center hover:opacity-80"
+                    style={{
+                      backgroundColor: "#2d2c3d",
+                      color: "#9e9aa7",
+                      borderBottom: "1px solid #3d3c4f",
+                      fontSize: "14px",
+                    }}
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => {
+                      const options = [30, 60, 300, 900, 1800, 3600];
+                      const currentIndex = options.indexOf(expirationSeconds);
+                      if (currentIndex > 0) {
+                        setExpirationSeconds(options[currentIndex - 1]);
+                      }
+                    }}
+                    className="flex-1 flex items-center justify-center hover:opacity-80"
+                    style={{
+                      backgroundColor: "#2d2c3d",
+                      color: "#9e9aa7",
+                      fontSize: "14px",
+                    }}
+                  >
+                    -
+                  </button>
+                </div>
+              </div>
+
+              {/* Profit Display - Standalone Section */}
+              <div className="py-3 mb-3">
+                <div className="flex items-center justify-center mb-2">
+                  <span style={{ color: "#9e9aa7", fontSize: "13px" }}>
                     Profit
                   </span>
                   <button
-                    className="w-4 h-4 rounded text-xs flex items-center justify-center ml-1 hover:opacity-80 transition-opacity"
-                    style={{ backgroundColor: "#3d3c4f", color: "#9e9aa7" }}
+                    className="w-3 h-3 rounded-full flex items-center justify-center ml-1 hover:opacity-80 transition-opacity"
+                    style={{
+                      backgroundColor: "#3d3c4f",
+                      color: "#9e9aa7",
+                      fontSize: "7px",
+                    }}
                   >
                     ?
                   </button>
                 </div>
                 <div
-                  className="text-3xl mb-1 text-center"
-                  style={{ color: "#22c55e" }}
+                  className="font-bold mb-1 text-center"
+                  style={{ color: "#22c55e", fontSize: "36px" }}
                 >
-                  +86%
+                  +85%
                 </div>
                 <div
-                  className="text-lg text-center"
-                  style={{ color: "#22c55e" }}
+                  className="font-semibold text-center"
+                  style={{ color: "#22c55e", fontSize: "16px" }}
                 >
                   +${" "}
-                  {(amount * 0.86)
-                    .toFixed(0)
+                  {(amount * 0.85)
+                    .toFixed(2)
                     .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 </div>
               </div>
               {/* Trading Buttons */}
-              <div className="space-y-2 mt-8">
+              <div className="space-y-1">
                 {/* Higher Button */}
                 <motion.button
                   onClick={() => executeTrade("higher")}
@@ -3208,8 +3264,8 @@ function TradingInterface() {
                   <Image
                     src="/traderoom/icons/higher-button.png"
                     alt="HIGHER"
-                    width={200}
-                    height={42}
+                    width={120}
+                    height={28}
                     className="w-full h-auto rounded"
                     style={{ maxWidth: "100%", height: "auto" }}
                   />
@@ -3226,8 +3282,8 @@ function TradingInterface() {
                   <Image
                     src="/traderoom/icons/lower-button.png"
                     alt="LOWER"
-                    width={200}
-                    height={42}
+                    width={120}
+                    height={28}
                     className="w-full h-auto rounded"
                     style={{ maxWidth: "100%", height: "auto" }}
                   />
