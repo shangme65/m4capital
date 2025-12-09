@@ -14,36 +14,44 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link
+                <a
                   href="/news-feed"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   News feed
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/assets"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Assets
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/stock-collections"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Stock collections
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/industries"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Industries
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -55,28 +63,34 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link
+                <a
                   href="/historical-quotes"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Historical quotes
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/calendars"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Calendars
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/trading-specifications"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Trading specifications
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -88,20 +102,24 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link
+                <a
                   href="/video-tutorials"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Video tutorials
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/margin-trading-basics"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   The basics of margin trading
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -113,12 +131,14 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link
+                <a
                   href="/blog"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Our blog
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -133,52 +153,64 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link
+                <a
                   href="/in-numbers"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   In Numbers
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/press"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   In the Press
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/awards"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Awards
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/contact"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Contact Us
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/sitemap"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Sitemap
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/licenses-and-safeguards"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Licenses and Safeguards
-                </Link>
+                </a>
               </li>
             </ul>
           </div>
@@ -190,36 +222,44 @@ export function Footer() {
             </h3>
             <ul className="space-y-2">
               <li>
-                <Link
+                <a
                   href="/download"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Download app
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/help"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Help
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/deposits-withdrawals"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Deposits & withdrawals
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
+                <a
                   href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   Terms & Conditions
-                </Link>
+                </a>
               </li>
             </ul>
           </div>

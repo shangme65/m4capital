@@ -55,6 +55,20 @@ import ErrorBoundary from "@/components/client/ErrorBoundary";
 import { useSession } from "next-auth/react";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
+// Active trade interface for binary options
+interface ActiveTrade {
+  id: string;
+  symbol: string;
+  direction: "higher" | "lower";
+  amount: number;
+  entryPrice: number;
+  entryTime: number;
+  expirationTime: number;
+  expirationSeconds: number;
+  status: "active" | "won" | "lost" | "pending";
+  result?: number;
+}
+
 function TradingInterface() {
   const { data: session, status } = useSession();
   const { formatAmount, preferredCurrency } = useCurrency();
@@ -99,7 +113,17 @@ function TradingInterface() {
   const [cryptoPaymentInfo, setCryptoPaymentInfo] = useState<any>(null);
   const practiceAccountBalance = 10000.0; // Practice account default balance
   const [forexRates, setForexRates] = useState<any>({});
+  const [showPortfolioPanel, setShowPortfolioPanel] = useState(false);
   const isLoggedIn = status === "authenticated" && session?.user;
+
+  // Hover state for HIGHER/LOWER buttons (IQ Option style overlay)
+  const [hoveredButton, setHoveredButton] = useState<"higher" | "lower" | null>(
+    null
+  );
+
+  // Active trades state for chart markers
+  const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
 
   // Get trading context for history data
   const { tradeHistory, openPositions } = useTradingContext();
@@ -455,13 +479,107 @@ function TradingInterface() {
   ];
 
   const executeTrade = async (direction: "higher" | "lower") => {
+    if (isExecutingTrade) return;
+
+    // Check balance
+    const currentBalance =
+      selectedAccountType === "real"
+        ? traderoomBalance
+        : practiceAccountBalance;
+    if (amount > currentBalance) {
+      alert("Insufficient balance for this trade");
+      return;
+    }
+
     setIsExecutingTrade(true);
     setTradeDirection(direction);
+
+    // Generate trade ID
+    const tradeId = `trade_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
+    const entryTime = Date.now();
+    const expirationTime = entryTime + expirationSeconds * 1000;
+
+    // Get current entry price (you'd get this from the chart in production)
+    const entryPrice = currentPrice || 1.35742; // Default to USDCAD base price if not set
+
+    // Create new active trade
+    const newTrade: ActiveTrade = {
+      id: tradeId,
+      symbol: selectedSymbol,
+      direction,
+      amount,
+      entryPrice,
+      entryTime,
+      expirationTime,
+      expirationSeconds,
+      status: "active",
+    };
+
+    setActiveTrades((prev) => [...prev, newTrade]);
+
+    // Deduct from balance (for real account)
+    if (selectedAccountType === "real") {
+      setTraderoomBalance((prev) => prev - amount);
+    }
+
+    // Reset execution state after brief animation
     setTimeout(() => {
       setIsExecutingTrade(false);
       setTradeDirection(null);
-    }, 2000);
+    }, 500);
   };
+
+  // Process trade expiration
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+
+      setActiveTrades((prev) =>
+        prev.map((trade) => {
+          if (trade.status !== "active") return trade;
+
+          // Check if trade has expired
+          if (now >= trade.expirationTime) {
+            // Determine win/loss based on price movement
+            const priceChange = currentPrice - trade.entryPrice;
+            const won =
+              (trade.direction === "higher" && priceChange > 0) ||
+              (trade.direction === "lower" && priceChange < 0);
+
+            const payout = won ? trade.amount * 1.85 : 0; // 85% profit + original amount
+
+            // Update balance
+            if (selectedAccountType === "real" && won) {
+              setTraderoomBalance((prev) => prev + payout);
+            }
+
+            return {
+              ...trade,
+              status: won ? "won" : "lost",
+              result: won ? payout - trade.amount : -trade.amount,
+            };
+          }
+
+          return trade;
+        })
+      );
+
+      // Remove completed trades after 5 seconds
+      setActiveTrades((prev) =>
+        prev.filter((trade) => {
+          if (trade.status === "won" || trade.status === "lost") {
+            const completedTime = trade.expirationTime;
+            return now - completedTime < 5000; // Keep for 5 seconds after completion
+          }
+          return true;
+        })
+      );
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [currentPrice, selectedAccountType]);
 
   if (!mounted) {
     return (
@@ -2824,6 +2942,165 @@ function TradingInterface() {
                 backgroundRepeat: "no-repeat",
               }}
             >
+              {/* IQ Option Style - Top Left Symbol Header */}
+              <div className="absolute top-3 left-3 z-40 flex items-center gap-3">
+                {/* Symbol Badge with Flag */}
+                <div className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border border-[#38312e]">
+                    <span className="text-sm">
+                      {selectedSymbol.includes("CAD")
+                        ? "🇨🇦"
+                        : selectedSymbol.includes("EUR")
+                        ? "🇪🇺"
+                        : selectedSymbol.includes("GBP")
+                        ? "🇬🇧"
+                        : selectedSymbol.includes("JPY")
+                        ? "🇯🇵"
+                        : selectedSymbol.includes("AUD")
+                        ? "🇦🇺"
+                        : selectedSymbol.includes("BTC")
+                        ? "₿"
+                        : "🌐"}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-white font-semibold text-sm">
+                        {selectedSymbol.replace("/", "/")} (OTC)
+                      </span>
+                      <ChevronDown className="w-3 h-3 text-gray-400" />
+                    </div>
+                    <span className="text-gray-400 text-xs">Binary</span>
+                  </div>
+                </div>
+
+                {/* Info, Bell, Star buttons */}
+                <div className="flex items-center gap-1 ml-2">
+                  <button className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#38312e] text-white text-xs font-medium hover:bg-[#4a4340] transition-colors">
+                    <Info className="w-3.5 h-3.5" />
+                    <span>Info</span>
+                  </button>
+                  <button className="w-8 h-8 rounded-full bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors">
+                    <Bell className="w-4 h-4 text-gray-400" />
+                  </button>
+                  <button className="w-8 h-8 rounded-full bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors">
+                    <Star className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+              </div>
+
+              {/* IQ Option Style HIGHER/LOWER Indicators + Tools on Left Side */}
+              <div className="absolute left-0 top-16 bottom-0 z-30 flex flex-col justify-between py-4 w-16">
+                {/* HIGHER Indicator - Top */}
+                <div className="flex flex-col items-start">
+                  <div className="text-[#22c55e] text-xs font-bold tracking-wider mb-0.5 ml-2">
+                    HIGHER
+                  </div>
+                  <div className="text-[#22c55e] text-lg font-bold ml-2">
+                    90%
+                  </div>
+                  {/* Green gradient bar */}
+                  <div
+                    className="w-4 mt-1 ml-2"
+                    style={{
+                      height: "80px",
+                      background:
+                        "linear-gradient(to bottom, #22c55e 0%, transparent 100%)",
+                      opacity: 0.8,
+                    }}
+                  />
+                </div>
+
+                {/* LOWER Indicator - Middle */}
+                <div className="flex flex-col items-start">
+                  {/* Red gradient bar */}
+                  <div
+                    className="w-4 mb-1 ml-2"
+                    style={{
+                      height: "80px",
+                      background:
+                        "linear-gradient(to top, #ef4444 0%, transparent 100%)",
+                      opacity: 0.8,
+                    }}
+                  />
+                  <div className="text-[#ef4444] text-xs font-bold tracking-wider mb-0.5 ml-2">
+                    LOWER
+                  </div>
+                  <div className="text-[#ef4444] text-lg font-bold ml-2">
+                    10%
+                  </div>
+                </div>
+
+                {/* Tool Buttons - Bottom */}
+                <div className="flex flex-col items-center gap-1 mt-auto">
+                  {/* Drawing Tool */}
+                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
+                    <svg
+                      className="w-4 h-4 text-gray-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <rect x="3" y="3" width="7" height="7" rx="1" />
+                      <rect x="14" y="3" width="7" height="7" rx="1" />
+                      <rect x="3" y="14" width="7" height="7" rx="1" />
+                      <rect x="14" y="14" width="7" height="7" rx="1" />
+                    </svg>
+                  </button>
+
+                  {/* Expiration Time Selector */}
+                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e] text-white text-xs font-bold">
+                    {expirationSeconds}s
+                  </button>
+
+                  {/* Sound Toggle */}
+                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
+                    <svg
+                      className="w-4 h-4 text-gray-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    </svg>
+                  </button>
+
+                  {/* Pencil/Draw */}
+                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
+                    <svg
+                      className="w-4 h-4 text-gray-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+                    </svg>
+                  </button>
+
+                  {/* Wave/Indicators */}
+                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
+                    <svg
+                      className="w-4 h-4 text-gray-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5 2 2 2 5" />
+                    </svg>
+                  </button>
+
+                  {/* Candle Timeframe */}
+                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e] text-white text-xs font-bold">
+                    15m
+                  </button>
+                </div>
+              </div>
+
               <ChartGrid
                 gridType={selectedChartGrid}
                 defaultSymbol={selectedSymbol}
@@ -2840,6 +3117,178 @@ function TradingInterface() {
                   "LINK",
                 ]}
               />
+
+              {/* Active Trades Overlay - IQ Option Style */}
+              <AnimatePresence>
+                {activeTrades
+                  .filter((t) => t.symbol === selectedSymbol)
+                  .map((trade) => {
+                    const now = Date.now();
+                    const elapsed = now - trade.entryTime;
+                    const remaining = Math.max(0, trade.expirationTime - now);
+                    const remainingSeconds = Math.ceil(remaining / 1000);
+                    const progress = Math.min(
+                      1,
+                      elapsed / (trade.expirationSeconds * 1000)
+                    );
+
+                    return (
+                      <motion.div
+                        key={trade.id}
+                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                        className="absolute right-24 z-20"
+                        style={{
+                          top: trade.direction === "higher" ? "30%" : "50%",
+                        }}
+                      >
+                        {/* Trade Marker Line */}
+                        <div
+                          className="absolute right-0 w-40 h-[2px]"
+                          style={{
+                            backgroundColor:
+                              trade.direction === "higher"
+                                ? "#22c55e"
+                                : "#ef4444",
+                            top: "50%",
+                            transform: "translateY(-50%)",
+                          }}
+                        />
+
+                        {/* Trade Info Box */}
+                        <motion.div
+                          className="relative flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg"
+                          style={{
+                            backgroundColor:
+                              trade.direction === "higher"
+                                ? "#22c55e"
+                                : "#ef4444",
+                            boxShadow:
+                              trade.direction === "higher"
+                                ? "0 0 20px rgba(34, 197, 94, 0.4)"
+                                : "0 0 20px rgba(239, 68, 68, 0.4)",
+                          }}
+                          animate={{
+                            scale: trade.status === "active" ? [1, 1.02, 1] : 1,
+                          }}
+                          transition={{
+                            duration: 1,
+                            repeat: trade.status === "active" ? Infinity : 0,
+                          }}
+                        >
+                          {/* Amount */}
+                          <span className="text-white font-bold text-sm">
+                            $ {trade.amount.toLocaleString()}
+                          </span>
+
+                          {/* Countdown or Result */}
+                          {trade.status === "active" ? (
+                            <div className="flex items-center gap-1">
+                              <div
+                                className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white"
+                                style={{
+                                  background: `conic-gradient(white ${
+                                    progress * 360
+                                  }deg, transparent ${progress * 360}deg)`,
+                                }}
+                              >
+                                <span
+                                  className="bg-current rounded-full w-4 h-4 flex items-center justify-center"
+                                  style={{
+                                    backgroundColor:
+                                      trade.direction === "higher"
+                                        ? "#22c55e"
+                                        : "#ef4444",
+                                  }}
+                                >
+                                  {remainingSeconds}
+                                </span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1">
+                              <span
+                                className={`text-xs font-bold ${
+                                  trade.status === "won"
+                                    ? "text-white"
+                                    : "text-white"
+                                }`}
+                              >
+                                {trade.status === "won" ? "✓ WON" : "✗ LOST"}
+                              </span>
+                              <span className="text-white text-xs">
+                                {trade.result && trade.result > 0
+                                  ? `+$${trade.result.toFixed(2)}`
+                                  : `$${trade.result?.toFixed(2)}`}
+                              </span>
+                            </div>
+                          )}
+
+                          {/* Direction Arrow */}
+                          <div className="ml-1">
+                            {trade.direction === "higher" ? (
+                              <TrendingUp className="w-4 h-4 text-white" />
+                            ) : (
+                              <TrendingDown className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                        </motion.div>
+
+                        {/* Entry Price Line Indicator */}
+                        <div
+                          className="absolute left-full ml-2 flex items-center"
+                          style={{ top: "50%", transform: "translateY(-50%)" }}
+                        >
+                          <div
+                            className="text-xs font-mono px-2 py-0.5 rounded"
+                            style={{
+                              backgroundColor:
+                                trade.direction === "higher"
+                                  ? "#22c55e"
+                                  : "#ef4444",
+                              color: "white",
+                            }}
+                          >
+                            {trade.entryPrice.toFixed(5)}
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+              </AnimatePresence>
+
+              {/* Hover Effect Overlay for HIGHER */}
+              <AnimatePresence>
+                {hoveredButton === "higher" && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 pointer-events-none z-10"
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, rgba(34, 197, 94, 0.15) 0%, transparent 50%)",
+                    }}
+                  />
+                )}
+              </AnimatePresence>
+
+              {/* Hover Effect Overlay for LOWER */}
+              <AnimatePresence>
+                {hoveredButton === "lower" && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 pointer-events-none z-10"
+                    style={{
+                      background:
+                        "linear-gradient(to top, rgba(239, 68, 68, 0.15) 0%, transparent 50%)",
+                    }}
+                  />
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -3256,8 +3705,10 @@ function TradingInterface() {
                 {/* Higher Button */}
                 <motion.button
                   onClick={() => executeTrade("higher")}
+                  onMouseEnter={() => setHoveredButton("higher")}
+                  onMouseLeave={() => setHoveredButton(null)}
                   disabled={isExecutingTrade}
-                  className="w-full transition-all duration-200 disabled:opacity-50 border-0 p-0 bg-transparent cursor-pointer block"
+                  className="w-full transition-all duration-200 disabled:opacity-50 border-0 p-0 bg-transparent cursor-pointer block relative overflow-hidden"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -3269,13 +3720,32 @@ function TradingInterface() {
                     className="w-full h-auto rounded"
                     style={{ maxWidth: "100%", height: "auto" }}
                   />
+                  {/* Green glow overlay on hover */}
+                  <AnimatePresence>
+                    {hoveredButton === "higher" && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 rounded pointer-events-none"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, rgba(34, 197, 94, 0.3) 0%, rgba(34, 197, 94, 0.1) 100%)",
+                          boxShadow:
+                            "0 0 20px rgba(34, 197, 94, 0.4), inset 0 0 20px rgba(34, 197, 94, 0.2)",
+                        }}
+                      />
+                    )}
+                  </AnimatePresence>
                 </motion.button>
 
                 {/* Lower Button */}
                 <motion.button
                   onClick={() => executeTrade("lower")}
+                  onMouseEnter={() => setHoveredButton("lower")}
+                  onMouseLeave={() => setHoveredButton(null)}
                   disabled={isExecutingTrade}
-                  className="w-full transition-all duration-200 disabled:opacity-50 border-0 p-0 bg-transparent cursor-pointer block"
+                  className="w-full transition-all duration-200 disabled:opacity-50 border-0 p-0 bg-transparent cursor-pointer block relative overflow-hidden"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -3287,11 +3757,262 @@ function TradingInterface() {
                     className="w-full h-auto rounded"
                     style={{ maxWidth: "100%", height: "auto" }}
                   />
+                  {/* Red glow overlay on hover */}
+                  <AnimatePresence>
+                    {hoveredButton === "lower" && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 rounded pointer-events-none"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(239, 68, 68, 0.1) 100%)",
+                          boxShadow:
+                            "0 0 20px rgba(239, 68, 68, 0.4), inset 0 0 20px rgba(239, 68, 68, 0.2)",
+                        }}
+                      />
+                    )}
+                  </AnimatePresence>
                 </motion.button>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Total Portfolio Section - IQ Option Style */}
+        <div
+          className="border-t"
+          style={{ backgroundColor: "#1b1817", borderColor: "#38312e" }}
+        >
+          {/* Portfolio Header Bar - Always Visible */}
+          <button
+            onClick={() => setShowPortfolioPanel(!showPortfolioPanel)}
+            className="w-full flex items-center justify-between px-4 py-2 hover:bg-[#26211f] transition-colors"
+          >
+            <span className="text-sm font-medium" style={{ color: "#eceae9" }}>
+              Total portfolio
+            </span>
+            <span
+              className="text-sm flex items-center gap-1"
+              style={{ color: "#ff8516" }}
+            >
+              {showPortfolioPanel ? "Hide positions" : "Show positions"}
+              <ChevronDown
+                className={`w-4 h-4 transition-transform ${
+                  showPortfolioPanel ? "rotate-180" : ""
+                }`}
+              />
+            </span>
+          </button>
+
+          {/* Expanded Portfolio Panel */}
+          <AnimatePresence>
+            {showPortfolioPanel && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden border-t"
+                style={{ borderColor: "#38312e" }}
+              >
+                <div
+                  className="p-8 flex flex-col items-center justify-center"
+                  style={{ backgroundColor: "#1b1817", minHeight: "150px" }}
+                >
+                  {activeTrades.filter((t) => t.status === "active").length ===
+                  0 ? (
+                    <>
+                      <p className="text-sm mb-3" style={{ color: "#9e9aa7" }}>
+                        You have no open positions yet
+                      </p>
+                      <button
+                        onClick={() => setShowAddAssetModal(true)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:bg-[#26211f]"
+                        style={{ borderColor: "#38312e", color: "#9e9aa7" }}
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span className="text-sm">Select asset</span>
+                      </button>
+                    </>
+                  ) : (
+                    <div className="w-full">
+                      {/* Active Positions List */}
+                      <div className="space-y-2">
+                        {activeTrades
+                          .filter((t) => t.status === "active")
+                          .map((trade) => {
+                            const remaining = Math.max(
+                              0,
+                              trade.expirationTime - Date.now()
+                            );
+                            const remainingSeconds = Math.ceil(
+                              remaining / 1000
+                            );
+                            return (
+                              <div
+                                key={trade.id}
+                                className="flex items-center justify-between p-3 rounded-lg"
+                                style={{ backgroundColor: "#26211f" }}
+                              >
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={`w-2 h-2 rounded-full ${
+                                      trade.direction === "higher"
+                                        ? "bg-green-500"
+                                        : "bg-red-500"
+                                    }`}
+                                  />
+                                  <div>
+                                    <div
+                                      className="font-medium text-sm"
+                                      style={{ color: "#eceae9" }}
+                                    >
+                                      {trade.symbol}
+                                    </div>
+                                    <div
+                                      className="text-xs"
+                                      style={{ color: "#9e9aa7" }}
+                                    >
+                                      {trade.direction.toUpperCase()} •{" "}
+                                      {remainingSeconds}s
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="text-right">
+                                  <div
+                                    className="font-bold text-sm"
+                                    style={{ color: "#eceae9" }}
+                                  >
+                                    ${trade.amount.toLocaleString()}
+                                  </div>
+                                  <div
+                                    className="text-xs"
+                                    style={{ color: "#9e9aa7" }}
+                                  >
+                                    Entry: {trade.entryPrice.toFixed(5)}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Footer - IQ Option Style */}
+        <footer
+          className="flex items-center justify-between px-4 py-2 border-t"
+          style={{ backgroundColor: "#131211", borderColor: "#38312e" }}
+        >
+          {/* Left: Support */}
+          <div className="flex items-center gap-4">
+            <button
+              className="px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1.5"
+              style={{ backgroundColor: "#ef4444", color: "#ffffff" }}
+            >
+              <Headphones className="w-3.5 h-3.5" />
+              SUPPORT
+            </button>
+            <div className="flex items-center gap-2">
+              <span className="text-xs" style={{ color: "#9e9aa7" }}>
+                @
+              </span>
+              <span className="text-xs" style={{ color: "#9e9aa7" }}>
+                support@m4capital.online
+              </span>
+            </div>
+            <span className="text-xs" style={{ color: "#9e9aa7" }}>
+              EVERY DAY, AROUND THE CLOCK
+            </span>
+          </div>
+
+          {/* Center: Powered By */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs" style={{ color: "#9e9aa7" }}>
+              Powered by
+            </span>
+            <Image
+              src="/m4capitallogo2.png"
+              alt="M4Capital"
+              width={20}
+              height={20}
+              className="object-contain"
+            />
+          </div>
+
+          {/* Right: Time and Controls */}
+          <div className="flex items-center gap-4">
+            {/* Sound Toggle */}
+            <button className="p-1.5 rounded hover:bg-[#26211f] transition-colors">
+              <svg
+                className="w-4 h-4"
+                style={{ color: "#9e9aa7" }}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+              </svg>
+            </button>
+
+            {/* Settings */}
+            <button className="p-1.5 rounded hover:bg-[#26211f] transition-colors">
+              <Settings className="w-4 h-4" style={{ color: "#9e9aa7" }} />
+            </button>
+
+            {/* Notifications */}
+            <button className="p-1.5 rounded hover:bg-[#26211f] transition-colors">
+              <Bell className="w-4 h-4" style={{ color: "#9e9aa7" }} />
+            </button>
+
+            {/* Current Time */}
+            <div className="text-xs" style={{ color: "#9e9aa7" }}>
+              CURRENT TIME:{" "}
+              <span style={{ color: "#eceae9" }}>
+                {currentTime
+                  ? currentTime.toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "2-digit",
+                      year: "numeric",
+                    })
+                  : ""}{" "}
+                AT{" "}
+                {currentTime
+                  ? currentTime.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: false,
+                    })
+                  : ""}{" "}
+                (UTC+1)
+              </span>
+            </div>
+
+            {/* Fullscreen */}
+            <button className="p-1.5 rounded hover:bg-[#26211f] transition-colors">
+              <svg
+                className="w-4 h-4"
+                style={{ color: "#9e9aa7" }}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+              </svg>
+            </button>
+          </div>
+        </footer>
 
         {/* Add Asset Modal */}
         <AnimatePresence>

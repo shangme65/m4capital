@@ -13,6 +13,7 @@ import {
   fetchForexCandles,
   subscribeToForexUpdates,
   normalizeForexSymbol,
+  setLastHistoricalClose,
   type CandleData,
 } from "@/lib/api/forex-chart";
 
@@ -47,12 +48,53 @@ export default function RealTimeTradingChart({
   const { cryptoPrices } = useCryptoMarket();
   const [currentInterval, setCurrentInterval] = useState(interval);
   const [showIndicators, setShowIndicators] = useState(false);
+  const [showCandleTimePeriod, setShowCandleTimePeriod] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [livePrice, setLivePrice] = useState<{
     price: number;
     direction: "up" | "down" | "neutral";
   } | null>(null);
+
+  // Candle time period options like IQ Option
+  const candleTimePeriods = [
+    { label: "5 seconds", value: "5s" },
+    { label: "10 seconds", value: "10s" },
+    { label: "30 seconds", value: "30s" },
+    { label: "1 minute", value: "1m" },
+    { label: "2 minutes", value: "2m" },
+    { label: "5 minutes", value: "5m" },
+    { label: "10 minutes", value: "10m" },
+    { label: "30 minutes", value: "30m" },
+    { label: "1 hour", value: "1h" },
+    { label: "2 hours", value: "2h" },
+    { label: "4 hours", value: "4h" },
+    { label: "8 hours", value: "8h" },
+    { label: "12 hours", value: "12h" },
+    { label: "1 day", value: "1D" },
+    { label: "1 week", value: "1W" },
+    { label: "1 month", value: "1M" },
+  ];
+
+  // Get display label for current interval
+  const getCurrentIntervalLabel = () => {
+    const period = candleTimePeriods.find((p) => p.value === currentInterval);
+    return period ? period.label : currentInterval;
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (showCandleTimePeriod) {
+        const target = e.target as HTMLElement;
+        if (!target.closest(".candle-time-dropdown")) {
+          setShowCandleTimePeriod(false);
+        }
+      }
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [showCandleTimePeriod]);
 
   // Load chart data when symbol or interval changes
   useEffect(() => {
@@ -263,10 +305,12 @@ export default function RealTimeTradingChart({
             chartRef.current.scrollToRealTime();
           }
 
-          // Set initial live price from last candle
+          // Set initial live price from last candle and store for live updates continuity
           if (forexData.length > 0) {
             const lastCandle = forexData[forexData.length - 1];
             setLivePrice({ price: lastCandle.close, direction: "neutral" });
+            // Store the last historical close so live updates continue from this price
+            setLastHistoricalClose(symbol, lastCandle.close);
           }
 
           // Subscribe to real-time forex updates with tick callback for live price
@@ -424,8 +468,71 @@ export default function RealTimeTradingChart({
     }
   };
 
-  // Y-axis zoom state for vertical price scaling
-  const [priceScaleMultiplier, setPriceScaleMultiplier] = useState(1);
+  // Y-axis zoom state for vertical price scaling (IQ Option style)
+  const [priceScaleZoom, setPriceScaleZoom] = useState(1);
+  const [isDraggingYAxis, setIsDraggingYAxis] = useState(false);
+  const yAxisDragStartRef = useRef<{ y: number; zoom: number } | null>(null);
+
+  // Handle Y-axis drag for vertical price zoom (like IQ Option)
+  const handleYAxisMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingYAxis(true);
+    yAxisDragStartRef.current = { y: e.clientY, zoom: priceScaleZoom };
+    document.body.style.cursor = "ns-resize";
+  };
+
+  // Global mouse move/up handlers for Y-axis drag
+  useEffect(() => {
+    if (!isDraggingYAxis) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!yAxisDragStartRef.current || !chartRef.current) return;
+
+      const deltaY = e.clientY - yAxisDragStartRef.current.y;
+      // Dragging down = flatten (zoom out), dragging up = exaggerate (zoom in)
+      const sensitivity = 0.005;
+      const newZoom = Math.max(
+        0.2,
+        Math.min(5, yAxisDragStartRef.current.zoom - deltaY * sensitivity)
+      );
+
+      setPriceScaleZoom(newZoom);
+
+      // Apply zoom to chart by adjusting the price precision display
+      // Klinecharts uses setPriceVolumePrecision but we can simulate Y-axis zoom
+      // by scrolling the visible data range
+      try {
+        const chart = chartRef.current;
+        if (chart && typeof chart.setStyles === "function") {
+          // Adjust the candle visual size based on zoom
+          const candleWidth = Math.max(1, Math.min(10, 4 * newZoom));
+          chart.setStyles({
+            candle: {
+              bar: {
+                width: candleWidth,
+              },
+            },
+          });
+        }
+      } catch {
+        // Ignore styling errors
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDraggingYAxis(false);
+      yAxisDragStartRef.current = null;
+      document.body.style.cursor = "";
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDraggingYAxis]);
 
   // Handle Y-axis scroll for vertical price zoom
   const handleYAxisWheel = (e: React.WheelEvent) => {
@@ -434,37 +541,19 @@ export default function RealTimeTradingChart({
 
     if (!chartRef.current) return;
 
-    // Calculate zoom factor based on scroll direction
-    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1; // Scroll down = zoom out, scroll up = zoom in
-    const newMultiplier = Math.max(
-      0.3,
-      Math.min(3, priceScaleMultiplier * zoomFactor)
-    );
+    // Scroll up = exaggerate (zoom in on Y), Scroll down = flatten (zoom out on Y)
+    const zoomChange = e.deltaY > 0 ? -0.1 : 0.1;
+    const newZoom = Math.max(0.2, Math.min(5, priceScaleZoom + zoomChange));
+    setPriceScaleZoom(newZoom);
 
-    setPriceScaleMultiplier(newMultiplier);
-
-    // Use klinecharts API to adjust the price scale
-    // executeAction allows zooming at the Y-axis
-    try {
-      if (e.deltaY > 0) {
-        // Zoom out vertically (increase price range visible)
-        chartRef.current.executeAction("zoomOut" as any, {
-          paneId: "candle_pane",
-        });
-      } else {
-        // Zoom in vertically (decrease price range visible)
-        chartRef.current.executeAction("zoomIn" as any, {
-          paneId: "candle_pane",
-        });
-      }
-    } catch {
-      // Fallback: adjust bar space slightly to give visual feedback
-      const currentBarSpace = chartRef.current.getBarSpace() || 12;
-      if (e.deltaY > 0) {
-        chartRef.current.setBarSpace(Math.max(currentBarSpace - 0.5, 3));
-      } else {
-        chartRef.current.setBarSpace(Math.min(currentBarSpace + 0.5, 50));
-      }
+    // Adjust bar space as visual feedback (affects how spread out candles look)
+    const currentBarSpace = chartRef.current.getBarSpace() || 12;
+    if (e.deltaY > 0) {
+      // Flatten - make candles look flatter by adjusting space
+      chartRef.current.setBarSpace(Math.min(currentBarSpace + 1, 30));
+    } else {
+      // Exaggerate - reduce spacing to make price swings more visible
+      chartRef.current.setBarSpace(Math.max(currentBarSpace - 1, 4));
     }
   };
 
@@ -484,13 +573,46 @@ export default function RealTimeTradingChart({
         />
       </div>
 
-      {/* Y-axis scroll zone - invisible overlay on right side for vertical zoom */}
+      {/* Y-axis drag/scroll zone - IQ Option style price scale control on right side */}
       <div
-        className="absolute top-0 right-0 w-16 h-full cursor-ns-resize z-10"
+        className={`absolute top-0 right-0 w-20 h-full cursor-ns-resize z-10 transition-all ${
+          isDraggingYAxis ? "bg-orange-500/10" : "hover:bg-white/5"
+        }`}
         onWheel={handleYAxisWheel}
-        title="Scroll to adjust price scale"
-        style={{ background: "transparent" }}
-      />
+        onMouseDown={handleYAxisMouseDown}
+        title="Drag up/down to adjust price scale"
+      >
+        {/* Visual indicator for Y-axis zoom zone */}
+        <div className="absolute top-1/2 right-2 -translate-y-1/2 flex flex-col items-center gap-1 opacity-30 hover:opacity-60 transition-opacity pointer-events-none">
+          <svg
+            className="w-4 h-4 text-[#9e9aa7]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M5 15l7-7 7 7"
+            />
+          </svg>
+          <div className="w-0.5 h-8 bg-[#9e9aa7] rounded" />
+          <svg
+            className="w-4 h-4 text-[#9e9aa7]"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </div>
+      </div>
 
       {/* Loading indicator */}
       {isLoading && (
@@ -510,17 +632,128 @@ export default function RealTimeTradingChart({
       )}
 
       {/* Chart controls - Bottom left */}
-      <div className="absolute bottom-2 left-4 flex items-center gap-4 z-10">
-        {/* Time interval buttons */}
+      <div className="absolute bottom-2 left-4 flex items-center gap-2 z-10">
+        {/* Candle Time Period Button - IQ Option Style */}
+        <div className="relative candle-time-dropdown">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowCandleTimePeriod(!showCandleTimePeriod);
+            }}
+            className="flex items-center gap-2 px-3 py-1.5 rounded bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white transition-colors border border-[#38312e]"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <span className="text-xs font-bold">{currentInterval}</span>
+            <svg
+              className="w-3 h-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </button>
+
+          {/* Candle Time Period Dropdown - IQ Option Style */}
+          {showCandleTimePeriod && (
+            <div className="absolute bottom-full left-0 mb-2 bg-[#1e1d2d] border border-[#3d3c4f] rounded-lg shadow-2xl min-w-[320px] max-h-[400px] overflow-hidden z-50 candle-time-dropdown">
+              {/* Header */}
+              <div className="px-4 py-3 border-b border-[#3d3c4f]">
+                <h3 className="text-sm font-bold text-white">
+                  CANDLE TIME PERIOD
+                </h3>
+                <p className="text-xs text-[#9e9aa7] mt-1 flex items-center gap-1">
+                  <svg
+                    className="w-3 h-3"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Price range for a specific time interval, used for both
+                  candlesticks and bars.
+                </p>
+              </div>
+
+              {/* Time Period Grid */}
+              <div className="p-3 grid grid-cols-3 gap-1 max-h-[280px] overflow-y-auto">
+                {candleTimePeriods.map((period) => (
+                  <button
+                    key={period.value}
+                    onClick={() => {
+                      setCurrentInterval(period.value);
+                      setShowCandleTimePeriod(false);
+                    }}
+                    className={`px-3 py-2 rounded text-xs font-medium transition-colors text-left ${
+                      currentInterval === period.value
+                        ? "bg-[#22c55e] text-white"
+                        : "bg-[#2a2935] text-[#9e9aa7] hover:bg-[#38374a] hover:text-white"
+                    }`}
+                  >
+                    {period.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Footer with Candle Timer option */}
+              <div className="px-4 py-3 border-t border-[#3d3c4f] bg-[#1a1924]">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded border-2 border-[#22c55e] bg-[#22c55e] flex items-center justify-center">
+                      <svg
+                        className="w-2.5 h-2.5 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                    <span className="text-xs text-[#9e9aa7]">Candle timer</span>
+                  </div>
+                  <span className="text-xs text-[#9e9aa7]">Count down</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Quick interval buttons */}
         <div className="flex gap-1">
           {["1m", "5m", "15m", "1h", "4h", "1D"].map((int) => (
             <button
               key={int}
               onClick={() => setCurrentInterval(int)}
-              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+              className={`px-2.5 py-1.5 rounded text-xs font-bold transition-colors ${
                 currentInterval === int
                   ? "bg-orange-500 text-white"
-                  : "bg-[#2a2522]/80 text-[#9e9aa7] hover:bg-[#38312e]"
+                  : "bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white"
               }`}
             >
               {int}
@@ -528,22 +761,40 @@ export default function RealTimeTradingChart({
           ))}
         </div>
 
-        {/* Scroll hint */}
-        <div className="text-[10px] text-[#666] flex items-center gap-1">
-          <svg
-            className="w-3 h-3"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M8 9l4-4 4 4m0 6l-4 4-4-4"
-            />
-          </svg>
-          Scroll to view history
+        {/* Scroll hints */}
+        <div className="flex flex-col gap-0.5">
+          <div className="text-[9px] text-[#666] flex items-center gap-1">
+            <svg
+              className="w-2.5 h-2.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 9l4-4 4 4m0 6l-4 4-4-4"
+              />
+            </svg>
+            Scroll to view history
+          </div>
+          <div className="text-[9px] text-[#666] flex items-center gap-1">
+            <svg
+              className="w-2.5 h-2.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 15l7-7 7 7M5 9l7-7 7 7"
+              />
+            </svg>
+            Drag Y-axis to adjust price scale
+          </div>
         </div>
       </div>
 
@@ -612,73 +863,6 @@ export default function RealTimeTradingChart({
             />
           </svg>
         </button>
-      </div>
-
-      <div className="absolute top-4 left-4">
-        <button
-          onClick={() => setShowIndicators(!showIndicators)}
-          className="px-3 py-1 rounded text-xs font-medium bg-[#2a2522] text-[#9e9aa7] hover:bg-[#38312e]"
-        >
-          Indicators
-        </button>
-        {showIndicators && (
-          <div className="absolute top-10 left-0 bg-[#1b1817] border border-[#38312e] rounded-lg p-2 shadow-xl z-50 min-w-[200px]">
-            <div className="text-xs text-[#9e9aa7] mb-2 font-semibold">
-              Overlay Indicators
-            </div>
-            <button
-              onClick={() => addIndicator("MA")}
-              className="block w-full text-left px-3 py-2 text-xs text-[#9e9aa7] hover:bg-[#2a2522] rounded"
-            >
-              MA - Moving Average
-            </button>
-            <button
-              onClick={() => addIndicator("EMA")}
-              className="block w-full text-left px-3 py-2 text-xs text-[#9e9aa7] hover:bg-[#2a2522] rounded"
-            >
-              EMA - Exponential MA
-            </button>
-            <button
-              onClick={() => addIndicator("BOLL")}
-              className="block w-full text-left px-3 py-2 text-xs text-[#9e9aa7] hover:bg-[#2a2522] rounded"
-            >
-              BOLL - Bollinger Bands
-            </button>
-            <div className="text-xs text-[#9e9aa7] mt-3 mb-2 font-semibold border-t border-[#38312e] pt-2">
-              Separate Pane
-            </div>
-            <button
-              onClick={() => addIndicator("RSI")}
-              className="block w-full text-left px-3 py-2 text-xs text-[#9e9aa7] hover:bg-[#2a2522] rounded"
-            >
-              RSI - Relative Strength
-            </button>
-            <button
-              onClick={() => addIndicator("MACD")}
-              className="block w-full text-left px-3 py-2 text-xs text-[#9e9aa7] hover:bg-[#2a2522] rounded"
-            >
-              MACD - Convergence
-            </button>
-            <button
-              onClick={() => addIndicator("KDJ")}
-              className="block w-full text-left px-3 py-2 text-xs text-[#9e9aa7] hover:bg-[#2a2522] rounded"
-            >
-              KDJ - Stochastic
-            </button>
-            <button
-              onClick={() => addIndicator("VOL")}
-              className="block w-full text-left px-3 py-2 text-xs text-[#9e9aa7] hover:bg-[#2a2522] rounded"
-            >
-              VOL - Volume
-            </button>
-            <button
-              onClick={clearIndicators}
-              className="block w-full text-left px-3 py-2 text-xs text-red-400 hover:bg-[#2a2522] rounded mt-2 border-t border-[#38312e] pt-2"
-            >
-              Clear All
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Live Price Display - IQ Option Style floating on right side */}

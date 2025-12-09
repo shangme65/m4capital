@@ -71,20 +71,31 @@ export function normalizeForexSymbol(symbol: string): string {
  */
 function getIntervalMs(interval: string): number {
   const intervals: Record<string, number> = {
+    "5s": 5 * 1000,
+    "10s": 10 * 1000,
+    "30s": 30 * 1000,
     "1m": 60 * 1000,
+    "2m": 2 * 60 * 1000,
     "5m": 5 * 60 * 1000,
+    "10m": 10 * 60 * 1000,
     "15m": 15 * 60 * 1000,
+    "30m": 30 * 60 * 1000,
     "1h": 60 * 60 * 1000,
+    "2h": 2 * 60 * 60 * 1000,
     "4h": 4 * 60 * 60 * 1000,
+    "8h": 8 * 60 * 60 * 1000,
+    "12h": 12 * 60 * 60 * 1000,
     "1d": 24 * 60 * 60 * 1000,
     "1D": 24 * 60 * 60 * 1000,
+    "1W": 7 * 24 * 60 * 60 * 1000,
+    "1M": 30 * 24 * 60 * 60 * 1000,
   };
   return intervals[interval] || 60 * 1000;
 }
 
 /**
- * Generate realistic candlestick data based on price action patterns
- * Uses random walk with trend and mean reversion
+ * Generate historical candlestick data with realistic price movements
+ * Creates visible candles with proper OHLC variation
  */
 export function generateRealisticCandles(
   symbol: string,
@@ -96,71 +107,83 @@ export function generateRealisticCandles(
   const volatility = VOLATILITY[normalizedSymbol] || 0.0005;
   const intervalMs = getIntervalMs(interval);
 
-  const candles: CandleData[] = [];
   const now = Date.now();
-  let currentPrice = basePrice;
+  // Align to interval boundary (same as live updates)
+  const currentCandleStart = Math.floor(now / intervalMs) * intervalMs;
 
-  // Trend parameters
-  let trend = 0; // -1 to 1
-  let trendStrength = 0.3;
-  let momentum = 0;
-
-  // Seed for deterministic but varied data based on symbol and time
-  const seed = normalizedSymbol
+  // Use seeded random for consistency within a session
+  // Seed changes every hour to keep data fresh but consistent within the hour
+  const hourSeed = Math.floor(now / (60 * 60 * 1000));
+  const symbolSeed = normalizedSymbol
     .split("")
     .reduce((a, c) => a + c.charCodeAt(0), 0);
-  const seededRandom = (i: number) => {
-    const x = Math.sin(seed + i * 9999) * 10000;
-    return x - Math.floor(x);
+  const seed = symbolSeed + hourSeed;
+
+  let seedState = seed;
+  const seededRandom = () => {
+    seedState = (seedState * 1103515245 + 12345) & 0x7fffffff;
+    return seedState / 0x7fffffff;
   };
 
-  for (let i = count - 1; i >= 0; i--) {
-    const timestamp = now - i * intervalMs;
+  // Initialize price simulation parameters
+  let currentPrice = basePrice;
+  let trend = (seededRandom() - 0.5) * 2; // -1 to 1
 
-    // Update trend occasionally - creates alternating up/down patterns
-    if (seededRandom(i * 7) > 0.9) {
-      trend = (seededRandom(i * 13) - 0.5) * 2;
+  const candles: CandleData[] = [];
+
+  // Generate candles from oldest to newest
+  for (let candleIndex = count - 1; candleIndex >= 0; candleIndex--) {
+    const candleTimestamp = currentCandleStart - candleIndex * intervalMs;
+
+    // Change trend occasionally (creates waves) - ~10% chance per candle
+    if (seededRandom() > 0.9) {
+      trend = (seededRandom() - 0.5) * 2;
     }
 
-    // Calculate price movement with trend and randomness (visible movements)
-    const trendComponent = trend * volatility * trendStrength;
-    const randomComponent = (seededRandom(i) - 0.5) * 2 * volatility;
-    const meanReversion = (basePrice - currentPrice) * 0.008;
+    // Calculate candle movement - more visible price action
+    const trendMove = trend * volatility * 0.5;
+    const randomMove = (seededRandom() - 0.5) * volatility * 1.5;
+    const meanReversion = (basePrice - currentPrice) * 0.01;
 
-    momentum = momentum * 0.7 + (trendComponent + randomComponent) * 0.3;
+    const priceChange = trendMove + randomMove + meanReversion;
 
-    const priceChange = momentum + meanReversion;
-
-    // Generate OHLC with realistic body sizes
+    // Generate OHLC
     const open = currentPrice;
     const close = currentPrice + priceChange;
 
-    // High and low based on volatility - add visible wicks
-    const range =
-      Math.abs(priceChange) + volatility * seededRandom(i * 3) * 0.8;
-    const highOffset = range * (0.2 + seededRandom(i * 5) * 0.5);
-    const lowOffset = range * (0.2 + seededRandom(i * 11) * 0.5);
+    // Create visible wicks - high and low extend beyond open/close
+    const wickSize = volatility * seededRandom() * 0.8;
+    const high =
+      Math.max(open, close) + wickSize * (0.3 + seededRandom() * 0.7);
+    const low = Math.min(open, close) - wickSize * (0.3 + seededRandom() * 0.7);
 
-    const high = Math.max(open, close) + highOffset;
-    const low = Math.min(open, close) - lowOffset;
+    // Keep price in reasonable range (5% of base)
+    const clampedClose = Math.max(
+      basePrice * 0.95,
+      Math.min(basePrice * 1.05, close)
+    );
 
     // Volume varies with price movement
     const baseVolume = 1000000;
     const volumeMultiplier =
-      0.5 + seededRandom(i * 17) + Math.abs(priceChange / volatility) * 0.5;
-    const volume = baseVolume * volumeMultiplier;
+      0.5 + seededRandom() + Math.abs(priceChange / volatility) * 0.3;
+    const volume = Math.round(baseVolume * volumeMultiplier);
 
     candles.push({
-      timestamp,
+      timestamp: candleTimestamp,
       open: parseFloat(open.toFixed(5)),
-      high: parseFloat(high.toFixed(5)),
-      low: parseFloat(low.toFixed(5)),
-      close: parseFloat(close.toFixed(5)),
-      volume: Math.round(volume),
+      high: parseFloat(Math.max(high, Math.max(open, clampedClose)).toFixed(5)),
+      low: parseFloat(Math.min(low, Math.min(open, clampedClose)).toFixed(5)),
+      close: parseFloat(clampedClose.toFixed(5)),
+      volume,
     });
 
-    currentPrice = close;
+    currentPrice = clampedClose;
   }
+
+  // Store the final price AND simulation state so live updates continue exactly from this point
+  setLastHistoricalClose(symbol, currentPrice);
+  setSimulationState(symbol, 0, trend);
 
   return candles;
 }
@@ -210,6 +233,7 @@ export async function fetchForexCandles(
 /**
  * Create a real-time update stream for forex data
  * Simulates live market data updates with fast tick rate like IQ Option
+ * Continues from the last historical candle's close price AND simulation state for seamless continuity
  */
 export function subscribeToForexUpdates(
   symbol: string,
@@ -222,16 +246,21 @@ export function subscribeToForexUpdates(
   const volatility = VOLATILITY[normalizedSymbol] || 0.0005;
   const intervalMs = getIntervalMs(interval);
 
-  let currentPrice = basePrice + (Math.random() - 0.5) * volatility * 5; // Start near base with small variance
+  // Start from last historical close price if available, otherwise use base price
+  const lastHistoricalClose = getLastHistoricalClose(symbol);
+  let currentPrice =
+    lastHistoricalClose !== null ? lastHistoricalClose : basePrice;
+
+  // Get simulation state from historical generation for perfect continuity
+  const savedState = getSimulationState(symbol);
+  let momentum = savedState ? savedState.momentum : 0;
+  let trend = savedState ? savedState.trend : (Math.random() - 0.5) * 0.3;
+
   let lastCandle: CandleData | null = null;
-  let tickCount = 0;
-  let momentum = 0;
-  let trend = (Math.random() - 0.5) * 0.3; // Initial trend (smaller)
   let lastPrice = currentPrice;
 
   // Update every 100ms for smooth real-time feel like IQ Option
   const tickInterval = setInterval(() => {
-    tickCount++;
     const now = Date.now();
     const candleStart = Math.floor(now / intervalMs) * intervalMs;
 
@@ -296,11 +325,17 @@ export function subscribeToForexUpdates(
   };
 }
 
-// Store current prices for external access
+// Store current prices and last candle close prices for external access
 const currentPrices: Record<
   string,
   { price: number; direction: "up" | "down" | "neutral" }
 > = {};
+
+// Store the last close price from historical data to ensure live updates continue from it
+const lastHistoricalCloses: Record<string, number> = {};
+
+// Store simulation state (momentum, trend) so live updates continue exactly from historical
+const simulationState: Record<string, { momentum: number; trend: number }> = {};
 
 export function getCurrentPrice(
   symbol: string
@@ -316,4 +351,33 @@ export function setCurrentPrice(
 ): void {
   const normalized = normalizeForexSymbol(symbol);
   currentPrices[normalized] = { price, direction };
+}
+
+export function setLastHistoricalClose(
+  symbol: string,
+  closePrice: number
+): void {
+  const normalized = normalizeForexSymbol(symbol);
+  lastHistoricalCloses[normalized] = closePrice;
+}
+
+export function getLastHistoricalClose(symbol: string): number | null {
+  const normalized = normalizeForexSymbol(symbol);
+  return lastHistoricalCloses[normalized] || null;
+}
+
+export function setSimulationState(
+  symbol: string,
+  momentum: number,
+  trend: number
+): void {
+  const normalized = normalizeForexSymbol(symbol);
+  simulationState[normalized] = { momentum, trend };
+}
+
+export function getSimulationState(
+  symbol: string
+): { momentum: number; trend: number } | null {
+  const normalized = normalizeForexSymbol(symbol);
+  return simulationState[normalized] || null;
 }
