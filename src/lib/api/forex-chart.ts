@@ -34,24 +34,24 @@ const FOREX_BASE_PRICES: Record<string, number> = {
 };
 
 // Volatility factors for different pairs (pip movement per candle)
-// Increased for more visible candlesticks with clear green/red bodies
+// Balanced values for visible but natural candlesticks
 const VOLATILITY: Record<string, number> = {
-  USDCAD: 0.015,
-  EURUSD: 0.012,
-  GBPUSD: 0.018,
-  USDJPY: 1.5,
-  AUDUSD: 0.014,
-  USDCHF: 0.012,
-  NZDUSD: 0.015,
-  EURJPY: 1.8,
-  GBPJPY: 2.2,
-  EURGBP: 0.01,
-  AUDCAD: 0.014,
-  EURCAD: 0.016,
-  GBPCAD: 0.02,
-  BTCUSD: 3500,
-  ETHUSD: 180,
-  XRPUSD: 0.25,
+  USDCAD: 0.002,
+  EURUSD: 0.0015,
+  GBPUSD: 0.002,
+  USDJPY: 0.15,
+  AUDUSD: 0.0015,
+  USDCHF: 0.0015,
+  NZDUSD: 0.0015,
+  EURJPY: 0.2,
+  GBPJPY: 0.25,
+  EURGBP: 0.001,
+  AUDCAD: 0.0015,
+  EURCAD: 0.002,
+  GBPCAD: 0.0025,
+  BTCUSD: 300,
+  ETHUSD: 15,
+  XRPUSD: 0.02,
 };
 
 /**
@@ -118,28 +118,28 @@ export function generateRealisticCandles(
     const timestamp = now - i * intervalMs;
 
     // Update trend occasionally - creates alternating up/down patterns
-    if (seededRandom(i * 7) > 0.92) {
-      trend = (seededRandom(i * 13) - 0.5) * 2.5;
+    if (seededRandom(i * 7) > 0.9) {
+      trend = (seededRandom(i * 13) - 0.5) * 2;
     }
 
-    // Calculate price movement with trend and randomness
+    // Calculate price movement with trend and randomness (visible movements)
     const trendComponent = trend * volatility * trendStrength;
-    const randomComponent = (seededRandom(i) - 0.5) * 2.5 * volatility;
-    const meanReversion = (basePrice - currentPrice) * 0.002;
+    const randomComponent = (seededRandom(i) - 0.5) * 2 * volatility;
+    const meanReversion = (basePrice - currentPrice) * 0.008;
 
     momentum = momentum * 0.7 + (trendComponent + randomComponent) * 0.3;
 
     const priceChange = momentum + meanReversion;
 
-    // Generate OHLC with more pronounced body (open-close difference)
+    // Generate OHLC with realistic body sizes
     const open = currentPrice;
     const close = currentPrice + priceChange;
 
-    // High and low based on volatility - add wicks
+    // High and low based on volatility - add visible wicks
     const range =
       Math.abs(priceChange) + volatility * seededRandom(i * 3) * 0.8;
-    const highOffset = range * (0.2 + seededRandom(i * 5) * 0.6);
-    const lowOffset = range * (0.2 + seededRandom(i * 11) * 0.6);
+    const highOffset = range * (0.2 + seededRandom(i * 5) * 0.5);
+    const lowOffset = range * (0.2 + seededRandom(i * 11) * 0.5);
 
     const high = Math.max(open, close) + highOffset;
     const low = Math.min(open, close) - lowOffset;
@@ -222,11 +222,11 @@ export function subscribeToForexUpdates(
   const volatility = VOLATILITY[normalizedSymbol] || 0.0005;
   const intervalMs = getIntervalMs(interval);
 
-  let currentPrice = basePrice + (Math.random() - 0.5) * volatility * 10; // Start near base with variance
+  let currentPrice = basePrice + (Math.random() - 0.5) * volatility * 5; // Start near base with small variance
   let lastCandle: CandleData | null = null;
   let tickCount = 0;
   let momentum = 0;
-  let trend = (Math.random() - 0.5) * 0.5; // Initial trend
+  let trend = (Math.random() - 0.5) * 0.3; // Initial trend (smaller)
   let lastPrice = currentPrice;
 
   // Update every 100ms for smooth real-time feel like IQ Option
@@ -236,24 +236,24 @@ export function subscribeToForexUpdates(
     const candleStart = Math.floor(now / intervalMs) * intervalMs;
 
     // Change trend occasionally (creates waves)
-    if (Math.random() > 0.99) {
-      trend = (Math.random() - 0.5) * 2.5;
+    if (Math.random() > 0.92) {
+      trend = (Math.random() - 0.5) * 2;
     }
 
-    // Stronger momentum for visible price action like IQ Option
+    // More visible momentum for natural price action like IQ Option
     const trendPush = trend * volatility * 0.15;
-    const noise = (Math.random() - 0.5) * volatility * 0.5;
-    const meanReversion = (basePrice - currentPrice) * 0.0005;
+    const noise = (Math.random() - 0.5) * volatility * 0.6;
+    const meanReversion = (basePrice - currentPrice) * 0.002;
 
-    momentum = momentum * 0.9 + (trendPush + noise + meanReversion) * 0.1;
+    momentum = momentum * 0.7 + (trendPush + noise + meanReversion) * 0.3;
 
     lastPrice = currentPrice;
     currentPrice += momentum;
 
-    // Keep price in reasonable range (10% of base for more visible swings)
+    // Keep price in reasonable range (5% of base for visible swings)
     currentPrice = Math.max(
-      basePrice * 0.9,
-      Math.min(basePrice * 1.1, currentPrice)
+      basePrice * 0.95,
+      Math.min(basePrice * 1.05, currentPrice)
     );
 
     // Determine direction for tick callback
