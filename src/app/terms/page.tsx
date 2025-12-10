@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield,
   FileText,
@@ -17,292 +17,779 @@ import {
   RefreshCw,
   MessageSquare,
   Gavel,
+  ChevronDown,
+  Cookie,
+  TrendingUp,
+  Wallet,
+  UserCheck,
+  Gamepad2,
+  Moon,
+  MessageCircle,
+  Bug,
+  Ticket,
 } from "lucide-react";
 
-const sections = [
-  {
-    id: "acceptance",
-    icon: FileText,
-    title: "1. Acceptance of Terms",
-    content: `By accessing or using M4 Capital's services, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.
+// Policy categories similar to IQ Option
+const policyCategories = [
+  { id: "terms", label: "Terms & Conditions", icon: FileText },
+  { id: "privacy", label: "Privacy Policy", icon: Lock },
+  { id: "fees", label: "General Fees", icon: CreditCard },
+  { id: "withdrawal", label: "Withdrawal Policy", icon: Wallet },
+  { id: "payment", label: "Payment Policy", icon: TrendingUp },
+  { id: "aml", label: "AML & KYC Policy", icon: UserCheck },
+  { id: "demo", label: "Demo & Tournament Accounts", icon: Gamepad2 },
+  { id: "islamic", label: "Islamic (Swap-free) Account", icon: Moon },
+  { id: "chat", label: "Chat Rules", icon: MessageCircle },
+  { id: "risk", label: "Risk Disclosure", icon: AlertTriangle },
+  { id: "order", label: "Order Execution Policy", icon: Scale },
+  { id: "cookie", label: "Cookie Policy", icon: Cookie },
+  { id: "margin", label: "Margin Trading Terms", icon: TrendingUp },
+  { id: "vulnerability", label: "Vulnerability Disclosure", icon: Bug },
+  { id: "promo", label: "Promo Code Policy", icon: Ticket },
+];
 
-These Terms constitute a legally binding agreement between you and SKY LADDER LLC ("M4 Capital", "we", "us", or "our"). We reserve the right to modify these terms at any time, and your continued use of our services constitutes acceptance of any changes.`,
-  },
+// Content for each policy
+const policyContent: Record<
+  string,
   {
-    id: "eligibility",
-    icon: Users,
-    title: "2. Eligibility Requirements",
-    content: `To use M4 Capital's services, you must:
+    title: string;
+    sections: { title: string; content: string; icon: React.ElementType }[];
+  }
+> = {
+  terms: {
+    title: "Terms & Conditions",
+    sections: [
+      {
+        title: "1. Acceptance of Terms",
+        icon: FileText,
+        content: `By accessing or using M4 Capital's services, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
 
-• Be at least 18 years of age or the legal age of majority in your jurisdiction
-• Have the legal capacity to enter into binding contracts
-• Not be a resident of a restricted jurisdiction where our services are prohibited
-• Provide accurate and complete registration information
-• Maintain the security of your account credentials
+These Terms constitute a legally binding agreement between you and SKY LADDER LLC ("M4 Capital", "we", "us", or "our"). We reserve the right to modify these terms at any time.`,
+      },
+      {
+        title: "2. Eligibility Requirements",
+        icon: Users,
+        content: `To use M4 Capital's services, you must:
 
-We reserve the right to refuse service, terminate accounts, or cancel orders at our sole discretion.`,
-  },
-  {
-    id: "services",
-    icon: Globe,
-    title: "3. Description of Services",
-    content: `M4 Capital provides a digital platform for:
+• Be at least 18 years of age
+• Have the legal capacity to enter into contracts
+• Not be a resident of a restricted jurisdiction
+• Provide accurate registration information
+• Maintain the security of your account`,
+      },
+      {
+        title: "3. Description of Services",
+        icon: Globe,
+        content: `M4 Capital provides:
 
 • Cryptocurrency trading and investment services
 • Portfolio management and tracking tools
 • Market data, charts, and analytical tools
 • Educational resources and market insights
-• Peer-to-peer transfer capabilities within the platform
+• Peer-to-peer transfer capabilities`,
+      },
+      {
+        title: "4. Account Security",
+        icon: Lock,
+        content: `You are responsible for:
 
-Our services are provided "as is" and "as available" without any warranties of any kind, either express or implied.`,
-  },
-  {
-    id: "accounts",
-    icon: Lock,
-    title: "4. Account Security",
-    content: `You are responsible for:
-
-• Maintaining the confidentiality of your account credentials
-• All activities that occur under your account
-• Immediately notifying us of any unauthorized access or security breaches
-• Using strong passwords and enabling two-factor authentication when available
-
-M4 Capital will never ask for your password via email, phone, or any other means. We employ industry-standard security measures but cannot guarantee absolute security.`,
-  },
-  {
-    id: "financial",
-    icon: CreditCard,
-    title: "5. Financial Terms",
-    content: `Deposits and Withdrawals:
-• All deposits and withdrawals are subject to verification procedures
-• Processing times may vary based on payment method and verification status
-• Minimum and maximum limits apply to all transactions
-• We reserve the right to charge fees for certain services
+• Maintaining credential confidentiality
+• All activities under your account
+• Notifying us of unauthorized access
+• Using strong passwords and 2FA`,
+      },
+      {
+        title: "5. Financial Terms",
+        icon: CreditCard,
+        content: `Deposits and Withdrawals:
+• Subject to verification procedures
+• Processing times vary by method
+• Minimum and maximum limits apply
 
 Trading:
 • All trades are final once executed
-• Prices are determined by real-time market data
-• Spreads and fees vary based on market conditions and asset type
-• Leverage trading carries significant risk of loss`,
-  },
-  {
-    id: "risks",
-    icon: AlertTriangle,
-    title: "6. Risk Disclosure",
-    content: `IMPORTANT: Trading cryptocurrencies involves substantial risk of loss and is not suitable for all investors.
+• Prices are determined by real-time market data`,
+      },
+      {
+        title: "6. Prohibited Activities",
+        icon: Ban,
+        content: `You agree not to:
 
-• The value of cryptocurrencies can be highly volatile
-• You may lose some or all of your invested capital
-• Past performance is not indicative of future results
-• You should only invest money you can afford to lose
-• We strongly recommend seeking independent financial advice
+• Use services for illegal purposes
+• Engage in market manipulation or fraud
+• Attempt unauthorized system access
+• Use automated systems without authorization
+• Engage in money laundering activities`,
+      },
+      {
+        title: "7. Intellectual Property",
+        icon: Shield,
+        content: `All content on M4 Capital including logos, trademarks, software, and design are owned by SKY LADDER LLC and protected by international intellectual property laws.`,
+      },
+      {
+        title: "8. Termination",
+        icon: RefreshCw,
+        content: `We may suspend or terminate your account if:
 
-By using our services, you acknowledge that you understand and accept these risks.`,
-  },
-  {
-    id: "prohibited",
-    icon: Ban,
-    title: "7. Prohibited Activities",
-    content: `You agree not to:
-
-• Use our services for any illegal or unauthorized purpose
-• Engage in market manipulation, fraud, or deceptive practices
-• Attempt to gain unauthorized access to our systems or other users' accounts
-• Interfere with or disrupt our services or servers
-• Use automated systems, bots, or scripts without authorization
-• Violate any applicable laws, regulations, or third-party rights
-• Engage in money laundering or terrorist financing activities
-• Create multiple accounts or provide false information`,
-  },
-  {
-    id: "intellectual",
-    icon: Shield,
-    title: "8. Intellectual Property",
-    content: `All content, features, and functionality on M4 Capital, including but not limited to:
-
-• Logos, trademarks, and service marks
-• Software, algorithms, and source code
-• Text, graphics, images, and videos
-• User interface design and layout
-
-Are owned by SKY LADDER LLC or its licensors and are protected by international copyright, trademark, and other intellectual property laws. Unauthorized use is strictly prohibited.`,
-  },
-  {
-    id: "termination",
-    icon: RefreshCw,
-    title: "9. Termination",
-    content: `We may suspend or terminate your account at any time if:
-
-• You violate these Terms of Service
-• We suspect fraudulent, illegal, or suspicious activity
-• Required by law or regulatory authority
-• You provide false or misleading information
-• Your account remains inactive for an extended period
-
-Upon termination, you remain liable for all outstanding obligations. We may retain certain information as required by law or for legitimate business purposes.`,
-  },
-  {
-    id: "liability",
-    icon: Scale,
-    title: "10. Limitation of Liability",
-    content: `To the maximum extent permitted by law:
-
-• M4 Capital shall not be liable for any indirect, incidental, special, consequential, or punitive damages
-• Our total liability shall not exceed the amount of fees paid by you in the 12 months preceding the claim
-• We are not responsible for losses due to market volatility, system failures, or force majeure events
-• We make no guarantees regarding the accuracy of market data or third-party information
-
-Some jurisdictions do not allow the exclusion of certain warranties or limitations of liability, so some of the above may not apply to you.`,
-  },
-  {
-    id: "disputes",
-    icon: Gavel,
-    title: "11. Dispute Resolution",
-    content: `Any disputes arising from these Terms or your use of our services shall be:
-
-• First attempted to be resolved through good-faith negotiation
-• Subject to binding arbitration if negotiation fails
-• Governed by the laws of Antigua and Barbuda
-• Brought in the courts of Saint John's, Antigua and Barbuda
-
-You agree to waive any right to a jury trial or to participate in a class action lawsuit.`,
-  },
-  {
-    id: "contact",
-    icon: MessageSquare,
-    title: "12. Contact Information",
-    content: `For questions about these Terms of Service, please contact us:
-
-SKY LADDER LLC
+• You violate these Terms
+• We suspect fraudulent activity
+• Required by law
+• Your account remains inactive`,
+      },
+      {
+        title: "9. Limitation of Liability",
+        icon: Scale,
+        content: `M4 Capital shall not be liable for indirect, incidental, or consequential damages. Our total liability shall not exceed fees paid in the 12 months preceding the claim.`,
+      },
+      {
+        title: "10. Dispute Resolution",
+        icon: Gavel,
+        content: `Disputes shall be resolved through good-faith negotiation, then binding arbitration. Governed by the laws of Antigua and Barbuda.`,
+      },
+      {
+        title: "11. Contact Information",
+        icon: MessageSquare,
+        content: `SKY LADDER LLC
 The Colony House, 41 Nevis Street
 Saint John's, Antigua and Barbuda
-
-Email: support@m4capital.com
-
-Payment transactions are managed by:
-FIDELES LIMITED
-Registration No. HE 406368
-Kyriakou Matsi & Anexartisias 3, ROUSSOS LIMASSOL TOWER
-4th Floor, 3040 Limassol, Cyprus`,
+Email: support@m4capital.com`,
+      },
+    ],
   },
-];
+  privacy: {
+    title: "Privacy Policy",
+    sections: [
+      {
+        title: "1. Information Collection",
+        icon: Users,
+        content: `We collect information you provide directly:
+
+• Personal identification (name, email, phone)
+• Financial information for transactions
+• Identity verification documents
+• Communication preferences`,
+      },
+      {
+        title: "2. How We Use Information",
+        icon: Globe,
+        content: `Your information is used to:
+
+• Provide and improve our services
+• Process transactions and verify identity
+• Communicate important updates
+• Comply with legal obligations
+• Prevent fraud and ensure security`,
+      },
+      {
+        title: "3. Data Protection",
+        icon: Shield,
+        content: `We implement industry-standard security measures:
+
+• Encryption of sensitive data
+• Secure server infrastructure
+• Regular security audits
+• Access controls and monitoring`,
+      },
+      {
+        title: "4. Your Rights",
+        icon: Lock,
+        content: `You have the right to:
+
+• Access your personal data
+• Request data correction or deletion
+• Opt-out of marketing communications
+• Request data portability`,
+      },
+    ],
+  },
+  fees: {
+    title: "General Fees",
+    sections: [
+      {
+        title: "1. Trading Fees",
+        icon: TrendingUp,
+        content: `• Spot trading: 0.1% - 0.5% per trade
+• Crypto purchases: Variable based on payment method
+• P2P transfers: Free within platform`,
+      },
+      {
+        title: "2. Deposit Fees",
+        icon: CreditCard,
+        content: `• Bank transfer: Free
+• Credit/Debit card: 2.5% - 3.5%
+• Cryptocurrency: Network fees only
+• PIX (Brazil): Free`,
+      },
+      {
+        title: "3. Withdrawal Fees",
+        icon: Wallet,
+        content: `• Bank withdrawal: Varies by region
+• Crypto withdrawal: Network fees apply
+• Minimum withdrawal amounts apply
+• Processing time: 1-5 business days`,
+      },
+    ],
+  },
+  withdrawal: {
+    title: "Withdrawal Policy",
+    sections: [
+      {
+        title: "1. Withdrawal Requirements",
+        icon: UserCheck,
+        content: `• Complete identity verification (KYC)
+• Verify withdrawal address/account
+• Meet minimum withdrawal amounts
+• Ensure sufficient available balance`,
+      },
+      {
+        title: "2. Processing Times",
+        icon: RefreshCw,
+        content: `• Cryptocurrency: 1-24 hours
+• Bank transfer: 1-5 business days
+• PIX (Brazil): Instant to 1 hour
+• Review may extend processing time`,
+      },
+      {
+        title: "3. Limits & Restrictions",
+        icon: AlertTriangle,
+        content: `• Daily/monthly limits based on verification level
+• Higher limits available with enhanced verification
+• Suspicious activity may trigger review
+• We reserve the right to delay withdrawals for security`,
+      },
+    ],
+  },
+  payment: {
+    title: "Payment Policy",
+    sections: [
+      {
+        title: "1. Accepted Payment Methods",
+        icon: CreditCard,
+        content: `• Bank transfers (local and international)
+• Credit/Debit cards (Visa, Mastercard)
+• Cryptocurrency deposits
+• PIX (Brazil)
+• Other regional payment methods`,
+      },
+      {
+        title: "2. Payment Processing",
+        icon: RefreshCw,
+        content: `• Payments processed by FIDELES LIMITED
+• All transactions are encrypted
+• Multi-currency support available
+• Real-time exchange rates applied`,
+      },
+      {
+        title: "3. Refund Policy",
+        icon: Wallet,
+        content: `• Crypto purchases are non-refundable
+• Deposit errors reviewed case-by-case
+• Refunds processed to original payment method
+• Processing time varies by payment type`,
+      },
+    ],
+  },
+  aml: {
+    title: "AML & KYC Policy",
+    sections: [
+      {
+        title: "1. Know Your Customer (KYC)",
+        icon: UserCheck,
+        content: `Required documentation:
+
+• Government-issued ID (passport, driver's license)
+• Proof of address (utility bill, bank statement)
+• Selfie verification
+• Source of funds declaration (for large transactions)`,
+      },
+      {
+        title: "2. Anti-Money Laundering",
+        icon: Shield,
+        content: `We implement strict AML procedures:
+
+• Transaction monitoring
+• Suspicious activity reporting
+• PEP and sanctions screening
+• Risk-based customer assessment`,
+      },
+      {
+        title: "3. Compliance",
+        icon: Scale,
+        content: `• We comply with international AML regulations
+• Cooperation with law enforcement when required
+• Regular policy reviews and updates
+• Staff training on AML procedures`,
+      },
+    ],
+  },
+  demo: {
+    title: "Demo & Tournament Accounts",
+    sections: [
+      {
+        title: "1. Demo Account",
+        icon: Gamepad2,
+        content: `• Virtual funds for practice trading
+• Real market conditions simulated
+• No real money at risk
+• Available to all registered users`,
+      },
+      {
+        title: "2. Trading Tournaments",
+        icon: TrendingUp,
+        content: `• Competitive trading events
+• Prize pools for top performers
+• Entry requirements may apply
+• Results based on percentage gains`,
+      },
+      {
+        title: "3. Terms of Use",
+        icon: FileText,
+        content: `• Demo accounts may be reset periodically
+• Tournament rules vary by event
+• Prizes subject to verification
+• Abuse or manipulation prohibited`,
+      },
+    ],
+  },
+  islamic: {
+    title: "Islamic (Swap-free) Account",
+    sections: [
+      {
+        title: "1. Overview",
+        icon: Moon,
+        content: `Islamic accounts are designed to comply with Sharia law by:
+
+• No overnight interest (swap) charges
+• No interest on leveraged positions
+• Halal trading environment`,
+      },
+      {
+        title: "2. Eligibility",
+        icon: UserCheck,
+        content: `• Available upon request
+• Verification of Islamic account need
+• Subject to approval
+• May have different fee structure`,
+      },
+      {
+        title: "3. Terms",
+        icon: FileText,
+        content: `• Some instruments may not be available
+• Account may revert if misused
+• Regular review of account status
+• Compliance monitoring`,
+      },
+    ],
+  },
+  chat: {
+    title: "Chat Rules",
+    sections: [
+      {
+        title: "1. Community Guidelines",
+        icon: MessageCircle,
+        content: `• Be respectful to all users
+• No spam or promotional content
+• No harassment or hate speech
+• Keep discussions relevant`,
+      },
+      {
+        title: "2. Prohibited Content",
+        icon: Ban,
+        content: `• Financial advice or guarantees
+• Misleading information
+• Personal attacks
+• Illegal activity promotion`,
+      },
+      {
+        title: "3. Moderation",
+        icon: Shield,
+        content: `• Messages may be monitored
+• Violations result in warnings or bans
+• Appeals can be submitted to support
+• Repeated violations lead to account action`,
+      },
+    ],
+  },
+  risk: {
+    title: "Risk Disclosure",
+    sections: [
+      {
+        title: "1. Trading Risks",
+        icon: AlertTriangle,
+        content: `IMPORTANT: Trading cryptocurrencies involves substantial risk:
+
+• High volatility can result in significant losses
+• You may lose your entire investment
+• Past performance doesn't guarantee future results
+• Only invest what you can afford to lose`,
+      },
+      {
+        title: "2. Market Risks",
+        icon: TrendingUp,
+        content: `• Market manipulation can occur
+• Liquidity may vary by asset
+• Regulatory changes may affect trading
+• Technical issues can impact execution`,
+      },
+      {
+        title: "3. Your Responsibility",
+        icon: Users,
+        content: `• Seek independent financial advice
+• Understand products before trading
+• Monitor your positions regularly
+• Use risk management tools`,
+      },
+    ],
+  },
+  order: {
+    title: "Order Execution Policy",
+    sections: [
+      {
+        title: "1. Execution Principles",
+        icon: Scale,
+        content: `• Best execution for client orders
+• Fair and transparent pricing
+• Timely order execution
+• Clear order confirmation`,
+      },
+      {
+        title: "2. Order Types",
+        icon: TrendingUp,
+        content: `• Market orders: Execute at current price
+• Limit orders: Execute at specified price or better
+• Stop orders: Trigger at specified price
+• All orders subject to available liquidity`,
+      },
+      {
+        title: "3. Execution Venue",
+        icon: Globe,
+        content: `• Orders executed on connected exchanges
+• Best available price sought
+• Slippage may occur in volatile markets
+• Order routing optimized for execution`,
+      },
+    ],
+  },
+  cookie: {
+    title: "Cookie Policy",
+    sections: [
+      {
+        title: "1. What Are Cookies",
+        icon: Cookie,
+        content: `Cookies are small text files stored on your device that help us:
+
+• Remember your preferences
+• Understand how you use our site
+• Improve your experience
+• Provide security features`,
+      },
+      {
+        title: "2. Types of Cookies",
+        icon: FileText,
+        content: `• Essential: Required for site function
+• Analytics: Help us understand usage
+• Functional: Remember your preferences
+• Marketing: Used for relevant ads`,
+      },
+      {
+        title: "3. Managing Cookies",
+        icon: Lock,
+        content: `• Control cookies in browser settings
+• Essential cookies cannot be disabled
+• Disabling cookies may affect functionality
+• Third-party cookie policies apply`,
+      },
+    ],
+  },
+  margin: {
+    title: "Margin Trading Terms",
+    sections: [
+      {
+        title: "1. Margin Trading Overview",
+        icon: TrendingUp,
+        content: `Margin trading allows you to:
+
+• Trade with borrowed funds
+• Amplify potential gains and losses
+• Access leverage up to specified limits
+• Maintain minimum margin requirements`,
+      },
+      {
+        title: "2. Risks of Margin Trading",
+        icon: AlertTriangle,
+        content: `• Losses can exceed your deposit
+• Margin calls may require immediate action
+• Positions may be liquidated automatically
+• Not suitable for all investors`,
+      },
+      {
+        title: "3. Margin Requirements",
+        icon: Scale,
+        content: `• Initial margin required to open position
+• Maintenance margin must be maintained
+• Margin levels vary by asset
+• Changes may occur based on volatility`,
+      },
+    ],
+  },
+  vulnerability: {
+    title: "Vulnerability Disclosure Policy",
+    sections: [
+      {
+        title: "1. Reporting Security Issues",
+        icon: Bug,
+        content: `If you discover a security vulnerability:
+
+• Report to security@m4capital.com
+• Include detailed description
+• Do not exploit the vulnerability
+• Allow reasonable time for resolution`,
+      },
+      {
+        title: "2. Our Commitment",
+        icon: Shield,
+        content: `• We take all reports seriously
+• Investigate promptly and thoroughly
+• Keep reporters informed
+• Credit researchers (if desired)`,
+      },
+      {
+        title: "3. Safe Harbor",
+        icon: Scale,
+        content: `• Good faith researchers protected
+• No legal action for responsible disclosure
+• Cooperation appreciated and recognized
+• Bug bounty program may apply`,
+      },
+    ],
+  },
+  promo: {
+    title: "Promo Code Policy",
+    sections: [
+      {
+        title: "1. Using Promo Codes",
+        icon: Ticket,
+        content: `• Enter code during signup or deposit
+• One code per account/transaction
+• Codes may have expiration dates
+• Cannot be combined with other offers`,
+      },
+      {
+        title: "2. Bonus Terms",
+        icon: CreditCard,
+        content: `• Bonuses may have trading requirements
+• Withdrawal conditions apply
+• Abuse results in bonus cancellation
+• Terms vary by promotion`,
+      },
+      {
+        title: "3. Restrictions",
+        icon: Ban,
+        content: `• Codes non-transferable
+• Duplicate accounts prohibited
+• We reserve right to modify terms
+• Decisions on eligibility are final`,
+      },
+    ],
+  },
+};
 
 const TermsOfServicePage = () => {
+  const [selectedCategory, setSelectedCategory] = useState("terms");
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+  const currentPolicy = policyContent[selectedCategory];
+  const currentCategoryInfo = policyCategories.find(
+    (c) => c.id === selectedCategory
+  );
+
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950 pt-20">
-        {/* Hero Section */}
+      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950 pt-16">
+        {/* Compact Hero Section */}
         <div className="relative overflow-hidden">
-          {/* Background Effects */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-500/10 via-transparent to-transparent" />
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-500/5 rounded-full blur-3xl" />
-          <div className="absolute top-20 right-1/4 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl" />
 
-          <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="relative max-w-3xl mx-auto px-3 sm:px-4 py-6 sm:py-10">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.4 }}
               className="text-center"
             >
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/25 mb-6">
-                <FileText className="w-8 h-8 text-white" />
+              <div className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg shadow-orange-500/25 mb-3">
+                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
                 Terms of{" "}
                 <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">
                   Service
                 </span>
               </h1>
-              <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto">
+              <p className="text-sm sm:text-base text-gray-400 max-w-lg mx-auto px-2">
                 Please read these terms carefully before using M4 Capital's
-                services. Your access to and use of our platform is conditioned
-                on your acceptance of these terms.
+                services.
               </p>
-              <p className="text-sm text-gray-500 mt-4">
+              <p className="text-xs text-gray-500 mt-2">
                 Last updated: December 10, 2025
               </p>
             </motion.div>
           </div>
         </div>
 
-        {/* Quick Navigation */}
-        <div className="sticky top-16 z-40 bg-gray-900/80 backdrop-blur-xl border-y border-gray-800">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex gap-2 py-3 overflow-x-auto scrollbar-hide">
-              {sections.slice(0, 6).map((section) => (
-                <a
-                  key={section.id}
-                  href={`#${section.id}`}
-                  className="flex-shrink-0 px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-orange-400 bg-gray-800/50 hover:bg-gray-800 rounded-full transition-all"
+        {/* Policy Category Selector - Dropdown Style */}
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 pb-6">
+          {/* Category Dropdown Button */}
+          <div className="relative">
+            <button
+              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+              className="w-full flex items-center justify-between gap-2 p-3 sm:p-4 bg-gray-800/80 hover:bg-gray-800 border border-gray-700 rounded-xl transition-all"
+            >
+              <div className="flex items-center gap-2.5">
+                {currentCategoryInfo && (
+                  <currentCategoryInfo.icon className="w-4 h-4 text-orange-400" />
+                )}
+                <span className="text-sm sm:text-base font-medium text-white">
+                  {currentCategoryInfo?.label || "Select Policy"}
+                </span>
+              </div>
+              <ChevronDown
+                className={`w-4 h-4 text-gray-400 transition-transform ${
+                  showCategoryDropdown ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {showCategoryDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-xl shadow-xl z-50 max-h-80 overflow-y-auto"
                 >
-                  {section.title.split(". ")[1]}
-                </a>
-              ))}
-            </div>
+                  {policyCategories.map((category) => {
+                    const Icon = category.icon;
+                    const isSelected = selectedCategory === category.id;
+                    return (
+                      <button
+                        key={category.id}
+                        onClick={() => {
+                          setSelectedCategory(category.id);
+                          setShowCategoryDropdown(false);
+                          setExpandedSection(null);
+                        }}
+                        className={`w-full flex items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 text-left transition-colors border-b border-gray-700/50 last:border-0 ${
+                          isSelected
+                            ? "bg-orange-500/10 text-orange-400"
+                            : "text-gray-300 hover:bg-gray-700/50 hover:text-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          <span className="text-xs sm:text-sm font-medium">
+                            {category.label}
+                          </span>
+                        </div>
+                        {isSelected && (
+                          <div className="w-2 h-2 rounded-full bg-orange-500" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
-        {/* Content Sections */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="space-y-8">
-            {sections.map((section, index) => {
+        {/* Content Sections - Accordion Style */}
+        <div className="max-w-3xl mx-auto px-3 sm:px-4 pb-12">
+          <motion.div
+            key={selectedCategory}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="space-y-2"
+          >
+            {currentPolicy?.sections.map((section, index) => {
               const Icon = section.icon;
+              const isExpanded =
+                expandedSection === `${selectedCategory}-${index}`;
+              const sectionId = `${selectedCategory}-${index}`;
+
               return (
                 <motion.div
-                  key={section.id}
-                  id={section.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                  transition={{ duration: 0.5, delay: index * 0.05 }}
-                  className="group"
+                  key={sectionId}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: index * 0.03 }}
+                  className="bg-gray-800/60 border border-gray-700/50 rounded-lg overflow-hidden"
                 >
-                  <div className="relative bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl border border-gray-800 hover:border-gray-700 transition-all duration-300 overflow-hidden">
-                    {/* Glow effect on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <button
+                    onClick={() =>
+                      setExpandedSection(isExpanded ? null : sectionId)
+                    }
+                    className="w-full flex items-center justify-between gap-2 p-3 sm:p-4 text-left hover:bg-gray-700/30 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-orange-500/10 flex items-center justify-center">
+                        <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-orange-400" />
+                      </div>
+                      <span className="text-xs sm:text-sm font-medium text-white">
+                        {section.title}
+                      </span>
+                    </div>
+                    <ChevronDown
+                      className={`w-3.5 h-3.5 text-gray-400 transition-transform flex-shrink-0 ${
+                        isExpanded ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
-                    <div className="relative p-6 sm:p-8">
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-orange-600/10 flex items-center justify-center border border-orange-500/20">
-                          <Icon className="w-6 h-6 text-orange-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h2 className="text-xl sm:text-2xl font-bold text-white mb-4 group-hover:text-orange-400 transition-colors">
-                            {section.title}
-                          </h2>
-                          <div className="prose prose-invert prose-gray max-w-none">
-                            <p className="text-gray-300 leading-relaxed whitespace-pre-line">
-                              {section.content}
-                            </p>
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
+                          <div className="pl-8 sm:pl-9 text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line">
+                            {section.content}
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               );
             })}
-          </div>
+          </motion.div>
 
-          {/* Agreement Section */}
+          {/* Agreement Notice */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="mt-16 text-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mt-6 p-3 sm:p-4 bg-orange-500/5 border border-orange-500/20 rounded-lg"
           >
-            <div className="inline-flex items-center justify-center p-8 rounded-2xl bg-gradient-to-br from-orange-500/10 to-orange-600/5 border border-orange-500/20">
+            <div className="flex items-start gap-2.5">
+              <Shield className="w-4 h-4 text-orange-400 mt-0.5 flex-shrink-0" />
               <div>
-                <Shield className="w-12 h-12 text-orange-400 mx-auto mb-4" />
-                <h3 className="text-xl font-bold text-white mb-2">
+                <p className="text-xs sm:text-sm font-medium text-white mb-1">
                   Your Agreement
-                </h3>
-                <p className="text-gray-400 max-w-md">
+                </p>
+                <p className="text-xs text-gray-400">
                   By using M4 Capital, you confirm that you have read,
-                  understood, and agree to be bound by these Terms of Service.
+                  understood, and agree to be bound by these Terms of Service
+                  and all applicable policies.
                 </p>
               </div>
             </div>
