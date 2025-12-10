@@ -84,10 +84,13 @@ export async function POST(
         where: { userId: userId },
       });
 
-      // Sessions will be automatically deleted via CASCADE constraint
-      // No need to explicitly delete them here
+      // Explicitly delete user's sessions to force logout
+      // This ensures the user is logged out immediately even before CASCADE runs
+      await tx.session.deleteMany({
+        where: { userId: userId },
+      });
 
-      // Finally, delete the user (this will cascade delete sessions)
+      // Finally, delete the user (this will cascade delete remaining relations)
       await tx.user.delete({
         where: { id: userId },
       });

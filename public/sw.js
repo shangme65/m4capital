@@ -53,7 +53,9 @@ self.addEventListener("push", (event) => {
         image: payload.image,
         actions: payload.actions || [],
         requireInteraction: payload.requireInteraction || false,
-        vibrate: payload.vibrate || [200, 100, 200],
+        vibrate: payload.vibrate,
+        renotify: payload.renotify !== undefined ? payload.renotify : true,
+        silent: payload.silent || false,
       };
     } catch (e) {
       console.log("[Service Worker] Push data parse error:", e);
@@ -67,10 +69,16 @@ self.addEventListener("push", (event) => {
     badge: data.badge,
     tag: data.tag,
     data: data.data,
-    vibrate: data.vibrate,
     requireInteraction: data.requireInteraction,
     actions: data.actions,
+    renotify: data.renotify,
+    silent: data.silent,
   };
+
+  // Only add vibrate if not silent
+  if (!data.silent && data.vibrate) {
+    options.vibrate = data.vibrate;
+  }
 
   if (data.image) {
     options.image = data.image;

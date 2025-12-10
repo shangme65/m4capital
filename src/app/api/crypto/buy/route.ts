@@ -190,7 +190,9 @@ export async function POST(request: NextRequest) {
     console.log(
       `✅ Crypto purchase: ${amount} ${symbol} for ${balanceCurrency} ${totalCostInBalanceCurrency.toFixed(
         2
-      )} (USD $${totalCostUSD.toFixed(2)}) | New balance: ${balanceCurrency} ${newBalance}`
+      )} (USD $${totalCostUSD.toFixed(
+        2
+      )}) | New balance: ${balanceCurrency} ${newBalance}`
     );
 
     // Send email notification
@@ -369,7 +371,7 @@ export async function POST(request: NextRequest) {
 
       // Send web push notification to user's devices
       await sendWebPushToUser(user.id, {
-        title: `💰 ${notificationTitle}`,
+        title: notificationTitle,
         body: notificationMessage,
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-96.png",
@@ -379,7 +381,8 @@ export async function POST(request: NextRequest) {
           notificationId,
           type: "buy",
         },
-        vibrate: [200, 100, 200],
+        renotify: false,
+        silent: false,
       });
       console.log(`🔔 Push notification sent for user ${user.id}`);
     } catch (notifError) {

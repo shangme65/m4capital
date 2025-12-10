@@ -26,6 +26,8 @@ export async function sendWebPushToUser(
     actions?: Array<{ action: string; title: string; icon?: string }>;
     requireInteraction?: boolean;
     vibrate?: number[];
+    renotify?: boolean;
+    silent?: boolean;
   }
 ) {
   if (!vapidPublicKey || !vapidPrivateKey) {
@@ -146,7 +148,8 @@ export async function sendPushNotification(
         type: options?.type || "notification",
         ...options?.data,
       },
-      vibrate: [200, 100, 200],
+      renotify: false,
+      silent: false,
     };
 
     const result = await sendWebPushToUser(userId, pushPayload);

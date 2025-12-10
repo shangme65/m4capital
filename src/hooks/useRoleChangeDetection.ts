@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 /**
  * Hook to periodically check if user's role has changed
- * and automatically refresh the session + redirect if needed
+ * and automatically refresh the session + redirect if needed.
+ * Also handles the case when user account is deleted by admin.
  */
 export function useRoleChangeDetection(checkInterval = 60000) {
   const { data: session, update } = useSession();
@@ -21,6 +22,21 @@ export function useRoleChangeDetection(checkInterval = 60000) {
         const response = await fetch("/api/auth/refresh-session", {
           method: "POST",
         });
+
+        // Handle deleted user case - user no longer exists in database
+        if (response.status === 404 || response.status === 401) {
+          console.log(
+            "🚫 User account has been deleted or is unauthorized - signing out"
+          );
+          // Clear local storage and session storage
+          if (typeof window !== "undefined") {
+            localStorage.clear();
+            sessionStorage.clear();
+          }
+          // Sign out and redirect to homepage
+          await signOut({ callbackUrl: "/", redirect: true });
+          return;
+        }
 
         if (response.ok) {
           const data = await response.json();

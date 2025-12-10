@@ -87,16 +87,70 @@ export async function GET(request: NextRequest) {
 
     // Normalize into a common format
     const normalized = [
-      ...trades.map((t) => ({
-        id: t.id,
-        type: t.side.toLowerCase(),
-        symbol: t.symbol,
-        amount: Number(t.quantity),
-        price: Number(t.entryPrice),
-        date: t.createdAt,
-        status: t.status.toLowerCase(),
-        source: "trade",
-      })),
+      ...trades.map((t) => {
+        // Check if this is a swap transaction from metadata
+        const metadata = t.metadata as {
+          type?: string;
+          fromAsset?: string;
+          toAsset?: string;
+          fromAmount?: number;
+          toAmount?: number;
+          fromPriceUSD?: number;
+          toPriceUSD?: number;
+          fromValueUSD?: number;
+          toValueUSD?: number;
+          rate?: number;
+          fee?: number;
+        } | null;
+
+        const isSwap = metadata?.type === "SWAP";
+
+        if (isSwap) {
+          // For swaps, determine if we're showing this in fromAsset or toAsset history
+          const fromAsset = metadata?.fromAsset || "";
+          const toAsset = metadata?.toAsset || "";
+          const isFromAssetView =
+            fromAsset.toUpperCase() === symbol.toUpperCase();
+
+          return {
+            id: t.id,
+            type: "swap",
+            symbol: t.symbol,
+            amount: isFromAssetView
+              ? Number(metadata?.fromAmount || t.quantity)
+              : Number(metadata?.toAmount || t.quantity),
+            price: Number(t.entryPrice),
+            date: t.createdAt,
+            status: t.status.toLowerCase(),
+            source: "trade",
+            // Swap-specific fields
+            isSwap: true,
+            fromAsset,
+            toAsset,
+            fromAmount: metadata?.fromAmount || 0,
+            toAmount: metadata?.toAmount || 0,
+            fromPriceUSD: metadata?.fromPriceUSD || 0,
+            toPriceUSD: metadata?.toPriceUSD || 0,
+            fromValueUSD: metadata?.fromValueUSD || 0,
+            toValueUSD: metadata?.toValueUSD || 0,
+            swapRate: metadata?.rate || 0,
+            fee: metadata?.fee || 0,
+            isFromAssetView,
+          };
+        }
+
+        // Regular buy/sell trade
+        return {
+          id: t.id,
+          type: t.side.toLowerCase(),
+          symbol: t.symbol,
+          amount: Number(t.quantity),
+          price: Number(t.entryPrice),
+          date: t.createdAt,
+          status: t.status.toLowerCase(),
+          source: "trade",
+        };
+      }),
       ...deposits.map((d) => {
         // Get cryptoAmount from field or metadata
         const metadata = d.metadata as {

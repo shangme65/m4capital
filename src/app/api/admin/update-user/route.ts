@@ -291,7 +291,7 @@ export async function PUT(req: NextRequest) {
             id: generateId(),
             userId: userBefore.id,
             type: "INFO",
-            title: "🎉 Promoted to Staff Administrator",
+            title: "Promoted to Staff Administrator",
             message: `Congratulations! You have been promoted to Staff Administrator. You now have access to administrative features in your dashboard.`,
           },
         });

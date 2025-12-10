@@ -329,8 +329,8 @@ export async function POST(request: NextRequest) {
 
       await sendPushNotification(
         user.id,
-        `🔄 Swap Completed`,
-        `Swapped ${amount.toFixed(8)} ${fromAsset} → ${receiveAmount.toFixed(
+        `Swap Completed`,
+        `Swapped ${amount.toFixed(8)} ${fromAsset} to ${receiveAmount.toFixed(
           8
         )} ${toAsset}`,
         {

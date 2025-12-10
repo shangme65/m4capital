@@ -33,7 +33,8 @@ export interface DetailedTransaction {
     | "convert"
     | "transfer"
     | "send"
-    | "receive";
+    | "receive"
+    | "swap";
   asset: string;
   amount: number;
   value: number;
@@ -53,6 +54,7 @@ export interface DetailedTransaction {
   toPriceUSD?: number;
   fromValueUSD?: number;
   toValueUSD?: number;
+  swapRate?: number;
   rate?: number;
   confirmations?: number;
   maxConfirmations?: number;
@@ -128,6 +130,17 @@ export default function TransactionDetailsModal({
   };
 
   const getTransactionTitle = () => {
+    // For swaps, show custom title
+    if (
+      transaction.type === "swap" &&
+      transaction.fromAsset &&
+      transaction.toAsset
+    ) {
+      return `Swapped ${getCryptoFullName(transaction.fromAsset).name} → ${
+        getCryptoFullName(transaction.toAsset).name
+      }`;
+    }
+
     const crypto = getCryptoFullName(transaction.asset);
     const typeMap: Record<string, string> = {
       buy: "Bought",
@@ -138,6 +151,7 @@ export default function TransactionDetailsModal({
       transfer: "Transferred",
       send: "Sent",
       receive: "Received",
+      swap: "Swapped",
     };
     return `${typeMap[transaction.type] || transaction.type} ${crypto.name}`;
   };
@@ -319,6 +333,26 @@ export default function TransactionDetailsModal({
             </svg>
           </div>
         );
+      case "swap":
+        return (
+          <div
+            className={`${baseClasses} bg-gradient-to-br from-purple-500 to-pink-500`}
+          >
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2.5}
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              />
+            </svg>
+          </div>
+        );
       default:
         return (
           <div
@@ -422,7 +456,8 @@ export default function TransactionDetailsModal({
                   <div className="flex items-start gap-3 mb-4">
                     <div className="flex-shrink-0">
                       {/* For swap/convert transactions, show overlapping asset icons */}
-                      {transaction.type === "convert" &&
+                      {(transaction.type === "convert" ||
+                        transaction.type === "swap") &&
                       transaction.fromAsset &&
                       transaction.toAsset ? (
                         <div className="relative w-14 h-10">
@@ -543,7 +578,8 @@ export default function TransactionDetailsModal({
                 {/* Main Transaction Details */}
                 <div className="space-y-3 mb-4 -mt-4">
                   {/* For Convert/Swap transactions, show FROM and TO cards separately */}
-                  {transaction.type === "convert" &&
+                  {(transaction.type === "convert" ||
+                    transaction.type === "swap") &&
                   transaction.fromAsset &&
                   transaction.toAsset ? (
                     <>
@@ -919,12 +955,17 @@ export default function TransactionDetailsModal({
                             Exchange Rate
                           </label>
                           <div className="text-white font-medium text-sm">
-                            {transaction.type === "convert" &&
+                            {(transaction.type === "convert" ||
+                              transaction.type === "swap") &&
                             transaction.fromAsset &&
                             transaction.toAsset ? (
                               <>
                                 1 {transaction.fromAsset} ={" "}
-                                {transaction.rate.toFixed(8)}{" "}
+                                {(
+                                  transaction.swapRate ||
+                                  transaction.rate ||
+                                  0
+                                ).toFixed(8)}{" "}
                                 {transaction.toAsset}
                               </>
                             ) : (

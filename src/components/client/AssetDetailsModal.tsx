@@ -883,10 +883,26 @@ export default function AssetDetailsModal({
                                   | "convert"
                                   | "transfer"
                                   | "send"
-                                  | "receive",
-                                asset: tx.cryptoCurrency || asset.symbol,
-                                amount: txAmount,
-                                value: txValue,
+                                  | "receive"
+                                  | "swap",
+                                asset:
+                                  tx.type === "swap"
+                                    ? tx.isFromAssetView
+                                      ? tx.fromAsset
+                                      : tx.toAsset
+                                    : tx.cryptoCurrency || asset.symbol,
+                                amount:
+                                  tx.type === "swap"
+                                    ? tx.isFromAssetView
+                                      ? tx.fromAmount
+                                      : tx.toAmount
+                                    : txAmount,
+                                value:
+                                  tx.type === "swap"
+                                    ? tx.isFromAssetView
+                                      ? tx.fromValueUSD
+                                      : tx.toValueUSD
+                                    : txValue,
                                 timestamp: new Date(tx.date).toLocaleString(),
                                 status: (tx.status?.toLowerCase() ===
                                   "completed" ||
@@ -904,7 +920,7 @@ export default function AssetDetailsModal({
                                   tx.method || tx.paymentMethod || undefined,
                                 date: new Date(tx.date),
                                 currency: tx.currency || preferredCurrency,
-                                valueCurrency: tx.fiatCurrency || undefined, // Currency that fiatValue is in
+                                valueCurrency: tx.fiatCurrency || undefined,
                                 rate: tx.price || undefined,
                                 hash: tx.hash || tx.txHash || undefined,
                                 network: tx.network || undefined,
@@ -912,6 +928,18 @@ export default function AssetDetailsModal({
                                   tx.address || tx.payAddress || undefined,
                                 confirmations: tx.confirmations,
                                 maxConfirmations: tx.maxConfirmations || 6,
+                                // Swap-specific fields
+                                ...(tx.type === "swap" && {
+                                  fromAsset: tx.fromAsset,
+                                  toAsset: tx.toAsset,
+                                  fromAmount: tx.fromAmount,
+                                  toAmount: tx.toAmount,
+                                  fromPriceUSD: tx.fromPriceUSD,
+                                  toPriceUSD: tx.toPriceUSD,
+                                  fromValueUSD: tx.fromValueUSD,
+                                  toValueUSD: tx.toValueUSD,
+                                  swapRate: tx.swapRate,
+                                }),
                               };
                               setSelectedTransaction(detailedTx);
                               setShowTransactionDetails(true);
@@ -931,9 +959,13 @@ export default function AssetDetailsModal({
                                   className={`w-10 h-10 rounded-full flex items-center justify-center ${
                                     tx.type === "buy" ||
                                     tx.type === "deposit" ||
-                                    tx.type === "receive"
+                                    tx.type === "receive" ||
+                                    (tx.type === "swap" && !tx.isFromAssetView)
                                       ? "bg-green-500/20"
-                                      : tx.type === "sell" || tx.type === "send"
+                                      : tx.type === "sell" ||
+                                        tx.type === "send" ||
+                                        (tx.type === "swap" &&
+                                          tx.isFromAssetView)
                                       ? "bg-red-500/20"
                                       : "bg-blue-500/20"
                                   }`}
@@ -942,10 +974,14 @@ export default function AssetDetailsModal({
                                     className={`text-lg ${
                                       tx.type === "buy" ||
                                       tx.type === "deposit" ||
-                                      tx.type === "receive"
+                                      tx.type === "receive" ||
+                                      (tx.type === "swap" &&
+                                        !tx.isFromAssetView)
                                         ? "text-green-400"
                                         : tx.type === "sell" ||
-                                          tx.type === "send"
+                                          tx.type === "send" ||
+                                          (tx.type === "swap" &&
+                                            tx.isFromAssetView)
                                         ? "text-red-400"
                                         : "text-blue-400"
                                     }`}
@@ -956,13 +992,18 @@ export default function AssetDetailsModal({
                                       ? "↓"
                                       : tx.type === "sell" || tx.type === "send"
                                       ? "↑"
+                                      : tx.type === "swap"
+                                      ? "⇄"
                                       : "↔"}
                                   </span>
                                 </div>
                                 <div>
                                   <div className="font-semibold text-white capitalize text-base">
-                                    {tx.type}{" "}
-                                    {tx.cryptoCurrency || asset.symbol}
+                                    {tx.type === "swap"
+                                      ? `Swapped ${tx.fromAsset} → ${tx.toAsset}`
+                                      : `${tx.type} ${
+                                          tx.cryptoCurrency || asset.symbol
+                                        }`}
                                   </div>
                                   <div className="text-xs text-gray-500">
                                     {new Date(tx.date).toLocaleDateString(
@@ -1014,62 +1055,111 @@ export default function AssetDetailsModal({
                             <div className="flex items-end justify-between pt-2 border-t border-gray-700/50">
                               <div>
                                 <div className="text-xs text-gray-500 mb-1">
-                                  Amount
+                                  {tx.type === "swap"
+                                    ? tx.isFromAssetView
+                                      ? "Sent"
+                                      : "Received"
+                                    : "Amount"}
                                 </div>
                                 <div
                                   className={`font-bold text-lg ${
                                     tx.type === "buy" ||
                                     tx.type === "deposit" ||
-                                    tx.type === "receive"
+                                    tx.type === "receive" ||
+                                    (tx.type === "swap" && !tx.isFromAssetView)
                                       ? "text-green-400"
-                                      : tx.type === "sell" || tx.type === "send"
+                                      : tx.type === "sell" ||
+                                        tx.type === "send" ||
+                                        (tx.type === "swap" &&
+                                          tx.isFromAssetView)
                                       ? "text-red-400"
                                       : "text-white"
                                   }`}
                                 >
-                                  {tx.type === "buy" ||
-                                  tx.type === "deposit" ||
-                                  tx.type === "receive"
-                                    ? "+"
-                                    : tx.type === "sell" || tx.type === "send"
-                                    ? "-"
-                                    : ""}
-                                  {typeof tx.amount === "number"
-                                    ? tx.amount.toLocaleString(undefined, {
-                                        maximumFractionDigits: 8,
-                                      })
-                                    : tx.amount}{" "}
-                                  {tx.cryptoCurrency || asset.symbol}
+                                  {tx.type === "swap" ? (
+                                    tx.isFromAssetView ? (
+                                      <>
+                                        -
+                                        {Number(tx.fromAmount).toLocaleString(
+                                          undefined,
+                                          { maximumFractionDigits: 8 }
+                                        )}{" "}
+                                        {tx.fromAsset}
+                                      </>
+                                    ) : (
+                                      <>
+                                        +
+                                        {Number(tx.toAmount).toLocaleString(
+                                          undefined,
+                                          { maximumFractionDigits: 8 }
+                                        )}{" "}
+                                        {tx.toAsset}
+                                      </>
+                                    )
+                                  ) : (
+                                    <>
+                                      {tx.type === "buy" ||
+                                      tx.type === "deposit" ||
+                                      tx.type === "receive"
+                                        ? "+"
+                                        : tx.type === "sell" ||
+                                          tx.type === "send"
+                                        ? "-"
+                                        : ""}
+                                      {typeof tx.amount === "number"
+                                        ? tx.amount.toLocaleString(undefined, {
+                                            maximumFractionDigits: 8,
+                                          })
+                                        : tx.amount}{" "}
+                                      {tx.cryptoCurrency || asset.symbol}
+                                    </>
+                                  )}
                                 </div>
                               </div>
                               <div className="text-right">
                                 <div className="text-xs text-gray-500 mb-1">
-                                  Value
+                                  {tx.type === "swap"
+                                    ? "Exchange Rate"
+                                    : "Value"}
                                 </div>
                                 <div className="font-semibold text-white">
-                                  {/* For deposits/transfers with fiatCurrency, show in that currency without conversion */}
-                                  {/* For trades (no fiatCurrency), price is in USD so use formatAmount to convert */}
-                                  {tx.fiatCurrency && tx.fiatValue
-                                    ? tx.fiatCurrency === preferredCurrency
-                                      ? formatCurrencyUtil(
-                                          tx.fiatValue,
-                                          tx.fiatCurrency,
-                                          2
-                                        )
-                                      : tx.fiatValueUSD
-                                      ? formatAmount(tx.fiatValueUSD, 2)
-                                      : formatCurrencyUtil(
-                                          tx.fiatValue,
-                                          tx.fiatCurrency,
-                                          2
-                                        )
-                                    : formatAmount(
-                                        tx.price *
-                                          (typeof tx.amount === "number"
-                                            ? tx.amount
-                                            : parseFloat(tx.amount)),
+                                  {/* For swaps, show the exchange rate */}
+                                  {tx.type === "swap" ? (
+                                    <>
+                                      1 {tx.fromAsset} ={" "}
+                                      {Number(tx.swapRate).toLocaleString(
+                                        undefined,
+                                        { maximumFractionDigits: 6 }
+                                      )}{" "}
+                                      {tx.toAsset}
+                                    </>
+                                  ) : /* For deposits/transfers with fiatCurrency, show in that currency without conversion */
+                                  /* For trades (no fiatCurrency), price is in USD so use formatAmount to convert */
+                                  tx.fiatCurrency && tx.fiatValue ? (
+                                    tx.fiatCurrency === preferredCurrency ? (
+                                      formatCurrencyUtil(
+                                        tx.fiatValue,
+                                        tx.fiatCurrency,
                                         2
-                                      )}
+                                      )
+                                    ) : tx.fiatValueUSD ? (
+                                      formatAmount(tx.fiatValueUSD, 2)
+                                    ) : (
+                                      formatCurrencyUtil(
+                                        tx.fiatValue,
+                                        tx.fiatCurrency,
+                                        2
+                                      )
+                                    )
+                                  ) : (
+                                    formatAmount(
+                                      tx.price *
+                                        (typeof tx.amount === "number"
+                                          ? tx.amount
+                                          : parseFloat(tx.amount)),
+                                      2
+                                    )
+                                  )}
                                 </div>
                               </div>
                             </div>
@@ -1294,7 +1384,7 @@ export default function AssetDetailsModal({
 
               {/* Bottom Action Bar - Unique Branded Design */}
               <div
-                className="fixed bottom-0 left-0 right-0 z-[9999] p-3"
+                className="fixed bottom-0 left-0 right-0 z-[9999] p-2"
                 style={{
                   background:
                     "linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
@@ -1307,7 +1397,7 @@ export default function AssetDetailsModal({
                   {/* Send Button - Purple */}
                   <button
                     onClick={handleSend}
-                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -1317,7 +1407,7 @@ export default function AssetDetailsModal({
                     }}
                   >
                     <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
                       style={{
                         background:
                           "linear-gradient(145deg, #8b5cf6 0%, #6d28d9 100%)",
@@ -1326,7 +1416,7 @@ export default function AssetDetailsModal({
                       }}
                     >
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-4 h-4 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1339,7 +1429,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-purple-400 transition-colors">
+                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-purple-400 transition-colors">
                       Send
                     </span>
                   </button>
@@ -1347,7 +1437,7 @@ export default function AssetDetailsModal({
                   {/* Receive Button - Teal */}
                   <button
                     onClick={handleReceive}
-                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -1357,7 +1447,7 @@ export default function AssetDetailsModal({
                     }}
                   >
                     <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
                       style={{
                         background:
                           "linear-gradient(145deg, #14b8a6 0%, #0d9488 100%)",
@@ -1366,7 +1456,7 @@ export default function AssetDetailsModal({
                       }}
                     >
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-4 h-4 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1379,7 +1469,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-teal-400 transition-colors">
+                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-teal-400 transition-colors">
                       Receive
                     </span>
                   </button>
@@ -1387,7 +1477,7 @@ export default function AssetDetailsModal({
                   {/* Swap Button - Cyan */}
                   <button
                     onClick={handleSwap}
-                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -1397,7 +1487,7 @@ export default function AssetDetailsModal({
                     }}
                   >
                     <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
                       style={{
                         background:
                           "linear-gradient(145deg, #06b6d4 0%, #0891b2 100%)",
@@ -1406,7 +1496,7 @@ export default function AssetDetailsModal({
                       }}
                     >
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-4 h-4 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1419,7 +1509,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-cyan-400 transition-colors">
+                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-cyan-400 transition-colors">
                       Swap
                     </span>
                   </button>
@@ -1427,7 +1517,7 @@ export default function AssetDetailsModal({
                   {/* Buy Button - Green */}
                   <button
                     onClick={handleBuy}
-                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -1437,7 +1527,7 @@ export default function AssetDetailsModal({
                     }}
                   >
                     <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
                       style={{
                         background:
                           "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
@@ -1446,7 +1536,7 @@ export default function AssetDetailsModal({
                       }}
                     >
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-4 h-4 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1459,7 +1549,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-green-400 transition-colors">
+                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-green-400 transition-colors">
                       Buy
                     </span>
                   </button>
@@ -1467,7 +1557,7 @@ export default function AssetDetailsModal({
                   {/* Sell Button - Orange/Red */}
                   <button
                     onClick={handleSell}
-                    className="flex flex-col items-center justify-center gap-1 flex-1 py-2.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
+                    className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -1477,7 +1567,7 @@ export default function AssetDetailsModal({
                     }}
                   >
                     <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-0.5"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center"
                       style={{
                         background:
                           "linear-gradient(145deg, #f97316 0%, #ea580c 100%)",
@@ -1486,7 +1576,7 @@ export default function AssetDetailsModal({
                       }}
                     >
                       <svg
-                        className="w-5 h-5 text-white"
+                        className="w-4 h-4 text-white"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1499,7 +1589,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[11px] font-semibold text-gray-300 group-hover:text-orange-400 transition-colors">
+                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-orange-400 transition-colors">
                       Sell
                     </span>
                   </button>

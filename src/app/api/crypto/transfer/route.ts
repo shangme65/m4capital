@@ -522,7 +522,7 @@ export async function POST(request: NextRequest) {
       // Send push notification to recipient in their preferred currency
       sendTransferPushNotification(
         recipient.id,
-        "💰 Transfer Received!",
+        "Transfer Received",
         `You received ${recipientCurrSymbol}${recipientDisplayAmount.toFixed(
           2
         )} from ${sender.name || sender.email}`,
@@ -533,7 +533,7 @@ export async function POST(request: NextRequest) {
       // Send push notification to sender in their preferred currency
       sendTransferPushNotification(
         sender.id,
-        "📤 Transfer Sent",
+        "Transfer Sent",
         `You sent ${currSymbol}${amount.toFixed(2)} to ${
           recipient.name || destination
         }`,
@@ -718,7 +718,7 @@ export async function POST(request: NextRequest) {
     // Send push notification to recipient
     sendTransferPushNotification(
       recipient.id,
-      "💰 Transfer Received!",
+      "Transfer Received",
       `You received ${amount.toFixed(8)} ${asset} from ${
         sender.name || sender.email
       }`,
@@ -729,7 +729,7 @@ export async function POST(request: NextRequest) {
     // Send push notification to sender
     sendTransferPushNotification(
       sender.id,
-      "📤 Transfer Sent",
+      "Transfer Sent",
       `You sent ${amount.toFixed(8)} ${asset} to ${
         recipient.name || destination
       }`,
