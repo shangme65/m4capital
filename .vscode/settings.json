@@ -17,6 +17,31 @@
   // Disable problematic MCP servers
   "copilot-mcp.disableServers": ["figma"],
 
+  // Terminal Configuration
+  "terminal.integrated.defaultProfile.windows": "PowerShell 7",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell 7": {
+      "path": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+      "icon": "terminal-powershell",
+      "args": []
+    },
+    "Git Bash": {
+      "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+      "icon": "terminal-bash"
+    },
+    "PowerShell 5": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    },
+    "Command Prompt": {
+      "path": [
+        "${env:windir}\\Sysnative\\cmd.exe",
+        "${env:windir}\\System32\\cmd.exe"
+      ],
+      "icon": "terminal-cmd"
+    }
+  },
+
   // General VS Code Settings for Development
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
