@@ -185,9 +185,19 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
   // Fixed minimum deposit for crypto: $20 USD (Bitcoin minimum)
   const CRYPTO_MIN_USD = 20;
+  const minDepositFormatted = formatAmount(CRYPTO_MIN_USD, 2);
   const minDepositAmount = parseFloat(
-    formatAmount(CRYPTO_MIN_USD, 2).replace(/[^0-9.]/g, "")
+    minDepositFormatted.replace(/[^0-9.]/g, "")
   );
+  
+  // Debug logging
+  console.log("Currency context:", {
+    preferredCurrency,
+    currencySymbol,
+    cryptoMinUSD: CRYPTO_MIN_USD,
+    minDepositFormatted,
+    minDepositAmount,
+  });
 
   // Handle back button navigation
   const handleBack = () => {
@@ -253,7 +263,14 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
     setIsLoading(true);
 
     const numAmount = parseFloat(amount);
-    if (!amount || numAmount <= 0) {
+    console.log("Form submission validation:", {
+      amount,
+      numAmount,
+      minDepositAmount,
+      isValid: numAmount >= minDepositAmount,
+    });
+
+    if (!amount || numAmount <= 0 || isNaN(numAmount)) {
       setError("Please enter a valid amount");
       setIsLoading(false);
       return;
@@ -263,7 +280,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setError(
         `Minimum deposit amount is ${currencySymbol}${minDepositAmount.toFixed(
           2
-        )}`
+        )}. For crypto deposits, minimum is $20 USD.`
       );
       setIsLoading(false);
       return;
