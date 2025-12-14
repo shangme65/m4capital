@@ -90,6 +90,12 @@ export async function POST(request: NextRequest) {
 
     // Try payment API first, fall back to invoice API
     try {
+      console.log("Attempting to create payment with:", {
+        user: user.email,
+        amount,
+        currency,
+        crypto: cryptoInfo.code,
+      });
       return await createCryptoPayment(
         user,
         portfolio,
@@ -99,9 +105,10 @@ export async function POST(request: NextRequest) {
         cryptoInfo.name
       );
     } catch (error: any) {
-      console.log(
+      console.error(
         "Payment API failed, falling back to invoice API:",
-        error?.message || error
+        error?.message || error,
+        error?.stack
       );
       try {
         return await createCryptoInvoice(
@@ -115,7 +122,8 @@ export async function POST(request: NextRequest) {
       } catch (invoiceError: any) {
         console.error(
           "Invoice API also failed:",
-          invoiceError?.message || invoiceError
+          invoiceError?.message || invoiceError,
+          invoiceError?.stack
         );
         // Return a more descriptive error
         const errorMessage =
@@ -127,7 +135,10 @@ export async function POST(request: NextRequest) {
           errorMessage.includes("API key")
             ? "Payment service is not configured. Please contact support."
             : errorMessage,
-          invoiceError,
+          {
+            paymentError: error?.message,
+            invoiceError: invoiceError?.message,
+          },
           500
         );
       }
