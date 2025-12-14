@@ -24,6 +24,7 @@ import {
 import { getCryptoMetadata } from "@/lib/crypto-constants";
 import { useVerificationGate } from "@/hooks/useVerificationGate";
 import VerificationRequiredModal from "@/components/client/VerificationRequiredModal";
+import PendingDepositsWidget from "@/components/client/PendingDepositsWidget";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -1024,6 +1025,9 @@ function DashboardContent() {
           </div>
         </div>
       </div>
+
+      {/* Pending Deposits Widget */}
+      <PendingDepositsWidget />
 
       {/* Trading Actions */}
       <div className="grid grid-cols-4 gap-2 sm:gap-4">

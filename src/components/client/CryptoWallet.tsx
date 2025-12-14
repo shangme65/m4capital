@@ -7,15 +7,6 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
-interface CryptoWalletProps {
-  amount: string;
-  cryptoCurrency: string;
-  cryptoSymbol: string;
-  cryptoName: string;
-  onBack: () => void;
-  onComplete: () => void;
-}
-
 interface PaymentData {
   paymentAddress: string;
   paymentAmount: number;
@@ -24,6 +15,16 @@ interface PaymentData {
   expiresAt?: string;
   invoiceUrl?: string;
   method?: string;
+}
+
+interface CryptoWalletProps {
+  amount: string;
+  cryptoCurrency: string;
+  cryptoSymbol: string;
+  cryptoName: string;
+  onBack: () => void;
+  onComplete: () => void;
+  existingPayment?: PaymentData; // Optional: pass existing payment data to skip creation
 }
 
 // Crypto-specific styling and configuration
@@ -105,12 +106,15 @@ export default function CryptoWallet({
   cryptoName,
   onBack,
   onComplete,
+  existingPayment,
 }: CryptoWalletProps) {
   const [copied, setCopied] = useState(false);
   const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!existingPayment);
   const [error, setError] = useState("");
-  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(
+    existingPayment || null
+  );
   const [paymentStatus, setPaymentStatus] = useState<string>("pending");
 
   const { addNotification, addTransaction } = useNotifications();
@@ -119,10 +123,12 @@ export default function CryptoWallet({
   const cryptoConfig =
     CRYPTO_CONFIG[cryptoSymbol.toUpperCase()] || CRYPTO_CONFIG.BTC;
 
-  // Create payment on mount
+  // Create payment on mount only if no existing payment
   useEffect(() => {
-    createPayment();
-  }, [amount, cryptoCurrency]);
+    if (!existingPayment) {
+      createPayment();
+    }
+  }, [amount, cryptoCurrency, existingPayment]);
 
   // Poll payment status every 10 seconds
   useEffect(() => {
