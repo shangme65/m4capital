@@ -183,6 +183,10 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const currencySymbol =
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
 
+  // Calculate minimum deposit based on lowest crypto minimum
+  const minCryptoUSD = Math.min(...supportedCryptos.map((c) => c.minUSD));
+  const minDepositAmount = parseFloat(formatAmount(minCryptoUSD, 2).replace(/[^0-9.]/g, ''));
+
   // Handle back button navigation
   const handleBack = () => {
     if (showCryptoWallet) {
@@ -253,8 +257,8 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       return;
     }
 
-    if (numAmount < 10) {
-      setError(`Minimum deposit amount is ${currencySymbol}10`);
+    if (numAmount < minDepositAmount) {
+      setError(`Minimum deposit amount is ${currencySymbol}${minDepositAmount.toFixed(2)}`);
       setIsLoading(false);
       return;
     }
@@ -517,7 +521,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                               className="w-full rounded-xl px-4 py-3 pl-8 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                               style={inputStyle}
                               placeholder="0.00"
-                              min="10"
+                              min={minDepositAmount.toString()}
                               required
                             />
                           </div>
@@ -533,7 +537,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                 clipRule="evenodd"
                               />
                             </svg>
-                            Minimum deposit: {currencySymbol}10.00
+                            Minimum deposit: {currencySymbol}{minDepositAmount.toFixed(2)}
                           </p>
                         </div>
 
