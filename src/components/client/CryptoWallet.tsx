@@ -116,6 +116,8 @@ export default function CryptoWallet({
     existingPayment || null
   );
   const [paymentStatus, setPaymentStatus] = useState<string>("pending");
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   const { addNotification, addTransaction } = useNotifications();
   const { preferredCurrency, formatAmount, convertAmount } = useCurrency();
@@ -294,6 +296,43 @@ export default function CryptoWallet({
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("Failed to copy: ", err);
+    }
+  };
+
+  const handleCancelPayment = async () => {
+    if (!paymentData?.depositId) return;
+
+    try {
+      setIsCancelling(true);
+      const response = await fetch("/api/deposits/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          depositId: paymentData.depositId,
+        }),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        addNotification({
+          type: "info",
+          title: "Payment Cancelled",
+          message: `Your ${cryptoName} deposit has been cancelled.`,
+        });
+        onBack();
+      } else {
+        setError(data.error || "Failed to cancel payment");
+      }
+    } catch (err) {
+      console.error("Cancel error:", err);
+      setError("Failed to cancel payment. Please try again.");
+    } finally {
+      setIsCancelling(false);
+      setShowCancelConfirm(false);
     }
   };
 
@@ -593,6 +632,58 @@ export default function CryptoWallet({
         </div>
       </div>
 
+      {/* Cancel Confirmation Modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-gray-800 rounded-xl p-6 max-w-md w-full border border-gray-700"
+          >
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg
+                  className="w-8 h-8 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">
+                Cancel Payment?
+              </h3>
+              <p className="text-gray-400 text-sm">
+                Are you sure you want to cancel this payment? If you've already
+                sent {cryptoName}, it may be lost.
+              </p>
+            </div>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                disabled={isCancelling}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                Keep Payment
+              </button>
+              <button
+                onClick={handleCancelPayment}
+                disabled={isCancelling}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                {isCancelling ? "Cancelling..." : "Yes, Cancel"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex space-x-3">
         <button
@@ -600,6 +691,13 @@ export default function CryptoWallet({
           className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors"
         >
           ← Back
+        </button>
+        <button
+          onClick={() => setShowCancelConfirm(true)}
+          disabled={isCancelling || paymentStatus === "COMPLETED"}
+          className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-500 py-3 px-4 rounded-lg font-medium transition-colors border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isCancelling ? "Cancelling..." : "Cancel Payment"}
         </button>
       </div>
 
