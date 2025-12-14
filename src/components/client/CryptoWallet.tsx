@@ -109,7 +109,7 @@ export default function CryptoWallet({
   existingPayment,
 }: CryptoWalletProps) {
   const [copied, setCopied] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(1800); // 30 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(0);
   const [isLoading, setIsLoading] = useState(!existingPayment);
   const [error, setError] = useState("");
   const [paymentData, setPaymentData] = useState<PaymentData | null>(
@@ -266,20 +266,33 @@ export default function CryptoWallet({
       )}`
     : "";
 
-  // Countdown timer
+  // Calculate and update timer based on expiresAt
   useEffect(() => {
+    if (!paymentData?.expiresAt) return;
+
+    const calculateTimeLeft = () => {
+      const expiryTime = new Date(paymentData.expiresAt!).getTime();
+      const now = Date.now();
+      const secondsLeft = Math.max(0, Math.floor((expiryTime - now) / 1000));
+      return secondsLeft;
+    };
+
+    // Set initial time
+    setTimeLeft(calculateTimeLeft());
+
+    // Update every second
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          return 0;
-        }
-        return prev - 1;
-      });
+      const newTimeLeft = calculateTimeLeft();
+      setTimeLeft(newTimeLeft);
+
+      if (newTimeLeft <= 0) {
+        clearInterval(timer);
+        setError("Payment expired. Please create a new deposit.");
+      }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [paymentData?.expiresAt]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);

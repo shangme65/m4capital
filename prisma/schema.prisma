@@ -100,6 +100,7 @@ model Deposit {
   cryptoAmount    Decimal?
   cryptoCurrency  String?
   invoiceUrl      String?
+  expiresAt       DateTime?
   confirmations   Int       @default(0)
   fee             Decimal?
   targetAsset     String?

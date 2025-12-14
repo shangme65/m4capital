@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
         paymentAddress: true,
         paymentAmount: true,
         invoiceUrl: true,
+        expiresAt: true,
         status: true,
         createdAt: true,
         updatedAt: true,

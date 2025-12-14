@@ -242,6 +242,9 @@ async function createCryptoPayment(
       paymentAddress: payment.pay_address,
       paymentAmount: payment.pay_amount,
       paymentStatus: payment.payment_status,
+      expiresAt: payment.expiration_estimate_date
+        ? new Date(payment.expiration_estimate_date)
+        : undefined,
     },
   });
 

@@ -16,6 +16,7 @@ interface PendingDeposit {
   paymentAddress: string;
   paymentAmount: number;
   invoiceUrl?: string;
+  expiresAt?: string;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -209,6 +210,7 @@ export default function PendingDepositsWidget() {
                   depositId: selectedDeposit.id,
                   paymentId: selectedDeposit.paymentId,
                   invoiceUrl: selectedDeposit.invoiceUrl,
+                  expiresAt: selectedDeposit.expiresAt,
                 }}
               />
             </motion.div>
