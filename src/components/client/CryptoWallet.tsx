@@ -140,12 +140,25 @@ export default function CryptoWallet({
       setIsLoading(true);
       setError("");
 
+      const amountValue = parseFloat(amount);
+      console.log("Creating payment with:", {
+        amount: amountValue,
+        amountString: amount,
+        currency: "USD",
+        cryptoCurrency: cryptoCurrency,
+        isValidAmount: !isNaN(amountValue) && amountValue > 0,
+      });
+
+      if (isNaN(amountValue) || amountValue <= 0) {
+        throw new Error("Invalid amount");
+      }
+
       const response = await fetch("/api/payment/create-crypto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          amount: parseFloat(amount),
+          amount: amountValue,
           currency: "USD",
           cryptoCurrency: cryptoCurrency,
         }),
