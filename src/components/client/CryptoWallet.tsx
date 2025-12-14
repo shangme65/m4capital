@@ -413,7 +413,7 @@ export default function CryptoWallet({
             Deposit Amount ({preferredCurrency})
           </span>
           <span className="text-white font-medium">
-            {formatAmount(convertAmount(parseFloat(amount)), 2)}
+            {formatAmount(parseFloat(amount), 2)}
           </span>
         </div>
         <div className="flex justify-between">
