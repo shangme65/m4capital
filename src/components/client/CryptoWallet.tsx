@@ -381,13 +381,14 @@ export default function CryptoWallet({
   };
 
   // Format crypto amount based on the cryptocurrency
-  const formatCryptoAmount = (amount: number) => {
+  const formatCryptoAmount = (amount: number | undefined | null) => {
+    const numAmount = Number(amount) || 0;
     // Stablecoins and high-precision coins
     if (["USDC", "USDT"].includes(cryptoSymbol.toUpperCase())) {
-      return amount.toFixed(2);
+      return numAmount.toFixed(2);
     }
     // Standard precision for most cryptos
-    return amount.toFixed(8);
+    return numAmount.toFixed(8);
   };
 
   return (
