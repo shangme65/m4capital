@@ -59,13 +59,14 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
 
   // Supported cryptocurrencies from NowPayments
+  // All crypto minimum deposit: $10 USD
   const supportedCryptos = [
     {
       id: "btc",
       symbol: "BTC",
       name: "Bitcoin",
       minAmount: 0.0002,
-      minUSD: 20,
+      minUSD: 10,
       network: "Bitcoin",
     },
     {
@@ -73,7 +74,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "ETH",
       name: "Ethereum",
       minAmount: 0.001,
-      minUSD: 3,
+      minUSD: 10,
       network: "Ethereum (ERC-20)",
     },
     {
@@ -81,7 +82,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "ETC",
       name: "Ethereum Classic",
       minAmount: 0.1,
-      minUSD: 2,
+      minUSD: 10,
       network: "Ethereum Classic",
     },
     {
@@ -89,7 +90,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "LTC",
       name: "Litecoin",
       minAmount: 0.01,
-      minUSD: 1,
+      minUSD: 10,
       network: "Litecoin",
     },
     {
@@ -97,7 +98,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "XRP",
       name: "Ripple",
       minAmount: 10,
-      minUSD: 5,
+      minUSD: 10,
       network: "XRP Ledger",
     },
     {
@@ -105,7 +106,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "USDC",
       name: "USD Coin",
       minAmount: 1,
-      minUSD: 1,
+      minUSD: 10,
       network: "Ethereum (ERC-20)",
     },
     {
@@ -113,7 +114,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "TON",
       name: "Toncoin",
       minAmount: 1,
-      minUSD: 2,
+      minUSD: 10,
       network: "TON Network",
     },
     {
@@ -121,7 +122,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "TRX",
       name: "Tron",
       minAmount: 10,
-      minUSD: 2,
+      minUSD: 10,
       network: "Tron (TRC-20)",
     },
     {
@@ -129,7 +130,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "USDT",
       name: "Tether",
       minAmount: 1,
-      minUSD: 1,
+      minUSD: 10,
       network: "Ethereum (ERC-20)",
     },
     {
@@ -137,7 +138,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "BCH",
       name: "Bitcoin Cash",
       minAmount: 0.001,
-      minUSD: 1,
+      minUSD: 10,
       network: "Bitcoin Cash",
     },
   ];
