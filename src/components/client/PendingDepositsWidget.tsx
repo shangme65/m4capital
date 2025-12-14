@@ -136,7 +136,7 @@ export default function PendingDepositsWidget() {
                           "linear-gradient(145deg, #f7931a 0%, #c77800 100%)",
                       }}
                     >
-                      <CryptoIcon symbol={deposit.cryptoCurrency} size={24} />
+                      <CryptoIcon symbol={deposit.cryptoCurrency} size="md" />
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-white">
