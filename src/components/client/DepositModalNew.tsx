@@ -59,14 +59,14 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
 
   // Supported cryptocurrencies from NowPayments
-  // All crypto minimum deposit: $10 USD
+  // All crypto minimum deposit: $20 USD (matches Bitcoin's NowPayments minimum)
   const supportedCryptos = [
     {
       id: "btc",
       symbol: "BTC",
       name: "Bitcoin",
       minAmount: 0.0002,
-      minUSD: 10,
+      minUSD: 20,
       network: "Bitcoin",
     },
     {
@@ -74,7 +74,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "ETH",
       name: "Ethereum",
       minAmount: 0.001,
-      minUSD: 10,
+      minUSD: 20,
       network: "Ethereum (ERC-20)",
     },
     {
@@ -82,7 +82,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "ETC",
       name: "Ethereum Classic",
       minAmount: 0.1,
-      minUSD: 10,
+      minUSD: 20,
       network: "Ethereum Classic",
     },
     {
@@ -90,7 +90,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "LTC",
       name: "Litecoin",
       minAmount: 0.01,
-      minUSD: 10,
+      minUSD: 20,
       network: "Litecoin",
     },
     {
@@ -98,7 +98,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "XRP",
       name: "Ripple",
       minAmount: 10,
-      minUSD: 10,
+      minUSD: 20,
       network: "XRP Ledger",
     },
     {
@@ -106,7 +106,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "USDC",
       name: "USD Coin",
       minAmount: 1,
-      minUSD: 10,
+      minUSD: 20,
       network: "Ethereum (ERC-20)",
     },
     {
@@ -114,7 +114,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "TON",
       name: "Toncoin",
       minAmount: 1,
-      minUSD: 10,
+      minUSD: 20,
       network: "TON Network",
     },
     {
@@ -122,7 +122,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "TRX",
       name: "Tron",
       minAmount: 10,
-      minUSD: 10,
+      minUSD: 20,
       network: "Tron (TRC-20)",
     },
     {
@@ -130,7 +130,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "USDT",
       name: "Tether",
       minAmount: 1,
-      minUSD: 10,
+      minUSD: 20,
       network: "Ethereum (ERC-20)",
     },
     {
@@ -138,7 +138,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       symbol: "BCH",
       name: "Bitcoin Cash",
       minAmount: 0.001,
-      minUSD: 10,
+      minUSD: 20,
       network: "Bitcoin Cash",
     },
   ];
@@ -184,8 +184,8 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const currencySymbol =
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
 
-  // Fixed minimum deposit for all payment methods: $10 USD
-  const MINIMUM_DEPOSIT_USD = 10;
+  // Fixed minimum deposit for all payment methods: $20 USD (matches NowPayments Bitcoin minimum)
+  const MINIMUM_DEPOSIT_USD = 20;
   const minDepositFormatted = formatAmount(MINIMUM_DEPOSIT_USD, 2);
   const minDepositAmount = parseFloat(
     minDepositFormatted.replace(/[^0-9.]/g, "")
@@ -272,7 +272,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
       setError(
         `Minimum deposit amount is ${currencySymbol}${minDepositAmount.toFixed(
           2
-        )} (equivalent to $10 USD)`
+        )} (equivalent to $20 USD)`
       );
       setIsLoading(false);
       return;
