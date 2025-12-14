@@ -168,11 +168,13 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
   // Use currency context
   let formatAmount = (amount: number, decimals: number = 2) =>
     `$${amount.toFixed(decimals)}`;
+  let convertAmount = (amount: number, toUSD: boolean = false) => amount;
   let preferredCurrency = "USD";
 
   try {
     const currency = useCurrency();
     formatAmount = currency.formatAmount;
+    convertAmount = currency.convertAmount;
     preferredCurrency = currency.preferredCurrency;
   } catch {
     console.log("Currency context not available");
@@ -380,7 +382,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
               {/* Show CryptoWallet when in wallet step */}
               {showCryptoWallet && selectedCryptoInfo ? (
                 <CryptoWallet
-                  amount={amount}
+                  amount={convertAmount(parseFloat(amount), true).toFixed(2)}
                   cryptoCurrency={selectedCrypto}
                   cryptoSymbol={selectedCryptoInfo.symbol}
                   cryptoName={selectedCryptoInfo.name}
