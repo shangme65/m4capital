@@ -183,9 +183,11 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
   const currencySymbol =
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
 
-  // Calculate minimum deposit based on lowest crypto minimum
-  const minCryptoUSD = Math.min(...supportedCryptos.map((c) => c.minUSD));
-  const minDepositAmount = parseFloat(formatAmount(minCryptoUSD, 2).replace(/[^0-9.]/g, ''));
+  // Fixed minimum deposit for crypto: $20 USD (Bitcoin minimum)
+  const CRYPTO_MIN_USD = 20;
+  const minDepositAmount = parseFloat(
+    formatAmount(CRYPTO_MIN_USD, 2).replace(/[^0-9.]/g, "")
+  );
 
   // Handle back button navigation
   const handleBack = () => {
@@ -258,7 +260,11 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
     }
 
     if (numAmount < minDepositAmount) {
-      setError(`Minimum deposit amount is ${currencySymbol}${minDepositAmount.toFixed(2)}`);
+      setError(
+        `Minimum deposit amount is ${currencySymbol}${minDepositAmount.toFixed(
+          2
+        )}`
+      );
       setIsLoading(false);
       return;
     }
@@ -537,7 +543,8 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                 clipRule="evenodd"
                               />
                             </svg>
-                            Minimum deposit: {currencySymbol}{minDepositAmount.toFixed(2)}
+                            Minimum deposit: {currencySymbol}
+                            {minDepositAmount.toFixed(2)}
                           </p>
                         </div>
 
