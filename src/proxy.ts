@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 /**
- * Next.js Middleware - Runs on every request
+ * Next.js Proxy - Runs on every request (Next.js 16+)
  *
  * Features:
  * - Route protection (auth required)
@@ -54,7 +54,7 @@ const skipMiddleware = [
   "/payments",
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Skip middleware for static files and certain API routes
