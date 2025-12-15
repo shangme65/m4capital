@@ -11,6 +11,10 @@
     "seed": "tsx prisma/seed.ts",
     "build:icons": "node scripts/generate-icons.mjs"
   },
+  "overrides": {
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
   "dependencies": {
     "@capacitor/android": "^7.4.4",
     "@capacitor/cli": "^7.4.4",
