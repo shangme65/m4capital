@@ -1,8 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatTimeAgo } from "@/lib/crypto-constants";
+import {
+  NewsFeedSkeleton,
+  NewsCardSkeleton,
+} from "@/components/ui/LoadingSkeletons";
 import {
   Search,
   TrendingUp,

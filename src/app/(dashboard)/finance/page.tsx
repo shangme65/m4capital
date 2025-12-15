@@ -1,9 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import {
+  FinanceOverviewSkeleton,
+  ChartSkeleton,
+  TableSkeleton,
+} from "@/components/ui/LoadingSkeletons";
 import {
   TrendingUp,
   DollarSign,

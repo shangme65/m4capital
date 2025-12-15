@@ -25,6 +25,11 @@ import { getCryptoMetadata } from "@/lib/crypto-constants";
 import { useVerificationGate } from "@/hooks/useVerificationGate";
 import VerificationRequiredModal from "@/components/client/VerificationRequiredModal";
 import PendingDepositsWidget from "@/components/client/PendingDepositsWidget";
+import {
+  BalanceCardSkeleton,
+  PortfolioGridSkeleton,
+  TransactionHistorySkeleton,
+} from "@/components/ui/LoadingSkeletons";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";

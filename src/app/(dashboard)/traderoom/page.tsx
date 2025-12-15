@@ -1,8 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import {
+  CryptoPricesListSkeleton,
+  ChartSkeleton,
+  TransactionHistorySkeleton,
+} from "@/components/ui/LoadingSkeletons";
 import {
   TrendingUp,
   TrendingDown,
