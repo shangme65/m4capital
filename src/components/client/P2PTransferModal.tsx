@@ -1,7 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useOptimistic, useTransition } from "react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/contexts/ToastContext";
+import { sendP2PTransferAction } from "@/actions/p2p-actions";
+import { usePortfolio } from "@/lib/usePortfolio";
 import {
   X,
   User,
@@ -37,6 +39,7 @@ export default function P2PTransferModal({
 }: P2PTransferModalProps) {
   const { data: session } = useSession();
   const { showSuccess, showError } = useToast();
+  const { portfolio, refetch } = usePortfolio();
 
   const [currentStep, setCurrentStep] = useState<Step>("identifier");
   const [identifierType, setIdentifierType] = useState<"email" | "account">(
@@ -47,13 +50,17 @@ export default function P2PTransferModal({
   const [description, setDescription] = useState("");
   const [pin, setPin] = useState("");
   const [receiver, setReceiver] = useState<ReceiverInfo | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [hasPinSet, setHasPinSet] = useState(false);
   const [transferResult, setTransferResult] = useState<any>(null);
   const [showPinSetup, setShowPinSetup] = useState(false);
   const [newPin, setNewPin] = useState("");
   const [confirmNewPin, setConfirmNewPin] = useState("");
   const [settingUpPin, setSettingUpPin] = useState(false);
+
+  const availableBalance = portfolio?.portfolio?.balance || 0;
+  const [optimisticBalance, setOptimisticBalance] =
+    useOptimistic(availableBalance);
 
   // Check if user has PIN set
   useEffect(() => {
@@ -78,27 +85,26 @@ export default function P2PTransferModal({
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `/api/p2p-transfer/lookup-receiver?identifier=${encodeURIComponent(
-          identifier
-        )}`
-      );
-      const data = await response.json();
+    startTransition(async () => {
+      try {
+        const response = await fetch(
+          `/api/p2p-transfer/lookup-receiver?identifier=${encodeURIComponent(
+            identifier
+          )}`
+        );
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to find user");
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to find user");
+        }
+
+        setReceiver(data.receiver);
+        setCurrentStep("amount");
+        showSuccess(`Receiver found: ${data.receiver.name}`);
+      } catch (error: any) {
+        showError(error.message || "User not found");
       }
-
-      setReceiver(data.receiver);
-      setCurrentStep("amount");
-      showSuccess(`Receiver found: ${data.receiver.name}`);
-    } catch (error: any) {
-      showError(error.message || "User not found");
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const validateAmount = () => {
@@ -168,42 +174,45 @@ export default function P2PTransferModal({
       return;
     }
 
-    setLoading(true);
-    try {
-      const response = await fetch("/api/p2p-transfer/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          receiverIdentifier: identifier,
-          amount: parseFloat(amount),
+    const transferAmount = parseFloat(amount);
+
+    // Optimistic update: deduct amount from balance immediately
+    setOptimisticBalance(availableBalance - transferAmount);
+
+    startTransition(async () => {
+      try {
+        const result = await sendP2PTransferAction(
+          identifier,
+          transferAmount,
           pin,
-          description: description || undefined,
-        }),
-      });
+          description || undefined
+        );
 
-      const data = await response.json();
+        if (result.success && result.data) {
+          setTransferResult(result.data);
+          setCurrentStep("success");
+          showSuccess("Transfer completed successfully!");
 
-      if (!response.ok) {
-        throw new Error(data.error || "Transfer failed");
+          if (onSuccess) {
+            onSuccess();
+          }
+
+          // Refresh portfolio data
+          await refetch();
+
+          // Reload page after delay to show updated transaction history
+          setTimeout(() => {
+            window.location.reload();
+          }, 2500);
+        } else {
+          throw new Error(result.error || "Transfer failed");
+        }
+      } catch (error: any) {
+        showError(error.message || "Transfer failed");
+        // Reset optimistic balance on error
+        setOptimisticBalance(availableBalance);
       }
-
-      setTransferResult(data.transfer);
-      setCurrentStep("success");
-      showSuccess("Transfer completed successfully!");
-
-      if (onSuccess) {
-        onSuccess();
-      }
-
-      // Reload page after delay to show updated balance and transaction history
-      setTimeout(() => {
-        window.location.reload();
-      }, 2500);
-    } catch (error: any) {
-      showError(error.message || "Transfer failed");
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const resetForm = () => {
@@ -324,10 +333,10 @@ export default function P2PTransferModal({
 
               <button
                 onClick={lookupReceiver}
-                disabled={loading || !identifier.trim()}
+                disabled={isPending || !identifier.trim()}
                 className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
               >
-                {loading ? (
+                {isPending ? (
                   <>Processing...</>
                 ) : (
                   <>
@@ -515,7 +524,7 @@ export default function P2PTransferModal({
               <div className="flex gap-3">
                 <button
                   onClick={() => setCurrentStep("confirm")}
-                  disabled={loading}
+                  disabled={isPending}
                   className="flex-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <ArrowLeft className="w-5 h-5" />
@@ -523,10 +532,10 @@ export default function P2PTransferModal({
                 </button>
                 <button
                   onClick={processTransfer}
-                  disabled={loading || pin.length !== 4}
+                  disabled={isPending || pin.length !== 4}
                   className="flex-1 bg-green-500 hover:bg-green-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 px-4 rounded-lg transition-colors"
                 >
-                  {loading ? "Processing..." : "Send Money"}
+                  {isPending ? "Processing..." : "Send Money"}
                 </button>
               </div>
             </div>
