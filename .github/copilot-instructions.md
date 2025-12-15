@@ -304,21 +304,92 @@ grep -rn "CONSTANT_NAME" src/
 
 This is a full-stack application built on the T3 stack principles, but with some key differences.
 
-- **Framework**: Next.js 14 (App Router) with TypeScript.
+- **Framework**: Next.js 16 (App Router) with TypeScript and Turbopack as the default bundler.
+- **React**: React 19 with Server Actions, `useOptimistic`, `useTransition`, and the `use()` hook.
 - **Database**: PostgreSQL managed by Prisma ORM. The schema is the source of truth for our data models (`prisma/schema.prisma`).
 - **Authentication**: NextAuth.js is used for authentication, configured with a `CredentialsProvider` for email/password logins. The core configuration is in `src/lib/auth.ts`.
 - **Styling**: Tailwind CSS is used for styling. Global styles are in `src/app/globals.css`.
-- **3D Graphics**: We use `react-three-fiber` for 3D visualizations. Note the custom webpack config in `next.config.mjs` for handling `.glsl` shader files.
+- **3D Graphics**: We use `react-three-fiber` for 3D visualizations. Note: `.npmrc` has `legacy-peer-deps=true` for React 19 compatibility.
+
+### React 19 Patterns - MUST USE
+
+**Server Actions (preferred over API routes for mutations):**
+
+```typescript
+// src/actions/crypto-actions.ts
+"use server";
+
+import { revalidatePath } from "next/cache";
+
+export async function buyCryptoAction(symbol: string, amount: number, price: number) {
+  // Direct database operations
+  await prisma.trade.create({ ... });
+  revalidatePath("/dashboard");
+  return { success: true };
+}
+```
+
+**useOptimistic for instant UI feedback:**
+
+```typescript
+"use client";
+import { useOptimistic, useTransition } from "react";
+
+function BuyModal() {
+  const [isPending, startTransition] = useTransition();
+  const [optimisticBalance, setOptimisticBalance] = useOptimistic(balance);
+
+  const handleBuy = () => {
+    startTransition(async () => {
+      setOptimisticBalance(balance - cost); // Instant UI update
+      await buyCryptoAction(symbol, amount, price); // Server action
+    });
+  };
+}
+```
+
+**Loading States with Suspense:**
+
+```typescript
+import { Suspense } from "react";
+import { PortfolioGridSkeleton } from "@/components/ui/LoadingSkeletons";
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<PortfolioGridSkeleton />}>
+      <PortfolioGrid />
+    </Suspense>
+  );
+}
+```
+
+### Key Files for React 19 Patterns
+
+| File | Purpose |
+|------|---------|
+| `src/actions/crypto-actions.ts` | Server Actions for buy/sell crypto |
+| `src/actions/p2p-actions.ts` | Server Action for P2P transfers |
+| `src/components/ui/LoadingSkeletons.tsx` | Suspense-ready skeleton components |
+| `src/hooks/useNavigationTransition.tsx` | View Transitions API hook |
+
+### React 19 Rules
+
+1. **NO useMemo/useCallback** - React Compiler handles memoization automatically
+2. **NO forwardRef** - Pass `ref` as a regular prop
+3. **Prefer Server Actions** over API routes for mutations
+4. **Use useOptimistic** for instant UI feedback before server response
+5. **Use useTransition** for non-blocking state updates
+6. **Wrap async components** in Suspense with skeleton fallbacks
 
 ## 2. Getting Started: Developer Workflow
 
 The primary setup and development workflow is captured in `setup.sh`.
 
-1.  **Installation**: Run `npm install` to install all dependencies.
+1.  **Installation**: Run `npm install` (uses `.npmrc` with `legacy-peer-deps=true` for React 19).
 2.  **Environment**: The script creates a `.env` file from `.env.example`. **You must manually add your `DATABASE_URL` for a PostgreSQL database.**
 3.  **Database Migration**: Run `npx prisma migrate dev` to apply schema changes to your database.
 4.  **Database Seeding**: Run `npm run seed` to populate the database with initial data. The seed script is `prisma/seed.ts`.
-5.  **Run Dev Server**: Use `npm run dev` to start the Next.js development server.
+5.  **Run Dev Server**: Use `npm run dev` to start the Next.js development server (Turbopack enabled by default).
 
 ## 3. Key Codebase Patterns & Conventions
 
