@@ -5,6 +5,7 @@ import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { Providers } from "@/components/Providers";
 import CookieConsent from "@/components/client/CookieConsent";
 import CapacitorStatusBar from "@/components/client/CapacitorStatusBar";
+import OfflineIndicator from "@/components/client/OfflineIndicator";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -123,6 +124,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.className} safe-area-padding`}>
         <Providers>
+          <OfflineIndicator />
           <CapacitorStatusBar />
           <ConditionalLayout>{children}</ConditionalLayout>
           <CookieConsent />

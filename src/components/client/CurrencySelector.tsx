@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { CURRENCIES } from "@/lib/currencies";
 import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
 import { Search, X } from "lucide-react";
@@ -176,20 +176,18 @@ export default function CurrencySelector({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const selectedCurrency = useMemo(
-    () => CURRENCIES.find((c) => c.code === value),
-    [value]
-  );
+  // React Compiler automatically optimizes these - no need for useMemo
+  const selectedCurrency = CURRENCIES.find((c) => c.code === value);
 
-  const filteredCurrencies = useMemo(() => {
-    if (!searchQuery) return CURRENCIES;
-    const query = searchQuery.toLowerCase();
-    return CURRENCIES.filter(
-      (currency) =>
-        currency.code.toLowerCase().includes(query) ||
-        currency.name.toLowerCase().includes(query)
-    );
-  }, [searchQuery]);
+  const filteredCurrencies = !searchQuery
+    ? CURRENCIES
+    : CURRENCIES.filter((currency) => {
+        const query = searchQuery.toLowerCase();
+        return (
+          currency.code.toLowerCase().includes(query) ||
+          currency.name.toLowerCase().includes(query)
+        );
+      });
 
   const handleSelect = (code: string) => {
     onChange(code);
