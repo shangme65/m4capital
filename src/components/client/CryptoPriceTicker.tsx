@@ -235,7 +235,7 @@ function CryptoPriceCard({
 }
 
 // Main ticker component
-export const CryptoPriceTicker: React.FC<CryptoPriceTickerProps> = ({
+export function CryptoPriceTicker({
   symbols = [
     "BTC",
     "ETH",
@@ -251,7 +251,7 @@ export const CryptoPriceTicker: React.FC<CryptoPriceTickerProps> = ({
   showDetails = true,
   compact = false,
   className = "",
-}) => {
+}: CryptoPriceTickerProps) {
   const prices = useCryptoPrices(symbols);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -284,13 +284,16 @@ export const CryptoPriceTicker: React.FC<CryptoPriceTickerProps> = ({
       </div>
     </div>
   );
-};
+}
 
 // Bitcoin-specific component
-export const BitcoinPriceWidget: React.FC<{
+export function BitcoinPriceWidget({
+  compact = false,
+  showChart = false,
+}: {
   compact?: boolean;
   showChart?: boolean;
-}> = ({ compact = false, showChart = false }) => {
+}) {
   const btcPrice = useBitcoinPrice();
   const [priceHistory, setPriceHistory] = useState<number[]>([]);
 
@@ -417,6 +420,6 @@ export const BitcoinPriceWidget: React.FC<{
       </div>
     </motion.div>
   );
-};
+}
 
 export default CryptoPriceTicker;

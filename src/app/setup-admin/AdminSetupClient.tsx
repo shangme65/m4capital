@@ -91,7 +91,7 @@ export default function AdminSetupClient({
               "Auto-login failed. Please login manually with your credentials."
             );
             setTimeout(() => {
-              window.location.href = "/?login=true";
+              window.location.href = "/?auth=login";
             }, 2000);
           }
         }

@@ -592,7 +592,7 @@ const TestimonialCard3D = ({
   );
 };
 
-const Testimonials: React.FC = () => {
+function Testimonials() {
   // Independent indices for each card position (4 cards for desktop)
   const [card1Index, setCard1Index] = useState(0);
   const [card2Index, setCard2Index] = useState(1);
@@ -801,6 +801,6 @@ const Testimonials: React.FC = () => {
       `}</style>
     </div>
   );
-};
+}
 
 export default Testimonials;

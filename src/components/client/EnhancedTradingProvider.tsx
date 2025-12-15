@@ -115,9 +115,7 @@ interface TradingProviderProps {
 }
 
 // Internal TradingProvider that uses market data
-const InternalTradingProvider: React.FC<TradingProviderProps> = ({
-  children,
-}) => {
+function InternalTradingProvider({ children }: TradingProviderProps) {
   const marketDataContext = useMarketData();
   const [openPositions, setOpenPositions] = useState<Position[]>([]);
   const [tradeHistory, setTradeHistory] = useState<Trade[]>([]);
@@ -348,15 +346,13 @@ const InternalTradingProvider: React.FC<TradingProviderProps> = ({
       {children}
     </TradingContext.Provider>
   );
-};
+}
 
 // Main TradingProvider that wraps with MarketDataProvider
-export const TradingProvider: React.FC<TradingProviderProps> = ({
-  children,
-}) => {
+export function TradingProvider({ children }: TradingProviderProps) {
   return (
     <MarketDataProvider autoConnect={true} enableNews={true}>
       <InternalTradingProvider>{children}</InternalTradingProvider>
     </MarketDataProvider>
   );
-};
+}

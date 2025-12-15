@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import BackgroundSlider from "@/components/client/BackgroundSlider";
 import AnimatedButton from "@/components/client/AnimatedButton";
 import Features from "@/components/client/Features";
@@ -736,6 +736,37 @@ function CallToAction() {
   );
 }
 
+// Component to handle auth query params and open modals
+function AuthHandler() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { openLoginModal, openSignupModal } = useModal();
+
+  useEffect(() => {
+    const auth = searchParams.get("auth");
+    const callbackUrl = searchParams.get("callbackUrl");
+
+    if (auth === "login") {
+      // Open login modal and pass callback URL
+      openLoginModal();
+      // Clean up URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("auth");
+      url.searchParams.delete("callbackUrl");
+      window.history.replaceState({}, "", url.pathname);
+    } else if (auth === "signup") {
+      openSignupModal();
+      // Clean up URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("auth");
+      url.searchParams.delete("callbackUrl");
+      window.history.replaceState({}, "", url.pathname);
+    }
+  }, [searchParams, openLoginModal, openSignupModal, router]);
+
+  return null;
+}
+
 export default function Home() {
   const [loading, setLoading] = useState(true);
 
@@ -751,6 +782,9 @@ export default function Home() {
   return (
     <CryptoMarketProvider>
       <main>
+        <Suspense fallback={null}>
+          <AuthHandler />
+        </Suspense>
         <Hero />
         <Features />
         <Testimonials />

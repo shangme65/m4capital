@@ -40,6 +40,23 @@ const publicRoutes = [
   "/contact",
   "/privacy",
   "/terms",
+  "/setup-admin", // Admin setup page (has its own auth check)
+  "/assets",
+  "/awards",
+  "/calendars",
+  "/data-deletion",
+  "/download",
+  "/help",
+  "/historical-quotes",
+  "/in-numbers",
+  "/industries",
+  "/licenses-and-safeguards",
+  "/margin-trading-basics",
+  "/news-feed",
+  "/press",
+  "/stock-collections",
+  "/trading-specifications",
+  "/video-tutorials",
 ];
 
 // API routes that should skip middleware
@@ -109,7 +126,9 @@ export async function proxy(request: NextRequest) {
 
   // Redirect unauthenticated users from protected routes
   if (isProtectedRoute && !isAuthenticated) {
-    const loginUrl = new URL("/login", request.url);
+    // Redirect to home page with login modal trigger
+    const loginUrl = new URL("/", request.url);
+    loginUrl.searchParams.set("auth", "login");
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -117,7 +136,8 @@ export async function proxy(request: NextRequest) {
   // Redirect non-admin users from admin routes
   if (isAdminRoute && (!isAuthenticated || userRole !== "ADMIN")) {
     if (!isAuthenticated) {
-      const loginUrl = new URL("/login", request.url);
+      const loginUrl = new URL("/", request.url);
+      loginUrl.searchParams.set("auth", "login");
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
@@ -125,7 +145,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Redirect authenticated users away from login/signup
+  // Redirect authenticated users away from login/signup (if those pages existed)
   if (isAuthenticated && (pathname === "/login" || pathname === "/signup")) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
