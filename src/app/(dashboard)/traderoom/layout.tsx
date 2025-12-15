@@ -5,6 +5,18 @@ import MarketDataProvider from "@/components/client/MarketDataProvider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Trade Room | M4 Capital",
+  description:
+    "Professional trading interface with real-time crypto prices, advanced charting, and one-click trading.",
+  openGraph: {
+    title: "Trade Room | M4 Capital",
+    description:
+      "Professional trading interface with real-time crypto prices, advanced charting, and one-click trading.",
+  },
+};
 
 export default async function TraderoomLayout({
   children,
