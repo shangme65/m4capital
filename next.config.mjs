@@ -4,6 +4,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
+  // Note: cacheComponents (PPR) requires removing "export const dynamic" from all pages
+  // Enable when ready to refactor: cacheComponents: true,
   images: {
     remotePatterns: [
       {

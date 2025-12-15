@@ -20,8 +20,10 @@ import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
   children,
+  modal,
 }: {
   children: React.ReactNode;
+  modal: React.ReactNode;
 }) {
   // Temporarily bypass authentication to fix trade page
   // const session = await getServerSession(authOptions);
@@ -54,6 +56,8 @@ export default async function DashboardLayout({
                             </main>
                           </div>
                         </div>
+                        {/* Parallel route for intercepted modals */}
+                        {modal}
                       </PushNotificationProvider>
                     </CryptoMarketProvider>
                   </MarketDataProvider>
