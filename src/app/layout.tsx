@@ -6,6 +6,7 @@ import { Providers } from "@/components/Providers";
 import CookieConsent from "@/components/client/CookieConsent";
 import CapacitorStatusBar from "@/components/client/CapacitorStatusBar";
 import OfflineIndicator from "@/components/client/OfflineIndicator";
+import { WebVitals } from "@/components/client/WebVitals";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -123,6 +124,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.className} safe-area-padding`}>
+        <WebVitals />
         <Providers>
           <OfflineIndicator />
           <CapacitorStatusBar />
