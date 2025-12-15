@@ -194,7 +194,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="/sitemap"
+                  href="/sitemap.xml"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"

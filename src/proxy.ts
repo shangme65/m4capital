@@ -45,6 +45,7 @@ const publicRoutes = [
   "/awards",
   "/calendars",
   "/data-deletion",
+  "/deposits-withdrawals",
   "/download",
   "/help",
   "/historical-quotes",
