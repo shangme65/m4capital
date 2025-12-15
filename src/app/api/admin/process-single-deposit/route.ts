@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         const userCurrency = deposit.Portfolio.User.preferredCurrency || "USD";
         const cryptoAmount = Number(deposit.amount);
         let displayAmount = cryptoAmount;
-        
+
         // For crypto deposits, convert to fiat value for notification display
         if (metadata.depositType === "crypto" && metadata.cryptoAsset) {
           try {
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
               const priceData = await priceResponse.json();
               const usdPrice = parseFloat(priceData.price);
               const usdValue = cryptoAmount * usdPrice;
-              
+
               // Convert USD to user's preferred currency
               displayAmount = usdValue;
               if (userCurrency !== "USD") {
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
             console.error("Error fetching crypto price for notification:", err);
           }
         }
-        
+
         await prisma.notification.create({
           data: {
             id: generateId(),
@@ -220,7 +220,7 @@ async function completeDeposit(deposit: any, metadata: any) {
       const userCurrency = user.preferredCurrency || "USD";
       let displayAmount = amount;
       const currencySymbol = getCurrencySymbol(userCurrency);
-      
+
       // For crypto deposits, convert to fiat value for notification display
       if (depositType === "crypto" && cryptoAsset) {
         try {
@@ -233,7 +233,7 @@ async function completeDeposit(deposit: any, metadata: any) {
             const priceData = await priceResponse.json();
             const usdPrice = parseFloat(priceData.price);
             const usdValue = amount * usdPrice;
-            
+
             // Convert USD to user's preferred currency
             displayAmount = usdValue;
             if (userCurrency !== "USD") {
@@ -251,7 +251,7 @@ async function completeDeposit(deposit: any, metadata: any) {
           console.error("Error fetching crypto price for notification:", err);
         }
       }
-      
+
       await prisma.notification.create({
         data: {
           id: generateId(),
@@ -262,7 +262,7 @@ async function completeDeposit(deposit: any, metadata: any) {
           } Deposit Completed!`,
           message: `Your deposit of ${
             depositType === "crypto"
-              ? `${amount} ${cryptoAsset}`
+              ? `${amount.toFixed(8)} ${cryptoAsset}`
               : `${currencySymbol}${amount}`
           } has been confirmed and credited to your account.`,
           amount: Math.round(displayAmount * 100) / 100, // Store pre-converted fiat amount

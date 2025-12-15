@@ -163,7 +163,7 @@ export async function POST(req: NextRequest) {
             title: `${deposit.targetAsset || userCurrency} Deposit Completed!`,
             message: `Your deposit of ${
               deposit.targetAsset
-                ? `${deposit.amount} ${deposit.targetAsset}`
+                ? `${deposit.amount.toFixed(8)} ${deposit.targetAsset}`
                 : `${getCurrencySymbol(userCurrency)}${deposit.amount}`
             } has been successfully credited to your account.`,
             amount: deposit.amount,

@@ -357,9 +357,9 @@ export async function POST(req: NextRequest) {
           : `${userPreferredCurrency} Deposit Completed!`;
       const pushMessage =
         depositType === "crypto"
-          ? `Your deposit of ${
-              cryptoAmount || amount
-            } ${cryptoAsset} has been credited to your account.`
+          ? `Your deposit of ${(cryptoAmount || amount).toFixed(
+              8
+            )} ${cryptoAsset} has been credited to your account.`
           : `Your deposit of ${getCurrencySymbol(userPreferredCurrency)}${(
               Math.round((fiatAmount || amount) * 100) / 100
             ).toFixed(2)} has been credited to your account.`;
@@ -531,7 +531,9 @@ async function completeDepositImmediately(
             : `${userCurrency} Deposit Completed!`;
         const pushMessage =
           depositType === "crypto"
-            ? `Your deposit of ${amount} ${cryptoAsset} has been credited to your account.`
+            ? `Your deposit of ${amount.toFixed(
+                8
+              )} ${cryptoAsset} has been credited to your account.`
             : `Your deposit of ${getCurrencySymbol(
                 userCurrency
               )}${amount} has been credited to your account.`;
@@ -717,7 +719,9 @@ async function completeDeposit(
             : `${userCurr} Deposit Completed!`;
         const pushMessage =
           depositType === "crypto"
-            ? `Your deposit of ${amount} ${cryptoAsset} has been credited to your account.`
+            ? `Your deposit of ${amount.toFixed(
+                8
+              )} ${cryptoAsset} has been credited to your account.`
             : `Your deposit of ${getCurrencySymbol(
                 userCurr
               )}${amount} has been credited to your account.`;
