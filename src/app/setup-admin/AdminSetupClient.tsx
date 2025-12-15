@@ -123,6 +123,12 @@ export default function AdminSetupClient({
 
         // Auto-login after successful initialization
         const credentials = data.data?._credentials;
+        console.log("🔍 Auto-login check:", {
+          action: data.data?.action,
+          hasCredentials: !!credentials,
+          email: credentials?.email,
+        });
+
         if (
           (data.data?.action === "created" ||
             data.data?.action === "updated") &&
@@ -130,10 +136,18 @@ export default function AdminSetupClient({
         ) {
           showSuccess("Admin initialized! Logging in automatically...");
 
+          console.log("🔐 Attempting auto-login with:", credentials.email);
+
           const signInResult = await signIn("credentials", {
             email: credentials.email,
             password: credentials.password,
             redirect: false,
+          });
+
+          console.log("🔐 SignIn result:", {
+            ok: signInResult?.ok,
+            error: signInResult?.error,
+            status: signInResult?.status,
           });
 
           if (signInResult?.ok) {
