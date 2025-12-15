@@ -365,12 +365,12 @@ export default function Dashboard() {
 
 ### Key Files for React 19 Patterns
 
-| File | Purpose |
-|------|---------|
-| `src/actions/crypto-actions.ts` | Server Actions for buy/sell crypto |
-| `src/actions/p2p-actions.ts` | Server Action for P2P transfers |
+| File                                     | Purpose                            |
+| ---------------------------------------- | ---------------------------------- |
+| `src/actions/crypto-actions.ts`          | Server Actions for buy/sell crypto |
+| `src/actions/p2p-actions.ts`             | Server Action for P2P transfers    |
 | `src/components/ui/LoadingSkeletons.tsx` | Suspense-ready skeleton components |
-| `src/hooks/useNavigationTransition.tsx` | View Transitions API hook |
+| `src/hooks/useNavigationTransition.tsx`  | View Transitions API hook          |
 
 ### React 19 Rules
 

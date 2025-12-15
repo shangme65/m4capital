@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -8,6 +8,7 @@ import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
+import { transferCryptoAction } from "@/actions/transfer-actions";
 
 interface TransferModalNewProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ export default function TransferModalNew({
     recipient: string;
     recipientName?: string;
   } | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [receiverName, setReceiverName] = useState<string | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -282,29 +283,27 @@ export default function TransferModalNew({
     }
   };
 
-  const confirmTransfer = async () => {
-    setLoading(true);
-    try {
-      const inputAmount = parseFloat(transferData.amount);
-      // Convert from preferred currency to asset amount
-      const assetAmount = getAssetAmount(inputAmount);
-      // Get USD value for records
-      const usdValue = convertAmount(inputAmount, true);
+  const confirmTransfer = () => {
+    const inputAmount = parseFloat(transferData.amount);
+    // Convert from preferred currency to asset amount
+    const assetAmount = getAssetAmount(inputAmount);
+    // Get USD value for records
+    const usdValue = convertAmount(inputAmount, true);
 
-      const response = await fetch("/api/crypto/transfer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          asset: transferData.asset,
-          amount: assetAmount,
-          destination: transferData.destination,
-          memo: transferData.memo,
-        }),
-      });
+    startTransition(async () => {
+      const result = await transferCryptoAction(
+        transferData.asset,
+        assetAmount,
+        transferData.destination,
+        transferData.memo
+      );
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to process transfer");
+      if (!result.success) {
+        setErrors({
+          amount: result.error || "Transfer failed",
+        });
+        setStep(2);
+        return;
       }
 
       addTransaction({
@@ -332,17 +331,10 @@ export default function TransferModalNew({
         amount: assetAmount,
         value: usdValue,
         recipient: transferData.destination,
-        recipientName: receiverName || undefined,
+        recipientName: result.data?.recipientName || receiverName || undefined,
       });
       setStep(4);
-    } catch (error) {
-      setErrors({
-        amount: error instanceof Error ? error.message : "Transfer failed",
-      });
-      setStep(2);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const handleDone = () => {
@@ -1051,7 +1043,7 @@ export default function TransferModalNew({
                     <div className="flex gap-2">
                       <button
                         onClick={handleBack}
-                        disabled={loading}
+                        disabled={isPending}
                         className="flex-1 py-3 px-3 rounded-xl font-semibold text-white text-sm disabled:opacity-50"
                         style={card3DStyle}
                       >
@@ -1059,7 +1051,7 @@ export default function TransferModalNew({
                       </button>
                       <button
                         onClick={confirmTransfer}
-                        disabled={loading}
+                        disabled={isPending}
                         className="flex-1 py-3 px-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                         style={{
                           background:
@@ -1068,7 +1060,7 @@ export default function TransferModalNew({
                             "0 8px 20px -5px rgba(168, 85, 247, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                         }}
                       >
-                        {loading ? (
+                        {isPending ? (
                           <>
                             <svg
                               className="animate-spin h-5 w-5"

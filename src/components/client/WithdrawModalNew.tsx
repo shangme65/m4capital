@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { CURRENCIES } from "@/lib/currencies";
 import Image from "next/image";
+import {
+  createWithdrawalAction,
+  payWithdrawalFeeAction,
+} from "@/actions/payment-actions";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -308,25 +312,19 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const createWithdrawal = async () => {
     setLoading(true);
     try {
-      const response = await fetch("/api/payment/create-withdrawal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: parseFloat(withdrawData.amount),
-          currency: withdrawData.currency,
-          withdrawalMethod: withdrawData.withdrawalMethod,
-          address: withdrawData.address,
-          memo: withdrawData.memo,
-        }),
+      const result = await createWithdrawalAction({
+        amount: parseFloat(withdrawData.amount),
+        currency: withdrawData.currency,
+        withdrawalMethod: withdrawData.withdrawalMethod,
+        address: withdrawData.address,
+        memo: withdrawData.memo,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to create withdrawal");
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create withdrawal");
       }
 
-      setWithdrawalId(data.withdrawal.id);
+      setWithdrawalId(result.data.id);
       setStep(3); // Move to fee payment step
 
       addNotification({
@@ -354,19 +352,13 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
     setLoading(true);
     try {
-      const response = await fetch("/api/payment/pay-withdrawal-fee", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          withdrawalId,
-          paymentMethod: "BALANCE_DEDUCTION",
-        }),
+      const result = await payWithdrawalFeeAction({
+        withdrawalId,
+        paymentMethod: "BALANCE_DEDUCTION",
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to process fee payment");
+      if (!result.success) {
+        throw new Error(result.error || "Failed to process fee payment");
       }
 
       // Refresh portfolio

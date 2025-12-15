@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useTransition } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -59,6 +59,10 @@ import ChartGrid from "@/components/client/ChartGrid";
 import ErrorBoundary from "@/components/client/ErrorBoundary";
 import { useSession } from "next-auth/react";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import {
+  fundTraderoomAction,
+  fundTraderoomCryptoAction,
+} from "@/actions/traderoom-actions";
 
 // Active trade interface for binary options
 interface ActiveTrade {
@@ -409,17 +413,11 @@ function TradingInterface() {
     setFundingError("");
 
     try {
-      const response = await fetch("/api/traderoom/fund", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
-      });
+      const result = await fundTraderoomAction(amount);
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setRealAccountBalance(data.data.newFiatBalance);
-        setTraderoomBalance(data.data.newTraderoomBalance);
+      if (result.success && result.data) {
+        setRealAccountBalance(result.data.newFiatBalance);
+        setTraderoomBalance(result.data.newTraderoomBalance);
         setFundAmount("");
         setShowFundModal(false);
         alert(
@@ -429,7 +427,7 @@ function TradingInterface() {
           )} to your Traderoom balance!`
         );
       } else {
-        setFundingError(data.message || "Failed to transfer funds");
+        setFundingError(result.error || "Failed to transfer funds");
       }
     } catch (error) {
       setFundingError("Network error. Please try again.");

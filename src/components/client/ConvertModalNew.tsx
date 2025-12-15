@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useTransition, useOptimistic } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -8,6 +8,7 @@ import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
+import { convertCryptoAction } from "@/actions/convert-actions";
 
 interface ConvertModalNewProps {
   isOpen: boolean;
@@ -98,9 +99,12 @@ export default function ConvertModalNew({
     timestamp?: Date;
   } | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [conversionFee] = useState(0.5); // 0.5% fee
   const [inputMode, setInputMode] = useState<"crypto" | "fiat">("crypto");
+
+  // useOptimistic for instant UI feedback on balances
+  const [optimisticFromBalance, setOptimisticFromBalance] = useOptimistic(0);
 
   const { portfolio, refetch } = usePortfolio();
   const { formatAmount, preferredCurrency, convertAmount } = useCurrency();
@@ -156,17 +160,17 @@ export default function ConvertModalNew({
     }
   }, [userOwnedCrypto.length]);
 
-  // Handle back button navigation
-  const handleBack = useCallback(() => {
+  // Handle back button navigation - React Compiler handles memoization
+  const handleBack = () => {
     if (step > 1 && step < 4) {
       setStep((prev) => (prev - 1) as 1 | 2 | 3 | 4);
     } else {
       onClose();
     }
-  }, [step, onClose]);
+  };
 
-  // Handle done function
-  const handleDone = useCallback(() => {
+  // Handle done function - React Compiler handles memoization
+  const handleDone = () => {
     setConvertData({ fromAsset: "BTC", toAsset: "ETH", amount: "" });
     setErrors({});
     setStep(1);
@@ -175,7 +179,7 @@ export default function ConvertModalNew({
     refetchTransactions();
     // Reload page to show updated balance and transaction history
     window.location.reload();
-  }, [onClose, refetch, refetchTransactions]);
+  };
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -294,36 +298,40 @@ export default function ConvertModalNew({
     }
   };
 
-  // Process conversion
-  const handleConvert = async () => {
+  // Process conversion using Server Action with useTransition
+  const handleConvert = () => {
     if (!validateStep()) return;
 
-    setIsProcessing(true);
-    try {
-      const cryptoAmount = getCryptoAmountFromInput();
-      const receiveAmount = getReceiveAmount();
-      const usdValue = getUsdValue();
-      const rate = getConversionRate();
-      const feeAmount = cryptoAmount * rate * (conversionFee / 100);
-      const fromPriceUSD = cryptoPrices[convertData.fromAsset]?.price || 0;
-      const toPriceUSD = cryptoPrices[convertData.toAsset]?.price || 0;
+    const cryptoAmount = getCryptoAmountFromInput();
+    const receiveAmount = getReceiveAmount();
+    const usdValue = getUsdValue();
+    const rate = getConversionRate();
+    const feeAmount = cryptoAmount * rate * (conversionFee / 100);
+    const fromPriceUSD = cryptoPrices[convertData.fromAsset]?.price || 0;
+    const toPriceUSD = cryptoPrices[convertData.toAsset]?.price || 0;
 
-      const response = await fetch("/api/crypto/convert", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fromAsset: convertData.fromAsset,
-          toAsset: convertData.toAsset,
-          amount: cryptoAmount,
-          rate: rate,
-          fromPriceUSD,
-          toPriceUSD,
-        }),
-      });
+    startTransition(async () => {
+      // Optimistic UI update - show reduced balance immediately
+      const currentFromBalance = availableBalances[convertData.fromAsset] || 0;
+      setOptimisticFromBalance(currentFromBalance - cryptoAmount);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to convert assets");
+      const result = await convertCryptoAction(
+        convertData.fromAsset,
+        convertData.toAsset,
+        cryptoAmount,
+        rate,
+        fromPriceUSD,
+        toPriceUSD
+      );
+
+      if (!result.success) {
+        addNotification({
+          type: "warning",
+          title: "Swap Failed",
+          message: result.error || "Failed to process swap",
+        });
+        setStep(1);
+        return;
       }
 
       const transaction = {
@@ -369,18 +377,7 @@ export default function ConvertModalNew({
         timestamp: new Date(),
       });
       setStep(4);
-    } catch (error) {
-      console.error("Error processing conversion:", error);
-      addNotification({
-        type: "warning",
-        title: "Swap Failed",
-        message:
-          error instanceof Error ? error.message : "Failed to process swap",
-      });
-      setStep(1);
-    } finally {
-      setIsProcessing(false);
-    }
+    });
   };
 
   const setMaxAmount = () => {
@@ -1212,7 +1209,7 @@ export default function ConvertModalNew({
                   {/* Confirm Button */}
                   <button
                     onClick={handleConvert}
-                    disabled={isProcessing}
+                    disabled={isPending}
                     className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:scale-[1.02] disabled:opacity-50"
                     style={{
                       background:
@@ -1221,7 +1218,7 @@ export default function ConvertModalNew({
                         "0 10px 30px -5px rgba(6, 182, 212, 0.5), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)",
                     }}
                   >
-                    {isProcessing ? (
+                    {isPending ? (
                       <div className="flex items-center justify-center gap-2">
                         <svg
                           className="animate-spin h-5 w-5"
