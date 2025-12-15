@@ -83,7 +83,8 @@ export default function AdminSetupClient({
           if (signInResult?.ok) {
             showSuccess("Logged in successfully! Redirecting to dashboard...");
             setTimeout(() => {
-              router.push("/dashboard");
+              // Use window.location for full page reload to ensure session is fresh
+              window.location.href = "/dashboard";
             }, 1500);
           } else {
             // Fallback to manual login if auto-login fails

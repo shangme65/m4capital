@@ -739,30 +739,35 @@ function CallToAction() {
 // Component to handle auth query params and open modals
 function AuthHandler() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const { openLoginModal, openSignupModal } = useModal();
+  const [hasHandled, setHasHandled] = useState(false);
 
   useEffect(() => {
+    // Only run once and only if not already handled
+    if (hasHandled) return;
+
     const auth = searchParams.get("auth");
-    const callbackUrl = searchParams.get("callbackUrl");
 
     if (auth === "login") {
-      // Open login modal and pass callback URL
+      setHasHandled(true);
+      // Clean up URL first
+      const url = new URL(window.location.href);
+      url.searchParams.delete("auth");
+      url.searchParams.delete("callbackUrl");
+      window.history.replaceState({}, "", url.pathname);
+      // Then open modal
       openLoginModal();
-      // Clean up URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete("auth");
-      url.searchParams.delete("callbackUrl");
-      window.history.replaceState({}, "", url.pathname);
     } else if (auth === "signup") {
-      openSignupModal();
-      // Clean up URL
+      setHasHandled(true);
+      // Clean up URL first
       const url = new URL(window.location.href);
       url.searchParams.delete("auth");
       url.searchParams.delete("callbackUrl");
       window.history.replaceState({}, "", url.pathname);
+      // Then open modal
+      openSignupModal();
     }
-  }, [searchParams, openLoginModal, openSignupModal, router]);
+  }, [searchParams, openLoginModal, openSignupModal, hasHandled]);
 
   return null;
 }
