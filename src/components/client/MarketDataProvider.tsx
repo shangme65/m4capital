@@ -1,12 +1,12 @@
 "use client";
 
-import React, {
+import {
   createContext,
   useContext,
   useEffect,
   useState,
-  useCallback,
   useRef,
+  type ReactNode,
 } from "react";
 import MarketDataService, {
   MarketTick,
@@ -50,16 +50,16 @@ interface MarketDataContextType {
 const MarketDataContext = createContext<MarketDataContextType | null>(null);
 
 interface MarketDataProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
   autoConnect?: boolean;
   enableNews?: boolean;
 }
 
-export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
+export function MarketDataProvider({
   children,
   autoConnect = true, // Re-enabled with CoinGecko
   enableNews = false,
-}) => {
+}: MarketDataProviderProps) {
   const [prices, setPrices] = useState<Record<string, MarketTick>>({});
   const [news, setNews] = useState<NewsItem[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -101,7 +101,7 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const connect = useCallback(() => {
+  const connect = () => {
     // Using CoinGecko API instead of Binance WebSocket
     console.log("🚀 Connecting to CoinGecko market data service...");
     setIsConnected(true);
@@ -166,9 +166,9 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
 
     // Store interval ID for cleanup
     (window as any).__coinGeckoInterval = intervalId;
-  }, [enableNews]);
+  };
 
-  const disconnect = useCallback(() => {
+  const disconnect = () => {
     // Clear CoinGecko polling interval
     if ((window as any).__coinGeckoInterval) {
       clearInterval((window as any).__coinGeckoInterval);
@@ -180,9 +180,9 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
     setPrices({});
     subscriptionsRef.current.clear();
     console.log("🔌 Disconnected from CoinGecko market data");
-  }, []);
+  };
 
-  const loadNews = useCallback(async () => {
+  const loadNews = async () => {
     if (marketDataService.current) {
       try {
         const newsItems = await marketDataService.current.getMarketNews();
@@ -191,56 +191,56 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
         console.error("Failed to load news:", error);
       }
     }
-  }, []);
+  };
 
-  const subscribe = useCallback(
-    (symbols: string[], onTick: (tick: MarketTick) => void): string => {
-      if (!marketDataService.current) {
-        console.warn("Market data service not connected");
-        return "";
-      }
+  const subscribe = (
+    symbols: string[],
+    onTick: (tick: MarketTick) => void
+  ): string => {
+    if (!marketDataService.current) {
+      console.warn("Market data service not connected");
+      return "";
+    }
 
-      const subscriptionId = `sub_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`;
+    const subscriptionId = `sub_${Date.now()}_${Math.random()
+      .toString(36)
+      .substr(2, 9)}`;
 
-      const subscriber: MarketDataSubscriber = {
-        id: subscriptionId,
-        symbols,
-        onTick: (tick: MarketTick) => {
-          // Update global prices state using a ref check to prevent excessive updates
-          setPrices((prev) => {
-            // Only update if price actually changed
-            if (prev[tick.symbol]?.price === tick.price) {
-              return prev;
-            }
-            return {
-              ...prev,
-              [tick.symbol]: tick,
-            };
-          });
+    const subscriber: MarketDataSubscriber = {
+      id: subscriptionId,
+      symbols,
+      onTick: (tick: MarketTick) => {
+        // Update global prices state using a ref check to prevent excessive updates
+        setPrices((prev) => {
+          // Only update if price actually changed
+          if (prev[tick.symbol]?.price === tick.price) {
+            return prev;
+          }
+          return {
+            ...prev,
+            [tick.symbol]: tick,
+          };
+        });
 
-          // Track updates
-          updateCountRef.current++;
+        // Track updates
+        updateCountRef.current++;
 
-          // Call subscriber callback
-          onTick(tick);
-        },
-        onError: (error: Error) => {
-          console.error("Market data subscription error:", error);
-          setConnectionQuality("poor");
-        },
-      };
+        // Call subscriber callback
+        onTick(tick);
+      },
+      onError: (error: Error) => {
+        console.error("Market data subscription error:", error);
+        setConnectionQuality("poor");
+      },
+    };
 
-      marketDataService.current.subscribe(subscriber);
-      subscriptionsRef.current.set(subscriptionId, subscriptionId);
+    marketDataService.current.subscribe(subscriber);
+    subscriptionsRef.current.set(subscriptionId, subscriptionId);
 
-      return subscriptionId;
-    },
-    []
-  );
+    return subscriptionId;
+  };
 
-  const unsubscribe = useCallback((subscriptionId: string) => {
+  const unsubscribe = (subscriptionId: string) => {
     if (
       marketDataService.current &&
       subscriptionsRef.current.has(subscriptionId)
@@ -248,32 +248,26 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
       marketDataService.current.unsubscribe(subscriptionId);
       subscriptionsRef.current.delete(subscriptionId);
     }
-  }, []);
+  };
 
-  const getPrice = useCallback(
-    (symbol: string): MarketTick | null => {
-      return prices[symbol] || null;
-    },
-    [prices]
-  );
+  const getPrice = (symbol: string): MarketTick | null => {
+    return prices[symbol] || null;
+  };
 
-  const getHistoricalData = useCallback(
-    async (
-      symbol: string,
-      timeframe: string = "1D"
-    ): Promise<CandlestickData[]> => {
-      if (!marketDataService.current) {
-        throw new Error("Market data service not connected");
-      }
+  const getHistoricalData = async (
+    symbol: string,
+    timeframe: string = "1D"
+  ): Promise<CandlestickData[]> => {
+    if (!marketDataService.current) {
+      throw new Error("Market data service not connected");
+    }
 
-      return marketDataService.current.getHistoricalData(symbol, timeframe);
-    },
-    []
-  );
+    return marketDataService.current.getHistoricalData(symbol, timeframe);
+  };
 
-  const refreshNews = useCallback(async () => {
+  const refreshNews = async () => {
     await loadNews();
-  }, [loadNews]);
+  };
 
   const contextValue: MarketDataContextType = {
     prices,
@@ -296,7 +290,7 @@ export const MarketDataProvider: React.FC<MarketDataProviderProps> = ({
       {children}
     </MarketDataContext.Provider>
   );
-};
+}
 
 export const useMarketData = () => {
   const context = useContext(MarketDataContext);

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMarketNews, useMarketData } from "./MarketDataProvider";
 import { NewsItem } from "@/lib/marketData";
@@ -20,12 +20,12 @@ interface MarketNewsProps {
   refreshInterval?: number;
 }
 
-const MarketNews: React.FC<MarketNewsProps> = ({
+function MarketNews({
   maxItems = 10,
   showSentiment = true,
   autoRefresh = true,
   refreshInterval = 300000, // 5 minutes
-}) => {
+}: MarketNewsProps) {
   const { news, refreshNews } = useMarketNews();
   const { isConnected } = useMarketData();
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -209,5 +209,5 @@ const MarketNews: React.FC<MarketNewsProps> = ({
       `}</style>
     </div>
   );
-};
+}
 export default MarketNews;

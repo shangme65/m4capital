@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -20,11 +20,15 @@ interface CryptoPriceTickerProps {
 }
 
 // Individual crypto price card component
-const CryptoPriceCard: React.FC<{
+function CryptoPriceCard({
+  symbol,
+  showDetails = true,
+  compact = false,
+}: {
   symbol: string;
   showDetails?: boolean;
   compact?: boolean;
-}> = ({ symbol, showDetails = true, compact = false }) => {
+}) {
   const prices = useCryptoPrices([symbol]);
   const price = prices[symbol];
   const [previousPrice, setPreviousPrice] = useState<number | null>(null);
@@ -228,7 +232,7 @@ const CryptoPriceCard: React.FC<{
       )}
     </motion.div>
   );
-};
+}
 
 // Main ticker component
 export const CryptoPriceTicker: React.FC<CryptoPriceTickerProps> = ({

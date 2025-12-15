@@ -9,49 +9,46 @@ import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
 import { COUNTRY_LANGUAGE_MAP } from "@/contexts/LanguageContext";
 import { countries } from "@/lib/countries";
 import { generateAccountNumber } from "@/lib/p2p-transfer-utils";
+import { z } from "zod";
+
+// Zod schema for signup validation
+const signupSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  email: z.string().email("Invalid email format").toLowerCase().trim(),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  accountType: z.enum(["INVESTOR", "TRADER"]).default("INVESTOR"),
+  country: z.string().optional(),
+});
 
 // Force dynamic to ensure fresh data on each request
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, accountType, country } = await req.json();
+    const body = await req.json();
 
-    // Validation
-    if (!name || !email || !password) {
+    // Validate with Zod
+    const validation = signupSchema.safeParse(body);
+    if (!validation.success) {
+      const errors = validation.error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      }));
       return NextResponse.json(
-        { success: false, message: "Missing required fields" },
+        {
+          success: false,
+          message: errors[0]?.message || "Validation failed",
+          errors,
+        },
         { status: 400 }
       );
     }
 
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid email format" },
-        { status: 400 }
-      );
-    }
-
-    // Validate password strength
-    if (password.length < 6) {
-      return NextResponse.json(
-        { success: false, message: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
-    }
-
-    const normalizedAccountType =
-      accountType && ["INVESTOR", "TRADER"].includes(accountType)
-        ? accountType
-        : "INVESTOR"; // default
-
-    const normalizedEmail = (email as string).toLowerCase().trim();
+    const { name, email, password, accountType, country } = validation.data;
 
     const exist = await prisma.user.findUnique({
       where: {
-        email: normalizedEmail,
+        email: email, // Already normalized by Zod
       },
     });
 
@@ -84,9 +81,9 @@ export async function POST(req: Request) {
       data: {
         id: generateId(),
         name,
-        email: normalizedEmail,
+        email: email, // Already normalized by Zod
         password: hashedPassword,
-        accountType: normalizedAccountType,
+        accountType: accountType,
         country: country || undefined,
         preferredCurrency,
         preferredLanguage,
@@ -115,16 +112,16 @@ export async function POST(req: Request) {
 
     // Generate and send verification code
     try {
-      const verificationCode = await createVerificationToken(normalizedEmail);
+      const verificationCode = await createVerificationToken(email);
       const emailContent = verificationCodeTemplate(name, verificationCode);
 
       await sendEmail({
-        to: normalizedEmail,
+        to: email,
         subject: "Verify Your Email - M4 Capital",
         html: emailTemplate(emailContent),
         text: `Your M4 Capital verification code is: ${verificationCode}. This code will expire in 15 minutes.`,
       });
-      console.log(`Verification code sent to ${normalizedEmail}`);
+      console.log(`Verification code sent to ${email}`);
     } catch (emailError) {
       console.error("Error sending verification email:", emailError);
       // Don't fail signup if email fails - user can request resend
@@ -134,7 +131,7 @@ export async function POST(req: Request) {
       success: true,
       message:
         "Account created successfully. Please check your email for the verification code.",
-      email: normalizedEmail,
+      email: email,
       requiresVerification: true,
     });
   } catch (error) {

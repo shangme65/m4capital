@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
 import { sendWebPushToUser } from "@/lib/push-notifications";
+import { validateBody, schemas } from "@/lib/api-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -50,16 +51,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body: BuyCryptoRequest = await request.json();
-    const { symbol, amount, price } = body;
-
-    // Validate required fields
-    if (!symbol || !amount || !price) {
-      return NextResponse.json(
-        { error: "Missing required fields: symbol, amount, price" },
-        { status: 400 }
-      );
+    // Validate with Zod
+    const validation = await validateBody(request, schemas.buyOrder);
+    if (!validation.success) {
+      return validation.error;
     }
+
+    const { symbol, amount, price } = validation.data;
 
     // Calculate total cost in USD
     const totalCostUSD = amount * price;

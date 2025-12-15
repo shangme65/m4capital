@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePrices, useMarketData } from "./MarketDataProvider";
 import { MarketTick } from "@/lib/marketData";
@@ -14,7 +14,7 @@ interface PriceTickerProps {
   autoScroll?: boolean;
 }
 
-const PriceTicker: React.FC<PriceTickerProps> = ({
+function PriceTicker({
   symbols = [
     "EURUSD",
     "GBPUSD",
@@ -29,7 +29,7 @@ const PriceTicker: React.FC<PriceTickerProps> = ({
   showVolume = false,
   scrollSpeed = 30,
   autoScroll = true,
-}) => {
+}: PriceTickerProps) {
   const prices = usePrices(symbols);
   const { isConnected, connectionQuality } = useMarketData();
   const [isHovered, setIsHovered] = useState(false);
@@ -224,6 +224,6 @@ const PriceTicker: React.FC<PriceTickerProps> = ({
       )}
     </div>
   );
-};
+}
 
 export default PriceTicker;

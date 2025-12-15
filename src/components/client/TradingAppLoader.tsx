@@ -9,7 +9,7 @@ interface TradingAppLoaderProps {
 
 type LoadingPhase = "downloading" | "initializing" | "connecting" | "complete";
 
-const TradingAppLoader: React.FC<TradingAppLoaderProps> = ({ onComplete }) => {
+function TradingAppLoader({ onComplete }: TradingAppLoaderProps) {
   const [phase, setPhase] = useState<LoadingPhase>("downloading");
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState(
@@ -220,6 +220,6 @@ const TradingAppLoader: React.FC<TradingAppLoaderProps> = ({ onComplete }) => {
       </div>
     </div>
   );
-};
+}
 
 export default TradingAppLoader;

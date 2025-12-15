@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -91,7 +91,7 @@ export default function AssetSwapModal({
   );
 
   // Handle back navigation
-  const handleBack = useCallback(() => {
+  const handleBack = () => {
     if (step === 2) {
       setStep(1);
     } else if (step === 3) {
@@ -99,7 +99,7 @@ export default function AssetSwapModal({
     } else if (step === 1) {
       onClose();
     }
-  }, [step, onClose]);
+  };
 
   // Android back button support
   useEffect(() => {

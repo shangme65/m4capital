@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 
 interface PushNotificationState {
@@ -22,7 +22,7 @@ export function usePushNotifications() {
   });
 
   // Check if push notifications are supported
-  const checkSupport = useCallback(() => {
+  const checkSupport = () => {
     if (typeof window === "undefined") return false;
 
     const isSupported =
@@ -31,10 +31,10 @@ export function usePushNotifications() {
       "Notification" in window;
 
     return isSupported;
-  }, []);
+  };
 
   // Register service worker
-  const registerServiceWorker = useCallback(async () => {
+  const registerServiceWorker = async () => {
     if (!checkSupport()) return null;
 
     try {
@@ -47,10 +47,10 @@ export function usePushNotifications() {
       console.error("❌ Service Worker registration failed:", error);
       return null;
     }
-  }, [checkSupport]);
+  };
 
   // Get VAPID public key from server
-  const getVapidPublicKey = useCallback(async () => {
+  const getVapidPublicKey = async () => {
     try {
       const response = await fetch("/api/push/vapid-public-key");
       if (!response.ok) throw new Error("Failed to get VAPID key");
@@ -60,10 +60,10 @@ export function usePushNotifications() {
       console.error("Error getting VAPID key:", error);
       return null;
     }
-  }, []);
+  };
 
   // Convert URL base64 to Uint8Array (for VAPID key)
-  const urlBase64ToUint8Array = useCallback((base64String: string) => {
+  const urlBase64ToUint8Array = (base64String: string) => {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
     const base64 = (base64String + padding)
       .replace(/-/g, "+")
@@ -76,10 +76,10 @@ export function usePushNotifications() {
       outputArray[i] = rawData.charCodeAt(i);
     }
     return outputArray;
-  }, []);
+  };
 
   // Subscribe to push notifications
-  const subscribe = useCallback(async () => {
+  const subscribe = async () => {
     if (!session?.user?.id) {
       setState((prev) => ({
         ...prev,
@@ -156,15 +156,10 @@ export function usePushNotifications() {
       }));
       return false;
     }
-  }, [
-    session,
-    registerServiceWorker,
-    getVapidPublicKey,
-    urlBase64ToUint8Array,
-  ]);
+  };
 
   // Unsubscribe from push notifications
-  const unsubscribe = useCallback(async () => {
+  const unsubscribe = async () => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
@@ -203,10 +198,10 @@ export function usePushNotifications() {
       }));
       return false;
     }
-  }, []);
+  };
 
   // Check current subscription status
-  const checkSubscription = useCallback(async () => {
+  const checkSubscription = async () => {
     if (!checkSupport() || status !== "authenticated") {
       setState((prev) => ({
         ...prev,
@@ -238,12 +233,13 @@ export function usePushNotifications() {
         error: "Failed to check subscription status",
       }));
     }
-  }, [checkSupport, status]);
+  };
 
   // Initialize on mount
   useEffect(() => {
     checkSubscription();
-  }, [checkSubscription]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status]);
 
   // Auto-subscribe when user logs in (if permission was already granted)
   useEffect(() => {

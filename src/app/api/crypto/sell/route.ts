@@ -6,14 +6,9 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
 import { sendWebPushToUser } from "@/lib/push-notifications";
+import { validateBody, schemas } from "@/lib/api-validation";
 
 export const dynamic = "force-dynamic";
-
-interface SellCryptoRequest {
-  symbol: string; // e.g., "BTC", "ETH"
-  amount: number; // Amount of crypto to sell
-  price: number; // Current price per unit
-}
 
 interface Asset {
   symbol: string;
@@ -32,16 +27,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body: SellCryptoRequest = await request.json();
-    const { symbol, amount, price } = body;
-
-    // Validate required fields
-    if (!symbol || !amount || !price) {
-      return NextResponse.json(
-        { error: "Missing required fields: symbol, amount, price" },
-        { status: 400 }
-      );
+    // Validate with Zod
+    const validation = await validateBody(request, schemas.sellOrder);
+    if (!validation.success) {
+      return validation.error;
     }
+
+    const { symbol, amount, price } = validation.data;
 
     // Calculate total value in USD
     const totalValue = amount * price;
