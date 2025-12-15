@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useOptimistic, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -8,6 +8,7 @@ import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
+import { buyCryptoAction } from "@/actions/crypto-actions";
 
 interface BuyModalProps {
   isOpen: boolean;
@@ -54,8 +55,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     amount: number;
     value: number;
   } | null>(null);
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  // React 19: useOptimistic for instant UI updates
+  const [isPending, startTransition] = useTransition();
+  const [optimisticBalance, setOptimisticBalance] = useOptimistic(0);
 
   const { portfolio, refetch } = usePortfolio();
   const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
@@ -180,54 +184,49 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   };
 
   const confirmBuy = async () => {
-    setLoading(true);
     try {
       const price = getCurrentPrice();
       const inputAmount = parseFloat(buyData.amount);
       const usdValue = convertAmount(inputAmount, true);
       const assetAmount = usdValue / price;
 
-      const response = await fetch("/api/crypto/buy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          symbol: buyData.asset,
-          amount: assetAmount,
-          price: price,
-        }),
-      });
+      // React 19: Show optimistic update immediately
+      setOptimisticBalance(availableBalance - usdValue);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to process purchase");
-      }
+      // Use Server Action with transition
+      startTransition(async () => {
+        const result = await buyCryptoAction(buyData.asset, assetAmount, price);
 
-      addTransaction({
-        type: "buy" as const,
-        asset: buyData.asset,
-        amount: assetAmount,
-        value: usdValue,
-        timestamp: new Date().toLocaleString(),
-        status: "completed" as const,
-        fee: usdValue * 0.015,
-        method: `${preferredCurrency} Balance`,
-        description: `Market buy order for ${buyData.asset}`,
-        rate: price,
-      });
+        if (result.success && result.data) {
+          // Add to local transaction list
+          addTransaction({
+            type: "buy" as const,
+            asset: buyData.asset,
+            amount: assetAmount,
+            value: usdValue,
+            timestamp: new Date().toLocaleString(),
+            status: "completed" as const,
+            fee: usdValue * 0.015,
+            method: `${preferredCurrency} Balance`,
+            description: `Market buy order for ${buyData.asset}`,
+            rate: price,
+          });
 
-      setSuccessData({
-        asset: buyData.asset,
-        amount: assetAmount,
-        value: usdValue,
+          setSuccessData({
+            asset: buyData.asset,
+            amount: assetAmount,
+            value: usdValue,
+          });
+          setStep(4);
+        } else {
+          throw new Error(result.error || "Failed to process purchase");
+        }
       });
-      setStep(4);
     } catch (error) {
       setErrors({
         amount: error instanceof Error ? error.message : "Purchase failed",
       });
       setStep(2);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -735,7 +734,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <div className="flex gap-2">
                       <button
                         onClick={handleBack}
-                        disabled={loading}
+                        disabled={isPending}
                         className="flex-1 py-3 px-3 rounded-xl font-semibold text-white text-sm disabled:opacity-50"
                         style={card3DStyle}
                       >
@@ -743,7 +742,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       </button>
                       <button
                         onClick={confirmBuy}
-                        disabled={loading}
+                        disabled={isPending}
                         className="flex-1 py-3 px-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                         style={{
                           background:
@@ -752,7 +751,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             "0 8px 20px -5px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                         }}
                       >
-                        {loading ? (
+                        {isPending ? (
                           <>
                             <svg
                               className="animate-spin h-5 w-5"

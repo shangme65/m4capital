@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useOptimistic, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { CURRENCIES } from "@/lib/currencies";
+import { sellCryptoAction } from "@/actions/crypto-actions";
 
 interface SellModalProps {
   isOpen: boolean;
@@ -53,13 +54,17 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     amount: number;
     value: number;
   } | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [assetPrices, setAssetPrices] = useState<Record<string, number>>({});
 
   const { portfolio, refetch } = usePortfolio();
   const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
   const { addTransaction } = useNotifications();
+
+  const availableBalance = portfolio?.portfolio?.balance || 0;
+  const [optimisticBalance, setOptimisticBalance] =
+    useOptimistic(availableBalance);
 
   const currencySymbol =
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
@@ -211,58 +216,56 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   };
 
   const confirmSell = async () => {
-    setLoading(true);
-    try {
-      const cryptoAmount = getCryptoAmountFromCurrency();
-      const currencyValue = parseFloat(sellData.amount);
-      const fee = currencyValue * 0.015;
-      const receivedValue = currencyValue - fee; // Amount after fee in preferred currency
-      // Convert the received amount to USD for storage
-      const usdValue = convertAmount(receivedValue, true); // true = convert FROM preferred TO USD
+    const cryptoAmount = getCryptoAmountFromCurrency();
+    const currencyValue = parseFloat(sellData.amount);
+    const fee = currencyValue * 0.015;
+    const receivedValue = currencyValue - fee; // Amount after fee in preferred currency
+    // Convert the received amount to USD for storage
+    const usdValue = convertAmount(receivedValue, true); // true = convert FROM preferred TO USD
 
-      const response = await fetch("/api/crypto/sell", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          symbol: sellData.asset,
-          amount: cryptoAmount,
-          price: currentPrice,
-        }),
-      });
+    // Optimistic update: add the received amount to balance immediately
+    setOptimisticBalance(availableBalance + usdValue);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to process sale");
+    startTransition(async () => {
+      try {
+        const result = await sellCryptoAction(
+          sellData.asset,
+          cryptoAmount,
+          currentPrice
+        );
+
+        if (result.success && result.data) {
+          // Store the received value (after fee) in USD
+          addTransaction({
+            type: "sell" as const,
+            asset: sellData.asset,
+            amount: cryptoAmount,
+            value: usdValue, // This is the received amount after fee in USD
+            timestamp: new Date().toLocaleString(),
+            status: "completed" as const,
+            fee: convertAmount(fee, true), // Store fee in USD
+            method: `${preferredCurrency} Balance`,
+            description: `Market sell order for ${sellData.asset}`,
+            rate: currentPrice,
+          });
+
+          setSuccessData({
+            asset: sellData.asset,
+            amount: cryptoAmount,
+            value: receivedValue, // Store in preferred currency for display
+          });
+          setStep(4);
+          await refetch(); // Refresh portfolio data
+        } else {
+          throw new Error(result.error || "Failed to process sale");
+        }
+      } catch (error) {
+        setErrors({
+          amount: error instanceof Error ? error.message : "Sale failed",
+        });
+        setStep(2);
       }
-
-      // Store the received value (after fee) in USD
-      addTransaction({
-        type: "sell" as const,
-        asset: sellData.asset,
-        amount: cryptoAmount,
-        value: usdValue, // This is the received amount after fee in USD
-        timestamp: new Date().toLocaleString(),
-        status: "completed" as const,
-        fee: convertAmount(fee, true), // Store fee in USD
-        method: `${preferredCurrency} Balance`,
-        description: `Market sell order for ${sellData.asset}`,
-        rate: currentPrice,
-      });
-
-      setSuccessData({
-        asset: sellData.asset,
-        amount: cryptoAmount,
-        value: receivedValue, // Store in preferred currency for display
-      });
-      setStep(4);
-    } catch (error) {
-      setErrors({
-        amount: error instanceof Error ? error.message : "Sale failed",
-      });
-      setStep(2);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   const handleDone = () => {
@@ -780,7 +783,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                     <div className="flex gap-2">
                       <button
                         onClick={handleBack}
-                        disabled={loading}
+                        disabled={isPending}
                         className="flex-1 py-3 px-3 rounded-xl font-semibold text-white text-sm disabled:opacity-50"
                         style={card3DStyle}
                       >
@@ -788,7 +791,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       </button>
                       <button
                         onClick={confirmSell}
-                        disabled={loading}
+                        disabled={isPending}
                         className="flex-1 py-3 px-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                         style={{
                           background:
@@ -797,7 +800,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                             "0 8px 20px -5px rgba(239, 68, 68, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                         }}
                       >
-                        {loading ? (
+                        {isPending ? (
                           <>
                             <svg
                               className="animate-spin h-5 w-5"
