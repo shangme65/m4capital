@@ -1,12 +1,6 @@
 "use client";
 
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-} from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark" | "system";
 
@@ -26,41 +20,38 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   // Get system preference
-  const getSystemTheme = useCallback((): "light" | "dark" => {
+  // React 19: No useCallback needed - React Compiler handles memoization
+  const getSystemTheme = (): "light" | "dark" => {
     if (typeof window !== "undefined") {
       return window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
         : "light";
     }
     return "dark";
-  }, []);
+  };
 
   // Update the document class and resolved theme
-  const updateTheme = useCallback(
-    (newTheme: Theme) => {
-      const resolved = newTheme === "system" ? getSystemTheme() : newTheme;
-      setResolvedTheme(resolved);
+  // React 19: No useCallback needed - React Compiler handles memoization
+  const updateTheme = (newTheme: Theme) => {
+    const resolved = newTheme === "system" ? getSystemTheme() : newTheme;
+    setResolvedTheme(resolved);
 
-      // Update document class
-      const root = document.documentElement;
-      root.classList.remove("light", "dark");
-      root.classList.add(resolved);
+    // Update document class
+    const root = document.documentElement;
+    root.classList.remove("light", "dark");
+    root.classList.add(resolved);
 
-      // Update color-scheme for native elements
-      root.style.colorScheme = resolved;
-    },
-    [getSystemTheme]
-  );
+    // Update color-scheme for native elements
+    root.style.colorScheme = resolved;
+  };
 
   // Set theme and persist to localStorage
-  const setTheme = useCallback(
-    (newTheme: Theme) => {
-      setThemeState(newTheme);
-      localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-      updateTheme(newTheme);
-    },
-    [updateTheme]
-  );
+  // React 19: No useCallback needed - React Compiler handles memoization
+  const setTheme = (newTheme: Theme) => {
+    setThemeState(newTheme);
+    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    updateTheme(newTheme);
+  };
 
   // Initialize theme from localStorage or system preference
   useEffect(() => {
@@ -69,7 +60,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(initialTheme);
     updateTheme(initialTheme);
     setMounted(true);
-  }, [updateTheme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Listen for system theme changes
   useEffect(() => {
@@ -85,7 +77,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [theme, mounted, updateTheme]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [theme, mounted]);
 
   // Prevent flash of wrong theme
   if (!mounted) {

@@ -2,7 +2,6 @@
 
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getTranslation, TranslationKey } from "./translations";
-import { useCallback } from "react";
 
 /**
  * Hook for translating text in components
@@ -15,12 +14,10 @@ import { useCallback } from "react";
 export function useTranslation() {
   const { language } = useLanguage();
 
-  const t = useCallback(
-    (key: TranslationKey): string => {
-      return getTranslation(language, key);
-    },
-    [language]
-  );
+  // React 19: No useCallback needed - React Compiler handles memoization
+  const t = (key: TranslationKey): string => {
+    return getTranslation(language, key);
+  };
 
   return { t, language };
 }
