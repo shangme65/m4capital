@@ -2249,151 +2249,6 @@ const AdminDashboard = () => {
                 <UserX className="text-blue-400" size={24} />
               </div>
             </button>
-
-            <button
-              onClick={() => setShowUserStatsModal("sessions")}
-              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-gray-400 text-xs sm:text-sm">
-                    Active Sessions
-                  </p>
-                  <p className="text-xl sm:text-2xl font-bold text-purple-400">
-                    24
-                  </p>
-                </div>
-                <Activity className="text-purple-400" size={24} />
-              </div>
-            </button>
-          </div>
-
-          {/* User Management List */}
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 sm:p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Users className="text-orange-400" size={20} />
-              <h2 className="text-xl sm:text-2xl font-bold">User Management</h2>
-            </div>
-            <div className="max-h-[600px] overflow-y-auto">
-              <div className="space-y-2">
-                {users.map((user) => (
-                  <div
-                    key={user.id}
-                    className={`p-3 sm:p-4 rounded-lg border transition-all ${
-                      selectedUser?.id === user.id
-                        ? "bg-orange-500/20 border-orange-500/50"
-                        : "bg-gray-700/30 border-gray-600/30 hover:bg-gray-700/50"
-                    } ${user.role === "USER" ? "cursor-pointer" : ""}`}
-                    onClick={() =>
-                      user.role === "USER" && setSelectedUser(user)
-                    }
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-white text-sm sm:text-base truncate">
-                          {user.email}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-400">
-                          {user.name || "No name"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Account: {user.accountType}
-                        </p>
-                        {user.assignedStaffId && (
-                          <p className="text-xs text-blue-400 mt-1">
-                            📋 Assigned to staff admin
-                          </p>
-                        )}
-                        {/* Show Assign to Staff Admin inline for regular users */}
-                        {selectedUser?.id === user.id &&
-                          user.role === "USER" &&
-                          !user.isOriginAdmin && (
-                            <div className="mt-3 space-y-2">
-                              <label className="text-sm text-gray-300 font-semibold">
-                                Assign to Staff Admin:
-                              </label>
-                              <select
-                                value={user.assignedStaffId || ""}
-                                onChange={(e) =>
-                                  handleAssignStaff(
-                                    user.id,
-                                    e.target.value || null
-                                  )
-                                }
-                                onClick={(e) => e.stopPropagation()}
-                                disabled={
-                                  assigningStaff || staffAdmins.length === 0
-                                }
-                                className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                              >
-                                <option value="">
-                                  {staffAdmins.length === 0
-                                    ? "No staff admins available"
-                                    : "Unassigned"}
-                                </option>
-                                {staffAdmins.map((staff) => (
-                                  <option key={staff.id} value={staff.id}>
-                                    {staff.name || staff.email}
-                                  </option>
-                                ))}
-                              </select>
-                              {user.assignedStaffId && (
-                                <p className="text-xs text-green-400">
-                                  ✓ Assigned to staff admin
-                                </p>
-                              )}
-                            </div>
-                          )}
-                      </div>
-                      <div className="flex items-center space-x-2 flex-shrink-0">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            user.role === "ADMIN"
-                              ? "bg-green-500/20 text-green-400"
-                              : user.role === "STAFF_ADMIN"
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-gray-500/20 text-gray-400"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
-                        {/* Hide settings and delete buttons for origin admin */}
-                        {!user.isOriginAdmin && (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingUser(user);
-                                setNewRole(
-                                  user.role as "USER" | "ADMIN" | "STAFF_ADMIN"
-                                );
-                              }}
-                              className="text-gray-400 hover:text-orange-400 transition-colors"
-                              title="Edit Role"
-                            >
-                              <Settings size={14} />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteUser(
-                                  user.id,
-                                  user.email || "Unknown"
-                                );
-                              }}
-                              className="text-gray-400 hover:text-red-400 transition-colors"
-                              title="Delete User"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       )}
@@ -2563,16 +2418,10 @@ const AdminDashboard = () => {
                     <ArrowLeft size={20} />
                   </button>
                 )}
-                <h2 className="text-base xs:text-lg sm:text-xl lg:text-2xl font-bold text-white flex items-center gap-2">
-                  <CreditCard
-                    className="text-green-400 mobile:hidden xs:block"
-                    size={20}
-                  />
-                  <span className="truncate">
-                    {selectedUser
-                      ? `Payment for ${selectedUser.email}`
-                      : "Manual Payment"}
-                  </span>
+                <h2 className="text-xs sm:text-sm font-medium text-gray-300 truncate max-w-[200px] sm:max-w-none">
+                  {selectedUser
+                    ? `Payment for ${selectedUser.email}`
+                    : "Manual Payment"}
                 </h2>
               </div>
               <button
@@ -3842,49 +3691,51 @@ const AdminDashboard = () => {
             exit={{ opacity: 0, scale: 0.9 }}
             className="bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
           >
-            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                {showUserStatsModal === "total" && (
-                  <>
-                    <Users className="text-blue-400" size={24} />
-                    All Users ({totalUsers})
-                  </>
-                )}
-                {showUserStatsModal === "admin" && (
-                  <>
-                    <UserCheck className="text-green-400" size={24} />
-                    Admin Users ({adminUsers})
-                  </>
-                )}
-                {showUserStatsModal === "staff" && (
-                  <>
-                    <Shield className="text-green-400" size={24} />
-                    Staff Admin Users ({staffAdminUsers})
-                  </>
-                )}
-                {showUserStatsModal === "regular" && (
-                  <>
-                    <UserX className="text-blue-400" size={24} />
-                    Regular Users ({regularUsers})
-                  </>
-                )}
-                {showUserStatsModal === "sessions" && (
-                  <>
-                    <Activity className="text-purple-400" size={24} />
-                    Active Sessions (24)
-                  </>
-                )}
-              </h2>
+            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setShowUserStatsModal(null)}
+                  className="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-gray-700 rounded-lg"
+                >
+                  <ArrowLeft size={20} />
+                </button>
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  {showUserStatsModal === "total" && (
+                    <>
+                      <Users className="text-blue-400" size={20} />
+                      All Users ({totalUsers})
+                    </>
+                  )}
+                  {showUserStatsModal === "admin" && (
+                    <>
+                      <UserCheck className="text-green-400" size={20} />
+                      Admin Users ({adminUsers})
+                    </>
+                  )}
+                  {showUserStatsModal === "staff" && (
+                    <>
+                      <Shield className="text-green-400" size={20} />
+                      Staff Admin Users ({staffAdminUsers})
+                    </>
+                  )}
+                  {showUserStatsModal === "regular" && (
+                    <>
+                      <UserX className="text-blue-400" size={20} />
+                      Regular Users ({regularUsers})
+                    </>
+                  )}
+                </h2>
+              </div>
               <button
                 onClick={() => setShowUserStatsModal(null)}
                 className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
-              <div className="space-y-3">
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+              <div className="space-y-2">
                 {users
                   .filter((user) => {
                     if (showUserStatsModal === "total") return true;
@@ -3894,25 +3745,39 @@ const AdminDashboard = () => {
                       return user.role === "STAFF_ADMIN";
                     if (showUserStatsModal === "regular")
                       return user.role === "USER";
-                    if (showUserStatsModal === "sessions") return true; // Show all for now
                     return false;
                   })
                   .map((user) => (
                     <div
                       key={user.id}
-                      className="bg-gray-700/30 border border-gray-600/30 rounded-lg p-4 hover:bg-gray-700/50 transition-colors"
+                      className={`bg-gray-700/30 border rounded-lg p-3 transition-colors ${
+                        selectedUser?.id === user.id
+                          ? "bg-orange-500/20 border-orange-500/50"
+                          : "border-gray-600/30 hover:bg-gray-700/50"
+                      } ${user.role === "USER" ? "cursor-pointer" : ""}`}
+                      onClick={() =>
+                        user.role === "USER" &&
+                        setSelectedUser(
+                          selectedUser?.id === user.id ? null : user
+                        )
+                      }
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white text-sm sm:text-base truncate">
+                          <p className="font-medium text-white text-sm truncate">
                             {user.email}
                           </p>
-                          <p className="text-xs sm:text-sm text-gray-400">
+                          <p className="text-xs text-gray-400">
                             {user.name || "No name"}
                           </p>
                           <p className="text-xs text-gray-500">
                             Account: {user.accountType}
                           </p>
+                          {user.assignedStaffId && (
+                            <p className="text-xs text-blue-400 mt-1">
+                              📋 Assigned to staff admin
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center space-x-2 flex-shrink-0">
                           <span
@@ -3926,8 +3791,82 @@ const AdminDashboard = () => {
                           >
                             {user.role}
                           </span>
+                          {/* Admin action buttons - hide for origin admin */}
+                          {!user.isOriginAdmin && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingUser(user);
+                                  setNewRole(
+                                    user.role as
+                                      | "USER"
+                                      | "ADMIN"
+                                      | "STAFF_ADMIN"
+                                  );
+                                }}
+                                className="text-gray-400 hover:text-orange-400 transition-colors p-1"
+                                title="Edit Role"
+                              >
+                                <Settings size={14} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteUser(
+                                    user.id,
+                                    user.email || "Unknown"
+                                  );
+                                }}
+                                className="text-gray-400 hover:text-red-400 transition-colors p-1"
+                                title="Delete User"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
+                      {/* Show Assign to Staff Admin when user is selected */}
+                      {selectedUser?.id === user.id &&
+                        user.role === "USER" &&
+                        !user.isOriginAdmin && (
+                          <div className="mt-3 pt-3 border-t border-gray-600/50 space-y-2">
+                            <label className="text-xs text-gray-300 font-semibold">
+                              Assign to Staff Admin:
+                            </label>
+                            <select
+                              value={user.assignedStaffId || ""}
+                              onChange={(e) =>
+                                handleAssignStaff(
+                                  user.id,
+                                  e.target.value || null
+                                )
+                              }
+                              onClick={(e) => e.stopPropagation()}
+                              disabled={
+                                assigningStaff || staffAdmins.length === 0
+                              }
+                              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              <option value="">
+                                {staffAdmins.length === 0
+                                  ? "No staff admins available"
+                                  : "Unassigned"}
+                              </option>
+                              {staffAdmins.map((staff) => (
+                                <option key={staff.id} value={staff.id}>
+                                  {staff.name || staff.email}
+                                </option>
+                              ))}
+                            </select>
+                            {user.assignedStaffId && (
+                              <p className="text-xs text-green-400">
+                                ✓ Assigned to staff admin
+                              </p>
+                            )}
+                          </div>
+                        )}
                     </div>
                   ))}
               </div>
@@ -3940,7 +3879,6 @@ const AdminDashboard = () => {
                   return user.role === "STAFF_ADMIN";
                 if (showUserStatsModal === "regular")
                   return user.role === "USER";
-                if (showUserStatsModal === "sessions") return true;
                 return false;
               }).length === 0 && (
                 <div className="text-center py-12">
@@ -4187,25 +4125,25 @@ const AdminDashboard = () => {
 
       {/* Success Modal */}
       {showSuccessModal && successDetails && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-2 sm:p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-gray-800 rounded-2xl max-w-md w-full shadow-2xl border border-green-500/30"
+            className="bg-gray-800 rounded-xl max-w-sm w-full shadow-2xl border border-green-500/30 max-h-[90vh] overflow-y-auto"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-6 border-b border-gray-700">
+            <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-2.5 sm:p-3 border-b border-gray-700 sticky top-0">
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
-                    <CheckCircle className="text-green-400" size={24} />
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="text-green-400" size={16} />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-white">
+                    <h3 className="text-sm sm:text-base font-bold text-white">
                       Deposit Successful!
                     </h3>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-xs text-gray-400">
                       Transaction completed
                     </p>
                   </div>
@@ -4215,58 +4153,60 @@ const AdminDashboard = () => {
                     setShowSuccessModal(false);
                     setSuccessDetails(null);
                   }}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="text-gray-400 hover:text-white transition-colors p-1"
                 >
-                  <X size={24} />
+                  <X size={18} />
                 </button>
               </div>
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-4">
+            <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
               {/* Deposit Type */}
-              <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700">
-                <p className="text-sm text-gray-400 mb-1">Deposit Type</p>
-                <p className="text-lg font-semibold text-white">
+              <div className="bg-gray-900/50 rounded-lg p-2.5 sm:p-3 border border-gray-700">
+                <p className="text-xs text-gray-400 mb-0.5">Deposit Type</p>
+                <p className="text-sm sm:text-base font-semibold text-white">
                   {successDetails.type}
                 </p>
               </div>
 
               {/* Amount */}
-              <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700">
-                <p className="text-sm text-gray-400 mb-1">Amount</p>
-                <p className="text-2xl font-bold text-green-400">
+              <div className="bg-gray-900/50 rounded-lg p-2.5 sm:p-3 border border-gray-700">
+                <p className="text-xs text-gray-400 mb-0.5">Amount</p>
+                <p className="text-lg sm:text-xl font-bold text-green-400">
                   {successDetails.amount}
                 </p>
               </div>
 
               {/* User */}
-              <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700">
-                <p className="text-sm text-gray-400 mb-1">Credited To</p>
-                <p className="text-base font-medium text-white">
+              <div className="bg-gray-900/50 rounded-lg p-2.5 sm:p-3 border border-gray-700">
+                <p className="text-xs text-gray-400 mb-0.5">Credited To</p>
+                <p className="text-sm font-medium text-white truncate">
                   {successDetails.userEmail}
                 </p>
               </div>
 
               {/* Transaction Hash (if crypto) */}
               {successDetails.transactionHash && (
-                <div className="bg-gray-900/50 rounded-xl p-4 border border-gray-700">
-                  <p className="text-sm text-gray-400 mb-1">Transaction Hash</p>
+                <div className="bg-gray-900/50 rounded-lg p-2.5 sm:p-3 border border-gray-700">
+                  <p className="text-xs text-gray-400 mb-0.5">
+                    Transaction Hash
+                  </p>
                   <p className="text-xs font-mono text-gray-300 break-all">
                     {successDetails.transactionHash}
                   </p>
-                  <p className="text-xs text-yellow-400 mt-2">
+                  <p className="text-xs text-yellow-400 mt-1">
                     ⏱️ Awaiting confirmations (0/6)
                   </p>
                 </div>
               )}
 
               {/* Notifications Sent */}
-              <div className="bg-blue-500/10 rounded-xl p-4 border border-blue-500/30">
-                <p className="text-sm font-medium text-blue-400 mb-2">
+              <div className="bg-blue-500/10 rounded-lg p-2.5 sm:p-3 border border-blue-500/30">
+                <p className="text-xs font-medium text-blue-400 mb-1">
                   📬 Notifications Sent
                 </p>
-                <ul className="text-sm text-gray-300 space-y-1">
+                <ul className="text-xs text-gray-300 space-y-0.5">
                   <li>✓ Email notification</li>
                   <li>✓ Push notification (if enabled)</li>
                   {successDetails.transactionHash && (
@@ -4277,14 +4217,14 @@ const AdminDashboard = () => {
             </div>
 
             {/* Footer */}
-            <div className="p-6 border-t border-gray-700 flex space-x-3">
+            <div className="p-3 sm:p-4 border-t border-gray-700 flex space-x-2 sm:space-x-3">
               <button
                 onClick={() => {
                   setShowSuccessModal(false);
                   setSuccessDetails(null);
                   setShowPaymentModal(true);
                 }}
-                className="flex-1 bg-blue-500/20 border border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-3 px-4 rounded-xl transition-all font-semibold"
+                className="flex-1 bg-blue-500/20 border border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-2 sm:py-2.5 px-3 rounded-lg transition-all font-semibold text-sm"
               >
                 Process Another
               </button>
@@ -4293,7 +4233,7 @@ const AdminDashboard = () => {
                   setShowSuccessModal(false);
                   setSuccessDetails(null);
                 }}
-                className="flex-1 bg-green-500/20 border border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-3 px-4 rounded-xl transition-all font-semibold"
+                className="flex-1 bg-green-500/20 border border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-2 sm:py-2.5 px-3 rounded-lg transition-all font-semibold text-sm"
               >
                 Done
               </button>

@@ -121,21 +121,7 @@ export async function sendPushNotification(
   }
 ) {
   try {
-    // Store in database
-    const notification = await prisma.notification.create({
-      data: {
-        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        userId,
-        type: "TRANSACTION" as any,
-        title,
-        message,
-        amount: options?.amount ? parseFloat(options.amount.toString()) : null,
-        asset: options?.asset || null,
-        read: false,
-      },
-    });
-
-    // Send web push
+    // Only send web push notification (in-app notification created separately by caller)
     const pushPayload = {
       title,
       body: message,
@@ -144,7 +130,9 @@ export async function sendPushNotification(
       tag: `m4capital-${options?.type || "notification"}-${Date.now()}`,
       data: {
         url: options?.url || "/dashboard",
-        notificationId: notification.id,
+        notificationId: `notif_${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 9)}`,
         type: options?.type || "notification",
         ...options?.data,
       },
@@ -153,7 +141,7 @@ export async function sendPushNotification(
     };
 
     const result = await sendWebPushToUser(userId, pushPayload);
-    return { notification, pushStats: result };
+    return result;
   } catch (error) {
     console.error("Error in sendPushNotification:", error);
     throw error;

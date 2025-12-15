@@ -213,7 +213,9 @@ export async function buyCryptoAction(
         userId: user.id,
         type: "TRADE",
         title: "Crypto Purchase Successful",
-        message: `You successfully purchased ${amount} ${symbol} (${cryptoName}) for ${currencySymbol}${displayAmount.toFixed(
+        message: `You successfully purchased ${amount.toFixed(
+          8
+        )} ${symbol} (${cryptoName}) for ${currencySymbol}${displayAmount.toFixed(
           2
         )}`,
         amount: displayAmount,
@@ -227,9 +229,9 @@ export async function buyCryptoAction(
     try {
       await sendWebPushToUser(user.id, {
         title: "Crypto Purchase Successful",
-        body: `You purchased ${amount} ${symbol} for ${currencySymbol}${displayAmount.toFixed(
-          2
-        )}`,
+        body: `You purchased ${amount.toFixed(
+          8
+        )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`,
         icon: `/crypto/${symbol.toLowerCase()}.png`,
       });
     } catch (pushError) {
@@ -419,7 +421,9 @@ export async function sellCryptoAction(
         userId: user.id,
         type: "TRADE",
         title: "Crypto Sale Successful",
-        message: `You successfully sold ${amount} ${symbol} (${cryptoName}) for ${currencySymbol}${displayAmount.toFixed(
+        message: `You successfully sold ${amount.toFixed(
+          8
+        )} ${symbol} (${cryptoName}) for ${currencySymbol}${displayAmount.toFixed(
           2
         )}`,
         amount: displayAmount,
@@ -433,9 +437,9 @@ export async function sellCryptoAction(
     try {
       await sendWebPushToUser(user.id, {
         title: "Crypto Sale Successful",
-        body: `You sold ${amount} ${symbol} for ${currencySymbol}${displayAmount.toFixed(
-          2
-        )}`,
+        body: `You sold ${amount.toFixed(
+          8
+        )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`,
         icon: `/crypto/${symbol.toLowerCase()}.png`,
       });
     } catch (pushError) {

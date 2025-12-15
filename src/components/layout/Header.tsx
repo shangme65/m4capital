@@ -235,8 +235,8 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               {activeDropdown === "lang" && <LanguageDropdown />}
             </div>
             {session ? (
-              <button
-                onClick={() => router.push("/dashboard")}
+              <Link
+                href="/dashboard"
                 className="flex items-center space-x-2 hover:scale-105 transition-all duration-300 transform text-sm font-bold text-white"
                 style={{
                   background:
@@ -251,7 +251,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               >
                 <LayoutDashboard size={20} />
                 <span>Dashboard</span>
-              </button>
+              </Link>
             ) : (
               <>
                 <button
@@ -293,8 +293,8 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           {/* Mobile Menu */}
           <div className="md:hidden flex items-center space-x-2 sm:space-x-3">
             {session ? (
-              <button
-                onClick={() => router.push("/dashboard")}
+              <Link
+                href="/dashboard"
                 className="flex items-center space-x-1 hover:scale-105 transition-all duration-300 text-white"
                 style={{
                   background:
@@ -309,7 +309,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               >
                 <LayoutDashboard size={16} />
                 <span className="text-xs font-bold">Dashboard</span>
-              </button>
+              </Link>
             ) : (
               <>
                 <button

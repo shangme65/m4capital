@@ -156,7 +156,7 @@ export async function GET(req: NextRequest) {
 
         return {
           id: t.id,
-          type: "convert" as const,
+          type: "swap" as const,
           asset: t.symbol, // e.g., "BTC/ETH"
           amount: metadata?.fromAmount || Number(t.quantity),
           value: fromValueUSD, // USD value of from amount (for display in user's currency)

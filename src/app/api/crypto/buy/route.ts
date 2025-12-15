@@ -344,8 +344,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Store the pre-converted display amount and user's currency as asset
-      // This ensures notifications display correctly without re-conversion
+      // Send web push notification to user's devices (in-app notification created by crypto-actions)
       const notificationId = `notif_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`;
@@ -354,20 +353,6 @@ export async function POST(request: NextRequest) {
         8
       )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`;
 
-      await prisma.notification.create({
-        data: {
-          id: notificationId,
-          userId: user.id,
-          type: "TRANSACTION" as any,
-          title: notificationTitle,
-          message: notificationMessage,
-          amount: Math.round(displayAmount * 100) / 100, // Store pre-converted amount
-          asset: userCurrency, // Store user's currency, not crypto symbol
-          read: false,
-        },
-      });
-
-      // Send web push notification to user's devices
       await sendWebPushToUser(user.id, {
         title: notificationTitle,
         body: notificationMessage,

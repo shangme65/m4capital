@@ -181,20 +181,44 @@ export default function ConvertModalNew({
     window.location.reload();
   };
 
+  // Refetch portfolio when modal opens to get latest balance
+  useEffect(() => {
+    if (isOpen) {
+      refetch();
+    }
+  }, [isOpen, refetch]);
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
-      // Reset on close
-      setStep(1);
-      setConvertData({ fromAsset: "BTC", toAsset: "ETH", amount: "" });
-      setSuccessData(null);
-      setErrors({});
     }
 
-    // Add mobile back button handler
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen]);
+
+  // Reset state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      // Use setTimeout to avoid state updates during render
+      const timer = setTimeout(() => {
+        setStep(1);
+        setConvertData({ fromAsset: "BTC", toAsset: "ETH", amount: "" });
+        setSuccessData(null);
+        setErrors({});
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen]);
+
+  // Handle mobile back button
+  useEffect(() => {
+    if (!isOpen) return;
+
     const handleBackButton = (e: PopStateEvent) => {
       e.preventDefault();
       if (step === 4) {
@@ -207,13 +231,10 @@ export default function ConvertModalNew({
       }
     };
 
-    if (isOpen) {
-      window.history.pushState({ modal: true }, "");
-      window.addEventListener("popstate", handleBackButton);
-    }
+    window.history.pushState({ modal: true }, "");
+    window.addEventListener("popstate", handleBackButton);
 
     return () => {
-      document.body.style.overflow = "unset";
       window.removeEventListener("popstate", handleBackButton);
     };
   }, [isOpen, step, onClose, handleDone]);

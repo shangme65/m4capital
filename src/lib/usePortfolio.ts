@@ -113,6 +113,39 @@ export const usePortfolio = (period: string = "all") => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [period]); // Only re-fetch when period actually changes
 
+  // Polling for portfolio updates every 30 seconds
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      // Only poll if document is visible
+      if (document.visibilityState === "visible") {
+        fetchPortfolio(period);
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [period, fetchPortfolio]);
+
+  // Refetch on window focus
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchPortfolio(period);
+      }
+    };
+
+    const handleFocus = () => {
+      fetchPortfolio(period);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [period, fetchPortfolio]);
+
   return {
     portfolio,
     isLoading,

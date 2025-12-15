@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { generateId } from "@/lib/generate-id";
+import { sendPushNotification } from "@/lib/push-notifications";
+import { getCurrencySymbol } from "@/lib/currencies";
 
 export async function POST(req: NextRequest) {
   try {
@@ -124,6 +126,26 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    // Send web push notification
+    try {
+      const currencySymbol = getCurrencySymbol(currency);
+      await sendPushNotification(
+        user.id,
+        "Account Credited",
+        `Your account has been credited with ${currencySymbol}${amount.toLocaleString()}`,
+        {
+          type: "deposit",
+          amount: parseFloat(amount.toString()),
+          asset: currency,
+          url: "/dashboard",
+        }
+      );
+      console.log(`🔔 Staff topup push notification sent to user ${user.id}`);
+    } catch (pushError) {
+      console.error("Failed to send push notification:", pushError);
+      // Continue even if push fails
+    }
 
     // Log the activity
     await prisma.userActivity.create({

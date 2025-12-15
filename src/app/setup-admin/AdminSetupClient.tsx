@@ -16,12 +16,10 @@ import {
   Mail,
   Key,
   Server,
-  Activity,
   Zap,
   XCircle,
   ArrowRight,
   Terminal,
-  Database,
 } from "lucide-react";
 
 interface AdminSetupClientProps {
@@ -48,6 +46,64 @@ export default function AdminSetupClient({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Subscribe admin to push notifications
+  const subscribeAdminToPush = async () => {
+    try {
+      // Register service worker
+      const registration = await navigator.serviceWorker.register("/sw.js", {
+        scope: "/",
+      });
+      await navigator.serviceWorker.ready;
+
+      // Get VAPID public key
+      const vapidResponse = await fetch("/api/push/vapid-public-key");
+      if (!vapidResponse.ok) {
+        throw new Error("Failed to get VAPID key");
+      }
+      const { publicKey } = await vapidResponse.json();
+
+      // Convert VAPID key to Uint8Array
+      const convertedVapidKey = urlBase64ToUint8Array(publicKey);
+
+      // Subscribe to push manager
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: convertedVapidKey,
+      });
+
+      // Send subscription to server
+      const subscribeResponse = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(subscription),
+      });
+
+      if (!subscribeResponse.ok) {
+        throw new Error("Failed to subscribe to push notifications");
+      }
+
+      console.log("✅ Admin subscribed to push notifications");
+    } catch (error) {
+      console.error("Push subscription error:", error);
+    }
+  };
+
+  // Convert URL base64 to Uint8Array for VAPID key
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
 
   const initializeAdmin = async () => {
     setInitLoading(true);
@@ -81,7 +137,30 @@ export default function AdminSetupClient({
           });
 
           if (signInResult?.ok) {
-            showSuccess("Logged in successfully! Redirecting to dashboard...");
+            showSuccess("Logged in successfully! Setting up notifications...");
+
+            // Request notification permission for admin
+            try {
+              if (
+                "Notification" in window &&
+                Notification.permission !== "granted"
+              ) {
+                const permission = await Notification.requestPermission();
+                if (permission === "granted") {
+                  console.log("✅ Notification permission granted");
+                  // Auto-subscribe to push notifications
+                  await subscribeAdminToPush();
+                }
+              } else if (Notification.permission === "granted") {
+                // Already granted, just subscribe
+                await subscribeAdminToPush();
+              }
+            } catch (notifError) {
+              console.error("Notification setup error:", notifError);
+              // Don't block dashboard redirect on notification error
+            }
+
+            showSuccess("Redirecting to dashboard...");
             setTimeout(() => {
               // Use window.location for full page reload to ensure session is fresh
               window.location.href = "/dashboard";
@@ -220,29 +299,6 @@ export default function AdminSetupClient({
             </div>
           </div>
 
-          {/* Alert Banners */}
-          {!adminExists && (
-            <div className="mb-4 bg-blue-500/10 backdrop-blur-xl border border-blue-500/20 rounded-xl p-4 shadow-xl">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center">
-                    <Activity className="w-5 h-5 text-blue-400" />
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-blue-300 font-semibold text-base mb-1">
-                    First-Time Setup Detected
-                  </h3>
-                  <p className="text-blue-200/80 text-xs leading-relaxed">
-                    No admin account exists yet. This page is publicly
-                    accessible for initial setup. After creating an admin, this
-                    page will require admin authentication for security.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {adminExists && !isAuthenticated && (
             <div className="mb-4 bg-yellow-500/10 backdrop-blur-xl border border-yellow-500/20 rounded-xl p-4 shadow-xl">
               <div className="flex items-start gap-3">
@@ -272,18 +328,18 @@ export default function AdminSetupClient({
             </div>
           )}
 
-          {/* Main Content Grid */}
-          <div className="grid lg:grid-cols-2 gap-4 mb-4">
+          {/* Main Content */}
+          <div className="mb-4">
             {/* Initialize Admin Card */}
             <div
-              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 hover:scale-[1.02] ${
+              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 ${
                 activeStep === 1 ? "ring-2 ring-purple-500" : ""
               }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">1</span>
+                    <Shield className="w-4 h-4 text-white" />
                   </div>
                   <h2 className="text-lg font-bold text-white">
                     Initialize Origin Admin
@@ -328,88 +384,44 @@ export default function AdminSetupClient({
                 </div>
               </div>
 
-              <button
-                onClick={initializeAdmin}
-                disabled={initLoading}
-                className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-purple-500/50 flex items-center justify-center gap-2 group"
-              >
-                {initLoading ? (
-                  <>
-                    <RefreshCw className="w-5 h-5 animate-spin" />
-                    <span>Initializing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Zap className="w-5 h-5 group-hover:rotate-12 transition-transform" />
-                    <span>Initialize Admin</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                  </>
-                )}
-              </button>
-            </div>
+              <div className="space-y-3">
+                <button
+                  onClick={initializeAdmin}
+                  disabled={initLoading}
+                  className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-6 py-4 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-purple-500/50 flex items-center justify-center gap-2 group"
+                >
+                  {initLoading ? (
+                    <>
+                      <RefreshCw className="w-5 h-5 animate-spin" />
+                      <span>Initializing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Zap className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+                      <span>Initialize Admin</span>
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
+                </button>
 
-            {/* Remove Admin Card */}
-            <div
-              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 shadow-2xl hover:shadow-red-500/20 transition-all duration-300 hover:scale-[1.02] ${
-                activeStep === 2 ? "ring-2 ring-red-500" : ""
-              }`}
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">2</span>
-                  </div>
-                  <h2 className="text-lg font-bold text-white">
-                    Remove Origin Admin
-                  </h2>
-                </div>
-                <div className="px-2 py-0.5 bg-orange-500/20 border border-orange-500/30 rounded-full">
-                  <span className="text-xs font-semibold text-orange-400">
-                    Optional
-                  </span>
-                </div>
+                <button
+                  onClick={() => setShowConfirmDialog(true)}
+                  disabled={removeLoading}
+                  className="w-full bg-gradient-to-r from-red-500/80 to-orange-600/80 hover:from-red-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-5 py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/50 flex items-center justify-center gap-2 group text-sm"
+                >
+                  {removeLoading ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
+                      <span>Remove Origin Admin</span>
+                    </>
+                  )}
+                </button>
               </div>
-
-              <p className="text-gray-300 text-sm mb-3 leading-relaxed">
-                Remove the origin admin account if you want to clean up or start
-                fresh. This operation is reversible.
-              </p>
-
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-red-300 font-semibold text-xs mb-0.5">
-                      Caution
-                    </p>
-                    <p className="text-red-200/80 text-xs leading-relaxed">
-                      This will soft-delete the admin account specified in{" "}
-                      <code className="bg-red-900/30 px-1.5 py-0.5 rounded text-xs font-mono">
-                        ORIGIN_ADMIN_EMAIL
-                      </code>
-                      . The account can be restored if needed.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowConfirmDialog(true)}
-                disabled={removeLoading}
-                className="w-full bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 text-white px-5 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-red-500/50 flex items-center justify-center gap-2 group text-sm"
-              >
-                {removeLoading ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                    <span>Remove Origin Admin</span>
-                  </>
-                )}
-              </button>
             </div>
           </div>
 
@@ -452,66 +464,6 @@ export default function AdminSetupClient({
               </div>
             </div>
           )}
-
-          {/* Instructions Card */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 shadow-2xl">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
-                <Database className="w-4 h-4 text-white" />
-              </div>
-              <h3 className="text-lg font-bold text-white">Setup Guide</h3>
-            </div>
-
-            <div className="space-y-2">
-              {[
-                {
-                  step: "1",
-                  text: "Ensure ORIGIN_ADMIN_EMAIL and ORIGIN_ADMIN_PASSWORD are set in your .env file",
-                  icon: Terminal,
-                },
-                {
-                  step: "2",
-                  text: 'Click "Initialize Admin" to create or update the super admin account',
-                  icon: Zap,
-                },
-                {
-                  step: "3",
-                  text: "The admin will be automatically verified (no email verification required)",
-                  icon: CheckCircle,
-                },
-                {
-                  step: "4",
-                  text: "Login using the credentials from your .env file",
-                  icon: Lock,
-                },
-                {
-                  step: "5",
-                  text: 'Optional: Use "Remove Origin Admin" to clean up if needed',
-                  icon: Trash2,
-                },
-              ].map((item, index) => {
-                const Icon = item.icon;
-                return (
-                  <div
-                    key={index}
-                    className="flex items-start gap-2 p-2.5 bg-white/5 rounded-lg hover:bg-white/10 transition-all duration-300 group"
-                  >
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-500/20 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <span className="text-blue-400 font-bold text-xs">
-                        {item.step}
-                      </span>
-                    </div>
-                    <div className="flex items-start gap-1.5 flex-1">
-                      <Icon className="w-3.5 h-3.5 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-gray-300 text-xs leading-relaxed">
-                        {item.text}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </div>
 

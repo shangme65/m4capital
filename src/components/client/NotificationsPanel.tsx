@@ -94,80 +94,105 @@ export default function NotificationsPanel({
   });
 
   const getNotificationIcon = (notification: Notification) => {
-    // Smaller icons with gradient backgrounds
-    if (notification.title?.includes("You've bought")) {
-      return (
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg blur-sm opacity-50"></div>
-          <div className="relative w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-600 rounded-lg flex items-center justify-center shadow-md">
-            <ArrowUpRight className="w-4 h-4 text-white" strokeWidth={2.5} />
-          </div>
-        </div>
-      );
-    }
-    if (notification.title?.includes("You've sold")) {
-      return (
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-rose-600 rounded-lg blur-sm opacity-50"></div>
-          <div className="relative w-8 h-8 bg-gradient-to-br from-red-400 to-rose-600 rounded-lg flex items-center justify-center shadow-md">
-            <ArrowDownRight className="w-4 h-4 text-white" strokeWidth={2.5} />
-          </div>
-        </div>
-      );
-    }
+    // New gradient style for all notifications
+
+    // Crypto Purchase (buy)
     if (
-      notification.title?.includes("USD Deposit") ||
-      notification.title?.includes("Incoming USD") ||
-      notification.title?.includes("Purchase Completed")
+      notification.title?.includes("You've bought") ||
+      notification.title?.includes("Crypto Purchase")
     ) {
       return (
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-lg blur-sm opacity-50"></div>
-          <div className="relative w-8 h-8 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
-            <DollarSign className="w-4 h-4 text-white" strokeWidth={2.5} />
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-lg blur-sm opacity-50"></div>
+          <div className="relative w-8 h-8 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
+            <TrendingUp className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
         </div>
       );
     }
 
-    // Default icons
+    // Crypto Sell
+    if (notification.title?.includes("You've sold")) {
+      return (
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-rose-600 rounded-lg blur-sm opacity-50"></div>
+          <div className="relative w-8 h-8 bg-gradient-to-br from-red-400 to-rose-600 rounded-lg flex items-center justify-center shadow-md">
+            <TrendingDown className="w-4 h-4 text-white" strokeWidth={2.5} />
+          </div>
+        </div>
+      );
+    }
+
+    // Deposits (BRL, USD, EUR, crypto, etc.)
+    if (
+      notification.title?.includes("Deposit Completed") ||
+      notification.title?.includes("Deposit") ||
+      notification.type?.toUpperCase() === "SUCCESS"
+    ) {
+      return (
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-lg blur-sm opacity-50"></div>
+          <div className="relative w-8 h-8 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
+            <TrendingUp className="w-4 h-4 text-white" strokeWidth={2.5} />
+          </div>
+        </div>
+      );
+    }
+
+    // Withdrawals
+    if (
+      notification.title?.includes("Withdraw") ||
+      notification.title?.includes("Withdrawal")
+    ) {
+      return (
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-red-600 rounded-lg blur-sm opacity-50"></div>
+          <div className="relative w-8 h-8 bg-gradient-to-br from-orange-400 to-red-600 rounded-lg flex items-center justify-center shadow-md">
+            <TrendingDown className="w-4 h-4 text-white" strokeWidth={2.5} />
+          </div>
+        </div>
+      );
+    }
+
+    // Default icons with new gradient style
     const iconConfig: Record<
       string,
       { icon: any; gradient: string; color: string }
     > = {
-      deposit: {
-        icon: DollarSign,
-        gradient: "from-green-400 to-emerald-600",
-        color: "text-white",
-      },
-      withdraw: {
-        icon: DollarSign,
-        gradient: "from-red-400 to-rose-600",
-        color: "text-white",
-      },
-      trade: {
-        icon: TrendingUp,
-        gradient: "from-purple-400 to-indigo-600",
-        color: "text-white",
-      },
-      transaction: {
+      DEPOSIT: {
         icon: TrendingUp,
         gradient: "from-blue-400 to-cyan-600",
         color: "text-white",
       },
-      success: {
-        icon: CheckCircle,
+      WITHDRAW: {
+        icon: TrendingDown,
+        gradient: "from-orange-400 to-red-600",
+        color: "text-white",
+      },
+      TRADE: {
+        icon: TrendingUp,
+        gradient: "from-purple-400 to-indigo-600",
+        color: "text-white",
+      },
+      TRANSACTION: {
+        icon: TrendingUp,
+        gradient: "from-purple-400 to-indigo-600",
+        color: "text-white",
+      },
+      SUCCESS: {
+        icon: TrendingUp,
         gradient: "from-green-400 to-emerald-600",
         color: "text-white",
       },
-      warning: {
+      WARNING: {
         icon: AlertTriangle,
         gradient: "from-yellow-400 to-orange-600",
         color: "text-white",
       },
     };
 
-    const config = iconConfig[notification.type] || iconConfig.transaction;
+    const config =
+      iconConfig[notification.type?.toUpperCase()] || iconConfig.TRANSACTION;
     const IconComponent = config.icon;
 
     return (

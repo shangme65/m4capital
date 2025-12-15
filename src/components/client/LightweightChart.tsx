@@ -24,6 +24,17 @@ const getCoinGeckoId = (symbol: string): string => {
     ETC: "ethereum-classic",
     USDC: "usd-coin",
     USDT: "tether",
+    SOL: "solana",
+    ADA: "cardano",
+    DOGE: "dogecoin",
+    DOT: "polkadot",
+    MATIC: "matic-network",
+    AVAX: "avalanche-2",
+    LINK: "chainlink",
+    UNI: "uniswap",
+    SHIB: "shiba-inu",
+    ATOM: "cosmos",
+    BNB: "binancecoin",
   };
   return idMap[upperSymbol] || upperSymbol.toLowerCase();
 };
@@ -145,7 +156,10 @@ function LightweightChart({
     let mounted = true;
 
     const fetchData = async () => {
-      if (!seriesRef.current) return;
+      if (!seriesRef.current) {
+        console.log("LightweightChart: Series not ready yet");
+        return;
+      }
 
       try {
         setIsLoading(true);
@@ -157,22 +171,52 @@ function LightweightChart({
         // Get currency code for CoinGecko (lowercase)
         const vsCurrency = preferredCurrency.toLowerCase();
 
+        console.log("LightweightChart: Fetching data", {
+          symbol,
+          coinId,
+          days,
+          vsCurrency,
+        });
+
         // CoinGecko free API - no key needed
-        const response = await fetch(
-          `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=${vsCurrency}&days=${days}`
-        );
+        const url = `https://api.coingecko.com/api/v3/coins/${coinId}/market_chart?vs_currency=${vsCurrency}&days=${days}`;
+        const response = await fetch(url);
+
+        console.log("LightweightChart: API response status", response.status);
 
         if (!response.ok) {
-          throw new Error("Failed to fetch chart data");
+          const errorText = await response.text();
+          console.error("LightweightChart: API error", {
+            status: response.status,
+            statusText: response.statusText,
+            body: errorText,
+          });
+          throw new Error(`Failed to fetch chart data: ${response.status}`);
         }
 
         const data = await response.json();
+        console.log("LightweightChart: API response data", {
+          hasPrices: !!data.prices,
+          priceCount: data.prices?.length,
+        });
 
-        if (mounted && data.prices && seriesRef.current) {
+        if (
+          mounted &&
+          data.prices &&
+          Array.isArray(data.prices) &&
+          data.prices.length > 0 &&
+          seriesRef.current
+        ) {
           const lineData = data.prices.map((point: [number, number]) => ({
             time: Math.floor(point[0] / 1000) as any,
             value: point[1],
           }));
+
+          console.log("LightweightChart: Setting chart data", {
+            pointCount: lineData.length,
+            firstTime: lineData[0]?.time,
+            lastTime: lineData[lineData.length - 1]?.time,
+          });
 
           // Determine price direction
           if (lineData.length >= 2) {
@@ -190,9 +234,19 @@ function LightweightChart({
           if (chartRef.current) {
             chartRef.current.timeScale().fitContent();
           }
+
+          console.log("LightweightChart: Chart data set successfully");
+        } else {
+          console.warn("LightweightChart: No valid data to display", {
+            mounted,
+            hasPrices: !!data.prices,
+            isArray: Array.isArray(data.prices),
+            length: data.prices?.length,
+            hasSeries: !!seriesRef.current,
+          });
         }
       } catch (err) {
-        console.error("Chart data fetch error:", err);
+        console.error("LightweightChart: Chart data fetch error:", err);
         if (mounted) {
           setError("Failed to load chart");
         }
@@ -238,10 +292,16 @@ function LightweightChart({
 
       {/* Error overlay */}
       {error && !isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 rounded-xl">
-          <div className="text-center">
-            <div className="text-red-400 mb-2">⚠️</div>
-            <div className="text-sm text-gray-400">{error}</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/90 backdrop-blur-sm rounded-xl">
+          <div className="text-center px-4">
+            <div className="text-3xl mb-3">📊</div>
+            <div className="text-sm text-gray-400 mb-4">{error}</div>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm rounded-lg transition-all"
+            >
+              Reload Page
+            </button>
           </div>
         </div>
       )}

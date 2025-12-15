@@ -132,7 +132,7 @@ export default function TransactionDetailsModal({
   const getTransactionTitle = () => {
     // For swaps, show custom title
     if (
-      transaction.type === "swap" &&
+      (transaction.type === "swap" || transaction.type === "convert") &&
       transaction.fromAsset &&
       transaction.toAsset
     ) {
@@ -254,6 +254,7 @@ export default function TransactionDetailsModal({
           </div>
         );
       case "convert":
+      case "swap":
         return (
           <div
             className={`${baseClasses} bg-gradient-to-br from-orange-500 to-orange-600`}

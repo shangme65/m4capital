@@ -145,6 +145,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   }, [status]); // Only depend on status, not session object (session reference changes constantly)
 
+  // Polling for notifications and transactions every 30 seconds
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user?.id) return;
+
+    const pollInterval = setInterval(() => {
+      // Only poll if document is visible
+      if (document.visibilityState === "visible") {
+        fetchNotifications();
+        fetchTransactions();
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(pollInterval);
+  }, [status, session?.user?.id]);
+
   // Refetch on window focus (for when user returns to app after transaction)
   useEffect(() => {
     if (status !== "authenticated" || !session?.user?.id) return;

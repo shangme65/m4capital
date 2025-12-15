@@ -121,7 +121,10 @@ export async function GET(request: NextRequest) {
               : Number(metadata?.toAmount || t.quantity),
             price: Number(t.entryPrice),
             date: t.createdAt,
-            status: t.status.toLowerCase(),
+            status:
+              t.status.toLowerCase() === "closed"
+                ? "completed"
+                : t.status.toLowerCase(),
             source: "trade",
             // Swap-specific fields
             isSwap: true,
@@ -147,7 +150,10 @@ export async function GET(request: NextRequest) {
           amount: Number(t.quantity),
           price: Number(t.entryPrice),
           date: t.createdAt,
-          status: t.status.toLowerCase(),
+          status:
+            t.status.toLowerCase() === "closed"
+              ? "completed"
+              : t.status.toLowerCase(),
           source: "trade",
         };
       }),

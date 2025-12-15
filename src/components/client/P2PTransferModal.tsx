@@ -62,6 +62,13 @@ export default function P2PTransferModal({
   const [optimisticBalance, setOptimisticBalance] =
     useOptimistic(availableBalance);
 
+  // Refetch portfolio when modal opens to get latest balance
+  useEffect(() => {
+    if (isOpen) {
+      refetch();
+    }
+  }, [isOpen, refetch]);
+
   // Check if user has PIN set
   useEffect(() => {
     if (isOpen) {

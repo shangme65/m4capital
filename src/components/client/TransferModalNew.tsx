@@ -153,6 +153,13 @@ export default function TransferModalNew({
     }
   };
 
+  // Refetch portfolio when modal opens to get latest balance
+  useEffect(() => {
+    if (isOpen) {
+      refetch();
+    }
+  }, [isOpen, refetch]);
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {

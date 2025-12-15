@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
+import { sendPushNotification } from "@/lib/push-notifications";
 
 // Force dynamic for API routes that use headers
 export const dynamic = "force-dynamic";
@@ -348,6 +349,35 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Send web push notification
+    try {
+      const pushTitle =
+        depositType === "crypto"
+          ? `${cryptoAsset} Deposit Completed!`
+          : `${userPreferredCurrency} Deposit Completed!`;
+      const pushMessage =
+        depositType === "crypto"
+          ? `Your deposit of ${
+              cryptoAmount || amount
+            } ${cryptoAsset} has been credited to your account.`
+          : `Your deposit of ${getCurrencySymbol(userPreferredCurrency)}${(
+              Math.round((fiatAmount || amount) * 100) / 100
+            ).toFixed(2)} has been credited to your account.`;
+
+      await sendPushNotification(userId, pushTitle, pushMessage, {
+        type: "deposit",
+        amount:
+          depositType === "crypto"
+            ? cryptoAmount || amount
+            : fiatAmount || amount,
+        asset: depositType === "crypto" ? cryptoAsset : userPreferredCurrency,
+        url: "/dashboard",
+      });
+    } catch (pushError) {
+      console.error("Failed to send push notification:", pushError);
+      // Continue even if push fails
+    }
+
     return NextResponse.json({
       message: "Deposit completed successfully and credited to user account.",
       deposit: {
@@ -492,6 +522,29 @@ async function completeDepositImmediately(
           </div>
         `,
       });
+
+      // Send web push notification
+      try {
+        const pushTitle =
+          depositType === "crypto"
+            ? `${cryptoAsset} Deposit Completed!`
+            : `${userCurrency} Deposit Completed!`;
+        const pushMessage =
+          depositType === "crypto"
+            ? `Your deposit of ${amount} ${cryptoAsset} has been credited to your account.`
+            : `Your deposit of ${getCurrencySymbol(
+                userCurrency
+              )}${amount} has been credited to your account.`;
+
+        await sendPushNotification(userId, pushTitle, pushMessage, {
+          type: "deposit",
+          amount,
+          asset: depositType === "crypto" ? cryptoAsset : userCurrency,
+          url: "/dashboard",
+        });
+      } catch (pushError) {
+        console.error("Failed to send push notification:", pushError);
+      }
     }
 
     console.log(`✅ Deposit ${depositId} completed successfully`);
@@ -655,6 +708,30 @@ async function completeDeposit(
           </div>
         `,
       });
+
+      // Send web push notification
+      try {
+        const pushTitle =
+          depositType === "crypto"
+            ? `${cryptoAsset} Deposit Completed!`
+            : `${userCurr} Deposit Completed!`;
+        const pushMessage =
+          depositType === "crypto"
+            ? `Your deposit of ${amount} ${cryptoAsset} has been credited to your account.`
+            : `Your deposit of ${getCurrencySymbol(
+                userCurr
+              )}${amount} has been credited to your account.`;
+
+        await sendPushNotification(userId, pushTitle, pushMessage, {
+          type: "deposit",
+          amount,
+          asset:
+            depositType === "crypto" ? cryptoAsset || "BTC" : userCurr || "USD",
+          url: "/dashboard",
+        });
+      } catch (pushError) {
+        console.error("Failed to send push notification:", pushError);
+      }
     }
   } catch (error) {
     console.error("Error completing deposit:", error);
