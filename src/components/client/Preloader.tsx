@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 const Preloader = () => {
   return (
@@ -19,9 +20,15 @@ const Preloader = () => {
           ease: "easeInOut",
           repeat: Infinity,
         }}
-        className="w-32 h-32"
+        className="w-32 h-32 relative"
       >
-        <img src="/m4capitallogo2.png" alt="Loading..." />
+        <Image
+          src="/m4capitallogo2.png"
+          alt="Loading..."
+          fill
+          priority
+          className="object-contain"
+        />
       </motion.div>
     </motion.div>
   );
