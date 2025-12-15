@@ -1,9 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -29,13 +26,25 @@ const nextConfig = {
       },
     ],
   },
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.(glsl|vs|fs|vert|frag)$/,
-      exclude: /node_modules/,
-      use: ["raw-loader", "glslify-loader"],
-    });
-    return config;
+  // Turbopack config for Next.js 16 (replaces webpack)
+  turbopack: {
+    rules: {
+      "*.glsl": {
+        loaders: ["raw-loader"],
+      },
+      "*.vs": {
+        loaders: ["raw-loader"],
+      },
+      "*.fs": {
+        loaders: ["raw-loader"],
+      },
+      "*.vert": {
+        loaders: ["raw-loader"],
+      },
+      "*.frag": {
+        loaders: ["raw-loader"],
+      },
+    },
   },
 };
 
