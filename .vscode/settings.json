@@ -64,5 +64,96 @@
     ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
     ["classnames\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"],
     ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
-  ]
+  ],
+
+  // M4Capital Brand Colors - Green/Emerald Theme
+  "workbench.colorCustomizations": {
+    // Title Bar - White text
+    "titleBar.activeBackground": "#1e293b",
+    "titleBar.activeForeground": "#ffffff",
+    "titleBar.inactiveBackground": "#1e293b",
+    "titleBar.inactiveForeground": "#ffffffcc",
+    "titleBar.border": "#10b981",
+
+    // Activity Bar (left sidebar icons) - White
+    "activityBar.background": "#1e293b",
+    "activityBar.foreground": "#ffffff",
+    "activityBar.inactiveForeground": "#ffffffaa",
+    "activityBar.activeBorder": "#10b981",
+    "activityBarBadge.background": "#22c55e",
+    "activityBarBadge.foreground": "#0f172a",
+
+    // Status Bar (bottom) - White text
+    "statusBar.background": "#1e293b",
+    "statusBar.foreground": "#ffffff",
+    "statusBar.debuggingBackground": "#22c55e",
+    "statusBar.noFolderBackground": "#1e293b",
+    "statusBarItem.remoteBackground": "#22c55e",
+    "statusBarItem.remoteForeground": "#ffffff",
+
+    // Side Bar - White text
+    "sideBar.background": "#1e293b",
+    "sideBar.foreground": "#ffffff",
+    "sideBar.border": "#334155",
+    "sideBarTitle.foreground": "#ffffff",
+    "sideBarSectionHeader.background": "#334155",
+    "sideBarSectionHeader.foreground": "#ffffff",
+
+    // Editor
+    "editor.background": "#1e293b",
+    "editor.foreground": "#e2e8f0",
+    "editor.lineHighlightBackground": "#334155",
+    "editor.selectionBackground": "#22c55e44",
+    "editorCursor.foreground": "#22c55e",
+
+    // Tabs
+    "tab.activeBackground": "#334155",
+    "tab.activeForeground": "#22c55e",
+    "tab.activeBorderTop": "#10b981",
+    "tab.inactiveBackground": "#1e293b",
+    "tab.inactiveForeground": "#94a3b8",
+    "tab.border": "#334155",
+    "editorGroupHeader.tabsBackground": "#1e293b",
+
+    // Terminal
+    "terminal.background": "#1e293b",
+    "terminal.foreground": "#e2e8f0",
+    "terminalCursor.foreground": "#22c55e",
+    "terminal.ansiGreen": "#22c55e",
+    "terminal.ansiBrightGreen": "#10b981",
+
+    // Panel (bottom - terminal, output, etc.)
+    "panel.background": "#1e293b",
+    "panel.border": "#334155",
+    "panelTitle.activeForeground": "#22c55e",
+    "panelTitle.activeBorder": "#10b981",
+
+    // Input fields
+    "input.background": "#334155",
+    "input.foreground": "#e2e8f0",
+    "input.border": "#475569",
+    "inputOption.activeBorder": "#22c55e",
+    "focusBorder": "#22c55e",
+
+    // Lists (file explorer, suggestions, etc.)
+    "list.activeSelectionBackground": "#22c55e44",
+    "list.activeSelectionForeground": "#22c55e",
+    "list.hoverBackground": "#334155",
+    "list.focusBackground": "#22c55e33",
+
+    // Badges & Notifications
+    "badge.background": "#22c55e",
+    "badge.foreground": "#0f172a",
+    "notificationCenterHeader.background": "#334155",
+    "notifications.background": "#334155",
+
+    // Scrollbar
+    "scrollbarSlider.background": "#22c55e44",
+    "scrollbarSlider.hoverBackground": "#22c55e66",
+    "scrollbarSlider.activeBackground": "#22c55e88",
+
+    // Minimap
+    "minimap.background": "#1e293b",
+    "minimap.selectionHighlight": "#22c55e55"
+  }
 }

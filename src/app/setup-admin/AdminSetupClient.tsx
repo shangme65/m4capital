@@ -72,11 +72,11 @@ export default function AdminSetupClient({
         applicationServerKey: convertedVapidKey,
       });
 
-      // Send subscription to server
+      // Send subscription to server (wrapped in subscription object)
       const subscribeResponse = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(subscription),
+        body: JSON.stringify({ subscription: subscription.toJSON() }),
       });
 
       if (!subscribeResponse.ok) {
@@ -151,24 +151,20 @@ export default function AdminSetupClient({
           });
 
           if (signInResult?.ok) {
-            showSuccess("Logged in successfully! Setting up notifications...");
+            showSuccess("Logged in successfully!");
 
-            // Request notification permission for admin
+            // Subscribe to push notifications if already granted
             try {
               if (
                 "Notification" in window &&
-                Notification.permission !== "granted"
+                Notification.permission === "granted"
               ) {
-                const permission = await Notification.requestPermission();
-                if (permission === "granted") {
-                  console.log("✅ Notification permission granted");
-                  // Auto-subscribe to push notifications
-                  await subscribeAdminToPush();
-                }
-              } else if (Notification.permission === "granted") {
                 // Already granted, just subscribe
                 await subscribeAdminToPush();
+                console.log("✅ Auto-subscribed to push notifications");
               }
+              // If not granted, the NotificationPermissionPrompt component
+              // in the dashboard layout will show a custom UI prompt
             } catch (notifError) {
               console.error("Notification setup error:", notifError);
               // Don't block dashboard redirect on notification error
