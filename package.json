@@ -4,8 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:safe": "node scripts/wake-database.js && next dev",
     "build": "prisma generate && prisma db push && next build",
     "start": "next start",
+    "start:safe": "node scripts/wake-database.js && next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "typecheck": "tsc --noEmit",
@@ -16,7 +18,9 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "wake-db": "node scripts/wake-database.js",
+    "fix-admin": "node scripts/fix-admin-login.js"
   },
   "overrides": {
     "react": "^19.2.3",

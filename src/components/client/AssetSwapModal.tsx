@@ -309,12 +309,15 @@ export default function AssetSwapModal({
         asset.symbol
       } to ${toAmt.toFixed(8)} ${toAsset}`;
 
+      // Convert USD value to user's preferred currency for notification display
+      const displayAmount = convertAmount(value);
+
       addNotification({
         type: "transaction",
         title: notificationTitle,
         message: notificationMessage,
-        amount: value,
-        asset: asset.symbol,
+        amount: Math.round(displayAmount * 100) / 100,
+        asset: preferredCurrency,
       });
 
       setSuccessData({
