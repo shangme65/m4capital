@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Button from "@/components/ui/Button";
+import { motion } from "framer-motion";
 import {
   Menu,
   X,
@@ -254,38 +256,18 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               </Link>
             ) : (
               <>
-                <button
+                <Button
                   onClick={onLoginClick}
-                  className="flex items-center space-x-2 hover:scale-105 active:scale-95 transition-all duration-300 transform text-sm font-bold text-white"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
-                    boxShadow:
-                      "0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -3px 0 rgba(0, 0, 0, 0.4)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    padding: "10px 18px",
-                    borderRadius: "12px",
-                  }}
+                  variant="outline"
+                  size="sm"
                   aria-label="Login"
                 >
                   <LogIn size={16} />
                   <span>Log in</span>
-                </button>
-                <button
-                  onClick={onSignupClick}
-                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-sm font-bold text-white"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
-                    boxShadow:
-                      "0 10px 25px -5px rgba(249, 115, 22, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.25), inset 0 -3px 0 rgba(0, 0, 0, 0.3)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    padding: "10px 18px",
-                    borderRadius: "12px",
-                  }}
-                >
+                </Button>
+                <Button onClick={onSignupClick} variant="primary" size="sm">
                   Sign Up
-                </button>
+                </Button>
               </>
             )}
           </div>
@@ -312,61 +294,36 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               </Link>
             ) : (
               <>
-                <button
+                <Button
                   onClick={onLoginClick}
-                  className="flex items-center space-x-1 hover:scale-105 active:scale-95 transition-all duration-300 transform text-xs font-bold text-white"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
-                    boxShadow:
-                      "0 8px 18px -4px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    padding: "8px 12px",
-                    borderRadius: "10px",
-                  }}
+                  variant="primary"
+                  size="sm"
                   aria-label="Login"
+                  className="!bg-gradient-to-b !from-gray-500 !via-gray-500 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#374151,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
                 >
-                  <LogIn size={14} className="sm:w-4 sm:h-4" />
+                  <LogIn size={12} />
                   <span className="hidden xs:inline">Log in</span>
                   <span className="xs:hidden">Login</span>
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={onSignupClick}
-                  className="hover:scale-105 active:scale-95 transition-all duration-300 transform whitespace-nowrap text-xs font-bold text-white"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
-                    boxShadow:
-                      "0 8px 18px -4px rgba(249, 115, 22, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.25), inset 0 -2px 0 rgba(0, 0, 0, 0.3)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    padding: "8px 12px",
-                    borderRadius: "10px",
-                  }}
+                  variant="primary"
+                  size="sm"
+                  className="!bg-gradient-to-r !from-orange-400 !via-orange-600 !to-orange-500 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(194,65,12,0.8),0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(249,115,22,0.8),0_10px_8px_-2px_rgba(249,115,22,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(249,115,22,0.5)]"
                 >
-                  Sign Up
-                </button>
+                  <span>Sign Up</span>
+                </Button>
               </>
             )}
-            <button
+            <Button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-              className="hover:scale-105 hover:rotate-180 active:scale-90 transition-all duration-300 transform text-white"
-              style={{
-                background:
-                  "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
-                boxShadow:
-                  "0 8px 18px -4px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
-                padding: "8px 12px",
-                borderRadius: "10px",
-              }}
+              variant="primary"
+              size="sm"
+              className="!h-[24px] !px-3 !bg-gradient-to-b !from-gray-500 !via-gray-500 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#374151,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
               aria-label="Open menu"
             >
-              {isMobileMenuOpen ? (
-                <X size={16} className="sm:w-5 sm:h-5" />
-              ) : (
-                <Menu size={16} className="sm:w-5 sm:h-5" />
-              )}
-            </button>
+              {isMobileMenuOpen ? <X size={12} /> : <Menu size={12} />}
+            </Button>
           </div>
         </div>
       </nav>
@@ -418,30 +375,22 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
                     onClick={onLoginClick}
-                    className="flex items-center space-x-1 text-xs font-bold"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
-                      padding: "8px 12px",
-                      borderRadius: "10px",
-                    }}
+                    variant="primary"
+                    size="sm"
+                    className="!bg-gradient-to-b !from-gray-500 !via-gray-500 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#374151,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
                   >
-                    <LogIn size={14} />
-                  </button>
-                  <button
+                    <LogIn size={12} />
+                  </Button>
+                  <Button
                     onClick={onSignupClick}
-                    className="text-xs font-bold text-white"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
-                      padding: "8px 14px",
-                      borderRadius: "10px",
-                    }}
+                    variant="primary"
+                    size="sm"
+                    className="!bg-gradient-to-r !from-orange-400 !via-orange-600 !to-orange-500 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(194,65,12,0.8),0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(249,115,22,0.8),0_10px_8px_-2px_rgba(249,115,22,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(249,115,22,0.5)]"
                   >
-                    Sign Up
-                  </button>
+                    <span>Sign Up</span>
+                  </Button>
                 </>
               )}
               <button

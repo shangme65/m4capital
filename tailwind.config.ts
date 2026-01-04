@@ -9,6 +9,21 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        primary: {
+          50: "#f0fdf4",
+          100: "#dcfce7",
+          200: "#bbf7d0",
+          300: "#86efac",
+          400: "#4ade80",
+          500: "#22c55e",
+          600: "#16a34a",
+          700: "#15803d",
+          800: "#166534",
+          900: "#14532d",
+          950: "#052e16",
+        },
+      },
       screens: {
         xs: "360px", // Extra small devices (budget phones like Redmi 14C - 360-400px)
         sm: "640px", // Small devices (large phones) - Tailwind default
@@ -20,6 +35,9 @@ const config: Config = {
         // Mobile-specific breakpoints
         mobile: { max: "639px" }, // Target mobile devices specifically
         "mobile-sm": { max: "359px" }, // Very small phones
+      },
+      perspective: {
+        "1000": "1000px",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",

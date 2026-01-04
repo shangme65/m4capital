@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import BackgroundSlider from "@/components/client/BackgroundSlider";
 import AnimatedButton from "@/components/client/AnimatedButton";
+import Button from "@/components/ui/Button";
 import Features from "@/components/client/Features";
 import Testimonials from "@/components/client/Testimonials";
 import CryptoPriceTicker from "@/components/client/CryptoPriceTicker";
@@ -396,36 +397,22 @@ function Hero() {
             ) : (
               // Not logged in - Show "Get Started" and "Try Free Demo" buttons
               <>
-                <button
+                <Button
                   onClick={openSignupModal}
-                  className="text-white font-bold text-xs xs:text-sm transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
-                    boxShadow:
-                      "0 12px 30px -6px rgba(249, 115, 22, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.25), inset 0 -4px 0 rgba(0, 0, 0, 0.3)",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    padding: "10px 20px",
-                    borderRadius: "10px",
-                  }}
+                  variant="primary"
+                  size="sm"
+                  className="whitespace-nowrap !px-5 !py-2.5 !text-sm !bg-gradient-to-r !from-orange-400 !via-orange-600 !to-orange-500"
                 >
                   Get Started
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={handleTryDemo}
-                  className="text-white font-bold text-xs xs:text-sm transition-all duration-200 transform hover:scale-105 whitespace-nowrap"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
-                    boxShadow:
-                      "0 12px 30px -6px rgba(0, 0, 0, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.15), inset 0 -4px 0 rgba(0, 0, 0, 0.4)",
-                    border: "1px solid rgba(255, 255, 255, 0.12)",
-                    padding: "10px 20px",
-                    borderRadius: "10px",
-                  }}
+                  variant="primary"
+                  size="sm"
+                  className="whitespace-nowrap !px-5 !py-2.5 !text-sm !bg-gradient-to-br !from-gray-500 !via-gray-700 !to-gray-600"
                 >
                   Try Free Demo
-                </button>
+                </Button>
               </>
             )}
           </div>
