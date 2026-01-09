@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import AnimatedButton from "@/components/client/AnimatedButton";
 import Button from "@/components/ui/Button";
 import Features from "@/components/client/Features";
 import Testimonials from "@/components/client/Testimonials";
@@ -26,14 +25,7 @@ import ParticleSystem from "@/components/client/ParticleSystem";
 import AnimatedGradientBackground from "@/components/client/AnimatedGradientBackground";
 import GlassmorphismCards from "@/components/client/GlassmorphismCards";
 // import { default as dynamicImport } from "next/dynamic";
-import VideoBackground from "@/components/client/VideoBackground";
-import LiveMarketPulse from "@/components/client/LiveMarketPulse";
-import InteractiveDemoPreview from "@/components/client/InteractiveDemoPreview";
-import LiveUserCounter from "@/components/client/LiveUserCounter";
-import RecentActivityFeed from "@/components/client/RecentActivityFeed";
 import TestimonialSlider from "@/components/client/TestimonialSlider";
-import AchievementBadges from "@/components/client/AchievementBadges";
-import QuickEmailCapture from "@/components/client/QuickEmailCapture";
 import CountdownTimer from "@/components/client/CountdownTimer";
 import { useModal } from "@/contexts/ModalContext";
 import React from "react";
@@ -237,12 +229,6 @@ function Hero() {
 
       {/* Floating Hero Buttons - fixed position */}
       <HeroButtons />
-
-      {/* Live Market Pulse - Top Center */}
-      <LiveMarketPulse />
-
-      {/* Live User Counter - Top Right */}
-      <LiveUserCounter />
 
       {/* Achievement Badges - Below Market Pulse */}
       <AchievementBadges />
