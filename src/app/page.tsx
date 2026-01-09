@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import BackgroundSlider from "@/components/client/BackgroundSlider";
 import AnimatedButton from "@/components/client/AnimatedButton";
 import Button from "@/components/ui/Button";
 import Features from "@/components/client/Features";
@@ -14,11 +13,40 @@ import { CryptoMarketProvider } from "@/components/client/CryptoMarketProvider";
 import FAQ from "@/components/client/FAQ";
 import HowItWorks from "@/components/client/HowItWorks";
 import Preloader from "@/components/client/Preloader";
+import HeroButtons from "@/components/client/HeroButtons";
+import HeroTitle from "@/components/client/HeroTitle";
+import HeroDescription from "@/components/client/HeroDescription";
+import FloatingCryptoIcons from "@/components/client/FloatingCryptoIcons";
+import HeroStats from "@/components/client/HeroStats";
+import ScrollDownIndicator from "@/components/client/ScrollDownIndicator";
+import MouseParallax from "@/components/client/MouseParallax";
+import AnimatedTradingLines from "@/components/client/AnimatedTradingLines";
+import CursorSpotlight from "@/components/client/CursorSpotlight";
+import ParticleSystem from "@/components/client/ParticleSystem";
+import AnimatedGradientBackground from "@/components/client/AnimatedGradientBackground";
+import GlassmorphismCards from "@/components/client/GlassmorphismCards";
+// import { default as dynamicImport } from "next/dynamic";
+import VideoBackground from "@/components/client/VideoBackground";
+import LiveMarketPulse from "@/components/client/LiveMarketPulse";
+import InteractiveDemoPreview from "@/components/client/InteractiveDemoPreview";
+import LiveUserCounter from "@/components/client/LiveUserCounter";
+import RecentActivityFeed from "@/components/client/RecentActivityFeed";
+import TestimonialSlider from "@/components/client/TestimonialSlider";
+import AchievementBadges from "@/components/client/AchievementBadges";
+import QuickEmailCapture from "@/components/client/QuickEmailCapture";
+import CountdownTimer from "@/components/client/CountdownTimer";
 import { useModal } from "@/contexts/ModalContext";
 import React from "react";
+import MobileHeroInfoButton from "@/components/client/MobileHeroInfoButton";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
+
+// Dynamically import InteractiveGlobe with no SSR (Disabled due to React 19 compatibility)
+// const InteractiveGlobe = dynamicImport(
+//   () => import("@/components/client/InteractiveGlobe"),
+//   { ssr: false }
+// );
 
 type AnimationVariant = {
   initial: { opacity: number; x?: number; y?: number; scale?: number };
@@ -34,7 +62,6 @@ function Hero() {
   const { openLoginModal, openSignupModal } = useModal();
   const { data: session } = useSession();
   const router = useRouter();
-  const images = ["/hero-bg-1.jpg", "/hero-bg-2.jpg", "/hero-bg-3.jpg"];
 
   const handleTryDemo = () => {
     // Set practice mode in localStorage before navigation
@@ -46,231 +73,39 @@ function Hero() {
 
   const heroContent = [
     {
-      title: (
-        <>
-          <span className="text-blue-400">Unlock</span>{" "}
-          <span className="text-purple-400">Global</span>{" "}
-          <span className="text-green-400">Markets</span>
-        </>
-      ),
+      title: "Unlock Global Markets",
       description:
         "Trade Forex, stocks, and commodities from a single, powerful platform.",
+      titleAnimation: "slideLeft",
+      descAnimation: "slideRight",
     },
     {
-      title: (
-        <>
-          <span className="text-orange-400">Precision</span>{" "}
-          <span className="text-pink-400">Trading</span>{" "}
-          <span className="text-cyan-400">Tools</span>
-        </>
-      ),
+      title: "Precision Trading Tools",
       description:
         "Leverage advanced charting and analytics for surgical market entry and exit.",
+      titleAnimation: "slideRight",
+      descAnimation: "fadeInUp",
     },
     {
-      title: (
-        <>
-          <span className="text-emerald-400">Institutional</span>{" "}
-          <span className="text-yellow-400">Grade</span>{" "}
-          <span className="text-red-400">Liquidity</span>
-        </>
-      ),
-      description:
-        "Experience tight spreads and minimal slippage with our deep liquidity pools.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-indigo-400">Automate</span>{" "}
-          <span className="text-rose-400">Your</span>{" "}
-          <span className="text-lime-400">Strategies</span>
-        </>
-      ),
-      description:
-        "Build, backtest, and deploy trading algorithms with our robust API.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-violet-400">Blazing</span>{" "}
-          <span className="text-teal-400">Fast</span>{" "}
-          <span className="text-amber-400">Execution</span>
-        </>
-      ),
+      title: "Blazing Fast Execution",
       description:
         "Gain a competitive edge with our low-latency infrastructure.",
+      titleAnimation: "fadeInDown",
+      descAnimation: "scaleUp",
     },
     {
-      title: (
-        <>
-          <span className="text-sky-400">Actionable</span>{" "}
-          <span className="text-fuchsia-400">Market</span>{" "}
-          <span className="text-green-400">Insights</span>
-        </>
-      ),
-      description:
-        "Receive real-time news and analysis to make informed trading decisions.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-purple-400">Your</span>{" "}
-          <span className="text-orange-400">Capital</span>{" "}
-          <span className="text-blue-400">Secured</span>
-        </>
-      ),
+      title: "Your Capital Secured",
       description:
         "Trade with confidence, knowing your funds are protected by industry-leading security.",
+      titleAnimation: "scaleUp",
+      descAnimation: "slideLeft",
     },
     {
-      title: (
-        <>
-          <span className="text-cyan-400">Master</span>{" "}
-          <span className="text-pink-400">the</span>{" "}
-          <span className="text-yellow-400">Markets</span>
-        </>
-      ),
-      description:
-        "Access exclusive educational content and webinars from seasoned trading experts.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-emerald-400">Trade</span>{" "}
-          <span className="text-red-400">on</span>{" "}
-          <span className="text-indigo-400">Your</span>{" "}
-          <span className="text-lime-400">Terms</span>
-        </>
-      ),
-      description:
-        "Customize your trading environment with flexible layouts and powerful tools.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-rose-400">24/7</span>{" "}
-          <span className="text-teal-400">Dedicated</span>{" "}
-          <span className="text-violet-400">Support</span>
-        </>
-      ),
-      description:
-        "Our expert support team is always available to assist you, day or night.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-amber-400">Seamless</span>{" "}
-          <span className="text-sky-400">Mobile</span>{" "}
-          <span className="text-fuchsia-400">Trading</span>
-        </>
-      ),
-      description:
-        "Trade on-the-go with our full-featured and intuitive mobile application.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-green-400">Social</span>{" "}
-          <span className="text-purple-400">Trading</span>{" "}
-          <span className="text-orange-400">Revolution</span>
-        </>
-      ),
-      description:
-        "Copy the strategies of top-performing traders and enhance your portfolio.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-blue-400">Transparent</span>{" "}
-          <span className="text-pink-400">Fee</span>{" "}
-          <span className="text-cyan-400">Structure</span>
-        </>
-      ),
-      description:
-        "Enjoy competitive pricing with no hidden costs or commissions.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-yellow-400">Advanced</span>{" "}
-          <span className="text-red-400">Risk</span>{" "}
-          <span className="text-emerald-400">Management</span>
-        </>
-      ),
-      description:
-        "Protect your investments with sophisticated stop-loss and take-profit orders.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-indigo-400">Diverse</span>{" "}
-          <span className="text-rose-400">Asset</span>{" "}
-          <span className="text-lime-400">Portfolio</span>
-        </>
-      ),
-      description:
-        "Explore a wide range of currency pairs, indices, and cryptocurrencies.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-violet-400">The</span>{" "}
-          <span className="text-teal-400">Future</span>{" "}
-          <span className="text-amber-400">of</span>{" "}
-          <span className="text-sky-400">Algorithmic</span>{" "}
-          <span className="text-fuchsia-400">Trading</span>
-        </>
-      ),
-      description:
-        "Harness the power of AI to optimize your trading performance.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-green-400">Join</span>{" "}
-          <span className="text-purple-400">a</span>{" "}
-          <span className="text-orange-400">Global</span>{" "}
-          <span className="text-blue-400">Trading</span>{" "}
-          <span className="text-pink-400">Community</span>
-        </>
-      ),
-      description:
-        "Connect with and learn from a network of thousands of traders worldwide.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-cyan-400">Regulated</span>{" "}
-          <span className="text-yellow-400">and</span>{" "}
-          <span className="text-red-400">Trusted</span>{" "}
-          <span className="text-emerald-400">Broker</span>
-        </>
-      ),
-      description: "Operate in a secure and compliant trading environment.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-indigo-400">Unleash</span>{" "}
-          <span className="text-rose-400">Your</span>{" "}
-          <span className="text-lime-400">Trading</span>{" "}
-          <span className="text-violet-400">Potential</span>
-        </>
-      ),
-      description:
-        "We provide the tools, you define the success. Start your journey today.",
-    },
-    {
-      title: (
-        <>
-          <span className="text-teal-400">Next</span>{" "}
-          <span className="text-amber-400">Generation</span>{" "}
-          <span className="text-sky-400">Trading</span>{" "}
-          <span className="text-fuchsia-400">Platform</span>
-        </>
-      ),
+      title: "Next Generation Trading Platform",
       description:
         "Experience the pinnacle of trading technology, designed for performance and reliability.",
+      titleAnimation: "fadeInUp",
+      descAnimation: "fadeInDown",
     },
   ];
 
@@ -304,125 +139,148 @@ function Hero() {
   const variantNames = Object.keys(animationVariants);
 
   const [contentIndex, setContentIndex] = useState(0);
+  const [descriptionIndex, setDescriptionIndex] = useState(0);
   const [title, setTitle] = useState<React.ReactNode>(heroContent[0].title);
   const [description, setDescription] = useState(heroContent[0].description);
-  const [titleAnimation, setTitleAnimation] = useState(variantNames[0]);
-  const [descAnimation, setDescAnimation] = useState(variantNames[1]);
+  const [titleAnimation, setTitleAnimation] = useState(heroContent[0].titleAnimation);
+  const [descAnimation, setDescAnimation] = useState(heroContent[0].descAnimation);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const nextIndex = (contentIndex + 1) % heroContent.length;
-
-      // Start title change - cycle through variants deterministically
-      setTimeout(() => {
-        const titleVariantIndex = nextIndex % variantNames.length;
-        setTitleAnimation(variantNames[titleVariantIndex]);
+    // Title changes immediately on mount and every 10 seconds
+    const titleInterval = setInterval(() => {
+      setContentIndex((prev) => {
+        const nextIndex = (prev + 1) % heroContent.length;
+        setTitleAnimation(heroContent[nextIndex].titleAnimation);
         setTitle(heroContent[nextIndex].title);
-      }, 0);
+        return nextIndex;
+      });
+    }, 10000);
 
-      // Start description change after a delay - use different variant
-      setTimeout(() => {
-        const descVariantIndex = (nextIndex + 1) % variantNames.length;
-        setDescAnimation(variantNames[descVariantIndex]);
+    // Description changes 5 seconds after mount and every 10 seconds
+    const descriptionTimeout = setTimeout(() => {
+      setDescriptionIndex((prev) => {
+        const nextIndex = (prev + 1) % heroContent.length;
+        setDescAnimation(heroContent[nextIndex].descAnimation);
         setDescription(heroContent[nextIndex].description);
-      }, 1500); // 1.5s delay for description
+        return nextIndex;
+      });
 
-      setContentIndex(nextIndex);
-    }, 5000); // Change content every 5 seconds
+      const descInterval = setInterval(() => {
+        setDescriptionIndex((prev) => {
+          const nextIndex = (prev + 1) % heroContent.length;
+          setDescAnimation(heroContent[nextIndex].descAnimation);
+          setDescription(heroContent[nextIndex].description);
+          return nextIndex;
+        });
+      }, 10000);
 
-    return () => clearInterval(interval);
-  }, [contentIndex, heroContent.length, titleAnimation]);
+      return () => clearInterval(descInterval);
+    }, 5000);
+
+    return () => {
+      clearInterval(titleInterval);
+      clearTimeout(descriptionTimeout);
+    };
+  }, []);
 
   return (
-    <div className="relative h-[calc(100vh-60px)] sm:h-screen w-full flex flex-col overflow-hidden">
-      <BackgroundSlider images={images} />
-      <div className="absolute inset-0 bg-black bg-opacity-50" />
+    <div className="relative h-[calc(100vh-60px)] sm:h-screen w-full overflow-hidden bg-gradient-to-b from-[#2d1f1a] via-[#1a1410] to-[#0a0806]">
+      {/* Animated Gradient Background */}
+      <AnimatedGradientBackground />
 
-      {/* Main content - centered */}
-      <div className="relative z-10 flex-1 flex items-center justify-center text-center text-white px-4 sm:px-6 md:px-8 overflow-hidden max-w-7xl mx-auto w-full">
-        <div>
-          <AnimatePresence mode="wait">
-            <motion.h1
-              key={`title-${contentIndex}`}
-              variants={animationVariants[titleAnimation]}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.7, ease: "circOut" }}
-              className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 xs:mb-6 sm:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400 leading-tight"
-              style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.5)" }}
-            >
-              {title}
-            </motion.h1>
-          </AnimatePresence>
-          <div className="h-16 xs:h-20 sm:h-28 md:h-32 flex items-center justify-center mb-4 xs:mb-6 sm:mb-8">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={`desc-${contentIndex}`}
-                variants={animationVariants[descAnimation]}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                transition={{ duration: 0.7, ease: "circOut" }}
-                className="text-sm xs:text-base sm:text-xl md:text-2xl drop-shadow-md max-w-xs xs:max-w-md sm:max-w-2xl md:max-w-3xl mx-auto px-2"
-              >
-                {description}
-              </motion.p>
-            </AnimatePresence>
-          </div>
-          <div className="flex flex-col xs:flex-row gap-2 xs:gap-4 mt-6 sm:mt-12 items-center justify-center px-4">
-            {session ? (
-              // Logged in - Show "Go to Traderoom" button (defaults to real account)
-              <button
-                onClick={() => {
-                  // Ensure real account is selected when logged in user clicks
-                  if (typeof window !== "undefined") {
-                    localStorage.setItem("selectedAccountType", "real");
-                  }
-                  router.push("/traderoom");
-                }}
-                className="w-full xs:w-auto text-white font-bold text-sm xs:text-base transition-all duration-200 transform hover:scale-105"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
-                  boxShadow:
-                    "0 12px 30px -6px rgba(249, 115, 22, 0.6), inset 0 3px 0 rgba(255, 255, 255, 0.25), inset 0 -4px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                }}
-              >
-                Go to Traderoom
-              </button>
-            ) : (
-              // Not logged in - Show "Get Started" and "Try Free Demo" buttons
-              <>
-                <Button
-                  onClick={openSignupModal}
-                  variant="primary"
-                  size="sm"
-                  className="whitespace-nowrap !px-5 !py-2.5 !text-sm !bg-gradient-to-r !from-orange-400 !via-orange-600 !to-orange-500"
-                >
-                  Get Started
-                </Button>
-                <Button
-                  onClick={handleTryDemo}
-                  variant="primary"
-                  size="sm"
-                  className="whitespace-nowrap !px-5 !py-2.5 !text-sm !bg-gradient-to-br !from-gray-500 !via-gray-700 !to-gray-600"
-                >
-                  Try Free Demo
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
+      {/* Video Background (Optional - requires video file) */}
+      {/* <VideoBackground /> */}
+
+      {/* Cursor Spotlight Effect */}
+      <CursorSpotlight />
+
+      {/* Optional subtle pattern overlay */}
+      <div className="absolute inset-0 opacity-10 z-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+
+      {/* Particle System */}
+      <div className="absolute inset-0 z-[2]">
+        <ParticleSystem />
       </div>
 
-      {/* Crypto Price Ticker at bottom of hero */}
-      <div className="relative z-10 w-full pb-4">
+      {/* Interactive Globe - Disabled due to React 19 compatibility issues */}
+      {/* <InteractiveGlobe /> */}
+
+      {/* Animated Trading Lines */}
+      <div className="absolute inset-0 z-[3]">
+        <AnimatedTradingLines />
+      </div>
+
+      {/* Floating Crypto Icons with Parallax */}
+      <div className="absolute inset-0 z-[4]">
+        <MouseParallax>
+          <FloatingCryptoIcons />
+        </MouseParallax>
+      </div>
+
+      {/* Hero Title - independent sliding */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center text-white px-4 sm:px-6 md:px-8 w-full max-w-7xl -mt-36">
+        <HeroTitle
+          title={title as string}
+          contentIndex={contentIndex}
+          animation={animationVariants[titleAnimation]}
+        />
+      </div>
+
+      {/* Hero Description - independent sliding */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center text-white px-4 sm:px-6 md:px-8 w-full max-w-7xl -mt-8 sm:-mt-4">
+        <HeroDescription
+          description={description}
+          contentIndex={descriptionIndex}
+          animation={animationVariants[descAnimation]}
+        />
+      </div>
+
+      {/* Floating Hero Buttons - fixed position */}
+      <HeroButtons />
+
+      {/* Live Market Pulse - Top Center */}
+      <LiveMarketPulse />
+
+      {/* Live User Counter - Top Right */}
+      <LiveUserCounter />
+
+      {/* Achievement Badges - Below Market Pulse */}
+      <AchievementBadges />
+
+      {/* Countdown Timer - Top Left */}
+      <CountdownTimer />
+
+      {/* Glassmorphism Cards - Left and Right Sides */}
+      <GlassmorphismCards />
+
+      {/* Testimonial Slider - Bottom Right */}
+      <TestimonialSlider />
+
+      {/* Trustpilot Badge - separate positioning */}
+      <div className="absolute inset-0 z-20 pointer-events-none flex items-end justify-center pb-44">
+        <a
+          href="https://www.trustpilot.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 bg-white/5 backdrop-blur-sm px-4 py-1 rounded-full hover:bg-white/10 transition-all duration-200 cursor-pointer pointer-events-auto"
+        >
+          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+            <span className="text-white text-sm">★</span>
+          </div>
+          <span className="text-white text-sm font-medium">4.5 ★ on Trustpilot</span>
+        </a>
+      </div>
+
+      {/* Crypto Price Ticker at bottom - fixed position */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 w-full pb-4">
         <CryptoPriceTicker />
       </div>
+
+      {/* Scroll Down Indicator */}
+      <ScrollDownIndicator />
+
+      {/* Mobile Hero Info Button - edge positioned */}
+      <MobileHeroInfoButton />
     </div>
   );
 }

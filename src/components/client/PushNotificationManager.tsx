@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import NotificationPermissionModal from "./NotificationPermissionModal";
 
 interface PushNotificationState {
   isSupported: boolean;
@@ -9,6 +10,7 @@ interface PushNotificationState {
   isSubscribed: boolean;
   isLoading: boolean;
   error: string | null;
+  showPermissionModal: boolean;
 }
 
 export function usePushNotifications() {
@@ -19,6 +21,7 @@ export function usePushNotifications() {
     isSubscribed: false,
     isLoading: true,
     error: null,
+    showPermissionModal: false,
   });
 
   // Check if push notifications are supported
@@ -88,21 +91,32 @@ export function usePushNotifications() {
       return false;
     }
 
+    // Check current permission status
+    const currentPermission = Notification.permission;
+
+    if (currentPermission === "default") {
+      // Show custom modal instead of browser prompt
+      setState((prev) => ({ ...prev, showPermissionModal: true }));
+      return false;
+    }
+
+    if (currentPermission === "denied") {
+      setState((prev) => ({
+        ...prev,
+        error: "Notification permission denied. Please enable it in your browser settings.",
+      }));
+      return false;
+    }
+
+    // Permission already granted, proceed with subscription
+    return await completeSubscription();
+  };
+
+  // Complete subscription after permission granted
+  const completeSubscription = async () => {
     setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // Request notification permission
-      const permission = await Notification.requestPermission();
-      setState((prev) => ({ ...prev, permission }));
-
-      if (permission !== "granted") {
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error: "Notification permission denied",
-        }));
-        return false;
-      }
 
       // Register service worker if not already registered
       let registration: ServiceWorkerRegistration | undefined =
@@ -224,6 +238,7 @@ export function usePushNotifications() {
         isSubscribed: !!subscription,
         isLoading: false,
         error: null,
+        showPermissionModal: false,
       });
     } catch (error) {
       console.error("Error checking subscription:", error);
@@ -301,6 +316,8 @@ export function PushNotificationToggle() {
     unsubscribe,
   } = usePushNotifications();
 
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+
   if (!isSupported) {
     return (
       <div className="text-gray-500 text-sm">
@@ -313,12 +330,36 @@ export function PushNotificationToggle() {
     if (isSubscribed) {
       await unsubscribe();
     } else {
+      // Check permission before showing modal
+      if (Notification.permission === "default") {
+        setShowPermissionModal(true);
+      } else {
+        await subscribe();
+      }
+    }
+  };
+
+  const handleAllowNotifications = async () => {
+    setShowPermissionModal(false);
+    // Request browser permission
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
       await subscribe();
     }
   };
 
+  const handleBlockNotifications = () => {
+    setShowPermissionModal(false);
+  };
+
   return (
-    <div className="flex items-center justify-between">
+    <>
+      <NotificationPermissionModal
+        isOpen={showPermissionModal}
+        onAllow={handleAllowNotifications}
+        onBlock={handleBlockNotifications}
+      />
+      <div className="flex items-center justify-between">
       <div>
         <h4 className="text-white font-medium">Push Notifications</h4>
         <p className="text-gray-400 text-sm">
@@ -346,6 +387,7 @@ export function PushNotificationToggle() {
         />
       </button>
     </div>
+    </>
   );
 }
 

@@ -9,7 +9,17 @@
         "console.log('MCP Filesystem Server')"
       ],
       "env": {
-        "MCP_ROOT_PATH": "c:/Users/HP/Desktop/m4capital"
+        "MCP_ROOT_PATH": "c:/Users/Silas/Desktop/m4capital"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${env:GITHUB_TOKEN}"
       }
     }
   },

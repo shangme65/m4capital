@@ -264,7 +264,7 @@ export function CryptoPriceTicker({
   return (
     <div className={`${className}`}>
       {/* Horizontal Scrolling Ticker */}
-      <div className="relative overflow-hidden py-1 rounded-lg bg-gray-100 dark:bg-gradient-to-b dark:from-[#0f0e0d] dark:via-[#1b1817] dark:to-[#0f0e0d] shadow-[inset_0_1px_6px_rgba(0,0,0,0.1),inset_0_-1px_6px_rgba(0,0,0,0.05)] dark:shadow-[inset_0_1px_6px_rgba(0,0,0,0.5),inset_0_-1px_6px_rgba(0,0,0,0.3)]">
+      <div className="relative overflow-hidden py-1 rounded-lg bg-transparent shadow-none">
         <div className="flex animate-scroll" style={{ width: "max-content" }}>
           {/* Triple the symbols array for seamless infinite loop */}
           {[...symbols, ...symbols, ...symbols].map((symbol, index) => (

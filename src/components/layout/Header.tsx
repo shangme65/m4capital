@@ -108,34 +108,22 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 ${
         isScrolled
-          ? "bg-white dark:bg-black text-gray-900 dark:text-white shadow-md dark:shadow-none"
+          ? "bg-gray-900 text-white shadow-md dark:shadow-none"
           : "bg-transparent text-white"
       }`}
     >
       <nav className="container mx-auto px-4 sm:px-8 md:px-16 py-2 flex justify-between items-center">
         <Link href="/" className="flex items-center group">
-          <div
-            className="rounded-lg transition-all duration-300 group-hover:scale-110"
-            style={{
-              background:
-                "linear-gradient(145deg, #1f2937 0%, #111827 50%, #1f2937 100%)",
-              boxShadow:
-                "0 8px 20px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.05), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
-              border: "1px solid rgba(255, 255, 255, 0.05)",
-              padding: "4px 6px",
-            }}
-          >
-            <Image
-              src="/m4capitallogo1.png"
-              alt="M4 Capital Logo"
-              width={100}
-              height={34}
-              className="object-contain w-20 md:w-auto"
-              priority
-            />
-          </div>
+          <Image
+            src="/m4capitallogo1.png"
+            alt="M4 Capital Logo"
+            width={100}
+            height={34}
+            className="object-contain w-20 md:w-auto"
+            priority
+          />
         </Link>
 
         {/* Widescreen Menu */}
@@ -261,11 +249,12 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   variant="outline"
                   size="sm"
                   aria-label="Login"
+                  className="min-w-[100px]"
                 >
                   <LogIn size={16} />
                   <span>Log in</span>
                 </Button>
-                <Button onClick={onSignupClick} variant="primary" size="sm">
+                <Button onClick={onSignupClick} variant="primary" size="sm" className="min-w-[100px]">
                   Sign Up
                 </Button>
               </>
@@ -299,7 +288,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   variant="primary"
                   size="sm"
                   aria-label="Login"
-                  className="!bg-gradient-to-b !from-gray-500 !via-gray-500 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#374151,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
+                  className="!bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-900 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
                 >
                   <LogIn size={12} />
                   <span className="hidden xs:inline">Log in</span>
@@ -309,7 +298,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   onClick={onSignupClick}
                   variant="primary"
                   size="sm"
-                  className="!bg-gradient-to-r !from-orange-400 !via-orange-600 !to-orange-500 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(194,65,12,0.8),0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(249,115,22,0.8),0_10px_8px_-2px_rgba(249,115,22,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(249,115,22,0.5)]"
+                  className="!bg-gradient-to-b !from-orange-400 !via-orange-600 !to-orange-800 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(120,30,5,1),0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(249,115,22,0.8),0_10px_8px_-2px_rgba(249,115,22,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(249,115,22,0.5)]"
                 >
                   <span>Sign Up</span>
                 </Button>
@@ -319,10 +308,10 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
               variant="primary"
               size="sm"
-              className="!h-[24px] !px-3 !bg-gradient-to-b !from-gray-500 !via-gray-500 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#374151,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
+              className="!px-2.5 !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-900 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
               aria-label="Open menu"
             >
-              {isMobileMenuOpen ? <X size={12} /> : <Menu size={12} />}
+              {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
             </Button>
           </div>
         </div>
@@ -338,22 +327,13 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               className="flex items-center"
               onClick={() => setMobileMenuOpen(false)}
             >
-              <div
-                className="rounded-lg"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #1f2937 0%, #111827 50%, #1f2937 100%)",
-                  padding: "4px 6px",
-                }}
-              >
-                <Image
-                  src="/m4capitallogo1.png"
-                  alt="M4 Capital Logo"
-                  width={80}
-                  height={27}
-                  className="object-contain"
-                />
-              </div>
+              <Image
+                src="/m4capitallogo1.png"
+                alt="M4 Capital Logo"
+                width={80}
+                height={27}
+                className="object-contain"
+              />
             </Link>
             <div className="flex items-center gap-2">
               {session ? (
@@ -379,32 +359,32 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                     onClick={onLoginClick}
                     variant="primary"
                     size="sm"
-                    className="!bg-gradient-to-b !from-gray-500 !via-gray-500 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#374151,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
+                    aria-label="Login"
+                    className="!bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-900 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
                   >
                     <LogIn size={12} />
+                    <span className="hidden xs:inline">Log in</span>
+                    <span className="xs:hidden">Login</span>
                   </Button>
                   <Button
                     onClick={onSignupClick}
                     variant="primary"
                     size="sm"
-                    className="!bg-gradient-to-r !from-orange-400 !via-orange-600 !to-orange-500 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(194,65,12,0.8),0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(249,115,22,0.8),0_10px_8px_-2px_rgba(249,115,22,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(249,115,22,0.5)]"
+                    className="!bg-gradient-to-b !from-orange-400 !via-orange-600 !to-orange-800 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(120,30,5,1),0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(249,115,22,0.8),0_10px_8px_-2px_rgba(249,115,22,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(249,115,22,0.5)]"
                   >
                     <span>Sign Up</span>
                   </Button>
                 </>
               )}
-              <button
+              <Button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #4b5563 0%, #1f2937 50%, #374151 100%)",
-                  borderRadius: "10px",
-                }}
+                variant="primary"
+                size="sm"
+                className="!px-3 !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-900 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
                 aria-label="Close menu"
               >
-                <X size={18} />
-              </button>
+                <X size={12} />
+              </Button>
             </div>
           </div>
 
