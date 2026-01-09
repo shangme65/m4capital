@@ -26,6 +26,7 @@ import AnimatedGradientBackground from "@/components/client/AnimatedGradientBack
 import GlassmorphismCards from "@/components/client/GlassmorphismCards";
 // import { default as dynamicImport } from "next/dynamic";
 import TestimonialSlider from "@/components/client/TestimonialSlider";
+import AchievementBadges from "@/components/client/AchievementBadges";
 import CountdownTimer from "@/components/client/CountdownTimer";
 import { useModal } from "@/contexts/ModalContext";
 import React from "react";
