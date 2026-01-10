@@ -1035,14 +1035,14 @@ function DashboardContent() {
       <PendingDepositsWidget />
 
       {/* Trading Actions */}
-      <div className="grid grid-cols-4 gap-2 sm:gap-4">
+      <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-4">
         <button
           onClick={handleBuy}
-          className="bg-gradient-to-br from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 text-white p-1 sm:p-2 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 shadow-lg hover:shadow-xl hover:shadow-green-500/30 border border-green-400/20 hover:scale-105 active:scale-95"
+          className="bg-gradient-to-b from-green-500 via-green-600 via-40% to-green-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(20,83,45),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(34,197,94,0.8),0_10px_8px_-2px_rgba(34,197,94,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(34,197,94,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
         >
-          <div className="bg-white/20 p-1.5 sm:p-2 rounded-full shadow-inner">
+          <div className="bg-white/20 p-1 sm:p-1.5 rounded-full shadow-inner">
             <svg
-              className="w-3 h-3 sm:w-6 sm:h-6"
+              className="w-3 h-3 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1060,11 +1060,11 @@ function DashboardContent() {
 
         <button
           onClick={handleSell}
-          className="bg-gradient-to-br from-red-500 to-red-700 hover:from-red-600 hover:to-red-800 text-white p-1 sm:p-2 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 shadow-lg hover:shadow-xl hover:shadow-red-500/30 border border-red-400/20 hover:scale-105 active:scale-95"
+          className="bg-gradient-to-b from-red-500 via-red-600 via-40% to-red-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(127,29,29),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(239,68,68,0.8),0_10px_8px_-2px_rgba(239,68,68,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(239,68,68,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
         >
-          <div className="bg-white/20 p-1.5 sm:p-2 rounded-full shadow-inner">
+          <div className="bg-white/20 p-1 sm:p-1.5 rounded-full shadow-inner">
             <svg
-              className="w-3 h-3 sm:w-6 sm:h-6"
+              className="w-3 h-3 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1083,11 +1083,11 @@ function DashboardContent() {
         <button
           data-tutorial="transfer-button"
           onClick={handleTransfer}
-          className="bg-gradient-to-br from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 text-white p-1 sm:p-2 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 shadow-lg hover:shadow-xl hover:shadow-purple-500/30 border border-purple-400/20 hover:scale-105 active:scale-95"
+          className="bg-gradient-to-b from-purple-500 via-purple-600 via-40% to-purple-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(88,28,135),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(168,85,247,0.8),0_10px_8px_-2px_rgba(168,85,247,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(168,85,247,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
         >
-          <div className="bg-white/20 p-1.5 sm:p-2 rounded-full shadow-inner">
+          <div className="bg-white/20 p-1 sm:p-1.5 rounded-full shadow-inner">
             <svg
-              className="w-3 h-3 sm:w-6 sm:h-6"
+              className="w-3 h-3 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -1105,11 +1105,11 @@ function DashboardContent() {
 
         <button
           onClick={handleConvert}
-          className="bg-gradient-to-br from-orange-500 to-orange-700 hover:from-orange-600 hover:to-orange-800 text-white p-1 sm:p-2 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 shadow-lg hover:shadow-xl hover:shadow-orange-500/30 border border-orange-400/20 hover:scale-105 active:scale-95"
+          className="bg-gradient-to-b from-orange-600 to-orange-800 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(124,45,18),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(251,146,60,0.8),0_10px_8px_-2px_rgba(251,146,60,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(251,146,60,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
         >
-          <div className="bg-white/20 p-1.5 sm:p-2 rounded-full shadow-inner">
+          <div className="bg-white/20 p-1 sm:p-1.5 rounded-full shadow-inner">
             <svg
-              className="w-3 h-3 sm:w-6 sm:h-6"
+              className="w-3 h-3 sm:w-5 sm:h-5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

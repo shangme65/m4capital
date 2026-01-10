@@ -87,9 +87,17 @@ export default function ForgotPasswordModal({
               <div className="flex items-center justify-between p-4 sticky top-0 bg-[#1f1f1f] z-10">
                 <button
                   onClick={onGoBack}
-                  className="text-orange-500 hover:text-orange-400 transition-colors flex items-center"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 hover:border-orange-500/50 text-orange-500 hover:text-orange-400 transition-all duration-200 group text-sm"
                 >
-                  ← Go back
+                  <svg 
+                    className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform duration-200" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  <span className="font-medium">Go back</span>
                 </button>
                 <button
                   onClick={onClose}
@@ -114,7 +122,7 @@ export default function ForgotPasswordModal({
                 </button>
               </div>
 
-              <div className="px-8 pb-8">
+              <div className="px-4 pb-8">
                 {/* Logo */}
                 <div className="flex items-center justify-center mb-6">
                   <Image
@@ -169,7 +177,7 @@ export default function ForgotPasswordModal({
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-orange-500/50 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
+                    className="w-full bg-gradient-to-b from-orange-600 to-orange-800 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(80,20,3,1),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(251,146,60,0.8),0_10px_8px_-2px_rgba(251,146,60,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(251,146,60,0.5)] hover:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg font-semibold transition-all"
                   >
                     {isLoading ? "Sending..." : "Continue"}
                   </button>

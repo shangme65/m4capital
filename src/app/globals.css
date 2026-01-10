@@ -205,17 +205,17 @@ html {
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: #1f1f1f;
+  background: transparent;
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #f97316;
+  background: transparent;
   border-radius: 3px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #ea580c;
+  background: transparent;
 }
 
 /* View Transitions API - React 19 / Next.js 16 */

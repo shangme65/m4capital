@@ -98,7 +98,7 @@ const Sidebar = () => {
             {/* Backdrop */}
             <motion.div
               key="sidebar-backdrop"
-              className="fixed inset-0 bg-black bg-opacity-50 z-40"
+              className="fixed inset-0 bg-black bg-opacity-50 z-30"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -150,7 +150,7 @@ const Sidebar = () => {
                   }}
                   whileTap={{ scale: 0.9 }}
                 >
-                  <X size={24} />
+                  <X size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px]" />
                 </motion.button>
               </div>
 

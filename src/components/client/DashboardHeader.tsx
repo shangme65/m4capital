@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bell, ChevronDown } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useSidebar } from "./SidebarContext";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -10,7 +10,7 @@ import Image from "next/image";
 
 const DashboardHeader = () => {
   const { data: session, status } = useSession(); // Removed 'update' to prevent infinite session refresh loop
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, isSidebarOpen } = useSidebar();
   const { unreadCount } = useNotifications();
   const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] =
     useState(false);
@@ -33,8 +33,9 @@ const DashboardHeader = () => {
 
   return (
     <motion.header
-      className="flex justify-between items-center mobile:p-2 p-3 sm:p-6 relative z-10 bg-transparent"
-      style={{ backgroundColor: "transparent" }}
+      className={`flex justify-between items-center mobile:p-2 p-3 sm:p-6 relative z-50 transition-colors duration-300 ${
+        isSidebarOpen ? "bg-gray-900" : "bg-transparent"
+      }`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -67,38 +68,42 @@ const DashboardHeader = () => {
         <button
           type="button"
           onClick={toggleSidebar}
-          className="flex items-center cursor-pointer mobile:p-0.5 p-1 sm:p-2 rounded-lg transition-colors focus:outline-none"
+          className="flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5"
           aria-haspopup="true"
           aria-label="Open navigation sidebar"
           data-tutorial="profile-settings"
         >
-          {session?.user?.image ? (
-            <img
-              src={session.user.image}
-              alt={session.user.name || "User avatar"}
-              className="mobile:w-7 mobile:h-7 w-8 h-8 sm:w-10 sm:h-10 rounded-full mobile:mr-1.5 mr-2 sm:mr-3 object-cover"
-            />
-          ) : (
-            <div className="mobile:w-7 mobile:h-7 w-8 h-8 sm:w-10 sm:h-10 rounded-full mobile:mr-1.5 mr-2 sm:mr-3 bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center mobile:text-[10px] text-xs sm:text-sm font-semibold text-white">
-              {(session?.user?.name || "U")
-                .split(" ")
-                .slice(0, 2)
-                .map((part) => part[0])
-                .join("")
-                .toUpperCase()}
+          {/* Desktop: Show avatar and name */}
+          <div className="hidden sm:flex items-center">
+            {session?.user?.image ? (
+              <img
+                src={session.user.image}
+                alt={session.user.name || "User avatar"}
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-2 sm:mr-3 object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full mr-2 sm:mr-3 bg-gradient-to-br from-gray-700 to-gray-600 flex items-center justify-center text-xs sm:text-sm font-semibold text-white">
+                {(session?.user?.name || "U")
+                  .split(" ")
+                  .slice(0, 2)
+                  .map((part) => part[0])
+                  .join("")
+                  .toUpperCase()}
+              </div>
+            )}
+            <div className="text-left">
+              <p className="font-semibold leading-tight text-white truncate max-w-[100px] sm:max-w-[140px] text-sm sm:text-base">
+                {session?.user?.name || "User"}
+              </p>
+              <p className="text-xs text-gray-400 uppercase tracking-wide">
+                {secondaryLabel}
+              </p>
             </div>
-          )}
-          <div className="text-left">
-            <p className="font-semibold leading-tight text-white truncate mobile:max-w-[70px] max-w-[100px] sm:max-w-[140px] mobile:text-xs text-sm sm:text-base">
-              {session?.user?.name || "User"}
-            </p>
-            <p className="mobile:text-[9px] text-xs text-gray-400 uppercase mobile:tracking-normal tracking-wide">
-              {secondaryLabel}
-            </p>
           </div>
-          <ChevronDown
-            size={14}
-            className="mobile:w-3 mobile:h-3 mobile:ml-0.5 ml-1 sm:ml-2 text-gray-400 sm:w-[18px] sm:h-[18px]"
+          {/* Hamburger icon */}
+          <Menu
+            size={20}
+            className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] text-gray-400 sm:ml-2"
           />
         </button>
       </div>

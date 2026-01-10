@@ -56,12 +56,12 @@ const Button = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
         "text-white border-0"
       ),
       outline: clsx(
-        // Metallic gradient with shine effect
-        "bg-gradient-to-b from-gray-500 via-gray-600 via-40% to-gray-800 bg-clip-padding",
-        // Dark bottom shadow matching Try Free Demo button (#111827)
-        "shadow-[inset_0_-3px_2px_0_rgba(0,0,0,0.3),inset_2px_0_2px_0_rgba(255,255,255,0.1),inset_-2px_0_2px_0_rgba(0,0,0,0.1),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5)]",
-        // Hover state - gray glow matching mobile version
-        "hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]",
+        // Solid gray-500 background
+        "bg-gray-500",
+        // Simple shadows without inset effects
+        "shadow-[0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5)]",
+        // Hover state - gray glow
+        "hover:!shadow-[0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]",
         // Text and border
         "text-white border-0"
       ),
@@ -110,26 +110,9 @@ const Button = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
             Loading...
           </div>
         ) : (
-          <>
-            {/* Shine/reflection effect */}
-            <div className="absolute inset-0 overflow-hidden rounded-inherit">
-              <div className="absolute -top-1/2 -left-1/4 w-[150%] h-full bg-gradient-to-br from-white/30 via-white/10 to-transparent rotate-12 transform translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
-            </div>
-
-            {/* Top highlight line */}
-            <div className="absolute top-0 left-[10%] right-[10%] h-[1px] bg-gradient-to-r from-transparent via-white/50 to-transparent" />
-
-            {/* Content */}
-            <div
-              className="relative z-10 flex items-center justify-center gap-2"
-              style={{ transform: "translateZ(2px)" }}
-            >
-              {children}
-            </div>
-
-            {/* Bottom inner shadow */}
-            <div className="absolute bottom-0 left-0 right-0 h-[40%] bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
-          </>
+          <div className="relative z-10 flex items-center justify-center gap-2">
+            {children}
+          </div>
         )}
       </motion.button>
     );

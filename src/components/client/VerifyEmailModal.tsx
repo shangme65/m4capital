@@ -210,7 +210,7 @@ export default function VerifyEmailModal({
                 </button>
 
                 {/* Header */}
-                <div className="px-8 pt-8 pb-6 text-center relative">
+                <div className="px-4 pt-8 pb-6 text-center relative">
                   {/* Icon with 3D effect */}
                   <div className="relative inline-block mb-4">
                     <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-md opacity-50 scale-110" />
@@ -243,7 +243,7 @@ export default function VerifyEmailModal({
                 </div>
 
                 {/* Code Input */}
-                <div className="px-8 pb-8">
+                <div className="px-4 pb-8">
                   <div
                     className="flex justify-center gap-2 mb-6"
                     onPaste={handlePaste}
