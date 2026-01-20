@@ -52,6 +52,19 @@ export default async function AdminSetupPage() {
   // Try to get current session
   try {
     session = await getServerSession(authOptions);
+    
+    // If session exists, verify the user still exists in database and is not deleted
+    if (session?.user?.email) {
+      const sessionUser = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { id: true, role: true, isDeleted: true },
+      });
+      
+      // If user doesn't exist or is deleted, clear the session
+      if (!sessionUser || sessionUser.isDeleted) {
+        session = null;
+      }
+    }
   } catch (error) {
     console.error("Session error:", error);
   }
@@ -75,12 +88,20 @@ export default async function AdminSetupPage() {
               Admin already exists. You must be logged in as an admin to access
               this page.
             </p>
-            <a
-              href="/"
-              className="inline-block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold"
-            >
-              Go to Home
-            </a>
+            <div className="space-y-3">
+              <a
+                href="/?auth=login"
+                className="block bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-semibold"
+              >
+                Login as Admin
+              </a>
+              <a
+                href="/"
+                className="block bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-semibold"
+              >
+                Go to Home
+              </a>
+            </div>
           </div>
         </div>
       );

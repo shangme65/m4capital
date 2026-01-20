@@ -222,14 +222,14 @@ export default function AdminSetupClient({
           sessionStorage.clear();
         }
 
-        // Sign out the user and redirect to setup page
+        // Sign out the user
         // This clears the NextAuth session cookie and database session
         await signOut({ redirect: false });
 
         // Redirect to setup page after a brief delay to show success message
+        // Use window.location for full page reload to clear all cached session data
         setTimeout(() => {
-          router.push("/setup-admin");
-          router.refresh();
+          window.location.href = "/setup-admin";
         }, 1500);
       } else {
         setError(data.error || "Failed to remove origin admin");
