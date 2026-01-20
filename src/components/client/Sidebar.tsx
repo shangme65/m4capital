@@ -6,14 +6,12 @@ import {
   Briefcase,
   Settings,
   Shield,
-  X,
   LogOut,
   Newspaper,
   Home,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import Image from "next/image";
 import { useSidebar } from "./SidebarContext";
 import { useState, useEffect } from "react";
 import LogoutConfirmationModal from "./LogoutConfirmationModal";
@@ -109,51 +107,12 @@ const Sidebar = () => {
             <motion.div
               key="sidebar-content"
               data-tutorial="sidebar"
-              className="fixed left-0 top-0 h-full bg-gray-800 text-white w-60 sm:w-72 p-4 sm:p-6 flex flex-col z-50"
+              className="fixed left-0 top-0 h-full bg-gray-800 text-white w-60 sm:w-72 p-4 sm:p-6 pt-20 flex flex-col z-40"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ duration: 0.3 }}
             >
-              {/* Close button */}
-              <div className="flex justify-between items-center mb-6 sm:mb-8">
-                <div className="flex items-center">
-                  <motion.div
-                    animate={{
-                      y: [0, -3, 0],
-                      transition: {
-                        duration: 3,
-                        repeat: Infinity,
-                        repeatType: "loop",
-                        ease: "easeInOut",
-                      },
-                    }}
-                    className="relative"
-                  >
-                    <Image
-                      src="/m4capitallogo1.png"
-                      alt="M4Capital"
-                      width={120}
-                      height={40}
-                      className="h-8 sm:h-10 w-auto object-contain"
-                    />
-                  </motion.div>
-                </div>
-                <motion.button
-                  onClick={closeSidebar}
-                  aria-label="Close sidebar"
-                  className="text-gray-400 hover:text-orange-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 rounded transition-colors duration-300"
-                  whileHover={{
-                    scale: 1.1,
-                    rotate: 90,
-                    transition: { type: "spring", stiffness: 300, damping: 15 },
-                  }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <X size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px]" />
-                </motion.button>
-              </div>
-
               <nav className="flex-1 overflow-y-auto">
                 <ul>
                   {navItems.map((item) => (
