@@ -60,9 +60,9 @@ export default async function AdminSetupPage() {
         select: { id: true, role: true, isDeleted: true },
       });
       
-      // If user doesn't exist or is deleted, clear the session
+      // If user doesn't exist or is deleted, force logout
       if (!sessionUser || sessionUser.isDeleted) {
-        session = null;
+        redirect("/logout");
       }
     }
   } catch (error) {
