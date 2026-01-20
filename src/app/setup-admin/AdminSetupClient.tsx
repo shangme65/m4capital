@@ -138,49 +138,17 @@ export default function AdminSetupClient({
 
           console.log("🔐 Attempting auto-login with:", credentials.email);
 
-          const signInResult = await signIn("credentials", {
+          // Use NextAuth's built-in redirect to ensure session is ready
+          // This will handle the redirect automatically after successful login
+          await signIn("credentials", {
             email: credentials.email,
             password: credentials.password,
-            redirect: false,
+            redirect: true,
+            callbackUrl: "/dashboard",
           });
 
-          console.log("🔐 SignIn result:", {
-            ok: signInResult?.ok,
-            error: signInResult?.error,
-            status: signInResult?.status,
-          });
-
-          if (signInResult?.ok) {
-            showSuccess("Logged in successfully!");
-
-            // Subscribe to push notifications if already granted
-            try {
-              if (
-                "Notification" in window &&
-                Notification.permission === "granted"
-              ) {
-                // Already granted, just subscribe
-                await subscribeAdminToPush();
-                console.log("✅ Auto-subscribed to push notifications");
-              }
-              // If not granted, the NotificationPermissionPrompt component
-              // in the dashboard layout will show a custom UI prompt
-            } catch (notifError) {
-              console.error("Notification setup error:", notifError);
-              // Don't block dashboard redirect on notification error
-            }
-
-            // Immediately redirect to dashboard - the session is ready
-            window.location.replace("/dashboard");
-          } else {
-            // Fallback to manual login if auto-login fails
-            showError(
-              "Auto-login failed. Please login manually with your credentials."
-            );
-            setTimeout(() => {
-              window.location.href = "/?auth=login";
-            }, 2000);
-          }
+          // If we reach here, login failed (redirect would have happened already)
+          showError("Auto-login failed. Please try logging in manually.");
         }
       } else {
         setError(data.error || "Failed to initialize admin");
