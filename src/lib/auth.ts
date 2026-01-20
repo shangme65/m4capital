@@ -72,18 +72,9 @@ export const authOptions: AuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 7 * 24 * 60 * 60, // Update session every 7 days (reduced from 24 hours)
   },
-  cookies: {
-    sessionToken: {
-      name: `next-auth.session-token`,
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        secure: process.env.NODE_ENV === "production", // Secure in production
-        domain: undefined,
-      },
-    },
-  },
+  // Let NextAuth handle cookie names automatically based on environment
+  // In production (HTTPS), it uses __Secure- prefix
+  // In development (HTTP), it uses regular prefix
   callbacks: {
     async signIn({ user, account, profile }) {
       // For OAuth providers (Google, Facebook), ensure user exists in database

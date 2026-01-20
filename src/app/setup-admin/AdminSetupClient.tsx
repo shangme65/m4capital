@@ -134,21 +134,42 @@ export default function AdminSetupClient({
             data.data?.action === "updated") &&
           credentials
         ) {
-          showSuccess("Admin initialized! Logging in automatically...");
+          showSuccess("Admin initialized! Logging in...");
 
           console.log("🔐 Attempting auto-login with:", credentials.email);
 
-          // Use NextAuth's built-in redirect to ensure session is ready
-          // This will handle the redirect automatically after successful login
-          await signIn("credentials", {
-            email: credentials.email,
-            password: credentials.password,
-            redirect: true,
-            callbackUrl: "/dashboard",
-          });
+          try {
+            // Use redirect: false to check if login succeeded
+            const signInResult = await signIn("credentials", {
+              email: credentials.email,
+              password: credentials.password,
+              redirect: false,
+            });
 
-          // If we reach here, login failed (redirect would have happened already)
-          showError("Auto-login failed. Please try logging in manually.");
+            console.log("🔐 SignIn result:", signInResult);
+
+            if (signInResult?.ok && !signInResult.error) {
+              // Login succeeded - force a hard redirect with page reload
+              showSuccess("Login successful! Redirecting to dashboard...");
+              // Use a small delay to ensure the session cookie is set
+              await new Promise(resolve => setTimeout(resolve, 500));
+              window.location.href = "/dashboard";
+              return; // Exit the function
+            } else {
+              // Login failed - show manual login option
+              console.error("Auto-login failed:", signInResult?.error);
+              showError("Auto-login failed. Please login manually with your admin credentials.");
+              setTimeout(() => {
+                window.location.href = "/?auth=login";
+              }, 2500);
+            }
+          } catch (signInError) {
+            console.error("SignIn error:", signInError);
+            showError("Auto-login failed. Please login manually with your admin credentials.");
+            setTimeout(() => {
+              window.location.href = "/?auth=login";
+            }, 2500);
+          }
         }
       } else {
         setError(data.error || "Failed to initialize admin");
