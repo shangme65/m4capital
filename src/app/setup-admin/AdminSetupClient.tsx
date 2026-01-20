@@ -170,11 +170,8 @@ export default function AdminSetupClient({
               // Don't block dashboard redirect on notification error
             }
 
-            showSuccess("Redirecting to dashboard...");
-            setTimeout(() => {
-              // Use window.location for full page reload to ensure session is fresh
-              window.location.href = "/dashboard";
-            }, 1500);
+            // Immediately redirect to dashboard - the session is ready
+            window.location.replace("/dashboard");
           } else {
             // Fallback to manual login if auto-login fails
             showError(
