@@ -140,19 +140,7 @@ function DashboardContent() {
     fetchTraderoomBalance();
   }, []);
 
-  // Auto-reload if stuck on loading screen
-  useEffect(() => {
-    if (status === "loading" || !session) {
-      // Set a timeout to reload the page if loading takes too long
-      const reloadTimer = setTimeout(() => {
-        console.log("Dashboard loading timeout - auto-reloading page");
-        window.location.reload();
-      }, 5000); // Reload after 5 seconds
 
-      // Clear timeout if component unmounts or loading completes
-      return () => clearTimeout(reloadTimer);
-    }
-  }, [status, session]);
 
   // Restore asset modal from URL on page load/refresh
   // This needs to be before any early returns to maintain hooks order
