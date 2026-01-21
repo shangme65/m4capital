@@ -14,7 +14,7 @@ import {
   Phone,
   Globe,
   Download,
-  ChevronLeft,
+  ArrowLeft,
   ZoomIn,
   X,
   ExternalLink,
@@ -426,7 +426,7 @@ export default function KycManagementPage() {
 
   if (selectedSubmission) {
     return (
-      <div className="fixed inset-0 z-50 bg-gray-900 overflow-y-auto">
+      <div className="fixed inset-0 top-20 bg-gray-900 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* Success Modal */}
         <SuccessModal
           isOpen={successModal.isOpen}
@@ -444,28 +444,41 @@ export default function KycManagementPage() {
         )}
 
         {/* Mobile Header */}
-        <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 py-3 flex items-center gap-3">
-          <button
-            onClick={() => setSelectedSubmission(null)}
-            className="p-2 -ml-2 hover:bg-gray-800 rounded-lg transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold text-white truncate">
-              {selectedSubmission.firstName} {selectedSubmission.lastName}
+        <div className="sticky top-0 z-[75] bg-gray-900/100 backdrop-blur-sm border-b border-gray-700 px-4 py-4">
+          <div className="mb-3">
+            <h2 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+              Admin Control Panel
             </h2>
-            <p className="text-xs text-gray-400 truncate">
-              {selectedSubmission.user.email}
+            <p className="text-[10px] xs:text-xs text-gray-400">
+              Complete administrative dashboard
             </p>
           </div>
-          {getStatusBadge(selectedSubmission.status)}
+          <button
+            onClick={() => setSelectedSubmission(null)}
+            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+          >
+            <ArrowLeft size={20} />
+            <span className="text-sm font-medium">Back to Dashboard</span>
+          </button>
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-white truncate">
+                {selectedSubmission.firstName} {selectedSubmission.lastName}
+              </h3>
+              <p className="text-xs text-gray-400 truncate">
+                {selectedSubmission.user.email}
+              </p>
+            </div>
+            <div className="ml-3">
+              {getStatusBadge(selectedSubmission.status)}
+            </div>
+          </div>
         </div>
 
         {/* Content */}
         <div className="p-4 space-y-4 pb-32">
           {/* Personal Information */}
-          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
             <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
               <User className="w-4 h-4 text-orange-500" />
               Personal Information
@@ -501,7 +514,7 @@ export default function KycManagementPage() {
           </div>
 
           {/* Address Information */}
-          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
             <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
               <MapPin className="w-4 h-4 text-orange-500" />
               Address Information
@@ -529,7 +542,7 @@ export default function KycManagementPage() {
           </div>
 
           {/* Documents */}
-          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
             <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
               <FileText className="w-4 h-4 text-orange-500" />
               Documents
@@ -570,7 +583,7 @@ export default function KycManagementPage() {
 
           {/* Review Info (if already reviewed) */}
           {selectedSubmission.reviewedAt && (
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
               <h3 className="text-base font-semibold text-white mb-3">
                 Review Information
               </h3>
@@ -597,7 +610,7 @@ export default function KycManagementPage() {
 
           {/* Review Section (if not approved) */}
           {selectedSubmission.status !== "APPROVED" && (
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
               <h3 className="text-base font-semibold text-white mb-4">
                 Review Submission
               </h3>
@@ -697,7 +710,7 @@ export default function KycManagementPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-gray-900 overflow-y-auto">
+    <div className="fixed inset-0 top-20 bg-gray-900 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Success Modal */}
       <SuccessModal
         isOpen={successModal.isOpen}
@@ -706,23 +719,38 @@ export default function KycManagementPage() {
       />
 
       {/* Mobile Header */}
-      <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-700 px-4 py-4">
-        <h1 className="text-xl font-bold text-white">KYC Management</h1>
-        <p className="text-sm text-gray-400 mt-1">
-          Review user verification submissions
-        </p>
+      <div className="sticky top-0 z-[75] bg-gray-900/100 backdrop-blur-sm border-b border-gray-700 px-4 py-4">
+        <div className="mb-3">
+          <h2 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+            Admin Control Panel
+          </h2>
+          <p className="text-[10px] xs:text-xs text-gray-400">
+            Complete administrative dashboard
+          </p>
+        </div>
+        <button
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg -ml-2 mb-3"
+        >
+          <ArrowLeft size={20} />
+          <span className="text-sm font-medium">Back to Dashboard</span>
+        </button>
+        <div>
+          <h1 className="text-xl font-bold text-white">KYC Management</h1>
+          <p className="text-sm text-gray-400 mt-1">
+            Review user verification submissions
+          </p>
+        </div>
       </div>
 
       {/* Filter Tabs - Scrollable */}
-      <div className="sticky top-[72px] z-10 bg-gray-900 border-b border-gray-700 overflow-x-auto">
-        <div className="flex min-w-max px-2">
-          {(
-            ["ALL", "PENDING", "UNDER_REVIEW", "APPROVED", "REJECTED"] as const
-          ).map((status) => (
+      <div className="sticky top-[168px] z-[74] bg-gray-900/100 backdrop-blur-sm border-b border-gray-700 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className="flex w-full">
+          {(["ALL", "PENDING", "APPROVED", "REJECTED"] as const).map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status as any)}
-              className={`px-4 py-3 font-medium text-sm whitespace-nowrap transition-colors ${
+              className={`flex-1 px-4 py-3 font-medium text-sm whitespace-nowrap transition-colors ${
                 filter === status
                   ? "text-orange-500 border-b-2 border-orange-500"
                   : "text-gray-400"
@@ -751,7 +779,7 @@ export default function KycManagementPage() {
             <button
               key={submission.id}
               onClick={() => setSelectedSubmission(submission)}
-              className="w-full bg-gray-800 rounded-xl p-4 border border-gray-700 text-left active:bg-gray-750 transition-colors"
+              className="w-full bg-gray-800 rounded-xl p-4 border border-gray-700 text-left transition-all shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
@@ -770,7 +798,6 @@ export default function KycManagementPage() {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   {getStatusBadge(submission.status)}
-                  <Eye className="w-5 h-5 text-orange-500" />
                 </div>
               </div>
             </button>

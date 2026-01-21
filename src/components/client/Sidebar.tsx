@@ -10,7 +10,7 @@ import {
   Newspaper,
   Home,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { useSidebar } from "./SidebarContext";
 import { useState, useEffect } from "react";
@@ -73,15 +73,19 @@ const Sidebar = () => {
         method: "POST",
       });
 
-      // Small delay to ensure cookie deletion completes
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // Use window.location.replace to force full page reload and stop all processes
-      window.location.replace("/");
+      // Use NextAuth's signOut to ensure all cookies are cleared
+      // This handles both development and production cookie prefixes
+      await signOut({
+        redirect: true,
+        callbackUrl: "/",
+      });
     } catch (error) {
       console.error("Logout error:", error);
-      // Force redirect anyway
-      window.location.replace("/");
+      // Fallback: Use NextAuth signOut directly
+      await signOut({
+        redirect: true,
+        callbackUrl: "/",
+      });
     }
   };
 

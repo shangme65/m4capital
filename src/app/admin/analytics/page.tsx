@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   BarChart3,
   Users,
@@ -12,6 +13,10 @@ import {
   MousePointer,
   MessageSquare,
   RefreshCw,
+  ArrowLeft,
+  Clock,
+  Globe,
+  Zap,
 } from "lucide-react";
 
 interface ActivityData {
@@ -77,11 +82,17 @@ export default function AnalyticsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <Image
+            src="/m4capitallogo1.png"
+            alt="M4 Capital"
+            width={120}
+            height={40}
+            className="mx-auto mb-6"
+          />
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-gray-400">Loading analytics...</p>
-          <p className="text-gray-500 text-sm mt-2">Please wait...</p>
         </div>
       </div>
     );
@@ -109,66 +120,74 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Header with Branding */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            📊 Analytics Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Monitor user activities and platform interactions
-          </p>
+          <div className="flex items-center gap-4 mb-6">
+            <Image
+              src="/m4capitallogo1.png"
+              alt="M4 Capital"
+              width={100}
+              height={35}
+              className="object-contain"
+            />
+            <div className="h-8 w-px bg-gray-700"></div>
+            <div>
+              <h1 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                Admin Control Panel
+              </h1>
+              <p className="text-[10px] xs:text-xs text-gray-400">
+                Complete administrative dashboard
+              </p>
+            </div>
+          </div>
+          
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg -ml-2 mb-4"
+          >
+            <ArrowLeft size={20} />
+            <span className="text-sm font-medium">Back to Dashboard</span>
+          </button>
+
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-[0_4px_16px_rgba(249,115,22,0.4)]">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white">Analytics Dashboard</h2>
+              <p className="text-sm text-gray-400">Monitor user activities and platform interactions</p>
+            </div>
+          </div>
         </div>
 
         {/* Controls */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-          <div className="flex flex-wrap gap-4 items-center justify-between">
-            <div className="flex gap-2">
-              <button
-                onClick={() => setTimeRange("24h")}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  timeRange === "24h"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                }`}
-              >
-                24 Hours
-              </button>
-              <button
-                onClick={() => setTimeRange("7d")}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  timeRange === "7d"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                }`}
-              >
-                7 Days
-              </button>
-              <button
-                onClick={() => setTimeRange("30d")}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  timeRange === "30d"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                }`}
-              >
-                30 Days
-              </button>
-              <button
-                onClick={() => setTimeRange("90d")}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  timeRange === "90d"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                }`}
-              >
-                90 Days
-              </button>
+        <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-5 mb-6 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+          <div className="flex flex-wrap gap-3 items-center justify-between">
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { value: "24h", label: "24 Hours" },
+                { value: "7d", label: "7 Days" },
+                { value: "30d", label: "30 Days" },
+                { value: "90d", label: "90 Days" },
+              ].map((range) => (
+                <button
+                  key={range.value}
+                  onClick={() => setTimeRange(range.value)}
+                  className={`px-4 py-2.5 rounded-xl font-medium text-sm transition-all ${
+                    timeRange === range.value
+                      ? "bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-[0_3px_0_0_#c2410c,0_4px_8px_rgba(249,115,22,0.3)]"
+                      : "bg-gray-700/50 text-gray-300 border border-gray-600/50 hover:border-orange-500/50 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.2)]"
+                  }`}
+                >
+                  {range.label}
+                </button>
+              ))}
             </div>
             <button
               onClick={fetchAnalytics}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl font-medium shadow-[0_3px_0_0_#c2410c,0_4px_8px_rgba(249,115,22,0.3)] hover:shadow-[0_1px_0_0_#c2410c,0_2px_4px_rgba(249,115,22,0.3)] hover:translate-y-0.5 active:shadow-none active:translate-y-1 transition-all"
             >
               <RefreshCw className="w-4 h-4" />
               Refresh
@@ -179,59 +198,64 @@ export default function AnalyticsPage() {
         {/* Summary Cards */}
         {analyticsData && (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-                <div className="flex items-center justify-between mb-4">
-                  <Activity className="w-8 h-8 opacity-80" />
-                  <span className="text-2xl font-bold">
-                    {analyticsData.summary.totalActivities}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-5 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold text-white">
+                    {analyticsData.summary.totalActivities.toLocaleString()}
                   </span>
                 </div>
-                <h3 className="text-sm font-medium opacity-90">
-                  Total Activities
-                </h3>
+                <h3 className="text-sm font-medium text-gray-400">Total Activities</h3>
               </div>
 
-              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-                <div className="flex items-center justify-between mb-4">
-                  <Users className="w-8 h-8 opacity-80" />
-                  <span className="text-2xl font-bold">
-                    {analyticsData.summary.uniqueUsers}
+              <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-5 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+                    <Users className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold text-white">
+                    {analyticsData.summary.uniqueUsers.toLocaleString()}
                   </span>
                 </div>
-                <h3 className="text-sm font-medium opacity-90">Unique Users</h3>
+                <h3 className="text-sm font-medium text-gray-400">Unique Users</h3>
               </div>
 
-              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-                <div className="flex items-center justify-between mb-4">
-                  <Eye className="w-8 h-8 opacity-80" />
-                  <span className="text-2xl font-bold">
-                    {analyticsData.summary.activityCounts.find(
+              <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-5 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-violet-600 flex items-center justify-center">
+                    <Eye className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold text-white">
+                    {(analyticsData.summary.activityCounts.find(
                       (a) => a.type === "PAGE_VIEW"
-                    )?.count || 0}
+                    )?.count || 0).toLocaleString()}
                   </span>
                 </div>
-                <h3 className="text-sm font-medium opacity-90">Page Views</h3>
+                <h3 className="text-sm font-medium text-gray-400">Page Views</h3>
               </div>
 
-              <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-lg p-6 text-white">
-                <div className="flex items-center justify-between mb-4">
-                  <TrendingUp className="w-8 h-8 opacity-80" />
-                  <span className="text-2xl font-bold">
-                    {analyticsData.summary.activityCounts.find(
+              <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-5 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-2xl font-bold text-white">
+                    {(analyticsData.summary.activityCounts.find(
                       (a) => a.type === "BUTTON_CLICK"
-                    )?.count || 0}
+                    )?.count || 0).toLocaleString()}
                   </span>
                 </div>
-                <h3 className="text-sm font-medium opacity-90">
-                  Button Clicks
-                </h3>
+                <h3 className="text-sm font-medium text-gray-400">Interactions</h3>
               </div>
             </div>
 
             {/* Activity Types */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+            <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6 mb-6 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-orange-500" />
                 Activity by Type
               </h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -243,21 +267,21 @@ export default function AnalyticsPage() {
                         selectedType === activity.type ? null : activity.type
                       )
                     }
-                    className={`p-4 rounded-lg text-left transition ${
+                    className={`p-4 rounded-xl text-left transition-all bg-gray-700/50 border border-gray-600/50 hover:bg-gray-700 ${
                       selectedType === activity.type
-                        ? "ring-2 ring-blue-500"
+                        ? "ring-2 ring-orange-500 bg-gray-700"
                         : ""
                     }`}
                   >
                     <div
-                      className={`w-full h-2 rounded mb-2 ${
+                      className={`w-full h-1.5 rounded-full mb-3 ${
                         activityTypeColors[activity.type] || "bg-gray-500"
                       }`}
                     ></div>
-                    <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {activity.count}
+                    <div className="text-xl font-bold text-white">
+                      {activity.count.toLocaleString()}
                     </div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">
+                    <div className="text-xs text-gray-400 mt-1">
                       {activity.type.replace(/_/g, " ")}
                     </div>
                   </button>
@@ -265,23 +289,24 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Top Pages */}
+            {/* Top Pages & Actions */}
             <div className="grid md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  📄 Top Pages
+              <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <Globe className="w-5 h-5 text-blue-400" />
+                  Top Pages
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {analyticsData.summary.topPages.map((page, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-gray-700/40 rounded-lg border border-gray-600/30 hover:bg-gray-700/60 transition-colors"
                     >
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate flex-1">
+                      <span className="text-sm font-medium text-gray-300 truncate flex-1">
                         {page.page || "Unknown"}
                       </span>
-                      <span className="ml-2 px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-bold">
-                        {page.count}
+                      <span className="ml-2 px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-sm font-bold border border-blue-500/30">
+                        {page.count.toLocaleString()}
                       </span>
                     </div>
                   ))}
@@ -289,21 +314,22 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Top Actions */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-                  🎯 Top Actions
+              <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <Zap className="w-5 h-5 text-orange-400" />
+                  Top Actions
                 </h2>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {analyticsData.summary.topActions.map((action, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+                      className="flex items-center justify-between p-3 bg-gray-700/40 rounded-lg border border-gray-600/30 hover:bg-gray-700/60 transition-colors"
                     >
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate flex-1">
+                      <span className="text-sm font-medium text-gray-300 truncate flex-1">
                         {action.action || "Unknown"}
                       </span>
-                      <span className="ml-2 px-3 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full text-sm font-bold">
-                        {action.count}
+                      <span className="ml-2 px-3 py-1 bg-orange-500/20 text-orange-400 rounded-full text-sm font-bold border border-orange-500/30">
+                        {action.count.toLocaleString()}
                       </span>
                     </div>
                   ))}
@@ -312,59 +338,60 @@ export default function AnalyticsPage() {
             </div>
 
             {/* Recent Activities */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                📋 Recent Activities
+            <div className="bg-gray-800/60 backdrop-blur-sm rounded-xl border border-gray-700/50 p-6 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+              <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-purple-400" />
+                Recent Activities
               </h2>
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 <table className="w-full">
-                  <thead className="bg-gray-50 dark:bg-gray-700">
+                  <thead className="bg-gray-700/50 border-b border-gray-600/50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Time
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         User
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Type
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Page
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                         Action
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  <tbody className="divide-y divide-gray-700/50">
                     {analyticsData.activities.slice(0, 50).map((activity) => (
                       <tr
                         key={activity.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-700"
+                        className="hover:bg-gray-700/30 transition-colors"
                       >
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
+                        <td className="px-4 py-3 text-sm text-gray-300">
                           {new Date(activity.createdAt).toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
+                        <td className="px-4 py-3 text-sm text-gray-300">
                           {activity.user?.name ||
                             activity.user?.email ||
                             "Anonymous"}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <span
-                            className={`px-2 py-1 rounded-full text-white text-xs ${
+                            className={`px-2.5 py-1 rounded-full text-white text-xs font-medium ${
                               activityTypeColors[activity.activityType] ||
                               "bg-gray-500"
                             }`}
                           >
-                            {activity.activityType}
+                            {activity.activityType.replace(/_/g, " ")}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
+                        <td className="px-4 py-3 text-sm text-gray-300">
                           {activity.page || "-"}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-300">
+                        <td className="px-4 py-3 text-sm text-gray-300">
                           {activity.action || "-"}
                         </td>
                       </tr>

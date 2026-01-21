@@ -435,7 +435,7 @@ const TransactionHistoryView = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
             className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           />
-          <div className="flex gap-2 overflow-x-auto">
+          <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {["all", "deposit", "withdraw", "buy", "sell"].map((type) => (
               <button
                 key={type}
@@ -455,7 +455,7 @@ const TransactionHistoryView = () => {
 
       {/* Transactions Table */}
       <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
@@ -1432,7 +1432,7 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white px-3 py-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white px-3 py-4 sm:p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Popup Notification */}
       {showNotification && (
         <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
@@ -1498,8 +1498,8 @@ const AdminDashboard = () => {
       {activeTab === "dashboard" && (
         <div className="space-y-3 sm:space-y-8">
           {/* Quick Actions - 3D Crypto Card Style */}
-          <div className="bg-gray-800/50 rounded-2xl p-3 border border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
-            <div className="space-y-2.5">
+          <div className="bg-gray-800/50 rounded-xl p-2 sm:p-3 border border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)] -mx-1 sm:mx-0">
+            <div className="space-y-2">
               {/* Process Manual Payment */}
               <button
                 onClick={() => {
@@ -1529,7 +1529,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       Manual Payment
                     </span>
@@ -1581,7 +1581,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       Manage Users
                     </span>
@@ -1633,7 +1633,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       Deleted Users Bin
                     </span>
@@ -1692,7 +1692,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       KYC Verification
                     </span>
@@ -1751,7 +1751,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       Analytics Dashboard
                     </span>
@@ -1803,7 +1803,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       Send Notifications
                     </span>
@@ -1855,7 +1855,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       Transaction History
                     </span>
@@ -1907,7 +1907,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       System Settings
                     </span>
@@ -1959,7 +1959,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       Reports
                     </span>
@@ -2011,7 +2011,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       Database
                     </span>
@@ -2063,7 +2063,7 @@ const AdminDashboard = () => {
                       size={20}
                     />
                   </div>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
                       Activity Logs
                     </span>
@@ -2193,7 +2193,7 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <button
               onClick={() => setShowUserStatsModal("total")}
-              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
+              className="bg-gradient-to-b from-gray-700/60 to-gray-800/80 border border-gray-600/50 rounded-xl p-4 hover:from-gray-700/80 hover:to-gray-800 transition-all text-left shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -2210,7 +2210,7 @@ const AdminDashboard = () => {
 
             <button
               onClick={() => setShowUserStatsModal("admin")}
-              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
+              className="bg-gradient-to-b from-gray-700/60 to-gray-800/80 border border-gray-600/50 rounded-xl p-4 hover:from-gray-700/80 hover:to-gray-800 transition-all text-left shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -2227,7 +2227,7 @@ const AdminDashboard = () => {
 
             <button
               onClick={() => setShowUserStatsModal("staff")}
-              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
+              className="bg-gradient-to-b from-gray-700/60 to-gray-800/80 border border-gray-600/50 rounded-xl p-4 hover:from-gray-700/80 hover:to-gray-800 transition-all text-left shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -2244,7 +2244,7 @@ const AdminDashboard = () => {
 
             <button
               onClick={() => setShowUserStatsModal("regular")}
-              className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 hover:bg-gray-800/70 transition-colors text-left"
+              className="bg-gradient-to-b from-gray-700/60 to-gray-800/80 border border-gray-600/50 rounded-xl p-4 hover:from-gray-700/80 hover:to-gray-800 transition-all text-left shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
             >
               <div className="flex items-center justify-between">
                 <div>
@@ -2275,7 +2275,7 @@ const AdminDashboard = () => {
           </button>
 
           {/* Bin Stats - Compact */}
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+          <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-4 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Trash2 className="text-red-400" size={20} />
@@ -2296,108 +2296,76 @@ const AdminDashboard = () => {
           </div>
 
           {/* Deleted Users List - Compact */}
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+          <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-2 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
             {deletedUsers.length === 0 ? (
               <div className="text-center py-8">
                 <Trash2 className="mx-auto mb-3 text-gray-600" size={36} />
                 <p className="text-gray-400 text-sm">No deleted users in bin</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-700/50">
-                    <tr>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase">
-                        User
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase">
-                        Role
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase">
-                        Type
-                      </th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-300 uppercase">
-                        Deleted At
-                      </th>
-                      <th className="px-3 py-2 text-right text-xs font-medium text-gray-300 uppercase">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-700">
-                    {deletedUsers.map((user: any) => (
-                      <tr
-                        key={user.id}
-                        className="hover:bg-gray-700/30 transition-colors"
+              <div className="space-y-2">
+                {deletedUsers.map((user: any) => (
+                  <div
+                    key={user.id}
+                    className="bg-gradient-to-b from-gray-700/40 to-gray-800/60 hover:from-gray-700/60 hover:to-gray-800/80 rounded-xl p-2.5 transition-all border border-gray-600/40 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.25)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.25)] hover:translate-y-0.5"
+                  >
+                    {/* Row 1: Email + Delete */}
+                    <div className="flex items-center justify-between mb-1">
+                      <p className="font-medium text-white text-sm">
+                        {user.email}
+                      </p>
+                      <button
+                        onClick={() =>
+                          handlePermanentDelete(
+                            user.id,
+                            user.email || "Unknown"
+                          )
+                        }
+                        disabled={loading}
+                        className="bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white disabled:opacity-50 p-1 rounded shadow-[0_1px_0_0_#991b1b] hover:shadow-[0_0.5px_0_0_#991b1b] active:shadow-none active:translate-y-0.5 transition-all"
+                        title="Delete Forever"
                       >
-                        <td className="px-3 py-2">
-                          <div>
-                            <p className="font-medium text-white text-sm">
-                              {user.email}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {user.name || "No name"}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              user.role === "ADMIN"
-                                ? "bg-orange-500/20 text-orange-400"
-                                : "bg-gray-500/20 text-gray-400"
-                            }`}
-                          >
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2 text-xs text-gray-300">
-                          {user.accountType}
-                        </td>
-                        <td className="px-3 py-2 text-xs text-gray-400">
-                          {user.deletedAt
-                            ? new Date(user.deletedAt).toLocaleDateString()
-                            : "N/A"}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() =>
-                                handleRestoreUser(
-                                  user.id,
-                                  user.email || "Unknown"
-                                )
-                              }
-                              disabled={loading}
-                              className="text-green-400 hover:text-green-300 disabled:opacity-50"
-                              title="Restore User"
-                            >
-                              <ArrowLeft size={14} />
-                            </button>
-                            <button
-                              onClick={() =>
-                                handlePermanentDelete(
-                                  user.id,
-                                  user.email || "Unknown"
-                                )
-                              }
-                              disabled={loading}
-                              className="text-red-400 hover:text-red-300 disabled:opacity-50"
-                              title="Delete Forever"
-                            >
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        <Trash2 size={10} />
+                      </button>
+                    </div>
+                    {/* Row 2: Name + Role + Restore */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs text-gray-400">
+                          {user.name || "No name"}
+                        </p>
+                        <span
+                          className={`px-1 rounded text-[8px] font-medium leading-tight ${
+                            user.role === "ADMIN"
+                              ? "bg-orange-500/20 text-orange-400"
+                              : "bg-green-500/20 text-green-400"
+                          }`}
+                        >
+                          {user.role}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() =>
+                          handleRestoreUser(
+                            user.id,
+                            user.email || "Unknown"
+                          )
+                        }
+                        disabled={loading}
+                        className="bg-gradient-to-b from-green-500 to-green-600 hover:from-green-400 hover:to-green-500 text-white disabled:opacity-50 flex items-center gap-0.5 text-[8px] px-1.5 py-0.5 rounded shadow-[0_1px_0_0_#166534] hover:shadow-[0_0.5px_0_0_#166534] active:shadow-none active:translate-y-0.5 transition-all font-medium"
+                        title="Restore User"
+                      >
+                        <ArrowLeft size={8} />
+                        Restore
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
             {deletedUsers.length > 0 && (
-              <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/30 rounded text-xs">
+              <div className="mt-3 p-2 bg-gradient-to-b from-yellow-500/15 to-yellow-600/10 border border-yellow-500/40 rounded-xl text-xs shadow-[0_2px_0_0_#ca8a04,0_3px_6px_rgba(202,138,4,0.2)]">
                 <div className="flex items-start gap-2">
                   <AlertTriangle
                     className="text-yellow-400 flex-shrink-0"
@@ -2417,53 +2385,60 @@ const AdminDashboard = () => {
 
       {/* Payment Modal - Fullscreen */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-gray-900 z-50 overflow-y-auto">
+        <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 z-50 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          {/* Sticky Header Background */}
+          <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-800 px-2 xs:px-3 sm:px-4 lg:px-6 py-3 pt-14">
+            <div className="flex items-center justify-between">
+              <h1 className="text-base xs:text-lg sm:text-xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                Admin Control Panel
+              </h1>
+            </div>
+          </div>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             className="min-h-screen"
           >
-            {/* Modal Header with Close Button */}
-            <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-gray-700 p-3 xs:p-4 sm:p-6 flex items-center justify-between z-10">
-              <div className="flex items-center gap-3">
-                {selectedUser && (
-                  <button
-                    onClick={() => setSelectedUser(null)}
-                    className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
-                    title="Back to user selection"
-                  >
-                    <ArrowLeft size={20} />
-                  </button>
-                )}
-                <h2 className="text-xs sm:text-sm font-medium text-gray-300 truncate max-w-[200px] sm:max-w-none">
-                  {selectedUser
-                    ? `Payment for ${selectedUser.email}`
-                    : "Manual Payment"}
-                </h2>
-              </div>
-              <button
-                onClick={() => {
-                  setShowPaymentModal(false);
-                  setSelectedUser(null);
-                }}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
-                title="Close"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
             {/* Modal Content */}
-            <div className="max-w-7xl mx-auto p-3 xs:p-4 sm:p-6 lg:p-8">
-              {/* User Selection */}
-              {!selectedUser && (
-                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-                  <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-                    <Users className="text-blue-400" size={24} />
-                    <span>Select User</span>
-                  </h3>
-                  <div className="max-h-96 overflow-y-auto space-y-2">
+            <div className="w-full px-2 xs:px-3 sm:px-4 lg:px-6 mt-6 sm:mt-8">
+              {/* Admin Header */}
+              <div className="mb-2 xs:mb-3 sm:mb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 sm:space-x-3">
+                    <div>
+                      <h1 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                        Manual Payment
+                      </h1>
+                      <p className="text-[10px] xs:text-xs text-gray-400">
+                        Complete administrative dashboard
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {/* Back Button */}
+                <button
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setSelectedUser(null);
+                  }}
+                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg"
+                >
+                  <ArrowLeft size={20} />
+                  <span className="text-sm font-medium">Back to Dashboard</span>
+                </button>
+
+                {/* User Selection */}
+                {!selectedUser && (
+                  <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-3 sm:p-4 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] mb-2">
+                    <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
+                      <Users className="text-blue-400" size={24} />
+                      <span>Select User</span>
+                    </h3>
+                  <div className="max-h-96 overflow-y-auto space-y-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
                     {users.length === 0 ? (
                       <p className="text-gray-400 text-center py-8">
                         No users available
@@ -2473,7 +2448,7 @@ const AdminDashboard = () => {
                         <button
                           key={user.id}
                           onClick={() => setSelectedUser(user)}
-                          className="w-full p-4 rounded-lg border bg-gray-700/30 border-gray-600/30 hover:bg-gray-700/50 hover:border-orange-500/50 transition-all text-left"
+                          className="w-full p-3 sm:p-4 rounded-xl border bg-gradient-to-b from-gray-700/40 to-gray-800/60 border-gray-600/40 hover:from-gray-700/60 hover:to-gray-800/80 hover:border-orange-500/50 transition-all text-left shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.25)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.25)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
@@ -2500,18 +2475,27 @@ const AdminDashboard = () => {
                       ))
                     )}
                   </div>
-                </div>
-              )}
+                  </div>
+                )}
 
-              {/* Payment Form */}
-              {selectedUser && (
-                <div className="space-y-6">
-                  {/* Manual Top-up Section */}
-                  <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
-                    <h3 className="text-base xs:text-lg font-bold mb-4 flex items-center space-x-2">
-                      <Wallet className="text-green-400" size={20} />
-                      <span>Manual Payment Processing</span>
-                    </h3>
+                {/* Payment Form */}
+                {selectedUser && (
+                  <>
+                    {/* Back to User Selection Button */}
+                    <button
+                      onClick={() => setSelectedUser(null)}
+                      className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg"
+                    >
+                      <ArrowLeft size={20} />
+                      <span className="text-sm font-medium">Back to User Selection</span>
+                    </button>
+
+                    {/* Manual Top-up Section */}
+                    <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-4 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+                      <h3 className="text-base xs:text-lg font-bold mb-4 flex items-center space-x-2">
+                        <Wallet className="text-green-400" size={20} />
+                        <span>Manual Payment Processing</span>
+                      </h3>
 
                     {/* Main Deposit Type Selection */}
                     <div className="mb-3 xs:mb-4">
@@ -2524,10 +2508,10 @@ const AdminDashboard = () => {
                             setDepositType("fiat");
                             setPaymentMethodType("traditional");
                           }}
-                          className={`p-2.5 xs:p-3 rounded-lg border-2 transition-all ${
+                          className={`p-2.5 xs:p-3 rounded-xl border-2 transition-all ${
                             depositType === "fiat"
-                              ? "bg-gradient-to-br from-green-500/20 to-blue-500/20 border-green-500 shadow-lg shadow-green-500/20"
-                              : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
+                              ? "bg-gradient-to-br from-green-500/20 to-blue-500/20 border-green-500 shadow-[0_3px_0_0_#166534,0_4px_8px_rgba(34,197,94,0.3)] active:shadow-none active:translate-y-1"
+                              : "bg-gradient-to-b from-gray-700/40 to-gray-800/60 border-gray-600/50 hover:border-gray-500 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.2)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.2)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
                           }`}
                         >
                           <DollarSign
@@ -2549,10 +2533,10 @@ const AdminDashboard = () => {
                         </button>
                         <button
                           onClick={() => setDepositType("crypto")}
-                          className={`p-2.5 xs:p-3 rounded-lg border-2 transition-all ${
+                          className={`p-2.5 xs:p-3 rounded-xl border-2 transition-all ${
                             depositType === "crypto"
-                              ? "bg-gradient-to-br from-orange-500/20 to-purple-500/20 border-orange-500 shadow-lg shadow-orange-500/20"
-                              : "bg-gray-700/30 border-gray-600/50 hover:border-gray-500"
+                              ? "bg-gradient-to-br from-orange-500/20 to-purple-500/20 border-orange-500 shadow-[0_3px_0_0_#c2410c,0_4px_8px_rgba(249,115,22,0.3)] active:shadow-none active:translate-y-1"
+                              : "bg-gradient-to-b from-gray-700/40 to-gray-800/60 border-gray-600/50 hover:border-gray-500 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.2)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.2)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
                           }`}
                         >
                           <Wallet
@@ -2690,7 +2674,7 @@ const AdminDashboard = () => {
                                     </button>
 
                                     {showCryptoDropdown && (
-                                      <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto">
+                                      <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                                         {cryptoPaymentMethods.map((method) => {
                                           const cryptoPrice =
                                             prices[method.name];
@@ -2821,7 +2805,7 @@ const AdminDashboard = () => {
 
                             {showCryptoDropdown && (
                               <div
-                                className="absolute top-full left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-2xl z-50 max-h-80 overflow-y-auto p-2"
+                                className="absolute top-full left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-2xl z-50 max-h-40 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6 py-4 pb-6"
                                 style={{ perspective: "1000px" }}
                               >
                                 {cryptoAssets.map((asset, index) => {
@@ -2842,16 +2826,17 @@ const AdminDashboard = () => {
                                       animate={{ opacity: 1, y: 0 }}
                                       transition={{ delay: index * 0.05 }}
                                       whileHover={{
-                                        scale: 1.02,
+                                        scale: 1.05,
                                         z: 50,
                                         rotateY: 2,
+                                        zIndex: 999,
                                         transition: { duration: 0.2 },
                                       }}
                                       onClick={() => {
                                         setCryptoAsset(asset.symbol);
                                         setShowCryptoDropdown(false);
                                       }}
-                                      className={`w-full p-4 mb-2 flex items-center gap-3 rounded-xl transition-all relative group overflow-hidden ${
+                                      className={`w-full p-2.5 mb-2.5 flex items-center gap-2.5 rounded-xl transition-all relative group overflow-hidden ${
                                         isSelected
                                           ? "bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-2 border-orange-500/60 shadow-lg shadow-orange-500/20"
                                           : "bg-gradient-to-br from-gray-800/80 to-gray-800/40 border border-gray-700/50 hover:border-gray-600 hover:shadow-xl"
@@ -2879,7 +2864,7 @@ const AdminDashboard = () => {
                                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
 
                                       <div
-                                        className={`relative z-10 w-10 h-10 rounded-lg flex items-center justify-center ${
+                                        className={`relative z-10 w-8 h-8 rounded-lg flex items-center justify-center ${
                                           isSelected
                                             ? "bg-orange-500/20 shadow-lg shadow-orange-500/20"
                                             : "bg-gray-700/50 group-hover:bg-gray-600/50"
@@ -2890,7 +2875,7 @@ const AdminDashboard = () => {
                                       >
                                         <CryptoIcon
                                           symbol={asset.symbol}
-                                          className="w-6 h-6"
+                                          className="w-5 h-5"
                                         />
                                       </div>
 
@@ -2900,13 +2885,13 @@ const AdminDashboard = () => {
                                           transform: "translateZ(10px)",
                                         }}
                                       >
-                                        <div className="flex items-center justify-between mb-1">
+                                        <div className="flex items-center justify-between mb-0.5">
                                           <div className="flex items-center gap-2">
-                                            <p className="font-bold text-white text-base">
+                                            <p className="font-bold text-white text-sm">
                                               {asset.symbol}
                                             </p>
                                             <span
-                                              className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                              className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                                                 change >= 0
                                                   ? "bg-green-500/20 text-green-400"
                                                   : "bg-red-500/20 text-red-400"
@@ -2920,20 +2905,20 @@ const AdminDashboard = () => {
                                             <motion.div
                                               initial={{ scale: 0 }}
                                               animate={{ scale: 1 }}
-                                              className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/50"
+                                              className="w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/50"
                                               style={{
                                                 transform: "translateZ(20px)",
                                               }}
                                             >
-                                              <Check className="w-4 h-4 text-white" />
+                                              <Check className="w-3 h-3 text-white" />
                                             </motion.div>
                                           )}
                                         </div>
                                         <div className="flex items-center justify-between">
-                                          <p className="text-xs text-gray-400 font-medium">
+                                          <p className="text-[10px] text-gray-400 font-medium">
                                             {asset.name}
                                           </p>
-                                          <p className="text-sm font-bold text-white">
+                                          <p className="text-xs font-bold text-white">
                                             {currencySymbol}
                                             {price.toLocaleString()}
                                           </p>
@@ -2958,7 +2943,7 @@ const AdminDashboard = () => {
                             )}
                           </div>
                         )}
-                        <div>
+                        <div className="mt-6">
                           <label className="block text-xs font-semibold text-gray-300 mb-2">
                             Amount
                           </label>
@@ -3049,7 +3034,7 @@ const AdminDashboard = () => {
                               </p>
                             )}
                         </div>
-                        <div>
+                        <div className="mt-4">
                           <label className="block text-xs font-semibold text-gray-300 mb-2">
                             Notification Message
                           </label>
@@ -3058,14 +3043,14 @@ const AdminDashboard = () => {
                             onChange={(e) =>
                               setNotificationMessage(e.target.value)
                             }
-                            className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                            className="w-full bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]"
                             placeholder="Optional note for the user..."
                             rows={2}
                           />
                         </div>
                       </div>
                       <div className="space-y-3">
-                        <div className="bg-gray-700/30 p-3 rounded-lg border border-gray-600/30">
+                        <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 p-3 rounded-xl border border-gray-600/40 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)]">
                           <h4 className="font-semibold mb-2 text-sm">
                             Transaction Summary
                           </h4>
@@ -3200,8 +3185,9 @@ const AdminDashboard = () => {
                       </div>
                     </div>
                   )}
-                </div>
+                </>
               )}
+              </div>
             </div>
           </motion.div>
         </div>
@@ -3523,7 +3509,7 @@ const AdminDashboard = () => {
 
       {/* Edit User Role Modal - Responsive Web UI */}
       {editingUser && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -3532,23 +3518,23 @@ const AdminDashboard = () => {
             className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
           >
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-b border-gray-700 px-6 py-4">
-              <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                <Settings className="w-6 h-6 text-orange-400" />
+            <div className="bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-b border-gray-700 px-4 py-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Settings className="w-5 h-5 text-orange-400" />
                 Edit User Role
               </h3>
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-6">
+            <div className="p-4 space-y-4">
               {/* User Info */}
-              <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
-                <p className="text-sm text-gray-400 mb-1">User</p>
-                <p className="font-semibold text-white truncate">
+              <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+                <p className="text-xs text-gray-400 mb-0.5">User</p>
+                <p className="font-semibold text-white text-sm truncate">
                   {editingUser.email}
                 </p>
                 {editingUser.name && (
-                  <p className="text-sm text-gray-300 mt-1">
+                  <p className="text-xs text-gray-300">
                     {editingUser.name}
                   </p>
                 )}
@@ -3556,27 +3542,27 @@ const AdminDashboard = () => {
 
               {/* Role Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-3">
+                <label className="block text-xs font-medium text-gray-300 mb-2">
                   Select Role
                 </label>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {/* USER Role */}
-                  <label className="flex items-center justify-between p-4 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-orange-500/50 group">
-                    <div className="flex items-center gap-3">
+                  <label className="flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg cursor-pointer transition-all hover:border-orange-500/50 group">
+                    <div className="flex items-center gap-2.5">
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
                           newRole === "USER"
                             ? "border-orange-500 bg-orange-500"
                             : "border-gray-600 group-hover:border-orange-500/50"
                         }`}
                       >
                         {newRole === "USER" && (
-                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
                         )}
                       </div>
                       <div>
-                        <p className="font-semibold text-white">User</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="font-semibold text-white text-sm">User</p>
+                        <p className="text-[10px] text-gray-400">
                           Standard user account
                         </p>
                       </div>
@@ -3596,22 +3582,22 @@ const AdminDashboard = () => {
                   </label>
 
                   {/* ADMIN Role */}
-                  <label className="flex items-center justify-between p-4 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-orange-500/50 group">
-                    <div className="flex items-center gap-3">
+                  <label className="flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg cursor-pointer transition-all hover:border-orange-500/50 group">
+                    <div className="flex items-center gap-2.5">
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
                           newRole === "ADMIN"
                             ? "border-orange-500 bg-orange-500"
                             : "border-gray-600 group-hover:border-orange-500/50"
                         }`}
                       >
                         {newRole === "ADMIN" && (
-                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
                         )}
                       </div>
                       <div>
-                        <p className="font-semibold text-white">Admin</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="font-semibold text-white text-sm">Admin</p>
+                        <p className="text-[10px] text-gray-400">
                           Full system access
                         </p>
                       </div>
@@ -3631,22 +3617,22 @@ const AdminDashboard = () => {
                   </label>
 
                   {/* STAFF_ADMIN Role */}
-                  <label className="flex items-center justify-between p-4 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-xl cursor-pointer transition-all hover:border-orange-500/50 group">
-                    <div className="flex items-center gap-3">
+                  <label className="flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg cursor-pointer transition-all hover:border-orange-500/50 group">
+                    <div className="flex items-center gap-2.5">
                       <div
-                        className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
+                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
                           newRole === "STAFF_ADMIN"
                             ? "border-orange-500 bg-orange-500"
                             : "border-gray-600 group-hover:border-orange-500/50"
                         }`}
                       >
                         {newRole === "STAFF_ADMIN" && (
-                          <div className="w-2.5 h-2.5 bg-white rounded-full"></div>
+                          <div className="w-2 h-2 bg-white rounded-full"></div>
                         )}
                       </div>
                       <div>
-                        <p className="font-semibold text-white">Staff Admin</p>
-                        <p className="text-xs text-gray-400">
+                        <p className="font-semibold text-white text-sm">Staff Admin</p>
+                        <p className="text-[10px] text-gray-400">
                           Manage assigned users only
                         </p>
                       </div>
@@ -3668,20 +3654,20 @@ const AdminDashboard = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <div className="flex flex-col gap-2 pt-1">
                 <button
                   onClick={() => handleUpdateUserRole(editingUser.id, newRole)}
                   disabled={loading}
-                  className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg disabled:shadow-none flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg disabled:shadow-none flex items-center justify-center gap-2 text-sm"
                 >
                   {loading ? (
                     <>
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                       Updating...
                     </>
                   ) : (
                     <>
-                      <Check className="w-5 h-5" />
+                      <Check className="w-4 h-4" />
                       Update Role
                     </>
                   )}
@@ -3689,9 +3675,9 @@ const AdminDashboard = () => {
                 <button
                   onClick={() => setEditingUser(null)}
                   disabled={loading}
-                  className="flex-1 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-4 h-4" />
                   Cancel
                 </button>
               </div>
@@ -3752,7 +3738,7 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               <div className="space-y-2">
                 {users
                   .filter((user) => {
@@ -3768,11 +3754,11 @@ const AdminDashboard = () => {
                   .map((user) => (
                     <div
                       key={user.id}
-                      className={`bg-gray-700/30 border rounded-lg p-3 transition-colors ${
+                      className={`bg-gradient-to-b from-gray-700/50 to-gray-800/70 border rounded-xl p-3 transition-all ${
                         selectedUser?.id === user.id
-                          ? "bg-orange-500/20 border-orange-500/50"
-                          : "border-gray-600/30 hover:bg-gray-700/50"
-                      } ${user.role === "USER" ? "cursor-pointer" : ""}`}
+                          ? "bg-gradient-to-b from-orange-500/30 to-orange-600/20 border-orange-500/50 shadow-[0_3px_0_0_#c2410c,0_4px_8px_rgba(0,0,0,0.3)]"
+                          : "border-gray-600/40 hover:from-gray-700/70 hover:to-gray-800/90 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.3)] hover:translate-y-0.5"
+                      } ${user.role === "USER" ? "cursor-pointer active:shadow-none active:translate-y-1" : ""}`}
                       onClick={() =>
                         user.role === "USER" &&
                         setSelectedUser(
@@ -3932,7 +3918,7 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {activityLogs.length === 0 ? (
                 <div className="text-center py-12">
                   <Activity className="w-16 h-16 mx-auto text-gray-600 mb-4" />
@@ -4002,7 +3988,7 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
               {/* Database Stats */}
               <div className="bg-gray-700/30 border border-gray-600/30 rounded-xl p-6 mb-6">
                 <h3 className="text-lg font-semibold text-white mb-4">
@@ -4148,7 +4134,7 @@ const AdminDashboard = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-gray-800 rounded-xl max-w-sm w-full shadow-2xl border border-green-500/30 max-h-[90vh] overflow-y-auto"
+            className="bg-gray-800 rounded-xl max-w-sm w-full shadow-2xl border border-green-500/30 max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-2.5 sm:p-3 border-b border-gray-700 sticky top-0">

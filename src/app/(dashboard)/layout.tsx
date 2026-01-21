@@ -49,7 +49,7 @@ export default async function DashboardLayout({
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">
                             <DashboardHeaderWrapper />
-                            <main className="flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4">
+                            <main className="flex-1 overflow-x-hidden overflow-y-auto p-2 sm:p-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                               <DashboardModalWrapper>
                                 {children}
                               </DashboardModalWrapper>
