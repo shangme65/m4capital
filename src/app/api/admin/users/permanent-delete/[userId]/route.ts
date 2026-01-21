@@ -50,50 +50,37 @@ export async function POST(
     }
 
     // Execute permanent deletion in a transaction
-    // Order matters due to foreign key constraints
+    // Portfolio relation doesn't have onDelete: Cascade, so we need to handle it manually
     await prisma.$transaction(async (tx) => {
-      // Delete user's deposits and withdrawals
-      await tx.deposit.deleteMany({
-        where: {
-          Portfolio: {
-            userId: userId,
-          },
-        },
-      });
-
-      await tx.withdrawal.deleteMany({
-        where: {
-          Portfolio: {
-            userId: userId,
-          },
-        },
-      });
-
-      // Delete user's portfolio
-      await tx.portfolio.deleteMany({
+      // First, get the portfolio ID
+      const portfolio = await tx.portfolio.findUnique({
         where: { userId: userId },
+        select: { id: true },
       });
 
-      // Delete user's KYC verification
-      await tx.kycVerification.deleteMany({
-        where: { userId: userId },
-      });
+      if (portfolio) {
+        // Delete deposits and withdrawals related to this portfolio
+        await tx.deposit.deleteMany({
+          where: { portfolioId: portfolio.id },
+        });
 
-      // Delete user's accounts (NextAuth)
-      await tx.account.deleteMany({
-        where: { userId: userId },
-      });
+        await tx.withdrawal.deleteMany({
+          where: { portfolioId: portfolio.id },
+        });
 
-      // Explicitly delete user's sessions to force logout
-      // This ensures the user is logged out immediately even before CASCADE runs
-      await tx.session.deleteMany({
-        where: { userId: userId },
-      });
+        // Delete the portfolio
+        await tx.portfolio.delete({
+          where: { id: portfolio.id },
+        });
+      }
 
-      // Finally, delete the user (this will cascade delete remaining relations)
+      // Delete the user - this will cascade delete everything else
+      // (Account, Session, KYC, Notifications, etc.)
       await tx.user.delete({
         where: { id: userId },
       });
+    }, {
+      timeout: 10000, // 10 second timeout for the transaction
     });
 
     return NextResponse.json({

@@ -719,11 +719,11 @@ function DashboardContent() {
   };
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <div>
       {/* Portfolio Section - Single 3D Card */}
       <div
         data-tutorial="portfolio-balance"
-        className="relative rounded-2xl p-4 sm:p-6 overflow-hidden transition-all duration-300"
+        className="relative rounded-2xl p-4 sm:p-6 overflow-hidden transition-all duration-300 mb-4"
         style={{
           background:
             "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
@@ -1023,7 +1023,7 @@ function DashboardContent() {
       <PendingDepositsWidget />
 
       {/* Trading Actions */}
-      <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-4">
+      <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-6">
         <button
           onClick={handleBuy}
           className="bg-gradient-to-b from-green-500 via-green-600 via-40% to-green-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(20,83,45),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(34,197,94,0.8),0_10px_8px_-2px_rgba(34,197,94,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(34,197,94,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
