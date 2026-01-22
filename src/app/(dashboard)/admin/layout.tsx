@@ -9,7 +9,8 @@ export default async function AdminLayout({
 }) {
   const session = await getServerSession(authOptions);
 
-  if (session?.user?.role !== "ADMIN") {
+  // Allow both ADMIN and STAFF_ADMIN to access admin routes
+  if (session?.user?.role !== "ADMIN" && session?.user?.role !== "STAFF_ADMIN") {
     redirect("/dashboard");
   }
 

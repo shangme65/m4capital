@@ -11,13 +11,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is admin
+    // Check if user is admin or staff admin
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: { role: true },
     });
 
-    if (user?.role !== "ADMIN") {
+    if (user?.role !== "ADMIN" && user?.role !== "STAFF_ADMIN") {
       return NextResponse.json(
         { error: "Forbidden - Admin only" },
         { status: 403 }

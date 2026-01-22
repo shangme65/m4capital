@@ -440,13 +440,13 @@ const Sidebar = () => {
                           }
                           className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
                           onClick={closeSidebar}
-                          onMouseEnter={() => setHoveredItem("Admin")}
+                          onMouseEnter={() => setHoveredItem(session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : "Admin")}
                           onMouseLeave={() => setHoveredItem(null)}
                         >
                           <motion.div
                             className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
                             animate={
-                              hoveredItem === "Admin"
+                              hoveredItem === (session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : "Admin")
                                 ? {
                                     rotate: 360,
                                     scale: 1.1,
@@ -503,7 +503,7 @@ const Sidebar = () => {
                             <motion.span
                               className="inline-block"
                               animate={
-                                hoveredItem === "Admin"
+                                hoveredItem === (session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : "Admin")
                                   ? {
                                       x: [0, 3, 0],
                                       transition: {
@@ -527,7 +527,7 @@ const Sidebar = () => {
                                 },
                               }}
                             >
-                              {adminItem.name}
+                              {session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : adminItem.name}
                             </motion.span>
                           </motion.span>
                         </Link>

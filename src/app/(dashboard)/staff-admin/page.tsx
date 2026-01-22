@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Users,
   DollarSign,
@@ -13,6 +14,7 @@ import {
   ArrowLeft,
   CreditCard,
   TrendingUp,
+  FileCheck,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { getCurrencySymbol } from "@/lib/currencies";
@@ -60,17 +62,6 @@ export default function StaffAdminPage() {
       fetchAssignedUsers();
     }
   }, [status, session]);
-
-  // Auto-reload if stuck on loading screen
-  useEffect(() => {
-    if (status === "loading" || loading) {
-      const reloadTimer = setTimeout(() => {
-        console.log("Staff admin loading timeout - auto-reloading page");
-        window.location.reload();
-      }, 5000);
-      return () => clearTimeout(reloadTimer);
-    }
-  }, [status, loading]);
 
   const fetchAssignedUsers = async () => {
     try {
@@ -161,19 +152,29 @@ export default function StaffAdminPage() {
       {/* Custom Header for Staff Admin */}
       <div className="sticky top-0 z-40 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold">Staff Admin Dashboard</h1>
-              <p className="text-sm text-gray-400">
-                Manage your assigned users
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <ArrowLeft className="w-6 h-6" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-bold">Staff Admin Dashboard</h1>
+                <p className="text-sm text-gray-400">
+                  Manage your assigned users
+                </p>
+              </div>
             </div>
+            {/* KYC Verification Link */}
+            <Link
+              href="/admin/kyc"
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg transition-all font-semibold text-sm"
+            >
+              <FileCheck className="w-5 h-5" />
+              KYC Verification
+            </Link>
           </div>
         </div>
       </div>

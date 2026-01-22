@@ -143,6 +143,105 @@ function KycSubmissionLoadingModal() {
   );
 }
 
+// Modal component for full-screen settings sections - 3D Dark Theme
+// IMPORTANT: Defined outside SettingsPage to prevent re-creation on state changes
+function SettingsModal({
+  isOpen,
+  onClose,
+  title,
+  children,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  // Handle browser back button
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handlePopState = () => {
+      onClose();
+    };
+
+    // Push a state when modal opens
+    window.history.pushState({ modal: true }, "");
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
+    <div
+      className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen"
+      style={{
+        background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
+      }}
+    >
+      <div className="h-full overflow-y-auto">
+        {/* Header with 3D styling */}
+        <div
+          className="sticky top-0 z-10"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
+          }}
+        >
+          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
+              style={{
+                background:
+                  "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                boxShadow:
+                  "0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h2 className="text-xl font-bold text-white">{title}</h2>
+          </div>
+        </div>
+
+        {/* Content area with card wrapper */}
+        <div className="max-w-4xl mx-auto px-4 pt-4 pb-4 space-y-4">
+          {React.Children.map(children, (child, index) => (
+            <div
+              key={index}
+              className="relative rounded-2xl p-5 overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                boxShadow:
+                  "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+              }}
+            >
+              <div
+                className="absolute inset-0 opacity-20 rounded-2xl pointer-events-none"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
+                }}
+              />
+              <div className="relative z-10">{child}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function SettingsPage() {
   const { data: session } = useSession();
   const [saving, setSaving] = useState(false);
@@ -830,6 +929,29 @@ export default function SettingsPage() {
 
   const handleKycSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate all documents are uploaded
+    if (!documents.idDocument) {
+      showError("Please upload your government-issued ID document");
+      return;
+    }
+    if (!documents.proofOfAddress) {
+      showError("Please upload your proof of address document");
+      return;
+    }
+    if (!documents.selfie) {
+      showError("Please upload your selfie");
+      return;
+    }
+    
+    // Validate required fields
+    if (!kycData.firstName || !kycData.lastName || !kycData.dateOfBirth || 
+        !kycData.nationality || !kycData.phoneNumber || !kycData.address || 
+        !kycData.city || !kycData.postalCode) {
+      showError("Please fill in all required fields");
+      return;
+    }
+    
     setSubmittingKyc(true);
 
     try {
@@ -847,11 +969,9 @@ export default function SettingsPage() {
       formData.append("country", kycData.nationality); // Using nationality as country for now
 
       // Add files
-      if (documents.idDocument)
-        formData.append("idDocument", documents.idDocument);
-      if (documents.proofOfAddress)
-        formData.append("proofOfAddress", documents.proofOfAddress);
-      if (documents.selfie) formData.append("selfie", documents.selfie);
+      formData.append("idDocument", documents.idDocument);
+      formData.append("proofOfAddress", documents.proofOfAddress);
+      formData.append("selfie", documents.selfie);
 
       const response = await fetch("/api/kyc/submit", {
         method: "POST",
@@ -874,104 +994,6 @@ export default function SettingsPage() {
     } finally {
       setSubmittingKyc(false);
     }
-  };
-
-  // Modal component for full-screen settings sections - 3D Dark Theme
-  const SettingsModal = ({
-    isOpen,
-    onClose,
-    title,
-    children,
-  }: {
-    isOpen: boolean;
-    onClose: () => void;
-    title: string;
-    children: React.ReactNode;
-  }) => {
-    // Handle browser back button
-    useEffect(() => {
-      if (!isOpen) return;
-
-      const handlePopState = () => {
-        onClose();
-      };
-
-      // Push a state when modal opens
-      window.history.pushState({ modal: true }, "");
-      window.addEventListener("popstate", handlePopState);
-
-      return () => {
-        window.removeEventListener("popstate", handlePopState);
-      };
-    }, [isOpen, onClose]);
-
-    if (!isOpen) return null;
-
-    return ReactDOM.createPortal(
-      <div
-        className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen"
-        style={{
-          background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
-        }}
-      >
-        <div className="h-full overflow-y-auto">
-          {/* Header with 3D styling */}
-          <div
-            className="sticky top-0 z-10"
-            style={{
-              background:
-                "linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
-              borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-              boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
-            }}
-          >
-            <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
-              <button
-                onClick={onClose}
-                className="w-10 h-10 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                  boxShadow:
-                    "0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
-                }}
-              >
-                <X className="w-5 h-5" />
-              </button>
-              <h2 className="text-xl font-bold text-white">{title}</h2>
-            </div>
-          </div>
-
-          {/* Content area with card wrapper */}
-          <div className="max-w-4xl mx-auto px-4 pt-4 pb-4 space-y-4">
-            {React.Children.map(children, (child, index) => (
-              <div
-                key={index}
-                className="relative rounded-2xl p-5 overflow-hidden"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                }}
-              >
-                <div
-                  className="absolute inset-0 opacity-20 rounded-2xl pointer-events-none"
-                  style={{
-                    background:
-                      "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
-                  }}
-                />
-                <div className="relative z-10">{child}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>,
-      document.body
-    );
   };
 
   // Memoize close modal callback
@@ -2508,7 +2530,10 @@ export default function SettingsPage() {
                         disabled={
                           submittingKyc ||
                           kycStatus === "PENDING" ||
-                          kycStatus === "UNDER_REVIEW"
+                          kycStatus === "UNDER_REVIEW" ||
+                          !documents.idDocument ||
+                          !documents.proofOfAddress ||
+                          !documents.selfie
                         }
                         className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
                       >
@@ -2517,6 +2542,8 @@ export default function SettingsPage() {
                           : kycStatus === "PENDING" ||
                             kycStatus === "UNDER_REVIEW"
                           ? "Under Review"
+                          : !documents.idDocument || !documents.proofOfAddress || !documents.selfie
+                          ? "Upload All Documents"
                           : "Submit for Verification"}
                       </button>
                     </div>

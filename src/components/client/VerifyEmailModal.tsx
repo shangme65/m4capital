@@ -164,35 +164,35 @@ export default function VerifyEmailModal({
                 transformStyle: "preserve-3d",
               }}
             >
-              {/* Outer glow layer */}
-              <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 via-blue-500 to-purple-600 rounded-3xl blur-lg opacity-40 dark:opacity-50 animate-pulse" />
+              {/* Outer glow layer - Green branding */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-primary-500 via-emerald-400 to-primary-500 rounded-3xl blur-lg opacity-30 dark:opacity-40 animate-pulse" />
 
               {/* Deep shadow layers for 3D effect */}
-              <div className="absolute inset-0 bg-black/20 dark:bg-black/40 rounded-3xl translate-y-4 blur-xl" />
-              <div className="absolute inset-0 bg-purple-900/20 dark:bg-purple-900/30 rounded-3xl translate-y-2 blur-md" />
+              <div className="absolute inset-0 bg-black/20 dark:bg-black/50 rounded-3xl translate-y-4 blur-xl" />
+              <div className="absolute inset-0 bg-primary-900/20 dark:bg-primary-900/30 rounded-3xl translate-y-2 blur-md" />
 
-              {/* Main card */}
+              {/* Main card - Dark theme */}
               <div
-                className="relative bg-white dark:bg-gray-900 rounded-2xl overflow-hidden border border-gray-200/50 dark:border-gray-700/50"
+                className="relative bg-gray-900 rounded-2xl overflow-hidden border border-gray-800/80"
                 style={{
                   boxShadow: `
-                    0 0 0 1px rgba(139, 92, 246, 0.1),
-                    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-                    0 10px 15px -3px rgba(0, 0, 0, 0.1),
-                    0 20px 25px -5px rgba(139, 92, 246, 0.15),
-                    0 25px 50px -12px rgba(59, 130, 246, 0.25),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.1)
+                    0 0 0 1px rgba(34, 197, 94, 0.1),
+                    0 4px 6px -1px rgba(0, 0, 0, 0.2),
+                    0 10px 15px -3px rgba(0, 0, 0, 0.2),
+                    0 20px 25px -5px rgba(34, 197, 94, 0.1),
+                    0 25px 50px -12px rgba(16, 185, 129, 0.15),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.05)
                   `,
                 }}
               >
-                {/* Gradient overlay at top */}
-                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-purple-500/10 via-blue-500/5 to-transparent dark:from-purple-500/20 dark:via-blue-500/10 pointer-events-none" />
+                {/* Gradient overlay at top - Green theme */}
+                <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-primary-500/10 via-emerald-500/5 to-transparent pointer-events-none" />
 
                 {/* Close button */}
                 <button
                   onClick={onClose}
                   aria-label="Close modal"
-                  className="absolute top-4 right-4 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors z-10 p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-300 transition-colors z-10 p-1 rounded-lg hover:bg-gray-800"
                 >
                   <svg
                     className="w-6 h-6"
@@ -211,10 +211,10 @@ export default function VerifyEmailModal({
 
                 {/* Header */}
                 <div className="px-4 pt-8 pb-6 text-center relative">
-                  {/* Icon with 3D effect */}
+                  {/* Icon with 3D effect - Green branding */}
                   <div className="relative inline-block mb-4">
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full blur-md opacity-50 scale-110" />
-                    <div className="relative w-16 h-16 bg-gradient-to-br from-purple-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg shadow-purple-500/30">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-emerald-400 rounded-full blur-md opacity-50 scale-110" />
+                    <div className="relative w-16 h-16 bg-gradient-to-br from-primary-500 to-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-primary-500/30">
                       <svg
                         className="w-8 h-8 text-white"
                         fill="none"
@@ -231,21 +231,21 @@ export default function VerifyEmailModal({
                     </div>
                   </div>
 
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                  <h2 className="text-3xl font-bold text-white mb-2">
                     Verify Your Email
                   </h2>
-                  <p className="text-gray-500 dark:text-gray-400">
+                  <p className="text-gray-400">
                     We sent a 6-digit code to
                   </p>
-                  <p className="text-gray-900 dark:text-white font-medium mt-1">
+                  <p className="text-white font-medium mt-1">
                     {email}
                   </p>
                 </div>
 
-                {/* Code Input */}
+                {/* Code Input - Dark themed with green accents */}
                 <div className="px-4 pb-8">
                   <div
-                    className="flex justify-center gap-2 mb-6"
+                    className="flex justify-center gap-3 mb-6"
                     onPaste={handlePaste}
                   >
                     {code.map((digit, index) => (
@@ -260,7 +260,7 @@ export default function VerifyEmailModal({
                         value={digit}
                         onChange={(e) => handleChange(index, e.target.value)}
                         onKeyDown={(e) => handleKeyDown(index, e)}
-                        className="w-12 h-14 text-center text-2xl font-bold bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 rounded-xl text-gray-900 dark:text-white focus:border-purple-500 dark:focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 focus:outline-none transition-all shadow-inner"
+                        className="w-12 h-14 text-center text-2xl font-bold bg-gray-800/80 border-2 border-gray-700 rounded-xl text-white placeholder-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 focus:bg-gray-800 focus:outline-none transition-all duration-200"
                         disabled={isLoading}
                         aria-label={`Verification code digit ${index + 1}`}
                       />
@@ -269,25 +269,25 @@ export default function VerifyEmailModal({
 
                   {/* Error Message */}
                   {error && (
-                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl text-red-600 dark:text-red-400 text-sm text-center">
+                    <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm text-center">
                       {error}
                     </div>
                   )}
 
                   {/* Success Message */}
                   {resendSuccess && (
-                    <div className="mb-4 p-3 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl text-green-600 dark:text-green-400 text-sm text-center">
+                    <div className="mb-4 p-3 bg-primary-500/10 border border-primary-500/20 rounded-xl text-primary-400 text-sm text-center">
                       Verification code sent! Check your email.
                     </div>
                   )}
 
-                  {/* Verify Button - 3D style */}
+                  {/* Verify Button - Green branding 3D style */}
                   <div className="relative group">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl blur opacity-50 group-hover:opacity-75 transition duration-200" />
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-primary-500 to-emerald-500 rounded-xl blur opacity-40 group-hover:opacity-60 transition duration-200" />
                     <button
                       onClick={() => handleVerify()}
                       disabled={isLoading || code.join("").length !== 6}
-                      className="relative w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-purple-500/25"
+                      className="relative w-full bg-gradient-to-r from-primary-500 to-emerald-500 hover:from-primary-600 hover:to-emerald-600 text-white font-semibold py-3.5 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary-500/25"
                     >
                       {isLoading ? (
                         <span className="flex items-center justify-center">
@@ -320,20 +320,20 @@ export default function VerifyEmailModal({
 
                   {/* Resend Code */}
                   <div className="text-center text-sm mt-4">
-                    <span className="text-gray-500 dark:text-gray-400">
+                    <span className="text-gray-400">
                       Didn&apos;t receive the code?{" "}
                     </span>
                     <button
                       onClick={handleResendCode}
                       disabled={isResending}
-                      className="text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      className="text-primary-400 hover:text-primary-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {isResending ? "Sending..." : "Resend"}
                     </button>
                   </div>
 
                   {/* Info */}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-4">
+                  <p className="text-xs text-gray-500 text-center mt-4">
                     The code expires in 15 minutes
                   </p>
                 </div>

@@ -68,7 +68,10 @@ export async function POST(req: Request) {
     });
 
     if (!emailResult.success) {
-      console.error("Failed to send verification email:", emailResult.error);
+      console.error(
+        "Failed to send verification email:",
+        "error" in emailResult ? emailResult.error : "Unknown error"
+      );
       return NextResponse.json(
         {
           success: false,
