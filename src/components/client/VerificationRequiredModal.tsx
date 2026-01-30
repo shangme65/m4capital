@@ -120,33 +120,33 @@ export default function VerificationRequiredModal({
             className="fixed inset-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md z-[10000] flex items-center justify-center"
           >
             <div
-              className={`w-full bg-gradient-to-br from-gray-800/98 to-gray-900/98 backdrop-blur-xl rounded-2xl p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(59,130,246,0.3)] border ${status.borderColor}`}
+              className={`w-full bg-gradient-to-br from-gray-800/98 to-gray-900/98 backdrop-blur-xl rounded-2xl p-4 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(59,130,246,0.3)] border ${status.borderColor}`}
             >
               {/* Close button */}
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                className="absolute top-3 right-3 text-gray-400 hover:text-white transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
 
               {/* Icon */}
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-center mb-4">
                 <div
-                  className={`w-20 h-20 rounded-full bg-gradient-to-br ${status.bgColor} flex items-center justify-center`}
+                  className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br ${status.bgColor} flex items-center justify-center`}
                 >
-                  <StatusIcon className={`w-10 h-10 ${status.iconColor}`} />
+                  <StatusIcon className={`w-8 h-8 sm:w-10 sm:h-10 ${status.iconColor}`} />
                 </div>
               </div>
 
               {/* Title */}
-              <h2 className="text-2xl font-bold text-white text-center mb-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-white text-center mb-2">
                 {status.title}
               </h2>
 
               {/* Action attempted */}
               {action && (
-                <p className="text-center text-gray-400 text-sm mb-4">
+                <p className="text-center text-gray-400 text-xs sm:text-sm mb-3">
                   You need to verify your account to{" "}
                   <span className="text-white font-medium">
                     {getActionText()}
@@ -155,16 +155,16 @@ export default function VerificationRequiredModal({
               )}
 
               {/* Description */}
-              <p className="text-gray-300 text-center text-sm leading-relaxed mb-6">
+              <p className="text-gray-300 text-center text-xs sm:text-sm leading-relaxed mb-4">
                 {status.description}
               </p>
 
               {/* Features list */}
-              <div className="bg-gray-800/50 rounded-xl p-4 mb-6 border border-gray-700/50">
-                <p className="text-gray-400 text-xs font-medium mb-3 uppercase tracking-wider">
+              <div className="bg-gray-800/50 rounded-xl p-3 sm:p-4 mb-4 border border-gray-700/50">
+                <p className="text-gray-400 text-[10px] sm:text-xs font-medium mb-2 uppercase tracking-wider">
                   Verification unlocks:
                 </p>
-                <div className="space-y-2">
+                <div className="space-y-1.5 sm:space-y-2">
                   {[
                     "Crypto deposits & withdrawals",
                     "P2P transfers to users",
@@ -173,9 +173,9 @@ export default function VerificationRequiredModal({
                   ].map((feature, index) => (
                     <div
                       key={index}
-                      className="flex items-center gap-2 text-sm text-gray-300"
+                      className="flex items-center gap-2 text-xs sm:text-sm text-gray-300"
                     >
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
                       {feature}
                     </div>
                   ))}
@@ -183,20 +183,20 @@ export default function VerificationRequiredModal({
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 px-4 py-3 bg-gray-700/50 text-gray-300 font-medium rounded-xl hover:bg-gray-600/50 transition-all border border-gray-600/50"
+                  className="flex-1 px-3 py-2.5 sm:px-4 sm:py-3 bg-gray-700/50 text-gray-300 font-medium text-sm sm:text-base rounded-xl hover:bg-gray-600/50 transition-all border border-gray-600/50"
                 >
                   Cancel
                 </button>
                 {status.canSubmit && (
                   <button
                     onClick={handleVerify}
-                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-[0_4px_16px_rgba(59,130,246,0.4)]"
+                    className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 px-3 py-2.5 sm:px-4 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold text-sm sm:text-base rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-[0_4px_16px_rgba(59,130,246,0.4)]"
                   >
                     Verify Now
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </button>
                 )}
               </div>

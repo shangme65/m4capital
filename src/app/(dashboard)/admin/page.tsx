@@ -611,13 +611,13 @@ const AdminDashboard = () => {
     "total" | "admin" | "staff" | "regular" | "sessions" | null
   >(null);
   const [showActivityModal, setShowActivityModal] = useState(false);
-  const [showDatabaseModal, setShowDatabaseModal] = useState(false);
+  const [showSignalModal, setShowSignalModal] = useState(false);
+  const [globalSignalStrength, setGlobalSignalStrength] = useState(75);
+  const [isAutoMode, setIsAutoMode] = useState(false);
+  const [isStrongMode, setIsStrongMode] = useState(false);
+  const [isModerateMode, setIsModerateMode] = useState(false);
+  const [isWeakMode, setIsWeakMode] = useState(false);
   const [activityLogs, setActivityLogs] = useState<any[]>([]);
-  const [databaseStats, setDatabaseStats] = useState({
-    size: "Loading...",
-    totalRecords: 0,
-    lastBackup: "Loading...",
-  });
 
   // New states for deposit type selection
   const [depositType, setDepositType] = useState<"fiat" | "crypto">("fiat");
@@ -724,9 +724,9 @@ const AdminDashboard = () => {
       } else if (showActivityModal) {
         e.preventDefault();
         setShowActivityModal(false);
-      } else if (showDatabaseModal) {
+      } else if (showSignalModal) {
         e.preventDefault();
-        setShowDatabaseModal(false);
+        setShowSignalModal(false);
       } else if (showUserStatsModal) {
         e.preventDefault();
         setShowUserStatsModal(null);
@@ -737,7 +737,7 @@ const AdminDashboard = () => {
     if (
       showPaymentModal ||
       showActivityModal ||
-      showDatabaseModal ||
+      showSignalModal ||
       showUserStatsModal
     ) {
       window.history.pushState({ modalOpen: true }, "");
@@ -750,33 +750,9 @@ const AdminDashboard = () => {
   }, [
     showPaymentModal,
     showActivityModal,
-    showDatabaseModal,
+    showSignalModal,
     showUserStatsModal,
   ]);
-
-  // Fetch database stats on mount and when modal opens
-  useEffect(() => {
-    if (showDatabaseModal) {
-      const fetchDatabaseStats = async () => {
-        try {
-          const response = await fetch("/api/admin/database-stats");
-          const data = await response.json();
-          setDatabaseStats({
-            size: data.size || "0 KB",
-            totalRecords: data.totalRecords || 0,
-            lastBackup: data.lastBackup || "Not available",
-          });
-        } catch (error) {
-          console.error("Error fetching database stats:", error);
-        }
-      };
-
-      fetchDatabaseStats();
-      // Refresh every 30 seconds for real-time updates
-      const interval = setInterval(fetchDatabaseStats, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [showDatabaseModal]);
 
   // Handle back button for mobile (closes modals)
   useEffect(() => {
@@ -792,8 +768,8 @@ const AdminDashboard = () => {
         setShowUserStatsModal(null);
       } else if (showActivityModal) {
         setShowActivityModal(false);
-      } else if (showDatabaseModal) {
-        setShowDatabaseModal(false);
+      } else if (showSignalModal) {
+        setShowSignalModal(false);
       }
     };
 
@@ -804,7 +780,7 @@ const AdminDashboard = () => {
       showAssetWarning ||
       showUserStatsModal ||
       showActivityModal ||
-      showDatabaseModal
+      showSignalModal
     ) {
       window.history.pushState({ modal: true }, "");
     }
@@ -817,7 +793,7 @@ const AdminDashboard = () => {
     showAssetWarning,
     showUserStatsModal,
     showActivityModal,
-    showDatabaseModal,
+    showSignalModal,
   ]);
 
   // Auto-hide admin mode notification after 2 seconds
@@ -843,6 +819,83 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchSignalStrength = async () => {
+    try {
+      const res = await fetch("/api/admin/signal-strength");
+      if (res.ok) {
+        const data = await res.json();
+        setGlobalSignalStrength(data.signalStrength);
+      }
+    } catch (error) {
+      console.error("Failed to fetch signal strength:", error);
+    }
+  };
+
+  const updateSignalStrength = async (strength: number) => {
+    try {
+      const res = await fetch("/api/admin/signal-strength", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ signalStrength: strength }),
+      });
+      
+      if (res.ok) {
+        showPopupNotification(
+          `Signal strength set to ${strength}%`,
+          "success"
+        );
+        setShowSignalModal(false);
+      } else {
+        showPopupNotification("Failed to update signal strength", "error");
+      }
+    } catch (error) {
+      console.error("Failed to update signal strength:", error);
+      showPopupNotification("Error updating signal strength", "error");
+    }
+  };
+
+  // Auto-fluctuation effect
+  useEffect(() => {
+    if (!isAutoMode && !isStrongMode && !isModerateMode && !isWeakMode) return;
+
+    const fluctuateSignal = async () => {
+      let min, max;
+      
+      if (isWeakMode) {
+        min = 45;
+        max = 68;
+      } else if (isModerateMode) {
+        min = 65;
+        max = 78;
+      } else if (isStrongMode) {
+        min = 88;
+        max = 95;
+      } else {
+        min = 73;
+        max = 90;
+      }
+      
+      const randomStrength = Math.floor(Math.random() * (max - min + 1)) + min;
+      
+      setGlobalSignalStrength(randomStrength);
+      
+      // Update via API
+      try {
+        await fetch("/api/admin/signal-strength", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ signalStrength: randomStrength }),
+        });
+      } catch (error) {
+        console.error("Auto-mode update failed:", error);
+      }
+    };
+
+    // Fluctuate every 5 seconds
+    const interval = setInterval(fluctuateSignal, 5000);
+    return () => clearInterval(interval);
+  }, [isAutoMode, isStrongMode, isModerateMode, isWeakMode]);
+
   useEffect(() => {
     // Fetch KYC pending count
     const fetchKycCount = async () => {
@@ -860,6 +913,7 @@ const AdminDashboard = () => {
     if (session?.user?.role === "ADMIN") {
       fetchKycCount();
       fetchSystemStats();
+      fetchSignalStrength();
       // Also fetch deleted users count for the quick action badge
       fetchDeletedUsers();
 
@@ -1426,8 +1480,7 @@ const AdminDashboard = () => {
     },
     { id: "analytics", name: "Analytics", icon: <TrendingUp size={20} /> },
     { id: "system", name: "System Settings", icon: <Settings size={20} /> },
-    { id: "reports", name: "Reports", icon: <FileText size={20} /> },
-    { id: "database", name: "Database", icon: <Database size={20} /> },
+    { id: "signal", name: "Signal Strength", icon: <Activity size={20} /> },
     { id: "activity", name: "Activity Logs", icon: <Activity size={20} /> },
   ];
 
@@ -1435,7 +1488,7 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white px-3 py-4 sm:p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
       {/* Popup Notification */}
       {showNotification && (
-        <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
+        <div className="fixed top-4 right-4 z-[9999] animate-slide-in-right">
           <div
             className={`p-4 rounded-lg border shadow-lg ${
               notificationType === "success"
@@ -1467,7 +1520,7 @@ const AdminDashboard = () => {
 
       {/* Move logged in notification to popup */}
       {session?.user?.role === "ADMIN" && showAdminMode && (
-        <div className="fixed top-4 right-4 z-40 animate-slide-in">
+        <div className="fixed top-4 right-4 z-[9998] animate-slide-in">
           <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-3 backdrop-blur-sm">
             <div className="flex items-center space-x-2">
               <Shield className="text-green-400" size={16} />
@@ -1933,10 +1986,10 @@ const AdminDashboard = () => {
                 </div>
               </button>
 
-              {/* Reports */}
+              {/* Signal Strength */}
               <button
-                onClick={() => setActiveTab("reports")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(234,179,8,0.25),0_0_30px_rgba(234,179,8,0.4)]"
+                onClick={() => setShowSignalModal(true)}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(34,197,94,0.25),0_0_30px_rgba(34,197,94,0.4)]"
                 style={{
                   background:
                     "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
@@ -1947,80 +2000,28 @@ const AdminDashboard = () => {
               >
                 <div className="flex items-center gap-3">
                   <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500 to-yellow-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                     style={{
                       boxShadow:
-                        "0 4px 16px #eab30840, 0 2px 8px #eab30860, inset 0 1px 2px rgba(255,255,255,0.2)",
+                        "0 4px 16px #22c55e40, 0 2px 8px #22c55e60, inset 0 1px 2px rgba(255,255,255,0.2)",
                     }}
                   >
                     <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
-                    <FileText
+                    <Activity
                       className="relative z-10 drop-shadow-lg text-white"
                       size={20}
                     />
                   </div>
                   <div className="flex flex-col text-left">
                     <span className="text-white font-bold text-sm">
-                      Reports
+                      Signal Strength
                     </span>
                     <span className="text-gray-400 text-xs">
-                      Generate reports
+                      Control platform signal
                     </span>
                   </div>
                 </div>
-                <div className="text-yellow-400">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </button>
-
-              {/* Database */}
-              <button
-                onClick={() => setShowDatabaseModal(true)}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(236,72,153,0.25),0_0_30px_rgba(236,72,153,0.4)]"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
-                    style={{
-                      boxShadow:
-                        "0 4px 16px #ec489940, 0 2px 8px #ec489960, inset 0 1px 2px rgba(255,255,255,0.2)",
-                    }}
-                  >
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
-                    <Database
-                      className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
-                    />
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
-                      Database
-                    </span>
-                    <span className="text-gray-400 text-xs">
-                      Manage database
-                    </span>
-                  </div>
-                </div>
-                <div className="text-pink-400">
+                <div className="text-green-400">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -3284,113 +3285,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Reports Tab */}
-      {activeTab === "reports" && (
-        <div className="space-y-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-              <FileText className="text-blue-400" />
-              <span>System Reports</span>
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button className="p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <DollarSign className="text-green-400" size={24} />
-                  <div>
-                    <p className="font-medium">Financial Report</p>
-                    <p className="text-sm text-gray-400">
-                      Revenue and transactions
-                    </p>
-                  </div>
-                </div>
-              </button>
-              <button className="p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <Users className="text-blue-400" size={24} />
-                  <div>
-                    <p className="font-medium">User Activity</p>
-                    <p className="text-sm text-gray-400">
-                      Login and engagement
-                    </p>
-                  </div>
-                </div>
-              </button>
-              <button className="p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <Shield className="text-orange-400" size={24} />
-                  <div>
-                    <p className="font-medium">Security Audit</p>
-                    <p className="text-sm text-gray-400">
-                      Access logs and alerts
-                    </p>
-                  </div>
-                </div>
-              </button>
-              <button className="p-4 bg-gray-700/30 rounded-lg hover:bg-gray-700/50 transition-colors text-left">
-                <div className="flex items-center space-x-3">
-                  <TrendingUp className="text-purple-400" size={24} />
-                  <div>
-                    <p className="font-medium">Performance</p>
-                    <p className="text-sm text-gray-400">System metrics</p>
-                  </div>
-                </div>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Database Tab */}
-      {activeTab === "database" && (
-        <div className="space-y-4 sm:space-y-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
-            <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
-              <Database className="text-green-400" size={20} />
-              <span>Database Management</span>
-            </h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                <div className="bg-gray-700/30 rounded-lg p-3 sm:p-4">
-                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">
-                    Database Size
-                  </h4>
-                  <p className="text-lg sm:text-2xl font-bold text-green-400">
-                    2.3 GB
-                  </p>
-                </div>
-                <div className="bg-gray-700/30 rounded-lg p-3 sm:p-4">
-                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">
-                    Total Records
-                  </h4>
-                  <p className="text-lg sm:text-2xl font-bold text-blue-400">
-                    15,432
-                  </p>
-                </div>
-                <div className="bg-gray-700/30 rounded-lg p-3 sm:p-4">
-                  <h4 className="font-medium mb-1 sm:mb-2 text-sm sm:text-base">
-                    Last Backup
-                  </h4>
-                  <p className="text-lg sm:text-2xl font-bold text-purple-400">
-                    2h ago
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-row space-x-2 sm:space-x-4">
-                <button className="flex-1 bg-blue-500 hover:bg-blue-600 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-base">
-                  Create Backup
-                </button>
-                <button className="flex-1 bg-orange-500 hover:bg-orange-600 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-base">
-                  Optimize DB
-                </button>
-                <button className="flex-1 bg-red-500 hover:bg-red-600 text-white px-2 sm:px-4 py-2 rounded-lg transition-colors text-xs sm:text-base">
-                  Clear Logs
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Activity Logs Tab */}
       {activeTab === "activity" && (
         <div className="space-y-6">
@@ -3966,161 +3860,201 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Database Management Modal */}
-      {showDatabaseModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      {/* Signal Strength Control Modal */}
+      {showSignalModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-gray-800 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+            className="bg-gray-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl"
           >
-            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Database className="text-pink-400" size={24} />
-                Database Management
+            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
+              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <Activity className="text-green-400" size={18} />
+                <span className="text-sm sm:text-base">Platform Signal</span>
               </h2>
               <button
-                onClick={() => setShowDatabaseModal(false)}
-                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
+                onClick={() => setShowSignalModal(false)}
+                className="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-gray-700 rounded-lg"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {/* Database Stats */}
-              <div className="bg-gray-700/30 border border-gray-600/30 rounded-xl p-6 mb-6">
-                <h3 className="text-lg font-semibold text-white mb-4">
-                  Database Statistics
+            <div className="p-4 overflow-y-auto max-h-[calc(90vh-60px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {/* Current Signal Display */}
+              <div className="bg-gray-700/30 border border-gray-600/30 rounded-xl p-4 mb-4">
+                <h3 className="text-sm font-semibold text-white mb-3">
+                  Current Signal Strength
                 </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <p className="text-xs text-gray-400 mb-1">Database Size</p>
-                    <p className="text-xl font-bold text-white">
-                      {databaseStats.size}
-                    </p>
+                
+                {/* Signal Visualization */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-gray-400">
+                      {globalSignalStrength >= 75 ? "Strong" : globalSignalStrength >= 50 ? "Moderate" : "Weak"}
+                    </span>
+                    <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
+                      {globalSignalStrength}%
+                    </span>
                   </div>
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <p className="text-xs text-gray-400 mb-1">Total Records</p>
-                    <p className="text-xl font-bold text-white">
-                      {databaseStats.totalRecords.toLocaleString()}
-                    </p>
+                  
+                  <div className="relative h-3 bg-gray-700/50 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        globalSignalStrength >= 75
+                          ? "bg-gradient-to-r from-green-500 to-green-600"
+                          : globalSignalStrength >= 50
+                          ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                          : "bg-gradient-to-r from-red-500 to-red-600"
+                      }`}
+                      style={{ width: `${globalSignalStrength}%` }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+                    </div>
                   </div>
-                  <div className="bg-gray-800/50 rounded-lg p-4">
-                    <p className="text-xs text-gray-400 mb-1">Last Backup</p>
-                    <p className="text-sm font-medium text-white">
-                      {databaseStats.lastBackup}
+                </div>
+
+                {/* Signal Level Description */}
+                <div className="bg-gray-800/50 rounded-lg p-3">
+                  <p className="text-xs text-gray-300">
+                    {globalSignalStrength >= 75 
+                      ? "🟢 Strong signal - Optimal trading conditions for all users" 
+                      : globalSignalStrength >= 50 
+                      ? "🟡 Moderate signal - Good trading conditions with some variations" 
+                      : "🔴 Weak signal - Conservative trading conditions"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Signal Control Slider */}
+              <div className="bg-gray-700/30 border border-gray-600/30 rounded-xl p-4 mb-4">
+                <h3 className="text-sm font-semibold text-white mb-3">
+                  Adjust Signal Strength
+                </h3>
+                
+                <div className="space-y-3">
+                  <input
+                    type="range"
+                    min="30"
+                    max="95"
+                    value={globalSignalStrength}
+                    onChange={(e) => {
+                      setGlobalSignalStrength(Number(e.target.value));
+                      setIsAutoMode(false); // Disable auto mode when manually adjusted
+                    }}
+                    disabled={isAutoMode}
+                    className="w-full h-2.5 bg-gray-600 rounded-lg appearance-none cursor-pointer slider disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: `linear-gradient(to right, 
+                        ${globalSignalStrength >= 75 ? "#22c55e" : globalSignalStrength >= 50 ? "#eab308" : "#ef4444"} 0%, 
+                        ${globalSignalStrength >= 75 ? "#22c55e" : globalSignalStrength >= 50 ? "#eab308" : "#ef4444"} ${globalSignalStrength}%, 
+                        #4b5563 ${globalSignalStrength}%, 
+                        #4b5563 100%)`
+                    }}
+                  />
+                  
+                  {/* Quick Preset Buttons */}
+                  <div className="grid grid-cols-4 gap-2">
+                    <button
+                      onClick={() => {
+                        setIsAutoMode(false);
+                        setIsStrongMode(false);
+                        setIsModerateMode(false);
+                        setIsWeakMode(!isWeakMode);
+                      }}
+                      className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
+                        isWeakMode
+                          ? "bg-red-500/30 border-red-500/60 text-red-300"
+                          : "bg-red-500/20 border-red-500/40 hover:bg-red-500/30 text-red-400"
+                      }`}
+                    >
+                      <div>{isWeakMode ? "Weak ✓" : "Weak"}</div>
+                      <div className="text-[9px]">(45-68%)</div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsAutoMode(false);
+                        setIsStrongMode(false);
+                        setIsWeakMode(false);
+                        setIsModerateMode(!isModerateMode);
+                      }}
+                      className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
+                        isModerateMode
+                          ? "bg-yellow-500/30 border-yellow-500/60 text-yellow-300"
+                          : "bg-yellow-500/20 border-yellow-500/40 hover:bg-yellow-500/30 text-yellow-400"
+                      }`}
+                    >
+                      <div>{isModerateMode ? "Moderate ✓" : "Moderate"}</div>
+                      <div className="text-[9px]">(65-78%)</div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsAutoMode(false);
+                        setIsModerateMode(false);
+                        setIsWeakMode(false);
+                        setIsStrongMode(!isStrongMode);
+                      }}
+                      className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
+                        isStrongMode
+                          ? "bg-green-500/30 border-green-500/60 text-green-300"
+                          : "bg-green-500/20 border-green-500/40 hover:bg-green-500/30 text-green-400"
+                      }`}
+                    >
+                      <div>{isStrongMode ? "Strong ✓" : "Strong"}</div>
+                      <div className="text-[9px]">(88-95%)</div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsStrongMode(false);
+                        setIsModerateMode(false);
+                        setIsWeakMode(false);
+                        setIsAutoMode(!isAutoMode);
+                      }}
+                      className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
+                        isAutoMode
+                          ? "bg-purple-500/30 border-purple-500/60 text-purple-300"
+                          : "bg-purple-500/20 border-purple-500/40 hover:bg-purple-500/30 text-purple-400"
+                      }`}
+                    >
+                      <div>{isAutoMode ? "Auto ✓" : "Auto"}</div>
+                      <div className="text-[9px]">(73-90%)</div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Impact Information */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 mb-4">
+                <div className="flex items-start space-x-2">
+                  <AlertCircle className="text-blue-400 flex-shrink-0 mt-0.5" size={16} />
+                  <div className="text-xs text-blue-300">
+                    <p className="font-semibold mb-1">Platform-wide Signal Control</p>
+                    <p className="text-blue-200/80">
+                      Adjusting the signal strength affects all user dashboards and trading indicators. 
+                      Changes are applied immediately and synchronized across all active sessions.
                     </p>
                   </div>
                 </div>
               </div>
 
-              {/* Database Actions */}
-              <div className="space-y-3">
+              {/* Apply Button */}
+              <div className="flex gap-2">
                 <button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(
-                        "/api/admin/database-backup",
-                        {
-                          method: "POST",
-                        }
-                      );
-                      const data = await response.json();
-                      if (data.success) {
-                        showPopupNotification(
-                          "Database backup initiated successfully",
-                          "success"
-                        );
-                      } else {
-                        showPopupNotification(
-                          "Failed to create backup",
-                          "error"
-                        );
-                      }
-                    } catch (error) {
-                      showPopupNotification("Error creating backup", "error");
-                    }
-                  }}
-                  className="w-full bg-blue-500/20 border-2 border-blue-500/40 hover:bg-blue-500/30 hover:border-blue-500/60 text-blue-400 py-4 px-4 rounded-xl transition-all font-semibold flex items-center justify-center space-x-3"
+                  onClick={() => updateSignalStrength(globalSignalStrength)}
+                  className="flex-1 bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-2.5 px-3 rounded-xl transition-all font-semibold text-sm flex items-center justify-center gap-2"
                 >
-                  <Database size={20} />
-                  <span>Create Database Backup</span>
+                  <Check size={16} />
+                  <span>Apply Changes</span>
                 </button>
-
+                
                 <button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(
-                        "/api/admin/database-optimize",
-                        {
-                          method: "POST",
-                        }
-                      );
-                      const data = await response.json();
-                      if (data.success) {
-                        showPopupNotification(
-                          "Database optimized successfully",
-                          "success"
-                        );
-                      } else {
-                        showPopupNotification(
-                          "Failed to optimize database",
-                          "error"
-                        );
-                      }
-                    } catch (error) {
-                      showPopupNotification(
-                        "Error optimizing database",
-                        "error"
-                      );
-                    }
-                  }}
-                  className="w-full bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-4 px-4 rounded-xl transition-all font-semibold flex items-center justify-center space-x-3"
+                  onClick={() => setShowSignalModal(false)}
+                  className="bg-gray-600 hover:bg-gray-500 text-white py-2.5 px-4 rounded-xl transition-all font-semibold text-sm"
                 >
-                  <Activity size={20} />
-                  <span>Optimize Database</span>
+                  Cancel
                 </button>
-
-                <button
-                  onClick={async () => {
-                    if (
-                      !confirm(
-                        "Are you sure you want to clear old logs? This will delete transaction logs older than 90 days and failed deposits older than 30 days."
-                      )
-                    ) {
-                      return;
-                    }
-                    try {
-                      const response = await fetch(
-                        "/api/admin/database-clear-logs",
-                        {
-                          method: "POST",
-                        }
-                      );
-                      const data = await response.json();
-                      if (data.success) {
-                        showPopupNotification(
-                          `Cleared ${data.deleted.transactions} old transactions and ${data.deleted.deposits} failed deposits`,
-                          "success"
-                        );
-                      } else {
-                        showPopupNotification("Failed to clear logs", "error");
-                      }
-                    } catch (error) {
-                      showPopupNotification("Error clearing logs", "error");
-                    }
-                  }}
-                  className="w-full bg-red-500/20 border-2 border-red-500/40 hover:bg-red-500/30 hover:border-red-500/60 text-red-400 py-4 px-4 rounded-xl transition-all font-semibold flex items-center justify-center space-x-3"
-                >
-                  <X size={20} />
-                  <span>Clear Old Logs</span>
-                </button>
-              </div>
-
-              <div className="mt-6 text-center text-xs text-gray-500">
-                Stats auto-refresh every 30 seconds
               </div>
             </div>
           </motion.div>

@@ -25,6 +25,7 @@ import { getCryptoMetadata } from "@/lib/crypto-constants";
 import { useVerificationGate } from "@/hooks/useVerificationGate";
 import VerificationRequiredModal from "@/components/client/VerificationRequiredModal";
 import PendingDepositsWidget from "@/components/client/PendingDepositsWidget";
+import SignalStrength from "@/components/client/SignalStrength";
 import {
   BalanceCardSkeleton,
   PortfolioGridSkeleton,
@@ -1018,6 +1019,9 @@ function DashboardContent() {
           </div>
         </div>
       </div>
+
+      {/* Signal Strength Bar */}
+      <SignalStrength className="mb-6" />
 
       {/* Pending Deposits Widget */}
       <PendingDepositsWidget />
