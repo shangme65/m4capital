@@ -321,7 +321,7 @@ const paymentMethods: PaymentMethod[] = [
 ];
 
 // Transaction History Component
-const TransactionHistoryView = () => {
+const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) => void }) => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -399,6 +399,15 @@ const TransactionHistoryView = () => {
 
   return (
     <div className="space-y-4">
+      {/* Back Button */}
+      <button
+        onClick={() => setActiveTab("dashboard")}
+        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg"
+      >
+        <ArrowLeft size={20} />
+        <span className="text-sm font-medium">Back to Dashboard</span>
+      </button>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
@@ -895,6 +904,43 @@ const AdminDashboard = () => {
     const interval = setInterval(fluctuateSignal, 5000);
     return () => clearInterval(interval);
   }, [isAutoMode, isStrongMode, isModerateMode, isWeakMode]);
+
+  // Detect active mode when modal opens
+  useEffect(() => {
+    if (showSignalModal) {
+      // Determine which mode is active based on current signal strength
+      const currentStrength = globalSignalStrength;
+      
+      // Check if strength is within any of the fluctuation ranges
+      if (currentStrength >= 45 && currentStrength <= 68) {
+        setIsWeakMode(true);
+        setIsModerateMode(false);
+        setIsStrongMode(false);
+        setIsAutoMode(false);
+      } else if (currentStrength >= 65 && currentStrength <= 78) {
+        setIsWeakMode(false);
+        setIsModerateMode(true);
+        setIsStrongMode(false);
+        setIsAutoMode(false);
+      } else if (currentStrength >= 88 && currentStrength <= 95) {
+        setIsWeakMode(false);
+        setIsModerateMode(false);
+        setIsStrongMode(true);
+        setIsAutoMode(false);
+      } else if (currentStrength >= 73 && currentStrength <= 90) {
+        setIsWeakMode(false);
+        setIsModerateMode(false);
+        setIsStrongMode(false);
+        setIsAutoMode(true);
+      } else {
+        // Not in any auto mode range - all false
+        setIsWeakMode(false);
+        setIsModerateMode(false);
+        setIsStrongMode(false);
+        setIsAutoMode(false);
+      }
+    }
+  }, [showSignalModal, globalSignalStrength]);
 
   useEffect(() => {
     // Fetch KYC pending count
@@ -1472,14 +1518,12 @@ const AdminDashboard = () => {
     { id: "users", name: "User Management", icon: <Users size={20} /> },
     { id: "bin", name: "Deleted Users", icon: <Trash2 size={20} /> },
     { id: "payments", name: "Manual Payments", icon: <CreditCard size={20} /> },
-    { id: "notifications", name: "Notifications", icon: <Bell size={20} /> },
     {
       id: "transactions",
       name: "Transaction History",
       icon: <History size={20} />,
     },
     { id: "analytics", name: "Analytics", icon: <TrendingUp size={20} /> },
-    { id: "system", name: "System Settings", icon: <Settings size={20} /> },
     { id: "signal", name: "Signal Strength", icon: <Activity size={20} /> },
     { id: "activity", name: "Activity Logs", icon: <Activity size={20} /> },
   ];
@@ -1830,58 +1874,6 @@ const AdminDashboard = () => {
                 </div>
               </button>
 
-              {/* Send Notifications */}
-              <button
-                onClick={() => setActiveTab("notifications")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(168,85,247,0.25),0_0_30px_rgba(168,85,247,0.4)]"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
-                    style={{
-                      boxShadow:
-                        "0 4px 16px #a855f740, 0 2px 8px #a855f760, inset 0 1px 2px rgba(255,255,255,0.2)",
-                    }}
-                  >
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
-                    <Bell
-                      className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
-                    />
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
-                      Send Notifications
-                    </span>
-                    <span className="text-gray-400 text-xs">
-                      Broadcast to users
-                    </span>
-                  </div>
-                </div>
-                <div className="text-purple-400">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </button>
-
               {/* Transaction History */}
               <button
                 onClick={() => setActiveTab("transactions")}
@@ -1918,58 +1910,6 @@ const AdminDashboard = () => {
                   </div>
                 </div>
                 <div className="text-indigo-400">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </button>
-
-              {/* System Settings */}
-              <button
-                onClick={() => setActiveTab("system")}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(107,114,128,0.25),0_0_30px_rgba(107,114,128,0.4)]"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-500 to-gray-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
-                    style={{
-                      boxShadow:
-                        "0 4px 16px #6b728040, 0 2px 8px #6b728060, inset 0 1px 2px rgba(255,255,255,0.2)",
-                    }}
-                  >
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
-                    <Settings
-                      className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
-                    />
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
-                      System Settings
-                    </span>
-                    <span className="text-gray-400 text-xs">
-                      Configure platform
-                    </span>
-                  </div>
-                </div>
-                <div className="text-gray-400">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -3195,7 +3135,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Transaction History Tab */}
-      {activeTab === "transactions" && <TransactionHistoryView />}
+      {activeTab === "transactions" && <TransactionHistoryView setActiveTab={setActiveTab} />}
 
       {/* Analytics Tab */}
       {activeTab === "analytics" && (
@@ -3233,58 +3173,6 @@ const AdminDashboard = () => {
       )}
 
       {/* System Settings Tab */}
-      {activeTab === "system" && (
-        <div className="space-y-4 sm:space-y-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
-            <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
-              <Settings className="text-gray-400" size={20} />
-              <span>System Configuration</span>
-            </h3>
-            <div className="space-y-3 sm:space-y-4">
-              <div className="flex items-center justify-between p-2 sm:p-3 bg-gray-700/30 rounded-lg">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm sm:text-base">
-                    Maintenance Mode
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-400">
-                    Temporarily disable user access
-                  </p>
-                </div>
-                <button className="bg-red-500/20 text-red-400 px-2 sm:px-3 py-1 rounded border border-red-500/30 text-xs sm:text-sm whitespace-nowrap ml-2">
-                  Disabled
-                </button>
-              </div>
-              <div className="flex items-center justify-between p-2 sm:p-3 bg-gray-700/30 rounded-lg">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm sm:text-base">
-                    Auto Backups
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-400">
-                    Daily database backups
-                  </p>
-                </div>
-                <button className="bg-green-500/20 text-green-400 px-2 sm:px-3 py-1 rounded border border-green-500/30 text-xs sm:text-sm whitespace-nowrap ml-2">
-                  Enabled
-                </button>
-              </div>
-              <div className="flex items-center justify-between p-2 sm:p-3 bg-gray-700/30 rounded-lg">
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm sm:text-base">
-                    Email Notifications
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-400">
-                    System alerts and updates
-                  </p>
-                </div>
-                <button className="bg-green-500/20 text-green-400 px-2 sm:px-3 py-1 rounded border border-green-500/30 text-xs sm:text-sm whitespace-nowrap ml-2">
-                  Enabled
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Activity Logs Tab */}
       {activeTab === "activity" && (
         <div className="space-y-6">
@@ -3354,53 +3242,6 @@ const AdminDashboard = () => {
       )}
 
       {/* Notifications Tab */}
-      {activeTab === "notifications" && (
-        <div className="space-y-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-              <Bell className="text-yellow-400" />
-              <span>Send Notifications</span>
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Notification Type
-                </label>
-                <select className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white">
-                  <option value="info">Information</option>
-                  <option value="warning">Warning</option>
-                  <option value="success">Success</option>
-                  <option value="error">Error</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Recipients
-                </label>
-                <select className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white">
-                  <option value="all">All Users</option>
-                  <option value="admins">Admin Users Only</option>
-                  <option value="users">Regular Users Only</option>
-                  <option value="specific">Specific User</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Message
-                </label>
-                <textarea
-                  className="w-full bg-gray-700 border border-gray-600 rounded-lg p-3 text-white h-24 resize-none"
-                  placeholder="Enter notification message..."
-                />
-              </div>
-              <button className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg transition-colors">
-                Send Notification
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Edit User Role Modal - Responsive Web UI */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">

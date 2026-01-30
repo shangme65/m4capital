@@ -1445,11 +1445,11 @@ function DashboardContent() {
                     if (flag) {
                       return (
                         <div
-                          className="inline-flex items-center justify-center rounded-full overflow-hidden flex-shrink-0"
+                          className="inline-flex items-center justify-center rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-600 to-gray-700 shadow-md"
                           style={{
                             width: "24px",
                             height: "24px",
-                            fontSize: "18px",
+                            fontSize: "16px",
                             lineHeight: "1",
                           }}
                         >
