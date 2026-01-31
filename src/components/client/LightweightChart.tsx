@@ -74,16 +74,19 @@ function LightweightChart({
       toolbar_bg: "#0f172a",
       enable_publishing: false,
       hide_top_toolbar: false,
-      hide_legend: false,
+      hide_legend: true,
       save_image: false,
       hide_volume: false,
       allow_symbol_change: false,
+      hide_symbol_search_button: true,
       backgroundColor: "#0f172a",
       autosize: true,
       withdateranges: true,
       details: false,
       hotlist: false,
       calendar: false,
+      hide_side_toolbar: true,
+      studies: [],
       overrides: {
         "paneProperties.background": "#0f172a",
         "paneProperties.backgroundType": "solid",
@@ -104,8 +107,16 @@ function LightweightChart({
     const createWidget = () => {
       // @ts-expect-error - TradingView is loaded globally
       if (typeof TradingView !== "undefined" && widgetContainer) {
-        // @ts-expect-error - TradingView widget constructor
-        new TradingView.widget(widgetConfig);
+        try {
+          // @ts-expect-error - TradingView widget constructor
+          new TradingView.widget(widgetConfig);
+          setIsLoading(false);
+        } catch (error) {
+          console.error("Failed to create TradingView widget:", error);
+          setIsLoading(false);
+        }
+      } else {
+        console.warn("TradingView library not available");
         setIsLoading(false);
       }
     };
@@ -116,20 +127,41 @@ function LightweightChart({
     );
 
     if (existingScript) {
-      // Script already loaded, just create widget
-      createWidget();
+      // Script already loaded, check if TradingView is available
+      if (typeof window !== "undefined" && (window as any).TradingView) {
+        createWidget();
+      } else {
+        // Script loaded but TradingView not available yet, wait a bit
+        setTimeout(() => {
+          if ((window as any).TradingView) {
+            createWidget();
+          } else {
+            console.error("TradingView script loaded but library not available");
+            setIsLoading(false);
+          }
+        }, 1000);
+      }
     } else {
       const script = document.createElement("script");
       script.src = "https://s3.tradingview.com/tv.js";
       script.async = true;
       script.onload = () => {
-        createWidget();
+        // Wait a bit for TradingView to initialize
+        setTimeout(() => {
+          createWidget();
+        }, 100);
       };
-      script.onerror = () => {
-        console.error("Failed to load TradingView widget script");
+      script.onerror = (error) => {
+        console.error("Failed to load TradingView widget script:", error);
         setIsLoading(false);
       };
-      document.head.appendChild(script);
+      
+      try {
+        document.head.appendChild(script);
+      } catch (error) {
+        console.error("Failed to append TradingView script:", error);
+        setIsLoading(false);
+      }
     }
 
     return () => {
@@ -154,7 +186,7 @@ function LightweightChart({
 
       {/* Loading overlay */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm rounded-xl">
+        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm rounded-xl" style={{ zIndex: 10000 }}>
           <div className="text-center">
             <div className="w-10 h-10 border-3 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             <div className="text-sm text-gray-400">Loading chart...</div>

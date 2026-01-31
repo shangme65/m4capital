@@ -100,23 +100,32 @@ export default function AnalyticsPage() {
 
   return (
     <div className="text-white">
+      {/* Admin Control Panel Header */}
+      <div className="mb-2">
+        <h2 className="text-xl font-bold text-orange-500">Admin Control Panel</h2>
+        <p className="text-xs text-gray-400">Complete administrative dashboard</p>
+      </div>
+
       {/* Page Header */}
       <div className="mb-4">
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-gray-800/50 rounded-lg -ml-1.5 mb-3"
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg mb-3"
         >
-          <ArrowLeft size={16} />
-          <span className="text-xs font-medium">Back</span>
+          <ArrowLeft size={20} />
+          <span className="text-sm font-medium">Back to Dashboard</span>
         </button>
 
-        <div className="flex items-center gap-2 mb-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center shadow-[0_4px_16px_rgba(249,115,22,0.4)]">
-            <BarChart3 className="w-4 h-4 text-white" />
-          </div>
-          <div>
-            <h2 className="text-base font-bold text-white">Analytics Dashboard</h2>
-            <p className="text-[10px] text-gray-400">Monitor user activities</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div>
+              <h1 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                Analytics Dashboard
+              </h1>
+              <p className="text-[10px] xs:text-xs text-gray-400">
+                Monitor user activities
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -361,6 +370,16 @@ export default function AnalyticsPage() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-3"></div>
             <p className="text-gray-400 text-xs">Loading data...</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && !analyticsData && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <BarChart3 className="w-12 h-12 text-gray-500 mx-auto mb-3" />
+            <p className="text-gray-400 text-sm">No analytics data available</p>
+            <p className="text-gray-500 text-xs mt-1">Try refreshing or changing the time range</p>
           </div>
         </div>
       )}

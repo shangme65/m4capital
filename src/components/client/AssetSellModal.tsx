@@ -166,149 +166,110 @@ export default function AssetSellModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[10000]"
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
             style={{
-              background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
+              background: "rgba(0, 0, 0, 0.7)",
+              backdropFilter: "blur(4px)",
             }}
+            onClick={onClose}
           >
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="h-full flex flex-col"
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-sm max-h-[80vh] flex flex-col rounded-2xl overflow-hidden"
+              style={{
+                background: "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)",
+                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
+              onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
               <div
-                className="flex items-center justify-between px-4 py-4 border-b"
+                className="flex items-center justify-between px-4 py-3 border-b"
                 style={{
                   borderColor: "rgba(255, 255, 255, 0.08)",
-                  background:
-                    "linear-gradient(180deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)",
+                  background: "rgba(30, 41, 59, 0.5)",
                 }}
               >
                 <button
                   onClick={onClose}
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
                   style={{
                     background:
                       "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
                     boxShadow:
-                      "0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      "0 2px 8px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
                     border: "1px solid rgba(255, 255, 255, 0.06)",
                   }}
                 >
-                  <ArrowLeft className="w-5 h-5" />
+                  <ArrowLeft className="w-4 h-4" />
                 </button>
-                <div className="flex items-center gap-3">
-                  <CryptoIcon symbol={asset.symbol} size="sm" />
-                  <span className="text-xl font-bold text-white">
+                <div className="flex items-center gap-2">
+                  <CryptoIcon symbol={asset.symbol} size="xs" />
+                  <span className="text-lg font-bold text-white">
                     Sell {asset.symbol}
                   </span>
                 </div>
-                <div className="w-10" /> {/* Spacer for centering */}
+                <div className="w-8" /> {/* Spacer for centering */}
               </div>
 
               {/* Content */}
-              <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-                {/* Available Balance Card */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                {/* Available Balance - Compact */}
                 <div
-                  className="relative rounded-2xl p-5 overflow-hidden"
+                  className="p-3 rounded-xl"
                   style={{
-                    background:
-                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                    boxShadow:
-                      "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    background: "rgba(239, 68, 68, 0.1)",
+                    border: "1px solid rgba(239, 68, 68, 0.2)",
                   }}
                 >
-                  {/* Glow effect */}
-                  <div
-                    className="absolute inset-0 opacity-30 rounded-2xl pointer-events-none"
-                    style={{
-                      background:
-                        "radial-gradient(ellipse at 30% 0%, rgba(239, 68, 68, 0.3) 0%, transparent 50%)",
-                    }}
-                  />
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-12 h-12 rounded-full flex items-center justify-center"
-                          style={{
-                            background:
-                              "linear-gradient(145deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%)",
-                            boxShadow:
-                              "0 4px 12px -2px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                          }}
-                        >
-                          <CryptoIcon symbol={asset.symbol} size="sm" />
-                        </div>
-                        <div>
-                          <p className="text-sm text-gray-400">
-                            Available Balance
-                          </p>
-                          <p className="text-2xl font-bold text-white">
-                            {asset.amount.toFixed(8)}
-                            <span className="text-gray-400 text-lg ml-1">
-                              {asset.symbol}
-                            </span>
-                          </p>
-                        </div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <CryptoIcon symbol={asset.symbol} size="xs" />
+                      <div>
+                        <p className="text-xs text-gray-400">Available</p>
+                        <p className="text-sm font-bold text-white">
+                          {asset.amount.toFixed(8)} <span className="text-gray-400 text-xs">{asset.symbol}</span>
+                        </p>
                       </div>
                     </div>
-                    <div
-                      className="flex items-center justify-between pt-3 border-t"
-                      style={{ borderColor: "rgba(255, 255, 255, 0.08)" }}
-                    >
-                      <span className="text-sm text-gray-400">
-                        Current Price
-                      </span>
-                      <span className="font-semibold text-red-400">
-                        {formatAmount(asset.price, 2)}
-                      </span>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-400">Price</p>
+                      <p className="text-sm font-semibold text-red-400">{formatAmount(asset.price, 2)}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Amount Input Card */}
-                <div
-                  className="relative rounded-2xl p-5 overflow-hidden"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                    boxShadow:
-                      "0 15px 30px -8px rgba(0, 0, 0, 0.6), 0 8px 16px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
-                  }}
-                >
-                  <label className="block text-sm font-semibold text-gray-300 mb-3">
+                {/* Amount Input - Compact */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-400 mb-2">
                     Amount to Sell
                   </label>
-                  <div className="relative mb-4">
+                  <div className="relative mb-3">
                     <input
                       type="number"
                       step="0.00000001"
                       value={sellAmount}
                       onChange={(e) => setSellAmount(e.target.value)}
                       placeholder="0.00000000"
-                      className="w-full px-4 py-4 pr-20 rounded-xl text-white text-2xl font-bold focus:outline-none transition-all"
+                      className="w-full px-3 py-3 pr-16 rounded-xl text-white text-xl font-bold focus:outline-none transition-all"
                       style={{
-                        background:
-                          "linear-gradient(145deg, #0f172a 0%, #1e293b 100%)",
-                        boxShadow:
-                          "inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 0 rgba(255, 255, 255, 0.05)",
+                        background: "rgba(15, 23, 42, 0.8)",
+                        boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)",
                         border: errors.sellAmount
                           ? "1px solid rgba(239, 68, 68, 0.5)"
                           : "1px solid rgba(255, 255, 255, 0.08)",
                       }}
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
                       {asset.symbol}
                     </span>
                   </div>
 
-                  {/* Quick sell buttons */}
-                  <div className="flex gap-2 mb-4">
+                  {/* Quick sell buttons - Compact */}
+                  <div className="flex gap-1.5 mb-3">
                     {quickSellPercentages.map((percent) => (
                       <button
                         key={percent}
@@ -317,12 +278,9 @@ export default function AssetSellModal({
                             ((asset.amount * percent) / 100).toString()
                           )
                         }
-                        className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
+                        className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
                         style={{
-                          background:
-                            "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                          boxShadow:
-                            "0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                          background: "rgba(55, 65, 81, 0.5)",
                           border: "1px solid rgba(255, 255, 255, 0.06)",
                           color:
                             sellAmount ===
@@ -337,8 +295,8 @@ export default function AssetSellModal({
                   </div>
 
                   {errors.sellAmount && (
-                    <p className="text-sm text-red-400 flex items-center gap-1">
-                      <AlertCircle className="w-4 h-4" />
+                    <p className="text-xs text-red-400 flex items-center gap-1 mb-2">
+                      <AlertCircle className="w-3 h-3" />
                       {errors.sellAmount}
                     </p>
                   )}
@@ -346,89 +304,62 @@ export default function AssetSellModal({
                   {sellAmount &&
                     parseFloat(sellAmount) > 0 &&
                     !errors.sellAmount && (
-                      <div className="text-right text-gray-400">
+                      <p className="text-right text-xs text-gray-400">
                         ≈ {formatAmount(usdValue, 2)}
-                      </div>
+                      </p>
                     )}
                 </div>
 
-                {/* Preview Card */}
+                {/* Preview Card - Compact */}
                 {sellAmount &&
                   parseFloat(sellAmount) > 0 &&
                   !errors.sellAmount && (
                     <motion.div
-                      initial={{ opacity: 0, y: 10 }}
+                      initial={{ opacity: 0, y: 5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="relative rounded-2xl p-5 overflow-hidden"
+                      className="p-3 rounded-xl"
                       style={{
-                        background:
-                          "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%)",
-                        boxShadow:
-                          "0 15px 30px -8px rgba(239, 68, 68, 0.2), 0 8px 16px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                        background: "rgba(239, 68, 68, 0.1)",
                         border: "1px solid rgba(239, 68, 68, 0.2)",
                       }}
                     >
-                      {/* Glow effect */}
-                      <div
-                        className="absolute inset-0 opacity-20 rounded-2xl pointer-events-none"
-                        style={{
-                          background:
-                            "radial-gradient(ellipse at 50% 0%, rgba(239, 68, 68, 0.4) 0%, transparent 60%)",
-                        }}
-                      />
-                      <div className="relative z-10">
-                        <p className="text-sm text-gray-300 mb-4 font-semibold flex items-center gap-2">
-                          <TrendingDown className="w-4 h-4 text-red-400" />
-                          Sale Preview
-                        </p>
-                        <div className="space-y-3">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">
-                              You're selling
-                            </span>
-                            <span className="font-bold text-white">
-                              {parseFloat(sellAmount).toFixed(8)} {asset.symbol}
-                            </span>
-                          </div>
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-400">Exchange rate</span>
-                            <span className="font-medium text-gray-300">
-                              1 {asset.symbol} = {formatAmount(asset.price, 2)}
-                            </span>
-                          </div>
-                          <div
-                            className="h-px my-3"
-                            style={{
-                              background:
-                                "linear-gradient(90deg, transparent 0%, rgba(239, 68, 68, 0.3) 50%, transparent 100%)",
-                            }}
-                          />
-                          <div className="flex justify-between items-center">
-                            <span className="font-semibold text-gray-300">
-                              You'll receive
-                            </span>
-                            <span
-                              className="font-bold text-2xl bg-gradient-to-r from-red-400 to-orange-400 bg-clip-text text-transparent"
-                              style={{
-                                textShadow: "0 0 20px rgba(239, 68, 68, 0.3)",
-                              }}
-                            >
-                              {formatAmount(usdValue, 2)}
-                            </span>
-                          </div>
+                      <p className="text-xs text-gray-300 mb-2 font-semibold flex items-center gap-1.5">
+                        <TrendingDown className="w-3 h-3 text-red-400" />
+                        Sale Preview
+                      </p>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-400">You&apos;re selling</span>
+                          <span className="font-bold text-white">
+                            {parseFloat(sellAmount).toFixed(8)} {asset.symbol}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-400">Rate</span>
+                          <span className="text-gray-300">
+                            1 {asset.symbol} = {formatAmount(asset.price, 2)}
+                          </span>
+                        </div>
+                        <div className="h-px my-1" style={{ background: "rgba(239, 68, 68, 0.2)" }} />
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs font-semibold text-gray-300">
+                            You&apos;ll receive
+                          </span>
+                          <span className="font-bold text-lg text-red-400">
+                            {formatAmount(usdValue, 2)}
+                          </span>
                         </div>
                       </div>
                     </motion.div>
                   )}
               </div>
 
-              {/* Bottom Action */}
+              {/* Bottom Action - Compact */}
               <div
-                className="px-4 py-6 border-t"
+                className="px-4 py-3 border-t"
                 style={{
                   borderColor: "rgba(255, 255, 255, 0.08)",
-                  background:
-                    "linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, #0f172a 100%)",
+                  background: "rgba(15, 23, 42, 0.9)",
                 }}
               >
                 <button
@@ -439,7 +370,7 @@ export default function AssetSellModal({
                     parseFloat(sellAmount) <= 0 ||
                     !!errors.sellAmount
                   }
-                  className="w-full py-4 rounded-xl font-bold text-lg text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   style={{
                     background:
                       isProcessing ||
@@ -447,14 +378,14 @@ export default function AssetSellModal({
                       parseFloat(sellAmount) <= 0 ||
                       !!errors.sellAmount
                         ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
-                        : "linear-gradient(145deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%)",
+                        : "linear-gradient(145deg, #ef4444 0%, #dc2626 100%)",
                     boxShadow:
                       isProcessing ||
                       !sellAmount ||
                       parseFloat(sellAmount) <= 0 ||
                       !!errors.sellAmount
-                        ? "0 4px 12px -2px rgba(0, 0, 0, 0.4)"
-                        : "0 10px 25px -5px rgba(239, 68, 68, 0.5), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 2px 0 rgba(255, 255, 255, 0.15), inset 0 -2px 4px rgba(0, 0, 0, 0.2)",
+                        ? "none"
+                        : "0 4px 12px -2px rgba(239, 68, 68, 0.4)",
                     border: "1px solid rgba(255, 255, 255, 0.1)",
                   }}
                 >
@@ -466,8 +397,8 @@ export default function AssetSellModal({
                       }`
                     : `Sell ${asset.symbol}`}
                 </button>
-                <p className="text-xs text-center text-gray-500 mt-3">
-                  1.5% fee • Instant settlement to balance
+                <p className="text-[10px] text-center text-gray-500 mt-2">
+                  1.5% fee • Instant settlement
                 </p>
               </div>
             </motion.div>

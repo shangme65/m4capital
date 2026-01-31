@@ -369,251 +369,167 @@ export default function AssetSwapModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[10000] overflow-hidden"
+          className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
           style={{
-            background:
-              "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #164e63 50%, #0f172a 75%, #0a0a0f 100%)",
+            background: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
           }}
+          onClick={step === 4 ? handleDone : onClose}
         >
-          {/* Animated background orbs */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <motion.div
-              animate={{
-                scale: [1, 1.2, 1],
-                opacity: [0.3, 0.5, 0.3],
-              }}
-              transition={{
-                duration: 4,
-                repeat: Infinity,
-                ease: "easeInOut",
-              }}
-              className="absolute top-1/4 -left-20 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl"
-            />
-            <motion.div
-              animate={{
-                scale: [1.2, 1, 1.2],
-                opacity: [0.2, 0.4, 0.2],
-              }}
-              transition={{
-                duration: 5,
-                repeat: Infinity,
-                ease: "easeInOut",
-                delay: 1,
-              }}
-              className="absolute bottom-1/4 -right-20 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl"
-            />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/5 rounded-full blur-3xl" />
-          </div>
-
-          {/* Header */}
-          {step !== 4 && (
-            <div className="absolute top-0 left-0 right-0 z-10 px-4 py-4 flex items-center justify-between">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleBack}
-                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors px-4 py-2 rounded-full backdrop-blur-sm"
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
+            className="w-full max-w-md max-h-[85vh] flex flex-col rounded-2xl overflow-hidden"
+            style={{
+              background: "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            {step !== 4 && (
+              <div
+                className="flex items-center justify-between px-4 py-3 border-b"
                 style={{
-                  background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)",
-                  boxShadow:
-                    "0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
+                  borderColor: "rgba(255, 255, 255, 0.08)",
+                  background: "rgba(30, 41, 59, 0.5)",
                 }}
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span className="text-sm font-medium">Back</span>
-              </motion.button>
+                <button
+                  onClick={handleBack}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                    boxShadow:
+                      "0 2px 8px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                  }}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </button>
 
-              {/* Progress indicator */}
-              <div className="flex items-center gap-2">
-                {[1, 2, 3, 4].map((s) => (
-                  <motion.div
-                    key={s}
-                    initial={{ scale: 0.8 }}
-                    animate={{
-                      scale: step >= s ? 1 : 0.8,
-                      backgroundColor:
-                        step >= s
-                          ? "rgb(6, 182, 212)"
-                          : "rgba(6, 182, 212, 0.3)",
-                    }}
-                    className="w-2 h-2 rounded-full"
-                  />
-                ))}
+                <div className="flex items-center gap-2">
+                  <RefreshCw className="w-4 h-4 text-cyan-400" />
+                  <span className="text-lg font-bold text-white">
+                    Swap {asset.symbol}
+                  </span>
+                </div>
+
+                {/* Progress indicator */}
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4].map((s) => (
+                    <div
+                      key={s}
+                      className="w-1.5 h-1.5 rounded-full transition-colors"
+                      style={{
+                        backgroundColor:
+                          step >= s
+                            ? "rgb(6, 182, 212)"
+                            : "rgba(6, 182, 212, 0.3)",
+                      }}
+                    />
+                  ))}
+                </div>
               </div>
+            )}
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onClose}
-                className="text-white/80 hover:text-white transition-colors p-2 rounded-full backdrop-blur-sm"
-                style={{
-                  background:
-                    "linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)",
-                  boxShadow:
-                    "0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)",
-                }}
-              >
-                <X className="w-4 h-4" />
-              </motion.button>
-            </div>
-          )}
-
-          {/* Main Content */}
-          <div className="h-full flex items-center justify-center p-4 pt-20 pb-8 overflow-y-auto">
-            <motion.div
-              initial={{ opacity: 0, y: 30, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.1, duration: 0.4, ease: "easeOut" }}
-              className="w-full max-w-md rounded-3xl overflow-hidden"
-              style={card3DStyle}
-            >
+            {/* Main Content */}
+            <div className="flex-1 overflow-y-auto p-4">
               {/* Step 1: Select To Asset */}
               {step === 1 && (
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
-                  className="p-6"
+                  className="space-y-3"
                 >
-                  {/* Header */}
-                  <div className="text-center mb-6">
-                    <motion.div
-                      initial={{ scale: 0, rotate: -180 }}
-                      animate={{ scale: 1, rotate: 0 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 200,
-                        damping: 15,
-                      }}
-                      className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #06b6d4 0%, #14b8a6 50%, #06b6d4 100%)",
-                        boxShadow:
-                          "0 10px 40px rgba(6, 182, 212, 0.4), inset 0 2px 0 rgba(255,255,255,0.2)",
-                      }}
-                    >
-                      <RefreshCw className="w-8 h-8 text-white" />
-                    </motion.div>
-                    <h2 className="text-2xl font-bold text-white mb-1">
-                      Swap {asset.symbol}
-                    </h2>
-                    <p className="text-gray-400 text-sm">
+                  {/* Header - Compact */}
+                  <div className="text-center">
+                    <p className="text-gray-400 text-xs mb-3">
                       Select asset to receive
                     </p>
                   </div>
 
                   {errors.toAsset && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl"
-                    >
-                      <p className="text-red-400 text-sm text-center">
+                    <div className="p-2 bg-red-500/10 border border-red-500/20 rounded-lg">
+                      <p className="text-red-400 text-xs text-center">
                         {errors.toAsset}
                       </p>
-                    </motion.div>
+                    </div>
                   )}
 
-                  {/* From Asset Display */}
-                  <div className="mb-3">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {/* From Asset Display - Compact */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">
                       From
                     </label>
                     <div
-                      className="rounded-xl p-4"
+                      className="rounded-lg p-3"
                       style={{
                         background: "rgba(6, 182, 212, 0.1)",
                         border: "1px solid rgba(6, 182, 212, 0.2)",
                       }}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-10 h-10 rounded-full flex items-center justify-center"
-                            style={{
-                              background:
-                                "linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)",
-                            }}
-                          >
-                            <CryptoIcon symbol={asset.symbol} size="md" />
+                      <div className="flex items-center gap-2">
+                        <CryptoIcon symbol={asset.symbol} size="xs" />
+                        <div className="text-left flex-1">
+                          <div className="text-white text-sm font-medium">
+                            {asset.name} <span className="text-gray-400 text-xs">({asset.symbol})</span>
                           </div>
-                          <div className="text-left">
-                            <div className="text-white font-medium">
-                              {asset.name}{" "}
-                              <span className="text-gray-400">
-                                ({asset.symbol})
-                              </span>
-                            </div>
-                            <div className="text-gray-400 text-sm">
-                              Balance: {asset.amount.toFixed(8)}
-                            </div>
+                          <div className="text-gray-400 text-xs">
+                            Balance: {asset.amount.toFixed(8)}
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Swap Icon */}
-                  <div className="flex justify-center my-3">
+                  {/* Swap Icon - Compact */}
+                  <div className="flex justify-center">
                     <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center"
+                      className="w-8 h-8 rounded-full flex items-center justify-center"
                       style={{
-                        background:
-                          "linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)",
-                        boxShadow:
-                          "0 4px 15px rgba(6, 182, 212, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
+                        background: "rgba(6, 182, 212, 0.2)",
                         border: "1px solid rgba(6, 182, 212, 0.3)",
                       }}
                     >
-                      <ArrowDownUp className="w-5 h-5 text-cyan-400" />
+                      <ArrowDownUp className="w-4 h-4 text-cyan-400" />
                     </div>
                   </div>
 
-                  {/* To Asset Selection */}
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                  {/* To Asset Selection - Compact */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">
                       To
                     </label>
                     <div className="relative">
                       <button
                         onClick={() => setShowToDropdown(!showToDropdown)}
-                        className="w-full rounded-xl p-4 flex items-center justify-between transition-all hover:border-cyan-400/40"
-                        style={inputStyle}
+                        className="w-full rounded-lg p-3 flex items-center justify-between transition-all"
+                        style={{
+                          background: "rgba(15, 23, 42, 0.8)",
+                          border: "1px solid rgba(6, 182, 212, 0.2)",
+                        }}
                       >
                         {toAsset ? (
-                          <div className="flex items-center gap-3">
-                            <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center"
-                              style={{
-                                background:
-                                  "linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)",
-                              }}
-                            >
-                              <CryptoIcon symbol={toAsset} size="md" />
-                            </div>
+                          <div className="flex items-center gap-2">
+                            <CryptoIcon symbol={toAsset} size="xs" />
                             <div className="text-left">
-                              <div className="text-white font-medium">
-                                {
-                                  availableAssets.find(
-                                    (a) => a.symbol === toAsset
-                                  )?.name
-                                }{" "}
-                                <span className="text-gray-400">
-                                  ({toAsset})
-                                </span>
-                              </div>
-                              <div className="text-cyan-400 text-sm font-medium">
-                                You will receive this asset
+                              <div className="text-white text-sm font-medium">
+                                {availableAssets.find((a) => a.symbol === toAsset)?.name}{" "}
+                                <span className="text-gray-400 text-xs">({toAsset})</span>
                               </div>
                             </div>
                           </div>
                         ) : (
-                          <span className="text-gray-500">Select asset...</span>
+                          <span className="text-gray-500 text-sm">Select asset...</span>
                         )}
                         <ChevronDown
-                          className={`text-gray-400 transition-transform w-5 h-5 ${
+                          className={`text-gray-400 transition-transform w-4 h-4 ${
                             showToDropdown ? "rotate-180" : ""
                           }`}
                         />
@@ -675,100 +591,79 @@ export default function AssetSwapModal({
                     </div>
                   </div>
 
-                  {/* Exchange Rate Preview */}
+                  {/* Exchange Rate Preview - Compact */}
                   {toAsset && (
                     <div
-                      className="mb-6 p-4 rounded-xl"
+                      className="p-2 rounded-lg"
                       style={{
                         background: "rgba(6, 182, 212, 0.1)",
                         border: "1px solid rgba(6, 182, 212, 0.2)",
                       }}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-cyan-400" />
-                          <span className="text-gray-400 text-sm">
-                            Exchange Rate
-                          </span>
-                        </div>
-                        <span className="text-white font-medium text-sm">
-                          1 {asset.symbol} = {getConversionRate().toFixed(8)}{" "}
-                          {toAsset}
+                        <span className="text-gray-400 text-xs">Rate</span>
+                        <span className="text-white text-xs font-medium">
+                          1 {asset.symbol} = {getConversionRate().toFixed(8)} {toAsset}
                         </span>
                       </div>
                     </div>
                   )}
-
-                  {/* Continue Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleContinueStep1}
-                    disabled={!toAsset}
-                    className="w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #06b6d4 0%, #14b8a6 50%, #06b6d4 100%)",
-                      boxShadow:
-                        "0 10px 40px rgba(6, 182, 212, 0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)",
-                    }}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      Continue
-                      <ArrowRight className="w-4 h-4" />
-                    </span>
-                  </motion.button>
                 </motion.div>
               )}
 
-              {/* Step 2: Enter Amount */}
+              {/* Bottom Action for Step 1 */}
+              {step === 1 && (
+                <div
+                  className="px-4 py-3 border-t"
+                  style={{
+                    borderColor: "rgba(255, 255, 255, 0.08)",
+                    background: "rgba(15, 23, 42, 0.9)",
+                  }}
+                >
+                  <button
+                    onClick={handleContinueStep1}
+                    disabled={!toAsset}
+                    className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      background: "linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%)",
+                      boxShadow: "0 4px 12px -2px rgba(6, 182, 212, 0.4)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                    }}
+                  >
+                    Continue
+                  </button>
+                </div>
+              )}
+
+              {/* Step 2: Enter Amount - Compact */}
               {step === 2 && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="p-6"
+                  className="space-y-3"
                 >
-                  {/* Header */}
-                  <div className="text-center mb-6">
-                    <div className="flex items-center justify-center gap-3 mb-4">
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)",
-                        }}
-                      >
-                        <CryptoIcon symbol={asset.symbol} size="md" />
-                      </div>
-                      <ArrowRight className="w-5 h-5 text-cyan-400" />
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)",
-                        }}
-                      >
-                        <CryptoIcon symbol={toAsset} size="md" />
-                      </div>
+                  {/* Header - Compact */}
+                  <div className="text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <CryptoIcon symbol={asset.symbol} size="xs" />
+                      <ArrowRight className="w-4 h-4 text-cyan-400" />
+                      <CryptoIcon symbol={toAsset} size="xs" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-1">
-                      Enter Amount
-                    </h2>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-xs">
                       How much {asset.symbol} to swap?
                     </p>
                   </div>
 
-                  {/* Amount Input */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="text-sm font-medium text-gray-300">
+                  {/* Amount Input - Compact */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-medium text-gray-400">
                         Amount
                       </label>
                       <button
                         onClick={setMaxAmount}
-                        className="text-cyan-400 text-sm hover:text-cyan-300 transition-colors font-medium"
+                        className="text-cyan-400 text-xs hover:text-cyan-300 transition-colors font-medium"
                       >
                         Max
                       </button>
@@ -779,20 +674,23 @@ export default function AssetSwapModal({
                         step="0.00000001"
                         value={fromAmount}
                         onChange={(e) => setFromAmount(e.target.value)}
-                        className="w-full rounded-xl px-4 py-4 pr-20 text-white text-lg font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        style={inputStyle}
+                        className="w-full rounded-lg px-3 py-3 pr-16 text-white text-lg font-medium focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        style={{
+                          background: "rgba(15, 23, 42, 0.8)",
+                          border: "1px solid rgba(6, 182, 212, 0.2)",
+                        }}
                         placeholder="0.00000000"
                       />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1.5 rounded-lg text-cyan-300 text-sm font-medium bg-cyan-500/20">
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-md text-cyan-300 text-xs font-medium bg-cyan-500/20">
                         {asset.symbol}
                       </div>
                     </div>
                     {errors.fromAmount && (
-                      <p className="text-red-400 text-sm mt-2">
+                      <p className="text-red-400 text-xs mt-1.5">
                         {errors.fromAmount}
                       </p>
                     )}
-                    <p className="text-gray-500 text-sm mt-2">
+                    <p className="text-gray-500 text-xs mt-1.5">
                       Available: {asset.amount.toFixed(8)} {asset.symbol}
                     </p>
                   </div>
@@ -1166,8 +1064,8 @@ export default function AssetSwapModal({
                   </motion.button>
                 </motion.div>
               )}
-            </motion.div>
-          </div>
+            </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

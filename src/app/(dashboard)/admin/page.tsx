@@ -334,6 +334,8 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
     "all" | "deposit" | "withdraw" | "buy" | "sell"
   >("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
+  const [showTransactionModal, setShowTransactionModal] = useState(false);
 
   useEffect(() => {
     fetchAllTransactions();
@@ -488,25 +490,17 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
                   <th className="text-left p-3 text-xs font-semibold text-gray-300">
                     Type
                   </th>
-                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
-                    Asset
-                  </th>
-                  <th className="text-right p-3 text-xs font-semibold text-gray-300">
-                    Amount
-                  </th>
-                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
-                    Method
-                  </th>
-                  <th className="text-center p-3 text-xs font-semibold text-gray-300">
-                    Status
-                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredTransactions.map((tx, index) => (
                   <tr
                     key={tx.id || index}
-                    className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors"
+                    onClick={() => {
+                      setSelectedTransaction(tx);
+                      setShowTransactionModal(true);
+                    }}
+                    className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors cursor-pointer"
                   >
                     <td className="p-3 text-xs text-gray-400">
                       {new Date(tx.timestamp).toLocaleDateString()}
@@ -535,35 +529,6 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
                         {tx.isManual && <span className="ml-1">🔧</span>}
                       </span>
                     </td>
-                    <td className="p-3 text-xs font-semibold text-white">
-                      {tx.asset}
-                    </td>
-                    <td className="p-3 text-right">
-                      <p className="text-xs font-bold text-white">
-                        {tx.amount.toFixed(8)}
-                      </p>
-                      {tx.fee > 0 && (
-                        <p className="text-[10px] text-gray-500">
-                          Fee: {tx.fee.toFixed(8)}
-                        </p>
-                      )}
-                    </td>
-                    <td className="p-3 text-xs text-gray-400">{tx.method}</td>
-                    <td className="p-3 text-center">
-                      <span
-                        className={`text-xs font-semibold ${getStatusColor(
-                          tx.status
-                        )}`}
-                      >
-                        {tx.status?.toUpperCase() || "N/A"}
-                      </span>
-                      {tx.confirmations !== undefined &&
-                        tx.status === "pending" && (
-                          <p className="text-[10px] text-gray-500 mt-1">
-                            {tx.confirmations}/{tx.maxConfirmations}
-                          </p>
-                        )}
-                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -577,6 +542,155 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
         Showing {filteredTransactions.length} of {transactions.length}{" "}
         transactions
       </div>
+
+      {/* Transaction Details Modal */}
+      {showTransactionModal && selectedTransaction && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          >
+            {/* Header */}
+            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                <FileText size={20} className="text-blue-400" />
+                Transaction Details
+              </h2>
+              <button
+                onClick={() => {
+                  setShowTransactionModal(false);
+                  setSelectedTransaction(null);
+                }}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-4">
+              {/* Transaction Type */}
+              <div className="bg-gray-700/30 border-x-0 border-gray-600/30 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-sm text-gray-400">Transaction Type</span>
+                  <span
+                    className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold border ${getTypeColor(
+                      selectedTransaction.type
+                    )}`}
+                  >
+                    {selectedTransaction.type.toUpperCase()}
+                    {selectedTransaction.isManual && <span className="ml-1">🔧</span>}
+                  </span>
+                </div>
+              </div>
+
+              {/* User Information */}
+              <div className="bg-gray-700/30 border-x-0 border-gray-600/30 p-4">
+                <h3 className="text-sm font-semibold text-white mb-3">User Information</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">Name:</span>
+                    <span className="text-sm font-semibold text-white">
+                      {selectedTransaction.userName || "Unknown"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">Email:</span>
+                    <span className="text-sm font-semibold text-white">
+                      {selectedTransaction.userEmail}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transaction Details */}
+              <div className="bg-gray-700/30 border-x-0 border-gray-600/30 p-4">
+                <h3 className="text-sm font-semibold text-white mb-3">Transaction Details</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">Asset:</span>
+                    <span className="text-sm font-bold text-white">
+                      {selectedTransaction.asset}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">Amount:</span>
+                    <span className="text-sm font-bold text-white">
+                      {['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'ETC', 'TRX', 'TON', 'USDT', 'USDC'].includes(selectedTransaction.asset)
+                        ? selectedTransaction.amount.toFixed(8)
+                        : selectedTransaction.amount.toFixed(2)}
+                    </span>
+                  </div>
+                  {selectedTransaction.fee > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-400">Fee:</span>
+                      <span className="text-sm font-semibold text-gray-300">
+                        {['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'ETC', 'TRX', 'TON', 'USDT', 'USDC'].includes(selectedTransaction.asset)
+                          ? selectedTransaction.fee.toFixed(8)
+                          : selectedTransaction.fee.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">Method:</span>
+                    <span className="text-sm font-semibold text-white">
+                      {selectedTransaction.method}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">Status:</span>
+                    <span
+                      className={`text-sm font-semibold ${getStatusColor(
+                        selectedTransaction.status
+                      )}`}
+                    >
+                      {selectedTransaction.status?.toUpperCase() || "N/A"}
+                    </span>
+                  </div>
+                  {selectedTransaction.confirmations !== undefined && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-400">Confirmations:</span>
+                      <span className="text-sm font-semibold text-white">
+                        {selectedTransaction.confirmations}/{selectedTransaction.maxConfirmations}
+                      </span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-400">Date:</span>
+                    <span className="text-sm font-semibold text-white">
+                      {new Date(selectedTransaction.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transaction ID */}
+              {selectedTransaction.id && (
+                <div className="bg-gray-700/30 border-x-0 border-gray-600/30 p-4">
+                  <h3 className="text-sm font-semibold text-white mb-2">Transaction ID</h3>
+                  <code className="text-xs text-gray-300 bg-gray-900/50 px-3 py-2 rounded block break-all">
+                    {selectedTransaction.id}
+                  </code>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-gray-700">
+              <button
+                onClick={() => {
+                  setShowTransactionModal(false);
+                  setSelectedTransaction(null);
+                }}
+                className="w-full bg-gray-600 hover:bg-gray-500 text-white py-2.5 px-4 rounded-lg transition-all font-semibold text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
@@ -880,7 +994,7 @@ const AdminDashboard = () => {
         min = 88;
         max = 95;
       } else {
-        min = 73;
+        min = 78;
         max = 90;
       }
       
@@ -927,7 +1041,7 @@ const AdminDashboard = () => {
         setIsModerateMode(false);
         setIsStrongMode(true);
         setIsAutoMode(false);
-      } else if (currentStrength >= 73 && currentStrength <= 90) {
+      } else if (currentStrength >= 78 && currentStrength <= 90) {
         setIsWeakMode(false);
         setIsModerateMode(false);
         setIsStrongMode(false);
@@ -2899,7 +3013,7 @@ const AdminDashboard = () => {
                                       : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
                                   }`}
                                 >
-                                  {adminCurrency || "USD"}
+                                  {selectedUser?.preferredCurrency || "USD"}
                                 </button>
                                 <button
                                   onClick={() => setAmountInputType("crypto")}
@@ -2923,7 +3037,7 @@ const AdminDashboard = () => {
                                     : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
                                 }`}
                               >
-                                {adminCurrency || "USD"} Value
+                                {selectedUser?.preferredCurrency || "USD"} Value
                               </button>
                               <button
                                 onClick={() => setAmountInputType("crypto")}
@@ -3022,7 +3136,7 @@ const AdminDashboard = () => {
                                       selectedUser?.preferredCurrency || "USD"
                                     }`
                                   : amountInputType === "usd"
-                                  ? `${amount || "0"} ${adminCurrency || "USD"}`
+                                  ? `${amount || "0"} ${selectedUser?.preferredCurrency || "USD"}`
                                   : `${amount || "0"} ${cryptoAsset}`}
                               </span>
                             </div>
@@ -3804,6 +3918,10 @@ const AdminDashboard = () => {
                         setIsStrongMode(false);
                         setIsModerateMode(false);
                         setIsWeakMode(!isWeakMode);
+                        if (!isWeakMode) {
+                          // Set to middle of weak range
+                          setGlobalSignalStrength(56);
+                        }
                       }}
                       className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
                         isWeakMode
@@ -3820,6 +3938,10 @@ const AdminDashboard = () => {
                         setIsStrongMode(false);
                         setIsWeakMode(false);
                         setIsModerateMode(!isModerateMode);
+                        if (!isModerateMode) {
+                          // Set to middle of moderate range
+                          setGlobalSignalStrength(71);
+                        }
                       }}
                       className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
                         isModerateMode
@@ -3836,6 +3958,10 @@ const AdminDashboard = () => {
                         setIsModerateMode(false);
                         setIsWeakMode(false);
                         setIsStrongMode(!isStrongMode);
+                        if (!isStrongMode) {
+                          // Set to middle of strong range
+                          setGlobalSignalStrength(91);
+                        }
                       }}
                       className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
                         isStrongMode
@@ -3852,6 +3978,10 @@ const AdminDashboard = () => {
                         setIsModerateMode(false);
                         setIsWeakMode(false);
                         setIsAutoMode(!isAutoMode);
+                        if (!isAutoMode) {
+                          // Set to middle of auto range
+                          setGlobalSignalStrength(84);
+                        }
                       }}
                       className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
                         isAutoMode
@@ -3860,7 +3990,7 @@ const AdminDashboard = () => {
                       }`}
                     >
                       <div>{isAutoMode ? "Auto ✓" : "Auto"}</div>
-                      <div className="text-[9px]">(73-90%)</div>
+                      <div className="text-[9px]">(78-90%)</div>
                     </button>
                   </div>
                 </div>

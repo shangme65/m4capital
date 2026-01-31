@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/contexts/ToastContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -104,28 +105,29 @@ export default function AddCryptoModal({
 
   return (
     <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
-          />
+      {isOpen &&
+        ReactDOM.createPortal(
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed top-0 left-0 right-0 bottom-0 bg-black/60 backdrop-blur-sm z-[100]"
+            />
 
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-2 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md bg-gradient-to-br from-gray-800/95 to-gray-900/95 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(59,130,246,0.4)] border border-gray-700/50 hover:border-blue-500/50 z-50 overflow-hidden flex flex-col max-h-[90vh] backdrop-blur-xl transition-all duration-300"
-            style={{
-              transform: "perspective(1000px) rotateX(2deg)",
-              transformStyle: "preserve-3d",
-            }}
-          >
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed left-0 right-0 top-20 bottom-0 sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md sm:bottom-auto sm:h-auto bg-gradient-to-br from-gray-800/95 to-gray-900/95 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_40px_rgba(59,130,246,0.4)] border border-gray-700/50 hover:border-blue-500/50 z-[100] overflow-hidden flex flex-col max-h-[calc(100vh-5rem)] sm:max-h-[90vh] backdrop-blur-xl transition-all duration-300 mx-2"
+              style={{
+                transform: "perspective(1000px) rotateX(2deg)",
+                transformStyle: "preserve-3d",
+              }}
+            >
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/80 to-gray-900/80 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
               <h2 className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(59,130,246,0.3)]">
@@ -333,7 +335,8 @@ export default function AddCryptoModal({
               )}
             </div>
           </motion.div>
-        </>
+        </>,
+        document.body
       )}
     </AnimatePresence>
   );

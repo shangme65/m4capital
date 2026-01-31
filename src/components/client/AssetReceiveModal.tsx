@@ -202,7 +202,7 @@ export default function AssetReceiveModal({
                     Receive {asset.symbol}
                   </h2>
                   <p className="text-gray-400 text-sm mt-1">
-                    Deposit via NowPayments
+                    Receive from external wallet
                   </p>
                 </div>
 

@@ -13,7 +13,7 @@ import TransactionDetailsModal, {
 } from "./TransactionDetailsModal";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
-import { formatCurrency as formatCurrencyUtil } from "@/lib/currencies";
+import { formatCurrency as formatCurrencyUtil, getCurrencySymbol } from "@/lib/currencies";
 
 interface Asset {
   symbol: string;
@@ -273,22 +273,15 @@ export default function AssetDetailsModal({
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
 
   // Currency context for user's preferred currency
-  const { preferredCurrency, formatAmount } = useCurrency();
+  const { preferredCurrency, formatAmount, convertAmount } = useCurrency();
 
-  // Helper to format user balance - show directly if currencies match
+  // Helper to format user balance - always show in user's preferred currency
   const formatUserBalance = (balance: number): string => {
+    // Use the shared getCurrencySymbol function which supports all currencies
+    const symbol = getCurrencySymbol(preferredCurrency);
+    
     if (balanceCurrency === preferredCurrency) {
       // Same currency - show directly without conversion
-      const symbols: { [key: string]: string } = {
-        USD: "$",
-        EUR: "€",
-        GBP: "£",
-        NGN: "₦",
-        ZAR: "R",
-        KES: "KSh",
-        GHS: "₵",
-      };
-      const symbol = symbols[preferredCurrency] || "$";
       return `${symbol}${balance.toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -311,6 +304,15 @@ export default function AssetDetailsModal({
       };
     }
   }, [isOpen]);
+  
+  // Set initial buy amount when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const initialAmountUSD = 15; // First quick buy amount
+      const convertedInitial = Math.round(convertAmount(initialAmountUSD));
+      setSelectedBuyAmount(convertedInitial);
+    }
+  }, [isOpen, convertAmount]);
 
   // Action handlers - use asset-specific modals for the selected crypto
   const handleSend = () => {
@@ -362,8 +364,8 @@ export default function AssetDetailsModal({
   const [selectedPeriod, setSelectedPeriod] = useState<
     "1D" | "1W" | "1M" | "1Y"
   >("1D");
-  // Buy amount state
-  const [selectedBuyAmount, setSelectedBuyAmount] = useState<number>(30);
+  // Buy amount state - will be set dynamically based on user's currency
+  const [selectedBuyAmount, setSelectedBuyAmount] = useState<number>(0);
 
   // Fetch live price for asset.symbol from our prices API
   // ONLY poll when modal is actually open to prevent continuous API calls
@@ -462,7 +464,8 @@ export default function AssetDetailsModal({
   const currentPrice = livePrice ?? info?.price ?? 0;
   const priceChange = liveChangePercent ?? asset.change ?? 0;
 
-  const quickBuyAmounts = [15, 25, 50, 100]; // USD amounts
+  // Quick buy amounts in USD - these get converted to user's preferred currency
+  const quickBuyAmountsUSD = [15, 25, 50, 100];
 
   return (
     <AnimatePresence>
@@ -625,7 +628,7 @@ export default function AssetDetailsModal({
                         Buy now
                       </h3>
                       <div className="text-2xl font-bold text-white">
-                        {formatAmount(selectedBuyAmount, 2)}{" "}
+                        {getCurrencySymbol(preferredCurrency)}{selectedBuyAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
                         <span className="text-gray-400 text-lg font-medium">
                           {preferredCurrency}
                         </span>
@@ -647,39 +650,43 @@ export default function AssetDetailsModal({
                   </div>
                   {/* Quick amount buttons */}
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {quickBuyAmounts.map((amount) => (
-                      <button
-                        key={amount}
-                        onClick={() => setSelectedBuyAmount(amount)}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                          selectedBuyAmount === amount
-                            ? "text-white"
-                            : "text-gray-300 hover:text-white"
-                        }`}
-                        style={
-                          selectedBuyAmount === amount
-                            ? {
-                                background:
-                                  "linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%)",
-                                boxShadow:
-                                  "0 4px 12px -2px rgba(37, 99, 235, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
-                                border: "1px solid rgba(59, 130, 246, 0.4)",
-                              }
-                            : {
-                                background:
-                                  "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                                boxShadow:
-                                  "0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                                border: "1px solid rgba(255, 255, 255, 0.06)",
-                              }
-                        }
-                      >
-                        {formatAmount(amount, 0)}
-                      </button>
-                    ))}
+                    {quickBuyAmountsUSD.map((usdAmount) => {
+                      // Convert USD amount to user's preferred currency for display and storage
+                      const convertedAmount = Math.round(convertAmount(usdAmount));
+                      return (
+                        <button
+                          key={usdAmount}
+                          onClick={() => setSelectedBuyAmount(convertedAmount)}
+                          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                            selectedBuyAmount === convertedAmount
+                              ? "text-white"
+                              : "text-gray-300 hover:text-white"
+                          }`}
+                          style={
+                            selectedBuyAmount === convertedAmount
+                              ? {
+                                  background:
+                                    "linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%)",
+                                  boxShadow:
+                                    "0 4px 12px -2px rgba(37, 99, 235, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
+                                  border: "1px solid rgba(59, 130, 246, 0.4)",
+                                }
+                              : {
+                                  background:
+                                    "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                                  boxShadow:
+                                    "0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                                }
+                          }
+                        >
+                          {getCurrencySymbol(preferredCurrency)}{convertedAmount}
+                        </button>
+                      );
+                    })}
                   </div>
                   <p className="text-sm text-gray-400">
-                    Buying {(selectedBuyAmount / currentPrice).toFixed(5)}{" "}
+                    Buying {(convertAmount(selectedBuyAmount, true) / currentPrice).toFixed(5)}{" "}
                     {asset.symbol} from available balance:{" "}
                     <span
                       className="font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent"

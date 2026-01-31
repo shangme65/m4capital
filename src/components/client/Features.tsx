@@ -112,7 +112,7 @@ const Feature3DCard = ({
           </div>
 
           {/* Icon + Title row */}
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3 mb-3">
             <div
               className={`w-11 h-11 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-white transition-transform duration-300 group-hover:scale-110 shadow-lg`}
             >
@@ -124,7 +124,7 @@ const Feature3DCard = ({
           </div>
 
           {/* Description */}
-          <p className="text-gray-500 leading-relaxed text-xs pl-[56px]">
+          <p className="text-gray-500 leading-relaxed text-sm">
             {feature.description}
           </p>
 
@@ -211,7 +211,7 @@ const Feature3DCard = ({
             </div>
 
             {/* Icon + Title row */}
-            <div className="flex items-center gap-3 mb-2 relative z-10">
+            <div className="flex items-center gap-3 mb-3 relative z-10">
               <div className="relative flex-shrink-0">
                 <div
                   className={`w-10 h-10 rounded-lg bg-gradient-to-br ${feature.gradient} flex items-center justify-center text-white transform group-hover:scale-110 transition-transform duration-300`}
@@ -235,7 +235,7 @@ const Feature3DCard = ({
             </div>
 
             {/* Description */}
-            <p className="text-gray-400 leading-relaxed relative z-10 text-xs pl-[52px]">
+            <p className="text-gray-400 leading-relaxed relative z-10 text-sm">
               {feature.description}
             </p>
 

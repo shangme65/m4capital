@@ -138,7 +138,7 @@ function TradingViewChart({
       gridColor:
         theme === "dark" ? "rgba(55, 65, 81, 0.5)" : "rgba(229, 231, 235, 1)",
       hide_top_toolbar: false,
-      hide_legend: true,
+      hide_legend: false,
       save_image: false,
       hide_volume: true,
       hide_side_toolbar: true,
@@ -179,18 +179,37 @@ function TradingViewChart({
         }
       `}</style>
       <div
-        ref={containerRef}
         style={{ height: `${height}px`, width: "100%" }}
         className="rounded-xl overflow-hidden relative"
       >
+        {/* Widget container */}
+        <div
+          ref={containerRef}
+          style={{ height: "100%", width: "100%" }}
+        />
+        
+        {/* Overlay to block "/ TetherUS" text - positioned after "Bitcoin" */}
+        <div
+          className="absolute z-[9999]"
+          style={{
+            top: "46px",
+            left: "90px",
+            width: "120px",
+            height: "22px",
+            background: theme === "dark" ? "#131722" : "#ffffff",
+            pointerEvents: "none",
+          }}
+        />
+        
         {/* Overlay to cover bottom-left TradingView logo */}
         <div
-          className="absolute bottom-0 left-0 w-24 h-10 z-10"
+          className="absolute z-[9999]"
           style={{
-            background:
-              theme === "dark"
-                ? "rgba(17, 24, 39, 1)"
-                : "rgba(255, 255, 255, 1)",
+            bottom: "0",
+            left: "0",
+            width: "96px",
+            height: "40px",
+            background: theme === "dark" ? "#131722" : "#ffffff",
             pointerEvents: "none",
           }}
         />
