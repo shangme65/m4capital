@@ -7,52 +7,24 @@ import {
   FaUsers,
 } from "react-icons/fa";
 import { motion } from "framer-motion";
+import { useTranslation } from "@/lib/translations";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-const features = [
-  {
-    number: "01",
-    name: "Secure Transactions",
-    description:
-      "Your funds and data are protected by industry-leading security protocols.",
-    icon: FaShieldAlt,
-    gradient: "from-indigo-600 to-purple-600",
-    glowColor: "rgba(99, 102, 241, 0.4)",
-  },
-  {
-    number: "02",
-    name: "Real-Time Analytics",
-    description:
-      "Access up-to-the-minute market data and powerful analytics tools.",
-    icon: FaChartLine,
-    gradient: "from-orange-500 to-red-500",
-    glowColor: "rgba(249, 115, 22, 0.4)",
-  },
-  {
-    number: "03",
-    name: "Blazing-Fast Execution",
-    description:
-      "Execute trades in milliseconds with our high-performance infrastructure.",
-    icon: FaTachometerAlt,
-    gradient: "from-emerald-500 to-teal-500",
-    glowColor: "rgba(16, 185, 129, 0.4)",
-  },
-  {
-    number: "04",
-    name: "Community Driven",
-    description:
-      "Join a thriving community of traders and share insights and strategies.",
-    icon: FaUsers,
-    gradient: "from-blue-500 to-cyan-500",
-    glowColor: "rgba(59, 130, 246, 0.4)",
-  },
-];
+type FeatureType = {
+  number: string;
+  name: string;
+  description: string;
+  icon: React.ComponentType<{ className?: string }>;
+  gradient: string;
+  glowColor: string;
+};
 
 const Feature3DCard = ({
   feature,
   index,
   isDarkMode,
 }: {
-  feature: (typeof features)[0];
+  feature: FeatureType;
   index: number;
   isDarkMode: boolean;
 }) => {
@@ -280,6 +252,44 @@ const Feature3DCard = ({
 
 export default function Features() {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { t } = useTranslation();
+  const { language } = useLanguage();
+
+  // Use React.useMemo to regenerate features when language changes
+  const features = React.useMemo(() => [
+    {
+      number: "01",
+      name: t("features.security.title"),
+      description: t("features.security.description"),
+      icon: FaShieldAlt,
+      gradient: "from-indigo-600 to-purple-600",
+      glowColor: "rgba(99, 102, 241, 0.4)",
+    },
+    {
+      number: "02",
+      name: t("features.trading.title"),
+      description: t("features.trading.description"),
+      icon: FaChartLine,
+      gradient: "from-orange-500 to-red-500",
+      glowColor: "rgba(249, 115, 22, 0.4)",
+    },
+    {
+      number: "03",
+      name: t("features.execution.title"),
+      description: t("features.execution.description"),
+      icon: FaTachometerAlt,
+      gradient: "from-emerald-500 to-teal-500",
+      glowColor: "rgba(16, 185, 129, 0.4)",
+    },
+    {
+      number: "04",
+      name: t("features.community.title"),
+      description: t("features.community.description"),
+      icon: FaUsers,
+      gradient: "from-blue-500 to-cyan-500",
+      glowColor: "rgba(59, 130, 246, 0.4)",
+    },
+  ], [language, t]);
 
   useEffect(() => {
     // Check initial dark mode
@@ -316,20 +326,16 @@ export default function Features() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/20 mb-4">
             <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
             <span className="text-xs font-medium text-orange-500 dark:text-orange-400">
-              Trade Smarter
+              {t("features.badge")}
             </span>
           </div>
 
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl mb-4">
-            Everything you need to{" "}
-            <span className="bg-gradient-to-r from-orange-400 via-red-400 to-pink-400 bg-clip-text text-transparent">
-              succeed in the market
-            </span>
+            {t("features.title")}
           </h2>
 
           <p className="text-base leading-7 text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-            Our platform is designed from the ground up to provide you with the
-            tools, speed, and security required for modern Forex trading.
+            {t("features.subtitle")}
           </p>
         </motion.div>
 

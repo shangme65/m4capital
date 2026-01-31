@@ -1,13 +1,19 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations/translations";
 
-const steps = [
+const HowItWorks = () => {
+  const { language } = useLanguage();
+  const t = (key: string) => (translations as any)[language]?.[key] || key;
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const steps = useMemo(() => [
   {
     number: "01",
-    title: "Create an Account",
-    description:
-      "Sign up in minutes with our simple and secure registration process. Your data is protected with industry-standard encryption.",
+    title: t("howItWorks.step1.title"),
+    description: t("howItWorks.step1.description"),
     icon: (
       <svg
         className="w-8 h-8"
@@ -28,9 +34,8 @@ const steps = [
   },
   {
     number: "02",
-    title: "Fund Your Account",
-    description:
-      "Deposit funds using PIX, crypto, or bank transfer. Multiple secure payment options for your convenience.",
+    title: t("howItWorks.step2.title"),
+    description: t("howItWorks.step2.description"),
     icon: (
       <svg
         className="w-8 h-8"
@@ -51,9 +56,8 @@ const steps = [
   },
   {
     number: "03",
-    title: "Start Trading",
-    description:
-      "Access global crypto markets and start trading BTC, ETH, and more with real-time data and advanced tools.",
+    title: t("howItWorks.step3.title"),
+    description: t("howItWorks.step3.description"),
     icon: (
       <svg
         className="w-8 h-8"
@@ -72,7 +76,7 @@ const steps = [
     gradient: "from-purple-500 to-pink-400",
     glowColor: "rgba(168, 85, 247, 0.4)",
   },
-];
+], [language, t]);
 
 const Card3D = ({
   step,
@@ -322,9 +326,6 @@ const Card3D = ({
   );
 };
 
-const HowItWorks = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
   useEffect(() => {
     // Check initial dark mode
     const checkDarkMode = () => {
@@ -360,20 +361,19 @@ const HowItWorks = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 mb-4">
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse" />
             <span className="text-xs font-medium text-indigo-500 dark:text-indigo-400">
-              How It Works
+              {t("howItWorks.title")}
             </span>
           </div>
 
           <h2 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-4xl mb-4">
-            Get Started in{" "}
+            {t("howItWorks.subtitle").split(" ").slice(0, -3).join(" ")}{" "}
             <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              3 Simple Steps
+              {t("howItWorks.subtitle").split(" ").slice(-3).join(" ")}
             </span>
           </h2>
 
           <p className="text-base leading-7 text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
-            Our streamlined process makes it easy for you to start trading in no
-            time. Join thousands of traders worldwide.
+            {t("cta.subtitle")}
           </p>
         </motion.div>
 

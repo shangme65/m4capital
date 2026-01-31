@@ -1,7 +1,12 @@
+"use client";
 import Link from "next/link";
 import Image from "next/image";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations/translations";
 
 export function Footer() {
+  const { language } = useLanguage();
+  const t = (key: string) => (translations as any)[language]?.[key] || key;
   return (
     <footer className="bg-gray-900 text-white py-8 px-4">
       <div className="container mx-auto max-w-6xl">
@@ -10,7 +15,7 @@ export function Footer() {
           {/* Markets & Assets */}
           <div>
             <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-              MARKETS & ASSETS
+              {t("footer.markets.title")}
             </h3>
             <ul className="space-y-2">
               <li>
@@ -20,7 +25,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  News feed
+                  {t("footer.markets.news")}
                 </a>
               </li>
               <li>
@@ -30,7 +35,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Assets
+                  {t("footer.markets.assets")}
                 </a>
               </li>
               <li>
@@ -40,7 +45,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Stock collections
+                  {t("footer.markets.collections")}
                 </a>
               </li>
               <li>
@@ -50,7 +55,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Industries
+                  {t("footer.markets.industries")}
                 </a>
               </li>
             </ul>
@@ -59,7 +64,7 @@ export function Footer() {
           {/* Analytics & Tools */}
           <div>
             <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-              ANALYTICS & TOOLS
+              {t("footer.analytics.title")}
             </h3>
             <ul className="space-y-2">
               <li>
@@ -69,7 +74,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Historical quotes
+                  {t("footer.analytics.quotes")}
                 </a>
               </li>
               <li>
@@ -79,7 +84,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Calendars
+                  {t("footer.analytics.calendars")}
                 </a>
               </li>
               <li>
@@ -89,7 +94,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Trading specifications
+                  {t("footer.analytics.specs")}
                 </a>
               </li>
             </ul>
@@ -98,7 +103,7 @@ export function Footer() {
           {/* Education & Learning */}
           <div>
             <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-              EDUCATION & LEARNING
+              {t("footer.education.title")}
             </h3>
             <ul className="space-y-2">
               <li>
@@ -108,7 +113,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Video tutorials
+                  {t("footer.education.videos")}
                 </a>
               </li>
               <li>
@@ -118,7 +123,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  The basics of margin trading
+                  {t("footer.education.margin")}
                 </a>
               </li>
             </ul>
@@ -127,7 +132,7 @@ export function Footer() {
           {/* Events & Community */}
           <div>
             <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-              EVENTS & COMMUNITY
+              {t("footer.events.title")}
             </h3>
             <ul className="space-y-2">
               <li>
@@ -137,7 +142,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Our blog
+                  {t("footer.events.blog")}
                 </a>
               </li>
             </ul>
@@ -149,7 +154,7 @@ export function Footer() {
           {/* About Us */}
           <div>
             <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-              ABOUT US
+              {t("footer.about.title")}
             </h3>
             <ul className="space-y-2">
               <li>
@@ -159,7 +164,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  In Numbers
+                  {t("footer.about.numbers")}
                 </a>
               </li>
               <li>
@@ -169,7 +174,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  In the Press
+                  {t("footer.about.press")}
                 </a>
               </li>
               <li>
@@ -179,7 +184,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Awards
+                  {t("footer.about.awards")}
                 </a>
               </li>
               <li>
@@ -189,7 +194,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Contact Us
+                  {t("footer.about.contact")}
                 </a>
               </li>
               <li>
@@ -199,7 +204,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Sitemap
+                  {t("footer.about.sitemap")}
                 </a>
               </li>
               <li>
@@ -209,7 +214,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Licenses and Safeguards
+                  {t("footer.about.licenses")}
                 </a>
               </li>
             </ul>
@@ -218,7 +223,7 @@ export function Footer() {
           {/* Support & Services */}
           <div>
             <h3 className="text-xs font-bold text-gray-500 mb-3 tracking-widest">
-              SUPPORT & SERVICES
+              {t("footer.support.title")}
             </h3>
             <ul className="space-y-2">
               <li>
@@ -228,7 +233,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Download app
+                  {t("footer.support.download")}
                 </a>
               </li>
               <li>
@@ -238,7 +243,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Help
+                  {t("footer.support.help")}
                 </a>
               </li>
               <li>
@@ -248,7 +253,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Deposits & withdrawals
+                  {t("footer.support.deposits")}
                 </a>
               </li>
               <li>
@@ -258,7 +263,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
-                  Terms & Conditions
+                  {t("footer.support.terms")}
                 </a>
               </li>
             </ul>
@@ -390,37 +395,22 @@ export function Footer() {
 
           {/* Risk Warning */}
           <div className="space-y-3">
-            <h4 className="text-orange-500 font-bold text-sm">Risk Warning</h4>
+            <h4 className="text-orange-500 font-bold text-sm">{t("footer.risk.title")}</h4>
             <p className="text-gray-400 text-xs leading-relaxed">
-              The Financial Products offered by the company include Contracts
-              for Difference (&apos;CFDs&apos;) and other complex financial
-              products. Trading CFDs carries a high level of risk since leverage
-              can work both to your advantage and disadvantage. As a result,
-              CFDs may not be suitable for all investors because it is possible
-              to lose all of your invested capital. You should never invest
-              money that you cannot afford to lose. Before trading in the
-              complex financial products offered, please ensure to understand
-              the risks involved.
+              {t("footer.risk.text1")}
             </p>
             <p className="text-gray-400 text-xs leading-relaxed">
-              You are granted limited non-exclusive non-transferable rights to
-              use the IP provided on this website for personal and
-              non-commercial purposes in relation to the services offered on the
-              Website only.
+              {t("footer.risk.text2")}
             </p>
             <p className="text-gray-400 text-xs leading-relaxed">
-              The information on this website is not directed at residents of
-              certain jurisdictions, including, without limitation, EU/EEA
-              member states, and is not intended for distribution to any person
-              in any country or jurisdiction where such distribution or use
-              would be contrary to local law or regulation.
+              {t("footer.risk.text3")}
             </p>
           </div>
 
           {/* Bottom Copyright */}
           <div className="border-t border-gray-800 pt-4 mt-6 text-center">
             <p className="text-gray-500 text-sm">
-              &copy; {new Date().getFullYear()} M4Capital. All rights reserved.
+              &copy; {new Date().getFullYear()} M4Capital. {t("footer.copyright").replace(/©.*M4Capital\.\s*/, "")}
             </p>
           </div>
         </div>

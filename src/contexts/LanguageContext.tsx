@@ -15,61 +15,119 @@ export interface Language {
   flag: string;
 }
 
+// Only include languages that have full translations available
 export const SUPPORTED_LANGUAGES: Language[] = [
   { code: "en", name: "English", nativeName: "English", flag: "🇺🇸" },
   { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸" },
   { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇧🇷" },
   { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷" },
   { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪" },
-  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹" },
-  { code: "ru", name: "Russian", nativeName: "Русский", flag: "🇷🇺" },
-  { code: "zh", name: "Chinese", nativeName: "中文", flag: "🇨🇳" },
-  { code: "ja", name: "Japanese", nativeName: "日本語", flag: "🇯🇵" },
-  { code: "ko", name: "Korean", nativeName: "한국어", flag: "🇰🇷" },
-  { code: "ar", name: "Arabic", nativeName: "العربية", flag: "🇸🇦" },
+  { code: "fil", name: "Filipino", nativeName: "Filipino", flag: "🇵🇭" },
   { code: "hi", name: "Hindi", nativeName: "हिन्दी", flag: "🇮🇳" },
-  { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷" },
-  { code: "nl", name: "Dutch", nativeName: "Nederlands", flag: "🇳🇱" },
+  { code: "ja", name: "Japanese", nativeName: "日本語", flag: "🇯🇵" },
   { code: "pl", name: "Polish", nativeName: "Polski", flag: "🇵🇱" },
+  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿" },
+  { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷" },
+  { code: "ru", name: "Russian", nativeName: "Русский", flag: "🇷🇺" },
+  { code: "ko", name: "Korean", nativeName: "한국어", flag: "🇰🇷" },
+  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹" },
+  { code: "fj", name: "Fijian", nativeName: "Vosa Vakaviti", flag: "🇫🇯" },
 ];
 
-// Map countries to default languages
-export const COUNTRY_LANGUAGE_MAP: Record<string, string> = {
-  US: "en",
-  GB: "en",
-  AU: "en",
-  CA: "en",
-  NZ: "en",
-  IE: "en",
-  ES: "es",
-  MX: "es",
-  AR: "es",
-  CO: "es",
-  CL: "es",
-  PE: "es",
-  VE: "es",
-  BR: "pt",
-  PT: "pt",
-  FR: "fr",
-  BE: "fr",
-  CH: "fr",
-  DE: "de",
-  AT: "de",
-  IT: "it",
-  RU: "ru",
-  CN: "zh",
-  TW: "zh",
-  HK: "zh",
-  JP: "ja",
-  KR: "ko",
-  SA: "ar",
-  AE: "ar",
-  EG: "ar",
-  IN: "hi",
-  TR: "tr",
-  NL: "nl",
-  PL: "pl",
+// Map browser locale codes to our supported languages
+const LOCALE_LANGUAGE_MAP: Record<string, string> = {
+  // English variants
+  en: "en",
+  "en-US": "en",
+  "en-GB": "en",
+  "en-AU": "en",
+  "en-CA": "en",
+  "en-NZ": "en",
+  // Spanish variants
+  es: "es",
+  "es-ES": "es",
+  "es-MX": "es",
+  "es-AR": "es",
+  "es-CO": "es",
+  // Portuguese variants
+  pt: "pt",
+  "pt-BR": "pt",
+  "pt-PT": "pt",
+  // French variants
+  fr: "fr",
+  "fr-FR": "fr",
+  "fr-CA": "fr",
+  "fr-BE": "fr",
+  // German variants
+  de: "de",
+  "de-DE": "de",
+  "de-AT": "de",
+  "de-CH": "de",
+  // Filipino/Tagalog
+  fil: "fil",
+  tl: "fil",
+  // Hindi
+  hi: "hi",
+  "hi-IN": "hi",
+  // Japanese
+  ja: "ja",
+  "ja-JP": "ja",
+  // Polish
+  pl: "pl",
+  "pl-PL": "pl",
+  // Czech
+  cs: "cs",
+  "cs-CZ": "cs",
+  // Turkish
+  tr: "tr",
+  "tr-TR": "tr",
+  // Russian
+  ru: "ru",
+  "ru-RU": "ru",
+  // Korean
+  ko: "ko",
+  "ko-KR": "ko",
+  // Italian
+  it: "it",
+  "it-IT": "it",
+  // Fijian
+  fj: "fj",
+  "fj-FJ": "fj",
 };
+
+// Function to detect browser language
+function detectBrowserLanguage(): string {
+  if (typeof window === "undefined") return "en";
+
+  try {
+    // Try navigator.languages first (ordered list of preferences)
+    if (navigator.languages && navigator.languages.length > 0) {
+      for (const lang of navigator.languages) {
+        const mapped = LOCALE_LANGUAGE_MAP[lang];
+        if (mapped) return mapped;
+
+        // Try base language code (e.g., "es" from "es-MX")
+        const baseLang = lang.split("-")[0];
+        const baseMapped = LOCALE_LANGUAGE_MAP[baseLang];
+        if (baseMapped) return baseMapped;
+      }
+    }
+
+    // Fallback to navigator.language
+    if (navigator.language) {
+      const mapped = LOCALE_LANGUAGE_MAP[navigator.language];
+      if (mapped) return mapped;
+
+      const baseLang = navigator.language.split("-")[0];
+      const baseMapped = LOCALE_LANGUAGE_MAP[baseLang];
+      if (baseMapped) return baseMapped;
+    }
+  } catch (error) {
+    console.error("Error detecting browser language:", error);
+  }
+
+  return "en"; // Default fallback
+}
 
 interface LanguageContextType {
   language: string;
@@ -122,17 +180,19 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         // Check localStorage for non-logged-in users
         try {
           const savedLanguage = localStorage.getItem("preferredLanguage");
-          if (savedLanguage) {
+          if (savedLanguage && SUPPORTED_LANGUAGES.find((l) => l.code === savedLanguage)) {
             setLanguageState(savedLanguage);
           } else {
-            // Try to detect from browser
-            const browserLang = navigator.language.split("-")[0];
-            if (SUPPORTED_LANGUAGES.find((l) => l.code === browserLang)) {
-              setLanguageState(browserLang);
-            }
+            // Auto-detect from browser language
+            const detectedLanguage = detectBrowserLanguage();
+            setLanguageState(detectedLanguage);
+            // Save detected language to localStorage
+            localStorage.setItem("preferredLanguage", detectedLanguage);
           }
         } catch {
-          // localStorage not available (SSR)
+          // localStorage not available (SSR), use detected language
+          const detectedLanguage = detectBrowserLanguage();
+          setLanguageState(detectedLanguage);
         }
       }
       setIsLoading(false);

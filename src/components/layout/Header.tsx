@@ -304,9 +304,9 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
       {/* Full-screen Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-30 flex flex-col md:hidden overflow-y-auto">
+        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-30 flex flex-col md:hidden overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Header with logo and close button */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-600 sticky top-0 bg-gray-700 z-10">
             <Link
               href="/"
               className="flex items-center"
@@ -364,10 +364,10 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 onClick={() => setMobileMenuOpen(false)}
                 variant="primary"
                 size="sm"
-                className="!px-3 !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-900 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.4),0_15px_25px_-5px_rgba(0,0,0,0.3)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)]"
+                className="!px-2.5 !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
                 aria-label="Close menu"
               >
-                <X size={12} />
+                <X size={16} />
               </Button>
             </div>
           </div>
@@ -398,7 +398,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   />
                 </button>
                 {isLanguageDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg z-50 max-h-64 overflow-y-auto border border-gray-200 dark:border-transparent">
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg z-50 max-h-64 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] border border-gray-200 dark:border-transparent">
                     {languages.map((lang) => (
                       <button
                         key={lang.code}

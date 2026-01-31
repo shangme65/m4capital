@@ -1,12 +1,19 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations/translations";
 
-const faqs = [
+const FAQ = () => {
+  const { language } = useLanguage();
+  const t = (key: string) => (translations as any)[language]?.[key] || key;
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const faqs = useMemo(() => [
   {
-    question: "What is the minimum deposit?",
-    answer:
-      "The minimum deposit is $100 for a standard account. This may vary for different account types.",
+    question: t("faq.q1.question"),
+    answer: t("faq.q1.answer"),
     icon: (
       <svg
         className="w-4 h-4"
@@ -24,9 +31,8 @@ const faqs = [
     ),
   },
   {
-    question: "How secure are my funds?",
-    answer:
-      "Your funds are held in segregated accounts with top-tier banks. We also use advanced encryption to protect your data.",
+    question: t("faq.q2.question"),
+    answer: t("faq.q2.answer"),
     icon: (
       <svg
         className="w-4 h-4"
@@ -44,9 +50,8 @@ const faqs = [
     ),
   },
   {
-    question: "What are the trading fees?",
-    answer:
-      "We offer competitive spreads and low to zero commissions, depending on the account type and asset traded.",
+    question: t("faq.q3.question"),
+    answer: t("faq.q3.answer"),
     icon: (
       <svg
         className="w-4 h-4"
@@ -64,9 +69,8 @@ const faqs = [
     ),
   },
   {
-    question: "How do I withdraw my money?",
-    answer:
-      "You can withdraw your funds at any time through the client portal. Withdrawals are typically processed within 24 hours.",
+    question: t("faq.q4.question"),
+    answer: t("faq.q4.answer"),
     icon: (
       <svg
         className="w-4 h-4"
@@ -83,7 +87,7 @@ const faqs = [
       </svg>
     ),
   },
-];
+], [language, t]);
 
 const FAQItem = ({
   faq,
@@ -185,7 +189,7 @@ const FAQItem = ({
                 className="overflow-hidden"
               >
                 <div className="px-4 pb-4 pt-0">
-                  <div className="pl-11 text-gray-600 text-sm leading-relaxed">
+                  <div className="text-gray-600 text-sm leading-relaxed">
                     {faq.answer}
                   </div>
                 </div>
@@ -320,7 +324,7 @@ const FAQItem = ({
                 className="overflow-hidden"
               >
                 <div className="px-4 pb-4 pt-0">
-                  <div className="pl-11 text-gray-400 text-sm leading-relaxed">
+                  <div className="text-gray-400 text-sm leading-relaxed">
                     {faq.answer}
                   </div>
                 </div>
@@ -342,9 +346,6 @@ const FAQItem = ({
   );
 };
 
-const FAQ = () => {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     const checkDarkMode = () => {
@@ -394,16 +395,16 @@ const FAQ = () => {
                 d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span className="text-xs font-medium text-indigo-400">FAQ</span>
+            <span className="text-xs font-medium text-indigo-400">{t("faq.badge")}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-white">
-            Frequently Asked{" "}
+            {t("faq.title").split(" ").slice(0, -1).join(" ")}{" "}
             <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-              Questions
+              {t("faq.title").split(" ").slice(-1).join(" ")}
             </span>
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            Find answers to common questions about our platform
+            {t("faq.subtitle")}
           </p>
         </motion.div>
 

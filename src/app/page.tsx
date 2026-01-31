@@ -31,6 +31,8 @@ import CountdownTimer from "@/components/client/CountdownTimer";
 import { useModal } from "@/contexts/ModalContext";
 import React from "react";
 import MobileHeroInfoButton from "@/components/client/MobileHeroInfoButton";
+import { useTranslation } from "@/lib/translations";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -55,6 +57,8 @@ function Hero() {
   const { openLoginModal, openSignupModal } = useModal();
   const { data: session } = useSession();
   const router = useRouter();
+  const { t } = useTranslation();
+  const { language } = useLanguage();
 
   const handleTryDemo = () => {
     // Set practice mode in localStorage before navigation
@@ -64,43 +68,39 @@ function Hero() {
     router.push("/traderoom");
   };
 
-  const heroContent = [
+  // Use React.useMemo to regenerate heroContent when language changes
+  const heroContent = React.useMemo(() => [
     {
-      title: "Unlock Global Markets",
-      description:
-        "Trade Forex, stocks, and commodities from a single, powerful platform.",
+      title: `${t("hero.title1")} ${t("hero.title2")} ${t("hero.title3")}`,
+      description: t("hero.description"),
       titleAnimation: "slideLeft",
       descAnimation: "slideRight",
     },
     {
-      title: "Precision Trading Tools",
-      description:
-        "Leverage advanced charting and analytics for surgical market entry and exit.",
+      title: t("hero.slide2.title"),
+      description: t("hero.slide2.description"),
       titleAnimation: "slideRight",
       descAnimation: "fadeInUp",
     },
     {
-      title: "Blazing Fast Execution",
-      description:
-        "Gain a competitive edge with our low-latency infrastructure.",
+      title: t("hero.slide3.title"),
+      description: t("hero.slide3.description"),
       titleAnimation: "fadeInDown",
       descAnimation: "scaleUp",
     },
     {
-      title: "Your Capital Secured",
-      description:
-        "Trade with confidence, knowing your funds are protected by industry-leading security.",
+      title: t("hero.slide4.title"),
+      description: t("hero.slide4.description"),
       titleAnimation: "scaleUp",
       descAnimation: "slideLeft",
     },
     {
-      title: "Next Generation Trading Platform",
-      description:
-        "Experience the pinnacle of trading technology, designed for performance and reliability.",
+      title: t("hero.slide5.title"),
+      description: t("hero.slide5.description"),
       titleAnimation: "fadeInUp",
       descAnimation: "fadeInDown",
     },
-  ];
+  ], [language, t]);
 
   const animationVariants: AnimationVariants = {
     slideLeft: {
@@ -138,13 +138,18 @@ function Hero() {
   const [titleAnimation, setTitleAnimation] = useState(heroContent[0].titleAnimation);
   const [descAnimation, setDescAnimation] = useState(heroContent[0].descAnimation);
 
+  // Update title and description when language changes
+  useEffect(() => {
+    setTitle(heroContent[contentIndex].title);
+    setDescription(heroContent[descriptionIndex].description);
+  }, [language, heroContent, contentIndex, descriptionIndex]);
+
   useEffect(() => {
     // Title changes immediately on mount and every 10 seconds
     const titleInterval = setInterval(() => {
       setContentIndex((prev) => {
         const nextIndex = (prev + 1) % heroContent.length;
         setTitleAnimation(heroContent[nextIndex].titleAnimation);
-        setTitle(heroContent[nextIndex].title);
         return nextIndex;
       });
     }, 10000);
@@ -154,7 +159,6 @@ function Hero() {
       setDescriptionIndex((prev) => {
         const nextIndex = (prev + 1) % heroContent.length;
         setDescAnimation(heroContent[nextIndex].descAnimation);
-        setDescription(heroContent[nextIndex].description);
         return nextIndex;
       });
 
@@ -162,7 +166,6 @@ function Hero() {
         setDescriptionIndex((prev) => {
           const nextIndex = (prev + 1) % heroContent.length;
           setDescAnimation(heroContent[nextIndex].descAnimation);
-          setDescription(heroContent[nextIndex].description);
           return nextIndex;
         });
       }, 10000);
@@ -275,6 +278,7 @@ function Hero() {
 function CallToAction() {
   const { openSignupModal } = useModal();
   const { data: session } = useSession();
+  const { t } = useTranslation();
   const [isHovered, setIsHovered] = React.useState(false);
   const [isDarkMode, setIsDarkMode] = React.useState(false);
 
@@ -338,14 +342,14 @@ function CallToAction() {
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 mb-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
                     <span className="text-xs font-medium text-orange-600">
-                      Get Started
+                      {t("cta.badge")}
                     </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
-                    Ready to dive in?
+                    {t("cta.title")}
                   </h2>
                   <p className="mt-1 text-sm text-gray-600">
-                    Start your trading journey today with M4Capital
+                    {t("cta.subtitle")}
                   </p>
                 </div>
 
@@ -362,7 +366,7 @@ function CallToAction() {
                           "0 8px 20px -4px rgba(249, 115, 22, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                       }}
                     >
-                      <span>Create an account</span>
+                      <span>{t("cta.button")}</span>
                       <svg
                         className="w-4 h-4 transition-transform group-hover/btn:translate-x-1"
                         fill="none"
@@ -466,14 +470,14 @@ function CallToAction() {
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 mb-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
                     <span className="text-xs font-medium text-orange-400">
-                      Get Started
+                      {t("cta.badge")}
                     </span>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                    Ready to dive in?
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
+                    {t("cta.title")}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-400">
-                    Start your trading journey today with M4Capital
+                  <p className="mt-1 text-sm text-gray-600">
+                    {t("cta.subtitle")}
                   </p>
                 </div>
 
@@ -492,7 +496,7 @@ function CallToAction() {
                           "0 8px 20px -4px rgba(249, 115, 22, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                       }}
                     >
-                      <span>Create an account</span>
+                      <span>{t("cta.button")}</span>
                       <svg
                         className="w-4 h-4 transition-transform group-hover/btn:translate-x-1"
                         fill="none"

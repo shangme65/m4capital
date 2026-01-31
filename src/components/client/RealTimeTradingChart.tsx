@@ -70,7 +70,6 @@ export default function RealTimeTradingChart({
     { label: "2 hours", value: "2h" },
     { label: "4 hours", value: "4h" },
     { label: "8 hours", value: "8h" },
-    { label: "12 hours", value: "12h" },
     { label: "1 day", value: "1D" },
     { label: "1 week", value: "1W" },
     { label: "1 month", value: "1M" },
@@ -125,16 +124,13 @@ export default function RealTimeTradingChart({
           format: string
         ) => {
           const date = new Date(timestamp);
-          if (format === "YYYY-MM-DD") {
-            return date.toLocaleDateString();
-          }
-          if (format === "HH:mm") {
-            return date.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-          }
-          return date.toLocaleString();
+          // Always show only time (HH:mm:ss) for x-axis like IQ Option
+          return date.toLocaleTimeString("en-US", {
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          });
         },
       },
       styles: {
@@ -180,8 +176,7 @@ export default function RealTimeTradingChart({
             style: "dashed" as any,
           },
           vertical: {
-            color: "rgba(100, 100, 100, 0.1)",
-            style: "dashed" as any,
+            show: false, // Hide vertical grid lines
           },
         },
         // Y-axis styling - enable scroll zooming on Y-axis
@@ -190,13 +185,13 @@ export default function RealTimeTradingChart({
           position: "right" as any,
           inside: false,
           reverse: false,
-          axisLine: { show: true, color: "rgba(150, 150, 150, 0.3)" },
+          axisLine: { show: false }, // Hide Y-axis line
           tickLine: { show: true, color: "rgba(150, 150, 150, 0.3)" },
           tickText: { show: true, color: "#9e9aa7", size: 11 },
         },
         // X-axis styling
         xAxis: {
-          axisLine: { color: "rgba(150, 150, 150, 0.3)" },
+          axisLine: { show: false }, // Hide X-axis line
           tickLine: { color: "rgba(150, 150, 150, 0.3)" },
           tickText: { color: "#9e9aa7", size: 11 },
         },
@@ -237,11 +232,29 @@ export default function RealTimeTradingChart({
         // Indicator styling
         indicator: {
           lineColors: ["#f7931a", "#26a69a", "#ef5350", "#7b68ee", "#00bcd4"],
+          tooltip: {
+            showRule: 'none' as any, // Hide indicator tooltip
+          },
         },
       },
     });
 
     chartRef.current = chart;
+    
+    // Zoom out the chart to create more space
+    if (chart) {
+      chart.setBarSpace(8); // Reduce bar spacing to zoom out (default is ~12)
+      chart.setOffsetRightDistance(80); // Add more space on the right
+      
+      // Hide candle tooltip after chart initialization
+      chart.setStyles({
+        candle: {
+          tooltip: {
+            showRule: 'none' as any, // Don't show candle OHLC data
+          } as any,
+        },
+      });
+    }
 
     // Make the chart background transparent to show the world map
     // klinecharts uses internal div containers, we need to make them all transparent
@@ -633,169 +646,6 @@ export default function RealTimeTradingChart({
 
       {/* Chart controls - Bottom left */}
       <div className="absolute bottom-2 left-4 flex items-center gap-2 z-10">
-        {/* Candle Time Period Button - IQ Option Style */}
-        <div className="relative candle-time-dropdown">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowCandleTimePeriod(!showCandleTimePeriod);
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white transition-colors border border-[#38312e]"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-            <span className="text-xs font-bold">{currentInterval}</span>
-            <svg
-              className="w-3 h-3"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
-
-          {/* Candle Time Period Dropdown - IQ Option Style */}
-          {showCandleTimePeriod && (
-            <div className="absolute bottom-full left-0 mb-2 bg-[#1e1d2d] border border-[#3d3c4f] rounded-lg shadow-2xl min-w-[320px] max-h-[400px] overflow-hidden z-50 candle-time-dropdown">
-              {/* Header */}
-              <div className="px-4 py-3 border-b border-[#3d3c4f]">
-                <h3 className="text-sm font-bold text-white">
-                  CANDLE TIME PERIOD
-                </h3>
-                <p className="text-xs text-[#9e9aa7] mt-1 flex items-center gap-1">
-                  <svg
-                    className="w-3 h-3"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                  Price range for a specific time interval, used for both
-                  candlesticks and bars.
-                </p>
-              </div>
-
-              {/* Time Period Grid */}
-              <div className="p-3 grid grid-cols-3 gap-1 max-h-[280px] overflow-y-auto">
-                {candleTimePeriods.map((period) => (
-                  <button
-                    key={period.value}
-                    onClick={() => {
-                      setCurrentInterval(period.value);
-                      setShowCandleTimePeriod(false);
-                    }}
-                    className={`px-3 py-2 rounded text-xs font-medium transition-colors text-left ${
-                      currentInterval === period.value
-                        ? "bg-[#22c55e] text-white"
-                        : "bg-[#2a2935] text-[#9e9aa7] hover:bg-[#38374a] hover:text-white"
-                    }`}
-                  >
-                    {period.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Footer with Candle Timer option */}
-              <div className="px-4 py-3 border-t border-[#3d3c4f] bg-[#1a1924]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded border-2 border-[#22c55e] bg-[#22c55e] flex items-center justify-center">
-                      <svg
-                        className="w-2.5 h-2.5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={3}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
-                    </div>
-                    <span className="text-xs text-[#9e9aa7]">Candle timer</span>
-                  </div>
-                  <span className="text-xs text-[#9e9aa7]">Count down</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Quick interval buttons */}
-        <div className="flex gap-1">
-          {["1m", "5m", "15m", "1h", "4h", "1D"].map((int) => (
-            <button
-              key={int}
-              onClick={() => setCurrentInterval(int)}
-              className={`px-2.5 py-1.5 rounded text-xs font-bold transition-colors ${
-                currentInterval === int
-                  ? "bg-orange-500 text-white"
-                  : "bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white"
-              }`}
-            >
-              {int}
-            </button>
-          ))}
-        </div>
-
-        {/* Scroll hints */}
-        <div className="flex flex-col gap-0.5">
-          <div className="text-[9px] text-[#666] flex items-center gap-1">
-            <svg
-              className="w-2.5 h-2.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M8 9l4-4 4 4m0 6l-4 4-4-4"
-              />
-            </svg>
-            Scroll to view history
-          </div>
-          <div className="text-[9px] text-[#666] flex items-center gap-1">
-            <svg
-              className="w-2.5 h-2.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M5 15l7-7 7 7M5 9l7-7 7 7"
-              />
-            </svg>
-            Drag Y-axis to adjust price scale
-          </div>
-        </div>
       </div>
 
       {/* Zoom & Focus Controls - Bottom center */}

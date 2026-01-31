@@ -85,6 +85,7 @@ function TradingInterface() {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState("USD/CAD");
   const [expirationSeconds, setExpirationSeconds] = useState(30);
+  const [countdown, setCountdown] = useState(expirationSeconds);
   const [isExecutingTrade, setIsExecutingTrade] = useState(false);
   const [tradeDirection, setTradeDirection] = useState<
     "higher" | "lower" | null
@@ -308,6 +309,17 @@ function TradingInterface() {
       setCurrentTime(new Date());
     }, 1000);
 
+    // Countdown timer for expiration
+    setCountdown(expirationSeconds);
+    const countdownInterval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          return expirationSeconds; // Reset when reaches 0
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
     // Fetch user balance
     const fetchBalance = async () => {
       try {
@@ -373,8 +385,9 @@ function TradingInterface() {
     return () => {
       clearInterval(timer);
       clearInterval(forexInterval);
+      clearInterval(countdownInterval);
     };
-  }, [isLoggedIn]);
+  }, [isLoggedIn, expirationSeconds]);
 
   // Close balance dropdown when clicking outside
   useEffect(() => {
@@ -854,12 +867,6 @@ function TradingInterface() {
 
             {/* Right: Balance and Controls */}
             <div className="flex items-center space-x-4">
-              <button className="p-2 hover:opacity-75 transition-opacity">
-                <Bell className="w-5 h-5" style={{ color: "#afadac" }} />
-              </button>
-              <button className="p-2 hover:opacity-75 transition-opacity">
-                <Settings className="w-5 h-5" style={{ color: "#afadac" }} />
-              </button>
               <div className="relative">
                 <button
                   onClick={() =>
@@ -3101,6 +3108,32 @@ function TradingInterface() {
                   <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e] text-white text-xs font-bold">
                     15m
                   </button>
+                </div>
+              </div>
+
+              {/* Purchase Time Countdown - IQ Option Style */}
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="text-[10px] text-[#9e9aa7] font-medium tracking-wider">
+                    PURCHASE TIME
+                  </div>
+                  <div className="text-2xl font-bold text-white font-mono">
+                    {String(Math.floor(countdown / 60)).padStart(2, "0")}:
+                    {String(countdown % 60).padStart(2, "0")}
+                  </div>
+                </div>
+              </div>
+
+              {/* Purchase Time Countdown - IQ Option Style */}
+              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
+                <div className="flex flex-col items-center gap-1">
+                  <div className="text-[10px] text-[#9e9aa7] font-medium tracking-wider">
+                    PURCHASE TIME
+                  </div>
+                  <div className="text-2xl font-bold text-white font-mono">
+                    {String(Math.floor(countdown / 60)).padStart(2, "0")}:
+                    {String(countdown % 60).padStart(2, "0")}
+                  </div>
                 </div>
               </div>
 

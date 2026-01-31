@@ -6,6 +6,8 @@ import { SiTrustpilot } from "react-icons/si";
 import { VscVerifiedFilled } from "react-icons/vsc";
 import { AnimatePresence, motion } from "framer-motion";
 import { allTestimonials } from "@/lib/testimonials-data";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { translations } from "@/lib/translations/translations";
 
 // Convert shared testimonials to the format used in this component
 const testimonials = allTestimonials.map((t) => ({
@@ -420,6 +422,9 @@ const TestimonialCard3D = ({
 };
 
 function Testimonials() {
+  const { language } = useLanguage();
+  const t = (key: string) => (translations as any)[language]?.[key] || key;
+  
   // Independent indices for each card position (4 cards for desktop)
   const [card1Index, setCard1Index] = useState(0);
   const [card2Index, setCard2Index] = useState(1);
@@ -517,13 +522,13 @@ function Testimonials() {
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
-            What Our{" "}
+            {t("testimonials.title").split(" ").slice(0, 2).join(" ")}{" "}
             <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-              Traders Say
+              {t("testimonials.title").split(" ").slice(2).join(" ")}
             </span>
           </h2>
           <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 max-w-md mx-auto">
-            Join thousands of satisfied traders worldwide
+            {t("testimonials.subtitle")}
           </p>
         </motion.div>
 

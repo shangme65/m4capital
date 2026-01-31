@@ -6,7 +6,6 @@ import { createVerificationToken } from "@/lib/verification";
 import { sendEmail } from "@/lib/email";
 import { emailTemplate, verificationCodeTemplate } from "@/lib/email-templates";
 import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
-import { COUNTRY_LANGUAGE_MAP } from "@/contexts/LanguageContext";
 import { countries } from "@/lib/countries";
 import { generateAccountNumber } from "@/lib/p2p-transfer-utils";
 import { z } from "zod";
@@ -70,9 +69,6 @@ export async function POST(req: Request) {
       if (countryData) {
         if (COUNTRY_CURRENCY_MAP[countryData.code]) {
           preferredCurrency = COUNTRY_CURRENCY_MAP[countryData.code];
-        }
-        if (COUNTRY_LANGUAGE_MAP[countryData.code]) {
-          preferredLanguage = COUNTRY_LANGUAGE_MAP[countryData.code];
         }
       }
     }
