@@ -7,6 +7,10 @@ import { generateId } from "@/lib/generate-id";
 import { sendEmail } from "@/lib/email";
 import { sendPushNotification } from "@/lib/push-notifications";
 import { getCurrencySymbol } from "@/lib/currencies";
+import {
+  cryptoSwapTemplate,
+  cryptoSwapTextTemplate,
+} from "@/lib/email-templates";
 
 export const dynamic = "force-dynamic";
 
@@ -205,103 +209,26 @@ export async function POST(request: NextRequest) {
         await sendEmail({
           to: user.email,
           subject: `🔄 Swap Completed: ${fromAsset} → ${toAsset} - M4Capital`,
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 40px 20px;">
-                <tr>
-                  <td align="center">
-                    <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
-                      <!-- Header -->
-                      <tr>
-                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #06b6d420 0%, transparent 100%);">
-                          <div style="display: inline-block; width: 80px; height: 80px; background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); border-radius: 50%; margin-bottom: 20px; line-height: 80px; font-size: 36px;">
-                            🔄
-                          </div>
-                          <h1 style="margin: 0; color: white; font-size: 28px; font-weight: 700;">Swap Completed!</h1>
-                          <p style="margin: 10px 0 0; color: #9ca3af; font-size: 16px;">${fromAsset} → ${toAsset}</p>
-                        </td>
-                      </tr>
-                      <!-- Content -->
-                      <tr>
-                        <td style="padding: 30px 40px;">
-                          <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px;">
-                            <tr>
-                              <td style="padding: 12px 0; color: #ef4444; font-size: 14px; font-weight: 600;">FROM</td>
-                              <td align="right" style="padding: 12px 0;">
-                                <div style="color: white; font-size: 18px; font-weight: 700;">${amount.toFixed(
-                                  8
-                                )} ${fromAsset}</div>
-                                <div style="color: #9ca3af; font-size: 14px;">≈ ${currencySymbol}${displayFromValue.toFixed(
-            2
-          )}</div>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td colspan="2" style="padding: 8px 0; text-align: center;">
-                                <div style="display: inline-block; width: 40px; height: 40px; background: #06b6d420; border-radius: 50%; line-height: 40px; font-size: 20px;">↓</div>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 12px 0; color: #22c55e; font-size: 14px; font-weight: 600;">TO</td>
-                              <td align="right" style="padding: 12px 0;">
-                                <div style="color: white; font-size: 18px; font-weight: 700;">${receiveAmount.toFixed(
-                                  8
-                                )} ${toAsset}</div>
-                                <div style="color: #9ca3af; font-size: 14px;">≈ ${currencySymbol}${displayToValue.toFixed(
-            2
-          )}</div>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">Exchange Rate</td>
-                              <td align="right" style="padding: 12px 0; color: white; font-size: 14px;">1 ${fromAsset} = ${rate.toFixed(
-            8
-          )} ${toAsset}</td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">Fee (${conversionFee}%)</td>
-                              <td align="right" style="padding: 12px 0; color: white; font-size: 14px;">${feeAmount.toFixed(
-                                8
-                              )} ${toAsset}</td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">Status</td>
-                              <td align="right" style="padding: 12px 0;">
-                                <span style="display: inline-block; background: #22c55e20; color: #22c55e; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">Completed</span>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
-                      <!-- Footer -->
-                      <tr>
-                        <td style="padding: 20px 40px 40px; text-align: center;">
-                          <p style="margin: 0; color: #6b7280; font-size: 13px;">This is an automated notification from M4Capital.</p>
-                          <p style="margin: 10px 0 0; color: #6b7280; font-size: 12px;">© ${new Date().getFullYear()} M4Capital. All rights reserved.</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </body>
-            </html>
-          `,
-          text: `Swap Completed! You swapped ${amount.toFixed(
-            8
-          )} ${fromAsset} for ${receiveAmount.toFixed(
-            8
-          )} ${toAsset}. Exchange Rate: 1 ${fromAsset} = ${rate.toFixed(
-            8
-          )} ${toAsset}. Fee: ${feeAmount.toFixed(
-            8
-          )} ${toAsset}. Thank you for using M4Capital!`,
+          html: cryptoSwapTemplate(
+            fromAsset,
+            toAsset,
+            amount,
+            receiveAmount,
+            rate,
+            conversionFee,
+            feeAmount,
+            displayFromValue.toFixed(2),
+            displayToValue.toFixed(2),
+            currencySymbol
+          ),
+          text: cryptoSwapTextTemplate(
+            fromAsset,
+            toAsset,
+            amount,
+            receiveAmount,
+            rate,
+            feeAmount
+          ),
         });
         console.log(`📧 Swap email sent to ${user.email}`);
       }

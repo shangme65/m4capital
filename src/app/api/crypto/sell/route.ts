@@ -171,6 +171,7 @@ export async function POST(request: NextRequest) {
       console.log("📧 Starting email notification process for sell...");
 
       const { sendEmail } = await import("@/lib/email");
+      const { cryptoSaleTemplate, cryptoSaleTextTemplate } = await import("@/lib/email-templates");
       const { getCurrencySymbol, getExchangeRates, convertCurrency } =
         await import("@/lib/currencies");
 
@@ -264,54 +265,30 @@ export async function POST(request: NextRequest) {
         const emailResult = await sendEmail({
           to: userWithPrefs.email,
           subject: `✅ Crypto Sale Successful - ${amount.toFixed(8)} ${symbol}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #10b981;">Crypto Sale Successful</h2>
-              <p>Hi ${userWithPrefs.name || "User"},</p>
-              <p>You have successfully sold <strong>${amount.toFixed(
-                8
-              )} ${symbol}</strong>.</p>
-              <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <p style="margin: 5px 0;"><strong>Asset:</strong> ${assetName} (${symbol})</p>
-                <p style="margin: 5px 0;"><strong>Amount Sold:</strong> ${amount.toFixed(
-                  8
-                )} ${symbol}</p>
-                <p style="margin: 5px 0;"><strong>Price per Unit:</strong> ${currencySymbol}${displayPrice.toFixed(
-            2
-          )}</p>
-                <p style="margin: 5px 0;"><strong>Total Value:</strong> ${currencySymbol}${displayTotalValue.toFixed(
-            2
-          )}</p>
-                <p style="margin: 5px 0;"><strong>Fee (1.5%):</strong> ${currencySymbol}${displayFee.toFixed(
-            2
-          )}</p>
-                <p style="margin: 5px 0; color: #10b981; font-size: 16px;"><strong>Net Received:</strong> ${currencySymbol}${displayNetReceived.toFixed(
-            2
-          )}</p>
-                <p style="margin: 5px 0;"><strong>New Balance:</strong> ${currencySymbol}${displayNewBalance.toFixed(
-            2
-          )}</p>
-              </div>
-              <p>Thank you for using M4Capital!</p>
-            </div>
-          `,
-          text: `Crypto Sale Successful\n\nHi ${
-            userWithPrefs.name || "User"
-          },\n\nYou have successfully sold ${amount.toFixed(
-            8
-          )} ${symbol}.\n\nAsset: ${assetName} (${symbol})\nAmount Sold: ${amount.toFixed(
-            8
-          )} ${symbol}\nPrice per Unit: ${currencySymbol}${displayPrice.toFixed(
-            2
-          )}\nTotal Value: ${currencySymbol}${displayTotalValue.toFixed(
-            2
-          )}\nFee (1.5%): ${currencySymbol}${displayFee.toFixed(
-            2
-          )}\nNet Received: ${currencySymbol}${displayNetReceived.toFixed(
-            2
-          )}\nNew Balance: ${currencySymbol}${displayNewBalance.toFixed(
-            2
-          )}\n\nThank you for using M4Capital!`,
+          html: cryptoSaleTemplate(
+            userWithPrefs.name || "User",
+            symbol,
+            assetName,
+            amount,
+            displayPrice,
+            displayTotalValue,
+            displayFee,
+            displayNetReceived,
+            displayNewBalance,
+            currencySymbol
+          ),
+          text: cryptoSaleTextTemplate(
+            userWithPrefs.name || "User",
+            symbol,
+            assetName,
+            amount,
+            displayPrice,
+            displayTotalValue,
+            displayFee,
+            displayNetReceived,
+            displayNewBalance,
+            currencySymbol
+          ),
         });
 
         console.log(`📧 Email sent successfully:`, emailResult);

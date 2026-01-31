@@ -1,182 +1,449 @@
-// Base email template wrapper
+// ============================================================================
+// MODERN PROFESSIONAL EMAIL TEMPLATE SYSTEM
+// ============================================================================
+
+const baseUrl = process.env.NEXTAUTH_URL || "https://m4capital.online";
+const currentYear = new Date().getFullYear();
+
+// Color Palette
+const colors = {
+  primary: "#6366f1",
+  primaryDark: "#4f46e5",
+  secondary: "#8b5cf6",
+  success: "#10b981",
+  successDark: "#059669",
+  warning: "#f59e0b",
+  warningDark: "#d97706",
+  danger: "#ef4444",
+  dangerDark: "#dc2626",
+  info: "#3b82f6",
+  infoDark: "#2563eb",
+  dark: "#0f172a",
+  darkSecondary: "#1e293b",
+  light: "#f8fafc",
+  gray: "#64748b",
+  grayLight: "#94a3b8",
+  white: "#ffffff",
+  border: "#e2e8f0",
+  textPrimary: "#ffffff",
+  textSecondary: "#e2e8f0",
+  textMuted: "#94a3b8",
+};
+
+// Base email template wrapper - Modern Dark Theme
 export const emailTemplate = (content: string) => `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>M4 Capital</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background-color: #f5f5f5;
-    }
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      background-color: #ffffff;
-    }
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 40px 20px;
-      text-align: center;
-    }
-    .logo-img {
-      max-width: 180px;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-      background-color: white;
-      padding: 10px;
-      border-radius: 8px;
-    }
-    .content {
-      padding: 40px 30px;
-      color: #333333;
-      line-height: 1.6;
-    }
-    .button {
-      display: inline-block;
-      padding: 12px 30px;
-      margin: 20px 0;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #ffffff;
-      text-decoration: none;
-      border-radius: 5px;
-      font-weight: 600;
-    }
-    .footer {
-      padding: 30px;
-      text-align: center;
-      color: #999999;
-      font-size: 14px;
-      border-top: 1px solid #eeeeee;
-    }
-    .alert {
-      padding: 15px;
-      margin: 20px 0;
-      border-radius: 5px;
-    }
-    .alert-success {
-      background-color: #d4edda;
-      border: 1px solid #c3e6cb;
-      color: #155724;
-    }
-    .alert-warning {
-      background-color: #fff3cd;
-      border: 1px solid #ffeeba;
-      color: #856404;
-    }
-    .alert-danger {
-      background-color: #f8d7da;
-      border: 1px solid #f5c6cb;
-      color: #721c24;
-    }
-    .alert-info {
-      background-color: #d1ecf1;
-      border: 1px solid #bee5eb;
-      color: #0c5460;
-    }
-  </style>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <img src="${
-        process.env.NEXTAUTH_URL || "https://m4capital.online"
-      }/m4capitallogo2.png" alt="M4 Capital" class="logo-img" />
-    </div>
-    <div class="content">${content}
-    </div>
-    <div class="footer">
-      <p>© 2025 M4 Capital. All rights reserved.</p>
-      <p>This is an automated message, please do not reply to this email.</p>
-    </div>
-  </div>
+<body style="margin: 0; padding: 0; background-color: ${colors.dark}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;">
+  <!-- Outer Container -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(180deg, ${colors.dark} 0%, ${colors.darkSecondary} 100%); min-height: 100vh;">
+    <tr>
+      <td align="center" style="padding: 40px 20px;">
+        <!-- Main Card -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background: linear-gradient(145deg, ${colors.darkSecondary} 0%, ${colors.dark} 100%); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);">
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <img src="${baseUrl}/m4capitallogo2.png" alt="M4 Capital" width="160" style="display: block; max-width: 160px; height: auto; background: ${colors.white}; padding: 12px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px 40px 30px; color: ${colors.light};">
+              ${content}
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px 40px; background: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.05);">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center">
+                    <!-- Social Links -->
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;">
+                      <tr>
+                        <td style="padding: 0 8px;">
+                          <a href="https://t.me/m4capitalbot" style="display: inline-block; width: 36px; height: 36px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 36px; text-decoration: none;">
+                            <img src="${baseUrl}/socials/telegram.png" alt="Telegram" width="18" height="18" style="vertical-align: middle;" />
+                          </a>
+                        </td>
+                        <td style="padding: 0 8px;">
+                          <a href="${baseUrl}" style="display: inline-block; width: 36px; height: 36px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 36px; text-decoration: none;">
+                            <img src="${baseUrl}/icons/icon-72x72.png" alt="Website" width="18" height="18" style="vertical-align: middle; border-radius: 4px;" />
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                    
+                    <p style="margin: 0 0 8px; color: ${colors.grayLight}; font-size: 13px;">
+                      © ${currentYear} M4 Capital. All rights reserved.
+                    </p>
+                    <p style="margin: 0; color: ${colors.gray}; font-size: 12px;">
+                      This is an automated message. Please do not reply directly to this email.
+                    </p>
+                    <p style="margin: 15px 0 0; color: ${colors.gray}; font-size: 11px;">
+                      <a href="${baseUrl}/settings" style="color: ${colors.grayLight}; text-decoration: none;">Manage Notifications</a>
+                      &nbsp;•&nbsp;
+                      <a href="${baseUrl}/contact" style="color: ${colors.grayLight}; text-decoration: none;">Contact Support</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+        
+        <!-- Trust Badge -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; margin-top: 20px;">
+          <tr>
+            <td align="center">
+              <p style="margin: 0; color: ${colors.gray}; font-size: 11px;">
+                🔒 Secured by industry-standard encryption
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
 `;
 
+// ============================================================================
+// REUSABLE EMAIL COMPONENTS
+// ============================================================================
+
+// Hero Section with Icon
+export const emailHero = (
+  icon: string,
+  title: string,
+  subtitle?: string,
+  gradient: "primary" | "success" | "warning" | "danger" | "info" = "primary"
+) => {
+  const gradients = {
+    primary: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%)`,
+    success: `linear-gradient(135deg, ${colors.success} 0%, ${colors.successDark} 100%)`,
+    warning: `linear-gradient(135deg, ${colors.warning} 0%, ${colors.warningDark} 100%)`,
+    danger: `linear-gradient(135deg, ${colors.danger} 0%, ${colors.dangerDark} 100%)`,
+    info: `linear-gradient(135deg, ${colors.info} 0%, ${colors.infoDark} 100%)`,
+  };
+
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 30px;">
+      <tr>
+        <td align="center">
+          <div style="display: inline-block; width: 80px; height: 80px; background: ${gradients[gradient]}; border-radius: 50%; text-align: center; line-height: 80px; font-size: 36px; margin-bottom: 20px; box-shadow: 0 10px 40px -10px ${gradient === "primary" ? colors.primary : gradient === "success" ? colors.success : gradient === "warning" ? colors.warning : gradient === "danger" ? colors.danger : colors.info};">
+            ${icon}
+          </div>
+          <h1 style="margin: 0 0 8px; color: ${colors.white}; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">
+            ${title}
+          </h1>
+          ${subtitle ? `<p style="margin: 0; color: ${colors.grayLight}; font-size: 16px;">${subtitle}</p>` : ""}
+        </td>
+      </tr>
+    </table>
+  `;
+};
+
+// Info Card Component
+export const emailCard = (content: string, borderColor?: string) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
+    <tr>
+      <td style="background: rgba(0, 0, 0, 0.3); border-radius: 16px; padding: 24px; ${borderColor ? `border-left: 4px solid ${borderColor};` : ""}">
+        ${content}
+      </td>
+    </tr>
+  </table>
+`;
+
+// Transaction Details Table
+export const emailTransactionTable = (
+  rows: Array<{ label: string; value: string; highlight?: boolean; color?: string }>
+) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0; background: rgba(0, 0, 0, 0.3); border-radius: 16px; overflow: hidden;">
+    ${rows
+      .map(
+        (row, index) => `
+      <tr>
+        <td style="padding: 16px 20px; color: ${colors.grayLight}; font-size: 14px; ${index < rows.length - 1 ? `border-bottom: 1px solid rgba(255, 255, 255, 0.05);` : ""}">
+          ${row.label}
+        </td>
+        <td align="right" style="padding: 16px 20px; color: ${row.color || (row.highlight ? colors.success : colors.white)}; font-size: ${row.highlight ? "18px" : "15px"}; font-weight: ${row.highlight ? "700" : "600"}; ${index < rows.length - 1 ? `border-bottom: 1px solid rgba(255, 255, 255, 0.05);` : ""}">
+          ${row.value}
+        </td>
+      </tr>
+    `
+      )
+      .join("")}
+  </table>
+`;
+
+// Status Badge
+export const emailBadge = (
+  text: string,
+  status: "success" | "warning" | "danger" | "info" | "pending" = "success"
+) => {
+  const statusColors = {
+    success: { bg: "rgba(16, 185, 129, 0.2)", text: colors.success },
+    warning: { bg: "rgba(245, 158, 11, 0.2)", text: colors.warning },
+    danger: { bg: "rgba(239, 68, 68, 0.2)", text: colors.danger },
+    info: { bg: "rgba(59, 130, 246, 0.2)", text: colors.info },
+    pending: { bg: "rgba(148, 163, 184, 0.2)", text: colors.grayLight },
+  };
+
+  return `<span style="display: inline-block; background: ${statusColors[status].bg}; color: ${statusColors[status].text}; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">${text}</span>`;
+};
+
+// Primary Button
+export const emailButton = (text: string, href: string, fullWidth = false) => `
+  <table role="presentation" ${fullWidth ? 'width="100%"' : ""} cellpadding="0" cellspacing="0" border="0" style="margin: 25px 0;">
+    <tr>
+      <td align="center">
+        <a href="${href}" style="display: inline-block; ${fullWidth ? "width: 100%; text-align: center;" : ""} padding: 16px 40px; background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%); color: ${colors.white}; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4); transition: all 0.3s ease;">
+          ${text}
+        </a>
+      </td>
+    </tr>
+  </table>
+`;
+
+// Secondary Button
+export const emailButtonSecondary = (text: string, href: string) => `
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 15px 0;">
+    <tr>
+      <td align="center">
+        <a href="${href}" style="display: inline-block; padding: 14px 32px; background: transparent; border: 2px solid ${colors.primary}; color: ${colors.primary}; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">
+          ${text}
+        </a>
+      </td>
+    </tr>
+  </table>
+`;
+
+// Alert Box
+export const emailAlert = (
+  message: string,
+  type: "success" | "warning" | "danger" | "info" = "info",
+  icon?: string
+) => {
+  const alertStyles = {
+    success: { bg: "rgba(16, 185, 129, 0.15)", border: colors.success, text: colors.success },
+    warning: { bg: "rgba(245, 158, 11, 0.15)", border: colors.warning, text: colors.warning },
+    danger: { bg: "rgba(239, 68, 68, 0.15)", border: colors.danger, text: colors.danger },
+    info: { bg: "rgba(59, 130, 246, 0.15)", border: colors.info, text: colors.info },
+  };
+
+  const icons = {
+    success: "✅",
+    warning: "⚠️",
+    danger: "🚫",
+    info: "ℹ️",
+  };
+
+  return `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
+      <tr>
+        <td style="background: ${alertStyles[type].bg}; border-left: 4px solid ${alertStyles[type].border}; border-radius: 8px; padding: 16px 20px;">
+          <p style="margin: 0; color: ${alertStyles[type].text}; font-size: 14px; line-height: 1.5;">
+            <strong style="margin-right: 8px;">${icon || icons[type]}</strong>
+            ${message}
+          </p>
+        </td>
+      </tr>
+    </table>
+  `;
+};
+
+// Divider
+export const emailDivider = () => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 25px 0;">
+    <tr>
+      <td style="height: 1px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);"></td>
+    </tr>
+  </table>
+`;
+
+// Feature List
+export const emailFeatureList = (items: Array<{ icon: string; text: string }>) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
+    ${items
+      .map(
+        (item) => `
+      <tr>
+        <td style="padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td width="40" style="font-size: 20px; vertical-align: middle;">${item.icon}</td>
+              <td style="color: ${colors.grayLight}; font-size: 15px; vertical-align: middle;">${item.text}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    `
+      )
+      .join("")}
+  </table>
+`;
+
+// Paragraph
+export const emailParagraph = (text: string) => `
+  <p style="margin: 0 0 16px; color: ${colors.grayLight}; font-size: 15px; line-height: 1.7;">
+    ${text}
+  </p>
+`;
+
+// Greeting
+export const emailGreeting = (name: string) => `
+  <p style="margin: 0 0 20px; color: ${colors.white}; font-size: 17px; font-weight: 500;">
+    Hi ${name},
+  </p>
+`;
+
+// Signature
+export const emailSignature = () => `
+  ${emailDivider()}
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td>
+        <p style="margin: 0 0 4px; color: ${colors.grayLight}; font-size: 14px;">Best regards,</p>
+        <p style="margin: 0; color: ${colors.white}; font-size: 15px; font-weight: 600;">The M4 Capital Team</p>
+      </td>
+    </tr>
+  </table>
+`;
+
+// Code Display (for verification codes)
+export const emailCode = (code: string, expiryMinutes: number = 15) => `
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 30px 0;">
+    <tr>
+      <td align="center" style="background: linear-gradient(145deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border: 2px dashed rgba(99, 102, 241, 0.3); border-radius: 16px; padding: 30px;">
+        <p style="margin: 0 0 10px; color: ${colors.grayLight}; font-size: 13px; text-transform: uppercase; letter-spacing: 2px;">
+          Your Verification Code
+        </p>
+        <p style="margin: 0; font-family: 'SF Mono', 'Consolas', 'Monaco', monospace; font-size: 42px; font-weight: 700; letter-spacing: 10px; color: ${colors.primary}; text-shadow: 0 0 30px rgba(99, 102, 241, 0.3);">
+          ${code}
+        </p>
+        <p style="margin: 15px 0 0; color: ${colors.gray}; font-size: 12px;">
+          ⏱️ Expires in ${expiryMinutes} minutes
+        </p>
+      </td>
+    </tr>
+  </table>
+`;
+
+// ============================================================================
+// KYC EMAIL TEMPLATES
+// ============================================================================
+
 // KYC Submission Confirmation (to user)
 export const kycSubmissionTemplate = (userName: string) =>
   emailTemplate(`
-  <h2>KYC Verification Submitted Successfully</h2>
-  <p>Dear ${userName},</p>
-  <p>Thank you for submitting your KYC (Know Your Customer) verification documents. We have received your application and our team is currently reviewing it.</p>
-  
-  <div class="alert alert-info">
-    <strong>What happens next?</strong><br>
-    Our compliance team will review your documents within 24-48 hours. You will receive an email notification once the review is complete.
-  </div>
-  
-  <p>You can check the status of your verification at any time by visiting your account settings.</p>
-  
-  <a href="${process.env.NEXTAUTH_URL}/settings" class="button">View KYC Status</a>
-  
-  <p>If you have any questions, please don't hesitate to contact our support team.</p>
-  
-  <p>Best regards,<br>The M4 Capital Team</p>
-`);
+    ${emailHero("📋", "KYC Submission Received", "We're reviewing your documents", "info")}
+    
+    ${emailGreeting(userName)}
+    
+    ${emailParagraph("Thank you for submitting your KYC (Know Your Customer) verification documents. We have received your application and our compliance team is now reviewing it.")}
+    
+    ${emailAlert("Our compliance team will review your documents within <strong>24-48 hours</strong>. You will receive an email notification once the review is complete.", "info", "⏱️")}
+    
+    ${emailCard(`
+      <p style="margin: 0 0 12px; color: ${colors.white}; font-size: 16px; font-weight: 600;">What happens next?</p>
+      ${emailFeatureList([
+        { icon: "📝", text: "Our team reviews your submitted documents" },
+        { icon: "🔍", text: "We verify the authenticity of your information" },
+        { icon: "✅", text: "You receive approval confirmation via email" },
+        { icon: "🚀", text: "Full platform access is unlocked" },
+      ])}
+    `)}
+    
+    ${emailButton("Check KYC Status", `${baseUrl}/settings`)}
+    
+    ${emailParagraph("If you have any questions about the verification process, please don't hesitate to contact our support team.")}
+    
+    ${emailSignature()}
+  `);
 
 // KYC Approved (to user)
 export const kycApprovedTemplate = (userName: string) =>
   emailTemplate(`
-  <h2>🎉 KYC Verification Approved!</h2>
-  <p>Dear ${userName},</p>
-  
-  <div class="alert alert-success">
-    <strong>Congratulations!</strong><br>
-    Your KYC verification has been approved. Your account is now fully verified.
-  </div>
-  
-  <p>You now have access to all platform features, including:</p>
-  <ul>
-    <li>Unlimited deposits and withdrawals</li>
-    <li>Higher trading limits</li>
-    <li>Access to premium features</li>
-    <li>Priority customer support</li>
-  </ul>
-  
-  <a href="${process.env.NEXTAUTH_URL}/dashboard" class="button">Go to Dashboard</a>
-  
-  <p>Thank you for completing your verification!</p>
-  
-  <p>Best regards,<br>The M4 Capital Team</p>
-`);
+    ${emailHero("🎉", "KYC Verification Approved!", "Your account is now fully verified", "success")}
+    
+    ${emailGreeting(userName)}
+    
+    ${emailAlert("Congratulations! Your KYC verification has been successfully approved. Your account now has full access to all platform features.", "success")}
+    
+    ${emailCard(`
+      <p style="margin: 0 0 16px; color: ${colors.white}; font-size: 16px; font-weight: 600;">You now have access to:</p>
+      ${emailFeatureList([
+        { icon: "💰", text: "Unlimited deposits and withdrawals" },
+        { icon: "📈", text: "Higher trading limits" },
+        { icon: "⭐", text: "Access to premium features" },
+        { icon: "🎧", text: "Priority customer support" },
+      ])}
+    `)}
+    
+    ${emailButton("Go to Dashboard", `${baseUrl}/dashboard`)}
+    
+    ${emailParagraph("Thank you for completing your verification and trusting M4 Capital with your investments!")}
+    
+    ${emailSignature()}
+  `);
 
 // KYC Rejected (to user)
 export const kycRejectedTemplate = (userName: string, reason: string) =>
   emailTemplate(`
-  <h2>KYC Verification Requires Attention</h2>
-  <p>Dear ${userName},</p>
-  
-  <div class="alert alert-warning">
-    <strong>Action Required</strong><br>
-    Unfortunately, we were unable to approve your KYC verification at this time.
-  </div>
-  
-  <p><strong>Reason:</strong></p>
-  <p>${reason}</p>
-  
-  <p>Please review the feedback above and resubmit your KYC documents with the necessary corrections.</p>
-  
-  <p><strong>Common issues to check:</strong></p>
-  <ul>
-    <li>Ensure all documents are clear and legible</li>
-    <li>Verify that document photos are not blurry or cut off</li>
-    <li>Make sure your selfie clearly shows your face</li>
-    <li>Confirm all information matches across documents</li>
-    <li>Check that documents are valid and not expired</li>
-  </ul>
-  
-  <a href="${process.env.NEXTAUTH_URL}/settings" class="button">Resubmit KYC</a>
-  
-  <p>If you have any questions or need assistance, please contact our support team.</p>
-  
-  <p>Best regards,<br>The M4 Capital Team</p>
-`);
+    ${emailHero("📋", "KYC Verification Update", "Action required on your submission", "warning")}
+    
+    ${emailGreeting(userName)}
+    
+    ${emailParagraph("Unfortunately, we were unable to approve your KYC verification at this time. Please review the feedback below and resubmit your documents.")}
+    
+    ${emailCard(`
+      <p style="margin: 0 0 8px; color: ${colors.grayLight}; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">Reason for Review</p>
+      <p style="margin: 0; color: ${colors.white}; font-size: 15px; line-height: 1.6;">${reason}</p>
+    `, colors.warning)}
+    
+    ${emailCard(`
+      <p style="margin: 0 0 16px; color: ${colors.white}; font-size: 16px; font-weight: 600;">📝 Common Issues to Check</p>
+      ${emailFeatureList([
+        { icon: "📷", text: "Ensure all documents are clear and legible" },
+        { icon: "🖼️", text: "Verify that photos are not blurry or cut off" },
+        { icon: "🤳", text: "Make sure your selfie clearly shows your face" },
+        { icon: "✓", text: "Confirm all information matches across documents" },
+        { icon: "📅", text: "Check that documents are valid and not expired" },
+      ])}
+    `)}
+    
+    ${emailButton("Resubmit Documents", `${baseUrl}/settings`)}
+    
+    ${emailParagraph("If you have any questions or need assistance, please contact our support team.")}
+    
+    ${emailSignature()}
+  `);
 
 // New KYC Submission (to admin)
 export const kycAdminNotificationTemplate = (
@@ -186,92 +453,111 @@ export const kycAdminNotificationTemplate = (
   kycId: string
 ) =>
   emailTemplate(`
-  <h2>New KYC Submission Received</h2>
-  
-  <div class="alert alert-info">
-    <strong>Action Required</strong><br>
-    A new KYC verification has been submitted and requires review.
-  </div>
-  
-  <p><strong>User Details:</strong></p>
-  <ul>
-    <li><strong>Name:</strong> ${userName}</li>
-    <li><strong>Email:</strong> ${userEmail}</li>
-    <li><strong>User ID:</strong> ${userId}</li>
-    <li><strong>KYC ID:</strong> ${kycId}</li>
-  </ul>
-  
-  <p>Please review the submitted documents and approve or reject the verification.</p>
-  
-  <a href="${process.env.NEXTAUTH_URL}/admin/kyc" class="button">Review KYC Submission</a>
-  
-  <p>This notification was sent to all admin users.</p>
-`);
+    ${emailHero("🔔", "New KYC Submission", "A user has submitted documents for review", "info")}
+    
+    ${emailAlert("A new KYC verification has been submitted and requires your review.", "info", "👤")}
+    
+    ${emailTransactionTable([
+      { label: "User Name", value: userName },
+      { label: "Email", value: userEmail },
+      { label: "User ID", value: userId.substring(0, 12) + "..." },
+      { label: "KYC ID", value: kycId.substring(0, 12) + "..." },
+      { label: "Status", value: emailBadge("Pending Review", "pending") },
+    ])}
+    
+    ${emailButton("Review Submission", `${baseUrl}/admin/kyc`)}
+    
+    ${emailParagraph("Please review the submitted documents and approve or reject the verification in a timely manner.")}
+    
+    ${emailDivider()}
+    
+    <p style="margin: 0; color: ${colors.gray}; font-size: 13px; text-align: center;">
+      This notification was sent to all admin users.
+    </p>
+  `);
+
+// ============================================================================
+// PLAIN TEXT EMAIL TEMPLATES
+// ============================================================================
 
 // Plain text versions for email clients that don't support HTML
 export const kycSubmissionTextTemplate = (userName: string) => `
-KYC Verification Submitted Successfully
+📋 KYC VERIFICATION SUBMITTED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Dear ${userName},
+Hi ${userName},
 
-Thank you for submitting your KYC (Know Your Customer) verification documents. We have received your application and our team is currently reviewing it.
+Thank you for submitting your KYC (Know Your Customer) verification documents. We have received your application and our compliance team is now reviewing it.
 
-What happens next?
-Our compliance team will review your documents within 24-48 hours. You will receive an email notification once the review is complete.
+⏱️ WHAT HAPPENS NEXT?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Our compliance team reviews your documents within 24-48 hours
+• You will receive an email once the review is complete
+• Check status anytime: ${baseUrl}/settings
 
-You can check the status of your verification at any time by visiting your account settings at ${process.env.NEXTAUTH_URL}/settings
-
-If you have any questions, please don't hesitate to contact our support team.
+If you have any questions, please contact our support team.
 
 Best regards,
 The M4 Capital Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+© ${currentYear} M4 Capital. All rights reserved.
 `;
 
 export const kycApprovedTextTemplate = (userName: string) => `
-KYC Verification Approved!
+🎉 KYC VERIFICATION APPROVED!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Dear ${userName},
+Hi ${userName},
 
 Congratulations! Your KYC verification has been approved. Your account is now fully verified.
 
-You now have access to all platform features, including:
-- Unlimited deposits and withdrawals
-- Higher trading limits
-- Access to premium features
-- Priority customer support
+✅ YOU NOW HAVE ACCESS TO:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Unlimited deposits and withdrawals
+• Higher trading limits
+• Access to premium features
+• Priority customer support
 
-Visit your dashboard: ${process.env.NEXTAUTH_URL}/dashboard
+Go to Dashboard: ${baseUrl}/dashboard
 
 Thank you for completing your verification!
 
 Best regards,
 The M4 Capital Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+© ${currentYear} M4 Capital. All rights reserved.
 `;
 
 export const kycRejectedTextTemplate = (userName: string, reason: string) => `
-KYC Verification Requires Attention
+📋 KYC VERIFICATION UPDATE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Dear ${userName},
+Hi ${userName},
 
 Unfortunately, we were unable to approve your KYC verification at this time.
 
-Reason: ${reason}
+REASON:
+${reason}
 
-Please review the feedback above and resubmit your KYC documents with the necessary corrections.
+📝 COMMON ISSUES TO CHECK:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Ensure all documents are clear and legible
+• Verify that photos are not blurry or cut off
+• Make sure your selfie clearly shows your face
+• Confirm all information matches across documents
+• Check that documents are valid and not expired
 
-Common issues to check:
-- Ensure all documents are clear and legible
-- Verify that document photos are not blurry or cut off
-- Make sure your selfie clearly shows your face
-- Confirm all information matches across documents
-- Check that documents are valid and not expired
+Resubmit Documents: ${baseUrl}/settings
 
-Resubmit your KYC: ${process.env.NEXTAUTH_URL}/settings
-
-If you have any questions or need assistance, please contact our support team.
+If you have any questions, please contact our support team.
 
 Best regards,
 The M4 Capital Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+© ${currentYear} M4 Capital. All rights reserved.
 `;
 
 export const kycAdminNotificationTextTemplate = (
@@ -280,103 +566,100 @@ export const kycAdminNotificationTextTemplate = (
   userId: string,
   kycId: string
 ) => `
-New KYC Submission Received
+🔔 NEW KYC SUBMISSION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 A new KYC verification has been submitted and requires review.
 
-User Details:
-- Name: ${userName}
-- Email: ${userEmail}
-- User ID: ${userId}
-- KYC ID: ${kycId}
+👤 USER DETAILS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+• Name: ${userName}
+• Email: ${userEmail}
+• User ID: ${userId}
+• KYC ID: ${kycId}
 
 Please review the submitted documents and approve or reject the verification.
 
-Review KYC: ${process.env.NEXTAUTH_URL}/admin/kyc
+Review KYC: ${baseUrl}/admin/kyc
 
 This notification was sent to all admin users.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+© ${currentYear} M4 Capital. All rights reserved.
 `;
+
+// ============================================================================
+// EMAIL VERIFICATION CODE TEMPLATE
+// ============================================================================
 
 // Email Verification Code Template
 export const verificationCodeTemplate = (name: string, code: string) => `
-<div style="text-align: center;">
-  <h1 style="color: #333333; margin-bottom: 10px;">Verify Your Email</h1>
-  <p style="font-size: 16px; color: #666666; margin-bottom: 30px;">
-    Welcome to M4 Capital, ${name}! Please use the code below to verify your email address.
-  </p>
-</div>
-
-<div style="background-color: #f8f9fa; border-radius: 10px; padding: 30px; margin: 30px 0; text-align: center;">
-  <p style="font-size: 14px; color: #666666; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 1px;">Your Verification Code</p>
-  <div style="font-size: 42px; font-weight: bold; letter-spacing: 8px; color: #667eea; font-family: 'Courier New', monospace; margin: 10px 0;">
-    ${code}
-  </div>
-  <p style="font-size: 12px; color: #999999; margin-top: 15px;">This code will expire in 15 minutes</p>
-</div>
-
-<div style="margin-top: 30px;">
-  <p style="font-size: 14px; color: #666666;">
+  ${emailHero("✉️", "Verify Your Email", `Welcome to M4 Capital, ${name}!`, "primary")}
+  
+  ${emailParagraph("To complete your registration and secure your account, please use the verification code below:")}
+  
+  ${emailCode(code, 15)}
+  
+  ${emailAlert("For your security, never share this code with anyone. M4 Capital will never ask you for this code via phone or message.", "warning", "🔒")}
+  
+  ${emailCard(`
+    <p style="margin: 0 0 12px; color: ${colors.white}; font-size: 15px; font-weight: 600;">What's Next?</p>
+    <p style="margin: 0; color: ${colors.grayLight}; font-size: 14px; line-height: 1.6;">
+      After verifying your email, you'll have full access to M4 Capital's trading platform, real-time market data, and portfolio management tools.
+    </p>
+  `)}
+  
+  ${emailDivider()}
+  
+  <p style="margin: 0; color: ${colors.gray}; font-size: 13px; text-align: center;">
     If you didn't create an account with M4 Capital, you can safely ignore this email.
   </p>
-</div>
-
-<div style="border-top: 1px solid #eeeeee; margin-top: 30px; padding-top: 20px;">
-  <p style="font-size: 12px; color: #999999; margin: 5px 0;">
-    <strong>Security Tip:</strong> Never share this code with anyone. M4 Capital will never ask you for this code.
-  </p>
-</div>
 `;
+
+// ============================================================================
+// WELCOME EMAIL TEMPLATE
+// ============================================================================
 
 // Welcome Email Template (after verification)
-export const welcomeEmailTemplate = (name: string) => `
-<div style="text-align: center;">
-  <h1 style="color: #333333; margin-bottom: 10px;">Welcome to M4 Capital!</h1>
-  <p style="font-size: 16px; color: #666666; margin-bottom: 30px;">
-    Your email has been successfully verified, ${name}!
-  </p>
-</div>
+export const welcomeEmailTemplate = (name: string) => emailTemplate(`
+  ${emailHero("🚀", "Welcome to M4 Capital!", `Your account is ready, ${name}`, "success")}
+  
+  ${emailAlert("Your email has been successfully verified and your account is now active!", "success")}
+  
+  ${emailCard(`
+    <p style="margin: 0 0 16px; color: ${colors.white}; font-size: 16px; font-weight: 600;">🌟 Getting Started</p>
+    ${emailFeatureList([
+      { icon: "📊", text: "Monitor real-time cryptocurrency prices" },
+      { icon: "💼", text: "Build and manage your investment portfolio" },
+      { icon: "📈", text: "Access trading signals and market insights" },
+      { icon: "🔐", text: "Complete KYC verification for full access" },
+    ])}
+  `)}
+  
+  ${emailButton("Start Trading Now", `${baseUrl}/dashboard`)}
+  
+  ${emailCard(`
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      <tr>
+        <td width="50" style="vertical-align: top;">
+          <div style="width: 40px; height: 40px; background: linear-gradient(135deg, ${colors.info} 0%, ${colors.infoDark} 100%); border-radius: 50%; text-align: center; line-height: 40px; font-size: 18px;">💡</div>
+        </td>
+        <td style="vertical-align: top; padding-left: 12px;">
+          <p style="margin: 0 0 4px; color: ${colors.white}; font-size: 15px; font-weight: 600;">Pro Tip</p>
+          <p style="margin: 0; color: ${colors.grayLight}; font-size: 14px; line-height: 1.5;">
+            Connect your Telegram account for instant notifications about deposits, trades, and market updates. Visit Settings to link your account.
+          </p>
+        </td>
+      </tr>
+    </table>
+  `)}
+  
+  ${emailSignature()}
+`);
 
-<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 30px; margin: 30px 0; text-align: center;">
-  <h2 style="color: #ffffff; margin: 0 0 15px 0; font-size: 24px;">🎉 You're All Set!</h2>
-  <p style="color: #ffffff; opacity: 0.9; margin: 0;">
-    Your M4 Capital account is now active and ready to use.
-  </p>
-</div>
-
-<div style="margin: 30px 0;">
-  <h3 style="color: #333333; font-size: 18px; margin-bottom: 15px;">What's Next?</h3>
-  <ul style="list-style: none; padding: 0; margin: 0;">
-    <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-      <span style="color: #667eea; margin-right: 10px;">📊</span>
-      <span style="color: #666666;">Monitor real-time cryptocurrency prices</span>
-    </li>
-    <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-      <span style="color: #667eea; margin-right: 10px;">💼</span>
-      <span style="color: #666666;">Manage your investment portfolio</span>
-    </li>
-    <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-      <span style="color: #667eea; margin-right: 10px;">📈</span>
-      <span style="color: #666666;">Access trading signals and market insights</span>
-    </li>
-    <li style="padding: 12px 0;">
-      <span style="color: #667eea; margin-right: 10px;">✅</span>
-      <span style="color: #666666;">Complete your KYC verification for full access</span>
-    </li>
-  </ul>
-</div>
-
-<div style="margin-top: 30px; text-align: center;">
-  <p style="font-size: 14px; color: #666666; margin-bottom: 15px;">
-    Need help getting started? Our support team is here to assist you.
-  </p>
-</div>
-
-<div style="border-top: 1px solid #eeeeee; margin-top: 30px; padding-top: 20px; text-align: center;">
-  <p style="font-size: 12px; color: #999999; margin: 5px 0;">
-    Thank you for choosing M4 Capital - Your trusted partner in crypto investment.
-  </p>
-</div>
-`;
+// ============================================================================
+// TELEGRAM LINKING TEMPLATES
+// ============================================================================
 
 // Telegram Linking Success Template
 export const telegramLinkSuccessTemplate = (
@@ -384,180 +667,108 @@ export const telegramLinkSuccessTemplate = (
   telegramUsername: string
 ) =>
   emailTemplate(`
-  <div style="text-align: center;">
-    <h1 style="color: #333333; margin-bottom: 10px;">🔗 Telegram Account Connected!</h1>
-    <p style="font-size: 16px; color: #666666; margin-bottom: 30px;">
-      Great news, ${name}! Your Telegram account has been successfully linked to your M4 Capital account.
+    ${emailHero("🔗", "Telegram Connected!", `Your account is now linked`, "success")}
+    
+    ${emailGreeting(name)}
+    
+    ${emailAlert(`Successfully connected to <strong>@${telegramUsername}</strong>`, "success", "✅")}
+    
+    ${emailCard(`
+      <p style="margin: 0 0 16px; color: ${colors.white}; font-size: 16px; font-weight: 600;">📱 What You Can Do Now</p>
+      ${emailFeatureList([
+        { icon: "💰", text: "Check your balance with /balance command" },
+        { icon: "📊", text: "View your portfolio with /portfolio command" },
+        { icon: "🔔", text: "Receive instant deposit & withdrawal notifications" },
+        { icon: "📈", text: "Get real-time crypto price updates" },
+        { icon: "⚡", text: "Set custom price alerts" },
+      ])}
+    `)}
+    
+    ${emailAlert("Use the <strong>/help</strong> command in Telegram to see all available commands and features.", "info", "💡")}
+    
+    ${emailButton("View Settings", `${baseUrl}/settings`)}
+    
+    ${emailDivider()}
+    
+    <p style="margin: 0; color: ${colors.gray}; font-size: 13px; text-align: center;">
+      🔒 If you didn't authorize this connection, please unlink the account immediately and change your password.
     </p>
-  </div>
-
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; padding: 30px; margin: 30px 0; text-align: center;">
-    <h2 style="color: #ffffff; margin: 0 0 15px 0; font-size: 24px;">✅ Connection Successful</h2>
-    <p style="color: #ffffff; opacity: 0.9; margin: 0;">
-      Connected to: <strong>@${telegramUsername}</strong>
-    </p>
-  </div>
-
-  <div style="margin: 30px 0;">
-    <h3 style="color: #333333; font-size: 18px; margin-bottom: 15px;">What You Can Do Now:</h3>
-    <ul style="list-style: none; padding: 0; margin: 0;">
-      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-        <span style="color: #667eea; margin-right: 10px;">💰</span>
-        <span style="color: #666666;">Check your balance with /balance command</span>
-      </li>
-      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-        <span style="color: #667eea; margin-right: 10px;">📊</span>
-        <span style="color: #666666;">View your portfolio with /portfolio command</span>
-      </li>
-      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-        <span style="color: #667eea; margin-right: 10px;">🔔</span>
-        <span style="color: #666666;">Receive instant notifications for deposits & withdrawals</span>
-      </li>
-      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-        <span style="color: #667eea; margin-right: 10px;">📈</span>
-        <span style="color: #666666;">Get real-time crypto price updates</span>
-      </li>
-      <li style="padding: 12px 0;">
-        <span style="color: #667eea; margin-right: 10px;">⚡</span>
-        <span style="color: #666666;">Set custom price alerts</span>
-      </li>
-    </ul>
-  </div>
-
-  <div style="background: #d1ecf1; border-left: 4px solid #0c5460; padding: 15px; margin: 20px 0; border-radius: 4px;">
-    <p style="font-size: 14px; color: #0c5460; margin: 0;">
-      <strong>💡 Pro Tip:</strong> Use the /help command in Telegram to see all available commands and features.
-    </p>
-  </div>
-
-  <div style="margin-top: 30px; text-align: center;">
-    <a href="${process.env.NEXTAUTH_URL}/settings" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: 600;">View Settings</a>
-  </div>
-
-  <div style="border-top: 1px solid #eeeeee; margin-top: 30px; padding-top: 20px;">
-    <p style="font-size: 12px; color: #999999; margin: 5px 0;">
-      <strong>Security Notice:</strong> If you didn't authorize this connection, please unlink the account immediately and change your password.
-    </p>
-  </div>
-`);
+  `);
 
 export const telegramUnlinkTemplate = (
   name: string,
   telegramUsername: string
 ) =>
   emailTemplate(`
-  <div style="text-align: center;">
-    <h1 style="color: #333333; margin-bottom: 10px;">🔓 Telegram Account Disconnected</h1>
-    <p style="font-size: 16px; color: #666666; margin-bottom: 30px;">
-      ${name}, your Telegram account has been successfully unlinked from your M4 Capital account.
+    ${emailHero("🔓", "Telegram Disconnected", `Your account has been unlinked`, "warning")}
+    
+    ${emailGreeting(name)}
+    
+    ${emailAlert(`Disconnected from <strong>@${telegramUsername}</strong>`, "warning", "📵")}
+    
+    ${emailCard(`
+      <p style="margin: 0 0 16px; color: ${colors.white}; font-size: 16px; font-weight: 600;">What This Means</p>
+      ${emailFeatureList([
+        { icon: "🚫", text: "You will no longer receive Telegram notifications" },
+        { icon: "📱", text: "Telegram commands (/balance, /portfolio) are disabled" },
+        { icon: "🔒", text: "Your account security remains intact" },
+        { icon: "🔄", text: "You can reconnect anytime from your settings" },
+      ])}
+    `)}
+    
+    ${emailButton("Reconnect Telegram", `${baseUrl}/settings`)}
+    
+    ${emailDivider()}
+    
+    <p style="margin: 0; color: ${colors.gray}; font-size: 13px; text-align: center;">
+      ⚠️ If you didn't authorize this disconnection, please secure your account immediately.
     </p>
-  </div>
+  `);
 
-  <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 10px; padding: 30px; margin: 30px 0; text-align: center;">
-    <h2 style="color: #ffffff; margin: 0 0 15px 0; font-size: 24px;">✅ Disconnection Complete</h2>
-    <p style="color: #ffffff; opacity: 0.9; margin: 0;">
-      Unlinked from: <strong>@${telegramUsername}</strong>
-    </p>
-  </div>
-
-  <div style="margin: 30px 0;">
-    <h3 style="color: #333333; font-size: 18px; margin-bottom: 15px;">What This Means:</h3>
-    <ul style="list-style: none; padding: 0; margin: 0;">
-      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-        <span style="color: #f5576c; margin-right: 10px;">🚫</span>
-        <span style="color: #666666;">You will no longer receive Telegram notifications</span>
-      </li>
-      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-        <span style="color: #f5576c; margin-right: 10px;">📱</span>
-        <span style="color: #666666;">Telegram commands (/balance, /portfolio) are now disabled</span>
-      </li>
-      <li style="padding: 12px 0; border-bottom: 1px solid #eeeeee;">
-        <span style="color: #f5576c; margin-right: 10px;">🔒</span>
-        <span style="color: #666666;">Your account security remains intact</span>
-      </li>
-      <li style="padding: 12px 0;">
-        <span style="color: #f5576c; margin-right: 10px;">🔄</span>
-        <span style="color: #666666;">You can reconnect anytime from your settings</span>
-      </li>
-    </ul>
-  </div>
-
-  <div style="background: #fff3cd; border-left: 4px solid #856404; padding: 15px; margin: 20px 0; border-radius: 4px;">
-    <p style="font-size: 14px; color: #856404; margin: 0;">
-      <strong>⚠️ Important:</strong> If you didn't authorize this disconnection, please secure your account immediately and contact support.
-    </p>
-  </div>
-
-  <div style="margin-top: 30px; text-align: center;">
-    <a href="${process.env.NEXTAUTH_URL}/settings" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: 600;">Reconnect Telegram</a>
-  </div>
-
-  <div style="border-top: 1px solid #eeeeee; margin-top: 30px; padding-top: 20px;">
-    <p style="font-size: 12px; color: #999999; margin: 5px 0;">
-      <strong>Need Help?</strong> Visit our support center or contact us at support@m4capital.com
-    </p>
-  </div>
-`);
+// ============================================================================
+// PASSWORD RESET TEMPLATE
+// ============================================================================
 
 // Password Reset Email Template
-export const passwordResetTemplate = (name: string, resetUrl: string) => `
-<div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-  <!-- Header -->
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 20px; text-align: center;">
-    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Password Reset Request</h1>
-  </div>
-
-  <!-- Content -->
-  <div style="padding: 40px 30px;">
-    <h2 style="color: #333333; margin-bottom: 20px;">Hi ${name},</h2>
-    
-    <p style="font-size: 16px; color: #666666; line-height: 1.6; margin-bottom: 20px;">
-      We received a request to reset your password for your M4 Capital account. If you made this request, click the button below to reset your password:
-    </p>
-
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${resetUrl}" style="display: inline-block; padding: 14px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
-        Reset Password
-      </a>
-    </div>
-
-    <p style="font-size: 14px; color: #666666; line-height: 1.6; margin-bottom: 20px;">
-      Or copy and paste this link into your browser:
-    </p>
-    
-    <p style="font-size: 14px; color: #667eea; word-break: break-all; background: #f5f5f5; padding: 12px; border-radius: 5px; margin-bottom: 20px;">
+export const passwordResetTemplate = (name: string, resetUrl: string) => emailTemplate(`
+  ${emailHero("🔐", "Password Reset Request", "We received a request to reset your password", "warning")}
+  
+  ${emailGreeting(name)}
+  
+  ${emailParagraph("We received a request to reset your password for your M4 Capital account. If you made this request, click the button below to create a new password:")}
+  
+  ${emailButton("Reset My Password", resetUrl)}
+  
+  ${emailCard(`
+    <p style="margin: 0 0 8px; color: ${colors.grayLight}; font-size: 13px;">Or copy and paste this link into your browser:</p>
+    <p style="margin: 0; color: ${colors.primary}; font-size: 13px; word-break: break-all; background: rgba(99, 102, 241, 0.1); padding: 12px; border-radius: 8px; font-family: monospace;">
       ${resetUrl}
     </p>
+  `)}
+  
+  ${emailAlert("This link will expire in <strong>1 hour</strong> for security reasons.", "warning", "⏱️")}
+  
+  ${emailDivider()}
+  
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+    <tr>
+      <td>
+        <p style="margin: 0 0 8px; color: ${colors.grayLight}; font-size: 14px;">
+          <strong>🛡️ Didn't request this?</strong>
+        </p>
+        <p style="margin: 0; color: ${colors.gray}; font-size: 13px; line-height: 1.6;">
+          If you didn't request a password reset, please ignore this email or contact our support team if you have concerns about your account security.
+        </p>
+      </td>
+    </tr>
+  </table>
+  
+  ${emailSignature()}
+`);
 
-    <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
-      <p style="font-size: 14px; color: #856404; margin: 0;">
-        <strong>⚠️ Security Notice:</strong> This link will expire in 1 hour for security reasons.
-      </p>
-    </div>
-
-    <p style="font-size: 14px; color: #666666; line-height: 1.6;">
-      If you didn't request a password reset, please ignore this email or contact our support team if you have concerns about your account security.
-    </p>
-
-    <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #eeeeee;">
-      <p style="font-size: 12px; color: #999999; margin: 5px 0;">
-        Best regards,<br>
-        M4 Capital Security Team
-      </p>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <div style="background: #f5f5f5; padding: 20px; text-align: center;">
-    <p style="font-size: 12px; color: #999999; margin: 5px 0;">
-      This is an automated message, please do not reply to this email.
-    </p>
-    <p style="font-size: 12px; color: #999999; margin: 5px 0;">
-      © 2025 M4 Capital. All rights reserved.
-    </p>
-  </div>
-</div>
-`;
+// ============================================================================
+// CRYPTO TRANSACTION TEMPLATES
+// ============================================================================
 
 // Crypto Purchase Confirmation Template
 export const cryptoPurchaseTemplate = (
@@ -571,64 +782,26 @@ export const cryptoPurchaseTemplate = (
   currencySymbol: string = "$"
 ) =>
   emailTemplate(`
-  <h2>🎉 Crypto Purchase Successful!</h2>
-  
-  <p>Hi ${userName},</p>
-  
-  <p>Your cryptocurrency purchase has been completed successfully.</p>
-  
-  <div class="alert alert-success">
-    <strong>Transaction Details</strong>
-  </div>
-  
-  <table style="width: 100%; margin: 20px 0; border-collapse: collapse;">
-    <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Asset:</strong></td>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right;">${asset}</td>
-    </tr>
-    <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Amount:</strong></td>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right;">${amount.toFixed(
-        8
-      )} ${asset}</td>
-    </tr>
-    <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Price per Unit:</strong></td>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right;">${currencySymbol}${price.toLocaleString(
-    "en-US",
-    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-  )}</td>
-    </tr>
-    <tr>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee;"><strong>Total Cost:</strong></td>
-      <td style="padding: 10px; border-bottom: 1px solid #eeeeee; text-align: right; color: #e74c3c; font-weight: bold;">-${currencySymbol}${totalCost.toLocaleString(
-    "en-US",
-    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-  )}</td>
-    </tr>
-    <tr>
-      <td style="padding: 10px;"><strong>New Balance:</strong></td>
-      <td style="padding: 10px; text-align: right; color: #27ae60; font-weight: bold;">${currencySymbol}${newBalance.toLocaleString(
-    "en-US",
-    { minimumFractionDigits: 2, maximumFractionDigits: 2 }
-  )}</td>
-    </tr>
-  </table>
-  
-  <p>The ${asset} has been added to your portfolio and is ready to track!</p>
-  
-  <a href="${
-    process.env.NEXTAUTH_URL
-  }/dashboard" class="button">View Portfolio</a>
-  
-  <p style="color: #666; font-size: 14px; margin-top: 30px;">
-    <strong>Note:</strong> This is a spot purchase transaction. Your crypto is now available in your portfolio.
-  </p>
-  
-  <p>If you have any questions or concerns about this transaction, please contact our support team.</p>
-  
-  <p>Best regards,<br>The M4 Capital Team</p>
-`);
+    ${emailHero("🎉", "Purchase Successful!", `You bought ${asset}`, "success")}
+    
+    ${emailGreeting(userName)}
+    
+    ${emailParagraph("Great news! Your cryptocurrency purchase has been completed successfully and added to your portfolio.")}
+    
+    ${emailTransactionTable([
+      { label: "Asset", value: `<strong style="color: ${colors.primary};">${asset}</strong>` },
+      { label: "Amount Purchased", value: `${amount.toFixed(8)} ${asset}` },
+      { label: "Price per Unit", value: `${currencySymbol}${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+      { label: "Total Cost", value: `-${currencySymbol}${totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: colors.danger },
+      { label: "New Balance", value: `${currencySymbol}${newBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, highlight: true },
+    ])}
+    
+    ${emailButton("View Portfolio", `${baseUrl}/dashboard`)}
+    
+    ${emailAlert("Your crypto is now available in your portfolio and ready to track!", "success", "✅")}
+    
+    ${emailSignature()}
+  `);
 
 // Crypto Purchase Text Template (plain text version)
 export const cryptoPurchaseTextTemplate = (
@@ -641,36 +814,338 @@ export const cryptoPurchaseTextTemplate = (
   currencyCode: string = "USD",
   currencySymbol: string = "$"
 ) => `
-Crypto Purchase Successful!
+🎉 Crypto Purchase Successful!
 
 Hi ${userName},
 
 Your cryptocurrency purchase has been completed successfully.
 
-Transaction Details:
-- Asset: ${asset}
-- Amount: ${amount.toFixed(8)} ${asset}
-- Price per Unit: ${currencySymbol}${price.toLocaleString("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})}
-- Total Cost: -${currencySymbol}${totalCost.toLocaleString("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})}
-- New Balance: ${currencySymbol}${newBalance.toLocaleString("en-US", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 TRANSACTION DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-The ${asset} has been added to your portfolio and is ready to track!
+Asset: ${asset}
+Amount: ${amount.toFixed(8)} ${asset}
+Price per Unit: ${currencySymbol}${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+Total Cost: -${currencySymbol}${totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+New Balance: ${currencySymbol}${newBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 
-View Portfolio: ${process.env.NEXTAUTH_URL}/dashboard
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-Note: This is a spot purchase transaction. Your crypto is now available in your portfolio.
+✅ Your ${asset} has been added to your portfolio!
 
-If you have any questions or concerns about this transaction, please contact our support team.
+View Portfolio: ${baseUrl}/dashboard
 
 Best regards,
 The M4 Capital Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+© ${currentYear} M4 Capital. All rights reserved.
 `;
+
+// ============================================================================
+// CRYPTO SALE TEMPLATE
+// ============================================================================
+
+// Crypto Sale Confirmation Template
+export const cryptoSaleTemplate = (
+  userName: string,
+  asset: string,
+  assetName: string,
+  amount: number,
+  price: number,
+  totalValue: number,
+  fee: number,
+  netReceived: number,
+  newBalance: number,
+  currencySymbol: string = "$"
+) =>
+  emailTemplate(`
+    ${emailHero("💰", "Sale Successful!", `You sold ${asset}`, "success")}
+    
+    ${emailGreeting(userName)}
+    
+    ${emailParagraph(`Your ${assetName} (${asset}) sale has been completed and the funds have been credited to your account.`)}
+    
+    ${emailTransactionTable([
+      { label: "Asset", value: `<strong style="color: ${colors.primary};">${assetName} (${asset})</strong>` },
+      { label: "Amount Sold", value: `${amount.toFixed(8)} ${asset}` },
+      { label: "Price per Unit", value: `${currencySymbol}${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+      { label: "Total Value", value: `${currencySymbol}${totalValue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+      { label: "Fee (1.5%)", value: `-${currencySymbol}${fee.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: colors.warning },
+      { label: "Net Received", value: `+${currencySymbol}${netReceived.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, highlight: true },
+      { label: "New Balance", value: `${currencySymbol}${newBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: colors.success },
+    ])}
+    
+    ${emailButton("View Portfolio", `${baseUrl}/dashboard`)}
+    
+    ${emailAlert("Funds have been credited to your account balance.", "success", "✅")}
+    
+    ${emailSignature()}
+  `);
+
+// Crypto Sale Text Template
+export const cryptoSaleTextTemplate = (
+  userName: string,
+  asset: string,
+  assetName: string,
+  amount: number,
+  price: number,
+  totalValue: number,
+  fee: number,
+  netReceived: number,
+  newBalance: number,
+  currencySymbol: string = "$"
+) => `
+💰 Crypto Sale Successful!
+
+Hi ${userName},
+
+Your ${assetName} (${asset}) sale has been completed.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 TRANSACTION DETAILS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Asset: ${assetName} (${asset})
+Amount Sold: ${amount.toFixed(8)} ${asset}
+Price per Unit: ${currencySymbol}${price.toFixed(2)}
+Total Value: ${currencySymbol}${totalValue.toFixed(2)}
+Fee (1.5%): -${currencySymbol}${fee.toFixed(2)}
+Net Received: +${currencySymbol}${netReceived.toFixed(2)}
+New Balance: ${currencySymbol}${newBalance.toFixed(2)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Funds have been credited to your account!
+
+View Portfolio: ${baseUrl}/dashboard
+
+Best regards,
+The M4 Capital Team
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+© ${currentYear} M4 Capital. All rights reserved.
+`;
+
+// ============================================================================
+// DEPOSIT CONFIRMATION TEMPLATES
+// ============================================================================
+
+// Deposit Confirmed Template
+export const depositConfirmedTemplate = (
+  userName: string,
+  amount: string,
+  asset: string,
+  currencySymbol: string = "$",
+  transactionId?: string,
+  isCrypto: boolean = false
+) =>
+  emailTemplate(`
+    ${emailHero("✅", "Deposit Confirmed!", `Your ${asset} deposit is complete`, "success")}
+    
+    ${emailGreeting(userName)}
+    
+    ${emailParagraph("Great news! Your deposit has been confirmed and credited to your account.")}
+    
+    ${emailTransactionTable([
+      { label: "Amount", value: isCrypto ? `${amount} ${asset}` : `${currencySymbol}${amount}` },
+      { label: "Asset", value: asset },
+      { label: "Status", value: emailBadge("Completed", "success") },
+      ...(transactionId ? [{ label: "Transaction ID", value: transactionId.substring(0, 16) + "..." }] : []),
+      { label: "Date", value: new Date().toLocaleString() },
+    ])}
+    
+    ${emailAlert("Your funds are now available! You can start trading immediately.", "success", "🚀")}
+    
+    ${emailButton("Go to Dashboard", `${baseUrl}/dashboard`)}
+    
+    ${emailSignature()}
+  `);
+
+// Deposit Pending Template
+export const depositPendingTemplate = (
+  userName: string,
+  amount: string,
+  asset: string,
+  currencySymbol: string = "$",
+  confirmationsRequired: number = 6,
+  isCrypto: boolean = false
+) =>
+  emailTemplate(`
+    ${emailHero("⏳", "Deposit Pending", `Waiting for ${asset} confirmation`, "info")}
+    
+    ${emailGreeting(userName)}
+    
+    ${emailParagraph("We've received your deposit and it's currently being processed. Your funds will be credited once the required confirmations are complete.")}
+    
+    ${emailTransactionTable([
+      { label: "Amount", value: isCrypto ? `${amount} ${asset}` : `${currencySymbol}${amount}` },
+      { label: "Asset", value: asset },
+      { label: "Status", value: emailBadge("Pending", "pending") },
+      { label: "Required Confirmations", value: confirmationsRequired.toString() },
+    ])}
+    
+    ${emailAlert("You will receive another email once the deposit is fully confirmed and credited to your account.", "info", "📧")}
+    
+    ${emailButton("Check Status", `${baseUrl}/dashboard`)}
+    
+    ${emailSignature()}
+  `);
+
+// ============================================================================
+// ADMIN NOTIFICATION TEMPLATES
+// ============================================================================
+
+// User Role Update Template (for promotions/demotions)
+export const roleUpdateTemplate = (
+  userName: string,
+  newRole: string,
+  isPromotion: boolean = true
+) =>
+  emailTemplate(`
+    ${emailHero(isPromotion ? "🎉" : "📋", isPromotion ? "Congratulations!" : "Role Update", `Your account role has been updated`, isPromotion ? "success" : "info")}
+    
+    ${emailGreeting(userName)}
+    
+    ${emailParagraph(`Your M4 Capital account role has been ${isPromotion ? "upgraded" : "updated"} to <strong>${newRole}</strong>.`)}
+    
+    ${isPromotion ? emailAlert("You now have access to additional administrative features and capabilities.", "success", "⭐") : emailAlert("Your account permissions have been updated accordingly.", "info", "ℹ️")}
+    
+    ${emailButton("View Dashboard", `${baseUrl}/dashboard`)}
+    
+    ${emailParagraph("If you have any questions about your new role or permissions, please contact the admin team.")}
+    
+    ${emailSignature()}
+  `);
+
+export const roleUpdateTextTemplate = (
+  userName: string,
+  newRole: string,
+  isPromotion: boolean = true
+) =>
+  `Hi ${userName}, your M4 Capital account role has been ${isPromotion ? "upgraded" : "updated"} to ${newRole}. ${isPromotion ? "You now have access to additional administrative features and capabilities." : "Your account permissions have been updated accordingly."}`;
+
+export const adminRoleNotificationTemplate = (
+  userName: string,
+  userEmail: string,
+  userId: string,
+  previousRole: string,
+  newRole: string,
+  isPromotion: boolean = true
+) =>
+  emailTemplate(`
+    ${emailHero(isPromotion ? "⬆️" : "⬇️", isPromotion ? "Staff Promotion" : "Role Change", `A user's role has been ${isPromotion ? "upgraded" : "updated"}`, isPromotion ? "success" : "warning")}
+    
+    ${emailCard(`
+      <table width="100%" cellpadding="8" cellspacing="0" border="0">
+        <tr>
+          <td width="120" style="color: ${colors.textMuted}; font-size: 14px;">Name:</td>
+          <td style="color: ${colors.textPrimary}; font-size: 14px; font-weight: 600;">${userName}</td>
+        </tr>
+        <tr>
+          <td width="120" style="color: ${colors.textMuted}; font-size: 14px;">Email:</td>
+          <td style="color: ${colors.textPrimary}; font-size: 14px;">${userEmail}</td>
+        </tr>
+        <tr>
+          <td width="120" style="color: ${colors.textMuted}; font-size: 14px;">User ID:</td>
+          <td style="color: ${colors.textPrimary}; font-size: 14px; font-family: monospace;">${userId}</td>
+        </tr>
+        <tr>
+          <td width="120" style="color: ${colors.textMuted}; font-size: 14px;">Previous Role:</td>
+          <td>${emailBadge(previousRole, "info")}</td>
+        </tr>
+        <tr>
+          <td width="120" style="color: ${colors.textMuted}; font-size: 14px;">New Role:</td>
+          <td>${emailBadge(newRole, isPromotion ? "success" : "warning")}</td>
+        </tr>
+      </table>
+    `)}
+    
+    ${emailAlert(`This is an automated notification. ${isPromotion ? "The user now has access to administrative features." : "The user's permissions have been adjusted accordingly."}`, "info", "🔔")}
+    
+    ${emailButton("View Users", `${baseUrl}/admin/users`)}
+    
+    ${emailSignature()}
+  `);
+
+export const adminRoleNotificationTextTemplate = (
+  userName: string,
+  userEmail: string,
+  previousRole: string,
+  newRole: string,
+  isPromotion: boolean = true
+) =>
+  `A user has been ${isPromotion ? "promoted" : "updated"}: ${userName} (${userEmail}). Previous Role: ${previousRole}. New Role: ${newRole}.`;
+
+// Crypto Swap/Convert Template
+export const cryptoSwapTemplate = (
+  fromAsset: string,
+  toAsset: string,
+  amount: number,
+  receiveAmount: number,
+  rate: number,
+  feePercent: number,
+  feeAmount: number,
+  fromDisplayValue: string,
+  toDisplayValue: string,
+  currencySymbol: string
+) =>
+  emailTemplate(`
+    ${emailHero("🔄", "Swap Completed!", `${fromAsset} → ${toAsset}`, "info")}
+    
+    ${emailCard(`
+      <table width="100%" cellpadding="8" cellspacing="0" border="0">
+        <tr>
+          <td style="padding: 12px 0;">
+            <div style="color: ${colors.danger}; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">FROM</div>
+            <div style="color: ${colors.textPrimary}; font-size: 20px; font-weight: 700;">${amount.toFixed(8)} ${fromAsset}</div>
+            <div style="color: ${colors.textMuted}; font-size: 14px; margin-top: 4px;">≈ ${currencySymbol}${fromDisplayValue}</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="text-align: center; padding: 8px 0;">
+            <div style="display: inline-block; width: 40px; height: 40px; background: ${colors.primary}20; border-radius: 50%; line-height: 40px; font-size: 20px;">↓</div>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding: 12px 0;">
+            <div style="color: ${colors.success}; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">TO</div>
+            <div style="color: ${colors.textPrimary}; font-size: 20px; font-weight: 700;">${receiveAmount.toFixed(8)} ${toAsset}</div>
+            <div style="color: ${colors.textMuted}; font-size: 14px; margin-top: 4px;">≈ ${currencySymbol}${toDisplayValue}</div>
+          </td>
+        </tr>
+      </table>
+    `, colors.info)}
+    
+    ${emailCard(`
+      <table width="100%" cellpadding="8" cellspacing="0" border="0">
+        <tr>
+          <td style="color: ${colors.textMuted}; font-size: 14px; padding: 8px 0;">Exchange Rate</td>
+          <td align="right" style="color: ${colors.textPrimary}; font-size: 14px; padding: 8px 0; font-weight: 600;">1 ${fromAsset} = ${rate.toFixed(8)} ${toAsset}</td>
+        </tr>
+        <tr>
+          <td style="color: ${colors.textMuted}; font-size: 14px; padding: 8px 0;">Fee (${feePercent}%)</td>
+          <td align="right" style="color: ${colors.textPrimary}; font-size: 14px; padding: 8px 0;">${feeAmount.toFixed(8)} ${toAsset}</td>
+        </tr>
+        <tr>
+          <td style="color: ${colors.textMuted}; font-size: 14px; padding: 8px 0;">Status</td>
+          <td align="right" style="padding: 8px 0;">${emailBadge("Completed", "success")}</td>
+        </tr>
+      </table>
+    `)}
+    
+    ${emailButton("View Portfolio", `${baseUrl}/dashboard`)}
+    
+    ${emailSignature()}
+  `);
+
+export const cryptoSwapTextTemplate = (
+  fromAsset: string,
+  toAsset: string,
+  amount: number,
+  receiveAmount: number,
+  rate: number,
+  feeAmount: number
+) =>
+  `Swap Completed! You swapped ${amount.toFixed(8)} ${fromAsset} for ${receiveAmount.toFixed(8)} ${toAsset}. Exchange Rate: 1 ${fromAsset} = ${rate.toFixed(8)} ${toAsset}. Fee: ${feeAmount.toFixed(8)} ${toAsset}. Thank you for using M4 Capital!`;
