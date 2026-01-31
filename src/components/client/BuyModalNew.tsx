@@ -669,10 +669,10 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
                 {/* Step 3: Confirm */}
                 {step === 3 && (
-                  <div className="space-y-4">
-                    <div className="text-center py-4">
+                  <div className="space-y-3">
+                    <div className="text-center py-2">
                       <div
-                        className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-3"
+                        className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2"
                         style={{
                           background:
                             cryptoGradients[buyData.asset] ||
@@ -682,22 +682,22 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       >
                         <CryptoIcon
                           symbol={buyData.asset}
-                          className="w-8 h-8 text-white"
+                          className="w-6 h-6 text-white"
                         />
                       </div>
-                      <p className="text-gray-400 text-xs mb-1">
+                      <p className="text-gray-400 text-xs mb-0.5">
                         You&apos;re buying
                       </p>
-                      <p className="text-2xl font-bold text-white">
+                      <p className="text-xl font-bold text-white">
                         {getEstimatedCrypto().toFixed(8)}
                       </p>
-                      <p className="text-green-400 font-semibold">
+                      <p className="text-green-400 font-semibold text-sm">
                         {buyData.asset}
                       </p>
                     </div>
 
                     <div
-                      className="rounded-xl p-4 space-y-3"
+                      className="rounded-xl p-3 space-y-2"
                       style={{
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
@@ -706,7 +706,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         border: "1px solid rgba(255, 255, 255, 0.08)",
                       }}
                     >
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs">
                         <span className="text-gray-400">
                           Price per {buyData.asset}:
                         </span>
@@ -714,14 +714,14 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                           {formatAmount(getCurrentPrice(), 2)}
                         </span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Amount:</span>
                         <span className="text-white font-medium">
                           {currencySymbol}
                           {parseFloat(buyData.amount).toFixed(2)}
                         </span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Fee (1.5%):</span>
                         <span className="text-white font-medium">
                           {currencySymbol}
@@ -729,7 +729,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         </span>
                       </div>
                       <hr className="border-gray-700" />
-                      <div className="flex justify-between font-bold">
+                      <div className="flex justify-between font-bold text-sm">
                         <span className="text-gray-300">Total Cost:</span>
                         <span className="text-green-400">
                           {currencySymbol}
@@ -742,7 +742,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <button
                         onClick={handleBack}
                         disabled={isPending}
-                        className="flex-1 py-3 px-3 rounded-xl font-semibold text-white text-sm disabled:opacity-50"
+                        className="flex-1 py-2.5 px-3 rounded-xl font-semibold text-white text-sm disabled:opacity-50"
                         style={card3DStyle}
                       >
                         Back
@@ -750,7 +750,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <button
                         onClick={confirmBuy}
                         disabled={isPending}
-                        className="flex-1 py-3 px-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="flex-1 py-2.5 px-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
                         style={{
                           background:
                             "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",
@@ -791,8 +791,8 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
                 {/* Step 4: Success */}
                 {step === 4 && successData && (
-                  <div className="space-y-4">
-                    <div className="flex justify-center mb-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-center mb-2">
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
@@ -801,7 +801,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                           type: "spring",
                           stiffness: 200,
                         }}
-                        className="w-20 h-20 rounded-full flex items-center justify-center"
+                        className="w-16 h-16 rounded-full flex items-center justify-center"
                         style={{
                           background:
                             "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
@@ -812,7 +812,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                           initial={{ pathLength: 0 }}
                           animate={{ pathLength: 1 }}
                           transition={{ delay: 0.4, duration: 0.5 }}
-                          className="w-10 h-10 text-white"
+                          className="w-8 h-8 text-white"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -827,56 +827,42 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       </motion.div>
                     </div>
 
-                    <h3 className="text-xl font-bold text-white text-center">
+                    <h3 className="text-lg font-bold text-white text-center">
                       Purchase Successful!
                     </h3>
-                    <p className="text-gray-400 text-sm text-center">
-                      Your order has been completed
+                    <p className="text-gray-400 text-xs text-center">
+                      You&apos;ve successfully purchased {successData.amount.toFixed(8)} {successData.asset}
                     </p>
 
                     <div
-                      className="rounded-xl p-4 space-y-2"
+                      className="rounded-xl p-3 space-y-2"
                       style={{
                         background:
                           "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)",
                         border: "1px solid rgba(34, 197, 94, 0.2)",
                       }}
                     >
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Asset:</span>
-                        <span className="text-white font-semibold">
-                          {successData.asset}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Amount Received:</span>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-gray-400">Amount:</span>
                         <span className="text-white font-semibold">
                           {successData.amount.toFixed(8)} {successData.asset}
                         </span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Total Paid:</span>
                         <span className="text-green-400 font-bold">
                           {formatAmount(successData.value * 1.015, 2)}
                         </span>
                       </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Date:</span>
-                        <span className="text-white font-semibold">
-                          {new Date().toLocaleDateString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Time:</span>
-                        <span className="text-white font-semibold">
-                          {new Date().toLocaleTimeString()}
-                        </span>
-                      </div>
                     </div>
+
+                    <p className="text-gray-500 text-xs text-center">
+                      Redirecting to dashboard...
+                    </p>
 
                     <button
                       onClick={handleDone}
-                      className="w-full py-3 rounded-xl font-bold text-white"
+                      className="w-full py-2.5 rounded-xl font-bold text-white text-sm"
                       style={{
                         background:
                           "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",

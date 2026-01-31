@@ -135,15 +135,29 @@ export async function proxy(request: NextRequest) {
   }
 
   // Redirect non-admin users from admin routes
-  if (isAdminRoute && (!isAuthenticated || userRole !== "ADMIN")) {
+  if (isAdminRoute) {
     if (!isAuthenticated) {
       const loginUrl = new URL("/", request.url);
       loginUrl.searchParams.set("auth", "login");
       loginUrl.searchParams.set("callbackUrl", pathname);
       return NextResponse.redirect(loginUrl);
     }
-    // User is logged in but not admin
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    
+    // Check role-based access
+    const isStaffAdminRoute = pathname.startsWith("/staff-admin");
+    const isMainAdminRoute = pathname.startsWith("/admin");
+    
+    // STAFF_ADMIN can only access /staff-admin
+    // ADMIN can access both /admin and /staff-admin
+    if (isStaffAdminRoute) {
+      if (userRole !== "ADMIN" && userRole !== "STAFF_ADMIN") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+    } else if (isMainAdminRoute) {
+      if (userRole !== "ADMIN") {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+    }
   }
 
   // Redirect authenticated users away from login/signup (if those pages existed)

@@ -38,7 +38,6 @@ const Sidebar = () => {
     { icon: <Briefcase size={24} />, name: "Dashboard", href: "/dashboard" },
     { icon: <TrendingUp size={24} />, name: "Traderoom", href: "/traderoom" },
     { icon: <Newspaper size={24} />, name: "Market News", href: "/news" },
-    { icon: <DollarSign size={24} />, name: "Finance", href: "/finance" },
     { icon: <Settings size={24} />, name: "Settings", href: "/settings" },
   ];
 

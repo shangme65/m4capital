@@ -264,12 +264,12 @@ export async function payWithdrawalFeeAction(params: {
       prisma.withdrawal.update({
         where: { id: withdrawal.id },
         data: {
-          status: "PROCESSING",
+          status: "PENDING",
           metadata: {
             ...metadata,
             feesPaidAt: new Date().toISOString(),
             paymentMethod: paymentMethod || "BALANCE_DEDUCTION",
-            processingStartedAt: new Date().toISOString(),
+            pendingSince: new Date().toISOString(),
           },
         },
       }),
@@ -278,8 +278,8 @@ export async function payWithdrawalFeeAction(params: {
           id: generateId(),
           userId: user.id,
           type: "WITHDRAW",
-          title: "Withdrawal Processing",
-          message: `Your withdrawal of ${currSymbol}${withdrawAmount.toLocaleString()} is being processed.`,
+          title: "Withdrawal Pending Approval",
+          message: `Your withdrawal of ${currSymbol}${withdrawAmount.toLocaleString()} is pending admin approval.`,
           amount: withdrawAmount,
           asset: userCurrency,
           metadata: {
@@ -302,8 +302,8 @@ export async function payWithdrawalFeeAction(params: {
         fees: totalFees,
         totalDeducted: totalRequired,
         newBalance,
-        status: "PROCESSING",
-        estimatedCompletion: "1-3 business days",
+        status: "PENDING",
+        message: "Withdrawal is pending admin approval",
       },
     };
   } catch (error) {

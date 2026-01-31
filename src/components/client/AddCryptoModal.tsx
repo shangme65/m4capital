@@ -128,60 +128,60 @@ export default function AddCryptoModal({
                 transformStyle: "preserve-3d",
               }}
             >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/80 to-gray-900/80 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
-              <h2 className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(59,130,246,0.3)]">
-                Add Cryptocurrency
-              </h2>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-700/50 bg-gradient-to-r from-gray-800/80 to-gray-900/80 shadow-[0_4px_12px_rgba(0,0,0,0.5)]">
+                <h2 className="text-xl font-bold text-white drop-shadow-[0_2px_8px_rgba(59,130,246,0.3)]">
+                  Add Cryptocurrency
+                </h2>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-white transition-colors"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-            {/* Search */}
-            <div className="p-4 sm:p-6 border-b border-gray-700/50 bg-gray-900/30">
-              <div className="relative">
-                <svg
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                  />
-                </svg>
-                <input
-                  type="text"
-                  placeholder="Search cryptocurrency..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-900/80 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all shadow-inner"
-                />
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
               </div>
-            </div>{" "}
-            {/* List */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {filteredCryptos.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+              {/* Search */}
+              <div className="p-4 sm:p-6 border-b border-gray-700/50 bg-gray-900/30">
+                <div className="relative">
+                  <svg
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search cryptocurrency..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-gray-900/80 border border-gray-700/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all shadow-inner"
+                  />
+                </div>
+              </div>
+              {/* List */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {filteredCryptos.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
                     <svg
                       className="w-8 h-8 text-gray-400"
                       fill="none"
@@ -199,25 +199,25 @@ export default function AddCryptoModal({
                   <p className="text-gray-400">No cryptocurrencies found</p>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {filteredCryptos.map((crypto) => {
-                    const isInPortfolio = existingSymbols.includes(
-                      crypto.symbol
-                    );
-                    const asset = existingAssets.find(
-                      (a) => a.symbol === crypto.symbol
-                    );
-                    const hasBalance = asset && asset.amount > 0;
+                  <div className="space-y-2">
+                    {filteredCryptos.map((crypto) => {
+                      const isInPortfolio = existingSymbols.includes(
+                        crypto.symbol
+                      );
+                      const asset = existingAssets.find(
+                        (a) => a.symbol === crypto.symbol
+                      );
+                      const hasBalance = asset && asset.amount > 0;
 
-                    const metadata = getCryptoMetadata(crypto.symbol);
+                      const metadata = getCryptoMetadata(crypto.symbol);
 
-                    return (
-                      <div
-                        key={crypto.symbol}
-                        className="w-full flex items-center justify-between p-4 bg-gradient-to-br from-gray-900/80 to-gray-800/80 hover:from-gray-800/90 hover:to-gray-900/90 rounded-xl border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.3)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
-                        style={{
-                          transform: "translateZ(10px)",
-                        }}
+                      return (
+                        <div
+                          key={crypto.symbol}
+                          className="w-full flex items-center justify-between p-4 bg-gradient-to-br from-gray-900/80 to-gray-800/80 hover:from-gray-800/90 hover:to-gray-900/90 rounded-xl border border-gray-700/50 hover:border-blue-500/50 transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.3)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                          style={{
+                            transform: "translateZ(10px)",
+                          }}
                       >
                         <div className="flex items-center gap-4">
                           {/* 3D Crypto Icon Container */}
@@ -331,10 +331,10 @@ export default function AddCryptoModal({
                       </div>
                     );
                   })}
-                </div>
-              )}
-            </div>
-          </motion.div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
         </>,
         document.body
       )}

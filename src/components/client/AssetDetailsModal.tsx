@@ -961,7 +961,7 @@ export default function AssetDetailsModal({
                                 <div>
                                   <div className="font-semibold text-white capitalize text-base">
                                     {tx.type === "swap"
-                                      ? `Swapped ${tx.fromAsset} → ${tx.toAsset}`
+                                      ? `${tx.fromAsset} → ${tx.toAsset}`
                                       : `${tx.type} ${
                                           tx.cryptoCurrency || asset.symbol
                                         }`}
@@ -1013,17 +1013,17 @@ export default function AssetDetailsModal({
                               </div>
                             </div>
 
-                            <div className="flex items-end justify-between pt-2 border-t border-gray-700/50">
-                              <div>
-                                <div className="text-xs text-gray-500 mb-1">
+                            <div className="flex items-center justify-between pt-1.5 border-t border-gray-700/50">
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-[10px] text-gray-500">
                                   {tx.type === "swap"
                                     ? tx.isFromAssetView
-                                      ? "Sent"
-                                      : "Received"
-                                    : "Amount"}
-                                </div>
-                                <div
-                                  className={`font-bold text-lg ${
+                                      ? "Sent:"
+                                      : "Received:"
+                                    : "Amount:"}
+                                </span>
+                                <span
+                                  className={`font-bold text-sm ${
                                     tx.type === "buy" ||
                                     tx.type === "deposit" ||
                                     tx.type === "receive" ||
@@ -1075,25 +1075,21 @@ export default function AssetDetailsModal({
                                       {tx.cryptoCurrency || asset.symbol}
                                     </>
                                   )}
-                                </div>
+                                </span>
                               </div>
-                              <div className="text-right">
-                                <div className="text-xs text-gray-500 mb-1">
-                                  {tx.type === "swap"
-                                    ? "Exchange Rate"
-                                    : "Value"}
-                                </div>
-                                <div className="font-semibold text-white">
-                                  {/* For swaps, show the exchange rate */}
+                              <div className="flex items-baseline gap-1">
+                                <span className="text-[10px] text-gray-500">
+                                  Value:
+                                </span>
+                                <span className="font-semibold text-white text-sm">
+                                  {/* For swaps, use fromValueUSD or toValueUSD depending on view */}
                                   {tx.type === "swap" ? (
-                                    <>
-                                      1 {tx.fromAsset} ={" "}
-                                      {Number(tx.swapRate).toLocaleString(
-                                        undefined,
-                                        { maximumFractionDigits: 6 }
-                                      )}{" "}
-                                      {tx.toAsset}
-                                    </>
+                                    formatAmount(
+                                      tx.isFromAssetView
+                                        ? tx.fromValueUSD || 0
+                                        : tx.toValueUSD || 0,
+                                      2
+                                    )
                                   ) : /* For deposits/transfers with fiatCurrency, show in that currency without conversion */
                                   /* For trades (no fiatCurrency), price is in USD so use formatAmount to convert */
                                   tx.fiatCurrency && tx.fiatValue ? (
@@ -1121,7 +1117,7 @@ export default function AssetDetailsModal({
                                       2
                                     )
                                   )}
-                                </div>
+                                </span>
                               </div>
                             </div>
                           </div>

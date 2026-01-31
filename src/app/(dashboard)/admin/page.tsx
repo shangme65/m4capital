@@ -733,14 +733,12 @@ const AdminDashboard = () => {
   const [showUserStatsModal, setShowUserStatsModal] = useState<
     "total" | "admin" | "staff" | "regular" | "sessions" | null
   >(null);
-  const [showActivityModal, setShowActivityModal] = useState(false);
   const [showSignalModal, setShowSignalModal] = useState(false);
   const [globalSignalStrength, setGlobalSignalStrength] = useState(75);
   const [isAutoMode, setIsAutoMode] = useState(false);
   const [isStrongMode, setIsStrongMode] = useState(false);
   const [isModerateMode, setIsModerateMode] = useState(false);
   const [isWeakMode, setIsWeakMode] = useState(false);
-  const [activityLogs, setActivityLogs] = useState<any[]>([]);
 
   // New states for deposit type selection
   const [depositType, setDepositType] = useState<"fiat" | "crypto">("fiat");
@@ -817,26 +815,6 @@ const AdminDashboard = () => {
     }, 3000); // Hide after 3 seconds
   };
 
-  // Fetch activity logs on mount and when modal opens
-  useEffect(() => {
-    if (showActivityModal) {
-      const fetchActivityLogs = async () => {
-        try {
-          const response = await fetch("/api/admin/activity-logs");
-          const data = await response.json();
-          setActivityLogs(data.activities || []);
-        } catch (error) {
-          console.error("Error fetching activity logs:", error);
-        }
-      };
-
-      fetchActivityLogs();
-      // Refresh every 10 seconds for real-time updates
-      const interval = setInterval(fetchActivityLogs, 10000);
-      return () => clearInterval(interval);
-    }
-  }, [showActivityModal]);
-
   // Handle browser/mobile back button to close modals
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
@@ -844,9 +822,6 @@ const AdminDashboard = () => {
         e.preventDefault();
         setShowPaymentModal(false);
         setSelectedUser(null);
-      } else if (showActivityModal) {
-        e.preventDefault();
-        setShowActivityModal(false);
       } else if (showSignalModal) {
         e.preventDefault();
         setShowSignalModal(false);
@@ -859,7 +834,6 @@ const AdminDashboard = () => {
     // Add state to history when modal opens
     if (
       showPaymentModal ||
-      showActivityModal ||
       showSignalModal ||
       showUserStatsModal
     ) {
@@ -872,7 +846,6 @@ const AdminDashboard = () => {
     };
   }, [
     showPaymentModal,
-    showActivityModal,
     showSignalModal,
     showUserStatsModal,
   ]);
@@ -889,8 +862,6 @@ const AdminDashboard = () => {
         setShowAssetWarning(false);
       } else if (showUserStatsModal) {
         setShowUserStatsModal(null);
-      } else if (showActivityModal) {
-        setShowActivityModal(false);
       } else if (showSignalModal) {
         setShowSignalModal(false);
       }
@@ -902,7 +873,6 @@ const AdminDashboard = () => {
       editingUser ||
       showAssetWarning ||
       showUserStatsModal ||
-      showActivityModal ||
       showSignalModal
     ) {
       window.history.pushState({ modal: true }, "");
@@ -915,7 +885,6 @@ const AdminDashboard = () => {
     editingUser,
     showAssetWarning,
     showUserStatsModal,
-    showActivityModal,
     showSignalModal,
   ]);
 
@@ -948,23 +917,29 @@ const AdminDashboard = () => {
       if (res.ok) {
         const data = await res.json();
         setGlobalSignalStrength(data.signalStrength);
+        // Set mode from server
+        setIsAutoMode(data.activeMode === "auto");
+        setIsStrongMode(data.activeMode === "strong");
+        setIsModerateMode(data.activeMode === "moderate");
+        setIsWeakMode(data.activeMode === "weak");
       }
     } catch (error) {
       console.error("Failed to fetch signal strength:", error);
     }
   };
 
-  const updateSignalStrength = async (strength: number) => {
+  const updateSignalStrength = async (strength: number, mode: "none" | "auto" | "strong" | "moderate" | "weak" = "none") => {
     try {
       const res = await fetch("/api/admin/signal-strength", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ signalStrength: strength }),
+        body: JSON.stringify({ signalStrength: strength, mode }),
       });
       
       if (res.ok) {
+        const modeLabel = mode === "none" ? "Manual" : mode.charAt(0).toUpperCase() + mode.slice(1);
         showPopupNotification(
-          `Signal strength set to ${strength}%`,
+          `Signal set to ${strength}% (${modeLabel} mode)`,
           "success"
         );
         setShowSignalModal(false);
@@ -1018,43 +993,6 @@ const AdminDashboard = () => {
     const interval = setInterval(fluctuateSignal, 5000);
     return () => clearInterval(interval);
   }, [isAutoMode, isStrongMode, isModerateMode, isWeakMode]);
-
-  // Detect active mode when modal opens
-  useEffect(() => {
-    if (showSignalModal) {
-      // Determine which mode is active based on current signal strength
-      const currentStrength = globalSignalStrength;
-      
-      // Check if strength is within any of the fluctuation ranges
-      if (currentStrength >= 45 && currentStrength <= 68) {
-        setIsWeakMode(true);
-        setIsModerateMode(false);
-        setIsStrongMode(false);
-        setIsAutoMode(false);
-      } else if (currentStrength >= 65 && currentStrength <= 78) {
-        setIsWeakMode(false);
-        setIsModerateMode(true);
-        setIsStrongMode(false);
-        setIsAutoMode(false);
-      } else if (currentStrength >= 88 && currentStrength <= 95) {
-        setIsWeakMode(false);
-        setIsModerateMode(false);
-        setIsStrongMode(true);
-        setIsAutoMode(false);
-      } else if (currentStrength >= 78 && currentStrength <= 90) {
-        setIsWeakMode(false);
-        setIsModerateMode(false);
-        setIsStrongMode(false);
-        setIsAutoMode(true);
-      } else {
-        // Not in any auto mode range - all false
-        setIsWeakMode(false);
-        setIsModerateMode(false);
-        setIsStrongMode(false);
-        setIsAutoMode(false);
-      }
-    }
-  }, [showSignalModal, globalSignalStrength]);
 
   useEffect(() => {
     // Fetch KYC pending count
@@ -1639,7 +1577,6 @@ const AdminDashboard = () => {
     },
     { id: "analytics", name: "Analytics", icon: <TrendingUp size={20} /> },
     { id: "signal", name: "Signal Strength", icon: <Activity size={20} /> },
-    { id: "activity", name: "Activity Logs", icon: <Activity size={20} /> },
   ];
 
   return (
@@ -1988,6 +1925,58 @@ const AdminDashboard = () => {
                 </div>
               </button>
 
+              {/* Withdrawals Management */}
+              <button
+                onClick={() => router.push("/admin/withdrawals")}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(220,38,38,0.25),0_0_30px_rgba(220,38,38,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #dc262640, 0 2px 8px #dc262660, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <Wallet
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-white font-bold text-sm">
+                      Withdrawals
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      Approve user withdrawals
+                    </span>
+                  </div>
+                </div>
+                <div className="text-red-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
               {/* Transaction History */}
               <button
                 onClick={() => setActiveTab("transactions")}
@@ -2076,58 +2065,6 @@ const AdminDashboard = () => {
                   </div>
                 </div>
                 <div className="text-green-400">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </div>
-              </button>
-
-              {/* Activity Logs */}
-              <button
-                onClick={() => setShowActivityModal(true)}
-                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(20,184,166,0.25),0_0_30px_rgba(20,184,166,0.4)]"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <div
-                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-500 to-teal-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
-                    style={{
-                      boxShadow:
-                        "0 4px 16px #14b8a640, 0 2px 8px #14b8a660, inset 0 1px 2px rgba(255,255,255,0.2)",
-                    }}
-                  >
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
-                    <Activity
-                      className="relative z-10 drop-shadow-lg text-white"
-                      size={20}
-                    />
-                  </div>
-                  <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
-                      Activity Logs
-                    </span>
-                    <span className="text-gray-400 text-xs">
-                      View system activity
-                    </span>
-                  </div>
-                </div>
-                <div className="text-teal-400">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -3287,73 +3224,6 @@ const AdminDashboard = () => {
       )}
 
       {/* System Settings Tab */}
-      {/* Activity Logs Tab */}
-      {activeTab === "activity" && (
-        <div className="space-y-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
-              <Activity className="text-yellow-400" />
-              <span>Recent Activity</span>
-            </h3>
-            <div className="space-y-3">
-              {[
-                {
-                  action: "User login",
-                  user: "admin@example.com",
-                  time: "2 mins ago",
-                  type: "success",
-                },
-                {
-                  action: "Balance updated",
-                  user: "user@example.com",
-                  time: "5 mins ago",
-                  type: "info",
-                },
-                {
-                  action: "User registration",
-                  user: "newuser@email.com",
-                  time: "10 mins ago",
-                  type: "success",
-                },
-                {
-                  action: "Failed login attempt",
-                  user: "unknown@email.com",
-                  time: "15 mins ago",
-                  type: "warning",
-                },
-                {
-                  action: "System backup",
-                  user: "system",
-                  time: "2 hours ago",
-                  type: "info",
-                },
-              ].map((log, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-3 h-3 rounded-full ${
-                        log.type === "success"
-                          ? "bg-green-400"
-                          : log.type === "warning"
-                          ? "bg-yellow-400"
-                          : "bg-blue-400"
-                      }`}
-                    />
-                    <div>
-                      <p className="font-medium">{log.action}</p>
-                      <p className="text-sm text-gray-400">{log.user}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-400">{log.time}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Notifications Tab */}
       {/* Edit User Role Modal - Responsive Web UI */}
@@ -3745,76 +3615,6 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* Activity Logs Modal */}
-      {showActivityModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
-          >
-            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Activity className="text-teal-400" size={24} />
-                Recent Activity Logs
-              </h2>
-              <button
-                onClick={() => setShowActivityModal(false)}
-                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <div className="p-6 overflow-y-auto max-h-[calc(90vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {activityLogs.length === 0 ? (
-                <div className="text-center py-12">
-                  <Activity className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-                  <p className="text-gray-400">No recent activity</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {activityLogs.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="bg-gray-700/30 border border-gray-600/30 rounded-lg p-4 hover:bg-gray-700/50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white text-sm sm:text-base">
-                            {activity.message}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {activity.timeAgo}
-                          </p>
-                        </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ml-2 ${
-                            activity.color === "green"
-                              ? "bg-green-500/20 text-green-400"
-                              : activity.color === "blue"
-                              ? "bg-blue-500/20 text-blue-400"
-                              : activity.color === "orange"
-                              ? "bg-orange-500/20 text-orange-400"
-                              : "bg-gray-500/20 text-gray-400"
-                          }`}
-                        >
-                          {activity.type}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="mt-4 text-center text-xs text-gray-500">
-                Auto-refreshes every 10 seconds
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
       {/* Signal Strength Control Modal */}
       {showSignalModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4">
@@ -3897,10 +3697,13 @@ const AdminDashboard = () => {
                     value={globalSignalStrength}
                     onChange={(e) => {
                       setGlobalSignalStrength(Number(e.target.value));
-                      setIsAutoMode(false); // Disable auto mode when manually adjusted
+                      // Disable all auto modes when manually adjusted
+                      setIsAutoMode(false);
+                      setIsStrongMode(false);
+                      setIsModerateMode(false);
+                      setIsWeakMode(false);
                     }}
-                    disabled={isAutoMode}
-                    className="w-full h-2.5 bg-gray-600 rounded-lg appearance-none cursor-pointer slider disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full h-2.5 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
                     style={{
                       background: `linear-gradient(to right, 
                         ${globalSignalStrength >= 75 ? "#22c55e" : globalSignalStrength >= 50 ? "#eab308" : "#ef4444"} 0%, 
@@ -3914,11 +3717,12 @@ const AdminDashboard = () => {
                   <div className="grid grid-cols-4 gap-2">
                     <button
                       onClick={() => {
+                        const newWeakMode = !isWeakMode;
                         setIsAutoMode(false);
                         setIsStrongMode(false);
                         setIsModerateMode(false);
-                        setIsWeakMode(!isWeakMode);
-                        if (!isWeakMode) {
+                        setIsWeakMode(newWeakMode);
+                        if (newWeakMode) {
                           // Set to middle of weak range
                           setGlobalSignalStrength(56);
                         }
@@ -3934,11 +3738,12 @@ const AdminDashboard = () => {
                     </button>
                     <button
                       onClick={() => {
+                        const newModerateMode = !isModerateMode;
                         setIsAutoMode(false);
                         setIsStrongMode(false);
                         setIsWeakMode(false);
-                        setIsModerateMode(!isModerateMode);
-                        if (!isModerateMode) {
+                        setIsModerateMode(newModerateMode);
+                        if (newModerateMode) {
                           // Set to middle of moderate range
                           setGlobalSignalStrength(71);
                         }
@@ -3954,11 +3759,12 @@ const AdminDashboard = () => {
                     </button>
                     <button
                       onClick={() => {
+                        const newStrongMode = !isStrongMode;
                         setIsAutoMode(false);
                         setIsModerateMode(false);
                         setIsWeakMode(false);
-                        setIsStrongMode(!isStrongMode);
-                        if (!isStrongMode) {
+                        setIsStrongMode(newStrongMode);
+                        if (newStrongMode) {
                           // Set to middle of strong range
                           setGlobalSignalStrength(91);
                         }
@@ -3974,11 +3780,12 @@ const AdminDashboard = () => {
                     </button>
                     <button
                       onClick={() => {
+                        const newAutoMode = !isAutoMode;
                         setIsStrongMode(false);
                         setIsModerateMode(false);
                         setIsWeakMode(false);
-                        setIsAutoMode(!isAutoMode);
-                        if (!isAutoMode) {
+                        setIsAutoMode(newAutoMode);
+                        if (newAutoMode) {
                           // Set to middle of auto range
                           setGlobalSignalStrength(84);
                         }
@@ -4013,7 +3820,10 @@ const AdminDashboard = () => {
               {/* Apply Button */}
               <div className="flex gap-2">
                 <button
-                  onClick={() => updateSignalStrength(globalSignalStrength)}
+                  onClick={() => {
+                    const mode = isWeakMode ? "weak" : isModerateMode ? "moderate" : isStrongMode ? "strong" : isAutoMode ? "auto" : "none";
+                    updateSignalStrength(globalSignalStrength, mode);
+                  }}
                   className="flex-1 bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-2.5 px-3 rounded-xl transition-all font-semibold text-sm flex items-center justify-center gap-2"
                 >
                   <Check size={16} />

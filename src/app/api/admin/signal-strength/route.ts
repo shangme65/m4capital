@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 
 // In-memory storage for signal strength (in production, use database)
 let globalSignalStrength = 75;
+let activeMode: "none" | "auto" | "strong" | "moderate" | "weak" = "none";
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json({ signalStrength: globalSignalStrength });
+    return NextResponse.json({ signalStrength: globalSignalStrength, activeMode });
   } catch (error) {
     console.error("Error fetching signal strength:", error);
     return NextResponse.json(
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { signalStrength } = await req.json();
+    const { signalStrength, mode } = await req.json();
 
     if (
       typeof signalStrength !== "number" ||
@@ -46,10 +47,16 @@ export async function POST(req: NextRequest) {
     }
 
     globalSignalStrength = signalStrength;
+    
+    // Update mode if provided
+    if (mode !== undefined) {
+      activeMode = mode;
+    }
 
     return NextResponse.json({
       success: true,
       signalStrength: globalSignalStrength,
+      activeMode,
     });
   } catch (error) {
     console.error("Error updating signal strength:", error);

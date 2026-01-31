@@ -31,7 +31,7 @@ export interface Notification {
 
 export interface Transaction {
   id: string;
-  type: "buy" | "sell" | "deposit" | "withdraw" | "convert" | "transfer";
+  type: "buy" | "sell" | "deposit" | "withdraw" | "convert" | "transfer" | "swap";
   asset: string;
   amount: number;
   value: number;

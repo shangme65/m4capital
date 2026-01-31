@@ -1114,19 +1114,19 @@ export default function ConvertModalNew({
 
               {/* Step 3: Confirm */}
               {step === 3 && (
-                <div className="space-y-4">
-                  <div className="text-center mb-4">
-                    <h3 className="text-xl font-bold text-white">
+                <div className="space-y-3">
+                  <div className="text-center mb-3">
+                    <h3 className="text-base font-bold text-white">
                       Confirm Swap
                     </h3>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-xs">
                       Review your transaction details
                     </p>
                   </div>
 
                   {/* Swap Summary */}
                   <div
-                    className="rounded-xl p-4"
+                    className="rounded-xl p-3"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
@@ -1135,10 +1135,10 @@ export default function ConvertModalNew({
                       border: "1px solid rgba(255, 255, 255, 0.08)",
                     }}
                   >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="text-center">
                         <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2"
+                          className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-1"
                           style={{
                             background:
                               cryptoGradients[convertData.fromAsset] ||
@@ -1147,26 +1147,26 @@ export default function ConvertModalNew({
                         >
                           <CryptoIcon
                             symbol={convertData.fromAsset}
-                            className="w-7 h-7 text-white"
+                            className="w-6 h-6 text-white"
                           />
                         </div>
-                        <div className="text-white font-bold text-sm">
+                        <div className="text-white font-bold text-xs">
                           {getCryptoAmountFromInput().toFixed(8)}
                         </div>
-                        <div className="text-gray-400 text-xs">
+                        <div className="text-gray-400 text-[10px]">
                           {convertData.fromAsset}
                         </div>
                       </div>
-                      <div className="flex-shrink-0 px-4">
+                      <div className="flex-shrink-0 px-2">
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center"
+                          className="w-8 h-8 rounded-full flex items-center justify-center"
                           style={{
                             background:
                               "linear-gradient(145deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)",
                           }}
                         >
                           <svg
-                            className="w-5 h-5 text-cyan-400"
+                            className="w-4 h-4 text-cyan-400"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -1182,7 +1182,7 @@ export default function ConvertModalNew({
                       </div>
                       <div className="text-center">
                         <div
-                          className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2"
+                          className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-1"
                           style={{
                             background:
                               cryptoGradients[convertData.toAsset] ||
@@ -1191,32 +1191,32 @@ export default function ConvertModalNew({
                         >
                           <CryptoIcon
                             symbol={convertData.toAsset}
-                            className="w-7 h-7 text-white"
+                            className="w-6 h-6 text-white"
                           />
                         </div>
-                        <div className="text-cyan-400 font-bold text-sm">
+                        <div className="text-cyan-400 font-bold text-xs">
                           {getReceiveAmount().toFixed(8)}
                         </div>
-                        <div className="text-gray-400 text-xs">
+                        <div className="text-gray-400 text-[10px]">
                           {convertData.toAsset}
                         </div>
                       </div>
                     </div>
 
                     {/* Details */}
-                    <div className="space-y-2 pt-3 border-t border-gray-700/50">
-                      <div className="flex flex-col sm:flex-row sm:justify-between text-sm gap-1">
+                    <div className="space-y-1 pt-2 border-t border-gray-700/50">
+                      <div className="flex flex-col sm:flex-row sm:justify-between text-xs gap-1">
                         <span className="text-gray-400">Exchange Rate</span>
-                        <span className="text-white text-xs sm:text-sm break-all">
+                        <span className="text-white text-[10px] sm:text-xs break-all">
                           1 {convertData.fromAsset} ={" "}
                           {getConversionRate().toFixed(8)} {convertData.toAsset}
                         </span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs">
                         <span className="text-gray-400">Network Fee</span>
                         <span className="text-white">{conversionFee}%</span>
                       </div>
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs">
                         <span className="text-gray-400">
                           {preferredCurrency} Value
                         </span>
@@ -1231,7 +1231,7 @@ export default function ConvertModalNew({
                   <button
                     onClick={handleConvert}
                     disabled={isPending}
-                    className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:scale-[1.02] disabled:opacity-50"
+                    className="w-full py-3 rounded-xl font-bold text-white text-base transition-all hover:scale-[1.02] disabled:opacity-50"
                     style={{
                       background:
                         "linear-gradient(145deg, #06b6d4 0%, #14b8a6 50%, #06b6d4 100%)",

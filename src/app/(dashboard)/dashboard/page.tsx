@@ -1348,7 +1348,7 @@ function DashboardContent() {
                     if (activity.type === "sell") return `${fullName} Sold`;
                     if (activity.type === "transfer")
                       return `${fullName} Transferred`;
-                    if (activity.type === "convert")
+                    if (activity.type === "convert" || activity.type === "swap")
                       return `${fullName} Swapped`;
                     if (activity.type === "deposit")
                       return `Deposit ${fullName}`;
@@ -1402,9 +1402,9 @@ function DashboardContent() {
 
                   // Get transaction type icon and color
                   const getTransactionIcon = () => {
-                    // For swap/convert transactions, show both asset icons vertically
+                    // For swap/convert transactions, show both asset icons vertically with swap arrow
                     if (
-                      activity.type === "convert" &&
+                      (activity.type === "convert" || activity.type === "swap") &&
                       activity.fromAsset &&
                       activity.toAsset
                     ) {

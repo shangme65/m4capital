@@ -130,13 +130,13 @@ export default function TransactionDetailsModal({
   };
 
   const getTransactionTitle = () => {
-    // For swaps, show custom title
+    // For swaps, show custom title without "Swapped" prefix
     if (
       (transaction.type === "swap" || transaction.type === "convert") &&
       transaction.fromAsset &&
       transaction.toAsset
     ) {
-      return `Swapped ${getCryptoFullName(transaction.fromAsset).name} → ${
+      return `${getCryptoFullName(transaction.fromAsset).name} → ${
         getCryptoFullName(transaction.toAsset).name
       }`;
     }

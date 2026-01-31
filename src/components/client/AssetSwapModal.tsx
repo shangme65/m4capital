@@ -787,59 +787,59 @@ export default function AssetSwapModal({
                   exit={{ opacity: 0, x: -20 }}
                   className="p-6"
                 >
-                  <div className="text-center mb-6">
+                  <div className="text-center mb-3">
                     <div
-                      className="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                      className="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center"
                       style={{
                         background:
                           "linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)",
                       }}
                     >
-                      <RefreshCw className="w-8 h-8 text-cyan-400" />
+                      <RefreshCw className="w-6 h-6 text-cyan-400" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-1">
+                    <h2 className="text-lg font-bold text-white mb-1">
                       Confirm Swap
                     </h2>
-                    <p className="text-gray-400 text-sm">
+                    <p className="text-gray-400 text-xs">
                       Review your conversion
                     </p>
                   </div>
 
                   {/* Swap Display */}
                   <div
-                    className="text-center py-6 mb-6 rounded-xl"
+                    className="text-center py-3 mb-3 rounded-xl"
                     style={{
                       background:
                         "linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(20, 184, 166, 0.1) 100%)",
                       border: "1px solid rgba(6, 182, 212, 0.2)",
                     }}
                   >
-                    <div className="text-gray-400 text-sm mb-2">
+                    <div className="text-gray-400 text-xs mb-1">
                       You&apos;re swapping
                     </div>
-                    <div className="flex items-center justify-center gap-3 mb-3">
-                      <CryptoIcon symbol={asset.symbol} size="lg" />
-                      <div className="text-3xl font-bold text-white">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <CryptoIcon symbol={asset.symbol} size="md" />
+                      <div className="text-xl font-bold text-white">
                         {parseFloat(fromAmount || "0").toFixed(8)}
                       </div>
-                      <span className="text-gray-400 text-lg">
+                      <span className="text-gray-400 text-sm">
                         {asset.symbol}
                       </span>
                     </div>
-                    <div className="text-cyan-400 text-2xl my-2">↓</div>
-                    <div className="flex items-center justify-center gap-3">
-                      <CryptoIcon symbol={toAsset} size="lg" />
-                      <div className="text-3xl font-bold text-cyan-400">
+                    <div className="text-cyan-400 text-lg my-1">↓</div>
+                    <div className="flex items-center justify-center gap-2">
+                      <CryptoIcon symbol={toAsset} size="md" />
+                      <div className="text-xl font-bold text-cyan-400">
                         {getEstimatedReceiveAmount().toFixed(8)}
                       </div>
-                      <span className="text-gray-400 text-lg">{toAsset}</span>
+                      <span className="text-gray-400 text-sm">{toAsset}</span>
                     </div>
                   </div>
 
                   {/* Details */}
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-2 mb-3">
                     <div
-                      className="flex justify-between p-3 rounded-lg"
+                      className="flex justify-between p-2 rounded-lg text-sm"
                       style={{ background: "rgba(15, 23, 42, 0.6)" }}
                     >
                       <span className="text-gray-400">Exchange Rate</span>
@@ -849,7 +849,7 @@ export default function AssetSwapModal({
                       </span>
                     </div>
                     <div
-                      className="flex justify-between p-3 rounded-lg"
+                      className="flex justify-between p-2 rounded-lg text-sm"
                       style={{ background: "rgba(15, 23, 42, 0.6)" }}
                     >
                       <span className="text-gray-400">You Send</span>
@@ -859,7 +859,7 @@ export default function AssetSwapModal({
                       </span>
                     </div>
                     <div
-                      className="flex justify-between p-3 rounded-lg"
+                      className="flex justify-between p-2 rounded-lg text-sm"
                       style={{ background: "rgba(15, 23, 42, 0.6)" }}
                     >
                       <span className="text-gray-400">
@@ -875,7 +875,7 @@ export default function AssetSwapModal({
                       </span>
                     </div>
                     <div
-                      className="flex justify-between p-4 rounded-lg"
+                      className="flex justify-between p-2 rounded-lg text-sm"
                       style={{
                         background: "rgba(6, 182, 212, 0.1)",
                         border: "1px solid rgba(6, 182, 212, 0.2)",
@@ -896,7 +896,7 @@ export default function AssetSwapModal({
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setStep(2)}
-                      className="flex-1 py-4 rounded-xl font-bold text-white transition-colors"
+                      className="flex-1 py-3 rounded-xl font-bold text-white transition-colors"
                       style={{
                         background:
                           "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
@@ -911,7 +911,7 @@ export default function AssetSwapModal({
                       whileTap={{ scale: 0.98 }}
                       onClick={confirmSwap}
                       disabled={isProcessing}
-                      className="flex-1 py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 py-3 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         background:
                           "linear-gradient(135deg, #06b6d4 0%, #14b8a6 50%, #06b6d4 100%)",

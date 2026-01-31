@@ -62,7 +62,7 @@ export const emailTemplate = (content: string) => `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <img src="${baseUrl}/m4capitallogo2.png" alt="M4 Capital" width="160" style="display: block; max-width: 160px; height: auto; background: ${colors.white}; padding: 12px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
+                    <img src="${baseUrl}/m4capitallogo1.png" alt="M4 Capital" width="160" style="display: block; max-width: 160px; height: auto; background: ${colors.white}; padding: 12px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
                   </td>
                 </tr>
               </table>
@@ -87,12 +87,12 @@ export const emailTemplate = (content: string) => `
                       <tr>
                         <td style="padding: 0 8px;">
                           <a href="https://t.me/m4capitalbot" style="display: inline-block; width: 36px; height: 36px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 36px; text-decoration: none;">
-                            <img src="${baseUrl}/socials/telegram.png" alt="Telegram" width="18" height="18" style="vertical-align: middle;" />
+                            <img src="${baseUrl}/socials/telegram.svg" alt="Telegram" width="18" height="18" style="vertical-align: middle;" />
                           </a>
                         </td>
                         <td style="padding: 0 8px;">
                           <a href="${baseUrl}" style="display: inline-block; width: 36px; height: 36px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 36px; text-decoration: none;">
-                            <img src="${baseUrl}/icons/icon-72x72.png" alt="Website" width="18" height="18" style="vertical-align: middle; border-radius: 4px;" />
+                            <img src="${baseUrl}/icons/icon-64.png" alt="Website" width="18" height="18" style="vertical-align: middle; border-radius: 4px;" />
                           </a>
                         </td>
                       </tr>
@@ -137,9 +137,9 @@ export const emailTemplate = (content: string) => `
 // REUSABLE EMAIL COMPONENTS
 // ============================================================================
 
-// Hero Section with Icon
+// Hero Section
 export const emailHero = (
-  icon: string,
+  _icon: string, // kept for backwards compatibility, not displayed
   title: string,
   subtitle?: string,
   gradient: "primary" | "success" | "warning" | "danger" | "info" = "primary"
@@ -156,9 +156,7 @@ export const emailHero = (
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 30px;">
       <tr>
         <td align="center">
-          <div style="display: inline-block; width: 80px; height: 80px; background: ${gradients[gradient]}; border-radius: 50%; text-align: center; line-height: 80px; font-size: 36px; margin-bottom: 20px; box-shadow: 0 10px 40px -10px ${gradient === "primary" ? colors.primary : gradient === "success" ? colors.success : gradient === "warning" ? colors.warning : gradient === "danger" ? colors.danger : colors.info};">
-            ${icon}
-          </div>
+          <div style="display: inline-block; width: 80px; height: 80px; background: ${gradients[gradient]}; border-radius: 50%; margin-bottom: 20px; box-shadow: 0 10px 40px -10px ${gradient === "primary" ? colors.primary : gradient === "success" ? colors.success : gradient === "warning" ? colors.warning : gradient === "danger" ? colors.danger : colors.info};"></div>
           <h1 style="margin: 0 0 8px; color: ${colors.white}; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">
             ${title}
           </h1>
@@ -248,7 +246,7 @@ export const emailButtonSecondary = (text: string, href: string) => `
 export const emailAlert = (
   message: string,
   type: "success" | "warning" | "danger" | "info" = "info",
-  icon?: string
+  _icon?: string // kept for backwards compatibility, not displayed
 ) => {
   const alertStyles = {
     success: { bg: "rgba(16, 185, 129, 0.15)", border: colors.success, text: colors.success },
@@ -257,19 +255,11 @@ export const emailAlert = (
     info: { bg: "rgba(59, 130, 246, 0.15)", border: colors.info, text: colors.info },
   };
 
-  const icons = {
-    success: "✅",
-    warning: "⚠️",
-    danger: "🚫",
-    info: "ℹ️",
-  };
-
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
       <tr>
         <td style="background: ${alertStyles[type].bg}; border-left: 4px solid ${alertStyles[type].border}; border-radius: 8px; padding: 16px 20px;">
           <p style="margin: 0; color: ${alertStyles[type].text}; font-size: 14px; line-height: 1.5;">
-            <strong style="margin-right: 8px;">${icon || icons[type]}</strong>
             ${message}
           </p>
         </td>
@@ -297,8 +287,7 @@ export const emailFeatureList = (items: Array<{ icon: string; text: string }>) =
         <td style="padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
-              <td width="40" style="font-size: 20px; vertical-align: middle;">${item.icon}</td>
-              <td style="color: ${colors.grayLight}; font-size: 15px; vertical-align: middle;">${item.text}</td>
+              <td style="color: ${colors.grayLight}; font-size: 15px; vertical-align: middle;">• ${item.text}</td>
             </tr>
           </table>
         </td>

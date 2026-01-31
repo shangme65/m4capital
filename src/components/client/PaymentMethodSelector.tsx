@@ -457,13 +457,13 @@ export default function PaymentMethodSelector({
                   damping: 15,
                   delay: 0.2,
                 }}
-                className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6"
+                className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4"
               >
                 <motion.svg
                   initial={{ pathLength: 0 }}
                   animate={{ pathLength: 1 }}
                   transition={{ duration: 0.5, delay: 0.5 }}
-                  className="w-12 h-12 text-white"
+                  className="w-8 h-8 text-white"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -478,22 +478,22 @@ export default function PaymentMethodSelector({
               </motion.div>
 
               {/* Success Message */}
-              <h3 className="text-2xl font-bold text-white mb-2">
+              <h3 className="text-lg font-bold text-white mb-1">
                 Purchase Successful!
               </h3>
-              <p className="text-gray-400 mb-6">
-                You've successfully purchased {amount} {asset}
+              <p className="text-gray-400 text-xs mb-4">
+                You&apos;ve successfully purchased {amount.toFixed(8)} {asset}
               </p>
 
               {/* Transaction Details */}
-              <div className="bg-gray-800 rounded-lg p-4 mb-4">
-                <div className="flex justify-between text-sm mb-2">
+              <div className="bg-gray-800 rounded-lg p-3 mb-3">
+                <div className="flex justify-between text-xs mb-2">
                   <span className="text-gray-400">Amount:</span>
                   <span className="text-white font-medium">
-                    {amount} {asset}
+                    {amount.toFixed(8)} {asset}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between text-xs">
                   <span className="text-gray-400">Total Paid:</span>
                   <span className="text-green-400 font-bold">
                     ${usdValue.toLocaleString()}
@@ -501,7 +501,7 @@ export default function PaymentMethodSelector({
                 </div>
               </div>
 
-              <p className="text-gray-500 text-sm">
+              <p className="text-gray-500 text-xs">
                 Redirecting to dashboard...
               </p>
             </div>
