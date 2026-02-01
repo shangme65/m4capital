@@ -149,13 +149,15 @@ export function CryptoMarketProvider({
       const response = await fetch(`/api/crypto/prices?symbols=${symbols}`);
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        console.warn(`⚠️ Crypto prices API returned ${response.status}, using cached/fallback data`);
+        return; // Silently fail and keep existing prices
       }
 
       const data = await response.json();
 
       if (data.error) {
-        throw new Error(data.error);
+        console.warn("⚠️ Crypto prices API error:", data.error);
+        return; // Silently fail and keep existing prices
       }
 
       const now = Date.now();

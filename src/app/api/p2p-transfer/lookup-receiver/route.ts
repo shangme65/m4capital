@@ -37,6 +37,7 @@ export async function GET(request: Request) {
         name: true,
         email: true,
         accountNumber: true,
+        isEmailVerified: true,
       },
     });
 
@@ -58,6 +59,7 @@ export async function GET(request: Request) {
         name: receiver.name,
         email: receiver.email,
         accountNumber: receiver.accountNumber,
+        isVerified: receiver.isEmailVerified,
       },
     });
   } catch (error) {

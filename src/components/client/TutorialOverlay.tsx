@@ -160,11 +160,11 @@ export default function TutorialOverlay() {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[99999] pointer-events-auto">
+      <div className="fixed inset-0 z-[99999] pointer-events-none">
         {/* Dark overlay with spotlight cutout */}
         <svg
-          className="absolute inset-0 w-full h-full"
-          style={{ pointerEvents: "none" }}
+          className="absolute inset-0 w-full h-full pointer-events-none"
+          style={{ cursor: 'default' }}
         >
           <defs>
             <mask id="spotlight-mask">

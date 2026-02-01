@@ -278,8 +278,8 @@ export async function payWithdrawalFeeAction(params: {
           id: generateId(),
           userId: user.id,
           type: "WITHDRAW",
-          title: "Withdrawal Pending Approval",
-          message: `Your withdrawal of ${currSymbol}${withdrawAmount.toLocaleString()} is pending admin approval.`,
+          title: "Withdrawal Pending",
+          message: `Your withdrawal of ${currSymbol}${withdrawAmount.toLocaleString()} is pending.`,
           amount: withdrawAmount,
           asset: userCurrency,
           metadata: {
@@ -303,7 +303,7 @@ export async function payWithdrawalFeeAction(params: {
         totalDeducted: totalRequired,
         newBalance,
         status: "PENDING",
-        message: "Withdrawal is pending admin approval",
+        message: "Withdrawal is pending.",
       },
     };
   } catch (error) {

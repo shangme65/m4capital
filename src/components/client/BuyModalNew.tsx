@@ -197,11 +197,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       const usdValue = convertAmount(inputAmount, true);
       const assetAmount = usdValue / price;
 
-      // React 19: Show optimistic update immediately
-      setOptimisticBalance(availableBalance - usdValue);
-
-      // Use Server Action with transition
+      // Use Server Action with transition - optimistic update must be inside transition
       startTransition(async () => {
+        // React 19: Show optimistic update immediately inside transition
+        setOptimisticBalance(availableBalance - usdValue);
+
         const result = await buyCryptoAction(buyData.asset, assetAmount, price);
 
         if (result.success && result.data) {

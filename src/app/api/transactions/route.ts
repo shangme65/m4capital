@@ -347,7 +347,7 @@ export async function GET(req: NextRequest) {
 
       return {
         id: t.id,
-        type: "deposit" as const, // Show received transfers as deposits
+        type: "receive" as const, // Show received transfers as received
         asset: receiverCurrency, // Receiver's currency or crypto symbol
         amount: receiverAmount,
         value: isCryptoTransfer ? usdValue : receiverAmount,

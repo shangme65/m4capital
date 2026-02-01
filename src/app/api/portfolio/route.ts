@@ -177,10 +177,12 @@ export async function GET(request: NextRequest) {
     const periodTradeEarnings = await prisma.trade.aggregate({
       where: {
         userId: user.id,
-        createdAt: {
-          gte: periodStart,
-          lte: periodEnd,
-        },
+        ...(periodStart && {
+          createdAt: {
+            gte: periodStart,
+            lte: periodEnd,
+          },
+        }),
       },
       _sum: {
         profit: true,

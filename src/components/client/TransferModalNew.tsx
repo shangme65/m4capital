@@ -66,6 +66,7 @@ export default function TransferModalNew({
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [receiverName, setReceiverName] = useState<string | null>(null);
+  const [receiverVerified, setReceiverVerified] = useState<boolean>(false);
   const [lookupLoading, setLookupLoading] = useState(false);
 
   const { portfolio, refetch } = usePortfolio();
@@ -177,6 +178,7 @@ export default function TransferModalNew({
       setSuccessData(null);
       setErrors({});
       setReceiverName(null);
+      setReceiverVerified(false);
     }
 
     // Add mobile back button handler
@@ -207,6 +209,7 @@ export default function TransferModalNew({
   const lookupReceiver = async (identifier: string) => {
     if (!identifier.trim()) {
       setReceiverName(null);
+      setReceiverVerified(false);
       return;
     }
 
@@ -220,12 +223,15 @@ export default function TransferModalNew({
       const data = await res.json();
       if (res.ok && data.receiver) {
         setReceiverName(data.receiver.name);
+        setReceiverVerified(data.receiver.isVerified || false);
       } else {
         setReceiverName(null);
+        setReceiverVerified(false);
       }
     } catch (error) {
       console.error("Error looking up receiver:", error);
       setReceiverName(null);
+      setReceiverVerified(false);
     } finally {
       setLookupLoading(false);
     }
@@ -302,7 +308,8 @@ export default function TransferModalNew({
         transferData.asset,
         assetAmount,
         transferData.destination,
-        transferData.memo
+        transferData.memo,
+        inputAmount // Pass original input amount for history display
       );
 
       if (!result.success) {
@@ -353,6 +360,7 @@ export default function TransferModalNew({
     });
     setErrors({});
     setReceiverName(null);
+    setReceiverVerified(false);
     setStep(1);
     onClose();
     refetch();
@@ -677,7 +685,7 @@ export default function TransferModalNew({
                             ? preferredCurrency
                             : transferData.asset}
                         </div>
-                        <div className="text-[10px] text-gray-400">
+                        <div className="text-xs text-gray-400">
                           Balance:{" "}
                           {transferData.asset === "FIAT"
                             ? formatBalanceDisplay(currentBalance)
@@ -726,43 +734,27 @@ export default function TransferModalNew({
                       )}
                       {receiverName && !lookupLoading && (
                         <div
-                          className="mt-2 rounded-xl p-3 flex items-center gap-3"
+                          className="mt-2 rounded-lg px-3 py-1.5 inline-flex items-center gap-2 w-fit"
                           style={{
                             background:
                               "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)",
-                            border: "1px solid rgba(34, 197, 94, 0.3)",
-                            boxShadow:
-                              "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05)",
                           }}
                         >
-                          <div
-                            className="w-8 h-8 rounded-lg flex items-center justify-center"
-                            style={{
-                              background:
-                                "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
-                              boxShadow:
-                                "0 4px 12px rgba(34, 197, 94, 0.4), inset 0 2px 0 rgba(255,255,255,0.2)",
-                            }}
-                          >
-                            <svg
-                              className="w-4 h-4 text-white"
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                          <div>
-                            <div className="text-green-400 text-sm font-semibold">
-                              Found: {receiverName}
-                            </div>
-                            <div className="text-gray-400 text-[10px]">
-                              Ready to receive transfer
-                            </div>
+                          <div className="text-green-400 text-sm font-semibold flex items-center gap-1.5">
+                            {receiverName}
+                            {receiverVerified && (
+                              <svg
+                                className="w-4 h-4 text-green-500"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
                           </div>
                         </div>
                       )}

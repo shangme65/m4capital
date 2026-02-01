@@ -38,6 +38,7 @@ import {
   Moon,
   Monitor,
   Globe,
+  ArrowLeft,
 } from "lucide-react";
 
 // Full-screen KYC Submission Loading Modal
@@ -1057,6 +1058,15 @@ export default function SettingsPage() {
             Manage your account preferences and platform experience.
           </p>
         </header>
+
+        {/* Back Button */}
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg mobile:mx-2"
+        >
+          <ArrowLeft size={20} />
+          <span className="text-sm font-medium">Back to Dashboard</span>
+        </button>
 
         {/* Settings Menu - Enhanced 3D Cards */}
         <div className="mobile:px-3 px-0 space-y-4">

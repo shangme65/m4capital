@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { Decimal } from "@prisma/client/runtime/library";
 import { generateId } from "@/lib/generate-id";
+import { generateTransactionReference } from "@/lib/p2p-transfer-utils";
 
 interface TransferActionResult {
   success: boolean;
@@ -22,7 +23,8 @@ export async function transferCryptoAction(
   asset: string,
   amount: number,
   destination: string,
-  memo?: string
+  memo?: string,
+  originalInputAmount?: number // Original amount user entered in their preferred currency
 ): Promise<TransferActionResult> {
   try {
     const session = await getServerSession(authOptions);
@@ -79,6 +81,13 @@ export async function transferCryptoAction(
 
     // Check if transferring FIAT or crypto
     const isFiat = asset === "FIAT" || asset === "USD";
+    
+    // Get currencies for proper display
+    const senderCurrency = sender.preferredCurrency || "USD";
+    const recipientCurrency = recipient.preferredCurrency || "USD";
+    
+    // Generate transaction reference
+    const transactionReference = generateTransactionReference();
 
     if (isFiat) {
       // Transfer from fiat balance
@@ -101,6 +110,36 @@ export async function transferCryptoAction(
         await tx.portfolio.update({
           where: { id: recipientPortfolio.id },
           data: { balance: new Decimal(recipientBalance + amount) },
+        });
+
+        // Create P2P Transfer record for transaction history
+        // Use originalInputAmount if provided, otherwise fallback to amount
+        const displaySenderAmount = originalInputAmount ?? amount;
+        
+        await tx.p2PTransfer.create({
+          data: {
+            id: transactionReference,
+            senderId: sender.id,
+            receiverId: recipient.id,
+            amount: new Decimal(amount),
+            currency: senderCurrency,
+            status: "COMPLETED",
+            description: JSON.stringify({
+              memo: memo || "P2P Transfer",
+              senderAmount: displaySenderAmount,
+              senderCurrency: senderCurrency,
+              receiverAmount: displaySenderAmount, // In same currency for display
+              receiverCurrency: recipientCurrency,
+              usdAmount: amount, // The actual USD amount transferred
+            }),
+            senderAccountNumber: sender.accountNumber || "",
+            receiverAccountNumber: recipient.accountNumber || "",
+            receiverEmail: recipient.email || "",
+            receiverName: recipient.name || "Unknown",
+            transactionReference,
+            processedAt: new Date(),
+            updatedAt: new Date(),
+          },
         });
 
         // Create notifications for both parties
@@ -185,6 +224,33 @@ export async function transferCryptoAction(
         await tx.portfolio.update({
           where: { id: recipientPortfolio.id },
           data: { assets: recipientAssets },
+        });
+
+        // Create P2P Transfer record for transaction history
+        await tx.p2PTransfer.create({
+          data: {
+            id: generateTransactionReference(),
+            senderId: sender.id,
+            receiverId: recipient.id,
+            amount: new Decimal(amount),
+            currency: asset.toUpperCase(),
+            status: "COMPLETED",
+            description: JSON.stringify({
+              memo: memo || "P2P Transfer",
+              type: "crypto",
+              cryptoAmount: amount,
+              cryptoAsset: asset.toUpperCase(),
+              cryptoPrice: senderAssetData.averagePrice || 0,
+              usdValue: amount * (senderAssetData.averagePrice || 0),
+            }),
+            senderAccountNumber: sender.accountNumber || "",
+            receiverAccountNumber: recipient.accountNumber || "",
+            receiverEmail: recipient.email || "",
+            receiverName: recipient.name || "Unknown",
+            transactionReference: generateTransactionReference(),
+            processedAt: new Date(),
+            updatedAt: new Date(),
+          },
         });
 
         // Create notifications

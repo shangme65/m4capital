@@ -53,16 +53,16 @@ export const emailTemplate = (content: string) => `
   <!-- Outer Container -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(180deg, ${colors.dark} 0%, ${colors.darkSecondary} 100%); min-height: 100vh;">
     <tr>
-      <td align="center" style="padding: 40px 20px;">
+      <td align="center" style="padding: 0;">
         <!-- Main Card -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; background: linear-gradient(145deg, ${colors.darkSecondary} 0%, ${colors.dark} 100%); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background: linear-gradient(145deg, ${colors.darkSecondary} 0%, ${colors.dark} 100%); overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);">
           <!-- Header -->
           <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+            <td style="padding: 16px 4px 10px; text-align: center; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <img src="${baseUrl}/m4capitallogo1.png" alt="M4 Capital" width="160" style="display: block; max-width: 160px; height: auto; background: ${colors.white}; padding: 12px 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
+                    <img src="${baseUrl}/m4capitallogo1.png" alt="M4 Capital" width="120" style="display: block; max-width: 120px; height: auto; background: ${colors.white}; padding: 8px 12px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
                   </td>
                 </tr>
               </table>
@@ -71,40 +71,40 @@ export const emailTemplate = (content: string) => `
           
           <!-- Content -->
           <tr>
-            <td style="padding: 40px 40px 30px; color: ${colors.light};">
+            <td style="padding: 20px 4px 16px; color: ${colors.light};">
               ${content}
             </td>
           </tr>
           
           <!-- Footer -->
           <tr>
-            <td style="padding: 30px 40px; background: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.05);">
+            <td style="padding: 16px 4px; background: rgba(0, 0, 0, 0.2); border-top: 1px solid rgba(255, 255, 255, 0.05);">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
                     <!-- Social Links -->
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
                       <tr>
-                        <td style="padding: 0 8px;">
-                          <a href="https://t.me/m4capitalbot" style="display: inline-block; width: 36px; height: 36px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 36px; text-decoration: none;">
-                            <img src="${baseUrl}/socials/telegram.svg" alt="Telegram" width="18" height="18" style="vertical-align: middle;" />
+                        <td style="padding: 0 6px;">
+                          <a href="https://t.me/m4capitalbot" style="display: inline-block; width: 32px; height: 32px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none;">
+                            <img src="${baseUrl}/socials/telegram.svg" alt="Telegram" width="16" height="16" style="vertical-align: middle;" />
                           </a>
                         </td>
-                        <td style="padding: 0 8px;">
-                          <a href="${baseUrl}" style="display: inline-block; width: 36px; height: 36px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 36px; text-decoration: none;">
-                            <img src="${baseUrl}/icons/icon-64.png" alt="Website" width="18" height="18" style="vertical-align: middle; border-radius: 4px;" />
+                        <td style="padding: 0 6px;">
+                          <a href="${baseUrl}" style="display: inline-block; width: 32px; height: 32px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none;">
+                            <img src="${baseUrl}/icons/icon-64.png" alt="Website" width="16" height="16" style="vertical-align: middle; border-radius: 4px;" />
                           </a>
                         </td>
                       </tr>
                     </table>
                     
-                    <p style="margin: 0 0 8px; color: ${colors.grayLight}; font-size: 13px;">
+                    <p style="margin: 0 0 6px; color: ${colors.grayLight}; font-size: 12px;">
                       © ${currentYear} M4 Capital. All rights reserved.
                     </p>
-                    <p style="margin: 0; color: ${colors.gray}; font-size: 12px;">
+                    <p style="margin: 0; color: ${colors.gray}; font-size: 11px;">
                       This is an automated message. Please do not reply directly to this email.
                     </p>
-                    <p style="margin: 15px 0 0; color: ${colors.gray}; font-size: 11px;">
+                    <p style="margin: 12px 0 0; color: ${colors.gray}; font-size: 10px;">
                       <a href="${baseUrl}/settings" style="color: ${colors.grayLight}; text-decoration: none;">Manage Notifications</a>
                       &nbsp;•&nbsp;
                       <a href="${baseUrl}/contact" style="color: ${colors.grayLight}; text-decoration: none;">Contact Support</a>
@@ -117,11 +117,11 @@ export const emailTemplate = (content: string) => `
         </table>
         
         <!-- Trust Badge -->
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 600px; margin-top: 20px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 0;">
           <tr>
-            <td align="center">
-              <p style="margin: 0; color: ${colors.gray}; font-size: 11px;">
-                🔒 Secured by industry-standard encryption
+            <td align="center" style="padding: 10px 12px;">
+              <p style="margin: 0; color: ${colors.gray}; font-size: 9px;">
+                🔒 Secured
               </p>
             </td>
           </tr>
@@ -153,14 +153,14 @@ export const emailHero = (
   };
 
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 30px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
       <tr>
         <td align="center">
-          <div style="display: inline-block; width: 80px; height: 80px; background: ${gradients[gradient]}; border-radius: 50%; margin-bottom: 20px; box-shadow: 0 10px 40px -10px ${gradient === "primary" ? colors.primary : gradient === "success" ? colors.success : gradient === "warning" ? colors.warning : gradient === "danger" ? colors.danger : colors.info};"></div>
-          <h1 style="margin: 0 0 8px; color: ${colors.white}; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">
+          <div style="display: inline-block; width: 50px; height: 50px; background: ${gradients[gradient]}; border-radius: 50%; margin-bottom: 10px; box-shadow: 0 10px 40px -10px ${gradient === "primary" ? colors.primary : gradient === "success" ? colors.success : gradient === "warning" ? colors.warning : gradient === "danger" ? colors.danger : colors.info};"></div>
+          <h1 style="margin: 0 0 4px; color: ${colors.white}; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">
             ${title}
           </h1>
-          ${subtitle ? `<p style="margin: 0; color: ${colors.grayLight}; font-size: 16px;">${subtitle}</p>` : ""}
+          ${subtitle ? `<p style="margin: 0; color: ${colors.grayLight}; font-size: 13px;">${subtitle}</p>` : ""}
         </td>
       </tr>
     </table>
@@ -169,9 +169,9 @@ export const emailHero = (
 
 // Info Card Component
 export const emailCard = (content: string, borderColor?: string) => `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 12px 0;">
     <tr>
-      <td style="background: rgba(0, 0, 0, 0.3); border-radius: 16px; padding: 24px; ${borderColor ? `border-left: 4px solid ${borderColor};` : ""}">
+      <td style="background: rgba(0, 0, 0, 0.3); border-radius: 10px; padding: 14px; ${borderColor ? `border-left: 4px solid ${borderColor};` : ""}">
         ${content}
       </td>
     </tr>
@@ -182,15 +182,15 @@ export const emailCard = (content: string, borderColor?: string) => `
 export const emailTransactionTable = (
   rows: Array<{ label: string; value: string; highlight?: boolean; color?: string }>
 ) => `
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 20px 0; background: rgba(0, 0, 0, 0.3); border-radius: 16px; overflow: hidden;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin: 12px 0; background: rgba(0, 0, 0, 0.3); border-radius: 10px; overflow: hidden;">
     ${rows
       .map(
         (row, index) => `
       <tr>
-        <td style="padding: 16px 20px; color: ${colors.grayLight}; font-size: 14px; ${index < rows.length - 1 ? `border-bottom: 1px solid rgba(255, 255, 255, 0.05);` : ""}">
+        <td style="padding: 10px 14px; color: ${colors.grayLight}; font-size: 12px; ${index < rows.length - 1 ? `border-bottom: 1px solid rgba(255, 255, 255, 0.05);` : ""}">
           ${row.label}
         </td>
-        <td align="right" style="padding: 16px 20px; color: ${row.color || (row.highlight ? colors.success : colors.white)}; font-size: ${row.highlight ? "18px" : "15px"}; font-weight: ${row.highlight ? "700" : "600"}; ${index < rows.length - 1 ? `border-bottom: 1px solid rgba(255, 255, 255, 0.05);` : ""}">
+        <td align="right" style="padding: 10px 14px; color: ${row.color || (row.highlight ? colors.success : colors.white)}; font-size: ${row.highlight ? "15px" : "13px"}; font-weight: ${row.highlight ? "700" : "600"}; ${index < rows.length - 1 ? `border-bottom: 1px solid rgba(255, 255, 255, 0.05);` : ""}">
           ${row.value}
         </td>
       </tr>
@@ -218,10 +218,10 @@ export const emailBadge = (
 
 // Primary Button
 export const emailButton = (text: string, href: string, fullWidth = false) => `
-  <table role="presentation" ${fullWidth ? 'width="100%"' : ""} cellpadding="0" cellspacing="0" border="0" style="margin: 25px 0;">
+  <table role="presentation" ${fullWidth ? 'width="100%"' : ""} cellpadding="0" cellspacing="0" border="0" style="margin: 12px 0;">
     <tr>
       <td align="center">
-        <a href="${href}" style="display: inline-block; ${fullWidth ? "width: 100%; text-align: center;" : ""} padding: 16px 40px; background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%); color: ${colors.white}; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4); transition: all 0.3s ease;">
+        <a href="${href}" style="display: inline-block; ${fullWidth ? "width: 100%; text-align: center;" : ""} padding: 10px 28px; background: linear-gradient(135deg, ${colors.primary} 0%, ${colors.secondary} 100%); color: ${colors.white}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 13px; box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.4); transition: all 0.3s ease;">
           ${text}
         </a>
       </td>
@@ -231,10 +231,10 @@ export const emailButton = (text: string, href: string, fullWidth = false) => `
 
 // Secondary Button
 export const emailButtonSecondary = (text: string, href: string) => `
-  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 15px 0;">
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 10px 0;">
     <tr>
       <td align="center">
-        <a href="${href}" style="display: inline-block; padding: 14px 32px; background: transparent; border: 2px solid ${colors.primary}; color: ${colors.primary}; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 14px;">
+        <a href="${href}" style="display: inline-block; padding: 10px 24px; background: transparent; border: 2px solid ${colors.primary}; color: ${colors.primary}; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 12px;">
           ${text}
         </a>
       </td>

@@ -230,11 +230,11 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     // Convert the received amount to USD for storage
     const usdValue = convertAmount(receivedValue, true); // true = convert FROM preferred TO USD
 
-    // Optimistic update: add the received amount to balance immediately
-    setOptimisticBalance(availableBalance + usdValue);
-
     startTransition(async () => {
       try {
+        // Optimistic update: add the received amount to balance inside transition
+        setOptimisticBalance(availableBalance + usdValue);
+
         const result = await sellCryptoAction(
           sellData.asset,
           cryptoAmount,

@@ -505,6 +505,7 @@ function DashboardContent() {
   };
 
   const handleAddCrypto = () => {
+    console.log("Add Crypto button clicked");
     setShowAddCryptoModal(true);
   };
 
@@ -1176,7 +1177,7 @@ function DashboardContent() {
             {/* Add Crypto Button - 3D Style */}
             <button
               onClick={handleAddCrypto}
-              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-white rounded-lg font-semibold transition-all text-xs active:scale-95"
+              className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-white rounded-lg font-semibold transition-all text-xs active:scale-95 relative z-[50] pointer-events-auto"
               style={{
                 background: "linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%)",
                 boxShadow:
@@ -1350,6 +1351,8 @@ function DashboardContent() {
                       return `${fullName} Transferred`;
                     if (activity.type === "convert" || activity.type === "swap")
                       return `${fullName} Swapped`;
+                    if (activity.type === "receive")
+                      return `${fullName} Received`;
                     if (activity.type === "deposit")
                       return `Deposit ${fullName}`;
                     if (activity.type === "withdraw")
@@ -1524,11 +1527,12 @@ function DashboardContent() {
                   ]);
                   const assetSymbol =
                     activity.asset?.split(" ")[0]?.toUpperCase() || "";
-                  const isFiatDeposit = FIAT_CURRENCIES.has(assetSymbol);
+                  const isFiatTransaction = FIAT_CURRENCIES.has(assetSymbol) && 
+                    (activity.type === "deposit" || activity.type === "receive");
 
                   const getFiatValue = () => {
-                    // For fiat deposits, value is already in user's currency - don't convert
-                    if (isFiatDeposit && activity.value) {
+                    // For fiat deposits/receives, value is already in user's currency - don't convert
+                    if (isFiatTransaction && activity.value) {
                       return activity.value;
                     }
                     // Use stored transaction value (USD at time of transaction)
@@ -1630,9 +1634,9 @@ function DashboardContent() {
                               </span>
                             </div>
                             <span className="font-medium text-xs text-white px-2 py-0.5 rounded-md bg-gray-700/50">
-                              {/* For fiat deposits, show in original currency without re-conversion */}
+                              {/* For fiat deposits/receives, show in original currency without re-conversion */}
                               {/* For crypto deposits, use formatAmount which handles USD->preferredCurrency conversion */}
-                              {isFiatDeposit
+                              {isFiatTransaction
                                 ? formatCurrencyUtil(
                                     activity.value || 0,
                                     assetSymbol,
@@ -1864,6 +1868,8 @@ function DashboardContent() {
                       return `${activity.asset} Transferred`;
                     if (activity.type === "convert")
                       return `${activity.asset} Swapped`;
+                    if (activity.type === "receive")
+                      return `${activity.asset} Received`;
                     if (activity.type === "deposit")
                       return `Deposit ${activity.asset}`;
                     if (activity.type === "withdraw")
@@ -1883,7 +1889,8 @@ function DashboardContent() {
                   ) => {
                     if (
                       activity.type === "deposit" ||
-                      activity.type === "withdraw"
+                      activity.type === "withdraw" ||
+                      activity.type === "receive"
                     ) {
                       return formatAmount(amount, 2);
                     }

@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft } from "lucide-react";
 import { formatTimeAgo } from "@/lib/crypto-constants";
 
 interface Withdrawal {
@@ -26,9 +28,10 @@ interface Withdrawal {
 }
 
 export default function AdminWithdrawalsPage() {
+  const router = useRouter();
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>("PENDING");
+  const [filter, setFilter] = useState<string>("ALL");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmationsInput, setConfirmationsInput] = useState<{
     [key: string]: number;
@@ -121,43 +124,55 @@ export default function AdminWithdrawalsPage() {
   return (
     <div className="min-h-screen p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+        {/* Admin Header */}
+        <div className="mb-2 xs:mb-3 sm:mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div>
+                <h1 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                  Admin Control Panel
+                </h1>
+                <p className="text-[10px] xs:text-xs text-gray-400">
+                  Complete administrative dashboard
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Back Button */}
+        <button
+          onClick={() => router.push("/admin")}
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg mb-4"
         >
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <ArrowLeft size={20} />
+          <span className="text-sm font-medium">Back to Dashboard</span>
+        </button>
+
+        {/* Header */}
+        <div className="mb-3">
+          <h2 className="text-lg font-bold text-white">
             Withdrawal Management
-          </h1>
-          <p className="text-gray-400">
+          </h2>
+          <p className="text-xs text-gray-400">
             Review and manage user withdrawal requests
           </p>
-        </motion.div>
+        </div>
 
-        {/* Filter Tabs */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6 flex flex-wrap gap-2"
-        >
-          {["PENDING", "PROCESSING", "COMPLETED", "REJECTED", "ALL"].map(
-            (status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  filter === status
-                    ? "bg-red-500 text-white"
-                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
-                }`}
-              >
-                {status}
-              </button>
-            )
-          )}
-        </motion.div>
+        {/* Filter Dropdown */}
+        <div className="mb-4">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-800 text-white border border-gray-700 focus:outline-none cursor-pointer"
+          >
+            <option value="ALL">ALL</option>
+            <option value="PENDING">PENDING</option>
+            <option value="PROCESSING">PROCESSING</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="REJECTED">REJECTED</option>
+          </select>
+        </div>
 
         {/* Withdrawals List */}
         {loading ? (
@@ -188,7 +203,7 @@ export default function AdminWithdrawalsPage() {
             <p className="text-gray-400 text-lg">No withdrawals found</p>
           </motion.div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2">
             <AnimatePresence mode="popLayout">
               {withdrawals.map((withdrawal, index) => (
                 <motion.div
@@ -197,52 +212,52 @@ export default function AdminWithdrawalsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ delay: index * 0.05 }}
-                  className="rounded-2xl p-4 md:p-6"
+                  className="rounded-xl p-3"
                   style={card3DStyle}
                 >
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     {/* Left: User & Withdrawal Info */}
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+                          <span className="text-white font-bold text-xs">
                             {withdrawal.User?.name?.[0] ||
                               withdrawal.User?.email[0].toUpperCase()}
                           </span>
                         </div>
                         <div>
-                          <p className="text-white font-semibold">
+                          <p className="text-white font-medium text-sm">
                             {withdrawal.User?.name || "Unknown User"}
                           </p>
-                          <p className="text-gray-400 text-sm">
+                          <p className="text-gray-400 text-xs">
                             {withdrawal.User?.email}
                           </p>
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm mt-3">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-2">
                         <div>
-                          <p className="text-gray-500">Amount</p>
-                          <p className="text-white font-semibold">
+                          <p className="text-gray-500 text-[10px]">Amount</p>
+                          <p className="text-white font-medium">
                             {Number(withdrawal.amount).toLocaleString()}{" "}
                             {withdrawal.currency}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Method</p>
+                          <p className="text-gray-500 text-[10px]">Method</p>
                           <p className="text-white">
                             {withdrawal.type?.replace("CRYPTO_", "") || "N/A"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Fees</p>
+                          <p className="text-gray-500 text-[10px]">Fees</p>
                           <p className="text-white">
                             {withdrawal.metadata?.fees?.totalFees?.toFixed(2) ||
                               "0.00"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500">Created</p>
+                          <p className="text-gray-500 text-[10px]">Created</p>
                           <p className="text-white">
                             {formatTimeAgo(withdrawal.createdAt)}
                           </p>
@@ -250,20 +265,20 @@ export default function AdminWithdrawalsPage() {
                       </div>
 
                       {withdrawal.metadata?.address && (
-                        <div className="mt-3">
-                          <p className="text-gray-500 text-sm">
+                        <div className="mt-2">
+                          <p className="text-gray-500 text-[10px]">
                             Withdrawal Address
                           </p>
-                          <p className="text-white text-sm font-mono bg-gray-900/50 px-3 py-2 rounded-lg mt-1 break-all">
+                          <p className="text-white text-xs font-mono bg-gray-900/50 px-2 py-1.5 rounded-lg mt-1 break-all">
                             {withdrawal.metadata.address}
                           </p>
                         </div>
                       )}
 
                       {withdrawal.status === "PROCESSING" && (
-                        <div className="mt-3">
-                          <p className="text-gray-500 text-sm">Confirmations</p>
-                          <p className="text-white">
+                        <div className="mt-2">
+                          <p className="text-gray-500 text-[10px]">Confirmations</p>
+                          <p className="text-white text-sm">
                             {withdrawal.metadata?.confirmations || 0} /{" "}
                             {withdrawal.metadata?.requiredConfirmations || 0}
                           </p>
@@ -272,16 +287,16 @@ export default function AdminWithdrawalsPage() {
                     </div>
 
                     {/* Right: Status & Actions */}
-                    <div className="flex flex-col items-end gap-3">
+                    <div className="flex flex-col items-end gap-2">
                       <span
-                        className={`px-3 py-1 rounded-full text-sm font-semibold ${getStatusColor(withdrawal.status)}`}
+                        className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(withdrawal.status)}`}
                       >
                         {withdrawal.status}
                       </span>
 
                       {withdrawal.status === "PENDING" && (
-                        <div className="flex flex-col gap-2 w-full md:w-auto">
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                          <div className="flex items-center gap-1.5">
                             <input
                               type="number"
                               min="0"
@@ -293,7 +308,7 @@ export default function AdminWithdrawalsPage() {
                                   [withdrawal.id]: parseInt(e.target.value) || 0,
                                 }))
                               }
-                              className="w-32 px-3 py-2 bg-gray-900 text-white rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none text-sm"
+                              className="w-24 px-2 py-1.5 bg-gray-900 text-white rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none text-xs"
                             />
                             <button
                               onClick={() =>
@@ -304,17 +319,17 @@ export default function AdminWithdrawalsPage() {
                                 )
                               }
                               disabled={actionLoading === withdrawal.id}
-                              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                              className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                             >
                               {actionLoading === withdrawal.id
-                                ? "Processing..."
+                                ? "..."
                                 : "Approve"}
                             </button>
                           </div>
                           <button
                             onClick={() => handleAction(withdrawal.id, "reject")}
                             disabled={actionLoading === withdrawal.id}
-                            className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                            className="w-full px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                           >
                             Reject & Refund
                           </button>
@@ -322,8 +337,8 @@ export default function AdminWithdrawalsPage() {
                       )}
 
                       {withdrawal.status === "PROCESSING" && (
-                        <div className="flex flex-col gap-2 w-full md:w-auto">
-                          <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-1.5 w-full md:w-auto">
+                          <div className="flex items-center gap-1.5">
                             <input
                               type="number"
                               min="0"
@@ -335,7 +350,7 @@ export default function AdminWithdrawalsPage() {
                                   [withdrawal.id]: parseInt(e.target.value) || 0,
                                 }))
                               }
-                              className="w-32 px-3 py-2 bg-gray-900 text-white rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none text-sm"
+                              className="w-24 px-2 py-1.5 bg-gray-900 text-white rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none text-xs"
                             />
                             <button
                               onClick={() =>
@@ -346,10 +361,10 @@ export default function AdminWithdrawalsPage() {
                                 )
                               }
                               disabled={actionLoading === withdrawal.id}
-                              className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                             >
                               {actionLoading === withdrawal.id
-                                ? "Updating..."
+                                ? "..."
                                 : "Update"}
                             </button>
                           </div>

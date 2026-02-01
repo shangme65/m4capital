@@ -1278,7 +1278,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         <button
                           onClick={handleNext}
                           disabled={loading}
-                          className="flex-1 py-3 px-3 rounded-xl font-bold transition-all text-white text-sm disabled:opacity-50"
+                          className="flex-1 py-3 px-3 rounded-xl font-bold transition-all text-white text-sm disabled:opacity-50 pointer-events-auto"
                           style={{
                             background:
                               "linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #dc2626 100%)",
@@ -1425,7 +1425,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         <button
                           onClick={() => setStep(2)}
                           disabled={loading}
-                          className="flex-1 py-3 px-3 rounded-xl font-semibold transition-all text-white text-sm disabled:opacity-50"
+                          className="flex-1 py-2 px-2 rounded-lg font-medium transition-all text-white text-xs disabled:opacity-50"
                           style={card3DStyle}
                         >
                           Back
@@ -1433,18 +1433,18 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         <button
                           onClick={handleFeePayment}
                           disabled={loading}
-                          className="flex-1 py-3 px-3 rounded-xl font-bold transition-all text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                          className="flex-1 py-2 px-2 rounded-lg font-semibold transition-all text-white text-xs disabled:opacity-50 flex items-center justify-center gap-1.5"
                           style={{
                             background:
                               "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",
                             boxShadow:
-                              "0 8px 20px -5px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                              "0 4px 12px -3px rgba(34, 197, 94, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                           }}
                         >
                           {loading ? (
                             <>
                               <svg
-                                className="animate-spin h-5 w-5"
+                                className="animate-spin h-4 w-4"
                                 fill="none"
                                 viewBox="0 0 24 24"
                               >
@@ -1467,7 +1467,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                           ) : (
                             <>
                               <svg
-                                className="w-5 h-5"
+                                className="w-4 h-4"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"

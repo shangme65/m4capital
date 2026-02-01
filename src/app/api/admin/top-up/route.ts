@@ -452,7 +452,7 @@ async function completeDepositImmediately(
     // Send completion email
     if (user?.email && user.isEmailVerified) {
       const displayAmount = depositType === "crypto"
-        ? amount.toString()
+        ? Number(amount).toFixed(8)
         : amount.toString();
       const displayAsset = depositType === "crypto" ? cryptoAsset! : userCurrency;
       const currSymbol = depositType === "crypto" ? "" : getCurrencySymbol(userCurrency);
@@ -629,7 +629,7 @@ async function completeDeposit(
     // Send completion email
     if (user?.email && user.isEmailVerified) {
       const displayAmount = depositType === "crypto"
-        ? amount.toString()
+        ? Number(amount).toFixed(8)
         : amount.toString();
       const displayAsset = depositType === "crypto" ? cryptoAsset! : userCurr;
       const currSymbol = depositType === "crypto" ? "" : getCurrencySymbol(userCurr);

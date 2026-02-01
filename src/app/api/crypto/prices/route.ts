@@ -74,17 +74,55 @@ async function fetchCryptoPrices(
   symbols: string[]
 ): Promise<CryptoPriceResponse[]> {
   const apiKey = process.env.COINMARKETCAP_API_KEY;
-  if (!apiKey) throw new Error("COINMARKETCAP_API_KEY not configured");
+  if (!apiKey) {
+    console.warn("⚠️ COINMARKETCAP_API_KEY not configured, using fallback prices");
+    // Return fallback prices instead of throwing error
+    return symbols.map((symbol) => ({
+      symbol,
+      name: CRYPTO_NAMES[symbol] || symbol,
+      price: getFallbackPrice(symbol),
+      change24h: 0,
+      changePercent24h: 0,
+      volume24h: 0,
+      marketCap: 0,
+      timestamp: Date.now(),
+    }));
+  }
   const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbols.join(
     ","
   )}&convert=USD`;
   const response = await fetch(url, {
     headers: { "X-CMC_PRO_API_KEY": apiKey },
   });
-  if (!response.ok) throw new Error(`API error: ${response.status}`);
+  if (!response.ok) {
+    console.error(`CoinMarketCap API error: ${response.status}`);
+    // Return fallback on API error
+    return symbols.map((symbol) => ({
+      symbol,
+      name: CRYPTO_NAMES[symbol] || symbol,
+      price: getFallbackPrice(symbol),
+      change24h: 0,
+      changePercent24h: 0,
+      volume24h: 0,
+      marketCap: 0,
+      timestamp: Date.now(),
+    }));
+  }
   const data: CoinMarketCapResponse = await response.json();
-  if (data.status.error_code !== 0)
-    throw new Error(data.status.error_message || "API error");
+  if (data.status.error_code !== 0) {
+    console.error(`CoinMarketCap error: ${data.status.error_message}`);
+    // Return fallback on API error
+    return symbols.map((symbol) => ({
+      symbol,
+      name: CRYPTO_NAMES[symbol] || symbol,
+      price: getFallbackPrice(symbol),
+      change24h: 0,
+      changePercent24h: 0,
+      volume24h: 0,
+      marketCap: 0,
+      timestamp: Date.now(),
+    }));
+  }
   return symbols
     .map((symbol) => {
       const coinData = data.data[symbol];
@@ -102,6 +140,23 @@ async function fetchCryptoPrices(
       };
     })
     .filter(Boolean) as CryptoPriceResponse[];
+}
+
+// Fallback prices when API is unavailable
+function getFallbackPrice(symbol: string): number {
+  const fallbackPrices: Record<string, number> = {
+    BTC: 50000,
+    ETH: 3000,
+    XRP: 0.6,
+    TRX: 0.12,
+    TON: 2.5,
+    LTC: 85,
+    BCH: 300,
+    ETC: 25,
+    USDC: 1,
+    USDT: 1,
+  };
+  return fallbackPrices[symbol] || 100;
 }
 
 export async function GET(request: NextRequest) {
