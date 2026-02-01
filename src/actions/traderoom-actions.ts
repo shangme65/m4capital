@@ -16,9 +16,12 @@ interface ActionResult {
 
 /**
  * Fund traderoom action - Transfer from fiat balance to traderoom
+ * @param amountInUserCurrency - Amount to deduct from user's fiat balance (in their currency)
+ * @param amountUSD - Amount to credit to traderoom balance (in USD)
  */
 export async function fundTraderoomAction(
-  amount: number
+  amountInUserCurrency: number,
+  amountUSD?: number
 ): Promise<ActionResult> {
   try {
     const session = await getServerSession(authOptions);
@@ -27,7 +30,7 @@ export async function fundTraderoomAction(
       return { success: false, error: "Authentication required" };
     }
 
-    if (!amount || amount <= 0) {
+    if (!amountInUserCurrency || amountInUserCurrency <= 0) {
       return { success: false, error: "Amount must be greater than 0" };
     }
 
@@ -53,8 +56,11 @@ export async function fundTraderoomAction(
     );
     const userCurrency = user.preferredCurrency || "USD";
     const currSymbol = getCurrencySymbol(userCurrency);
+    
+    // If amountUSD not provided, assume balance is in USD (backwards compatibility)
+    const traderoomCreditAmount = amountUSD !== undefined ? amountUSD : amountInUserCurrency;
 
-    if (currentBalance < amount) {
+    if (currentBalance < amountInUserCurrency) {
       return {
         success: false,
         error: `Insufficient funds. You only have ${currSymbol}${currentBalance.toFixed(
@@ -63,30 +69,33 @@ export async function fundTraderoomAction(
       };
     }
 
-    // Transfer funds
+    // Transfer funds:
+    // - Deduct amountInUserCurrency from fiat balance (user's currency)
+    // - Credit traderoomCreditAmount to traderoom balance (USD)
     const updatedPortfolio = await prisma.portfolio.update({
       where: { id: user.Portfolio.id },
       data: {
-        balance: currentBalance - amount,
-        traderoomBalance: currentTraderoomBalance + amount,
+        balance: currentBalance - amountInUserCurrency,
+        traderoomBalance: currentTraderoomBalance + traderoomCreditAmount,
       },
     });
 
-    // Create notification
+    // Create notification with amount in user's currency
     await prisma.notification.create({
       data: {
         id: generateId(),
         userId: user.id,
         type: "TRANSACTION",
         title: "Traderoom Funded",
-        message: `Successfully transferred ${currSymbol}${amount.toFixed(
+        message: `Successfully transferred ${currSymbol}${amountInUserCurrency.toFixed(
           2
         )} to your Traderoom balance`,
         metadata: {
           type: "traderoom_fund",
-          amount,
+          amountInUserCurrency,
+          amountUSD: traderoomCreditAmount,
           fromBalance: currentBalance,
-          toTraderoomBalance: currentTraderoomBalance + amount,
+          toTraderoomBalance: currentTraderoomBalance + traderoomCreditAmount,
         },
       },
     });
@@ -99,7 +108,7 @@ export async function fundTraderoomAction(
       data: {
         newFiatBalance: Number(updatedPortfolio.balance),
         newTraderoomBalance: Number(updatedPortfolio.traderoomBalance),
-        transferredAmount: amount,
+        transferredAmount: amountInUserCurrency,
       },
     };
   } catch (error) {

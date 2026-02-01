@@ -28,6 +28,7 @@ export async function GET() {
     // If user doesn't have a portfolio, create one
     let realBalance = 0;
     let traderoomBalance = 0;
+    let balanceCurrency = user.preferredCurrency || "USD";
     if (!user.Portfolio) {
       const newPortfolio = await prisma.portfolio.create({
         data: {
@@ -43,6 +44,7 @@ export async function GET() {
     } else {
       realBalance = Number(user.Portfolio.balance);
       traderoomBalance = Number(user.Portfolio.traderoomBalance || 0);
+      balanceCurrency = user.Portfolio.balanceCurrency || user.preferredCurrency || "USD";
     }
 
     // If user doesn't have a paper portfolio, create one
@@ -66,6 +68,7 @@ export async function GET() {
       realBalance,
       traderoomBalance,
       practiceBalance,
+      balanceCurrency,
       userId: user.id,
       email: user.email,
       name: user.name,

@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 // In-memory storage for signal strength (in production, use database)
-let globalSignalStrength = 75;
-let activeMode: "none" | "auto" | "strong" | "moderate" | "weak" = "none";
+let globalSignalStrength = 84;
+let activeMode: "none" | "auto" | "strong" | "moderate" | "weak" = "auto";
 
 export async function GET(req: NextRequest) {
   try {

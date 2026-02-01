@@ -734,8 +734,8 @@ const AdminDashboard = () => {
     "total" | "admin" | "staff" | "regular" | "sessions" | null
   >(null);
   const [showSignalModal, setShowSignalModal] = useState(false);
-  const [globalSignalStrength, setGlobalSignalStrength] = useState(75);
-  const [isAutoMode, setIsAutoMode] = useState(false);
+  const [globalSignalStrength, setGlobalSignalStrength] = useState(84);
+  const [isAutoMode, setIsAutoMode] = useState(true);
   const [isStrongMode, setIsStrongMode] = useState(false);
   const [isModerateMode, setIsModerateMode] = useState(false);
   const [isWeakMode, setIsWeakMode] = useState(false);

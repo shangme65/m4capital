@@ -80,7 +80,7 @@ interface ActiveTrade {
 
 function TradingInterface() {
   const { data: session, status } = useSession();
-  const { formatAmount, preferredCurrency } = useCurrency();
+  const { formatAmount, preferredCurrency, exchangeRates, convertAmount } = useCurrency();
   const [amount, setAmount] = useState(10000);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState("USD/CAD");
@@ -112,8 +112,10 @@ function TradingInterface() {
   const [selectedAccountType, setSelectedAccountType] = useState<
     "real" | "practice"
   >("real"); // Default to real account
-  const [realAccountBalance, setRealAccountBalance] = useState(0);
-  const [traderoomBalance, setTraderoomBalance] = useState(0);
+  const [realAccountBalance, setRealAccountBalance] = useState(0); // In user's currency
+  const [realAccountBalanceUSD, setRealAccountBalanceUSD] = useState(0); // Converted to USD
+  const [balanceCurrency, setBalanceCurrency] = useState("USD"); // User's balance currency
+  const [traderoomBalance, setTraderoomBalance] = useState(0); // Always in USD
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundMethod, setFundMethod] = useState<"fiat" | "crypto">("fiat");
   const [fundAmount, setFundAmount] = useState("");
@@ -121,6 +123,7 @@ function TradingInterface() {
   const [isFunding, setIsFunding] = useState(false);
   const [fundingError, setFundingError] = useState("");
   const [cryptoPaymentInfo, setCryptoPaymentInfo] = useState<any>(null);
+  const [fundingSuccessMessage, setFundingSuccessMessage] = useState<string | null>(null);
   const practiceAccountBalance = 10000.0; // Practice account default balance
   const [forexRates, setForexRates] = useState<any>({});
   const [showPortfolioPanel, setShowPortfolioPanel] = useState(false);
@@ -326,10 +329,12 @@ function TradingInterface() {
         const response = await fetch("/api/user/balance");
         if (response.ok) {
           const data = await response.json();
+          const userBalanceCurrency = data.balanceCurrency || "USD";
           setRealAccountBalance(data.realBalance);
+          setBalanceCurrency(userBalanceCurrency);
           setTraderoomBalance(data.traderoomBalance || 0);
           console.log(
-            `✅ User balance loaded: Real=$${data.realBalance}, Traderoom=$${data.traderoomBalance}, Practice=$${data.practiceBalance}`
+            `✅ User balance loaded: Real=${data.realBalance} ${userBalanceCurrency}, Traderoom=$${data.traderoomBalance}, Practice=$${data.practiceBalance}`
           );
         }
       } catch (error) {
@@ -363,21 +368,22 @@ function TradingInterface() {
     // Refresh forex rates every 60 seconds
     const forexInterval = setInterval(fetchForexRates, 60000);
 
-    // Load selected account type from localStorage
-    const savedAccountType = localStorage.getItem("selectedAccountType") as
-      | "real"
-      | "practice"
-      | null;
+    // Wait for auth status to be determined before setting account type
+    if (status === "loading") {
+      // Don't change account type while loading - keep default (real)
+      return () => {
+        clearInterval(timer);
+        clearInterval(forexInterval);
+        clearInterval(countdownInterval);
+      };
+    }
 
-    // If not logged in, force practice mode
-    if (!isLoggedIn) {
+    // If not logged in (unauthenticated), force practice mode
+    if (status === "unauthenticated") {
       setSelectedAccountType("practice");
       localStorage.setItem("selectedAccountType", "practice");
-    } else if (savedAccountType) {
-      // Logged in users can use saved preference
-      setSelectedAccountType(savedAccountType);
-    } else {
-      // Logged in users default to real account
+    } else if (status === "authenticated") {
+      // Logged in users: always default to real account
       setSelectedAccountType("real");
       localStorage.setItem("selectedAccountType", "real");
     }
@@ -387,7 +393,19 @@ function TradingInterface() {
       clearInterval(forexInterval);
       clearInterval(countdownInterval);
     };
-  }, [isLoggedIn, expirationSeconds]);
+  }, [status, expirationSeconds]);
+
+  // Convert balance to USD when balance or exchange rates change
+  useEffect(() => {
+    if (balanceCurrency === "USD") {
+      setRealAccountBalanceUSD(realAccountBalance);
+    } else {
+      // Convert from user's currency to USD
+      const rate = exchangeRates[balanceCurrency] || 1;
+      const usdValue = realAccountBalance / rate;
+      setRealAccountBalanceUSD(usdValue);
+    }
+  }, [realAccountBalance, balanceCurrency, exchangeRates]);
 
   // Close balance dropdown when clicking outside
   useEffect(() => {
@@ -407,37 +425,40 @@ function TradingInterface() {
 
   // Handle funding from fiat balance
   const handleFundFromFiat = async () => {
-    const amount = parseFloat(fundAmount);
-    if (isNaN(amount) || amount <= 0) {
+    const amountUSD = parseFloat(fundAmount);
+    if (isNaN(amountUSD) || amountUSD <= 0) {
       setFundingError("Please enter a valid amount");
       return;
     }
-    if (amount > realAccountBalance) {
+    
+    // Convert USD amount to user's currency for comparison
+    // Check against the USD-equivalent balance
+    if (amountUSD > realAccountBalanceUSD) {
       setFundingError(
-        `Insufficient balance. You have ${formatAmount(
-          realAccountBalance,
-          2
-        )} available.`
+        `Insufficient balance. You have $${realAccountBalanceUSD.toFixed(2)} USD available.`
       );
       return;
     }
+    
+    // Convert USD to user's currency for the actual deduction
+    const rate = exchangeRates[balanceCurrency] || 1;
+    const amountInUserCurrency = balanceCurrency === "USD" ? amountUSD : amountUSD * rate;
 
     setIsFunding(true);
     setFundingError("");
 
     try {
-      const result = await fundTraderoomAction(amount);
+      // Pass the amount in user's currency to be deducted from their balance
+      // Also pass the USD amount for traderoom credit
+      const result = await fundTraderoomAction(amountInUserCurrency, amountUSD);
 
       if (result.success && result.data) {
         setRealAccountBalance(result.data.newFiatBalance);
         setTraderoomBalance(result.data.newTraderoomBalance);
         setFundAmount("");
         setShowFundModal(false);
-        alert(
-          `Successfully transferred ${formatAmount(
-            amount,
-            2
-          )} to your Traderoom balance!`
+        setFundingSuccessMessage(
+          `Successfully transferred $${amountUSD.toFixed(2)} to your Traderoom balance!`
         );
       } else {
         setFundingError(result.error || "Failed to transfer funds");
@@ -671,6 +692,36 @@ function TradingInterface() {
 
   return (
     <>
+      {/* Funding Success Popup */}
+      {fundingSuccessMessage && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200">
+            {/* Success Header */}
+            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-center">
+              <div className="w-16 h-16 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-4">
+                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-bold text-white">Transfer Successful!</h3>
+            </div>
+            {/* Message */}
+            <div className="p-6">
+              <p className="text-gray-300 text-center text-lg">{fundingSuccessMessage}</p>
+            </div>
+            {/* Button */}
+            <div className="px-6 pb-6">
+              <button
+                onClick={() => setFundingSuccessMessage(null)}
+                className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-green-500/25"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx global>{`
         html,
         body {
@@ -997,7 +1048,7 @@ function TradingInterface() {
                             className="text-sm font-medium"
                             style={{ color: "#ffffff" }}
                           >
-                            $ {realAccountBalance.toFixed(2)}
+                            $ {realAccountBalanceUSD.toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -4610,7 +4661,7 @@ function TradingInterface() {
                         className="font-medium"
                         style={{ color: "#ffffff" }}
                       >
-                        ${realAccountBalance.toFixed(2)}
+                        ${realAccountBalanceUSD.toFixed(2)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -4652,7 +4703,7 @@ function TradingInterface() {
                           className="text-xs mt-1"
                           style={{ color: "#9e9aa7" }}
                         >
-                          Max: ${realAccountBalance.toFixed(2)}
+                          Max: ${realAccountBalanceUSD.toFixed(2)}
                         </p>
                       </div>
 
@@ -4663,10 +4714,10 @@ function TradingInterface() {
                             key={amt}
                             onClick={() =>
                               setFundAmount(
-                                Math.min(amt, realAccountBalance).toString()
+                                Math.min(amt, realAccountBalanceUSD).toString()
                               )
                             }
-                            disabled={realAccountBalance < amt}
+                            disabled={realAccountBalanceUSD < amt}
                             className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30"
                             style={{
                               backgroundColor: "#38312e",
@@ -4678,9 +4729,9 @@ function TradingInterface() {
                         ))}
                         <button
                           onClick={() =>
-                            setFundAmount(realAccountBalance.toString())
+                            setFundAmount(realAccountBalanceUSD.toString())
                           }
-                          disabled={realAccountBalance <= 0}
+                          disabled={realAccountBalanceUSD <= 0}
                           className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30"
                           style={{
                             backgroundColor: "#38312e",
