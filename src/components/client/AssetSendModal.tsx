@@ -370,8 +370,8 @@ export default function AssetSendModal({
                         </p>
                       )}
                       {receiverName && (
-                        <p className="text-sm text-green-400 mt-1 flex items-center gap-1">
-                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                        <p className="text-sm text-blue-400 mt-2 flex items-center gap-1.5 font-medium">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                           {receiverName}
                         </p>
                       )}

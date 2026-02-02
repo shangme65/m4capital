@@ -157,14 +157,15 @@ export default function RealTimeTradingChart({
               line: { show: true, style: "dashed" as any, dashedValue: [4, 4] },
               text: {
                 show: true,
-                paddingLeft: 4,
-                paddingRight: 4,
-                paddingTop: 2,
-                paddingBottom: 2,
+                paddingLeft: 8,
+                paddingRight: 8,
+                paddingTop: 6,
+                paddingBottom: 6,
                 color: "#ffffff",
                 family: "Arial",
-                size: 12,
-                borderRadius: 2,
+                size: 20,
+                weight: "bold" as any,
+                borderRadius: 6,
               },
             },
           },
@@ -715,51 +716,7 @@ export default function RealTimeTradingChart({
         </button>
       </div>
 
-      {/* Live Price Display - IQ Option Style floating on right side */}
-      {livePrice && (
-        <div className="absolute top-1/2 right-4 -translate-y-1/2 z-20">
-          <div
-            className={`px-3 py-1.5 rounded-md font-mono text-lg font-bold transition-all duration-100 ${
-              livePrice.direction === "up"
-                ? "bg-[#00c853] text-white shadow-[0_0_10px_rgba(0,200,83,0.5)]"
-                : livePrice.direction === "down"
-                ? "bg-[#ff1744] text-white shadow-[0_0_10px_rgba(255,23,68,0.5)]"
-                : "bg-[#1b1817] text-white border border-[#38312e]"
-            }`}
-          >
-            {livePrice.price.toFixed(5)}
-          </div>
-          {/* Price direction arrow */}
-          <div
-            className={`absolute -left-4 top-1/2 -translate-y-1/2 transition-all duration-100 ${
-              livePrice.direction === "up"
-                ? "text-[#00c853]"
-                : livePrice.direction === "down"
-                ? "text-[#ff1744]"
-                : "text-gray-500"
-            }`}
-          >
-            {livePrice.direction === "up" && (
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M5.293 9.707a1 1 0 010-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L11 7.414V15a1 1 0 11-2 0V7.414L6.707 9.707a1 1 0 01-1.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
-            {livePrice.direction === "down" && (
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path
-                  fillRule="evenodd"
-                  d="M14.707 10.293a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L9 12.586V5a1 1 0 012 0v7.586l2.293-2.293a1 1 0 011.414 0z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            )}
-          </div>
-        </div>
-      )}
+      {/* Live Price Display - Hidden */}
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useSidebar } from "@/components/client/SidebarContext";
 import ConfirmModal from "@/components/client/ConfirmModal";
 import CurrencySelector from "@/components/client/CurrencySelector";
 import Image from "next/image";
@@ -39,6 +40,7 @@ import {
   Monitor,
   Globe,
   ArrowLeft,
+  Menu,
 } from "lucide-react";
 
 // Full-screen KYC Submission Loading Modal
@@ -151,11 +153,13 @@ function SettingsModal({
   onClose,
   title,
   children,
+  toggleSidebar,
 }: {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  toggleSidebar: () => void;
 }) {
   // Handle browser back button
   useEffect(() => {
@@ -184,58 +188,51 @@ function SettingsModal({
       }}
     >
       <div className="h-full overflow-y-auto">
-        {/* Header with 3D styling */}
-        <div
-          className="sticky top-0 z-10"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
-            borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
-          }}
-        >
-          <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-4">
-            <button
-              onClick={onClose}
-              className="w-10 h-10 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
-              style={{
-                background:
-                  "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                boxShadow:
-                  "0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                border: "1px solid rgba(255, 255, 255, 0.06)",
-              }}
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold text-white">{title}</h2>
+        {/* Custom Header for Modal */}
+        <div className="sticky top-0 z-10 bg-gray-900/100 backdrop-blur-sm">
+          <div className="flex justify-between items-center p-3 sm:p-6">
+            <Image
+              src="/m4capitallogo1.png"
+              alt="M4 Capital Logo"
+              width={120}
+              height={40}
+              className="object-contain mobile:w-20 w-24 md:w-auto"
+              priority
+            />
+            <div className="flex items-center gap-3">
+              <button
+                onClick={onClose}
+                className="relative text-gray-400 hover:text-white transition-colors"
+                title="Notifications"
+              >
+                <Bell size={18} className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6" />
+              </button>
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5"
+                aria-label="Open sidebar"
+              >
+                <Menu size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] text-gray-400" />
+              </button>
+            </div>
           </div>
+        </div>
+
+        {/* Back Button - Outside of cards */}
+        <div className="max-w-4xl mx-auto px-4 pt-4">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft size={20} />
+            <span className="text-sm font-medium">Back to Dashboard</span>
+          </button>
         </div>
 
         {/* Content area with card wrapper */}
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-4 space-y-4">
-          {React.Children.map(children, (child, index) => (
-            <div
-              key={index}
-              className="relative rounded-2xl p-5 overflow-hidden"
-              style={{
-                background:
-                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                boxShadow:
-                  "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
-              }}
-            >
-              <div
-                className="absolute inset-0 opacity-20 rounded-2xl pointer-events-none"
-                style={{
-                  background:
-                    "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
-                }}
-              />
-              <div className="relative z-10">{child}</div>
-            </div>
-          ))}
+          {children}
         </div>
       </div>
     </div>,
@@ -244,12 +241,142 @@ function SettingsModal({
 }
 
 export default function SettingsPage() {
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession();
   const [saving, setSaving] = useState(false);
   const router = useRouter();
   const { showSuccess, showError, showWarning, showInfo } = useToast();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage, languages, currentLanguage } = useLanguage();
+  const { toggleSidebar } = useSidebar();
+
+  // Phone number placeholder mapping based on country
+  const getPhoneNumberPlaceholder = (countryName: string | null | undefined): string => {
+    if (!countryName) return "+1 (555) 123-4567";
+    
+    const phoneFormats: Record<string, string> = {
+      "Brazil": "+55 (11) 98765-4321",
+      "United States": "+1 (555) 123-4567",
+      "United Kingdom": "+44 20 7123 4567",
+      "Canada": "+1 (555) 123-4567",
+      "Nigeria": "+234 802 123 4567",
+      "South Africa": "+27 82 123 4567",
+      "India": "+91 98765 43210",
+      "Australia": "+61 4 1234 5678",
+      "Germany": "+49 151 23456789",
+      "France": "+33 6 12 34 56 78",
+      "Spain": "+34 612 34 56 78",
+      "Italy": "+39 312 345 6789",
+      "Mexico": "+52 55 1234 5678",
+      "Argentina": "+54 9 11 1234-5678",
+      "China": "+86 138 0000 0000",
+      "Japan": "+81 90-1234-5678",
+      "South Korea": "+82 10-1234-5678",
+      "Russia": "+7 (999) 123-45-67",
+      "Turkey": "+90 532 123 45 67",
+      "Netherlands": "+31 6 12345678",
+      "Belgium": "+32 470 12 34 56",
+      "Switzerland": "+41 76 123 45 67",
+      "Sweden": "+46 70 123 45 67",
+      "Norway": "+47 412 34 567",
+      "Denmark": "+45 12 34 56 78",
+      "Finland": "+358 40 123 4567",
+      "Poland": "+48 512 345 678",
+      "Portugal": "+351 912 345 678",
+      "Greece": "+30 691 234 5678",
+      "Egypt": "+20 100 123 4567",
+      "Kenya": "+254 712 345678",
+      "Ghana": "+233 24 123 4567",
+      "Saudi Arabia": "+966 50 123 4567",
+      "United Arab Emirates": "+971 50 123 4567",
+      "Singapore": "+65 8123 4567",
+      "Malaysia": "+60 12-345 6789",
+      "Thailand": "+66 81 234 5678",
+      "Vietnam": "+84 91 234 56 78",
+      "Philippines": "+63 917 123 4567",
+      "Indonesia": "+62 812-3456-7890",
+      "New Zealand": "+64 21 123 4567",
+      "Ireland": "+353 85 123 4567",
+      "Israel": "+972 50-123-4567",
+      "Chile": "+56 9 1234 5678",
+      "Colombia": "+57 312 345 6789",
+      "Peru": "+51 987 654 321",
+      "Venezuela": "+58 412-1234567",
+      "Pakistan": "+92 300 1234567",
+      "Bangladesh": "+880 1712-345678",
+      "Czech Republic": "+420 601 234 567",
+      "Austria": "+43 664 123456",
+      "Hungary": "+36 20 123 4567",
+      "Romania": "+40 712 345 678",
+      "Ukraine": "+380 67 123 4567",
+    };
+    
+    return phoneFormats[countryName] || "+1 (555) 123-4567";
+  };
+
+  // Format phone number based on country
+  const formatPhoneNumber = (value: string, countryName: string | null | undefined): string => {
+    // Remove all non-numeric characters except +
+    const cleaned = value.replace(/[^\d+]/g, '');
+    
+    if (!countryName || !cleaned) return cleaned;
+
+    // Extract just the digits (no +)
+    const digits = cleaned.replace(/\+/g, '');
+
+    // Format patterns for each country
+    const formatPatterns: Record<string, (digits: string) => string> = {
+      "Brazil": (d) => {
+        // +55 (11) 98765-4321
+        if (d.length <= 2) return `+${d}`;
+        if (d.length <= 4) return `+${d.slice(0, 2)} (${d.slice(2)}`;
+        if (d.length <= 9) return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4)}`;
+        return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9, 13)}`;
+      },
+      "United States": (d) => {
+        // +1 (555) 123-4567
+        if (d.length <= 1) return `+${d}`;
+        if (d.length <= 4) return `+${d.slice(0, 1)} (${d.slice(1)}`;
+        if (d.length <= 7) return `+${d.slice(0, 1)} (${d.slice(1, 4)}) ${d.slice(4)}`;
+        return `+${d.slice(0, 1)} (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7, 11)}`;
+      },
+      "Canada": (d) => {
+        // Same as US: +1 (555) 123-4567
+        if (d.length <= 1) return `+${d}`;
+        if (d.length <= 4) return `+${d.slice(0, 1)} (${d.slice(1)}`;
+        if (d.length <= 7) return `+${d.slice(0, 1)} (${d.slice(1, 4)}) ${d.slice(4)}`;
+        return `+${d.slice(0, 1)} (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7, 11)}`;
+      },
+      "Nigeria": (d) => {
+        // +234 802 123 4567
+        if (d.length <= 3) return `+${d}`;
+        if (d.length <= 6) return `+${d.slice(0, 3)} ${d.slice(3)}`;
+        if (d.length <= 9) return `+${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
+        return `+${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 9)} ${d.slice(9, 13)}`;
+      },
+      "United Kingdom": (d) => {
+        // +44 20 7123 4567
+        if (d.length <= 2) return `+${d}`;
+        if (d.length <= 4) return `+${d.slice(0, 2)} ${d.slice(2)}`;
+        if (d.length <= 8) return `+${d.slice(0, 2)} ${d.slice(2, 4)} ${d.slice(4)}`;
+        return `+${d.slice(0, 2)} ${d.slice(2, 4)} ${d.slice(4, 8)} ${d.slice(8, 12)}`;
+      },
+    };
+
+    const formatter = formatPatterns[countryName];
+    if (formatter) {
+      return formatter(digits);
+    }
+
+    // Default: just add + at the start
+    return `+${digits}`;
+  };
+
+  // Handle phone number input with formatting
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPhoneNumber(e.target.value, session?.user?.country);
+    setPhoneNumber(formatted);
+  };
+
 
   // Modal state
   const [activeModal, setActiveModal] = useState<string | null>(null);
@@ -290,6 +417,25 @@ export default function SettingsPage() {
   const [profileName, setProfileName] = useState("");
   const [originalName, setOriginalName] = useState("");
   const [showReVerifyModal, setShowReVerifyModal] = useState(false);
+  const [showPersonalDataModal, setShowPersonalDataModal] = useState(false);
+  const [showAccountNumberModal, setShowAccountNumberModal] = useState(false);
+  
+  // Contact info state
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [country, setCountry] = useState("");
+  const [timezone, setTimezone] = useState("");
+  const [citizenship, setCitizenship] = useState("");
+  
+  // Phone verification state
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [sendingCode, setSendingCode] = useState(false);
+  const [verifyingCode, setVerifyingCode] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [codeSent, setCodeSent] = useState(false);
+  const [devVerificationCode, setDevVerificationCode] = useState<string | null>(null);
 
   // Password change state
   const [currentPassword, setCurrentPassword] = useState("");
@@ -308,7 +454,7 @@ export default function SettingsPage() {
   const [settingUp2FA, setSettingUp2FA] = useState(false);
   const [twoFactorQRCode, setTwoFactorQRCode] = useState<string | null>(null);
   const [twoFactorSecret, setTwoFactorSecret] = useState<string | null>(null);
-  const [verificationCode, setVerificationCode] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState("");
   const [verifying2FA, setVerifying2FA] = useState(false);
   const [twoFactorError, setTwoFactorError] = useState<string | null>(null);
   const [show2FASetup, setShow2FASetup] = useState(false);
@@ -492,17 +638,133 @@ export default function SettingsPage() {
     }
   };
 
-  // Initialize profile name from session
+  // Initialize profile name and country from session
   useEffect(() => {
     if (session?.user?.name) {
       setProfileName(session.user.name);
       setOriginalName(session.user.name);
     }
-  }, [session?.user?.name]);
+    if (session?.user?.country) {
+      setCountry(session.user.country);
+    }
+  }, [session?.user?.name, session?.user?.country]);
+
+  // Load phone verification status
+  useEffect(() => {
+    const loadPhoneStatus = async () => {
+      if (!session?.user?.id) return;
+
+      try {
+        const response = await fetch("/api/user/profile");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.phoneNumber) {
+            setPhoneNumber(data.phoneNumber);
+          }
+          if (data.phoneVerified) {
+            setPhoneVerified(true);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load phone status:", error);
+      }
+    };
+
+    loadPhoneStatus();
+  }, [session?.user?.id]);
+
+  // Send phone verification code
+  const handleSendVerificationCode = async () => {
+    if (!phoneNumber || phoneNumber.length < 10) {
+      showError("Please enter a valid phone number");
+      return;
+    }
+
+    setSendingCode(true);
+    setVerificationError(null);
+
+    try {
+      const response = await fetch("/api/user/phone/send-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send verification code");
+      }
+
+      setCodeSent(true);
+      setShowPhoneVerification(true);
+      
+      // In development, store the code for easy testing
+      if (data.devCode) {
+        setDevVerificationCode(data.devCode);
+        showInfo(`Development code: ${data.devCode}`);
+      }
+      
+      showSuccess("Verification code sent to your phone number");
+    } catch (error: any) {
+      showError(error.message || "Failed to send verification code");
+      setVerificationError(error.message);
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  // Verify phone code
+  const handleVerifyPhoneCode = async () => {
+    if (!verificationCode || verificationCode.length !== 6) {
+      showError("Please enter the 6-digit verification code");
+      return;
+    }
+
+    setVerifyingCode(true);
+    setVerificationError(null);
+
+    try {
+      const response = await fetch("/api/user/phone/verify-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber, code: verificationCode }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to verify code");
+      }
+
+      setPhoneVerified(true);
+      setShowPhoneVerification(false);
+      setVerificationCode("");
+      setCodeSent(false);
+      showSuccess("Phone number verified successfully!");
+      
+      // Update session
+      await updateSession();
+    } catch (error: any) {
+      showError(error.message || "Failed to verify code");
+      setVerificationError(error.message);
+    } finally {
+      setVerifyingCode(false);
+    }
+  };
+
 
   // Check if profile has been modified
-  const hasProfileChanges =
-    profileName !== originalName && profileName.trim() !== "";
+  const hasProfileChanges = useMemo(() => {
+    return (
+      (profileName !== originalName && profileName.trim() !== "") ||
+      phoneNumber.trim() !== "" ||
+      dateOfBirth.trim() !== "" ||
+      country.trim() !== "" ||
+      timezone.trim() !== "" ||
+      citizenship.trim() !== ""
+    );
+  }, [profileName, originalName, phoneNumber, dateOfBirth, country, timezone, citizenship]);
 
   // Handle profile save - shows re-verification modal
   const handleProfileSave = async (e: React.FormEvent) => {
@@ -519,7 +781,15 @@ export default function SettingsPage() {
       const response = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: profileName, resetKyc: true }),
+        body: JSON.stringify({ 
+          name: profileName, 
+          phoneNumber,
+          dateOfBirth,
+          country,
+          timezone,
+          citizenship,
+          resetKyc: true 
+        }),
       });
 
       if (!response.ok) {
@@ -803,7 +1073,7 @@ export default function SettingsPage() {
       const response = await fetch("/api/user/2fa/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: verificationCode }),
+        body: JSON.stringify({ code: twoFactorCode }),
       });
 
       const data = await response.json();
@@ -815,7 +1085,7 @@ export default function SettingsPage() {
       setTwoFactorEnabled(true);
       setTwoFactorMethod("APP");
       setShow2FASetup(false);
-      setVerificationCode("");
+      setTwoFactorCode("");
       setTwoFactorQRCode(null);
       setTwoFactorSecret(null);
       showSuccess("Two-factor authentication enabled successfully!");
@@ -1069,7 +1339,7 @@ export default function SettingsPage() {
         </button>
 
         {/* Settings Menu - Enhanced 3D Cards */}
-        <div className="mobile:px-3 px-0 space-y-4">
+        <div className="mobile:px-3 px-0 space-y-2">
           {settingsItems.map((item, index) => {
             const Icon = item.icon;
             // Different gradient colors for each card
@@ -1127,15 +1397,14 @@ export default function SettingsPage() {
               >
                 {/* Main Card Container with 3D Effect */}
                 <div
-                  className="relative rounded-2xl p-4 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
+                  className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
                   style={{
                     background:
                       "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
                     boxShadow: `
-                      0 20px 40px -15px rgba(0, 0, 0, 0.6),
-                      0 10px 20px -10px rgba(0, 0, 0, 0.4),
+                      0 10px 20px -10px rgba(0, 0, 0, 0.5),
                       0 4px 8px -2px rgba(0, 0, 0, 0.3),
-                      inset 0 1px 0 rgba(255, 255, 255, 0.08),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.06),
                       inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                     `,
                     border: "1px solid rgba(255, 255, 255, 0.06)",
@@ -1146,13 +1415,13 @@ export default function SettingsPage() {
                     className="absolute top-0 left-0 right-0 h-[1px]"
                     style={{
                       background:
-                        "linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)",
+                        "linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent)",
                     }}
                   />
 
                   {/* Glow effect on hover */}
                   <div
-                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                     style={{
                       background: `radial-gradient(ellipse at 30% 0%, ${colors.glow} 0%, transparent 60%)`,
                     }}
@@ -1160,68 +1429,55 @@ export default function SettingsPage() {
 
                   {/* Bottom shadow gradient for depth */}
                   <div
-                    className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
+                    className="absolute bottom-0 left-0 right-0 h-6 pointer-events-none"
                     style={{
                       background:
-                        "linear-gradient(to top, rgba(0,0,0,0.3), transparent)",
+                        "linear-gradient(to top, rgba(0,0,0,0.2), transparent)",
                     }}
                   />
 
-                  <div className="relative z-10 flex items-center gap-4">
+                  <div className="relative z-10 flex items-center gap-2.5">
                     {/* 3D Icon Container */}
                     <div className="relative">
                       {/* Icon glow/shadow underneath */}
                       <div
-                        className="absolute inset-0 rounded-xl blur-md opacity-60 group-hover:opacity-80 transition-opacity"
+                        className="absolute inset-0 rounded-lg blur-md opacity-50 group-hover:opacity-70 transition-opacity"
                         style={{
                           background: `linear-gradient(135deg, ${colors.shadow}, transparent)`,
-                          transform: "translateY(4px)",
+                          transform: "translateY(3px)",
                         }}
                       />
                       <div
-                        className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${colors.from} ${colors.to} flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 group-hover:-translate-y-0.5`}
+                        className={`relative w-9 h-9 rounded-lg bg-gradient-to-br ${colors.from} ${colors.to} flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5`}
                         style={{
                           boxShadow: `
-                            0 8px 20px -4px ${colors.shadow},
-                            0 4px 10px -2px ${colors.shadow},
-                            inset 0 2px 4px rgba(255,255,255,0.25),
-                            inset 0 -2px 4px rgba(0,0,0,0.2)
+                            0 4px 12px -2px ${colors.shadow},
+                            0 2px 6px -1px ${colors.shadow},
+                            inset 0 1px 2px rgba(255,255,255,0.2),
+                            inset 0 -1px 2px rgba(0,0,0,0.15)
                           `,
                         }}
                       >
                         {/* Inner shine */}
                         <div
-                          className="absolute inset-0 rounded-xl overflow-hidden"
+                          className="absolute inset-0 rounded-lg overflow-hidden"
                           style={{
                             background:
-                              "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                              "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
                           }}
                         />
-                        <Icon className="w-5 h-5 text-white relative z-10 drop-shadow-md" />
+                        <Icon className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
                       </div>
                     </div>
 
                     {/* Text Content */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-bold text-white group-hover:text-white transition-colors truncate">
+                      <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
                         {item.title}
                       </h3>
-                      <p className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                      <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
                         {item.description}
                       </p>
-                    </div>
-
-                    {/* Chevron Arrow with 3D effect */}
-                    <div
-                      className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-300 group-hover:translate-x-1"
-                      style={{
-                        background:
-                          "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                        boxShadow:
-                          "0 2px 8px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
-                      }}
-                    >
-                      <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-white transition-colors" />
                     </div>
                   </div>
                 </div>
@@ -1235,73 +1491,320 @@ export default function SettingsPage() {
           isOpen={activeModal === "profile"}
           onClose={closeModal}
           title="Profile"
+          toggleSidebar={toggleSidebar}
         >
-          {/* Profile Info Form - First Card */}
-          <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-300 mb-1"
-                htmlFor="name"
-              >
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
-                className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
-                placeholder="Your full name"
-              />
+          {/* Personal Data Card Button */}
+          <button
+            onClick={() => setShowPersonalDataModal(true)}
+            className="group relative w-full text-left"
+          >
+            <div
+              className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                boxShadow: `
+                  0 10px 20px -10px rgba(0, 0, 0, 0.5),
+                  0 4px 8px -2px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                `,
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <div className="relative z-10 flex items-center gap-2.5">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-lg blur-md opacity-50 group-hover:opacity-70 transition-opacity"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(59,130,246,0.4), transparent)`,
+                      transform: "translateY(3px)",
+                    }}
+                  />
+                  <div
+                    className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    style={{
+                      boxShadow: `
+                        0 4px 12px -2px rgba(59,130,246,0.4),
+                        0 2px 6px -1px rgba(59,130,246,0.4),
+                        inset 0 1px 2px rgba(255,255,255,0.2),
+                        inset 0 -1px 2px rgba(0,0,0,0.15)
+                      `,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-lg overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                      }}
+                    />
+                    <User className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                    Personal Data
+                  </h3>
+                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                    Manage your personal information
+                  </p>
+                </div>
+              </div>
             </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-300 mb-1"
-                htmlFor="email"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                disabled
-                defaultValue={session?.user?.email || ""}
-                className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
-              />
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-gray-300 mb-1"
-                htmlFor="accountType"
-              >
-                Account Type
-              </label>
-              <input
-                id="accountType"
-                type="text"
-                disabled
-                value={
-                  session?.user?.accountType
-                    ? session.user.accountType.charAt(0) +
-                      session.user.accountType.slice(1).toLowerCase()
-                    : "Investor"
-                }
-                className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Account type is chosen at signup. Contact support to change.
-              </p>
-            </div>
-            {hasProfileChanges && (
-              <button
-                type="submit"
-                disabled={saving}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            )}
-          </form>
+          </button>
+
+          {/* Personal Data Inner Modal */}
+          {showPersonalDataModal && ReactDOM.createPortal(
+            <div
+              className="fixed top-0 left-0 right-0 bottom-0 z-[110] min-h-screen w-screen"
+              style={{
+                background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
+              }}
+            >
+              <div className="h-full overflow-y-auto">
+                {/* Dashboard Header */}
+                <div className="sticky top-0 z-10 bg-gray-900/100 backdrop-blur-sm">
+                  <div className="flex justify-between items-center p-3 sm:p-6">
+                    <Image
+                      src="/m4capitallogo1.png"
+                      alt="M4 Capital Logo"
+                      width={120}
+                      height={40}
+                      className="object-contain mobile:w-20 w-24 md:w-auto"
+                      priority
+                    />
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setShowPersonalDataModal(false)}
+                        className="relative text-gray-400 hover:text-white transition-colors"
+                        title="Notifications"
+                      >
+                        <Bell size={18} className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={toggleSidebar}
+                        className="flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5"
+                        aria-label="Open sidebar"
+                      >
+                        <Menu size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] text-gray-400" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Back Button */}
+                <div className="max-w-4xl mx-auto px-4 pt-4">
+                  <button
+                    onClick={() => setShowPersonalDataModal(false)}
+                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <ArrowLeft size={20} />
+                    <span className="text-sm font-medium">Back to Profile</span>
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="max-w-4xl mx-auto px-4 pt-4 pb-4">
+                  <div
+                    className="relative rounded-2xl p-5 overflow-hidden"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                      boxShadow:
+                        "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                    }}
+                  >
+                    <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
+                      <div>
+                        <label
+                          className="block text-sm font-medium text-gray-300 mb-1"
+                          htmlFor="name"
+                        >
+                          Name
+                        </label>
+                        <input
+                          id="name"
+                          type="text"
+                          value={profileName}
+                          onChange={(e) => setProfileName(e.target.value)}
+                          className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                          placeholder="Your full name"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="block text-sm font-medium text-gray-300 mb-1"
+                          htmlFor="email"
+                        >
+                          Email
+                        </label>
+                        <input
+                          id="email"
+                          type="email"
+                          disabled
+                          defaultValue={session?.user?.email || ""}
+                          className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="block text-sm font-medium text-gray-300 mb-1"
+                          htmlFor="accountType"
+                        >
+                          Account Type
+                        </label>
+                        <input
+                          id="accountType"
+                          type="text"
+                          disabled
+                          value={
+                            session?.user?.accountType
+                              ? session.user.accountType.charAt(0) +
+                                session.user.accountType.slice(1).toLowerCase()
+                              : "Investor"
+                          }
+                          className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Account type is chosen at signup. Contact support to change.
+                        </p>
+                      </div>
+
+                      {/* Phone Number Section */}
+                      <div className="pt-4 border-t border-gray-700">
+                        <label
+                          className="block text-sm font-medium text-gray-300 mb-1"
+                          htmlFor="phoneNumber"
+                        >
+                          Phone Number
+                        </label>
+                        <input
+                          id="phoneNumber"
+                          type="tel"
+                          value={phoneNumber}
+                          onChange={handlePhoneNumberChange}
+                          disabled={phoneVerified}
+                          className={`w-full rounded-lg px-3 py-2.5 border ${
+                            phoneVerified
+                              ? "bg-gray-700/80 text-gray-300 opacity-70 cursor-not-allowed border-gray-600/50"
+                              : "bg-gray-700/80 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-600/50"
+                          }`}
+                          placeholder={getPhoneNumberPlaceholder(session?.user?.country)}
+                        />
+                        {phoneVerified ? (
+                          <div className="flex items-center gap-2 mt-2">
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <span className="text-xs text-green-500 font-medium">
+                              Phone number verified
+                            </span>
+                          </div>
+                        ) : phoneNumber.length >= 10 ? (
+                          <button
+                            type="button"
+                            onClick={handleSendVerificationCode}
+                            disabled={sendingCode}
+                            className="mt-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                          >
+                            {sendingCode ? "Sending..." : "Verify Phone Number"}
+                          </button>
+                        ) : (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Increase account security by verifying your phone number
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Contact Info Section */}
+                      <div className="pt-4 border-t border-gray-700">
+                        <h3 className="text-base font-semibold text-white mb-4">Contact info:</h3>
+                        <div className="space-y-4">
+                          <div>
+                            <label
+                              className="block text-sm font-medium text-gray-300 mb-1"
+                              htmlFor="dateOfBirth"
+                            >
+                              Date of Birth
+                            </label>
+                            <input
+                              id="dateOfBirth"
+                              type="date"
+                              value={dateOfBirth}
+                              onChange={(e) => setDateOfBirth(e.target.value)}
+                              className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              className="block text-sm font-medium text-gray-300 mb-1"
+                              htmlFor="country"
+                            >
+                              Country
+                            </label>
+                            <input
+                              id="country"
+                              type="text"
+                              disabled
+                              value={country || "Not set"}
+                              className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                              Country is set during account creation. Contact support to change.
+                            </p>
+                          </div>
+                          <div>
+                            <label
+                              className="block text-sm font-medium text-gray-300 mb-1"
+                              htmlFor="timezone"
+                            >
+                              Timezone
+                            </label>
+                            <input
+                              id="timezone"
+                              type="text"
+                              value={timezone}
+                              onChange={(e) => setTimezone(e.target.value)}
+                              className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                              placeholder="e.g., America/Sao_Paulo"
+                            />
+                          </div>
+                          <div>
+                            <label
+                              className="block text-sm font-medium text-gray-300 mb-1"
+                              htmlFor="citizenship"
+                            >
+                              Citizenship
+                            </label>
+                            <input
+                              id="citizenship"
+                              type="text"
+                              value={citizenship}
+                              onChange={(e) => setCitizenship(e.target.value)}
+                              className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                              placeholder="Enter citizenship"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {hasProfileChanges && (
+                        <button
+                          type="submit"
+                          disabled={saving}
+                          className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors w-full"
+                        >
+                          {saving ? "Saving..." : "Save Changes"}
+                        </button>
+                      )}
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
 
           {/* Re-verification Warning Modal */}
           {showReVerifyModal && (
@@ -1347,52 +1850,139 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Account Number Card - Second Card */}
-          <div className="max-w-md">
-            <div className="flex items-center gap-3 mb-4">
+          {/* Account Number Card Button */}
+          <button
+            onClick={() => setShowAccountNumberModal(true)}
+            className="group relative w-full text-left"
+          >
+            <div
+              className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                boxShadow: `
+                  0 10px 20px -10px rgba(0, 0, 0, 0.5),
+                  0 4px 8px -2px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                `,
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <div className="relative z-10 flex items-center gap-2.5">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-lg blur-md opacity-50 group-hover:opacity-70 transition-opacity"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(249,115,22,0.4), transparent)`,
+                      transform: "translateY(3px)",
+                    }}
+                  />
+                  <div
+                    className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    style={{
+                      boxShadow: `
+                        0 4px 12px -2px rgba(249,115,22,0.4),
+                        0 2px 6px -1px rgba(249,115,22,0.4),
+                        inset 0 1px 2px rgba(255,255,255,0.2),
+                        inset 0 -1px 2px rgba(0,0,0,0.15)
+                      `,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-lg overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                      }}
+                    />
+                    <Copy className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                    Account Number
+                  </h3>
+                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                    Share to receive P2P transfers
+                  </p>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          {/* Account Number Popup Modal */}
+          {showAccountNumberModal && (
+            <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm">
               <div
-                className="w-11 h-11 rounded-xl flex items-center justify-center"
+                className="mx-4 max-w-md w-full rounded-2xl p-6"
                 style={{
                   background:
-                    "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                  boxShadow:
-                    "0 6px 16px -3px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.2)",
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
                 }}
               >
-                <Copy className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-white">
-                  Account Number
-                </h3>
-                <p className="text-xs text-gray-400">
-                  Share to receive P2P transfers
-                </p>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className="w-11 h-11 rounded-xl flex items-center justify-center"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                        boxShadow:
+                          "0 6px 16px -3px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.2)",
+                      }}
+                    >
+                      <Copy className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-white">
+                        Account Number
+                      </h3>
+                      <p className="text-xs text-gray-400">
+                        Share to receive P2P transfers
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowAccountNumberModal(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    disabled
+                    value={accountNumber || "Loading..."}
+                    className="w-full bg-gray-900/80 text-white rounded-lg px-2 py-3 cursor-not-allowed font-mono text-lg font-bold border border-gray-600/50 text-center"
+                    style={{ letterSpacing: '0.5em' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={copyAccountNumber}
+                    disabled={!accountNumber}
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+                    title="Copy account number"
+                  >
+                    {copiedAccountNumber ? (
+                      <>
+                        <Check className="w-4 h-4" />
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-4 h-4" />
+                        <span>Copy Account Number</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <input
-                id="accountNumber"
-                type="text"
-                disabled
-                value={accountNumber || "Loading..."}
-                className="flex-1 bg-gray-900/80 text-white rounded-lg px-3 py-2.5 cursor-not-allowed font-mono text-sm border border-gray-600/50"
-              />
-              <button
-                type="button"
-                onClick={copyAccountNumber}
-                disabled={!accountNumber}
-                className="flex-shrink-0 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-orange-500/20"
-                title="Copy account number"
-              >
-                {copiedAccountNumber ? (
-                  <Check className="w-4 h-4" />
-                ) : (
-                  <Copy className="w-4 h-4" />
-                )}
-              </button>
-            </div>
-          </div>
+          )}
         </SettingsModal>
 
         {/* Security Modal */}
@@ -1400,6 +1990,7 @@ export default function SettingsPage() {
           isOpen={activeModal === "security"}
           onClose={closeModal}
           title="Security"
+          toggleSidebar={toggleSidebar}
         >
           <div className="space-y-6 max-w-2xl">
             {/* Password Change Section */}
@@ -1642,8 +2233,8 @@ export default function SettingsPage() {
                         <input
                           id="verificationCode"
                           type="text"
-                          value={verificationCode}
-                          onChange={(e) => setVerificationCode(e.target.value)}
+                          value={twoFactorCode}
+                          onChange={(e) => setTwoFactorCode(e.target.value)}
                           className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg tracking-widest"
                           placeholder="000000"
                           maxLength={6}
@@ -1663,7 +2254,7 @@ export default function SettingsPage() {
                         <button
                           type="submit"
                           disabled={
-                            verifying2FA || verificationCode.length !== 6
+                            verifying2FA || twoFactorCode.length !== 6
                           }
                           className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
                         >
@@ -1675,7 +2266,7 @@ export default function SettingsPage() {
                             setShow2FASetup(false);
                             setTwoFactorQRCode(null);
                             setTwoFactorSecret(null);
-                            setVerificationCode("");
+                            setTwoFactorCode("");
                             setTwoFactorError(null);
                           }}
                           className="text-sm text-gray-400 hover:text-white transition-colors"
@@ -1955,6 +2546,7 @@ export default function SettingsPage() {
           isOpen={activeModal === "kyc"}
           onClose={closeModal}
           title="KYC Verification"
+          toggleSidebar={toggleSidebar}
         >
           <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
             <div>
@@ -2019,6 +2611,7 @@ export default function SettingsPage() {
           isOpen={activeModal === "kyc"}
           onClose={closeModal}
           title="KYC Verification"
+          toggleSidebar={toggleSidebar}
         >
           <div className="space-y-6">
             {/* KYC Status Banner */}
@@ -2583,6 +3176,7 @@ export default function SettingsPage() {
           isOpen={activeModal === "notifications"}
           onClose={closeModal}
           title="Email Notifications"
+          toggleSidebar={toggleSidebar}
         >
           {loadingEmailPrefs ? (
             <div className="flex items-center justify-center py-8">
@@ -2730,6 +3324,7 @@ export default function SettingsPage() {
           isOpen={activeModal === "telegram"}
           onClose={closeModal}
           title="Telegram Integration"
+          toggleSidebar={toggleSidebar}
         >
           {loadingTelegram ? (
             <div className="flex items-center justify-center py-8">
@@ -2910,6 +3505,7 @@ export default function SettingsPage() {
           isOpen={activeModal === "preferences"}
           onClose={closeModal}
           title="Preferences"
+          toggleSidebar={toggleSidebar}
         >
           <div className="space-y-6">
             {/* Theme Preference */}
@@ -3025,6 +3621,7 @@ export default function SettingsPage() {
           isOpen={activeModal === "data-privacy"}
           onClose={closeModal}
           title="Data & Privacy"
+          toggleSidebar={toggleSidebar}
         >
           <ul className="space-y-3 text-sm text-gray-300">
             <li>• Download account data (planned)</li>
@@ -3042,6 +3639,119 @@ export default function SettingsPage() {
           message={confirmModalConfig.message}
           variant={confirmModalConfig.variant}
         />
+
+        {/* Phone Verification Modal */}
+        {showPhoneVerification &&
+          ReactDOM.createPortal(
+            <div className="fixed top-0 left-0 right-0 bottom-0 z-[120] min-h-screen w-screen bg-gray-900 flex items-center justify-center px-4">
+              <div className="w-full max-w-md">
+                {/* Card */}
+                <div
+                  className="relative rounded-2xl p-6 overflow-hidden"
+                  style={{
+                    background:
+                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                    boxShadow:
+                      "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  {/* Close Button */}
+                  <button
+                    onClick={() => {
+                      setShowPhoneVerification(false);
+                      setVerificationCode("");
+                      setVerificationError(null);
+                    }}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Smartphone className="w-8 h-8 text-white" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white mb-2">
+                      Verify Phone Number
+                    </h2>
+                    <p className="text-gray-400 text-sm">
+                      Enter the 6-digit code sent to
+                    </p>
+                    <p className="text-white font-medium mt-1">{phoneNumber}</p>
+                  </div>
+
+                  {devVerificationCode && (
+                    <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                      <p className="text-xs text-yellow-500 text-center">
+                        Development Mode: Code is <strong>{devVerificationCode}</strong>
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Verification Code Input */}
+                  <div className="mb-6">
+                    <label
+                      className="block text-sm font-medium text-gray-300 mb-2 text-center"
+                      htmlFor="verificationCode"
+                    >
+                      Verification Code
+                    </label>
+                    <input
+                      id="verificationCode"
+                      type="text"
+                      maxLength={6}
+                      value={verificationCode}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setVerificationCode(value);
+                        setVerificationError(null);
+                      }}
+                      className="w-full bg-gray-700/80 text-white rounded-lg px-4 py-3 text-center text-2xl font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                      placeholder="000000"
+                      autoFocus
+                    />
+                    {verificationError && (
+                      <p className="text-red-500 text-xs mt-2 text-center">
+                        {verificationError}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleVerifyPhoneCode}
+                      disabled={verifyingCode || verificationCode.length !== 6}
+                      className="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-3 rounded-lg font-medium text-white transition-colors"
+                    >
+                      {verifyingCode ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Verifying...
+                        </span>
+                      ) : (
+                        "Verify Code"
+                      )}
+                    </button>
+
+                    <button
+                      onClick={handleSendVerificationCode}
+                      disabled={sendingCode}
+                      className="w-full bg-gray-700 hover:bg-gray-600 disabled:opacity-50 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors"
+                    >
+                      {sendingCode ? "Sending..." : "Resend Code"}
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-gray-500 text-center mt-4">
+                    Didn't receive the code? Check your phone and try resending.
+                  </p>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
       </div>
     </>
   );

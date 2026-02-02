@@ -209,7 +209,7 @@ html::-webkit-scrollbar {
 /* Custom Scrollbar Styles */
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #f97316 #1f1f1f;
+  scrollbar-color: rgba(255, 133, 22, 0.3) transparent;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -222,12 +222,13 @@ html::-webkit-scrollbar {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: transparent;
+  background: rgba(255, 133, 22, 0.2);
   border-radius: 3px;
+  transition: background 0.2s ease;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: transparent;
+  background: rgba(255, 133, 22, 0.4);
 }
 
 /* View Transitions API - React 19 / Next.js 16 */

@@ -80,23 +80,39 @@ export async function fundTraderoomAction(
       },
     });
 
-    // Create notification with amount in user's currency
+    // Create deposit record for transaction history
+    await prisma.deposit.create({
+      data: {
+        id: generateId(),
+        portfolioId: user.Portfolio.id,
+        userId: user.id,
+        amount: traderoomCreditAmount,
+        currency: "USD",
+        status: "COMPLETED",
+        method: "Traderoom Fund",
+        type: "TRADEROOM_FUND",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        metadata: {
+          amountInUserCurrency: amountInUserCurrency,
+          userCurrency: userCurrency,
+          amountUSD: traderoomCreditAmount,
+        },
+      },
+    });
+
+    // Create notification with USD amount (traderoom balance is in USD)
     await prisma.notification.create({
       data: {
         id: generateId(),
         userId: user.id,
         type: "TRANSACTION",
         title: "Traderoom Funded",
-        message: `Successfully transferred ${currSymbol}${amountInUserCurrency.toFixed(
+        message: `Successfully transferred $${traderoomCreditAmount.toFixed(
           2
         )} to your Traderoom balance`,
-        metadata: {
-          type: "traderoom_fund",
-          amountInUserCurrency,
-          amountUSD: traderoomCreditAmount,
-          fromBalance: currentBalance,
-          toTraderoomBalance: currentTraderoomBalance + traderoomCreditAmount,
-        },
+        amount: traderoomCreditAmount,
+        asset: "USD", // Traderoom balance is always in USD
       },
     });
 
@@ -183,6 +199,30 @@ export async function fundTraderoomCryptoAction(params: {
       data: {
         assets,
         traderoomBalance: currentTraderoomBalance + valueUSD,
+      },
+    });
+
+    // Create deposit record for transaction history
+    await prisma.deposit.create({
+      data: {
+        id: generateId(),
+        portfolioId: portfolio.id,
+        userId: user.id,
+        amount: valueUSD,
+        cryptoAmount: amount,
+        currency: "USD",
+        targetAsset: symbol,
+        cryptoCurrency: symbol,
+        status: "COMPLETED",
+        method: "Traderoom Crypto Fund",
+        type: "TRADEROOM_CRYPTO_FUND",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        metadata: {
+          cryptoAmount: amount,
+          priceUSD: price,
+          valueUSD: valueUSD,
+        },
       },
     });
 
@@ -279,18 +319,37 @@ export async function withdrawFromTraderoomAction(
       },
     });
 
-    // Create notification
+    // Create withdrawal record for transaction history
+    await prisma.withdrawal.create({
+      data: {
+        id: generateId(),
+        portfolioId: user.Portfolio.id,
+        userId: user.id,
+        amount,
+        currency: "USD",
+        status: "COMPLETED",
+        method: "Traderoom Withdrawal",
+        type: "TRADEROOM_WITHDRAWAL",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        metadata: {
+          userCurrency: userCurrency,
+        },
+      },
+    });
+
+    // Create notification (amount is in USD as traderoom balance is USD)
     await prisma.notification.create({
       data: {
         id: generateId(),
         userId: user.id,
         type: "TRANSACTION",
         title: "Traderoom Withdrawal",
-        message: `Withdrew ${currSymbol}${amount.toFixed(
+        message: `Withdrew $${amount.toFixed(
           2
         )} from Traderoom to your main balance`,
         amount,
-        asset: userCurrency,
+        asset: "USD", // Traderoom balance is always in USD
       },
     });
 

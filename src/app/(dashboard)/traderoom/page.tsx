@@ -40,6 +40,15 @@ import {
   Info,
   CircleHelp,
   Calculator,
+  Crown,
+  Camera,
+  User,
+  ShieldCheck,
+  Wallet,
+  ArrowDownCircle,
+  HelpCircle,
+  FileText,
+  LogOut,
 } from "lucide-react";
 import {
   TradingProvider,
@@ -57,12 +66,15 @@ import TradingCalculators from "@/components/client/TradingCalculators";
 import RealTimeTradingChart from "@/components/client/RealTimeTradingChart";
 import ChartGrid from "@/components/client/ChartGrid";
 import ErrorBoundary from "@/components/client/ErrorBoundary";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import {
   fundTraderoomAction,
   fundTraderoomCryptoAction,
+  withdrawFromTraderoomAction,
 } from "@/actions/traderoom-actions";
+import { getCurrencySymbol, formatCurrency } from "@/lib/currencies";
 
 // Active trade interface for binary options
 interface ActiveTrade {
@@ -80,6 +92,7 @@ interface ActiveTrade {
 
 function TradingInterface() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const { formatAmount, preferredCurrency, exchangeRates, convertAmount } = useCurrency();
   const [amount, setAmount] = useState(10000);
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
@@ -108,7 +121,14 @@ function TradingInterface() {
   const [historyFilter, setHistoryFilter] = useState("All Positions");
   const [showMoreItems, setShowMoreItems] = useState(false);
   const [showCalculators, setShowCalculators] = useState(false);
+  const [showExpirationModal, setShowExpirationModal] = useState(false);
   const [isBalanceDropdownOpen, setIsBalanceDropdownOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [withdrawError, setWithdrawError] = useState("");
+  const [withdrawSuccess, setWithdrawSuccess] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState<
     "real" | "practice"
   >("real"); // Default to real account
@@ -154,15 +174,7 @@ function TradingInterface() {
   };
 
   const symbols = [
-    {
-      symbol: "USD/CAD",
-      price: getForexRate("CAD")?.price || "1.35742",
-      change: getForexRate("CAD")?.change || "+0.0015",
-      percentage: `${getForexRate("CAD")?.changePercent >= 0 ? "+" : ""}${
-        getForexRate("CAD")?.changePercent || "0.11"
-      }%`,
-      flag: "🇺🇸🇨🇦",
-    },
+    // Forex Pairs
     {
       symbol: "EUR/USD",
       price: getForexRate("EUR")?.price || "1.08532",
@@ -171,6 +183,7 @@ function TradingInterface() {
         getForexRate("EUR")?.changePercent || "-0.21"
       }%`,
       flag: "🇪🇺🇺🇸",
+      category: "Forex",
     },
     {
       symbol: "GBP/USD",
@@ -180,6 +193,7 @@ function TradingInterface() {
         getForexRate("GBP")?.changePercent || "0.35"
       }%`,
       flag: "🇬🇧🇺🇸",
+      category: "Forex",
     },
     {
       symbol: "USD/JPY",
@@ -189,6 +203,17 @@ function TradingInterface() {
         getForexRate("JPY")?.changePercent || "0.08"
       }%`,
       flag: "🇺🇸🇯🇵",
+      category: "Forex",
+    },
+    {
+      symbol: "USD/CAD",
+      price: getForexRate("CAD")?.price || "1.35742",
+      change: getForexRate("CAD")?.change || "+0.0015",
+      percentage: `${getForexRate("CAD")?.changePercent >= 0 ? "+" : ""}${
+        getForexRate("CAD")?.changePercent || "0.11"
+      }%`,
+      flag: "🇺🇸🇨🇦",
+      category: "Forex",
     },
     {
       symbol: "AUD/USD",
@@ -198,7 +223,10 @@ function TradingInterface() {
         getForexRate("AUD")?.changePercent || "-0.18"
       }%`,
       flag: "🇦🇺🇺🇸",
+      category: "Forex",
     },
+    
+    // Cryptocurrencies
     {
       symbol: "BTC/USD",
       price:
@@ -209,7 +237,8 @@ function TradingInterface() {
       percentage: `${
         (getCryptoPrice("BTC")?.changePercent24h || 0) >= 0 ? "+" : ""
       }${getCryptoPrice("BTC")?.changePercent24h?.toFixed(2) || "1.85"}%`,
-      flag: "₿💵",
+      flag: "₿",
+      category: "Crypto",
     },
     {
       symbol: "ETH/USD",
@@ -221,7 +250,87 @@ function TradingInterface() {
       percentage: `${
         (getCryptoPrice("ETH")?.changePercent24h || 0) >= 0 ? "+" : ""
       }${getCryptoPrice("ETH")?.changePercent24h?.toFixed(2) || "0.95"}%`,
-      flag: "⟠💵",
+      flag: "⟠",
+      category: "Crypto",
+    },
+    {
+      symbol: "XRP/USD",
+      price:
+        getCryptoPrice("XRP")?.price?.toLocaleString("en-US", {
+          maximumFractionDigits: 4,
+        }) || "0.6234",
+      change: getCryptoPrice("XRP")?.change24h?.toFixed(4) || "+0.0234",
+      percentage: `${
+        (getCryptoPrice("XRP")?.changePercent24h || 0) >= 0 ? "+" : ""
+      }${getCryptoPrice("XRP")?.changePercent24h?.toFixed(2) || "3.89"}%`,
+      flag: "✕",
+      category: "Crypto",
+    },
+    
+    // Stocks
+    {
+      symbol: "TSLA",
+      price: "247.50",
+      change: "+5.20",
+      percentage: "+2.14%",
+      flag: "🚗",
+      category: "Stocks",
+    },
+    {
+      symbol: "AAPL",
+      price: "189.25",
+      change: "+2.15",
+      percentage: "+1.15%",
+      flag: "🍎",
+      category: "Stocks",
+    },
+    {
+      symbol: "NVDA",
+      price: "875.30",
+      change: "+12.45",
+      percentage: "+1.44%",
+      flag: "🎮",
+      category: "Stocks",
+    },
+    {
+      symbol: "GOOGL",
+      price: "142.65",
+      change: "-1.25",
+      percentage: "-0.87%",
+      flag: "🔍",
+      category: "Stocks",
+    },
+    {
+      symbol: "MSFT",
+      price: "378.90",
+      change: "+3.50",
+      percentage: "+0.93%",
+      flag: "🪟",
+      category: "Stocks",
+    },
+    {
+      symbol: "AMZN",
+      price: "156.75",
+      change: "+2.30",
+      percentage: "+1.49%",
+      flag: "📦",
+      category: "Stocks",
+    },
+    {
+      symbol: "META",
+      price: "445.20",
+      change: "-3.80",
+      percentage: "-0.85%",
+      flag: "👤",
+      category: "Stocks",
+    },
+    {
+      symbol: "NFLX",
+      price: "512.40",
+      change: "+8.90",
+      percentage: "+1.77%",
+      flag: "🎬",
+      category: "Stocks",
     },
   ];
 
@@ -916,26 +1025,201 @@ function TradingInterface() {
               </div>
             </div>
 
-            {/* Right: Balance and Controls */}
-            <div className="flex items-center space-x-4">
+            {/* Right: Profile Avatar, Balance and Deposit */}
+            <div className="flex items-center space-x-3">
+              {/* Profile Avatar with verified badge and dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  className="relative cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1"
+                >
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-600">
+                    <Image
+                      src={session?.user?.image || "/avatars/default.png"}
+                      alt="Profile"
+                      width={40}
+                      height={40}
+                      className="object-cover"
+                    />
+                  </div>
+                  {/* Green verified checkmark badge */}
+                  <div className="absolute bottom-0 right-0 w-4 h-4 bg-[#5ddf38] rounded-full flex items-center justify-center border-2 border-[#1b1817]">
+                    <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <ChevronDown className="w-3 h-3 text-gray-400 ml-0.5" />
+                </button>
+
+                {/* Profile Dropdown Menu */}
+                {isProfileDropdownOpen && (
+                  <>
+                    {/* Backdrop */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setIsProfileDropdownOpen(false)}
+                    />
+                    <div
+                      className="absolute top-full right-0 mt-2 z-50 rounded-lg shadow-2xl overflow-hidden flex"
+                      style={{
+                        backgroundColor: "#1e1d2d",
+                        border: "1px solid #3d3c4f",
+                        minWidth: "520px",
+                      }}
+                    >
+                      {/* Left Panel - User Info */}
+                      <div
+                        className="p-4 w-[240px]"
+                        style={{
+                          backgroundColor: "#1a1926",
+                          borderRight: "1px solid #3d3c4f",
+                        }}
+                      >
+                        {/* User Avatar and Name */}
+                        <div className="flex items-start gap-3 mb-4">
+                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-600 flex-shrink-0">
+                            <Image
+                              src={session?.user?.image || "/avatars/default.png"}
+                              alt="Profile"
+                              width={48}
+                              height={48}
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1">
+                              <span className="text-white font-semibold text-sm truncate max-w-[130px]">
+                                {session?.user?.name || "User"}
+                              </span>
+                              <svg className="w-4 h-4 text-[#5ddf38] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                            <div className="text-xs text-gray-400 truncate">
+                              {session?.user?.email || ""}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Country */}
+                        <div className="flex items-center gap-2 mb-4">
+                          <span className="text-lg">🇧🇷</span>
+                          <span className="text-sm text-[#5ddf38]">Brazil</span>
+                        </div>
+
+                        {/* Date and User ID */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">Date registered</div>
+                            <div className="text-sm text-white">
+                              {(session?.user as any)?.createdAt 
+                                ? new Date((session?.user as any).createdAt as string).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                : "17 Apr 2025"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-gray-500 mb-1">User ID</div>
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm text-white">
+                                {(session?.user as any)?.accountNumber || "177863954"}
+                              </span>
+                              <button 
+                                onClick={() => {
+                                  navigator.clipboard.writeText((session?.user as any)?.accountNumber || "177863954");
+                                }}
+                                className="text-gray-400 hover:text-white transition-colors"
+                              >
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Right Panel - Menu Items */}
+                      <div className="flex-1 py-2">
+                        {/* VIP Program - Highlighted */}
+                        <button
+                          onClick={() => {
+                            setIsProfileDropdownOpen(false);
+                            router.push("/dashboard?tab=vip");
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
+                          style={{ backgroundColor: "#5ddf38" }}
+                        >
+                          <Crown className="w-5 h-5 text-[#1b1817]" />
+                          <span className="text-sm font-medium text-[#1b1817]">VIP program</span>
+                        </button>
+
+                        {/* Menu Items */}
+                        {[
+                          { icon: Camera, label: "Change Photo", action: () => router.push("/settings?tab=profile") },
+                          { icon: User, label: "Personal Data", action: () => router.push("/settings?tab=profile") },
+                          { icon: ShieldCheck, label: "Verify Account", action: () => router.push("/settings?tab=kyc") },
+                          { icon: Wallet, label: "Deposit Funds", action: () => { setIsProfileDropdownOpen(false); setShowFundModal(true); } },
+                          { icon: ArrowDownCircle, label: "Withdraw Funds", action: () => { setIsProfileDropdownOpen(false); setShowWithdrawModal(true); } },
+                          { icon: HelpCircle, label: "Contact Support", action: () => router.push("/help") },
+                          { icon: FileText, label: "Balance History", action: () => router.push("/dashboard?tab=history") },
+                          { icon: History, label: "Trading History", action: () => setShowTradingHistory(true) },
+                          { icon: Settings, label: "Settings", action: () => router.push("/settings") },
+                        ].map((item, index) => (
+                          <button
+                            key={index}
+                            onClick={() => {
+                              setIsProfileDropdownOpen(false);
+                              item.action();
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5 transition-colors"
+                          >
+                            <item.icon className="w-5 h-5 text-gray-400" />
+                            <span className="text-sm text-white">{item.label}</span>
+                          </button>
+                        ))}
+
+                        {/* Divider */}
+                        <div className="my-2 border-t" style={{ borderColor: "#3d3c4f" }} />
+
+                        {/* Log Out */}
+                        <button
+                          onClick={() => {
+                            setIsProfileDropdownOpen(false);
+                            signOut({ callbackUrl: "/" });
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5 transition-colors"
+                        >
+                          <LogOut className="w-5 h-5 text-gray-400" />
+                          <span className="text-sm text-white">Log Out</span>
+                        </button>
+
+                        {/* Version */}
+                        <div className="px-4 py-2 text-right">
+                          <span className="text-xs text-gray-500">Version: 3835.4.4938</span>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Balance Dropdown */}
               <div className="relative">
                 <button
                   onClick={() =>
                     setIsBalanceDropdownOpen(!isBalanceDropdownOpen)
                   }
-                  className="px-4 py-2 rounded-lg flex items-center space-x-2 hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: "#38312e" }}
+                  className="flex items-center space-x-1 hover:opacity-90 transition-opacity"
                 >
                   <span
                     style={{
-                      color:
-                        selectedAccountType === "real" ? "#5ddf38" : "#ff8516",
-                      fontSize: "14px",
-                      fontWeight: "600",
+                      color: "#5ddf38",
+                      fontSize: "16px",
+                      fontWeight: "500",
                     }}
                   >
-                    $
-                    {(selectedAccountType === "real"
+                    $ {(selectedAccountType === "real"
                       ? traderoomBalance
                       : practiceAccountBalance
                     ).toLocaleString("en-US", {
@@ -945,239 +1229,159 @@ function TradingInterface() {
                   </span>
                   <ChevronDown
                     className="w-4 h-4"
-                    style={{ color: "#afadac" }}
+                    style={{ color: "#5ddf38" }}
                   />
                 </button>
 
                 {/* Balance Dropdown */}
                 {isBalanceDropdownOpen && (
                   <div
-                    className="absolute top-full right-0 mt-2 w-[380px] rounded-lg shadow-2xl border z-50"
+                    className="absolute top-full right-0 mt-2 rounded-lg shadow-2xl z-50 flex overflow-hidden"
                     style={{
-                      backgroundColor: "#2a2624",
-                      borderColor: "#38312e",
+                      backgroundColor: "#1e1d2d",
+                      border: "1px solid #3d3c4f",
                     }}
                   >
-                    {/* Real Account Section */}
-                    <button
-                      onClick={() => {
-                        if (!isLoggedIn) {
-                          alert("Please log in to access your real account");
-                          return;
-                        }
-                        setSelectedAccountType("real");
-                        setIsBalanceDropdownOpen(false);
-                        localStorage.setItem("selectedAccountType", "real");
-                      }}
-                      disabled={!isLoggedIn}
-                      className={`w-full p-4 border-b transition-all duration-200 ${
-                        isLoggedIn
-                          ? "hover:bg-opacity-50 cursor-pointer"
-                          : "opacity-50 cursor-not-allowed"
-                      }`}
+                    {/* Left Panel - Available/Investment Info */}
+                    <div
+                      className="p-4 w-[200px]"
                       style={{
-                        borderColor: "#38312e",
-                        backgroundColor:
-                          selectedAccountType === "real"
-                            ? "#38312e"
-                            : "transparent",
+                        backgroundColor: "#1a1926",
+                        borderRight: "1px solid #3d3c4f",
                       }}
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-left">
-                          <div className="flex items-center space-x-2">
-                            <div
-                              className="text-xs"
-                              style={{ color: "#9e9aa7" }}
-                            >
-                              REAL ACCOUNT {!isLoggedIn && "(Login Required)"}
-                            </div>
-                            {selectedAccountType === "real" && (
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: "#5ddf38" }}
-                              />
-                            )}
-                          </div>
-                          <div
-                            className="text-2xl font-semibold"
-                            style={{ color: "#5ddf38" }}
-                          >
-                            $ {traderoomBalance.toFixed(2)}
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsBalanceDropdownOpen(false);
-                            setShowFundModal(true);
-                          }}
-                          className="px-4 py-2 rounded text-sm font-medium transition-all duration-200 hover:bg-green-600"
-                          style={{
-                            backgroundColor: "#5ddf38",
-                            color: "#1b1817",
-                          }}
-                        >
-                          Fund
-                        </button>
+                      <div className="text-xs text-gray-500 mb-3 uppercase tracking-wider">
+                        {selectedAccountType === "real" ? "REAL" : "PRACTICE"}
                       </div>
-
-                      <div className="space-y-2 mt-3">
+                      
+                      <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                          <span
-                            className="text-sm"
-                            style={{ color: "#9e9aa7" }}
-                          >
-                            Traderoom Balance
-                          </span>
-                          <span
-                            className="text-sm font-medium"
-                            style={{ color: "#5ddf38" }}
-                          >
-                            $ {traderoomBalance.toFixed(2)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span
-                            className="text-sm"
-                            style={{ color: "#9e9aa7" }}
-                          >
-                            Fiat Balance
-                          </span>
-                          <span
-                            className="text-sm font-medium"
-                            style={{ color: "#ffffff" }}
-                          >
-                            $ {realAccountBalanceUSD.toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div
-                        className="mt-3 pt-3 border-t"
-                        style={{ borderColor: "#38312e" }}
-                      >
-                        <div
-                          className="flex items-center space-x-1 text-xs"
-                          style={{ color: "#9e9aa7" }}
-                        >
-                          <CircleHelp className="w-3 h-3" />
-                          <span>Click to switch to Real Account</span>
-                        </div>
-                      </div>
-                    </button>
-
-                    {/* Practice Account Section */}
-                    <button
-                      onClick={() => {
-                        setSelectedAccountType("practice");
-                        setIsBalanceDropdownOpen(false);
-                        localStorage.setItem("selectedAccountType", "practice");
-                      }}
-                      className="w-full p-4 transition-all duration-200 hover:bg-opacity-50"
-                      style={{
-                        backgroundColor:
-                          selectedAccountType === "practice"
-                            ? "#38312e"
-                            : "transparent",
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-left">
-                          <div className="flex items-center space-x-2">
-                            <div
-                              className="text-xs"
-                              style={{ color: "#9e9aa7" }}
-                            >
-                              PRACTICE ACCOUNT
-                            </div>
-                            {selectedAccountType === "practice" && (
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: "#ff8516" }}
-                              />
-                            )}
-                          </div>
-                          <div
-                            className="text-2xl font-semibold"
-                            style={{ color: "#ff8516" }}
-                          >
-                            ${" "}
-                            {practiceAccountBalance.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </div>
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            // Handle top up
-                          }}
-                          className="px-4 py-2 rounded text-sm font-medium transition-all duration-200"
-                          style={{
-                            backgroundColor: "#38312e",
-                            color: "#9e9aa7",
-                          }}
-                        >
-                          Top Up
-                        </button>
-                      </div>
-
-                      <div className="space-y-2 mt-3">
-                        <div className="flex justify-between items-center">
-                          <span
-                            className="text-sm"
-                            style={{ color: "#9e9aa7" }}
-                          >
+                          <span className="text-sm" style={{ color: "#9e9aa7" }}>
                             Available
                           </span>
-                          <span
-                            className="text-sm font-medium"
-                            style={{ color: "#ffffff" }}
-                          >
-                            ${" "}
-                            {practiceAccountBalance.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
+                          <span className="text-sm font-medium text-white">
+                            $ {(selectedAccountType === "real" ? traderoomBalance : practiceAccountBalance).toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span
-                            className="text-sm"
-                            style={{ color: "#9e9aa7" }}
-                          >
+                          <span className="text-sm" style={{ color: "#9e9aa7" }}>
                             Investment
                           </span>
-                          <span
-                            className="text-sm font-medium"
-                            style={{ color: "#ffffff" }}
-                          >
+                          <span className="text-sm font-medium text-white">
                             $ 0.00
                           </span>
                         </div>
                       </div>
 
-                      <div
-                        className="mt-3 pt-3 border-t"
-                        style={{ borderColor: "#38312e" }}
-                      >
-                        <div
-                          className="flex items-center space-x-1 text-xs"
-                          style={{ color: "#9e9aa7" }}
-                        >
+                      <div className="mt-6 pt-3 border-t" style={{ borderColor: "#3d3c4f" }}>
+                        <button className="flex items-center gap-1.5 text-xs" style={{ color: "#9e9aa7" }}>
                           <CircleHelp className="w-3 h-3" />
-                          <span>Click to switch to Practice Account</span>
-                        </div>
+                          <span>What is this?</span>
+                        </button>
                       </div>
-                    </button>
+                    </div>
+
+                    {/* Right Panel - Account Selection */}
+                    <div className="flex flex-col">
+                      {/* Real Account Row */}
+                      <button
+                        onClick={() => {
+                          if (!isLoggedIn) {
+                            alert("Please log in to access your real account");
+                            return;
+                          }
+                          setSelectedAccountType("real");
+                          setIsBalanceDropdownOpen(false);
+                          localStorage.setItem("selectedAccountType", "real");
+                        }}
+                        disabled={!isLoggedIn}
+                        className={`flex items-center justify-between p-4 min-w-[280px] transition-all ${
+                          selectedAccountType === "real" ? "bg-white/5" : "hover:bg-white/5"
+                        } ${!isLoggedIn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                        style={{ borderBottom: "1px solid #3d3c4f" }}
+                      >
+                        <div className="text-left">
+                          <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "#9e9aa7" }}>
+                            REAL ACCOUNT
+                          </div>
+                          <div className="text-lg font-semibold" style={{ color: "#5ddf38" }}>
+                            $ {traderoomBalance.toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: "#3d3c4f" }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9e9aa7" strokeWidth="2">
+                              <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsBalanceDropdownOpen(false);
+                              setShowFundModal(true);
+                            }}
+                            className="px-4 py-2 rounded text-sm font-medium transition-all hover:opacity-80"
+                            style={{ backgroundColor: "#3d3c4f", color: "#ffffff" }}
+                          >
+                            Deposit
+                          </button>
+                        </div>
+                      </button>
+
+                      {/* Practice Account Row */}
+                      <button
+                        onClick={() => {
+                          setSelectedAccountType("practice");
+                          setIsBalanceDropdownOpen(false);
+                          localStorage.setItem("selectedAccountType", "practice");
+                        }}
+                        className={`flex items-center justify-between p-4 min-w-[280px] transition-all ${
+                          selectedAccountType === "practice" ? "bg-white/5" : "hover:bg-white/5"
+                        } cursor-pointer`}
+                      >
+                        <div className="text-left">
+                          <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "#9e9aa7" }}>
+                            PRACTICE ACCOUNT
+                          </div>
+                          <div className="text-lg font-semibold" style={{ color: "#ff8516" }}>
+                            $ {practiceAccountBalance.toLocaleString("en-US", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: "#3d3c4f" }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9e9aa7" strokeWidth="2">
+                              <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Handle practice account top up
+                            }}
+                            className="px-4 py-2 rounded text-sm font-medium transition-all hover:opacity-80"
+                            style={{ backgroundColor: "#3d3c4f", color: "#ffffff" }}
+                          >
+                            Top Up
+                          </button>
+                        </div>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
+              
+              {/* Deposit Button - Green outline style */}
               <button
-                className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                style={{ backgroundColor: "#ff8516", color: "#ffffff" }}
+                onClick={() => setShowFundModal(true)}
+                className="px-5 py-2 rounded text-sm font-medium transition-all duration-200 hover:bg-[#5ddf38] hover:text-[#1b1817]"
+                style={{ 
+                  backgroundColor: "transparent", 
+                  color: "#5ddf38",
+                  border: "1px solid #5ddf38"
+                }}
               >
                 Deposit
               </button>
@@ -3662,96 +3866,226 @@ function TradingInterface() {
               </div>
 
               {/* Expiration Section - IQ Option Style Card */}
-              <div
-                className="rounded mb-2 overflow-hidden flex"
-                style={{
-                  backgroundColor: "#1e1d2d",
-                  border: "1px solid #3d3c4f",
-                }}
-              >
-                {/* Left side: Label and Value */}
-                <div className="flex-1">
-                  {/* Header: Expiration + ? */}
-                  <div className="flex items-center justify-between px-1.5 py-0.5">
-                    <span style={{ color: "#9e9aa7", fontSize: "11px" }}>
-                      Expiration
-                    </span>
-                    <button
-                      className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:opacity-80"
-                      style={{
-                        backgroundColor: "#3d3c4f",
-                        color: "#9e9aa7",
-                        fontSize: "8px",
-                      }}
-                    >
-                      ?
-                    </button>
-                  </div>
-                  {/* Value: Time */}
-                  <div className="px-1.5 py-1">
-                    <div className="flex items-center">
-                      <Clock
-                        className="w-3 h-3 mr-1"
-                        style={{ color: "#9e9aa7" }}
-                      />
-                      <span
-                        className="font-bold"
-                        style={{ color: "#ffffff", fontSize: "15px" }}
-                      >
-                        {expirationSeconds < 60
-                          ? `${expirationSeconds}s`
-                          : expirationSeconds < 3600
-                          ? `${Math.floor(expirationSeconds / 60)}:${String(
-                              expirationSeconds % 60
-                            ).padStart(2, "0")}`
-                          : `${Math.floor(expirationSeconds / 3600)}:${String(
-                              Math.floor((expirationSeconds % 3600) / 60)
-                            ).padStart(2, "0")}`}
+              <div className="relative">
+                <div
+                  className="rounded mb-2 overflow-hidden flex cursor-pointer hover:opacity-90 transition-opacity"
+                  style={{
+                    backgroundColor: "#1e1d2d",
+                    border: "1px solid #3d3c4f",
+                  }}
+                  onClick={() => setShowExpirationModal(!showExpirationModal)}
+                >
+                  {/* Left side: Label and Value */}
+                  <div className="flex-1">
+                    {/* Header: Expiration + ? */}
+                    <div className="flex items-center justify-between px-1.5 py-0.5">
+                      <span style={{ color: "#9e9aa7", fontSize: "11px" }}>
+                        Expiration
                       </span>
+                      <button
+                        className="w-3.5 h-3.5 rounded-full flex items-center justify-center hover:opacity-80"
+                        style={{
+                          backgroundColor: "#3d3c4f",
+                          color: "#9e9aa7",
+                          fontSize: "8px",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        ?
+                      </button>
+                    </div>
+                    {/* Value: Time */}
+                    <div className="px-1.5 py-1">
+                      <div className="flex items-center">
+                        <Clock
+                          className="w-3 h-3 mr-1"
+                          style={{ color: "#9e9aa7" }}
+                        />
+                        <span
+                          className="font-bold"
+                          style={{ color: "#ffffff", fontSize: "15px" }}
+                        >
+                          {(() => {
+                            const now = new Date();
+                            const expTime = new Date(now.getTime() + expirationSeconds * 1000);
+                            return `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
+                          })()}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                {/* Right side: + and - stacked vertically */}
-                <div
-                  className="flex flex-col w-6"
-                  style={{ borderLeft: "1px solid #3d3c4f" }}
-                >
-                  <button
-                    onClick={() => {
-                      const options = [30, 60, 300, 900, 1800, 3600];
-                      const currentIndex = options.indexOf(expirationSeconds);
-                      if (currentIndex < options.length - 1) {
-                        setExpirationSeconds(options[currentIndex + 1]);
-                      }
-                    }}
-                    className="flex-1 flex items-center justify-center hover:opacity-80"
-                    style={{
-                      backgroundColor: "#2d2c3d",
-                      color: "#9e9aa7",
-                      borderBottom: "1px solid #3d3c4f",
-                      fontSize: "14px",
-                    }}
+                  {/* Right side: + and - stacked vertically */}
+                  <div
+                    className="flex flex-col w-6"
+                    style={{ borderLeft: "1px solid #3d3c4f" }}
                   >
-                    +
-                  </button>
-                  <button
-                    onClick={() => {
-                      const options = [30, 60, 300, 900, 1800, 3600];
-                      const currentIndex = options.indexOf(expirationSeconds);
-                      if (currentIndex > 0) {
-                        setExpirationSeconds(options[currentIndex - 1]);
-                      }
-                    }}
-                    className="flex-1 flex items-center justify-center hover:opacity-80"
-                    style={{
-                      backgroundColor: "#2d2c3d",
-                      color: "#9e9aa7",
-                      fontSize: "14px",
-                    }}
-                  >
-                    -
-                  </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const options = [30, 60, 120, 180, 240, 300, 600, 900, 1800, 3600];
+                        const currentIndex = options.indexOf(expirationSeconds);
+                        if (currentIndex < options.length - 1) {
+                          setExpirationSeconds(options[currentIndex + 1]);
+                        } else if (currentIndex === -1) {
+                          // Find next higher option
+                          const nextIndex = options.findIndex(o => o > expirationSeconds);
+                          if (nextIndex !== -1) setExpirationSeconds(options[nextIndex]);
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center hover:opacity-80"
+                      style={{
+                        backgroundColor: "#2d2c3d",
+                        color: "#9e9aa7",
+                        borderBottom: "1px solid #3d3c4f",
+                        fontSize: "14px",
+                      }}
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const options = [30, 60, 120, 180, 240, 300, 600, 900, 1800, 3600];
+                        const currentIndex = options.indexOf(expirationSeconds);
+                        if (currentIndex > 0) {
+                          setExpirationSeconds(options[currentIndex - 1]);
+                        } else if (currentIndex === -1) {
+                          // Find next lower option
+                          const prevIndex = options.slice().reverse().findIndex(o => o < expirationSeconds);
+                          if (prevIndex !== -1) setExpirationSeconds(options[options.length - 1 - prevIndex]);
+                        }
+                      }}
+                      className="flex-1 flex items-center justify-center hover:opacity-80"
+                      style={{
+                        backgroundColor: "#2d2c3d",
+                        color: "#9e9aa7",
+                        fontSize: "14px",
+                      }}
+                    >
+                      -
+                    </button>
+                  </div>
                 </div>
+
+                {/* Expiration Time Modal */}
+                {showExpirationModal && (
+                  <>
+                    {/* Backdrop to close modal */}
+                    <div 
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowExpirationModal(false)}
+                    />
+                    <div 
+                      className="absolute bottom-full left-0 mb-2 z-50 rounded-lg shadow-2xl overflow-hidden"
+                      style={{
+                        backgroundColor: "#1e1d2d",
+                        border: "1px solid #3d3c4f",
+                        width: "340px",
+                        transform: "translateX(-50%)",
+                        left: "50%",
+                      }}
+                    >
+                    {/* Header */}
+                    <div className="px-4 py-3 border-b" style={{ borderColor: "#3d3c4f" }}>
+                      <h3 className="text-white font-semibold text-sm">EXPIRATION TIME</h3>
+                    </div>
+
+                    {/* Time Options Grid */}
+                    <div className="p-3">
+                      <div className="flex gap-6">
+                        {/* Column 1 - Near term */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-white text-sm font-medium">Profit</span>
+                            <span className="px-2 py-0.5 rounded text-xs font-bold" style={{ backgroundColor: "#22c55e", color: "white" }}>85%</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1 text-xs" style={{ color: "#9e9aa7" }}>
+                            <span>Time</span>
+                            <span className="text-right">Remaining</span>
+                          </div>
+                          {[
+                            { seconds: 60, label: "1 min" },
+                            { seconds: 120, label: "2 min" },
+                            { seconds: 180, label: "3 min" },
+                            { seconds: 240, label: "4 min" },
+                            { seconds: 300, label: "5 min" },
+                          ].map((option) => {
+                            const now = new Date();
+                            const expTime = new Date(now.getTime() + option.seconds * 1000);
+                            const timeStr = `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
+                            const remainingMin = Math.floor(option.seconds / 60);
+                            const remainingSec = option.seconds % 60;
+                            const remainingStr = `${String(remainingMin).padStart(2, '0')}:${String(remainingSec).padStart(2, '0')}`;
+                            const isSelected = expirationSeconds === option.seconds;
+                            return (
+                              <button
+                                key={option.seconds}
+                                onClick={() => {
+                                  setExpirationSeconds(option.seconds);
+                                  setShowExpirationModal(false);
+                                }}
+                                className={`grid grid-cols-2 gap-1 py-2 px-1 rounded transition-all ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                              >
+                                <span className={`text-left ${isSelected ? 'text-white font-medium' : ''}`} style={{ color: isSelected ? '#ffffff' : '#9e9aa7' }}>{timeStr}</span>
+                                <span className="flex items-center justify-end gap-1" style={{ color: "#9e9aa7" }}>
+                                  <Clock className="w-3 h-3" />
+                                  {remainingStr}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+
+                        {/* Divider */}
+                        <div className="w-px" style={{ backgroundColor: "#3d3c4f" }} />
+
+                        {/* Column 2 - Longer term */}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-white text-sm font-medium">Profit</span>
+                            <span className="px-2 py-0.5 rounded text-xs font-bold" style={{ backgroundColor: "#22c55e", color: "white" }}>84%</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-1 text-xs" style={{ color: "#9e9aa7" }}>
+                            <span>Time</span>
+                            <span className="text-right">Remaining</span>
+                          </div>
+                          {[
+                            { seconds: 600, label: "10 min" },
+                            { seconds: 900, label: "15 min" },
+                            { seconds: 1800, label: "30 min" },
+                            { seconds: 2700, label: "45 min" },
+                            { seconds: 3600, label: "1 hour" },
+                          ].map((option) => {
+                            const now = new Date();
+                            const expTime = new Date(now.getTime() + option.seconds * 1000);
+                            const timeStr = `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
+                            const remainingMin = Math.floor(option.seconds / 60);
+                            const remainingSec = option.seconds % 60;
+                            const remainingStr = `${String(remainingMin).padStart(2, '0')}:${String(remainingSec).padStart(2, '0')}`;
+                            const isSelected = expirationSeconds === option.seconds;
+                            return (
+                              <button
+                                key={option.seconds}
+                                onClick={() => {
+                                  setExpirationSeconds(option.seconds);
+                                  setShowExpirationModal(false);
+                                }}
+                                className={`grid grid-cols-2 gap-1 py-2 px-1 rounded transition-all ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}`}
+                              >
+                                <span className={`text-left ${isSelected ? 'text-white font-medium' : ''}`} style={{ color: isSelected ? '#ffffff' : '#9e9aa7' }}>{timeStr}</span>
+                                <span className="flex items-center justify-end gap-1" style={{ color: "#9e9aa7" }}>
+                                  <Clock className="w-3 h-3" />
+                                  {remainingStr}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  </>
+                )}
               </div>
 
               {/* Profit Display - Standalone Section */}
@@ -4108,93 +4442,158 @@ function TradingInterface() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50"
               onClick={() => setShowAddAssetModal(false)}
             >
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.9, opacity: 0 }}
-                className="rounded-lg p-6 w-96 max-h-96 overflow-y-auto"
-                style={{ backgroundColor: "#26211f" }}
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="rounded-2xl p-6 w-[480px] max-h-[600px] overflow-hidden shadow-2xl border border-white/10"
+                style={{ 
+                  backgroundColor: "#1b1817",
+                  backgroundImage: "linear-gradient(135deg, #26211f 0%, #1b1817 100%)"
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div className="flex items-center justify-between mb-4">
-                  <h3
-                    className="text-lg font-semibold"
-                    style={{ color: "#eceae9" }}
-                  >
-                    Add Asset
-                  </h3>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3
+                      className="text-2xl font-bold tracking-tight"
+                      style={{ color: "#ffffff" }}
+                    >
+                      Add Asset
+                    </h3>
+                    <p className="text-sm mt-1" style={{ color: "#827e7d" }}>
+                      {symbols.filter(s => !openTabs.some((tab) => tab.symbol === s.symbol)).length} assets available
+                    </p>
+                  </div>
                   <button
                     onClick={() => setShowAddAssetModal(false)}
-                    className="hover:opacity-75 transition-opacity"
+                    className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-white/5 transition-all duration-200"
                     style={{ color: "#afadac" }}
                   >
-                    ×
+                    <span className="text-2xl">×</span>
                   </button>
                 </div>
-                <div className="space-y-3">
-                  {symbols
-                    .filter(
+                
+                <div className="overflow-y-auto max-h-[460px] pr-2 custom-scrollbar">
+                  {/* Group symbols by category */}
+                  {["Forex", "Crypto", "Stocks"].map((category, catIndex) => {
+                    const categorySymbols = symbols.filter(
                       (symbol) =>
+                        symbol.category === category &&
                         !openTabs.some((tab) => tab.symbol === symbol.symbol)
-                    )
-                    .map((symbol) => (
-                      <button
-                        key={symbol.symbol}
-                        onClick={() => {
-                          const newTab = {
-                            symbol: symbol.symbol,
-                            type: "Binary",
-                          };
-                          setOpenTabs([...openTabs, newTab]);
-                          setActiveTab(openTabs.length);
-                          setSelectedSymbol(symbol.symbol);
-                          setShowAddAssetModal(false);
-                        }}
-                        className="w-full p-3 rounded-lg text-left transition-all duration-200"
-                        style={{ backgroundColor: "#38312e" }}
-                      >
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center space-x-3">
-                            <span className="text-lg">{symbol.flag}</span>
-                            <div>
-                              <div
-                                className="font-medium"
-                                style={{ color: "#eceae9" }}
-                              >
-                                {symbol.symbol}
-                              </div>
-                              <div
-                                className="text-sm"
-                                style={{ color: "#827e7d" }}
-                              >
-                                Binary Option
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div
-                              className="font-bold"
-                              style={{ color: "#eceae9" }}
-                            >
-                              {symbol.price}
-                            </div>
-                            <div
-                              className="text-xs"
-                              style={{
-                                color: symbol.change.startsWith("+")
-                                  ? "#5ddf38"
-                                  : "#ff4747",
+                    );
+                    
+                    if (categorySymbols.length === 0) return null;
+                    
+                    return (
+                      <div key={category} className="mb-6">
+                        {/* Category Header */}
+                        <div className="flex items-center space-x-2 mb-3">
+                          <div className="h-px flex-1" style={{ backgroundColor: "#38312e" }} />
+                          <span className="text-xs font-bold tracking-wider px-2" style={{ color: "#827e7d" }}>
+                            {category === "Forex" && "💱 "}
+                            {category === "Crypto" && "🪙 "}
+                            {category === "Stocks" && "📈 "}
+                            {category.toUpperCase()}
+                          </span>
+                          <div className="h-px flex-1" style={{ backgroundColor: "#38312e" }} />
+                        </div>
+                        
+                        {/* Category Assets */}
+                        <div className="space-y-2.5">
+                          {categorySymbols.map((symbol, index) => (
+                            <motion.button
+                              key={symbol.symbol}
+                              initial={{ opacity: 0, x: -20 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ delay: (catIndex * 0.1) + (index * 0.03) }}
+                              onClick={() => {
+                                const newTab = {
+                                  symbol: symbol.symbol,
+                                  type: "Binary",
+                                };
+                                setOpenTabs([...openTabs, newTab]);
+                                setActiveTab(openTabs.length);
+                                setSelectedSymbol(symbol.symbol);
+                                setShowAddAssetModal(false);
+                              }}
+                              className="group w-full p-4 rounded-xl text-left transition-all duration-300 relative overflow-hidden border border-white/5 hover:border-[#ff8516]/50 hover:shadow-lg hover:shadow-[#ff8516]/10 hover:-translate-y-0.5"
+                              style={{ 
+                                backgroundColor: "#26211f",
+                                backgroundImage: "linear-gradient(135deg, #2d2724 0%, #26211f 100%)"
                               }}
                             >
-                              {symbol.change} ({symbol.percentage})
-                            </div>
-                          </div>
+                              {/* Hover gradient overlay */}
+                              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                                style={{
+                                  background: "linear-gradient(135deg, rgba(255, 133, 22, 0.05) 0%, transparent 100%)"
+                                }}
+                              />
+                              
+                              <div className="flex justify-between items-center relative z-10">
+                                <div className="flex items-center space-x-4">
+                                  {/* Icon with gradient background */}
+                                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl relative overflow-hidden border border-white/10 group-hover:border-[#ff8516]/30 transition-all duration-300"
+                                    style={{
+                                      background: "linear-gradient(135deg, #38312e 0%, #2d2724 100%)"
+                                    }}
+                                  >
+                                    <span className="relative z-10">{symbol.flag}</span>
+                                    <div className="absolute inset-0 bg-gradient-to-br from-[#ff8516]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                  </div>
+                                  
+                                  <div>
+                                    <div
+                                      className="font-bold text-lg tracking-tight group-hover:text-[#ff8516] transition-colors duration-300"
+                                      style={{ color: "#ffffff" }}
+                                    >
+                                      {symbol.symbol}
+                                    </div>
+                                    <div
+                                      className="text-xs font-medium mt-0.5 flex items-center space-x-1.5"
+                                      style={{ color: "#827e7d" }}
+                                    >
+                                      <span className="w-1.5 h-1.5 rounded-full bg-[#ff8516] animate-pulse" />
+                                      <span>Binary Option</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                
+                                <div className="text-right">
+                                  <div
+                                    className="font-bold text-xl tracking-tight mb-1"
+                                    style={{ color: "#ffffff" }}
+                                  >
+                                    ${symbol.price}
+                                  </div>
+                                  <div className="flex items-center justify-end space-x-1.5">
+                                    <div
+                                      className="text-xs font-semibold px-2 py-1 rounded-md flex items-center space-x-1"
+                                      style={{
+                                        backgroundColor: symbol.change.startsWith("+")
+                                          ? "rgba(93, 223, 56, 0.1)"
+                                          : "rgba(255, 71, 71, 0.1)",
+                                        color: symbol.change.startsWith("+")
+                                          ? "#5ddf38"
+                                          : "#ff4747",
+                                      }}
+                                    >
+                                      <span>{symbol.change.startsWith("+") ? "↗" : "↘"}</span>
+                                      <span>{symbol.percentage}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.button>
+                          ))}
                         </div>
-                      </button>
-                    ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </motion.div>
             </motion.div>
@@ -4938,6 +5337,236 @@ function TradingInterface() {
                   </button>
                 </div>
               )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Withdraw Modal */}
+      <AnimatePresence>
+        {showWithdrawModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+            onClick={() => {
+              setShowWithdrawModal(false);
+              setWithdrawAmount("");
+              setWithdrawError("");
+              setWithdrawSuccess("");
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-xl overflow-hidden"
+              style={{
+                backgroundColor: "#1e1d2d",
+                border: "1px solid #3d3c4f",
+              }}
+            >
+              {/* Header */}
+              <div
+                className="flex items-center justify-between p-4 border-b"
+                style={{ borderColor: "#3d3c4f" }}
+              >
+                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                  <ArrowDownCircle className="w-5 h-5 text-[#5ddf38]" />
+                  Withdraw to Main Balance
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowWithdrawModal(false);
+                    setWithdrawAmount("");
+                    setWithdrawError("");
+                    setWithdrawSuccess("");
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Content */}
+              <div className="p-4 space-y-4">
+                {withdrawSuccess ? (
+                  <div className="text-center py-6">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <svg className="w-8 h-8 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <h4 className="text-lg font-semibold text-white mb-2">Withdrawal Successful!</h4>
+                    <p className="text-gray-400 text-sm">{withdrawSuccess}</p>
+                    <button
+                      onClick={() => {
+                        setShowWithdrawModal(false);
+                        setWithdrawAmount("");
+                        setWithdrawSuccess("");
+                      }}
+                      className="mt-4 px-6 py-2 rounded-lg font-medium transition-all"
+                      style={{ backgroundColor: "#5ddf38", color: "#1b1817" }}
+                    >
+                      Done
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Balance Info */}
+                    <div
+                      className="p-3 rounded-lg"
+                      style={{ backgroundColor: "#1a1926" }}
+                    >
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-400">
+                          Traderoom Balance
+                        </span>
+                        <span className="font-medium text-[#5ddf38]">
+                          ${traderoomBalance.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-gray-400">
+                          Current Fiat Balance
+                        </span>
+                        <span className="font-medium text-white">
+                          ${realAccountBalanceUSD.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Amount Input */}
+                    <div>
+                      <label className="block text-sm mb-2 text-gray-400">
+                        Amount to Withdraw
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          value={withdrawAmount}
+                          onChange={(e) => {
+                            setWithdrawAmount(e.target.value);
+                            setWithdrawError("");
+                          }}
+                          placeholder="0.00"
+                          className="w-full pl-8 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-[#5ddf38] focus:outline-none"
+                        />
+                      </div>
+                      <p className="text-xs mt-1 text-gray-500">
+                        Max: ${traderoomBalance.toFixed(2)}
+                      </p>
+                    </div>
+
+                    {/* Quick amounts */}
+                    <div className="flex flex-wrap gap-2">
+                      {[50, 100, 250, 500, 1000].map((amt) => (
+                        <button
+                          key={amt}
+                          onClick={() =>
+                            setWithdrawAmount(
+                              Math.min(amt, traderoomBalance).toString()
+                            )
+                          }
+                          disabled={traderoomBalance < amt}
+                          className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30"
+                          style={{
+                            backgroundColor: "#38312e",
+                            color: "#eceae9",
+                          }}
+                        >
+                          ${amt}
+                        </button>
+                      ))}
+                      <button
+                        onClick={() =>
+                          setWithdrawAmount(traderoomBalance.toString())
+                        }
+                        disabled={traderoomBalance <= 0}
+                        className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30"
+                        style={{
+                          backgroundColor: "#38312e",
+                          color: "#5ddf38",
+                        }}
+                      >
+                        MAX
+                      </button>
+                    </div>
+
+                    {/* Error Message */}
+                    {withdrawError && (
+                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                        <p className="text-sm text-red-400">{withdrawError}</p>
+                      </div>
+                    )}
+
+                    {/* Info Note */}
+                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                      <p className="text-xs text-blue-400">
+                        💡 Funds will be transferred instantly to your main dashboard balance.
+                      </p>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      onClick={async () => {
+                        const amount = parseFloat(withdrawAmount);
+                        if (!amount || amount <= 0) {
+                          setWithdrawError("Please enter a valid amount");
+                          return;
+                        }
+                        if (amount > traderoomBalance) {
+                          setWithdrawError("Insufficient traderoom balance");
+                          return;
+                        }
+
+                        setIsWithdrawing(true);
+                        setWithdrawError("");
+
+                        try {
+                          const result = await withdrawFromTraderoomAction(amount);
+                          if (result.success) {
+                            setTraderoomBalance(result.data.newTraderoomBalance);
+                            setRealAccountBalanceUSD(result.data.newFiatBalance);
+                            setWithdrawSuccess(
+                              `$${amount.toFixed(2)} has been transferred to your main balance.`
+                            );
+                          } else {
+                            setWithdrawError(result.error || "Withdrawal failed");
+                          }
+                        } catch (error) {
+                          setWithdrawError("An error occurred. Please try again.");
+                        } finally {
+                          setIsWithdrawing(false);
+                        }
+                      }}
+                      disabled={
+                        isWithdrawing ||
+                        !withdrawAmount ||
+                        parseFloat(withdrawAmount) <= 0 ||
+                        parseFloat(withdrawAmount) > traderoomBalance
+                      }
+                      className="w-full py-3 rounded-lg font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{ backgroundColor: "#5ddf38", color: "#1b1817" }}
+                    >
+                      {isWithdrawing ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <RefreshCw className="w-5 h-5 animate-spin" />
+                          Processing...
+                        </span>
+                      ) : (
+                        "Withdraw"
+                      )}
+                    </button>
+                  </>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
