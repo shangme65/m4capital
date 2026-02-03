@@ -452,7 +452,7 @@ export default function NotificationsPanel({
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between mb-0.5">
                                   <h3
-                                    className={`text-sm font-bold ${
+                                    className={`text-xs font-bold ${
                                       !notification.read
                                         ? "text-white"
                                         : "text-gray-300"

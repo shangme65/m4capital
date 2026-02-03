@@ -68,12 +68,38 @@ export async function POST(req: NextRequest) {
         );
       }
     } else if (user.twoFactorMethod === "EMAIL") {
-      // For email method, code validation would happen during login
-      // For now, we'll just enable it
-      return NextResponse.json(
-        { error: "Email 2FA is automatically enabled on login" },
-        { status: 400 }
-      );
+      // For email method, verify the code sent via email
+      // The code is stored in twoFactorSecret as "CODE:EXPIRY_TIMESTAMP"
+      if (!user.twoFactorSecret) {
+        return NextResponse.json(
+          { error: "No verification code found. Please request a new one." },
+          { status: 400 }
+        );
+      }
+
+      const [storedCode, expiryStr] = user.twoFactorSecret.split(":");
+      const expiry = parseInt(expiryStr, 10);
+
+      // Check if code has expired
+      if (expiry && Date.now() > expiry) {
+        return NextResponse.json(
+          { error: "Verification code has expired. Please request a new one." },
+          { status: 400 }
+        );
+      }
+
+      if (storedCode !== code) {
+        return NextResponse.json(
+          { error: "Invalid verification code" },
+          { status: 400 }
+        );
+      }
+
+      // Clear the code after successful verification (don't keep it in twoFactorSecret)
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { twoFactorSecret: null },
+      });
     }
 
     // Enable 2FA

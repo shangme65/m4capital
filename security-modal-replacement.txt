@@ -1,0 +1,190 @@
+        {/* Security Modal */}
+        <SettingsModal
+          isOpen={activeModal === "security"}
+          onClose={closeModal}
+          title="Security"
+          toggleSidebar={toggleSidebar}
+        >
+          {/* Change Password Card Button */}
+          <button
+            onClick={() => setShowChangePasswordModal(true)}
+            className="group relative w-full text-left"
+          >
+            <div
+              className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                boxShadow: `
+                  0 10px 20px -10px rgba(0, 0, 0, 0.5),
+                  0 4px 8px -2px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                `,
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <div className="relative z-10 flex items-center gap-2.5">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-lg blur-md opacity-50 group-hover:opacity-70 transition-opacity"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(249,115,22,0.4), transparent)`,
+                      transform: "translateY(3px)",
+                    }}
+                  />
+                  <div
+                    className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    style={{
+                      boxShadow: `
+                        0 4px 12px -2px rgba(249,115,22,0.4),
+                        0 2px 6px -1px rgba(249,115,22,0.4),
+                        inset 0 1px 2px rgba(255,255,255,0.2),
+                        inset 0 -1px 2px rgba(0,0,0,0.15)
+                      `,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-lg overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                      }}
+                    />
+                    <Key className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                    Change Password
+                  </h3>
+                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                    Update your account password
+                  </p>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          {/* Two-Factor Authentication Card Button */}
+          <button
+            onClick={() => setShowTwoFactorModal(true)}
+            className="group relative w-full text-left"
+          >
+            <div
+              className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                boxShadow: `
+                  0 10px 20px -10px rgba(0, 0, 0, 0.5),
+                  0 4px 8px -2px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                `,
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <div className="relative z-10 flex items-center gap-2.5">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-lg blur-md opacity-50 group-hover:opacity-70 transition-opacity"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(249,115,22,0.4), transparent)`,
+                      transform: "translateY(3px)",
+                    }}
+                  />
+                  <div
+                    className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    style={{
+                      boxShadow: `
+                        0 4px 12px -2px rgba(249,115,22,0.4),
+                        0 2px 6px -1px rgba(249,115,22,0.4),
+                        inset 0 1px 2px rgba(255,255,255,0.2),
+                        inset 0 -1px 2px rgba(0,0,0,0.15)
+                      `,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-lg overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                      }}
+                    />
+                    <Shield className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                    Two-Factor Authentication
+                  </h3>
+                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                    {twoFactorEnabled ? "Manage 2FA settings" : "Add extra layer of security"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          {/* Transfer PIN Card Button */}
+          <button
+            onClick={() => setShowTransferPinModal(true)}
+            className="group relative w-full text-left"
+          >
+            <div
+              className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                boxShadow: `
+                  0 10px 20px -10px rgba(0, 0, 0, 0.5),
+                  0 4px 8px -2px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                `,
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <div className="relative z-10 flex items-center gap-2.5">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-lg blur-md opacity-50 group-hover:opacity-70 transition-opacity"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(249,115,22,0.4), transparent)`,
+                      transform: "translateY(3px)",
+                    }}
+                  />
+                  <div
+                    className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    style={{
+                      boxShadow: `
+                        0 4px 12px -2px rgba(249,115,22,0.4),
+                        0 2px 6px -1px rgba(249,115,22,0.4),
+                        inset 0 1px 2px rgba(255,255,255,0.2),
+                        inset 0 -1px 2px rgba(0,0,0,0.15)
+                      `,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-lg overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                      }}
+                    />
+                    <Lock className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                    Transfer PIN
+                  </h3>
+                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                    {hasTransferPin ? "Manage transfer PIN" : "Set up 4-digit PIN"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </button>
+        </SettingsModal>

@@ -21,7 +21,7 @@ export default function EmailSignupModal({
   onSwitchToLogin,
 }: EmailSignupModalProps) {
   const [name, setName] = useState("");
-  const [accountType, setAccountType] = useState("INVESTOR");
+  const [accountType, setAccountType] = useState("STANDARD");
   const [country, setCountry] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -195,6 +195,17 @@ export default function EmailSignupModal({
                         Registering As
                       </label>
                       <div className="flex gap-4">
+                        <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="accountType"
+                            value="STANDARD"
+                            checked={accountType === "STANDARD"}
+                            onChange={(e) => setAccountType(e.target.value)}
+                            className="text-orange-500 focus:ring-orange-500 focus:outline-none"
+                          />
+                          <span className="text-white">Standard</span>
+                        </label>
                         <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
                           <input
                             type="radio"

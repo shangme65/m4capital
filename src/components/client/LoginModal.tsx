@@ -27,6 +27,13 @@ export default function LoginModal({
   const [isLoading, setIsLoading] = useState(false);
   const [showVerifyModal, setShowVerifyModal] = useState(false);
   const [verifyEmail, setVerifyEmail] = useState("");
+  
+  // 2FA states
+  const [show2FA, setShow2FA] = useState(false);
+  const [twoFactorMethod, setTwoFactorMethod] = useState<"authenticator" | "email" | null>(null);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [isVerifying2FA, setIsVerifying2FA] = useState(false);
+  
   const router = useRouter();
 
   // Prevent body scroll when modal is open
@@ -91,27 +98,157 @@ export default function LoginModal({
     setError("");
     setIsLoading(true);
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      email: email.toLowerCase().trim(),
-      password,
-    });
+    try {
+      // First check if 2FA is required
+      const checkResponse = await fetch("/api/auth/check-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password,
+        }),
+      });
 
-    setIsLoading(false);
+      const checkData = await checkResponse.json();
 
-    if (result?.error) {
-      // Check for email verification error
-      if (result.error === "EMAIL_NOT_VERIFIED") {
+      if (!checkResponse.ok) {
+        setIsLoading(false);
+        setError(checkData.error || "Invalid email or password. Please try again.");
+        return;
+      }
+
+      // Check if email verification is needed
+      if (checkData.requiresEmailVerification) {
+        setIsLoading(false);
         setError("Please verify your email address before logging in.");
-        // Show verification modal instead of redirecting
         setVerifyEmail(email.toLowerCase().trim());
         setShowVerifyModal(true);
-      } else {
-        setError("Invalid email or password. Please try again.");
+        return;
       }
-    } else {
-      onClose();
-      router.push("/dashboard");
+
+      // Check if 2FA is required
+      if (checkData.requires2FA) {
+        const normalizedMethod = checkData.method === "APP" ? "authenticator" : "email";
+        setTwoFactorMethod(normalizedMethod);
+        
+        // For email 2FA, request code to be sent
+        if (normalizedMethod === "email") {
+          const response = await fetch("/api/auth/2fa-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              email: email.toLowerCase().trim(),
+              password,
+            }),
+          });
+          
+          if (!response.ok) {
+            const data = await response.json();
+            setIsLoading(false);
+            setError(data.error || "Failed to send verification code");
+            return;
+          }
+        }
+        
+        setIsLoading(false);
+        setShow2FA(true);
+        return;
+      }
+
+      // No 2FA required, proceed with actual login
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: email.toLowerCase().trim(),
+        password,
+      });
+
+      setIsLoading(false);
+
+      if (result?.error) {
+        setError("Invalid email or password. Please try again.");
+      } else {
+        onClose();
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      setIsLoading(false);
+      setError("An error occurred. Please try again.");
+    }
+  };
+
+  const handle2FAVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsVerifying2FA(true);
+
+    try {
+      // First verify the 2FA code via our API
+      const verifyResponse = await fetch("/api/auth/verify-2fa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password,
+          code: twoFactorCode,
+          method: twoFactorMethod === "authenticator" ? "APP" : "EMAIL",
+        }),
+      });
+
+      const verifyData = await verifyResponse.json();
+
+      if (!verifyResponse.ok) {
+        setIsVerifying2FA(false);
+        setError(verifyData.error || "Invalid verification code");
+        return;
+      }
+
+      // 2FA verified, now proceed with actual login
+      const result = await signIn("credentials", {
+        redirect: false,
+        email: email.toLowerCase().trim(),
+        password,
+        twoFactorCode,
+        twoFactorMethod: twoFactorMethod === "authenticator" ? "APP" : "EMAIL",
+      });
+
+      setIsVerifying2FA(false);
+
+      if (result?.error) {
+        setError("Login failed. Please try again.");
+      } else {
+        onClose();
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      setIsVerifying2FA(false);
+      setError("An error occurred. Please try again.");
+    }
+  };
+
+  const handleResend2FACode = async () => {
+    setError("");
+    setIsLoading(true);
+    
+    try {
+      const response = await fetch("/api/auth/2fa-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password,
+        }),
+      });
+      
+      if (response.ok) {
+        setError("New verification code sent to your email.");
+      } else {
+        const data = await response.json();
+        setError(data.error || "Failed to send verification code");
+      }
+    } catch (err) {
+      setError("Failed to resend verification code.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -171,9 +308,113 @@ export default function LoginModal({
                   <div className="text-sm text-gray-400 mb-2">
                     Happy to see you
                   </div>
-                  <h2 className="text-3xl font-bold text-white mb-8">
-                    Welcome back
+                  <h2 className={`font-bold text-white mb-8 ${show2FA ? "text-2xl" : "text-3xl"}`}>
+                    {show2FA ? "Two-Factor Authentication" : "Welcome back"}
                   </h2>
+                  
+                  {/* 2FA Verification Screen */}
+                  {show2FA ? (
+                    <form onSubmit={handle2FAVerify} className="space-y-6">
+                      {error && (
+                        <div className={`text-sm text-center p-3 rounded-lg border ${
+                          error.includes("sent") 
+                            ? "text-green-500 bg-green-500/10 border-green-500/20" 
+                            : "text-red-500 bg-red-500/10 border-red-500/20"
+                        }`}>
+                          {error}
+                        </div>
+                      )}
+                      
+                      <div className="text-center">
+                        {twoFactorMethod === "email" ? (
+                          <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4 mb-4">
+                            <div className="flex items-center justify-center gap-2 text-blue-400 mb-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect width="20" height="16" x="2" y="4" rx="2"/>
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                              </svg>
+                              <span className="font-medium">Check Your Email</span>
+                            </div>
+                            <p className="text-sm text-gray-400">
+                              We&apos;ve sent a verification code to <span className="text-white">{email}</span>
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="bg-orange-900/20 border border-orange-700 rounded-lg p-4 mb-4">
+                            <div className="flex items-center justify-center gap-2 text-orange-400 mb-2">
+                              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+                                <path d="M12 18h.01"/>
+                              </svg>
+                              <span className="font-medium">Authenticator App</span>
+                            </div>
+                            <p className="text-sm text-gray-400">
+                              Enter the code from your authenticator app
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label htmlFor="twoFactorCode" className="block text-sm text-gray-300 mb-2">
+                          Verification Code
+                        </label>
+                        <input
+                          type="text"
+                          id="twoFactorCode"
+                          value={twoFactorCode}
+                          onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          className="w-full px-4 py-3 bg-[#2a2a2a] border border-gray-700 rounded-lg text-white text-center text-xl font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+                          placeholder="000000"
+                          maxLength={6}
+                          autoFocus
+                          autoComplete="one-time-code"
+                        />
+                      </div>
+                      
+                      <button
+                        type="submit"
+                        disabled={isVerifying2FA || twoFactorCode.length !== 6}
+                        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+                      >
+                        {isVerifying2FA ? (
+                          <>
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Verifying...
+                          </>
+                        ) : (
+                          "Verify & Login"
+                        )}
+                      </button>
+                      
+                      <div className="flex items-center justify-between pt-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShow2FA(false);
+                            setTwoFactorCode("");
+                            setTwoFactorMethod(null);
+                            setError("");
+                          }}
+                          className="text-sm text-gray-400 hover:text-white transition-colors"
+                        >
+                          ← Back to login
+                        </button>
+                        
+                        {twoFactorMethod === "email" && (
+                          <button
+                            type="button"
+                            onClick={handleResend2FACode}
+                            disabled={isLoading}
+                            className="text-sm text-orange-500 hover:text-orange-400 disabled:opacity-50 transition-colors"
+                          >
+                            {isLoading ? "Sending..." : "Resend Code"}
+                          </button>
+                        )}
+                      </div>
+                    </form>
+                  ) : (
+                  /* Login Form */
                   <form onSubmit={handleSubmit} className="space-y-6">
                     {error && (
                       <div className="text-red-500 text-sm text-center bg-red-500/10 p-3 rounded-lg border border-red-500/20">
@@ -338,6 +579,7 @@ export default function LoginModal({
                       </button>
                     </div>
                   </form>
+                  )}
                 </div>
               </div>
             </motion.div>

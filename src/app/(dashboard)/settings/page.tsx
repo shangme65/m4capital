@@ -420,6 +420,11 @@ export default function SettingsPage() {
   const [showPersonalDataModal, setShowPersonalDataModal] = useState(false);
   const [showAccountNumberModal, setShowAccountNumberModal] = useState(false);
   
+  // Security sub-modals
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
+  const [showTransferPinModal, setShowTransferPinModal] = useState(false);
+  
   // Contact info state
   const [phoneNumber, setPhoneNumber] = useState("");
   const [dateOfBirth, setDateOfBirth] = useState("");
@@ -454,13 +459,14 @@ export default function SettingsPage() {
   const [settingUp2FA, setSettingUp2FA] = useState(false);
   const [twoFactorQRCode, setTwoFactorQRCode] = useState<string | null>(null);
   const [twoFactorSecret, setTwoFactorSecret] = useState<string | null>(null);
-  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [twoFactorCode, setTwoFactorCode] = useState<string | null>(null);
   const [verifying2FA, setVerifying2FA] = useState(false);
   const [twoFactorError, setTwoFactorError] = useState<string | null>(null);
   const [show2FASetup, setShow2FASetup] = useState(false);
   const [disabling2FA, setDisabling2FA] = useState(false);
   const [disable2FAPassword, setDisable2FAPassword] = useState("");
   const [showDisable2FA, setShowDisable2FA] = useState(false);
+  const [selected2FAMethod, setSelected2FAMethod] = useState<string | null>(null); // Track which method view to show;
 
   // Transfer PIN state
   const [hasTransferPin, setHasTransferPin] = useState(false);
@@ -581,7 +587,15 @@ export default function SettingsPage() {
         if (response.ok) {
           const data = await response.json();
           setTwoFactorEnabled(data.twoFactorEnabled || false);
-          setTwoFactorMethod(data.twoFactorMethod || null);
+          // Normalize API method (APP/EMAIL) to frontend format (authenticator/email)
+          const method = data.twoFactorMethod;
+          if (method === "APP") {
+            setTwoFactorMethod("authenticator");
+          } else if (method === "EMAIL") {
+            setTwoFactorMethod("email");
+          } else {
+            setTwoFactorMethod(method || null);
+          }
           setAccountNumber(data.accountNumber || null);
         }
       } catch (error) {
@@ -590,6 +604,49 @@ export default function SettingsPage() {
     };
     fetch2FAStatus();
   }, []);
+
+  // Track if 2FA modal was previously open (to detect actual close, not initial mount)
+  const twoFactorModalWasOpen = React.useRef(false);
+
+  // Refetch 2FA status when 2FA modal is closed to ensure state is in sync
+  useEffect(() => {
+    if (showTwoFactorModal) {
+      twoFactorModalWasOpen.current = true;
+    } else if (twoFactorModalWasOpen.current) {
+      // Modal was open and is now closed - refetch and reset state
+      twoFactorModalWasOpen.current = false;
+      setSettingUp2FA(false);
+      setTwoFactorCode(null);
+      setTwoFactorError(null);
+      setTwoFactorQRCode(null);
+      setTwoFactorSecret(null);
+      setShow2FASetup(false);
+      setShowDisable2FA(false);
+      setSelected2FAMethod(null);
+      
+      const refetch2FAStatus = async () => {
+        try {
+          const response = await fetch("/api/user/profile");
+          if (response.ok) {
+            const data = await response.json();
+            setTwoFactorEnabled(data.twoFactorEnabled || false);
+            // Normalize API method (APP/EMAIL) to frontend format (authenticator/email)
+            const method = data.twoFactorMethod;
+            if (method === "APP") {
+              setTwoFactorMethod("authenticator");
+            } else if (method === "EMAIL") {
+              setTwoFactorMethod("email");
+            } else {
+              setTwoFactorMethod(method || null);
+            }
+          }
+        } catch (error) {
+          console.error("Failed to refetch 2FA status:", error);
+        }
+      };
+      refetch2FAStatus();
+    }
+  }, [showTwoFactorModal]);
 
   // Fetch transfer PIN status on mount
   useEffect(() => {
@@ -1029,6 +1086,39 @@ export default function SettingsPage() {
     }
   };
 
+  // Portal modal handlers for 2FA
+  const handleEnable2FA = async (method: "authenticator" | "email") => {
+    // Convert modal method names to API method names
+    const apiMethod = method === "authenticator" ? "APP" : "EMAIL";
+    setTwoFactorMethod(method);
+    await handle2FASetup(apiMethod);
+  };
+
+  const handleVerify2FA = async (e: React.FormEvent) => {
+    await handle2FAVerification(e);
+  };
+
+  const handleDisable2FA = async (e: React.FormEvent) => {
+    await handle2FADisable(e);
+  };
+
+  // Portal modal handlers for Transfer PIN
+  const handleSetupPIN = async (e: React.FormEvent) => {
+    await handleTransferPinSubmit(e);
+    // If successful, close the modal
+    if (!transferPinError) {
+      setShowTransferPinModal(false);
+    }
+  };
+
+  const handleChangePIN = async (e: React.FormEvent) => {
+    await handleTransferPinSubmit(e);
+    // If successful, close the modal
+    if (!transferPinError) {
+      setShowTransferPinModal(false);
+    }
+  };
+
   // Handle 2FA setup
   const handle2FASetup = async (method: "APP" | "EMAIL") => {
     setTwoFactorError(null);
@@ -1051,15 +1141,17 @@ export default function SettingsPage() {
         setTwoFactorQRCode(data.qrCode);
         setTwoFactorSecret(data.secret);
         setShow2FASetup(true);
+        // Keep settingUp2FA as true to show the QR code screen
       } else {
-        setTwoFactorMethod("EMAIL");
-        setTwoFactorEnabled(true);
-        showSuccess(data.message);
+        // For email, keep settingUp2FA true to show the verification form
+        setTwoFactorMethod("email");
+        // settingUp2FA is already true, so the email form will show
+        showSuccess("Verification code sent to your email!");
       }
     } catch (error: any) {
       setTwoFactorError(error.message || "Failed to setup 2FA");
-    } finally {
       setSettingUp2FA(false);
+      showError(error.message || "Failed to setup 2FA");
     }
   };
 
@@ -1083,12 +1175,16 @@ export default function SettingsPage() {
       }
 
       setTwoFactorEnabled(true);
-      setTwoFactorMethod("APP");
+      // Keep the method that was set during setup
       setShow2FASetup(false);
-      setTwoFactorCode("");
+      setTwoFactorCode(null);
       setTwoFactorQRCode(null);
       setTwoFactorSecret(null);
+      setSettingUp2FA(false);
       showSuccess("Two-factor authentication enabled successfully!");
+      
+      // Refresh session to update user data
+      await updateSession();
     } catch (error: any) {
       setTwoFactorError(error.message || "Failed to verify code");
     } finally {
@@ -1117,9 +1213,13 @@ export default function SettingsPage() {
 
       setTwoFactorEnabled(false);
       setTwoFactorMethod(null);
+      setSelected2FAMethod(null);
       setShowDisable2FA(false);
       setDisable2FAPassword("");
       showSuccess("Two-factor authentication disabled successfully!");
+      
+      // Refresh session to update user data
+      await updateSession();
     } catch (error: any) {
       setTwoFactorError(error.message || "Failed to disable 2FA");
     } finally {
@@ -1992,619 +2092,896 @@ export default function SettingsPage() {
           title="Security"
           toggleSidebar={toggleSidebar}
         >
-          <div className="space-y-6 max-w-2xl">
-            {/* Password Change Section */}
-            <div className="border-b border-gray-700 pb-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Key className="w-5 h-5 text-orange-500" />
-                <h3 className="text-lg font-semibold text-white">
-                  Change Password
-                </h3>
+          {/* Change Password Card Button */}
+          <button
+            onClick={() => setShowChangePasswordModal(true)}
+            className="group relative w-full text-left"
+          >
+            <div
+              className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                boxShadow: `
+                  0 10px 20px -10px rgba(0, 0, 0, 0.5),
+                  0 4px 8px -2px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                `,
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <div className="relative z-10 flex items-center gap-2.5">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-lg blur-md opacity-50 group-hover:opacity-70 transition-opacity"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(249,115,22,0.4), transparent)`,
+                      transform: "translateY(3px)",
+                    }}
+                  />
+                  <div
+                    className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    style={{
+                      boxShadow: `
+                        0 4px 12px -2px rgba(249,115,22,0.4),
+                        0 2px 6px -1px rgba(249,115,22,0.4),
+                        inset 0 1px 2px rgba(255,255,255,0.2),
+                        inset 0 -1px 2px rgba(0,0,0,0.15)
+                      `,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-lg overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                      }}
+                    />
+                    <Key className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                    Change Password
+                  </h3>
+                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                    Update your account password
+                  </p>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          {/* Two-Factor Authentication Card Button */}
+          <button
+            onClick={() => setShowTwoFactorModal(true)}
+            className="group relative w-full text-left"
+          >
+            <div
+              className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                boxShadow: `
+                  0 10px 20px -10px rgba(0, 0, 0, 0.5),
+                  0 4px 8px -2px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                `,
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <div className="relative z-10 flex items-center gap-2.5">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-lg blur-md opacity-50 group-hover:opacity-70 transition-opacity"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(249,115,22,0.4), transparent)`,
+                      transform: "translateY(3px)",
+                    }}
+                  />
+                  <div
+                    className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    style={{
+                      boxShadow: `
+                        0 4px 12px -2px rgba(249,115,22,0.4),
+                        0 2px 6px -1px rgba(249,115,22,0.4),
+                        inset 0 1px 2px rgba(255,255,255,0.2),
+                        inset 0 -1px 2px rgba(0,0,0,0.15)
+                      `,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-lg overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                      }}
+                    />
+                    <Shield className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                    Two-Factor Authentication
+                  </h3>
+                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                    {twoFactorEnabled ? "Manage 2FA settings" : "Add extra layer of security"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </button>
+
+          {/* Transfer PIN Card Button */}
+          <button
+            onClick={() => setShowTransferPinModal(true)}
+            className="group relative w-full text-left"
+          >
+            <div
+              className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
+              style={{
+                background:
+                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
+                boxShadow: `
+                  0 10px 20px -10px rgba(0, 0, 0, 0.5),
+                  0 4px 8px -2px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                  inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                `,
+                border: "1px solid rgba(255, 255, 255, 0.06)",
+              }}
+            >
+              <div className="relative z-10 flex items-center gap-2.5">
+                <div className="relative">
+                  <div
+                    className="absolute inset-0 rounded-lg blur-md opacity-50 group-hover:opacity-70 transition-opacity"
+                    style={{
+                      background: `linear-gradient(135deg, rgba(249,115,22,0.4), transparent)`,
+                      transform: "translateY(3px)",
+                    }}
+                  />
+                  <div
+                    className="relative w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-105 group-hover:-translate-y-0.5"
+                    style={{
+                      boxShadow: `
+                        0 4px 12px -2px rgba(249,115,22,0.4),
+                        0 2px 6px -1px rgba(249,115,22,0.4),
+                        inset 0 1px 2px rgba(255,255,255,0.2),
+                        inset 0 -1px 2px rgba(0,0,0,0.15)
+                      `,
+                    }}
+                  >
+                    <div
+                      className="absolute inset-0 rounded-lg overflow-hidden"
+                      style={{
+                        background:
+                          "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
+                      }}
+                    />
+                    <Lock className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                    Transfer PIN
+                  </h3>
+                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                    {hasTransferPin ? "Manage transfer PIN" : "Set up 4-digit PIN"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </button>
+        </SettingsModal>
+
+        {/* Change Password Portal Modal */}
+        {showChangePasswordModal &&
+          ReactDOM.createPortal(
+            <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900 overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowChangePasswordModal(false)}
+                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5 text-gray-400" />
+                    </button>
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Change Password</h2>
+                      <p className="text-sm text-gray-400">Update your account password</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <form onSubmit={handlePasswordChange} className="space-y-4">
-                {/* Current Password */}
-                <div>
-                  <label
-                    className="block text-sm font-medium mb-1 text-gray-300"
-                    htmlFor="currentPassword"
-                  >
-                    Current Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="currentPassword"
-                      type={showCurrentPassword ? "text" : "password"}
-                      value={currentPassword}
-                      onChange={(e) => setCurrentPassword(e.target.value)}
-                      className="w-full bg-gray-700 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
-                      placeholder="Enter current password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowCurrentPassword(!showCurrentPassword)
-                      }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                    >
-                      {showCurrentPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
+              {/* Content */}
+              <div className="p-4 max-w-2xl mx-auto">
+                <form onSubmit={handlePasswordChange} className="space-y-6">
+                  {/* Current Password */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-300" htmlFor="currentPassword">
+                      Current Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="currentPassword"
+                        type={showCurrentPassword ? "text" : "password"}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                        placeholder="Enter current password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                      >
+                        {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* New Password */}
-                <div>
-                  <label
-                    className="block text-sm font-medium mb-1 text-gray-300"
-                    htmlFor="newPassword"
-                  >
-                    New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="newPassword"
-                      type={showNewPassword ? "text" : "password"}
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full bg-gray-700 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
-                      placeholder="Enter new password (min 8 characters)"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowNewPassword(!showNewPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                    >
-                      {showNewPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
+                  {/* New Password */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-300" htmlFor="newPassword">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="newPassword"
+                        type={showNewPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                        placeholder="Enter new password (min 8 characters)"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                      >
+                        {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Confirm Password */}
-                <div>
-                  <label
-                    className="block text-sm font-medium mb-1 text-gray-300"
-                    htmlFor="confirmPassword"
-                  >
-                    Confirm New Password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full bg-gray-700 rounded-lg px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
-                      placeholder="Confirm new password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
+                  {/* Confirm Password */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-300" htmlFor="confirmPassword">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                        placeholder="Confirm new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Error/Success Messages */}
-                {passwordError && (
-                  <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
-                    <p className="text-sm text-red-400">{passwordError}</p>
-                  </div>
-                )}
+                  {/* Error/Success Messages */}
+                  {passwordError && (
+                    <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
+                      <p className="text-sm text-red-400">{passwordError}</p>
+                    </div>
+                  )}
 
-                {passwordSuccess && (
-                  <div className="bg-green-900/20 border border-green-700 rounded-lg p-3">
-                    <p className="text-sm text-green-400">
-                      Password changed successfully!
-                    </p>
-                  </div>
-                )}
+                  {passwordSuccess && (
+                    <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+                      <p className="text-sm text-green-400">{passwordSuccess}</p>
+                    </div>
+                  )}
 
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3">
+                  {/* Submit Button */}
                   <button
                     type="submit"
                     disabled={changingPassword}
-                    className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
                   >
-                    {changingPassword ? "Changing..." : "Change Password"}
+                    {changingPassword ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Changing Password...
+                      </>
+                    ) : (
+                      "Change Password"
+                    )}
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleForgotPassword}
-                    className="text-sm text-gray-400 hover:text-white transition-colors"
-                  >
-                    Forgot Password?
-                  </button>
-                </div>
-              </form>
-            </div>
+                </form>
+              </div>
+            </div>,
+            document.body
+          )}
 
-            {/* Two-Factor Authentication Section */}
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Shield className="w-5 h-5 text-orange-500" />
-                <h3 className="text-lg font-semibold text-white">
-                  Two-Factor Authentication
-                </h3>
+        {/* Two-Factor Authentication Portal Modal */}
+        {showTwoFactorModal &&
+          ReactDOM.createPortal(
+            <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900 overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowTwoFactorModal(false)}
+                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5 text-gray-400" />
+                    </button>
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Two-Factor Authentication</h2>
+                      <p className="text-sm text-gray-400">Add an extra layer of security</p>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {!twoFactorEnabled ? (
-                !show2FASetup ? (
-                  /* 2FA Not Enabled - Show Options */
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-300">
-                      Add an extra layer of security to your account by enabling
-                      two-factor authentication.
-                    </p>
+              {/* Content */}
+              <div className="p-4 max-w-2xl mx-auto">
+                <div className="space-y-4">
+                  {/* Method Selection Screen - Always show first unless setting up or a method is selected */}
+                  {!settingUp2FA && !selected2FAMethod && (
+                    <div className="space-y-4">
+                      <p className="text-sm text-gray-400">
+                        {twoFactorEnabled 
+                          ? "Your 2FA settings. Tap on your active method to manage it."
+                          : "Choose your preferred method for two-factor authentication:"}
+                      </p>
 
+                      <div className="grid grid-cols-1 gap-4">
+                        {/* Authenticator App Option */}
+                        <button
+                          onClick={() => {
+                            if (twoFactorEnabled && twoFactorMethod === "authenticator") {
+                              setSelected2FAMethod("authenticator");
+                            } else if (!twoFactorEnabled) {
+                              handleEnable2FA("authenticator");
+                            }
+                          }}
+                          disabled={twoFactorEnabled && twoFactorMethod !== "authenticator"}
+                          className={`${
+                            twoFactorEnabled && twoFactorMethod === "authenticator"
+                              ? "bg-green-900/20 border-green-700"
+                              : twoFactorEnabled
+                              ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed"
+                              : "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50"
+                          } border p-4 rounded-lg text-left transition-all duration-300 group`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`${
+                              twoFactorEnabled && twoFactorMethod === "authenticator"
+                                ? "bg-green-500/20"
+                                : "bg-orange-500/10 group-hover:bg-orange-500/20"
+                            } p-3 rounded-lg transition-colors`}>
+                              <Smartphone className={`w-6 h-6 ${
+                                twoFactorEnabled && twoFactorMethod === "authenticator"
+                                  ? "text-green-500"
+                                  : "text-orange-500"
+                              }`} />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-white mb-1">Authenticator App</h4>
+                              <p className="text-xs text-gray-400">
+                                Use apps like Google Authenticator or Authy
+                              </p>
+                            </div>
+                            {twoFactorEnabled && twoFactorMethod === "authenticator" && (
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                            )}
+                          </div>
+                        </button>
+
+                        {/* Email Option */}
+                        <button
+                          onClick={() => {
+                            if (twoFactorEnabled && twoFactorMethod === "email") {
+                              setSelected2FAMethod("email");
+                            } else if (!twoFactorEnabled) {
+                              handleEnable2FA("email");
+                            }
+                          }}
+                          disabled={twoFactorEnabled && twoFactorMethod !== "email"}
+                          className={`${
+                            twoFactorEnabled && twoFactorMethod === "email"
+                              ? "bg-green-900/20 border-green-700"
+                              : twoFactorEnabled
+                              ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed"
+                              : "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50"
+                          } border p-4 rounded-lg text-left transition-all duration-300 group`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`${
+                              twoFactorEnabled && twoFactorMethod === "email"
+                                ? "bg-green-500/20"
+                                : "bg-orange-500/10 group-hover:bg-orange-500/20"
+                            } p-3 rounded-lg transition-colors`}>
+                              <Mail className={`w-6 h-6 ${
+                                twoFactorEnabled && twoFactorMethod === "email"
+                                  ? "text-green-500"
+                                  : "text-orange-500"
+                              }`} />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-white mb-1">Email Verification</h4>
+                              <p className="text-xs text-gray-400">Receive codes via email</p>
+                            </div>
+                            {twoFactorEnabled && twoFactorMethod === "email" && (
+                              <CheckCircle className="w-5 h-5 text-green-500" />
+                            )}
+                          </div>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Selected Method Details - Show when a method is selected */}
+                  {selected2FAMethod && twoFactorEnabled && (
                     <div className="space-y-3">
                       <button
-                        onClick={() => handle2FASetup("APP")}
-                        disabled={settingUp2FA}
-                        className="w-full flex items-center gap-3 bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors text-left"
+                        onClick={() => setSelected2FAMethod(null)}
+                        className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-2"
                       >
-                        <Smartphone className="w-5 h-5 text-orange-500" />
-                        <div>
-                          <p className="font-medium text-white">
-                            Authenticator App
-                          </p>
-                          <p className="text-xs text-gray-400">
-                            Use Google Authenticator, Authy, or similar apps
-                          </p>
-                        </div>
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to methods
                       </button>
 
-                      <button
-                        onClick={() => handle2FASetup("EMAIL")}
-                        disabled={settingUp2FA}
-                        className="w-full flex items-center gap-3 bg-gray-700 hover:bg-gray-600 p-4 rounded-lg transition-colors text-left"
-                      >
-                        <Mail className="w-5 h-5 text-orange-500" />
-                        <div>
-                          <p className="font-medium text-white">Email</p>
-                          <p className="text-xs text-gray-400">
-                            Receive verification codes via email
-                          </p>
+                      <div className="bg-green-900/20 border border-green-700 rounded-lg p-3">
+                        <div className="flex items-center gap-2 text-green-400 mb-1">
+                          <CheckCircle className="w-4 h-4" />
+                          <span className="text-sm font-medium">2FA is enabled</span>
                         </div>
-                      </button>
-                    </div>
-
-                    {twoFactorError && (
-                      <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
-                        <p className="text-sm text-red-400">{twoFactorError}</p>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  /* 2FA Setup in Progress (APP method) */
-                  <div className="space-y-4">
-                    <p className="text-sm text-gray-300">
-                      Scan this QR code with your authenticator app:
-                    </p>
-
-                    {twoFactorQRCode && (
-                      <div className="flex justify-center bg-white p-4 rounded-lg">
-                        <img
-                          src={twoFactorQRCode}
-                          alt="2FA QR Code"
-                          className="w-48 h-48"
-                        />
-                      </div>
-                    )}
-
-                    {twoFactorSecret && (
-                      <div className="bg-gray-700 p-3 rounded-lg">
-                        <p className="text-xs text-gray-400 mb-1">
-                          Or enter this code manually:
-                        </p>
-                        <p className="text-sm font-mono text-white break-all">
-                          {twoFactorSecret}
+                        <div className="flex items-center gap-2 mt-2">
+                          {twoFactorMethod === "authenticator" ? (
+                            <>
+                              <Smartphone className="w-4 h-4 text-orange-500" />
+                              <span className="text-xs text-gray-300">Using Authenticator App</span>
+                            </>
+                          ) : twoFactorMethod === "email" ? (
+                            <>
+                              <Mail className="w-4 h-4 text-orange-500" />
+                              <span className="text-xs text-gray-300">Using Email Verification</span>
+                            </>
+                          ) : (
+                            <span className="text-xs text-gray-400">Method: {twoFactorMethod}</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                          Your account is protected with two-factor authentication.
                         </p>
                       </div>
-                    )}
 
-                    <form
-                      onSubmit={handle2FAVerification}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <label
-                          className="block text-sm font-medium mb-1 text-gray-300"
-                          htmlFor="verificationCode"
+                      {!showDisable2FA ? (
+                        <button
+                          onClick={() => setShowDisable2FA(true)}
+                          className="w-full bg-red-600/20 hover:bg-red-600/30 border border-red-700 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2 text-white"
                         >
-                          Verification Code
-                        </label>
-                        <input
-                          id="verificationCode"
-                          type="text"
-                          value={twoFactorCode}
-                          onChange={(e) => setTwoFactorCode(e.target.value)}
-                          className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg tracking-widest"
-                          placeholder="000000"
-                          maxLength={6}
-                          pattern="[0-9]{6}"
-                        />
-                      </div>
-
-                      {twoFactorError && (
-                        <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
-                          <p className="text-sm text-red-400">
-                            {twoFactorError}
+                          <XCircle className="w-3.5 h-3.5" />
+                          Disable Two-Factor Authentication
+                        </button>
+                      ) : (
+                        <form onSubmit={handle2FADisable} className="space-y-3 bg-gray-800/50 p-4 rounded-lg">
+                          <p className="text-xs text-gray-300">
+                            Enter your password to confirm disabling two-factor authentication.
                           </p>
-                        </div>
+
+                          <div>
+                            <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                              Password
+                            </label>
+                            <input
+                              type="password"
+                              value={disable2FAPassword}
+                              onChange={(e) => setDisable2FAPassword(e.target.value)}
+                              className="w-full bg-gray-900 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                              placeholder="Enter your password"
+                              required
+                            />
+                          </div>
+
+                          {twoFactorError && (
+                            <div className="bg-red-900/20 border border-red-700 rounded-lg p-2.5">
+                              <p className="text-xs text-red-400">{twoFactorError}</p>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowDisable2FA(false);
+                                setDisable2FAPassword("");
+                                setTwoFactorError(null);
+                              }}
+                              className="flex-1 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={disabling2FA || !disable2FAPassword}
+                              className="flex-1 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                            >
+                              {disabling2FA ? (
+                                <>
+                                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  Disabling...
+                                </>
+                              ) : (
+                                "Confirm & Disable"
+                              )}
+                            </button>
+                          </div>
+                        </form>
                       )}
+                    </div>
+                  )}
 
-                      <div className="flex items-center gap-3">
-                        <button
-                          type="submit"
-                          disabled={
-                            verifying2FA || twoFactorCode.length !== 6
-                          }
-                          className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-                        >
-                          {verifying2FA ? "Verifying..." : "Enable 2FA"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShow2FASetup(false);
-                            setTwoFactorQRCode(null);
-                            setTwoFactorSecret(null);
-                            setTwoFactorCode("");
-                            setTwoFactorError(null);
-                          }}
-                          className="text-sm text-gray-400 hover:text-white transition-colors"
-                        >
-                          Cancel
-                        </button>
+                  {/* Authenticator Setup Flow */}
+                  {settingUp2FA && twoFactorMethod === "authenticator" && (
+                    <div className="space-y-3">
+                      {twoFactorCode === null ? (
+                        /* Step 1: QR Code */
+                        <div className="space-y-3">
+                          <div className="bg-gray-800 p-3 rounded-lg">
+                            <p className="text-xs text-gray-300 mb-3">
+                              1. Scan this QR code with your authenticator app:
+                            </p>
+                            {twoFactorQRCode && (
+                              <div className="flex justify-center bg-white p-3 rounded-lg">
+                                <Image src={twoFactorQRCode} alt="2FA QR Code" width={160} height={160} />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="bg-gray-800 p-3 rounded-lg">
+                            <p className="text-xs text-gray-300 mb-1">Or enter this code manually:</p>
+                            <code className="bg-gray-900 px-2 py-1.5 rounded text-orange-400 text-xs font-mono block break-all">
+                              {twoFactorSecret}
+                            </code>
+                          </div>
+
+                          <button
+                            onClick={() => setTwoFactorCode("")}
+                            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
+                          >
+                            I&apos;ve Scanned the Code
+                          </button>
+                        </div>
+                      ) : (
+                        /* Step 2: Verify Code */
+                        <form onSubmit={handleVerify2FA} className="space-y-3">
+                          <div>
+                            <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                              2. Enter the 6-digit code from your app:
+                            </label>
+                            <input
+                              type="text"
+                              value={twoFactorCode}
+                              onChange={(e) =>
+                                setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                              }
+                              className="w-full bg-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-wider"
+                              placeholder="000000"
+                              maxLength={6}
+                              autoFocus
+                            />
+                          </div>
+
+                          {twoFactorError && (
+                            <div className="bg-red-900/20 border border-red-700 rounded-lg p-2.5">
+                              <p className="text-xs text-red-400">{twoFactorError}</p>
+                            </div>
+                          )}
+
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSettingUp2FA(false);
+                                setTwoFactorCode(null);
+                                setTwoFactorError("");
+                              }}
+                              className="flex-1 bg-gray-800 hover:bg-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={verifying2FA || twoFactorCode.length !== 6}
+                              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                            >
+                              {verifying2FA ? (
+                                <>
+                                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                  Verifying...
+                                </>
+                              ) : (
+                                "Verify & Enable"
+                              )}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Email Setup Flow */}
+                  {settingUp2FA && twoFactorMethod === "email" && (
+                    <div className="space-y-3">
+                      <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
+                        <div className="flex items-start gap-2">
+                          <Mail className="w-4 h-4 text-blue-400 mt-0.5" />
+                          <div>
+                            <p className="text-xs text-blue-300 font-medium">
+                              Email verification code sent!
+                            </p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              Check your email ({session?.user?.email}) for the code.
+                            </p>
+                          </div>
+                        </div>
                       </div>
-                    </form>
-                  </div>
-                )
-              ) : /* 2FA Enabled */
-              !showDisable2FA ? (
-                <div className="space-y-4">
-                  <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                      <p className="text-sm text-green-400 font-medium">
-                        Two-Factor Authentication is Enabled
+
+                      <form onSubmit={handleVerify2FA} className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                            Enter the 6-digit code from your email:
+                          </label>
+                          <input
+                            type="text"
+                            value={twoFactorCode || ""}
+                            onChange={(e) =>
+                              setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                            }
+                            className="w-full bg-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-wider"
+                            placeholder="000000"
+                            maxLength={6}
+                            autoFocus
+                          />
+                        </div>
+
+                        {twoFactorError && (
+                          <div className="bg-red-900/20 border border-red-700 rounded-lg p-2.5">
+                            <p className="text-xs text-red-400">{twoFactorError}</p>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSettingUp2FA(false);
+                              setTwoFactorCode(null);
+                              setTwoFactorError("");
+                            }}
+                            className="flex-1 bg-gray-800 hover:bg-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={verifying2FA || !twoFactorCode || twoFactorCode.length !== 6}
+                            className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                          >
+                            {verifying2FA ? (
+                              <>
+                                <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                Verifying...
+                              </>
+                            ) : (
+                              "Verify & Enable"
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
+        {/* Transfer PIN Portal Modal */}
+        {showTransferPinModal &&
+          ReactDOM.createPortal(
+            <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900 overflow-y-auto">
+              {/* Header */}
+              <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+                <div className="flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowTransferPinModal(false)}
+                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                      <X className="w-5 h-5 text-gray-400" />
+                    </button>
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">Transfer PIN</h2>
+                      <p className="text-sm text-gray-400">
+                        {hasTransferPin ? "Manage your transfer PIN" : "Set up a 4-digit PIN"}
                       </p>
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      Method:{" "}
-                      {twoFactorMethod === "APP"
-                        ? "Authenticator App"
-                        : "Email"}
-                    </p>
                   </div>
-
-                  <button
-                    onClick={() => setShowDisable2FA(true)}
-                    className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-                  >
-                    Disable 2FA
-                  </button>
                 </div>
-              ) : (
-                /* Disable 2FA Form */
-                <div className="space-y-4">
-                  <div className="bg-yellow-900/20 border border-yellow-700 rounded-lg p-4">
-                    <p className="text-sm text-yellow-400">
-                      Warning: Disabling two-factor authentication will make
-                      your account less secure.
-                    </p>
-                  </div>
-
-                  <form onSubmit={handle2FADisable} className="space-y-4">
-                    <div>
-                      <label
-                        className="block text-sm font-medium mb-1 text-gray-300"
-                        htmlFor="disable2FAPassword"
-                      >
-                        Confirm Password
-                      </label>
-                      <input
-                        id="disable2FAPassword"
-                        type="password"
-                        value={disable2FAPassword}
-                        onChange={(e) => setDisable2FAPassword(e.target.value)}
-                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
-                        placeholder="Enter your password"
-                      />
-                    </div>
-
-                    {twoFactorError && (
-                      <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
-                        <p className="text-sm text-red-400">{twoFactorError}</p>
-                      </div>
-                    )}
-
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="submit"
-                        disabled={disabling2FA}
-                        className="bg-red-600 hover:bg-red-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-                      >
-                        {disabling2FA ? "Disabling..." : "Confirm Disable"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowDisable2FA(false);
-                          setDisable2FAPassword("");
-                          setTwoFactorError(null);
-                        }}
-                        className="text-sm text-gray-400 hover:text-white transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-            </div>
-
-            {/* Transfer PIN Section */}
-            <div className="border-t border-gray-700 pt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Lock className="w-5 h-5 text-orange-500" />
-                <h3 className="text-lg font-semibold text-white">
-                  Transfer PIN
-                </h3>
               </div>
 
-              {!showTransferPinSetup ? (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-300">
-                    {hasTransferPin
-                      ? "Your transfer PIN is set. You can change it here."
-                      : "Set up a 4-digit PIN to secure your P2P transfers and withdrawals."}
-                  </p>
-
-                  {hasTransferPin && (
+              {/* Content */}
+              <div className="p-4 max-w-2xl mx-auto">
+                {hasTransferPin ? (
+                  /* PIN Exists - Change PIN Form */
+                  <div className="space-y-6">
                     <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                        <p className="text-sm text-green-400 font-medium">
-                          Transfer PIN is Set
-                        </p>
+                      <div className="flex items-center gap-2 text-green-400 mb-2">
+                        <CheckCircle className="w-5 h-5" />
+                        <span className="font-medium">Transfer PIN is enabled</span>
                       </div>
-                    </div>
-                  )}
-
-                  {transferPinSuccess && (
-                    <div className="bg-green-900/20 border border-green-700 rounded-lg p-3">
-                      <p className="text-sm text-green-400">
-                        {hasTransferPin
-                          ? "Transfer PIN changed successfully!"
-                          : "Transfer PIN set successfully!"}
+                      <p className="text-sm text-gray-400">
+                        Your transfers are protected with a 4-digit PIN.
                       </p>
                     </div>
-                  )}
 
-                  <button
-                    onClick={() => setShowTransferPinSetup(true)}
-                    className="bg-orange-600 hover:bg-orange-700 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-                  >
-                    {hasTransferPin
-                      ? "Change Transfer PIN"
-                      : "Set Transfer PIN"}
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-300">
-                    {hasTransferPin
-                      ? "Enter your current PIN and choose a new 4-digit PIN."
-                      : "Choose a 4-digit PIN for securing your transfers."}
-                  </p>
-
-                  <form
-                    onSubmit={handleTransferPinSubmit}
-                    className="space-y-4"
-                  >
-                    {hasTransferPin && (
+                    <form onSubmit={handleChangePIN} className="space-y-6 bg-gray-800/50 p-6 rounded-lg">
                       <div>
-                        <label
-                          className="block text-sm font-medium mb-1 text-gray-300"
-                          htmlFor="currentTransferPin"
-                        >
+                        <label className="block text-sm font-medium mb-2 text-gray-300">
                           Current PIN
                         </label>
                         <input
-                          id="currentTransferPin"
                           type="password"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          maxLength={4}
                           value={currentTransferPin}
                           onChange={(e) =>
-                            setCurrentTransferPin(
-                              e.target.value.replace(/\D/g, "").slice(0, 4)
-                            )
+                            setCurrentTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                           }
-                          className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg tracking-widest"
+                          className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
                           placeholder="••••"
+                          maxLength={4}
                         />
                       </div>
-                    )}
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-300">
+                          New PIN
+                        </label>
+                        <input
+                          type="password"
+                          value={transferPin}
+                          onChange={(e) =>
+                            setTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+                          }
+                          className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
+                          placeholder="••••"
+                          maxLength={4}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2 text-gray-300">
+                          Confirm New PIN
+                        </label>
+                        <input
+                          type="password"
+                          value={confirmTransferPin}
+                          onChange={(e) =>
+                            setConfirmTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
+                          }
+                          className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
+                          placeholder="••••"
+                          maxLength={4}
+                        />
+                      </div>
+
+                      {transferPinError && (
+                        <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
+                          <p className="text-sm text-red-400">{transferPinError}</p>
+                        </div>
+                      )}
+
+                      {transferPinSuccess && (
+                        <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+                          <p className="text-sm text-green-400">{transferPinSuccess}</p>
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={settingTransferPin}
+                        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                      >
+                        {settingTransferPin ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            Changing PIN...
+                          </>
+                        ) : (
+                          "Change Transfer PIN"
+                        )}
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  /* No PIN - Setup Form */
+                  <form onSubmit={handleSetupPIN} className="space-y-6 bg-gray-800/50 p-6 rounded-lg">
+                    <p className="text-sm text-gray-400">
+                      Set up a 4-digit PIN to secure your transfers.
+                    </p>
 
                     <div>
-                      <label
-                        className="block text-sm font-medium mb-1 text-gray-300"
-                        htmlFor="transferPin"
-                      >
-                        {hasTransferPin ? "New PIN" : "PIN"}
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        New PIN
                       </label>
                       <input
-                        id="transferPin"
                         type="password"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={4}
                         value={transferPin}
                         onChange={(e) =>
-                          setTransferPin(
-                            e.target.value.replace(/\D/g, "").slice(0, 4)
-                          )
+                          setTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                         }
-                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg tracking-widest"
+                        className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
                         placeholder="••••"
-                        required
+                        maxLength={4}
                       />
                     </div>
 
                     <div>
-                      <label
-                        className="block text-sm font-medium mb-1 text-gray-300"
-                        htmlFor="confirmTransferPin"
-                      >
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
                         Confirm PIN
                       </label>
                       <input
-                        id="confirmTransferPin"
                         type="password"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={4}
                         value={confirmTransferPin}
                         onChange={(e) =>
-                          setConfirmTransferPin(
-                            e.target.value.replace(/\D/g, "").slice(0, 4)
-                          )
+                          setConfirmTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                         }
-                        className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg tracking-widest"
+                        className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
                         placeholder="••••"
-                        required
+                        maxLength={4}
                       />
                     </div>
 
                     {transferPinError && (
-                      <div className="bg-red-900/20 border border-red-700 rounded-lg p-3">
-                        <p className="text-sm text-red-400">
-                          {transferPinError}
-                        </p>
+                      <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
+                        <p className="text-sm text-red-400">{transferPinError}</p>
                       </div>
                     )}
 
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="submit"
-                        disabled={
-                          settingTransferPin ||
-                          transferPin.length !== 4 ||
-                          confirmTransferPin.length !== 4
-                        }
-                        className="bg-orange-600 hover:bg-orange-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors"
-                      >
-                        {settingTransferPin
-                          ? "Setting..."
-                          : hasTransferPin
-                          ? "Change PIN"
-                          : "Set PIN"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowTransferPinSetup(false);
-                          setTransferPin("");
-                          setConfirmTransferPin("");
-                          setCurrentTransferPin("");
-                          setTransferPinError(null);
-                        }}
-                        className="text-sm text-gray-400 hover:text-white transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              )}
-            </div>
-          </div>
-        </SettingsModal>
+                    {transferPinSuccess && (
+                      <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+                        <p className="text-sm text-green-400">{transferPinSuccess}</p>
+                      </div>
+                    )}
 
-        {/* KYC Modal */}
-        <SettingsModal
-          isOpen={activeModal === "kyc"}
-          onClose={closeModal}
-          title="KYC Verification"
-          toggleSidebar={toggleSidebar}
-        >
-          <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="name">
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                defaultValue={session?.user?.name || ""}
-                className="w-full bg-gray-700 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="Your full name"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1" htmlFor="email">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                disabled
-                defaultValue={session?.user?.email || ""}
-                className="w-full bg-gray-700 rounded-lg px-3 py-2 opacity-70 cursor-not-allowed"
-              />
-            </div>
-            <div>
-              <label
-                className="block text-sm font-medium mb-1"
-                htmlFor="accountType"
-              >
-                Account Type
-              </label>
-              <input
-                id="accountType"
-                type="text"
-                disabled
-                value={
-                  session?.user?.accountType
-                    ? session.user.accountType.charAt(0) +
-                      session.user.accountType.slice(1).toLowerCase()
-                    : "Investor"
-                }
-                className="w-full bg-gray-700 rounded-lg px-3 py-2 opacity-70 cursor-not-allowed"
-              />
-              <p className="text-xs text-gray-400 mt-1">
-                Account type is chosen at signup. Contact support to change.
-              </p>
-            </div>
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium"
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </form>
-        </SettingsModal>
+                    <button
+                      type="submit"
+                      disabled={settingTransferPin}
+                      className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                    >
+                      {settingTransferPin ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Setting up PIN...
+                        </>
+                      ) : (
+                        "Set Transfer PIN"
+                      )}
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>,
+            document.body
+          )}
 
         {/* KYC Modal */}
         <SettingsModal

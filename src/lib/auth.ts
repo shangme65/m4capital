@@ -24,6 +24,8 @@ export const authOptions: AuthOptions = {
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
+        twoFactorCode: { label: "2FA Code", type: "text" },
+        twoFactorMethod: { label: "2FA Method", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -61,6 +63,59 @@ export const authOptions: AuthOptions = {
           userCreatedAt >= emailVerificationStartDate
         ) {
           throw new Error("EMAIL_NOT_VERIFIED");
+        }
+
+        // Check if user has 2FA enabled
+        if ((user as any).twoFactorEnabled) {
+          const twoFactorCode = credentials.twoFactorCode;
+          const twoFactorMethod = (user as any).twoFactorMethod;
+          
+          // If no 2FA code provided, signal that 2FA is required
+          if (!twoFactorCode) {
+            throw new Error(`2FA_REQUIRED:${twoFactorMethod}`);
+          }
+          
+          // Verify the 2FA code
+          const speakeasy = require("speakeasy");
+          
+          if (twoFactorMethod === "APP") {
+            // Verify TOTP code from authenticator app
+            const isValid = speakeasy.totp.verify({
+              secret: (user as any).twoFactorSecret,
+              encoding: "base32",
+              token: twoFactorCode,
+              window: 2,
+            });
+            
+            if (!isValid) {
+              throw new Error("INVALID_2FA_CODE");
+            }
+          } else if (twoFactorMethod === "EMAIL") {
+            // For email 2FA, we need to verify against stored code
+            // The code is stored in format "CODE:TIMESTAMP" in twoFactorSecret during login request
+            const storedData = (user as any).twoFactorLoginCode;
+            if (!storedData) {
+              throw new Error("2FA_CODE_EXPIRED");
+            }
+            
+            const [storedCode, timestamp] = storedData.split(":");
+            const codeAge = Date.now() - parseInt(timestamp);
+            const maxAge = 10 * 60 * 1000; // 10 minutes
+            
+            if (codeAge > maxAge) {
+              throw new Error("2FA_CODE_EXPIRED");
+            }
+            
+            if (storedCode !== twoFactorCode) {
+              throw new Error("INVALID_2FA_CODE");
+            }
+            
+            // Clear the login code after successful verification
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { twoFactorLoginCode: null } as any,
+            });
+          }
         }
 
         return user;

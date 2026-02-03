@@ -505,6 +505,7 @@ model User {
   twoFactorEnabled       Boolean            @default(false)
   twoFactorMethod        TwoFactorMethod?
   twoFactorSecret        String?
+  twoFactorLoginCode     String?            // Stores CODE:TIMESTAMP for email 2FA during login
   transferPin            String?
   accountNumber          String?            @unique
   phoneNumber            String?
@@ -601,6 +602,7 @@ model Withdrawal {
 }
 
 enum AccountType {
+  STANDARD
   INVESTOR
   TRADER
 }
