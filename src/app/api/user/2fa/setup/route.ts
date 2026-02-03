@@ -105,22 +105,35 @@ export async function POST(req: NextRequest) {
 
       // Send the verification code via email
       try {
+        const baseUrl = process.env.NEXTAUTH_URL || "https://m4capital.online";
+        
         await sendEmail({
           to: user.email || "",
           subject: "Your M4Capital 2FA Verification Code",
           html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-              <h3 style="color: #f97316;">Enable Two-Factor Authentication</h3>
-              <p>Hello ${user.name || "there"},</p>
-              <p>You are setting up email-based two-factor authentication for your M4Capital account.</p>
-              <p>Your verification code is:</p>
-              <div style="background: #1f2937; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
-                <span style="font-size: 32px; font-weight: bold; color: #f97316; letter-spacing: 8px;">${verificationCode}</span>
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #0f172a; padding: 0;">
+              <!-- Header with Logo -->
+              <div style="text-align: center; padding: 24px 20px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                <img src="${baseUrl}/m4capitallogo1.png" alt="M4 Capital" width="140" style="display: inline-block; max-width: 140px; height: auto;" />
               </div>
-              <p style="color: #666;">This code will expire in 10 minutes.</p>
-              <p style="color: #666;">If you did not request this, please ignore this email.</p>
-              <hr style="border: none; border-top: 1px solid #333; margin: 20px 0;">
-              <p style="color: #888; font-size: 12px;">M4Capital Security Team</p>
+              
+              <!-- Content -->
+              <div style="padding: 32px 24px;">
+                <h2 style="color: #f97316; margin: 0 0 16px; font-size: 22px;">Enable Two-Factor Authentication</h2>
+                <p style="color: #e2e8f0; margin: 0 0 12px; font-size: 15px;">Hello ${user.name || "there"},</p>
+                <p style="color: #e2e8f0; margin: 0 0 20px; font-size: 15px;">You are setting up email-based two-factor authentication for your M4Capital account.</p>
+                <p style="color: #e2e8f0; margin: 0 0 12px; font-size: 15px;">Your verification code is:</p>
+                <div style="background: #1e293b; padding: 24px; border-radius: 12px; text-align: center; margin: 20px 0; border: 1px solid rgba(255, 255, 255, 0.1);">
+                  <span style="font-size: 36px; font-weight: bold; color: #f97316; letter-spacing: 10px;">${verificationCode}</span>
+                </div>
+                <p style="color: #94a3b8; margin: 0 0 8px; font-size: 14px;">This code will expire in 10 minutes.</p>
+                <p style="color: #64748b; font-size: 13px; margin: 0;">If you did not request this, please ignore this email.</p>
+              </div>
+              
+              <!-- Footer -->
+              <div style="padding: 20px 24px; border-top: 1px solid rgba(255, 255, 255, 0.05); text-align: center;">
+                <p style="color: #64748b; font-size: 12px; margin: 0;">M4Capital Security Team</p>
+              </div>
             </div>
           `,
         });

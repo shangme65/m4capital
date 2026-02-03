@@ -38,6 +38,23 @@ export const authOptions: AuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email: normalizedEmail },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            role: true,
+            accountType: true,
+            isEmailVerified: true,
+            createdAt: true,
+            twoFactorEnabled: true,
+            twoFactorMethod: true,
+            twoFactorSecret: true,
+            twoFactorLoginCode: true,
+            image: true,
+            preferredCurrency: true,
+            country: true,
+          },
         });
 
         if (!user || !user.password) {
@@ -55,21 +72,21 @@ export const authOptions: AuthOptions = {
 
         // Check if email is verified (skip for admin users and users created before verification was implemented)
         // Only enforce for users created after email verification feature was added
-        const userCreatedAt = (user as any).createdAt;
+        const userCreatedAt = user.createdAt;
         const emailVerificationStartDate = new Date("2025-11-01"); // Adjust this date as needed
 
         if (
-          (user as any).role !== "ADMIN" &&
-          !(user as any).isEmailVerified &&
+          user.role !== "ADMIN" &&
+          !user.isEmailVerified &&
           userCreatedAt >= emailVerificationStartDate
         ) {
           throw new Error("EMAIL_NOT_VERIFIED");
         }
 
         // Check if user has 2FA enabled
-        if ((user as any).twoFactorEnabled) {
+        if (user.twoFactorEnabled) {
           const twoFactorCode = credentials.twoFactorCode;
-          const twoFactorMethod = (user as any).twoFactorMethod;
+          const twoFactorMethod = user.twoFactorMethod;
           const twoFactorVerified = credentials.twoFactorVerified === "true";
           
           // If no 2FA code provided, signal that 2FA is required
@@ -87,7 +104,7 @@ export const authOptions: AuthOptions = {
             if (twoFactorMethod === "APP") {
               // Verify TOTP code from authenticator app
               const isValid = speakeasy.totp.verify({
-                secret: (user as any).twoFactorSecret,
+                secret: user.twoFactorSecret,
                 encoding: "base32",
                 token: twoFactorCode,
                 window: 2,
@@ -99,7 +116,7 @@ export const authOptions: AuthOptions = {
             } else if (twoFactorMethod === "EMAIL") {
               // For email 2FA, we need to verify against stored code
               // The code is stored in format "CODE:TIMESTAMP" in twoFactorSecret during login request
-              const storedData = (user as any).twoFactorLoginCode;
+              const storedData = user.twoFactorLoginCode;
               if (!storedData) {
                 throw new Error("2FA_CODE_EXPIRED");
               }
@@ -125,7 +142,17 @@ export const authOptions: AuthOptions = {
           }
         }
 
-        return user;
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          accountType: user.accountType,
+          isEmailVerified: user.isEmailVerified,
+          image: user.image,
+          preferredCurrency: user.preferredCurrency,
+          country: user.country,
+        };
       },
     }),
   ],
@@ -133,6 +160,35 @@ export const authOptions: AuthOptions = {
     strategy: "jwt", // Using JWT for reliable session management
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 7 * 24 * 60 * 60, // Update session every 7 days (reduced from 24 hours)
+  },
+  cookies: {
+    sessionToken: {
+      name: `${process.env.NODE_ENV === 'production' ? '__Secure-' : ''}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        // Don't set domain - allows cookies to work on localhost AND network IP
+      },
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        sameSite: 'lax' as const,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax' as const,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   // Let NextAuth handle cookie names automatically based on environment
   // In production (HTTPS), it uses __Secure- prefix
@@ -207,6 +263,7 @@ export const authOptions: AuthOptions = {
           token.country = dbUser.country;
           token.lastUpdated = Date.now();
         }
+        // If dbUser not found, just return the existing token
       } else if (token.id) {
         // Refresh user data from DB periodically (every 7 days to reduce DB calls)
         const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days

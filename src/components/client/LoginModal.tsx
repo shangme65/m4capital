@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import VerifyEmailModal from "./VerifyEmailModal";
@@ -35,6 +35,7 @@ export default function LoginModal({
   const [isVerifying2FA, setIsVerifying2FA] = useState(false);
   
   const router = useRouter();
+  const { update } = useSession();
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -62,7 +63,9 @@ export default function LoginModal({
         setError("Facebook login failed. Please try again.");
       } else if (result?.ok) {
         onClose();
-        router.push("/dashboard");
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 100);
       }
     } catch (err) {
       setError("An error occurred during Facebook login.");
@@ -82,7 +85,9 @@ export default function LoginModal({
 
       if (result?.ok) {
         onClose();
-        router.push("/dashboard");
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 100);
       } else {
         setError("Google login failed. Please try again.");
       }
@@ -168,7 +173,10 @@ export default function LoginModal({
         setError("Invalid email or password. Please try again.");
       } else {
         onClose();
-        router.push("/dashboard");
+        // Small delay to ensure cookie is set, then force full page reload
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 100);
       }
     } catch (err) {
       setIsLoading(false);
@@ -242,7 +250,9 @@ export default function LoginModal({
         setError("Login failed. Please try again.");
       } else {
         onClose();
-        router.push("/dashboard");
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 100);
       }
     } catch (err) {
       setIsVerifying2FA(false);
@@ -619,7 +629,7 @@ export default function LoginModal({
         onVerified={() => {
           setShowVerifyModal(false);
           onClose();
-          router.push("/dashboard");
+          window.location.href = "/dashboard";
         }}
         onClose={() => setShowVerifyModal(false)}
       />

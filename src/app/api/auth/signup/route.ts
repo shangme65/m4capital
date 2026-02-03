@@ -15,7 +15,7 @@ const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters").max(100),
   email: z.string().email("Invalid email format").toLowerCase().trim(),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  accountType: z.enum(["INVESTOR", "TRADER"]).default("INVESTOR"),
+  accountType: z.enum(["STANDARD", "INVESTOR", "TRADER"]).default("STANDARD"),
   country: z.string().optional(),
 });
 
@@ -79,6 +79,7 @@ export async function POST(req: Request) {
         name,
         email: email, // Already normalized by Zod
         password: hashedPassword,
+        role: "USER", // Explicitly set role
         accountType: accountType,
         country: country || undefined,
         preferredCurrency,

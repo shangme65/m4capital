@@ -62,7 +62,7 @@ export async function POST(req: Request) {
       await sendEmail({
         to: normalizedEmail,
         subject: "Welcome to M4 Capital!",
-        html: emailTemplate(emailContent),
+        html: emailContent,
         text: `Welcome to M4 Capital! Your email has been successfully verified.`,
       });
     } catch (emailError) {

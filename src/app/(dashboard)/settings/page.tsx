@@ -1052,8 +1052,9 @@ export default function SettingsPage() {
       setNewPassword("");
       setConfirmPassword("");
 
-      // Hide success message after 5 seconds
-      setTimeout(() => setPasswordSuccess(false), 5000);
+      // Show success toast and close modal
+      showSuccess("Password changed successfully!");
+      setShowChangePasswordModal(false);
     } catch (error: any) {
       setPasswordError(error.message || "Failed to change password");
     } finally {
@@ -2664,7 +2665,7 @@ export default function SettingsPage() {
                         /* Step 2: Verify Code */
                         <form onSubmit={handleVerify2FA} className="space-y-3">
                           <div>
-                            <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                            <label className="block text-xs font-medium mb-1.5 text-white">
                               2. Enter the 6-digit code from your app:
                             </label>
                             <input

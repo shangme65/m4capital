@@ -21,14 +21,14 @@ const DashboardHeader = () => {
   // Derive the secondary label (Investor / Trader, etc.)
   const secondaryLabel = (() => {
     const at = session?.user?.accountType;
-    if (at && (at === "INVESTOR" || at === "TRADER")) {
+    if (at && (at === "STANDARD" || at === "INVESTOR" || at === "TRADER")) {
       return at.charAt(0) + at.slice(1).toLowerCase();
     }
     // If accountType missing but role is something other than USER (e.g. ADMIN), show role
     const role = session?.user?.role;
     if (role && role !== "USER") return role;
     // Fallback default
-    return "Investor";
+    return "Standard";
   })();
 
   return (

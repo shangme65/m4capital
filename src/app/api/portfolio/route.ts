@@ -9,13 +9,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("📊 Portfolio API endpoint called");
     const session = await getServerSession(authOptions);
-
-    console.log(
-      "🔐 Session:",
-      session ? `User: ${session.user?.email}` : "No session"
-    );
 
     if (!session?.user?.email) {
       console.error("❌ No authentication - session:", session);
@@ -102,9 +96,6 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log("👤 User found:", user ? `ID: ${user.id}` : "Not found");
-    console.log("💼 Portfolio exists:", user?.Portfolio ? "Yes" : "No");
-
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -112,7 +103,6 @@ export async function GET(request: NextRequest) {
     // Create portfolio if it doesn't exist
     let portfolio = user.Portfolio;
     if (!portfolio) {
-      console.log("📝 Creating new portfolio for user:", user.id);
       portfolio = await prisma.portfolio.create({
         data: {
           id: generateId(),

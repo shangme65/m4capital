@@ -7,7 +7,6 @@ import {
   Settings,
   Shield,
   LogOut,
-  Newspaper,
   Home,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
@@ -37,7 +36,6 @@ const Sidebar = () => {
     { icon: <Home size={24} />, name: "Homepage", href: "/" },
     { icon: <Briefcase size={24} />, name: "Dashboard", href: "/dashboard" },
     { icon: <TrendingUp size={24} />, name: "Traderoom", href: "/traderoom" },
-    { icon: <Newspaper size={24} />, name: "Market News", href: "/news" },
     { icon: <Settings size={24} />, name: "Settings", href: "/settings" },
   ];
 

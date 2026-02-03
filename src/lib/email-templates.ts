@@ -62,7 +62,7 @@ export const emailTemplate = (content: string) => `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <img src="${baseUrl}/m4capitallogo1.png" alt="M4 Capital" width="120" style="display: block; max-width: 120px; height: auto; background: ${colors.white}; padding: 8px 12px; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);" />
+                    <img src="${baseUrl}/m4capitallogo1.png" alt="M4 Capital" width="120" style="display: block; max-width: 120px; height: auto;" />
                   </td>
                 </tr>
               </table>

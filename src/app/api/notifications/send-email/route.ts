@@ -211,17 +211,21 @@ function generateProfessionalEmailTemplate({
         <!-- Main Container with 3D Effect -->
         <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(145deg, ${darkBg} 0%, #262626 100%); border-radius: 24px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 100px rgba(16, 185, 129, 0.1); border: 1px solid rgba(255, 255, 255, 0.05);">
           
+          <!-- Logo Header -->
+          <tr>
+            <td style="text-align: center; padding: 24px 20px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+              <img src="${process.env.NEXTAUTH_URL || "https://m4capital.online"}/m4capitallogo1.png" alt="M4 Capital" width="140" style="display: inline-block; max-width: 140px; height: auto;" />
+            </td>
+          </tr>
+          
           <!-- 3D Header with Gradient Overlay -->
           <tr>
-            <td style="position: relative; background: ${transactionGradient}; padding: 50px 40px 40px; text-align: center; box-shadow: inset 0 -2px 20px rgba(0, 0, 0, 0.2);">
+            <td style="position: relative; background: ${transactionGradient}; padding: 40px 40px 30px; text-align: center; box-shadow: inset 0 -2px 20px rgba(0, 0, 0, 0.2);">
               <!-- Animated Background Pattern -->
               <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; opacity: 0.1; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.05) 10px, rgba(255,255,255,.05) 20px);"></div>
               
-              <!-- Logo with Glow Effect -->
+              <!-- Title with Badge -->
               <div style="position: relative; z-index: 2;">
-                <h1 style="margin: 0; color: #ffffff; font-size: 36px; font-weight: 800; letter-spacing: -1px; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), 0 0 40px rgba(255, 255, 255, 0.2);">
-                  M4<span style="background: linear-gradient(to right, #fff, rgba(255,255,255,0.8)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Capital</span>
-                </h1>
                 <div style="margin-top: 12px; padding: 8px 20px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); border-radius: 20px; display: inline-block; border: 1px solid rgba(255, 255, 255, 0.2);">
                   <p style="margin: 0; color: rgba(255, 255, 255, 0.95); font-size: 13px; font-weight: 600; letter-spacing: 0.5px;">
                     PREMIUM DIGITAL ASSET MANAGEMENT

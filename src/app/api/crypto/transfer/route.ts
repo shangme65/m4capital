@@ -59,9 +59,15 @@ function generateTransferEmailHtml(
         <tr>
           <td align="center">
             <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+              <!-- Logo Header -->
+              <tr>
+                <td style="text-align: center; padding: 24px 20px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                  <img src="${process.env.NEXTAUTH_URL || "https://m4capital.online"}/m4capitallogo1.png" alt="M4 Capital" width="140" style="display: inline-block; max-width: 140px; height: auto;" />
+                </td>
+              </tr>
               <!-- Header -->
               <tr>
-                <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, ${
+                <td style="padding: 30px 40px 20px; text-align: center; background: linear-gradient(135deg, ${
                   direction === "received" ? "#22c55e20" : "#3b82f620"
                 } 0%, transparent 100%);">
                   <div style="display: inline-block; width: 80px; height: 80px; background: linear-gradient(135deg, ${
