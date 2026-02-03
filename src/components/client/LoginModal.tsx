@@ -182,33 +182,58 @@ export default function LoginModal({
     setIsVerifying2FA(true);
 
     try {
-      // First verify the 2FA code via our API
-      const verifyResponse = await fetch("/api/auth/verify-2fa", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.toLowerCase().trim(),
-          password,
-          code: twoFactorCode,
-          method: twoFactorMethod === "authenticator" ? "APP" : "EMAIL",
-        }),
-      });
+      // For APP (authenticator), verify first via API since it doesn't consume the code
+      if (twoFactorMethod === "authenticator") {
+        const verifyResponse = await fetch("/api/auth/verify-2fa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.toLowerCase().trim(),
+            password,
+            code: twoFactorCode,
+            method: "APP",
+          }),
+        });
 
-      const verifyData = await verifyResponse.json();
+        const verifyData = await verifyResponse.json();
 
-      if (!verifyResponse.ok) {
-        setIsVerifying2FA(false);
-        setError(verifyData.error || "Invalid verification code");
-        return;
+        if (!verifyResponse.ok) {
+          setIsVerifying2FA(false);
+          setError(verifyData.error || "Invalid verification code");
+          return;
+        }
+      } else {
+        // For EMAIL, verify via API but it will clear the code
+        // So we use a special flag to skip auth.ts verification
+        const verifyResponse = await fetch("/api/auth/verify-2fa", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.toLowerCase().trim(),
+            password,
+            code: twoFactorCode,
+            method: "EMAIL",
+          }),
+        });
+
+        const verifyData = await verifyResponse.json();
+
+        if (!verifyResponse.ok) {
+          setIsVerifying2FA(false);
+          setError(verifyData.error || "Invalid verification code");
+          return;
+        }
       }
 
       // 2FA verified, now proceed with actual login
+      // Pass skipTwoFactor to bypass 2FA check in auth.ts since we already verified
       const result = await signIn("credentials", {
         redirect: false,
         email: email.toLowerCase().trim(),
         password,
         twoFactorCode,
         twoFactorMethod: twoFactorMethod === "authenticator" ? "APP" : "EMAIL",
+        twoFactorVerified: "true", // Flag to skip 2FA check in auth.ts
       });
 
       setIsVerifying2FA(false);
