@@ -43,6 +43,208 @@ import {
   Menu,
 } from "lucide-react";
 
+// Countries list for nationality dropdown
+const COUNTRIES = [
+  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda",
+  "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain",
+  "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan",
+  "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria",
+  "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada",
+  "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros",
+  "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czech Republic", "Denmark",
+  "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador",
+  "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland",
+  "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada",
+  "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary",
+  "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy",
+  "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo",
+  "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia",
+  "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi",
+  "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania",
+  "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro",
+  "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands",
+  "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia",
+  "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea",
+  "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania",
+  "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia",
+  "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe",
+  "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore",
+  "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea",
+  "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland",
+  "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo",
+  "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
+  "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States",
+  "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam",
+  "Yemen", "Zambia", "Zimbabwe"
+];
+
+// Phone number format mapping by country
+const PHONE_FORMATS: Record<string, string> = {
+  "United States": "+1 234 567 8900",
+  "Canada": "+1 234 567 8900",
+  "United Kingdom": "+44 20 1234 5678",
+  "Australia": "+61 2 1234 5678",
+  "Germany": "+49 30 12345678",
+  "France": "+33 1 23 45 67 89",
+  "Italy": "+39 02 1234 5678",
+  "Spain": "+34 91 123 4567",
+  "Netherlands": "+31 20 123 4567",
+  "Belgium": "+32 2 123 45 67",
+  "Switzerland": "+41 21 123 45 67",
+  "Austria": "+43 1 234567890",
+  "Sweden": "+46 8 123 456 78",
+  "Norway": "+47 12 34 56 78",
+  "Denmark": "+45 12 34 56 78",
+  "Finland": "+358 9 1234567",
+  "Poland": "+48 22 123 4567",
+  "Portugal": "+351 21 123 4567",
+  "Greece": "+30 21 1234 5678",
+  "Ireland": "+353 1 234 5678",
+  "Czech Republic": "+420 123 456 789",
+  "Hungary": "+36 1 234 5678",
+  "Romania": "+40 21 123 4567",
+  "Russia": "+7 495 123 4567",
+  "Ukraine": "+380 44 123 4567",
+  "Turkey": "+90 212 123 4567",
+  "Brazil": "+55 11 91234 5678",
+  "Mexico": "+52 55 1234 5678",
+  "Argentina": "+54 11 1234 5678",
+  "Chile": "+56 2 1234 5678",
+  "Colombia": "+57 1 234 5678",
+  "Peru": "+51 1 234 5678",
+  "Venezuela": "+58 212 123 4567",
+  "China": "+86 10 1234 5678",
+  "Japan": "+81 3 1234 5678",
+  "South Korea": "+82 2 1234 5678",
+  "India": "+91 11 1234 5678",
+  "Indonesia": "+62 21 1234 5678",
+  "Thailand": "+66 2 123 4567",
+  "Malaysia": "+60 3 1234 5678",
+  "Singapore": "+65 1234 5678",
+  "Philippines": "+63 2 1234 5678",
+  "Vietnam": "+84 24 1234 5678",
+  "Pakistan": "+92 21 1234 5678",
+  "Bangladesh": "+880 2 1234 5678",
+  "South Africa": "+27 11 123 4567",
+  "Nigeria": "+234 1 234 5678",
+  "Kenya": "+254 20 123 4567",
+  "Egypt": "+20 2 1234 5678",
+  "Israel": "+972 2 123 4567",
+  "Saudi Arabia": "+966 11 234 5678",
+  "United Arab Emirates": "+971 4 123 4567",
+  "Qatar": "+974 1234 5678",
+  "Kuwait": "+965 1234 5678",
+  "New Zealand": "+64 9 123 4567",
+};
+
+// Helper function to get phone placeholder based on country
+const getPhonePlaceholder = (userCountry: string | null | undefined): string => {
+  if (!userCountry) return "+1 234 567 8900";
+  return PHONE_FORMATS[userCountry] || "+1 234 567 8900";
+};
+
+// Phone formatting patterns by country
+const PHONE_PATTERNS: Record<string, { prefix: string; pattern: number[] }> = {
+  "United States": { prefix: "+1", pattern: [3, 3, 4] },
+  "Canada": { prefix: "+1", pattern: [3, 3, 4] },
+  "United Kingdom": { prefix: "+44", pattern: [2, 4, 4] },
+  "Australia": { prefix: "+61", pattern: [1, 4, 4] },
+  "Germany": { prefix: "+49", pattern: [2, 8] },
+  "France": { prefix: "+33", pattern: [1, 2, 2, 2, 2] },
+  "Italy": { prefix: "+39", pattern: [2, 4, 4] },
+  "Spain": { prefix: "+34", pattern: [2, 3, 4] },
+  "Netherlands": { prefix: "+31", pattern: [2, 3, 4] },
+  "Belgium": { prefix: "+32", pattern: [1, 3, 2, 2] },
+  "Switzerland": { prefix: "+41", pattern: [2, 3, 2, 2] },
+  "Austria": { prefix: "+43", pattern: [1, 9] },
+  "Sweden": { prefix: "+46", pattern: [1, 3, 3, 2] },
+  "Norway": { prefix: "+47", pattern: [2, 2, 2, 2] },
+  "Denmark": { prefix: "+45", pattern: [2, 2, 2, 2] },
+  "Finland": { prefix: "+358", pattern: [1, 7] },
+  "Poland": { prefix: "+48", pattern: [2, 3, 4] },
+  "Portugal": { prefix: "+351", pattern: [2, 3, 4] },
+  "Greece": { prefix: "+30", pattern: [2, 4, 4] },
+  "Ireland": { prefix: "+353", pattern: [1, 3, 4] },
+  "Czech Republic": { prefix: "+420", pattern: [3, 3, 3] },
+  "Hungary": { prefix: "+36", pattern: [1, 3, 4] },
+  "Romania": { prefix: "+40", pattern: [2, 3, 4] },
+  "Russia": { prefix: "+7", pattern: [3, 3, 4] },
+  "Ukraine": { prefix: "+380", pattern: [2, 3, 4] },
+  "Turkey": { prefix: "+90", pattern: [3, 3, 4] },
+  "Brazil": { prefix: "+55", pattern: [2, 5, 4] },
+  "Mexico": { prefix: "+52", pattern: [2, 4, 4] },
+  "Argentina": { prefix: "+54", pattern: [2, 4, 4] },
+  "Chile": { prefix: "+56", pattern: [1, 4, 4] },
+  "Colombia": { prefix: "+57", pattern: [1, 3, 4] },
+  "Peru": { prefix: "+51", pattern: [1, 3, 4] },
+  "Venezuela": { prefix: "+58", pattern: [3, 3, 4] },
+  "China": { prefix: "+86", pattern: [2, 4, 4] },
+  "Japan": { prefix: "+81", pattern: [1, 4, 4] },
+  "South Korea": { prefix: "+82", pattern: [1, 4, 4] },
+  "India": { prefix: "+91", pattern: [2, 4, 4] },
+  "Indonesia": { prefix: "+62", pattern: [2, 4, 4] },
+  "Thailand": { prefix: "+66", pattern: [1, 3, 4] },
+  "Malaysia": { prefix: "+60", pattern: [1, 4, 4] },
+  "Singapore": { prefix: "+65", pattern: [4, 4] },
+  "Philippines": { prefix: "+63", pattern: [1, 4, 4] },
+  "Vietnam": { prefix: "+84", pattern: [2, 4, 4] },
+  "Pakistan": { prefix: "+92", pattern: [2, 4, 4] },
+  "Bangladesh": { prefix: "+880", pattern: [1, 4, 4] },
+  "South Africa": { prefix: "+27", pattern: [2, 3, 4] },
+  "Nigeria": { prefix: "+234", pattern: [1, 3, 4] },
+  "Kenya": { prefix: "+254", pattern: [2, 3, 4] },
+  "Egypt": { prefix: "+20", pattern: [1, 4, 4] },
+  "Israel": { prefix: "+972", pattern: [1, 3, 4] },
+  "Saudi Arabia": { prefix: "+966", pattern: [2, 3, 4] },
+  "United Arab Emirates": { prefix: "+971", pattern: [1, 3, 4] },
+  "Qatar": { prefix: "+974", pattern: [4, 4] },
+  "Kuwait": { prefix: "+965", pattern: [4, 4] },
+  "New Zealand": { prefix: "+64", pattern: [1, 3, 4] },
+};
+
+// Helper function to format phone number as user types
+const formatPhoneNumber = (value: string, userCountry: string | null | undefined): string => {
+  // Get the pattern for the country
+  const defaultPattern = { prefix: "+1", pattern: [3, 3, 4] };
+  const countryPattern = userCountry ? (PHONE_PATTERNS[userCountry] || defaultPattern) : defaultPattern;
+  
+  // Remove all non-numeric characters except +
+  let cleaned = value.replace(/[^\d+]/g, '');
+  
+  // If it starts with +, extract the digits after it
+  let numbers = cleaned.replace(/\D/g, '');
+  
+  // If no numbers, return just the prefix
+  if (!numbers) return countryPattern.prefix + ' ';
+  
+  // Start with the country prefix
+  let formatted = countryPattern.prefix + ' ';
+  let numberIndex = 0;
+  
+  // Apply the pattern
+  for (let i = 0; i < countryPattern.pattern.length && numberIndex < numbers.length; i++) {
+    const groupSize = countryPattern.pattern[i];
+    const group = numbers.substr(numberIndex, groupSize);
+    
+    if (group) {
+      formatted += group;
+      numberIndex += groupSize;
+      
+      // Add space after group if not the last group and we have more numbers
+      if (i < countryPattern.pattern.length - 1 && numberIndex < numbers.length) {
+        formatted += ' ';
+      }
+    }
+  }
+  
+  // If there are remaining numbers, append them
+  if (numberIndex < numbers.length) {
+    formatted += ' ' + numbers.substr(numberIndex);
+  }
+  
+  return formatted.trim();
+};
+
 // Full-screen KYC Submission Loading Modal
 function KycSubmissionLoadingModal() {
   return (
@@ -413,6 +615,11 @@ export default function SettingsPage() {
   const [accountNumber, setAccountNumber] = useState<string | null>(null);
   const [copiedAccountNumber, setCopiedAccountNumber] = useState(false);
 
+  // Account deletion request state
+  const [showDeletionModal, setShowDeletionModal] = useState(false);
+  const [deletionReason, setDeletionReason] = useState("");
+  const [submittingDeletion, setSubmittingDeletion] = useState(false);
+
   // Profile edit state
   const [profileName, setProfileName] = useState("");
   const [originalName, setOriginalName] = useState("");
@@ -483,8 +690,11 @@ export default function SettingsPage() {
     "NOT_STARTED" | "PENDING" | "APPROVED" | "REJECTED" | "UNDER_REVIEW"
   >("NOT_STARTED");
   const [kycStage, setKycStage] = useState(1); // 1: Personal Info, 2: Address Info, 3: Documents
+  const [showKycSuccessModal, setShowKycSuccessModal] = useState(false);
+  const [showKycDetails, setShowKycDetails] = useState(false);
   const [documents, setDocuments] = useState({
-    idDocument: null as File | null,
+    idDocumentFront: null as File | null,
+    idDocumentBack: null as File | null,
     proofOfAddress: null as File | null,
     selfie: null as File | null,
   });
@@ -1293,7 +1503,7 @@ export default function SettingsPage() {
   };
 
   const handleFileChange = (
-    type: "idDocument" | "proofOfAddress" | "selfie",
+    type: "idDocumentFront" | "idDocumentBack" | "proofOfAddress" | "selfie",
     file: File | null
   ) => {
     setDocuments((prev) => ({ ...prev, [type]: file }));
@@ -1303,8 +1513,12 @@ export default function SettingsPage() {
     e.preventDefault();
     
     // Validate all documents are uploaded
-    if (!documents.idDocument) {
-      showError("Please upload your government-issued ID document");
+    if (!documents.idDocumentFront) {
+      showError("Please upload the front of your government-issued ID");
+      return;
+    }
+    if (!documents.idDocumentBack) {
+      showError("Please upload the back of your government-issued ID");
       return;
     }
     if (!documents.proofOfAddress) {
@@ -1341,7 +1555,8 @@ export default function SettingsPage() {
       formData.append("country", kycData.nationality); // Using nationality as country for now
 
       // Add files
-      formData.append("idDocument", documents.idDocument);
+      formData.append("idDocumentFront", documents.idDocumentFront);
+      formData.append("idDocumentBack", documents.idDocumentBack);
       formData.append("proofOfAddress", documents.proofOfAddress);
       formData.append("selfie", documents.selfie);
 
@@ -1354,9 +1569,7 @@ export default function SettingsPage() {
 
       if (response.ok) {
         setKycStatus("PENDING");
-        showSuccess(
-          "KYC verification submitted successfully! We'll review your documents within 24-48 hours."
-        );
+        setShowKycSuccessModal(true);
       } else {
         showError(data.error || "Failed to submit KYC verification");
       }
@@ -1567,7 +1780,65 @@ export default function SettingsPage() {
                               "linear-gradient(135deg, rgba(255,255,255,0.25) 0%, transparent 50%, rgba(0,0,0,0.1) 100%)",
                           }}
                         />
-                        <Icon className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                        {item.id === "telegram" ? (
+                          <Image
+                            src="/socials/Telegram.png"
+                            alt="Telegram"
+                            width={50}
+                            height={50}
+                            className="relative z-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
+                          />
+                        ) : item.id === "profile" ? (
+                          <Image
+                            src="/settings/profile.png"
+                            alt="Profile"
+                            width={50}
+                            height={50}
+                            className="relative z-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
+                          />
+                        ) : item.id === "security" ? (
+                          <Image
+                            src="/settings/security.png"
+                            alt="Security"
+                            width={36}
+                            height={36}
+                            className="relative z-10 w-full h-full object-cover rounded-lg drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
+                          />
+                        ) : item.id === "kyc" ? (
+                          <Image
+                            src="/settings/kyc-3d.png"
+                            alt="KYC"
+                            width={40}
+                            height={40}
+                            className="relative z-10 rounded-full drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
+                          />
+                        ) : item.id === "notifications" ? (
+                          <Image
+                            src="/settings/emailnotifications.png"
+                            alt="Email Notifications"
+                            width={50}
+                            height={50}
+                            className="relative z-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
+                          />
+                        ) : item.id === "preferences" ? (
+                          <Image
+                            src="/settings/preference1.png"
+                            alt="Preferences"
+                            width={50}
+                            height={50}
+                            className="relative z-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
+                          />
+                        ) : item.id === "data-privacy" ? (
+                          <Image
+                            src="/settings/database.png"
+                            alt="Data & Privacy"
+                            width={50}
+                            height={50}
+                            className="relative z-10 drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
+                          />
+                        ) : (
+                          <Icon className="w-4 h-4 text-white relative z-10 drop-shadow-md" />
+                        )}
                       </div>
                     </div>
 
@@ -2991,10 +3262,10 @@ export default function SettingsPage() {
           title="KYC Verification"
           toggleSidebar={toggleSidebar}
         >
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* KYC Status Banner */}
             <div
-              className={`rounded-lg p-4 border ${
+              className={`rounded-lg p-3 border ${
                 kycStatus === "APPROVED"
                   ? "bg-green-900/20 border-green-700"
                   : kycStatus === "PENDING"
@@ -3006,108 +3277,138 @@ export default function SettingsPage() {
                   : "bg-gray-900/20 border-gray-700"
               }`}
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-3 mb-2">
                 {kycStatus === "APPROVED" && (
-                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
                 )}
                 {kycStatus === "PENDING" && (
-                  <Clock className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <Clock className="w-5 h-5 text-yellow-400 flex-shrink-0" />
                 )}
                 {kycStatus === "UNDER_REVIEW" && (
-                  <Eye className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <Eye className="w-5 h-5 text-blue-400 flex-shrink-0" />
                 )}
                 {kycStatus === "REJECTED" && (
-                  <XCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                  <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
                 )}
                 {kycStatus === "NOT_STARTED" && (
-                  <AlertCircle className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
+                  <AlertCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 )}
 
-                <div className="flex-1">
-                  <h3 className="font-semibold text-white mb-1">
-                    {kycStatus === "APPROVED" && "Verification Approved"}
-                    {kycStatus === "PENDING" && "Verification Pending"}
-                    {kycStatus === "UNDER_REVIEW" && "Under Review"}
-                    {kycStatus === "REJECTED" && "Verification Rejected"}
-                    {kycStatus === "NOT_STARTED" && "Verification Required"}
-                  </h3>
-                  <p className="text-sm text-gray-300">
-                    {kycStatus === "APPROVED" &&
-                      "Your identity has been verified. You have full access to all platform features."}
-                    {kycStatus === "PENDING" &&
-                      "We're reviewing your documents. This typically takes 24-48 hours."}
-                    {kycStatus === "UNDER_REVIEW" &&
-                      "Your documents are being carefully reviewed by our team. We'll notify you once complete."}
-                    {kycStatus === "REJECTED" &&
-                      "Your verification was rejected. Please review the feedback and resubmit."}
-                    {kycStatus === "NOT_STARTED" &&
-                      "Complete KYC verification to unlock full trading capabilities and higher limits."}
-                  </p>
-                </div>
+                <h3 className="font-semibold text-white">
+                  {kycStatus === "APPROVED" && "Verification Approved"}
+                  {kycStatus === "PENDING" && "Verification Pending"}
+                  {kycStatus === "UNDER_REVIEW" && "Under Review"}
+                  {kycStatus === "REJECTED" && "Verification Rejected"}
+                  {kycStatus === "NOT_STARTED" && "Verification Required"}
+                </h3>
               </div>
+              <p className="text-sm text-gray-300">
+                {kycStatus === "APPROVED" &&
+                  "Your identity has been verified. You have full access to all platform features."}
+                {kycStatus === "PENDING" &&
+                  "We're reviewing your documents. This typically takes 24-48 hours."}
+                {kycStatus === "UNDER_REVIEW" &&
+                  "Your documents are being carefully reviewed by our team. We'll notify you once complete."}
+                {kycStatus === "REJECTED" &&
+                  "Your verification was rejected. Please review the feedback and resubmit."}
+                {kycStatus === "NOT_STARTED" &&
+                  "Complete KYC verification to unlock full trading capabilities and higher limits."}
+              </p>
             </div>
 
             {/* KYC Form (only show if not approved) */}
             {kycStatus !== "APPROVED" && (
-              <form onSubmit={handleKycSubmit} className="space-y-6">
+              <form onSubmit={handleKycSubmit} className="space-y-4">
+                {/* Stage Title */}
+                <p className="text-sm text-gray-400 text-center">
+                  {kycStage === 1 && "Step 1 of 3: Personal Information"}
+                  {kycStage === 2 && "Step 2 of 3: Address Information"}
+                  {kycStage === 3 && "Step 3 of 3: Document Upload"}
+                </p>
+
                 {/* Stage Indicator */}
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                        kycStage >= 1
-                          ? "bg-orange-500 text-white"
-                          : "bg-gray-600 text-gray-400"
-                      }`}
-                    >
-                      {kycStage > 1 ? "✓" : "1"}
-                    </div>
-                    <div
-                      className={`h-1 w-16 ${
-                        kycStage >= 2 ? "bg-orange-500" : "bg-gray-600"
-                      }`}
-                    />
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                        kycStage >= 2
-                          ? "bg-orange-500 text-white"
-                          : "bg-gray-600 text-gray-400"
-                      }`}
-                    >
-                      {kycStage > 2 ? "✓" : "2"}
-                    </div>
-                    <div
-                      className={`h-1 w-16 ${
-                        kycStage >= 3 ? "bg-orange-500" : "bg-gray-600"
-                      }`}
-                    />
-                    <div
-                      className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                        kycStage >= 3
-                          ? "bg-orange-500 text-white"
-                          : "bg-gray-600 text-gray-400"
-                      }`}
-                    >
-                      3
-                    </div>
+                <div className="flex items-center justify-center gap-2">
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                      kycStage >= 1
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-600 text-gray-400"
+                    }`}
+                  >
+                    {kycStage > 1 ? "✓" : "1"}
                   </div>
-                  <p className="text-sm text-gray-400">
-                    {kycStage === 1 && "Step 1 of 3: Personal Information"}
-                    {kycStage === 2 && "Step 2 of 3: Address Information"}
-                    {kycStage === 3 && "Step 3 of 3: Document Upload"}
-                  </p>
+                  <div
+                    className={`h-1 w-16 ${
+                      kycStage >= 2 ? "bg-orange-500" : "bg-gray-600"
+                    }`}
+                  />
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                      kycStage >= 2
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-600 text-gray-400"
+                    }`}
+                  >
+                    {kycStage > 2 ? "✓" : "2"}
+                  </div>
+                  <div
+                    className={`h-1 w-16 ${
+                      kycStage >= 3 ? "bg-orange-500" : "bg-gray-600"
+                    }`}
+                  />
+                  <div
+                    className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                      kycStage >= 3
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-600 text-gray-400"
+                    }`}
+                  >
+                    3
+                  </div>
                 </div>
 
                 {/* Stage 1: Personal Information */}
                 {kycStage === 1 && (
                   <div>
-                    <h4 className="text-base font-semibold text-white mb-4">
-                      Personal Information
-                    </h4>
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    {!showKycDetails ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowKycDetails(true)}
+                        className="w-full bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg p-3 text-left transition-colors group"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
+                              <FileCheck className="w-5 h-5 text-orange-500" />
+                            </div>
+                            <h4 className="text-base font-semibold text-white">
+                              View Documents
+                            </h4>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                        </div>
+                        <p className="text-sm text-gray-400">
+                          Click to enter your personal information
+                        </p>
+                      </button>
+                    ) : (
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-base font-semibold text-white">
+                            Personal Information
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => setShowKycDetails(false)}
+                            className="text-sm text-gray-400 hover:text-white transition-colors"
+                          >
+                            Hide
+                          </button>
+                        </div>
+                    <div className="grid sm:grid-cols-2 gap-3">
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                          className="block text-sm font-medium mb-1 text-white"
                           htmlFor="firstName"
                         >
                           First Name *
@@ -3129,7 +3430,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                          className="block text-sm font-medium mb-1 text-white"
                           htmlFor="lastName"
                         >
                           Last Name (Surname) *
@@ -3148,7 +3449,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                          className="block text-sm font-medium mb-1 text-white"
                           htmlFor="dateOfBirth"
                         >
                           Date of Birth *
@@ -3169,14 +3470,13 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                          className="block text-sm font-medium mb-1 text-white"
                           htmlFor="nationality"
                         >
                           Nationality *
                         </label>
-                        <input
+                        <select
                           id="nationality"
-                          type="text"
                           required
                           value={kycData.nationality}
                           onChange={(e) =>
@@ -3186,12 +3486,20 @@ export default function SettingsPage() {
                             })
                           }
                           className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                          placeholder="e.g., United States, Canada, United Kingdom, etc."
-                        />
+                        >
+                          <option value="" disabled className="text-gray-500">
+                            Select your country
+                          </option>
+                          {COUNTRIES.map((country) => (
+                            <option key={country} value={country}>
+                              {country}
+                            </option>
+                          ))}
+                        </select>
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                          className="block text-sm font-medium mb-1 text-white"
                           htmlFor="phoneNumber"
                         >
                           Phone Number *
@@ -3201,20 +3509,21 @@ export default function SettingsPage() {
                           type="tel"
                           required
                           value={kycData.phoneNumber}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const formatted = formatPhoneNumber(e.target.value, kycData.nationality || country);
                             setKycData({
                               ...kycData,
-                              phoneNumber: e.target.value,
-                            })
-                          }
+                              phoneNumber: formatted,
+                            });
+                          }}
                           className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
-                          placeholder="+1 234 567 8900"
+                          placeholder={getPhonePlaceholder(kycData.nationality || country)}
                         />
                       </div>
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className="flex justify-end mt-6">
+                    <div className="flex justify-end mt-4">
                       <button
                         type="button"
                         onClick={() => {
@@ -3243,25 +3552,59 @@ export default function SettingsPage() {
                           }
                           setKycStage(2);
                         }}
-                        className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white"
                       >
                         Next
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Stage 2: Address Information */}
                 {kycStage === 2 && (
                   <div>
-                    <h4 className="text-base font-semibold text-white mb-4">
-                      Address Information
-                    </h4>
-                    <div className="space-y-4">
+                    {!showKycDetails ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowKycDetails(true)}
+                        className="w-full bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg p-3 text-left transition-colors group"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
+                              <FileCheck className="w-5 h-5 text-orange-500" />
+                            </div>
+                            <h4 className="text-base font-semibold text-white">
+                              View Documents
+                            </h4>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                        </div>
+                        <p className="text-sm text-gray-400">
+                          Click to enter your address information
+                        </p>
+                      </button>
+                    ) : (
+                      <div>
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-base font-semibold text-white">
+                            Address Information
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => setShowKycDetails(false)}
+                            className="text-sm text-gray-400 hover:text-white transition-colors"
+                          >
+                            Hide
+                          </button>
+                        </div>
+                    <div className="space-y-3">
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                          className="block text-sm font-medium mb-1 text-white"
                           htmlFor="address"
                         >
                           Street Address *
@@ -3278,10 +3621,10 @@ export default function SettingsPage() {
                           placeholder="e.g., 123 Main Street, Apt 4B"
                         />
                       </div>
-                      <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="grid sm:grid-cols-2 gap-3">
                         <div>
                           <label
-                            className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                            className="block text-sm font-medium mb-1 text-white"
                             htmlFor="city"
                           >
                             City *
@@ -3300,7 +3643,7 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <label
-                            className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300"
+                            className="block text-sm font-medium mb-1 text-white"
                             htmlFor="postalCode"
                           >
                             Postal Code *
@@ -3324,11 +3667,11 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className="flex justify-between mt-6">
+                    <div className="flex justify-between mt-4">
                       <button
                         type="button"
                         onClick={() => setKycStage(1)}
-                        className="bg-gray-700 hover:bg-gray-600 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        className="bg-gray-700 hover:bg-gray-600 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white"
                       >
                         <ChevronRight className="w-4 h-4 rotate-180" />
                         Previous
@@ -3351,66 +3694,167 @@ export default function SettingsPage() {
                           }
                           setKycStage(3);
                         }}
-                        className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white"
                       >
                         Next
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 {/* Stage 3: Document Upload */}
                 {kycStage === 3 && (
                   <div>
-                    <h4 className="text-base font-semibold text-white mb-4">
-                      Document Upload
-                    </h4>
-                    <div className="space-y-4">
-                      {/* ID Document */}
+                    {!showKycDetails ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowKycDetails(true)}
+                        className="w-full bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg p-3 text-left transition-colors group"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
+                              <FileCheck className="w-5 h-5 text-orange-500" />
+                            </div>
+                            <h4 className="text-base font-semibold text-white">
+                              View Documents
+                            </h4>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                        </div>
+                        <p className="text-sm text-gray-400">
+                          Click to upload your verification documents
+                        </p>
+                      </button>
+                    ) : (
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-base font-semibold text-white">
+                            Document Upload
+                          </h4>
+                          <button
+                            type="button"
+                            onClick={() => setShowKycDetails(false)}
+                            className="text-sm text-gray-400 hover:text-white transition-colors"
+                          >
+                            Hide
+                          </button>
+                        </div>
+                    <div className="space-y-3">
+                      {/* ID Document - Front and Back */}
+                      <div>
+                        <label className="block text-sm font-medium mb-2 text-white">
                           Government-Issued ID * (Passport, Driver's License, or
                           National ID)
                         </label>
-                        <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            onChange={(e) =>
-                              handleFileChange(
-                                "idDocument",
-                                e.target.files?.[0] || null
-                              )
-                            }
-                            className="hidden"
-                            id="idDocument"
-                            required
-                          />
-                          <label
-                            htmlFor="idDocument"
-                            className="cursor-pointer"
-                          >
-                            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                            <p className="text-sm text-gray-300">
-                              {documents.idDocument
-                                ? documents.idDocument.name
-                                : "Click to upload or drag and drop"}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              PNG, JPG or PDF (max 10MB)
-                            </p>
-                          </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Front Side */}
+                          <div>
+                            <p className="text-xs text-gray-400 mb-2">Front Side</p>
+                            <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+                              documents.idDocumentFront
+                                ? "border-green-500 bg-green-900/10"
+                                : "border-gray-600 hover:border-orange-500"
+                            }`}>
+                              <input
+                                type="file"
+                                accept="image/*,.pdf"
+                                onChange={(e) =>
+                                  handleFileChange(
+                                    "idDocumentFront",
+                                    e.target.files?.[0] || null
+                                  )
+                                }
+                                className="hidden"
+                                id="idDocumentFront"
+                                required
+                              />
+                              <label
+                                htmlFor="idDocumentFront"
+                                className="cursor-pointer block"
+                              >
+                                {documents.idDocumentFront ? (
+                                  <div className="space-y-2">
+                                    <CheckCircle className="w-6 h-6 mx-auto text-green-400" />
+                                    <p className="text-xs text-gray-300 truncate">
+                                      {documents.idDocumentFront.name}
+                                    </p>
+                                    <p className="text-xs text-green-400">Uploaded</p>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    <Upload className="w-6 h-6 mx-auto text-gray-400" />
+                                    <p className="text-xs text-gray-300">Upload Front</p>
+                                    <p className="text-xs text-gray-500">PNG, JPG or PDF</p>
+                                  </div>
+                                )}
+                              </label>
+                            </div>
+                          </div>
+                          
+                          {/* Back Side */}
+                          <div>
+                            <p className="text-xs text-gray-400 mb-2">Back Side</p>
+                            <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+                              documents.idDocumentBack
+                                ? "border-green-500 bg-green-900/10"
+                                : "border-gray-600 hover:border-orange-500"
+                            }`}>
+                              <input
+                                type="file"
+                                accept="image/*,.pdf"
+                                onChange={(e) =>
+                                  handleFileChange(
+                                    "idDocumentBack",
+                                    e.target.files?.[0] || null
+                                  )
+                                }
+                                className="hidden"
+                                id="idDocumentBack"
+                                required
+                              />
+                              <label
+                                htmlFor="idDocumentBack"
+                                className="cursor-pointer block"
+                              >
+                                {documents.idDocumentBack ? (
+                                  <div className="space-y-2">
+                                    <CheckCircle className="w-6 h-6 mx-auto text-green-400" />
+                                    <p className="text-xs text-gray-300 truncate">
+                                      {documents.idDocumentBack.name}
+                                    </p>
+                                    <p className="text-xs text-green-400">Uploaded</p>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    <Upload className="w-6 h-6 mx-auto text-gray-400" />
+                                    <p className="text-xs text-gray-300">Upload Back</p>
+                                    <p className="text-xs text-gray-500">PNG, JPG or PDF</p>
+                                  </div>
+                                )}
+                              </label>
+                            </div>
+                          </div>
                         </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Please upload clear images of both sides of your ID (max 10MB each)
+                        </p>
                       </div>
 
                       {/* Proof of Address */}
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                        <label className="block text-sm font-medium mb-2 text-white">
                           Proof of Address * (Utility Bill, Bank Statement -
                           less than 3 months old)
                         </label>
-                        <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
+                        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                          documents.proofOfAddress
+                            ? "border-green-500 bg-green-900/10"
+                            : "border-gray-600 hover:border-orange-500"
+                        }`}>
                           <input
                             type="file"
                             accept="image/*,.pdf"
@@ -3428,25 +3872,39 @@ export default function SettingsPage() {
                             htmlFor="proofOfAddress"
                             className="cursor-pointer"
                           >
-                            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                            <p className="text-sm text-gray-300">
-                              {documents.proofOfAddress
-                                ? documents.proofOfAddress.name
-                                : "Click to upload or drag and drop"}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              PNG, JPG or PDF (max 10MB)
-                            </p>
+                            {documents.proofOfAddress ? (
+                              <div className="space-y-2">
+                                <CheckCircle className="w-8 h-8 mx-auto text-green-400" />
+                                <p className="text-sm text-gray-300">
+                                  {documents.proofOfAddress.name}
+                                </p>
+                                <p className="text-xs text-green-400">Uploaded</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                                <p className="text-sm text-gray-300">
+                                  Click to upload or drag and drop
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  PNG, JPG or PDF (max 10MB)
+                                </p>
+                              </div>
+                            )}
                           </label>
                         </div>
                       </div>
 
                       {/* Selfie */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-white mb-2">
                           Selfie with ID * (Hold your ID next to your face)
                         </label>
-                        <div className="border-2 border-dashed border-gray-600 rounded-lg p-6 text-center hover:border-orange-500 transition-colors">
+                        <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                          documents.selfie
+                            ? "border-green-500 bg-green-900/10"
+                            : "border-gray-600 hover:border-orange-500"
+                        }`}>
                           <input
                             type="file"
                             accept="image/*"
@@ -3461,15 +3919,25 @@ export default function SettingsPage() {
                             required
                           />
                           <label htmlFor="selfie" className="cursor-pointer">
-                            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                            <p className="text-sm text-gray-300">
-                              {documents.selfie
-                                ? documents.selfie.name
-                                : "Click to upload or drag and drop"}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              PNG or JPG (max 10MB)
-                            </p>
+                            {documents.selfie ? (
+                              <div className="space-y-2">
+                                <CheckCircle className="w-8 h-8 mx-auto text-green-400" />
+                                <p className="text-sm text-gray-300">
+                                  {documents.selfie.name}
+                                </p>
+                                <p className="text-xs text-green-400">Uploaded</p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <Upload className="w-8 h-8 mx-auto text-gray-400" />
+                                <p className="text-sm text-gray-300">
+                                  Click to upload or drag and drop
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  PNG or JPG (max 10MB)
+                                </p>
+                              </div>
+                            )}
                           </label>
                         </div>
                       </div>
@@ -3482,7 +3950,7 @@ export default function SettingsPage() {
                           type="checkbox"
                           id="kycTerms"
                           required
-                          className="mt-1 w-4 h-4 rounded border-gray-600 bg-gray-700 focus:ring-2 focus:ring-orange-500"
+                          className="mt-1 w-4 h-4 rounded border-0 bg-gray-700 focus:ring-0 focus:outline-none accent-orange-500"
                         />
                         <label
                           htmlFor="kycTerms"
@@ -3501,7 +3969,7 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => setKycStage(2)}
-                        className="bg-gray-700 hover:bg-gray-600 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                        className="bg-gray-700 hover:bg-gray-600 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white"
                       >
                         <ChevronRight className="w-4 h-4 rotate-180" />
                         Previous
@@ -3512,22 +3980,25 @@ export default function SettingsPage() {
                           submittingKyc ||
                           kycStatus === "PENDING" ||
                           kycStatus === "UNDER_REVIEW" ||
-                          !documents.idDocument ||
+                          !documents.idDocumentFront ||
+                          !documents.idDocumentBack ||
                           !documents.proofOfAddress ||
                           !documents.selfie
                         }
-                        className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                        className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-medium transition-colors text-white"
                       >
                         {submittingKyc
                           ? "Submitting..."
                           : kycStatus === "PENDING" ||
                             kycStatus === "UNDER_REVIEW"
                           ? "Under Review"
-                          : !documents.idDocument || !documents.proofOfAddress || !documents.selfie
+                          : !documents.idDocumentFront || !documents.idDocumentBack || !documents.proofOfAddress || !documents.selfie
                           ? "Upload All Documents"
                           : "Submit for Verification"}
                       </button>
                     </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </form>
@@ -3549,6 +4020,52 @@ export default function SettingsPage() {
           </div>
         </SettingsModal>
 
+        {/* KYC Success Modal */}
+        {showKycSuccessModal && ReactDOM.createPortal(
+          <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900 flex flex-col items-center justify-center px-6">
+            {/* Background Gradient Effect */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-green-500/10 rounded-full blur-[100px] animate-pulse" />
+              <div className="absolute bottom-1/4 left-1/3 w-[300px] h-[300px] bg-orange-500/10 rounded-full blur-[80px] animate-pulse delay-1000" />
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 w-full max-w-md text-center">
+              {/* Success Icon */}
+              <div className="relative mb-8">
+                <div className="w-24 h-24 mx-auto relative">
+                  {/* Outer ring with 3D shadow */}
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-b from-green-400 to-green-600 shadow-[0_10px_30px_rgba(34,197,94,0.4),inset_0_-5px_20px_rgba(0,0,0,0.3)] animate-pulse" />
+                  {/* Inner ring */}
+                  <div className="absolute inset-2 rounded-full bg-gray-900 flex items-center justify-center shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)]">
+                    <CheckCircle className="w-12 h-12 text-green-400" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Title */}
+              <h2 className="text-2xl font-bold text-white mb-3">
+                Verification Submitted!
+              </h2>
+              <p className="text-gray-400 text-sm mb-8">
+                Thank you for submitting your documents. We'll review your KYC verification within 24-48 hours and notify you once complete.
+              </p>
+
+              {/* Action Button */}
+              <button
+                onClick={() => {
+                  setShowKycSuccessModal(false);
+                  closeModal();
+                }}
+                className="bg-green-600 hover:bg-green-500 px-8 py-3 rounded-lg font-medium transition-colors text-white"
+              >
+                Got it
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
+
         {/* Email Notifications Modal */}
         <SettingsModal
           isOpen={activeModal === "notifications"}
@@ -3567,40 +4084,40 @@ export default function SettingsPage() {
               </p>
 
               {/* Master toggle */}
-              <div className="flex items-start justify-between p-4 bg-gray-700/50 rounded-lg border border-gray-600">
-                <div className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-indigo-400 mt-0.5" />
-                  <div>
-                    <h3 className="font-medium text-white">
+              <div className="p-4 bg-gray-700/50 rounded-lg border border-gray-600">
+                <div className="flex items-start justify-between mb-1 pb-3 border-b border-gray-600">
+                  <div className="flex items-center gap-3">
+                    <Mail className="w-5 h-5 text-indigo-400" />
+                    <h3 className="font-semibold text-white text-base">
                       Email Notifications
                     </h3>
-                    <p className="text-sm text-gray-400 mt-1">
-                      Receive all email notifications. Turning this off will
-                      disable all email alerts.
-                    </p>
+                    <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">Main Toggle</span>
                   </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={emailPreferences.emailNotifications}
+                      onChange={(e) =>
+                        handleEmailPreferenceChange(
+                          "emailNotifications",
+                          e.target.checked
+                        )
+                      }
+                      disabled={savingEmailPrefs}
+                    />
+                    <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                  </label>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={emailPreferences.emailNotifications}
-                    onChange={(e) =>
-                      handleEmailPreferenceChange(
-                        "emailNotifications",
-                        e.target.checked
-                      )
-                    }
-                    disabled={savingEmailPrefs}
-                  />
-                  <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
-                </label>
-              </div>
+                <p className="text-sm text-gray-400 mb-4 mt-3">
+                  Receive all email notifications. Turning this off will
+                  disable all email alerts.
+                </p>
 
               {/* Sub-toggles */}
-              <div className="space-y-3 pl-4 border-l-2 border-gray-700">
+              <div className="space-y-0 -mx-4">
                 {/* KYC Notifications */}
-                <div className="flex items-start justify-between p-3 bg-gray-800/50 rounded-lg">
+                <div className="flex items-start justify-between px-4 py-3 border-t border-gray-700/50">
                   <div>
                     <h4 className="font-medium text-white text-sm">
                       KYC Verification
@@ -3629,7 +4146,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Trading Notifications */}
-                <div className="flex items-start justify-between p-3 bg-gray-800/50 rounded-lg">
+                <div className="flex items-start justify-between px-4 py-3 border-t border-gray-700/50">
                   <div>
                     <h4 className="font-medium text-white text-sm">
                       Trading & Transactions
@@ -3658,7 +4175,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Security Notifications */}
-                <div className="flex items-start justify-between p-3 bg-gray-800/50 rounded-lg">
+                <div className="flex items-start justify-between px-4 py-3 border-t border-gray-700/50">
                   <div>
                     <h4 className="font-medium text-white text-sm">
                       Security Alerts
@@ -3686,6 +4203,7 @@ export default function SettingsPage() {
                   </label>
                 </div>
               </div>
+              </div>
 
               {savingEmailPrefs && (
                 <div className="text-sm text-gray-400 flex items-center gap-2">
@@ -3710,35 +4228,47 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              <div className="flex items-start gap-3">
-                <MessageCircle className="w-5 h-5 text-blue-400 mt-1" />
-                <div className="flex-1">
-                  <h3 className="font-medium text-white mb-2">
+              <div>
+                <div className="flex items-center gap-3 mb-2">
+                  <Image
+                    src="/socials/Telegram.png"
+                    alt="Telegram"
+                    width={40}
+                    height={40}
+                    className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
+                  />
+                  <h3 className="font-medium text-white">
                     Connect your Telegram account
                   </h3>
-                  <p className="text-sm text-gray-400 mb-4">
-                    Link your M4 Capital account to Telegram to receive instant
-                    notifications, view your portfolio, and get real-time price
-                    alerts directly in Telegram.
-                  </p>
                 </div>
+                <p className="text-sm text-gray-400 mb-4">
+                  Link your M4 Capital account to Telegram to receive instant
+                  notifications, view your portfolio, and get real-time price
+                  alerts directly in Telegram.
+                </p>
               </div>
 
               {!telegramLinked ? (
                 <>
                   {/* Linking Instructions */}
-                  <div className="bg-gray-700/50 rounded-lg p-4 border border-gray-600">
-                    <h4 className="font-medium text-white mb-3">
+                  <div className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
+                    <h4 className="font-medium text-white mb-2">
                       How to link:
                     </h4>
-                    <ol className="space-y-2 text-sm text-gray-300">
+                    <ol className="space-y-1.5 text-sm text-gray-300">
                       <li className="flex gap-2">
                         <span className="font-semibold text-blue-400">1.</span>
                         <span>
-                          Open Telegram and search for{" "}
-                          <span className="font-mono bg-gray-800 px-2 py-0.5 rounded">
-                            @M4CapitalBot
-                          </span>
+                          Click{" "}
+                          <a 
+                            href="https://t.me/m4capital_bot" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-blue-400 hover:text-blue-300 underline font-medium"
+                          >
+                            here
+                          </a>
+                          {" "}to open our Telegram bot
                         </span>
                       </li>
                       <li className="flex gap-2">
@@ -3766,7 +4296,7 @@ export default function SettingsPage() {
                     <div>
                       <label
                         htmlFor="linkCode"
-                        className="block text-sm font-medium mb-2"
+                        className="block text-sm font-medium mb-2 text-white"
                       >
                         Enter your 6-digit linking code
                       </label>
@@ -3780,13 +4310,13 @@ export default function SettingsPage() {
                           maxLength={6}
                           pattern="[0-9]{6}"
                           required
-                          className="flex-1 bg-gray-700 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-lg tracking-wider"
+                          className="w-48 bg-gray-700 rounded-lg px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base tracking-wider text-white"
                           disabled={linkingTelegram}
                         />
                         <button
                           type="submit"
                           disabled={linkingTelegram || linkCode.length !== 6}
-                          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-5 py-0.5 rounded-lg text-sm font-medium transition-colors text-white"
                         >
                           {linkingTelegram ? "Linking..." : "Link Account"}
                         </button>
@@ -3885,48 +4415,48 @@ export default function SettingsPage() {
           title="Preferences"
           toggleSidebar={toggleSidebar}
         >
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Theme Preference */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Theme
               </label>
               <div className="grid grid-cols-3 gap-2">
                 <button
                   onClick={() => setTheme("light")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 ${
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 ${
                     theme === "light"
                       ? "bg-blue-500/20 border-2 border-blue-500 text-white"
                       : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
                   }`}
                 >
-                  <Sun className="w-6 h-6" />
+                  <Sun className="w-5 h-5" />
                   <span className="text-xs font-medium">Light</span>
                 </button>
                 <button
                   onClick={() => setTheme("dark")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 ${
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 ${
                     theme === "dark"
                       ? "bg-blue-500/20 border-2 border-blue-500 text-white"
                       : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
                   }`}
                 >
-                  <Moon className="w-6 h-6" />
+                  <Moon className="w-5 h-5" />
                   <span className="text-xs font-medium">Dark</span>
                 </button>
                 <button
                   onClick={() => setTheme("system")}
-                  className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all duration-200 ${
+                  className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 ${
                     theme === "system"
                       ? "bg-blue-500/20 border-2 border-blue-500 text-white"
                       : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
                   }`}
                 >
-                  <Monitor className="w-6 h-6" />
+                  <Monitor className="w-5 h-5" />
                   <span className="text-xs font-medium">System</span>
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-gray-400 mt-1.5">
                 {theme === "system"
                   ? `Using system preference (currently ${resolvedTheme})`
                   : `Currently using ${theme} theme`}
@@ -3935,7 +4465,7 @@ export default function SettingsPage() {
 
             {/* Language Preference */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Preferred Language
               </label>
               <div className="relative">
@@ -3945,7 +4475,7 @@ export default function SettingsPage() {
                     setLanguage(e.target.value);
                     showSuccess("Language preference updated");
                   }}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-white appearance-none cursor-pointer focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white appearance-none cursor-pointer focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 >
                   {languages.map((lang) => (
                     <option key={lang.code} value={lang.code}>
@@ -3955,7 +4485,7 @@ export default function SettingsPage() {
                 </select>
                 <Globe className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-gray-400 mt-1.5">
                 This will be used for displaying content throughout the
                 platform.
               </p>
@@ -3963,7 +4493,7 @@ export default function SettingsPage() {
 
             {/* Currency Preference */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
+              <label className="block text-sm font-medium text-gray-300 mb-2">
                 Preferred Currency
               </label>
               {loadingCurrency ? (
@@ -3975,21 +4505,10 @@ export default function SettingsPage() {
                   disabled={savingCurrency}
                 />
               )}
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-gray-400 mt-1.5">
                 This will be used for displaying balances and portfolio values
                 throughout the platform.
               </p>
-            </div>
-
-            {/* Coming Soon Features */}
-            <div className="border-t border-gray-700 pt-4">
-              <h4 className="text-sm font-medium text-gray-400 mb-3">
-                Coming Soon
-              </h4>
-              <ul className="space-y-2 text-sm text-gray-500">
-                <li>• Default dashboard layout</li>
-                <li>• Data refresh interval</li>
-              </ul>
             </div>
           </div>
         </SettingsModal>
@@ -4001,11 +4520,112 @@ export default function SettingsPage() {
           title="Data & Privacy"
           toggleSidebar={toggleSidebar}
         >
-          <ul className="space-y-3 text-sm text-gray-300">
-            <li>• Download account data (planned)</li>
-            <li>• Delete account request (planned)</li>
-            <li>• Consent & regulatory disclosures</li>
-          </ul>
+          <div className="space-y-4">
+            {/* Download Account Data */}
+            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-medium text-white mb-1">
+                    Download Your Data
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    Export all your account information, portfolio history, and transaction records
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch("/api/user/export-data");
+                    if (!response.ok) throw new Error("Failed to export data");
+                    
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `m4capital-data-${new Date().toISOString().split("T")[0]}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    
+                    showSuccess("Data exported successfully");
+                  } catch (error) {
+                    showError("Failed to export data");
+                  }
+                }}
+                className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Download Data (JSON)
+              </button>
+            </div>
+
+            {/* Delete Account */}
+            <div className="bg-gray-800/50 rounded-lg p-4 border border-red-900/30">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <h3 className="text-sm font-medium text-white mb-1">
+                    Delete Account
+                  </h3>
+                  <p className="text-xs text-gray-400">
+                    Submit a request to permanently delete your account. Our team will review your request.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowDeletionModal(true)}
+                className="w-full px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-600/30"
+              >
+                Request Account Deletion
+              </button>
+            </div>
+
+            {/* Privacy & Consent */}
+            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+              <h3 className="text-sm font-medium text-white mb-3">
+                Privacy & Consent
+              </h3>
+              <div className="space-y-3 text-xs text-gray-400">
+                <div className="flex items-start space-x-2">
+                  <div className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                  <p>
+                    We collect and process your data in accordance with GDPR and other applicable privacy regulations.
+                  </p>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <div className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                  <p>
+                    Your data is encrypted at rest and in transit. We never sell your personal information to third parties.
+                  </p>
+                </div>
+                <div className="flex items-start space-x-2">
+                  <div className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
+                  <p>
+                    You have the right to access, rectify, or delete your personal data at any time.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-gray-700/50">
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-400 hover:text-blue-300 underline"
+                >
+                  Read our Privacy Policy
+                </a>
+                <span className="text-gray-600 mx-2">•</span>
+                <a
+                  href="/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-blue-400 hover:text-blue-300 underline"
+                >
+                  Terms of Service
+                </a>
+              </div>
+            </div>
+          </div>
         </SettingsModal>
 
         {/* Confirm Modal */}
@@ -4130,6 +4750,102 @@ export default function SettingsPage() {
             </div>,
             document.body
           )}
+
+      {/* Account Deletion Request Modal */}
+      {showDeletionModal &&
+        ReactDOM.createPortal(
+          <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900/95 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-gray-800 rounded-xl border border-red-900/30 max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-white">Request Account Deletion</h2>
+                <button
+                  onClick={() => {
+                    setShowDeletionModal(false);
+                    setDeletionReason("");
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p className="text-xs text-red-400">
+                  This will submit a request to delete your account. Our team will review and process your request within 24-48 hours.
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-white mb-2">
+                  Reason for Deletion <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  value={deletionReason}
+                  onChange={(e) => setDeletionReason(e.target.value)}
+                  placeholder="Please tell us why you want to delete your account..."
+                  rows={4}
+                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-red-500 resize-none"
+                  maxLength={500}
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  {deletionReason.length}/500 characters
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => {
+                    setShowDeletionModal(false);
+                    setDeletionReason("");
+                  }}
+                  className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+                  disabled={submittingDeletion}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!deletionReason.trim()) {
+                      showError("Please provide a reason for deletion");
+                      return;
+                    }
+
+                    setSubmittingDeletion(true);
+                    try {
+                      const response = await fetch("/api/user/request-deletion", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ reason: deletionReason }),
+                      });
+
+                      if (!response.ok) throw new Error("Failed to submit deletion request");
+
+                      showSuccess("Deletion request submitted successfully. You will receive a confirmation email.");
+                      setShowDeletionModal(false);
+                      setDeletionReason("");
+                    } catch (error) {
+                      showError("Failed to submit deletion request");
+                    } finally {
+                      setSubmittingDeletion(false);
+                    }
+                  }}
+                  disabled={submittingDeletion || !deletionReason.trim()}
+                  className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-600/50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  {submittingDeletion ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    "Submit Request"
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
       </div>
     </>
   );

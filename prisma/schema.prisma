@@ -138,6 +138,7 @@ model KycVerification {
   postalCode        String
   country           String
   idDocumentUrl     String
+  idDocumentBackUrl String?
   proofOfAddressUrl String
   selfieUrl         String
   status            KycStatus @default(PENDING)

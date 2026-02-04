@@ -761,7 +761,7 @@ const TermsOfServicePage = () => {
                         className="overflow-hidden"
                       >
                         <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0">
-                          <div className="pl-8 sm:pl-9 text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line">
+                          <div className="text-xs sm:text-sm text-gray-300 leading-relaxed whitespace-pre-line">
                             {section.content}
                           </div>
                         </div>

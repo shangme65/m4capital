@@ -83,21 +83,28 @@ export async function POST(req: NextRequest) {
     }
 
     // Extract files
-    const idDocument = formData.get("idDocument") as File | null;
+    const idDocumentFront = formData.get("idDocumentFront") as File | null;
+    const idDocumentBack = formData.get("idDocumentBack") as File | null;
     const proofOfAddress = formData.get("proofOfAddress") as File | null;
     const selfie = formData.get("selfie") as File | null;
 
-    if (!idDocument || !proofOfAddress || !selfie) {
+    if (!idDocumentFront || !idDocumentBack || !proofOfAddress || !selfie) {
       return NextResponse.json(
-        { error: "All documents are required (ID, Proof of Address, Selfie)" },
+        { error: "All documents are required (ID Front, ID Back, Proof of Address, Selfie)" },
         { status: 400 }
       );
     }
 
     // Validate file sizes
-    if (idDocument.size > MAX_FILE_SIZE) {
+    if (idDocumentFront.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "ID document file is too large. Maximum size is 10MB." },
+        { error: "ID document front file is too large. Maximum size is 10MB." },
+        { status: 400 }
+      );
+    }
+    if (idDocumentBack.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { error: "ID document back file is too large. Maximum size is 10MB." },
         { status: 400 }
       );
     }
@@ -115,10 +122,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate file types
-    if (!ALLOWED_TYPES.includes(idDocument.type)) {
+    if (!ALLOWED_TYPES.includes(idDocumentFront.type)) {
       return NextResponse.json(
         {
-          error: "Invalid ID document format. Allowed: PNG, JPG, JPEG, or PDF.",
+          error: "Invalid ID document front format. Allowed: PNG, JPG, JPEG, or PDF.",
+        },
+        { status: 400 }
+      );
+    }
+    if (!ALLOWED_TYPES.includes(idDocumentBack.type)) {
+      return NextResponse.json(
+        {
+          error: "Invalid ID document back format. Allowed: PNG, JPG, JPEG, or PDF.",
         },
         { status: 400 }
       );
@@ -144,7 +159,8 @@ export async function POST(req: NextRequest) {
 
     // Convert files to base64 data URLs for storage
     // This works on serverless platforms like Vercel where filesystem is read-only
-    const idDocumentUrl = await fileToBase64DataUrl(idDocument);
+    const idDocumentFrontUrl = await fileToBase64DataUrl(idDocumentFront);
+    const idDocumentBackUrl = await fileToBase64DataUrl(idDocumentBack);
     const proofOfAddressUrl = await fileToBase64DataUrl(proofOfAddress);
     const selfieUrl = await fileToBase64DataUrl(selfie);
 
@@ -159,7 +175,8 @@ export async function POST(req: NextRequest) {
       city,
       postalCode,
       country,
-      idDocumentUrl,
+      idDocumentUrl: idDocumentFrontUrl, // Store front as primary
+      idDocumentBackUrl: idDocumentBackUrl, // Store back separately
       proofOfAddressUrl,
       selfieUrl,
       status: "PENDING" as const,
