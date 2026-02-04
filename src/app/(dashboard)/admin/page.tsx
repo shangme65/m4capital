@@ -42,6 +42,7 @@ import {
   getExchangeRates,
 } from "@/lib/currencies";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import ManualProfitModal from "@/components/client/ManualProfitModal";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
@@ -739,6 +740,7 @@ const AdminDashboard = () => {
   const [isStrongMode, setIsStrongMode] = useState(false);
   const [isModerateMode, setIsModerateMode] = useState(false);
   const [isWeakMode, setIsWeakMode] = useState(false);
+  const [showManualProfitModal, setShowManualProfitModal] = useState(false);
 
   // New states for deposit type selection
   const [depositType, setDepositType] = useState<"fiat" | "crypto">("fiat");
@@ -1687,6 +1689,58 @@ const AdminDashboard = () => {
                   </div>
                 </div>
                 <div className="text-green-400">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </div>
+              </button>
+
+              {/* Manual Trade Profit */}
+              <button
+                onClick={() => setShowManualProfitModal(true)}
+                className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(251,191,36,0.25),0_0_30px_rgba(251,191,36,0.4)]"
+                style={{
+                  background:
+                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                  boxShadow:
+                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                    style={{
+                      boxShadow:
+                        "0 4px 16px #fbbf2440, 0 2px 8px #fbbf2460, inset 0 1px 2px rgba(255,255,255,0.2)",
+                    }}
+                  >
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                    <TrendingUp
+                      className="relative z-10 drop-shadow-lg text-white"
+                      size={20}
+                    />
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-white font-bold text-sm">
+                      Manual Trade Profit
+                    </span>
+                    <span className="text-gray-400 text-xs">
+                      Add profits to user accounts
+                    </span>
+                  </div>
+                </div>
+                <div className="text-amber-400">
                   <svg
                     className="w-5 h-5"
                     fill="none"
@@ -3960,6 +4014,16 @@ const AdminDashboard = () => {
           </motion.div>
         </div>
       )}
+
+      {/* Manual Profit Modal */}
+      <ManualProfitModal
+        isOpen={showManualProfitModal}
+        onClose={() => setShowManualProfitModal(false)}
+        onSuccess={() => {
+          showPopupNotification("Manual profit added successfully", "success");
+          fetchUsers();
+        }}
+      />
     </div>
   );
 };

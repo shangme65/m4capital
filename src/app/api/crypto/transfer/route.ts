@@ -62,7 +62,7 @@ function generateTransferEmailHtml(
               <!-- Logo Header -->
               <tr>
                 <td style="text-align: center; padding: 24px 20px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                  <img src="${process.env.NEXTAUTH_URL || "https://m4capital.online"}/m4capitallogo1.png" alt="M4 Capital" width="140" style="display: inline-block; max-width: 140px; height: auto;" />
+                  <img src="https://www.m4capital.online/m4capitallogo1.png" alt="M4Capital" width="140" style="display: inline-block; max-width: 140px; height: auto;" />
                 </td>
               </tr>
               <!-- Header -->

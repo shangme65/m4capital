@@ -2,8 +2,23 @@
 // MODERN PROFESSIONAL EMAIL TEMPLATE SYSTEM
 // ============================================================================
 
-const baseUrl = process.env.NEXTAUTH_URL || "https://m4capital.online";
+const baseUrl = process.env.NEXTAUTH_URL || "https://www.m4capital.online";
 const currentYear = new Date().getFullYear();
+
+// Logo as SVG text for reliable email rendering (doesn't require external image loading)
+const logoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 50" width="120" height="30">
+  <defs>
+    <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f97316"/>
+      <stop offset="100%" style="stop-color:#ea580c"/>
+    </linearGradient>
+  </defs>
+  <text x="10" y="35" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="url(#logoGrad)">M<tspan fill="#ffffff" font-size="20" baseline-shift="super">4</tspan></text>
+  <text x="55" y="35" font-family="Arial, sans-serif" font-size="24" font-weight="500" fill="#ffffff">Capital</text>
+</svg>`;
+
+// Fallback text logo for maximum compatibility
+const textLogo = `<span style="font-family: Arial, sans-serif; font-size: 24px; font-weight: bold; color: #f97316;">M<sup style="font-size: 14px; color: #ffffff;">4</sup></span><span style="font-family: Arial, sans-serif; font-size: 20px; font-weight: 500; color: #ffffff;">Capital</span>`;
 
 // Color Palette
 const colors = {
@@ -62,7 +77,7 @@ export const emailTemplate = (content: string) => `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <img src="${baseUrl}/m4capitallogo1.png" alt="M4 Capital" width="120" style="display: block; max-width: 120px; height: auto;" />
+                    <img src="https://www.m4capital.online/m4capitallogo1.png" alt="M4Capital" width="120" style="display: block; max-width: 120px; height: auto;" />
                   </td>
                 </tr>
               </table>
