@@ -3,8 +3,8 @@ import Link from "next/link";
 
 const ForTradersDropdown = () => {
   return (
-    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-max">
-      <div className="bg-gray-800 text-white p-8 grid grid-cols-3 gap-x-16 rounded-lg shadow-2xl">
+    <div className="absolute top-full left-0 md:left-1/2 md:-translate-x-1/2 mt-2 w-screen md:w-max max-w-[100vw] px-4 md:px-0">
+      <div className="bg-gray-800 text-white p-4 md:p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-x-16 rounded-lg shadow-2xl max-h-[80vh] overflow-y-auto">
         <div>
           <h3 className="font-bold text-sm text-gray-400 mb-4 tracking-widest">
             MARKETS & ASSETS

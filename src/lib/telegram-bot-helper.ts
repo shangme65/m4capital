@@ -154,10 +154,18 @@ export async function convertCurrency(
   from: string,
   to: string
 ): Promise<number> {
+  // If same currency, no conversion needed
+  if (from === to) return amount;
+  
   const rate = await getForexRate(from, to);
   if (rate) {
-    return amount * rate;
+    const converted = amount * rate;
+    console.log(`Currency conversion: ${amount} ${from} -> ${converted} ${to} (rate: ${rate})`);
+    return converted;
   }
+  
+  // Log error if conversion fails
+  console.error(`Failed to convert currency from ${from} to ${to}, returning original amount`);
   return amount;
 }
 

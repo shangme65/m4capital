@@ -3,8 +3,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import {
   Grid3X3,
   List,
@@ -142,8 +140,6 @@ export default function IndustriesPage() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <Header />
-
       {/* Hero Section with Purple Gradient */}
       <section className="relative pt-20 pb-16 overflow-hidden">
         {/* Purple gradient background */}
@@ -344,40 +340,6 @@ export default function IndustriesPage() {
           </div>
         </div>
       </section>
-
-      {/* Risk Warning Section */}
-      <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="border border-gray-300 rounded-lg p-6">
-              <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
-                <span className="w-3 h-3 bg-gray-700 rounded-full"></span>
-                RISK WARNING:
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                The Financial Products offered by the company include Contracts
-                for Difference (&apos;CFDs&apos;) and other complex financial
-                products. Trading CFDs carries a high level of risk, since
-                leverage can work both to your advantage and disadvantage. As a
-                result, CFDs may not be suitable for all investors because it is
-                possible to lose all of your invested capital. You should never
-                invest money that you cannot afford to lose. Before trading in
-                the complex financial products offered, please ensure you
-                understand the risks involved.
-              </p>
-            </div>
-
-            <p className="text-gray-500 text-sm mt-6 text-center">
-              You are granted limited non-exclusive non-transferable rights to
-              use the IP provided on this website for personal and
-              non-commercial purposes in relation to the services offered on the
-              Website only.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <Footer />
     </div>
   );
 }

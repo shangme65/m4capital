@@ -6,5 +6,11 @@
       "master": true,
       "develop": true
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/process-stuck-deposits",
+      "schedule": "*/5 * * * *"
+    }
+  ]
 }

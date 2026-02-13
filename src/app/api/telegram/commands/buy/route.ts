@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    // Convert amount from user's currency to USD
+    // Convert amount from user's currency to USD (for crypto purchase)
     const userCurrency = user.preferredCurrency || "USD";
     const amountUSD = await convertCurrency(
       amountInUserCurrency,
@@ -126,10 +126,20 @@ export async function POST(req: NextRequest) {
 
     // Check balance
     const balance = parseFloat(user.Portfolio.balance.toString());
-    if (balance < amountUSD) {
+    const balanceCurrency = user.Portfolio.balanceCurrency || "USD";
+    
+    // Convert user's input amount to balance currency for comparison
+    const amountInBalanceCurrency = await convertCurrency(
+      amountInUserCurrency,
+      userCurrency,
+      balanceCurrency
+    );
+    
+    if (balance < amountInBalanceCurrency) {
+      // Convert balance to user's currency for display
       const balanceInUserCurrency = await convertCurrency(
         balance,
-        "USD",
+        balanceCurrency,
         userCurrency
       );
       await sendTelegramMessage(

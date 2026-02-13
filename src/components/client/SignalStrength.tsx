@@ -57,7 +57,7 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
   return (
     <div className={`${className}`}>
       <div
-        className="relative rounded-2xl p-4 sm:p-6 overflow-hidden"
+        className="relative rounded-2xl p-3 sm:p-4 overflow-hidden"
         style={{
           background:
             "linear-gradient(135deg, rgba(31, 41, 55, 0.4) 0%, rgba(17, 24, 39, 0.6) 100%)",

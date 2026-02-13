@@ -3,9 +3,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { useModal } from "@/contexts/ModalContext";
 import {
   Search,
   TrendingUp,
@@ -816,7 +813,6 @@ const CommodityCard = ({ asset }: { asset: (typeof commodities)[0] }) => {
 
 // Main Assets Page
 export default function AssetsPage() {
-  const { openLoginModal, openSignupModal } = useModal();
   const [activeTab, setActiveTab] = useState<
     "forex" | "stocks" | "crypto" | "commodities"
   >("forex");
@@ -889,8 +885,6 @@ export default function AssetsPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      <Header onLoginClick={openLoginModal} onSignupClick={openSignupModal} />
-
       {/* Hero Section */}
       <div
         className="relative pt-20 pb-8"
@@ -1047,44 +1041,6 @@ export default function AssetsPage() {
           </div>
         )}
       </div>
-
-      {/* Payment Methods Banner */}
-      <div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-6">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex items-center justify-center gap-8 overflow-x-auto">
-            <Image
-              src="/payments/skrill.png"
-              alt="Skrill"
-              width={80}
-              height={32}
-              className="h-8 w-auto opacity-60 hover:opacity-100 transition-opacity"
-            />
-            <Image
-              src="/payments/volet.png"
-              alt="Volet"
-              width={80}
-              height={32}
-              className="h-8 w-auto opacity-60 hover:opacity-100 transition-opacity"
-            />
-            <Image
-              src="/payments/neteller.png"
-              alt="Neteller"
-              width={80}
-              height={32}
-              className="h-8 w-auto opacity-60 hover:opacity-100 transition-opacity"
-            />
-            <Image
-              src="/payments/mastercard.png"
-              alt="Mastercard"
-              width={80}
-              height={32}
-              className="h-8 w-auto opacity-60 hover:opacity-100 transition-opacity"
-            />
-          </div>
-        </div>
-      </div>
-
-      <Footer />
     </div>
   );
 }

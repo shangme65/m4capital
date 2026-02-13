@@ -3,11 +3,10 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import {
   ChevronDown,
   ChevronUp,
+  ChevronRight,
   Calendar,
   TrendingUp,
   Search,
@@ -152,8 +151,6 @@ export default function HistoricalQuotesPage() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header />
-
       {/* Hero Section with Dark Purple/Gray Gradient */}
       <section className="relative pt-20 pb-16 overflow-hidden">
         {/* Dark gradient background with chart pattern */}
@@ -215,11 +212,11 @@ export default function HistoricalQuotesPage() {
       </section>
 
       {/* Main Content */}
-      <section className="py-8 bg-white">
+      <section className="py-6 bg-white">
         <div className="container mx-auto px-4">
           {/* Instrument Selector */}
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-medium mb-2">
+          <div className="mb-4">
+            <label className="block text-gray-700 text-xs font-medium mb-2">
               Instrument
             </label>
             <div className="flex items-center gap-2">
@@ -227,9 +224,9 @@ export default function HistoricalQuotesPage() {
               <div className="relative flex-1 max-w-md">
                 <button
                   onClick={() => setIsInstrumentOpen(!isInstrumentOpen)}
-                  className="w-full flex items-center justify-between px-4 py-3 bg-white border border-gray-300 rounded-lg text-left hover:border-orange-400 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
+                  className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg text-left hover:border-orange-400 transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500"
                 >
-                  <span className="text-gray-900">
+                  <span className="text-gray-900 text-sm">
                     {isLoading ? "Loading..." : selectedInstrument.name}
                   </span>
                   <ChevronDown
@@ -255,7 +252,7 @@ export default function HistoricalQuotesPage() {
                           <input
                             type="text"
                             placeholder="Search instruments..."
-                            className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                            className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
                           />
                         </div>
                       </div>
@@ -263,14 +260,14 @@ export default function HistoricalQuotesPage() {
                         <button
                           key={instrument.id}
                           onClick={() => handleInstrumentSelect(instrument)}
-                          className={`w-full px-4 py-3 text-left hover:bg-orange-50 transition-colors ${
+                          className={`w-full px-3 py-2 text-left hover:bg-orange-50 transition-colors ${
                             selectedInstrument.id === instrument.id
                               ? "bg-orange-50 text-orange-600"
                               : "text-gray-700"
                           }`}
                         >
-                          <span className="font-medium">{instrument.name}</span>
-                          <span className="text-gray-400 text-sm ml-2">
+                          <span className="font-medium text-sm">{instrument.name}</span>
+                          <span className="text-gray-400 text-xs ml-2">
                             ({instrument.symbol})
                           </span>
                         </button>
@@ -281,15 +278,15 @@ export default function HistoricalQuotesPage() {
               </div>
 
               {/* Calendar Button */}
-              <button className="p-3 bg-white border border-gray-300 rounded-lg hover:border-orange-400 transition-colors">
-                <Calendar className="w-5 h-5 text-gray-500" />
+              <button className="p-2 bg-white border border-gray-300 rounded-lg hover:border-orange-400 transition-colors">
+                <Calendar className="w-4 h-4 text-gray-500" />
               </button>
             </div>
           </div>
 
           {/* Info Notice */}
-          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-            <p className="text-gray-600 text-sm leading-relaxed">
+          <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+            <p className="text-gray-600 text-xs leading-relaxed">
               Please note that the tick-by-tick quotes displayed in this section
               are relevant only for option contracts, so this section contains
               only information about trades executed on this trading instrument.
@@ -309,18 +306,18 @@ export default function HistoricalQuotesPage() {
           {/* Quotes Table */}
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-4 gap-4 px-4 py-3 bg-gray-50 border-b border-gray-200">
-              <div className="text-gray-500 text-sm font-medium">Date</div>
-              <div className="text-gray-500 text-sm font-medium">Bid, Ask</div>
-              <div className="text-gray-500 text-sm font-medium">Quotes</div>
-              <div></div>
+            <div className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 px-4 py-2 bg-gray-50 border-b border-gray-200">
+              <div className="text-gray-500 text-xs font-medium">Date</div>
+              <div className="text-gray-500 text-xs font-medium text-right">Bid, Ask</div>
+              <div className="text-gray-500 text-xs font-medium text-right">Quotes</div>
+              <div className="w-8"></div>
             </div>
 
             {/* Table Body */}
             <div className="divide-y divide-gray-100">
               {isLoading ? (
-                <div className="px-4 py-8 text-center text-gray-500">
-                  <div className="animate-spin w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-3"></div>
+                <div className="px-4 py-6 text-center text-gray-500">
+                  <div className="animate-spin w-6 h-6 border-4 border-orange-500 border-t-transparent rounded-full mx-auto mb-2"></div>
                   Loading quotes...
                 </div>
               ) : (
@@ -328,31 +325,31 @@ export default function HistoricalQuotesPage() {
                   <div key={quote.id}>
                     {/* Main Quote Row */}
                     <div
-                      className={`grid grid-cols-4 gap-4 px-4 py-4 hover:bg-gray-50 transition-colors ${
+                      className={`grid grid-cols-[2fr_1fr_1fr_auto] gap-2 px-4 py-2 hover:bg-gray-50 transition-colors ${
                         quote.hasDetails ? "cursor-pointer" : ""
                       }`}
                       onClick={() =>
                         quote.hasDetails && toggleQuoteExpand(quote.id)
                       }
                     >
-                      <div className="text-gray-600 text-sm">
+                      <div className="text-gray-600 text-xs">
                         <div>{quote.date},</div>
                         <div>{quote.time}</div>
                       </div>
-                      <div className="text-gray-900 text-sm">
+                      <div className="text-gray-900 text-xs text-right">
                         <div>{quote.bid}</div>
                         <div>{quote.ask}</div>
                       </div>
-                      <div className="text-gray-900 text-sm font-medium">
+                      <div className="text-gray-900 text-xs font-medium text-right">
                         {quote.quote}
                       </div>
-                      <div className="flex justify-end">
+                      <div className="flex justify-end w-8">
                         {quote.hasDetails && (
                           <button className="p-1 text-orange-500 hover:bg-orange-50 rounded transition-colors">
                             {expandedQuotes.has(quote.id) ? (
-                              <ChevronUp className="w-5 h-5" />
+                              <ChevronUp className="w-4 h-4" />
                             ) : (
-                              <ChevronDown className="w-5 h-5" />
+                              <ChevronDown className="w-4 h-4" />
                             )}
                           </button>
                         )}
@@ -372,22 +369,22 @@ export default function HistoricalQuotesPage() {
                           {quote.details?.map((detail, idx) => (
                             <div
                               key={idx}
-                              className="grid grid-cols-4 gap-4 px-4 py-3 border-t border-gray-100"
+                              className="grid grid-cols-[2fr_1fr_1fr_auto] gap-2 px-4 py-1.5 border-t border-gray-100"
                             >
-                              <div className="text-gray-500 text-sm">
+                              <div className="text-gray-500 text-xs">
                                 <span>{detail.time}</span>
                                 <span className="text-orange-500 font-medium">
                                   {detail.milliseconds}
                                 </span>
                               </div>
-                              <div className="text-gray-700 text-sm">
+                              <div className="text-gray-700 text-xs text-right">
                                 <div>{detail.bid}</div>
                                 <div>{detail.ask}</div>
                               </div>
-                              <div className="text-gray-700 text-sm">
+                              <div className="text-gray-700 text-xs text-right">
                                 {detail.quote}
                               </div>
-                              <div></div>
+                              <div className="w-8"></div>
                             </div>
                           ))}
                         </motion.div>
@@ -400,7 +397,7 @@ export default function HistoricalQuotesPage() {
           </div>
 
           {/* Bottom Notice */}
-          <div className="mt-6 text-gray-500 text-sm">
+          <div className="mt-4 text-gray-500 text-xs">
             <p>
               Financial quotes for the last <strong>30 minutes</strong> are not
               displayed. The quotes presented here apply only to Option
@@ -410,122 +407,67 @@ export default function HistoricalQuotesPage() {
         </div>
       </section>
 
-      {/* Payment Partners Section */}
-      <section className="py-8 bg-gray-50 border-t border-gray-200">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-8 flex-wrap">
-            <div className="text-2xl font-bold text-purple-600">Skrill</div>
-            <div className="text-2xl font-bold text-gray-700">volet</div>
-            <div className="text-2xl font-bold text-green-600">NETELLER</div>
+      {/* Footer Links */}
+      <section className="py-6 px-4 border-t border-gray-200 bg-gray-50">
+        <div className="container mx-auto max-w-6xl">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
+            <Link href="/" className="hover:text-orange-500">
+              Home
+            </Link>
+            <ChevronRight className="w-4 h-4" />
+            <span className="text-gray-700 font-medium">Historical Quotes</span>
           </div>
-          {/* Pagination dots */}
-          <div className="flex items-center justify-center gap-2 mt-4">
-            {[...Array(12)].map((_, i) => (
-              <div
-                key={i}
-                className={`w-2 h-2 rounded-full ${
-                  i === 0 ? "bg-orange-500" : "bg-gray-300"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Breadcrumb */}
-      <section className="py-4 bg-white border-t border-gray-200">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <Link href="/" className="text-gray-500 hover:text-orange-500">
-                Home
-              </Link>
-              <span className="text-orange-500">▸</span>
-              <span className="text-gray-700">Historical Quotes</span>
-            </div>
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="p-2 border border-orange-500 rounded-full text-orange-500 hover:bg-orange-50 transition-colors"
+          {/* Quick Links */}
+          <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500">
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-orange-500"
             >
-              <ChevronUp className="w-5 h-5" />
-            </button>
+              Terms & Conditions
+            </a>
+            <span>{"|"}</span>
+            <a
+              href="/contact"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-orange-500"
+            >
+              Contact Us
+            </a>
+            <span>{"|"}</span>
+            <a
+              href="/blog"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-orange-500"
+            >
+              Our Blog
+            </a>
+            <span>{"|"}</span>
+            <a
+              href="/vip"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-orange-500 flex items-center gap-1"
+            >
+              <span className="text-yellow-500">👑</span> VIP
+            </a>
+            <span>{"|"}</span>
+            <a
+              href="/site-map"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-orange-500"
+            >
+              Sitemap
+            </a>
           </div>
         </div>
       </section>
-
-      {/* Risk Warning Section */}
-      <section className="py-8 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            {/* Links */}
-            <div className="flex items-center justify-center gap-4 flex-wrap mb-6 text-sm">
-              <Link
-                href="/terms"
-                className="text-gray-600 hover:text-orange-500"
-              >
-                Terms & Conditions
-              </Link>
-              <span className="text-gray-300">|</span>
-              <Link href="#" className="text-gray-600 hover:text-orange-500">
-                Affiliate Program
-              </Link>
-              <span className="text-gray-300">|</span>
-              <Link
-                href="/contact"
-                className="text-gray-600 hover:text-orange-500"
-              >
-                Contact Us
-              </Link>
-              <span className="text-gray-300">|</span>
-              <Link
-                href="/news"
-                className="text-gray-600 hover:text-orange-500"
-              >
-                Our Blog
-              </Link>
-              <span className="text-gray-300">|</span>
-              <Link
-                href="#"
-                className="text-gray-600 hover:text-orange-500 flex items-center gap-1"
-              >
-                <span className="text-yellow-500">👑</span> VIP
-              </Link>
-              <span className="text-gray-300">|</span>
-              <Link href="#" className="text-gray-600 hover:text-orange-500">
-                Sitemap
-              </Link>
-            </div>
-
-            {/* Risk Warning Box */}
-            <div className="border border-gray-300 rounded-lg p-6">
-              <h3 className="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
-                <span className="w-3 h-3 bg-gray-700 rounded-full"></span>
-                RISK WARNING:
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                The Financial Products offered by the company include Contracts
-                for Difference (&apos;CFDs&apos;) and other complex financial
-                products. Trading CFDs carries a high level of risk, since
-                leverage can work both to your advantage and disadvantage. As a
-                result, CFDs may not be suitable for all investors because it is
-                possible to lose all of your invested capital. You should never
-                invest money that you cannot afford to lose. Before trading in
-                the complex financial products offered, please ensure you
-                understand the risks involved.
-              </p>
-            </div>
-
-            <p className="text-gray-500 text-sm mt-6 text-center">
-              You are granted limited non-exclusive non-transferable rights to
-              use the IP provided on this website for personal and
-              non-commercial purposes in relation to the services offered on the
-              Website only.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <Footer />
     </div>
   );
 }

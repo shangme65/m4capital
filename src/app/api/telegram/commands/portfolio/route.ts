@@ -59,13 +59,14 @@ export async function POST(req: NextRequest) {
     }
 
     const balance = Number(updatedPortfolio.balance);
+    const balanceCurrency = updatedPortfolio.balanceCurrency || "USD";
     const assets = (updatedPortfolio.assets as any[]) || [];
     const userCurrency = user.preferredCurrency || "USD";
 
-    // Convert balance to user's preferred currency
+    // Convert balance from its stored currency to user's preferred currency
     const balanceInUserCurrency = await convertCurrency(
       balance,
-      "USD",
+      balanceCurrency,
       userCurrency
     );
 
@@ -86,6 +87,12 @@ export async function POST(req: NextRequest) {
       for (const asset of assets) {
         const amount = Number(asset.amount || 0);
         const priceUSD = Number(asset.price || 0);
+        
+        // Log if price is missing or 0
+        if (!priceUSD || priceUSD === 0) {
+          console.warn(`Warning: Asset ${asset.symbol} has invalid price: ${priceUSD}`);
+        }
+        
         const valueUSD = amount * priceUSD;
         totalAssetValueUSD += valueUSD;
 
@@ -113,11 +120,15 @@ export async function POST(req: NextRequest) {
         )}\n\n`;
       }
 
-      const totalValueInUserCurrency = await convertCurrency(
-        balance + totalAssetValueUSD,
+      // Convert total asset value from USD to user currency
+      const totalAssetValueInUserCurrency = await convertCurrency(
+        totalAssetValueUSD,
         "USD",
         userCurrency
       );
+
+      // Add converted balance and converted total asset value
+      const totalValueInUserCurrency = balanceInUserCurrency + totalAssetValueInUserCurrency;
 
       responseMessage += `━━━━━━━━━━━━━━━━\n`;
       responseMessage += `*Total Portfolio Value:* ${formatCurrency(

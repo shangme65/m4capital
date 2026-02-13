@@ -58,28 +58,6 @@ export default function HelpPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
-      {/* Header */}
-      <div className="bg-slate-900/50 backdrop-blur-sm border-b border-white/10">
-        <div className="container mx-auto px-4 py-6">
-          <Link
-            href="/"
-            className="inline-flex items-center text-orange-500 hover:text-orange-400 transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
-                <span className="text-white font-bold text-xl">M4</span>
-              </div>
-              <div>
-                <div className="text-xl font-bold text-white">M4Capital</div>
-                <div className="text-xs text-gray-400">
-                  Ultimate trading experience
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </div>
-
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16 text-center">
         <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">Help</h1>
@@ -97,7 +75,7 @@ export default function HelpPage() {
               placeholder="Search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 bg-white rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-lg"
+              className="w-full pl-12 pr-4 py-2 bg-white rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 text-base"
             />
           </div>
         </div>
@@ -105,14 +83,14 @@ export default function HelpPage() {
 
       {/* Login Prompt */}
       <div className="container mx-auto px-4 mb-8">
-        <div className="max-w-2xl mx-auto bg-green-50 border border-green-200 rounded-lg p-4 flex items-center gap-3">
-          <Info className="w-5 h-5 text-green-600 flex-shrink-0" />
-          <div className="flex-1 text-green-800">
+        <div className="max-w-2xl mx-auto bg-green-50 border border-green-200 rounded-lg p-2 flex items-center gap-2">
+          <Info className="w-4 h-4 text-green-600 flex-shrink-0" />
+          <div className="flex-1 text-green-800 text-sm">
             Log in to get extra help from our team.
           </div>
           <Link
             href="/dashboard"
-            className="text-orange-500 hover:text-orange-600 font-semibold whitespace-nowrap"
+            className="text-orange-500 hover:text-orange-600 font-semibold whitespace-nowrap text-sm"
           >
             Log In
           </Link>
@@ -126,21 +104,21 @@ export default function HelpPage() {
             <Link
               key={section.title}
               href={section.href}
-              className="block bg-white hover:bg-gray-50 transition-colors rounded-lg p-6 border border-gray-200 group"
+              className="block bg-white hover:bg-gray-50 transition-colors rounded-lg p-3 border border-gray-200 group"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <span className="text-3xl">{section.icon}</span>
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-900 group-hover:text-orange-500 transition-colors">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{section.icon}</span>
+                    <h2 className="text-base font-semibold text-gray-900 group-hover:text-orange-500 transition-colors">
                       {section.title}
                     </h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {section.description}
-                    </p>
                   </div>
+                  <p className="text-sm text-gray-500">
+                    {section.description}
+                  </p>
                 </div>
-                <ChevronRight className="w-6 h-6 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors flex-shrink-0" />
               </div>
             </Link>
           ))}

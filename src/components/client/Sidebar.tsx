@@ -39,6 +39,9 @@ const Sidebar = () => {
     { icon: <Settings size={24} />, name: "Settings", href: "/settings" },
   ];
 
+  // Check if user is admin for Traderoom access
+  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "STAFF_ADMIN";
+
   const adminItem = {
     icon: <Shield size={24} />,
     name: "Admin",
@@ -131,11 +134,26 @@ const Sidebar = () => {
                         }}
                       >
                         {item.name === "Traderoom" ? (
-                          // Traderoom is disabled - coming soon
-                          <div
-                            className="flex items-center p-2 sm:p-3 rounded-lg opacity-50 cursor-not-allowed w-full"
-                          >
-                            <>
+                          isAdmin ? (
+                            // Traderoom link for admins (under development)
+                            <Link
+                              href={item.href}
+                              className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
+                              onClick={closeSidebar}
+                              onMouseEnter={() => setHoveredItem(item.name)}
+                              onMouseLeave={() => setHoveredItem(null)}
+                            >
+                              <motion.div className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300">
+                                {item.icon}
+                              </motion.div>
+                              <motion.span className="ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-400 transition-colors duration-300">
+                                {item.name}
+                                <span className="ml-2">👑</span>
+                              </motion.span>
+                            </Link>
+                          ) : (
+                            // Traderoom is disabled for non-admins - coming soon
+                            <div className="flex items-center p-2 sm:p-3 rounded-lg opacity-50 cursor-not-allowed w-full">
                               <motion.div className="text-gray-500">
                                 {item.icon}
                               </motion.div>
@@ -143,10 +161,10 @@ const Sidebar = () => {
                                 {item.name}
                                 <span className="ml-2">👑</span>
                               </motion.span>
-                            </>
-                          </div>
-                        ) : (
-                          // Regular Next.js Link for other navigation items
+                            </div>
+                          )
+                        ) : item.name === "Settings" ? (
+                          // Special Settings item with synchronized hover effects
                           <Link
                             href={item.href}
                             className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
@@ -154,175 +172,176 @@ const Sidebar = () => {
                             onMouseEnter={() => setHoveredItem(item.name)}
                             onMouseLeave={() => setHoveredItem(null)}
                           >
-                            {item.name === "Settings" ? (
-                              // Special Settings item with synchronized hover effects
-                              <>
-                                <motion.div
-                                  className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
-                                  animate={{
-                                    rotate: 0,
-                                    scale: 1,
-                                  }}
-                                  whileHover={{
-                                    rotate: 360,
-                                    scale: 1.1,
-                                    transition: {
-                                      rotate: {
-                                        type: "spring",
-                                        stiffness: 200,
-                                        damping: 15,
-                                      },
-                                      scale: {
-                                        type: "spring",
-                                        stiffness: 300,
-                                        damping: 15,
-                                      },
-                                    },
-                                  }}
-                                  whileTap={{ scale: 0.95 }}
-                                >
-                                  <motion.div
-                                    className="group-hover:rotate-[360deg] group-hover:scale-110 transition-transform duration-300 ease-out"
-                                    style={{ originX: 0.5, originY: 0.5 }}
-                                  >
-                                    {item.icon}
-                                  </motion.div>
-                                </motion.div>
-                                <motion.span
-                                  className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
-                                  whileHover={{
-                                    x: [0, 3, 0],
-                                    transition: {
-                                      duration: 0.6,
-                                      repeat: Infinity,
-                                      repeatType: "loop",
-                                      ease: "easeInOut",
-                                    },
-                                  }}
-                                >
-                                  <motion.span
-                                    className="inline-block"
-                                    animate={
-                                      hoveredItem === "Settings"
-                                        ? {
-                                            x: [0, 3, 0],
-                                            transition: {
-                                              duration: 0.6,
-                                              repeat: Infinity,
-                                              repeatType: "loop",
-                                              ease: "easeInOut",
-                                            },
-                                          }
-                                        : {
-                                            x: 0,
-                                          }
-                                    }
-                                    whileHover={{
-                                      x: [0, 3, 0],
+                            <motion.div
+                              className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                              animate={{
+                                rotate: 0,
+                                scale: 1,
+                              }}
+                              whileHover={{
+                                rotate: 360,
+                                scale: 1.1,
+                                transition: {
+                                  rotate: {
+                                    type: "spring",
+                                    stiffness: 200,
+                                    damping: 15,
+                                  },
+                                  scale: {
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 15,
+                                  },
+                                },
+                              }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              <motion.div
+                                className="group-hover:rotate-[360deg] group-hover:scale-110 transition-transform duration-300 ease-out"
+                                style={{ originX: 0.5, originY: 0.5 }}
+                              >
+                                {item.icon}
+                              </motion.div>
+                            </motion.div>
+                            <motion.span
+                              className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                              whileHover={{
+                                x: [0, 3, 0],
+                                transition: {
+                                  duration: 0.6,
+                                  repeat: Infinity,
+                                  repeatType: "loop",
+                                  ease: "easeInOut",
+                                },
+                              }}
+                            >
+                              <motion.span
+                                className="inline-block"
+                                animate={
+                                  hoveredItem === "Settings"
+                                    ? {
+                                        x: [0, 3, 0],
+                                        transition: {
+                                          duration: 0.6,
+                                          repeat: Infinity,
+                                          repeatType: "loop",
+                                          ease: "easeInOut",
+                                        },
+                                      }
+                                    : {
+                                        x: 0,
+                                      }
+                                }
+                                whileHover={{
+                                  x: [0, 3, 0],
+                                  transition: {
+                                    duration: 0.6,
+                                    repeat: Infinity,
+                                    repeatType: "loop",
+                                    ease: "easeInOut",
+                                  },
+                                }}
+                              >
+                                {item.name}
+                              </motion.span>
+                            </motion.span>
+                          </Link>
+                        ) : (
+                          // Regular navigation items
+                          <Link
+                            href={item.href}
+                            className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
+                            onClick={closeSidebar}
+                            onMouseEnter={() => setHoveredItem(item.name)}
+                            onMouseLeave={() => setHoveredItem(null)}
+                          >
+                            <motion.div
+                              className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                              animate={
+                                hoveredItem === item.name
+                                  ? {
+                                      rotate: 360,
+                                      scale: 1.1,
                                       transition: {
-                                        duration: 0.6,
-                                        repeat: Infinity,
-                                        repeatType: "loop",
-                                        ease: "easeInOut",
+                                        rotate: {
+                                          type: "spring",
+                                          stiffness: 200,
+                                          damping: 15,
+                                        },
+                                        scale: {
+                                          type: "spring",
+                                          stiffness: 300,
+                                          damping: 15,
+                                        },
                                       },
-                                    }}
-                                  >
-                                    {item.name}
-                                  </motion.span>
-                                </motion.span>
-                              </>
-                            ) : (
-                              // Regular navigation items with synchronized hover effects
-                              <>
-                                <motion.div
-                                  className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
-                                  animate={
-                                    hoveredItem === item.name
-                                      ? {
-                                          rotate: 360,
-                                          scale: 1.1,
-                                          transition: {
-                                            rotate: {
-                                              type: "spring",
-                                              stiffness: 200,
-                                              damping: 15,
-                                            },
-                                            scale: {
-                                              type: "spring",
-                                              stiffness: 300,
-                                              damping: 15,
-                                            },
-                                          },
-                                        }
-                                      : {
-                                          rotate: 0,
-                                          scale: 1,
-                                        }
-                                  }
-                                  whileHover={{
-                                    rotate: 360,
-                                    scale: 1.1,
-                                    transition: {
-                                      rotate: {
-                                        type: "spring",
-                                        stiffness: 200,
-                                        damping: 15,
-                                      },
-                                      scale: {
-                                        type: "spring",
-                                        stiffness: 300,
-                                        damping: 15,
-                                      },
-                                    },
-                                  }}
-                                  whileTap={{ scale: 0.95 }}
-                                >
-                                  {item.icon}
-                                </motion.div>
-                                <motion.span
-                                  className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
-                                  whileHover={{
-                                    x: [0, 3, 0],
-                                    transition: {
-                                      duration: 0.6,
-                                      repeat: Infinity,
-                                      repeatType: "loop",
-                                      ease: "easeInOut",
-                                    },
-                                  }}
-                                >
-                                  <motion.span
-                                    className="inline-block"
-                                    animate={
-                                      hoveredItem === item.name
-                                        ? {
-                                            x: [0, 3, 0],
-                                            transition: {
-                                              duration: 0.6,
-                                              repeat: Infinity,
-                                              repeatType: "loop",
-                                              ease: "easeInOut",
-                                            },
-                                          }
-                                        : {
-                                            x: 0,
-                                          }
                                     }
-                                    whileHover={{
-                                      x: [0, 3, 0],
-                                      transition: {
-                                        duration: 0.6,
-                                        repeat: Infinity,
-                                        repeatType: "loop",
-                                        ease: "easeInOut",
-                                      },
-                                    }}
-                                  >
-                                    {item.name}
-                                  </motion.span>
-                                </motion.span>
-                              </>
-                            )}
+                                  : {
+                                      rotate: 0,
+                                      scale: 1,
+                                    }
+                              }
+                              whileHover={{
+                                rotate: 360,
+                                scale: 1.1,
+                                transition: {
+                                  rotate: {
+                                    type: "spring",
+                                    stiffness: 200,
+                                    damping: 15,
+                                  },
+                                  scale: {
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 15,
+                                  },
+                                },
+                              }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              {item.icon}
+                            </motion.div>
+                            <motion.span
+                              className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                              whileHover={{
+                                x: [0, 3, 0],
+                                transition: {
+                                  duration: 0.6,
+                                  repeat: Infinity,
+                                  repeatType: "loop",
+                                  ease: "easeInOut",
+                                },
+                              }}
+                            >
+                              <motion.span
+                                className="inline-block"
+                                animate={
+                                  hoveredItem === item.name
+                                    ? {
+                                        x: [0, 3, 0],
+                                        transition: {
+                                          duration: 0.6,
+                                          repeat: Infinity,
+                                          repeatType: "loop",
+                                          ease: "easeInOut",
+                                        },
+                                      }
+                                    : {
+                                        x: 0,
+                                      }
+                                }
+                                whileHover={{
+                                  x: [0, 3, 0],
+                                  transition: {
+                                    duration: 0.6,
+                                    repeat: Infinity,
+                                    repeatType: "loop",
+                                    ease: "easeInOut",
+                                  },
+                                }}
+                              >
+                                {item.name}
+                              </motion.span>
+                            </motion.span>
                           </Link>
                         )}
                       </motion.div>

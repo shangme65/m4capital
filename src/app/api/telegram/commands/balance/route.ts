@@ -55,14 +55,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    const balanceUSD = Number(updatedPortfolio.balance);
+    const balance = Number(updatedPortfolio.balance);
+    const balanceCurrency = updatedPortfolio.balanceCurrency || "USD";
     const assets = (updatedPortfolio.assets as any[]) || [];
     const userCurrency = user.preferredCurrency || "USD";
 
-    // Convert balance to user's preferred currency
+    // Convert balance from its stored currency to user's preferred currency
     const balanceInUserCurrency = await convertCurrency(
-      balanceUSD,
-      "USD",
+      balance,
+      balanceCurrency,
       userCurrency
     );
 
@@ -75,12 +76,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const totalValueUSD = balanceUSD + totalAssetValueUSD;
-    const totalValueInUserCurrency = await convertCurrency(
-      totalValueUSD,
+    // Convert total asset value from USD to user currency
+    const totalAssetValueInUserCurrency = await convertCurrency(
+      totalAssetValueUSD,
       "USD",
       userCurrency
     );
+
+    // Add converted balance and converted total asset value
+    const totalValueInUserCurrency = balanceInUserCurrency + totalAssetValueInUserCurrency;
 
     const responseMessage =
       `💼 *Account Balance*\n\n` +

@@ -3,8 +3,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 
 // Awards data matching the IQ Option screenshots
@@ -767,8 +765,6 @@ export default function AwardsPage() {
 
   return (
     <div className="min-h-screen bg-[#0d0d15]">
-      <Header />
-
       {/* Main Content - Full dark background */}
       <section
         className="relative min-h-screen pt-20 pb-16 overflow-hidden"
@@ -884,29 +880,7 @@ export default function AwardsPage() {
         </div>
       </section>
 
-      {/* Payment Partners Section */}
-      <section className="py-8 bg-[#0d0d15] border-t border-gray-800">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-center gap-8 flex-wrap">
-            <div className="text-2xl font-bold text-purple-400">Skrill</div>
-            <div className="text-2xl font-bold text-gray-400">volet</div>
-            <div className="text-2xl font-bold text-green-400">NETELLER</div>
-          </div>
-          {/* Pagination dots */}
-          <div className="flex items-center justify-center gap-2 mt-4">
-            {[...Array(12)].map((_, i) => (
-              <div
-                key={i}
-                className={`w-2 h-2 rounded-full ${
-                  i === 0 ? "bg-orange-500" : "bg-gray-600"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* Breadcrumb */}
       <section className="py-4 bg-[#0d0d15] border-t border-gray-800">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between">
@@ -927,7 +901,6 @@ export default function AwardsPage() {
         </div>
       </section>
 
-      {/* Footer Links & Risk Warning */}
       <section className="py-8 bg-[#0d0d15]">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
@@ -939,67 +912,35 @@ export default function AwardsPage() {
               >
                 Terms & Conditions
               </Link>
-              <span className="text-gray-700">|</span>
-              <Link href="#" className="text-gray-500 hover:text-orange-500">
-                Affiliate Program
-              </Link>
-              <span className="text-gray-700">|</span>
+              <span className="text-gray-700">{"|"}</span>
               <Link
                 href="/contact"
                 className="text-gray-500 hover:text-orange-500"
               >
                 Contact Us
               </Link>
-              <span className="text-gray-700">|</span>
+              <span className="text-gray-700">{"|"}</span>
               <Link
                 href="/blog"
                 className="text-gray-500 hover:text-orange-500"
               >
                 Our Blog
               </Link>
-              <span className="text-gray-700">|</span>
+              <span className="text-gray-700">{"|"}</span>
               <Link
                 href="#"
                 className="text-gray-500 hover:text-orange-500 flex items-center gap-1"
               >
                 <span className="text-yellow-500">👑</span> VIP
               </Link>
-              <span className="text-gray-700">|</span>
-              <Link href="#" className="text-gray-500 hover:text-orange-500">
+              <span className="text-gray-700">{"|"}</span>
+              <Link href="/site-map" className="text-gray-500 hover:text-orange-500">
                 Sitemap
               </Link>
             </div>
-
-            {/* Risk Warning Box */}
-            <div className="border border-gray-700 rounded-lg p-6">
-              <h3 className="text-sm font-bold text-gray-400 mb-4 flex items-center gap-2">
-                <span className="w-3 h-3 bg-gray-400 rounded-full"></span>
-                RISK WARNING:
-              </h3>
-              <p className="text-gray-500 text-sm leading-relaxed">
-                The Financial Products offered by the company include Contracts
-                for Difference (&apos;CFDs&apos;) and other complex financial
-                products. Trading CFDs carries a high level of risk, since
-                leverage can work both to your advantage and disadvantage. As a
-                result, CFDs may not be suitable for all investors because it is
-                possible to lose all of your invested capital. You should never
-                invest money that you cannot afford to lose. Before trading in
-                the complex financial products offered, please ensure you
-                understand the risks involved.
-              </p>
-            </div>
-
-            <p className="text-gray-600 text-sm mt-6 text-center">
-              You are granted limited non-exclusive non-transferable rights to
-              use the IP provided on this website for personal and
-              non-commercial purposes in relation to the services offered on the
-              Website only.
-            </p>
           </div>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 }

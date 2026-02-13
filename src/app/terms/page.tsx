@@ -1,8 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield,
@@ -605,9 +603,7 @@ const TermsOfServicePage = () => {
   );
 
   return (
-    <>
-      <Header />
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950 pt-16">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-gray-950 pt-16">
         {/* Compact Hero Section */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-orange-500/10 via-transparent to-transparent" />
@@ -795,9 +791,7 @@ const TermsOfServicePage = () => {
             </div>
           </motion.div>
         </div>
-      </div>
-      <Footer />
-    </>
+    </div>
   );
 };
 

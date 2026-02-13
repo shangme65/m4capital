@@ -108,13 +108,13 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 ${
+      className={`fixed top-0 left-0 right-0 z-50 h-[56px] ${
         isScrolled
           ? "bg-gray-700 text-white shadow-md dark:shadow-none"
           : "bg-transparent text-white"
       }`}
     >
-      <nav className="container mx-auto px-4 sm:px-8 md:px-16 py-3 flex justify-between items-center">
+      <nav className="container mx-auto px-4 sm:px-8 md:px-16 h-full flex justify-between items-center">
         <Link href="/" className="flex items-center group">
           <Image
             src="/m4capitallogo1.png"
@@ -132,7 +132,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           ref={dropdownRef}
         >
           <div
-            className="relative"
+            className="relative hidden xl:block"
             onMouseEnter={() => handleMouseEnter("download")}
             onMouseLeave={handleMouseLeave}
           >
@@ -204,7 +204,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           {/* Widescreen right side */}
           <div className="hidden md:flex items-center space-x-4">
             <div
-              className="relative"
+              className="relative hidden xl:block"
               onMouseEnter={() => handleMouseEnter("lang")}
               onMouseLeave={handleMouseLeave}
             >
@@ -306,7 +306,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
       {isMobileMenuOpen && (
         <div className="fixed inset-0 bg-white dark:bg-gray-900 z-30 flex flex-col md:hidden overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {/* Header with logo and close button */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-600 sticky top-0 bg-gray-700 z-10">
+          <div className="flex items-center justify-between px-4 h-[60px] border-b border-gray-600 sticky top-0 bg-gray-700 z-10">
             <Link
               href="/"
               className="flex items-center"

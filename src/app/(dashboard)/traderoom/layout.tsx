@@ -23,11 +23,17 @@ export default async function TraderoomLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Temporarily bypass authentication to fix trade page
-  // const session = await getServerSession(authOptions);
-  // if (!session || !session.user) {
-  //   redirect("/login");
-  // }
+  const session = await getServerSession(authOptions);
+  
+  // Check if user is authenticated
+  if (!session || !session.user) {
+    redirect("/login");
+  }
+
+  // Only allow ADMIN and STAFF_ADMIN to access Traderoom (under development)
+  if (session.user.role !== "ADMIN" && session.user.role !== "STAFF_ADMIN") {
+    redirect("/dashboard");
+  }
 
   return (
     <AuthProvider>
