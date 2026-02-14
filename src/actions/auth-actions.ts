@@ -93,9 +93,9 @@ export async function signUpAction(formData: FormData): Promise<ActionResult> {
         id: generateId(),
         userId: user.id,
         type: "INFO",
-        title: "Welcome to M4Capital!",
+        title: "Welcome to M4Capital! \uD83C\uDFE6",
         message:
-          "Your account has been created. Please verify your email to get started.",
+          "To unlock the full potential of your account, please complete your KYC verification and make your first deposit. Once set up, you'll have access to our full suite of investment tools and start earning right away.",
       },
     });
 

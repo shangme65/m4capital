@@ -282,7 +282,7 @@ export async function POST(req: NextRequest) {
     if (user.email && user.isEmailVerified) {
       try {
         const displayAmount = depositType === "crypto"
-          ? (cryptoAmount || amount).toString()
+          ? parseFloat((cryptoAmount || amount).toString()).toFixed(8)
           : (Math.round((fiatAmount || amount) * 100) / 100).toFixed(2);
         
         const displayAsset = depositType === "crypto" ? cryptoAsset : userPreferredCurrency;

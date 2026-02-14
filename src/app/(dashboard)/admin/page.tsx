@@ -2696,8 +2696,10 @@ const AdminDashboard = () => {
                                               selectedUser?.preferredCurrency ||
                                                 "USD"
                                             )}
-                                            {(
-                                              prices[cryptoAsset]?.price || 0
+                                            {convertCurrency(
+                                              prices[cryptoAsset]?.price || 0,
+                                              selectedUser?.preferredCurrency || "USD",
+                                              exchangeRates
                                             ).toLocaleString()}
                                           </p>
                                         </div>
@@ -2724,7 +2726,12 @@ const AdminDashboard = () => {
                                         {cryptoPaymentMethods.map((method) => {
                                           const cryptoPrice =
                                             prices[method.name];
-                                          const price = cryptoPrice?.price || 0;
+                                          const priceUSD = cryptoPrice?.price || 0;
+                                          const price = convertCurrency(
+                                            priceUSD,
+                                            selectedUser?.preferredCurrency || "USD",
+                                            exchangeRates
+                                          );
                                           const change =
                                             cryptoPrice?.change24h || 0;
                                           const currencySymbol =
@@ -2826,8 +2833,10 @@ const AdminDashboard = () => {
                                     {getCurrencySymbol(
                                       selectedUser?.preferredCurrency || "USD"
                                     )}
-                                    {(
-                                      prices[cryptoAsset]?.price || 0
+                                    {convertCurrency(
+                                      prices[cryptoAsset]?.price || 0,
+                                      selectedUser?.preferredCurrency || "USD",
+                                      exchangeRates
                                     ).toLocaleString()}
                                   </p>
                                 </div>
@@ -2856,7 +2865,12 @@ const AdminDashboard = () => {
                               >
                                 {cryptoAssets.map((asset, index) => {
                                   const cryptoPrice = prices[asset.symbol];
-                                  const price = cryptoPrice?.price || 0;
+                                  const priceUSD = cryptoPrice?.price || 0;
+                                  const price = convertCurrency(
+                                    priceUSD,
+                                    selectedUser?.preferredCurrency || "USD",
+                                    exchangeRates
+                                  );
                                   const change = cryptoPrice?.change24h || 0;
                                   const currencySymbol = getCurrencySymbol(
                                     selectedUser?.preferredCurrency || "USD"

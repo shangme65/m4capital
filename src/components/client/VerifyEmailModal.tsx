@@ -245,7 +245,7 @@ export default function VerifyEmailModal({
                 {/* Code Input - Dark themed with green accents */}
                 <div className="px-4 pb-8">
                   <div
-                    className="flex justify-center gap-3 mb-6"
+                    className="flex justify-center gap-2 mb-6"
                     onPaste={handlePaste}
                   >
                     {code.map((digit, index) => (
@@ -260,7 +260,7 @@ export default function VerifyEmailModal({
                         value={digit}
                         onChange={(e) => handleChange(index, e.target.value)}
                         onKeyDown={(e) => handleKeyDown(index, e)}
-                        className="w-12 h-14 text-center text-2xl font-bold bg-gray-800/80 border-2 border-gray-700 rounded-xl text-white placeholder-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 focus:bg-gray-800 focus:outline-none transition-all duration-200"
+                        className="w-11 h-12 text-center text-xl font-bold bg-gray-800/80 border-2 border-gray-700 rounded-xl text-white placeholder-gray-500 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/30 focus:bg-gray-800 focus:outline-none transition-all duration-200"
                         disabled={isLoading}
                         aria-label={`Verification code digit ${index + 1}`}
                       />

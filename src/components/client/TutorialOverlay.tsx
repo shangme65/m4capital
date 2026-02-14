@@ -160,7 +160,14 @@ export default function TutorialOverlay() {
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[99999] pointer-events-none">
+      <motion.div
+        key="tutorial-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+        className="fixed inset-0 z-[99999] pointer-events-none"
+      >
         {/* Dark overlay with spotlight cutout */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none"
@@ -278,7 +285,7 @@ export default function TutorialOverlay() {
                   onClick={completeTutorial}
                   className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-[0_4px_16px_rgba(34,197,94,0.4)] text-sm sm:text-base"
                 >
-                  <span className="hidden xs:inline">Complete &</span> Verify
+                  Complete
                   <Sparkles className="w-4 h-4" />
                 </button>
               ) : (
@@ -309,7 +316,7 @@ export default function TutorialOverlay() {
             </div>
           </div>
         </motion.div>
-      </div>
+      </motion.div>
     </AnimatePresence>
   );
 }

@@ -201,6 +201,11 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
   const completeTutorial = useCallback(async () => {
     try {
+      // Immediately restore UI interactivity
+      setIsActive(false);
+      setCurrentStep(0);
+      document.body.style.overflow = "";
+
       const response = await fetch("/api/user/tutorial-complete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -208,8 +213,6 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         setTutorialCompleted(true);
-        setIsActive(false);
-        setCurrentStep(0);
       }
     } catch (error) {
       console.error("Failed to complete tutorial:", error);
