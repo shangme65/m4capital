@@ -263,7 +263,7 @@ export default function BuyCryptoModal({
                           ? `0.00 ${asset.symbol}`
                           : `${currencySymbol}0.00`
                       }
-                      className="w-full px-3 py-3 pr-16 rounded-xl text-white text-xl font-bold focus:outline-none transition-all"
+                      className="w-full px-3 py-3 pr-16 rounded-xl text-white text-xl font-bold focus:outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       style={{
                         background: "rgba(15, 23, 42, 0.8)",
                         boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)",

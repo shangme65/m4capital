@@ -62,6 +62,10 @@ export interface DetailedTransaction {
   network?: string;
   address?: string;
   memo?: string;
+  receiverName?: string;
+  receiverEmail?: string;
+  senderName?: string;
+  senderEmail?: string;
 }
 
 interface TransactionDetailsModalProps {
@@ -769,12 +773,19 @@ export default function TransactionDetailsModal({
                           Value
                         </label>
                         <div className="text-white text-xl font-bold">
-                          {/* For fiat deposits (asset is fiat), value is in that currency */}
-                          {/* For crypto deposits with valueCurrency matching preferred, don't convert */}
-                          {/* Otherwise, value is in USD, use formatAmount to convert */}
+                          {/* For fiat receive/deposit with different currency, show in user's preferred currency */}
+                          {/* For fiat transfers (sender) or same currency, show in original currency */}
+                          {/* For crypto, convert USD value to user's preferred currency */}
                           {FIAT_CURRENCIES.has(
                             transaction.asset?.toUpperCase() || ""
-                          )
+                          ) &&
+                          (transaction.type === "receive" ||
+                            transaction.type === "deposit") &&
+                          transaction.asset?.toUpperCase() !== preferredCurrency
+                            ? formatAmount(transaction.value, 2)
+                            : FIAT_CURRENCIES.has(
+                                transaction.asset?.toUpperCase() || ""
+                              )
                             ? formatCurrencyUtil(
                                 transaction.value,
                                 transaction.asset?.toUpperCase() || "BRL",
@@ -791,7 +802,15 @@ export default function TransactionDetailsModal({
                           <span className="text-gray-400 text-base ml-2">
                             {FIAT_CURRENCIES.has(
                               transaction.asset?.toUpperCase() || ""
-                            )
+                            ) &&
+                            (transaction.type === "receive" ||
+                              transaction.type === "deposit") &&
+                            transaction.asset?.toUpperCase() !==
+                              preferredCurrency
+                              ? preferredCurrency
+                              : FIAT_CURRENCIES.has(
+                                  transaction.asset?.toUpperCase() || ""
+                                )
                               ? transaction.asset?.toUpperCase()
                               : preferredCurrency}
                           </span>
@@ -981,6 +1000,92 @@ export default function TransactionDetailsModal({
                     </div>
                   )}
                 </div>
+
+                {/* Transfer Information - Receiver/Sender */}
+                {(transaction.type === "transfer" || transaction.type === "send" || transaction.type === "receive") &&
+                  (transaction.receiverName || transaction.receiverEmail || transaction.senderName || transaction.senderEmail) && (
+                  <div
+                    className="rounded-xl p-4 mb-4"
+                    style={{
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow:
+                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                    }}
+                  >
+                    <h3 className="text-white font-bold text-base mb-4 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                        <svg
+                          className="w-4 h-4 text-purple-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                          />
+                        </svg>
+                      </div>
+                      Transfer Details
+                    </h3>
+                    <div className="space-y-3">
+                      {transaction.receiverName && (
+                        <div>
+                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                            Recipient Name
+                          </label>
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm">
+                            {transaction.receiverName}
+                          </div>
+                        </div>
+                      )}
+                      {transaction.receiverEmail && (
+                        <div>
+                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                            Recipient Email
+                          </label>
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm break-all">
+                            {transaction.receiverEmail}
+                          </div>
+                        </div>
+                      )}
+                      {transaction.senderName && (
+                        <div>
+                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                            Sender Name
+                          </label>
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm">
+                            {transaction.senderName}
+                          </div>
+                        </div>
+                      )}
+                      {transaction.senderEmail && (
+                        <div>
+                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                            Sender Email
+                          </label>
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm break-all">
+                            {transaction.senderEmail}
+                          </div>
+                        </div>
+                      )}
+                      {transaction.memo && (
+                        <div>
+                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                            Memo
+                          </label>
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm">
+                            {transaction.memo}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Network Information */}
                 {(transaction.hash ||

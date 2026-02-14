@@ -9,6 +9,7 @@ import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
 import { buyCryptoAction } from "@/actions/crypto-actions";
+import SuccessModal from "./SuccessModal";
 
 interface BuyModalProps {
   isOpen: boolean;
@@ -569,7 +570,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                               amount: e.target.value,
                             }))
                           }
-                          className="w-full rounded-xl px-4 py-3 pl-8 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/50"
+                          className="w-full rounded-xl px-4 py-3 pl-8 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           style={inputStyle}
                           placeholder="0.00"
                         />
@@ -789,89 +790,17 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                   </div>
                 )}
 
-                {/* Step 4: Success */}
+                {/* Step 4: Success - Use shared SuccessModal */}
                 {step === 4 && successData && (
-                  <div className="space-y-3">
-                    <div className="flex justify-center mb-2">
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        transition={{
-                          delay: 0.2,
-                          type: "spring",
-                          stiffness: 200,
-                        }}
-                        className="w-16 h-16 rounded-full flex items-center justify-center"
-                        style={{
-                          background:
-                            "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
-                          boxShadow: "0 10px 40px -10px rgba(34, 197, 94, 0.6)",
-                        }}
-                      >
-                        <motion.svg
-                          initial={{ pathLength: 0 }}
-                          animate={{ pathLength: 1 }}
-                          transition={{ delay: 0.4, duration: 0.5 }}
-                          className="w-8 h-8 text-white"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={3}
-                            d="M5 13l4 4L19 7"
-                          />
-                        </motion.svg>
-                      </motion.div>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-white text-center">
-                      Purchase Successful!
-                    </h3>
-                    <p className="text-gray-400 text-xs text-center">
-                      You&apos;ve successfully purchased {successData.amount.toFixed(8)} {successData.asset}
-                    </p>
-
-                    <div
-                      className="rounded-xl p-3 space-y-2"
-                      style={{
-                        background:
-                          "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)",
-                        border: "1px solid rgba(34, 197, 94, 0.2)",
-                      }}
-                    >
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Amount:</span>
-                        <span className="text-white font-semibold">
-                          {successData.amount.toFixed(8)} {successData.asset}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Total Paid:</span>
-                        <span className="text-green-400 font-bold">
-                          {formatAmount(successData.value * 1.015, 2)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="text-gray-500 text-xs text-center">
-                      Redirecting to dashboard...
-                    </p>
-
-                    <button
-                      onClick={handleDone}
-                      className="w-full py-2.5 rounded-xl font-bold text-white text-sm"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",
-                        boxShadow:
-                          "0 8px 20px -5px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
-                      }}
-                    >
-                      Done
-                    </button>
+                  <div className="absolute inset-0 z-[10001]">
+                    <SuccessModal
+                      isOpen={true}
+                      onClose={handleDone}
+                      type="buy"
+                      asset={successData.asset}
+                      amount={successData.amount.toString()}
+                      value={formatAmount(successData.value * 1.015, 2)}
+                    />
                   </div>
                 )}
               </motion.div>

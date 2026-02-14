@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Download, Copy, CheckCircle, AlertCircle } from "lucide-react";
+import { X, Download, Copy, CheckCircle, AlertCircle, ArrowUpDown } from "lucide-react";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
@@ -24,6 +24,7 @@ export default function AssetReceiveModal({
 }: AssetReceiveModalProps) {
   const [step, setStep] = useState<"amount" | "deposit">("amount");
   const [depositAmount, setDepositAmount] = useState("");
+  const [inputMode, setInputMode] = useState<"crypto" | "fiat">("crypto");
   const [paymentData, setPaymentData] = useState<{
     paymentId: string;
     payAddress: string;
@@ -34,6 +35,23 @@ export default function AssetReceiveModal({
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
   const { preferredCurrency, convertAmount } = useCurrency();
+
+  const getCurrencySymbol = (currency: string) => {
+    const symbols: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", BRL: "R$", NGN: "₦", JPY: "¥", KRW: "₩", INR: "₹", ZAR: "R", CHF: "CHF", CAD: "C$", AUD: "A$" };
+    return symbols[currency] || currency + " ";
+  };
+
+  // Get the crypto amount regardless of input mode
+  const getCryptoAmount = (): number => {
+    const val = parseFloat(depositAmount);
+    if (isNaN(val) || val <= 0) return 0;
+    if (inputMode === "fiat") {
+      // Convert fiat (in preferred currency) to USD, then to crypto
+      const usdValue = convertAmount(val, true);
+      return usdValue / asset.price;
+    }
+    return val;
+  };
 
   // Handle close with optional refresh if deposit was initiated
   const handleClose = () => {
@@ -53,6 +71,7 @@ export default function AssetReceiveModal({
       document.body.style.overflow = "unset";
       setStep("amount");
       setDepositAmount("");
+      setInputMode("crypto");
       setPaymentData(null);
       setError("");
     }
@@ -71,7 +90,8 @@ export default function AssetReceiveModal({
     setError("");
 
     try {
-      const amountUSD = parseFloat(depositAmount) * asset.price;
+      const cryptoAmount = getCryptoAmount();
+      const amountUSD = cryptoAmount * asset.price;
 
       const res = await fetch("/api/nowpayments/create-payment", {
         method: "POST",
@@ -265,11 +285,11 @@ export default function AssetReceiveModal({
                         <div className="relative">
                           <input
                             type="number"
-                            step="0.00000001"
+                            step={inputMode === "crypto" ? "0.00000001" : "0.01"}
                             value={depositAmount}
                             onChange={(e) => setDepositAmount(e.target.value)}
-                            placeholder="0.00000000"
-                            className="w-full px-4 py-3 pr-16 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all"
+                            placeholder={inputMode === "crypto" ? "0.00000000" : "0.00"}
+                            className="w-full px-4 py-3 pr-24 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/50 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             style={{
                               background:
                                 "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -277,23 +297,37 @@ export default function AssetReceiveModal({
                               border: "1px solid rgba(255, 255, 255, 0.1)",
                             }}
                           />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
-                            {asset.symbol}
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const val = parseFloat(depositAmount);
+                              if (!isNaN(val) && val > 0) {
+                                if (inputMode === "crypto") {
+                                  // Convert crypto to fiat
+                                  const fiatValue = convertAmount(val * asset.price);
+                                  setDepositAmount(fiatValue.toFixed(2));
+                                } else {
+                                  // Convert fiat to crypto
+                                  const usdValue = convertAmount(val, true);
+                                  const cryptoValue = usdValue / asset.price;
+                                  setDepositAmount(cryptoValue.toFixed(8));
+                                }
+                              }
+                              setInputMode(inputMode === "crypto" ? "fiat" : "crypto");
+                            }}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-1 text-gray-400 hover:text-teal-400 text-sm font-medium transition-colors"
+                          >
+                            <span>{inputMode === "crypto" ? asset.symbol : preferredCurrency}</span>
+                            <ArrowUpDown className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                         {depositAmount && parseFloat(depositAmount) > 0 && (
                           <p className="text-sm text-gray-400 mt-2">
-                            ≈{" "}
-                            {preferredCurrency === "USD"
-                              ? "$"
-                              : preferredCurrency === "EUR"
-                              ? "€"
-                              : preferredCurrency === "GBP"
-                              ? "£"
-                              : preferredCurrency}
-                            {convertAmount(
-                              parseFloat(depositAmount) * asset.price
-                            ).toFixed(2)}
+                            {inputMode === "crypto" ? (
+                              <>≈ {getCurrencySymbol(preferredCurrency)}{convertAmount(parseFloat(depositAmount) * asset.price).toFixed(2)}</>
+                            ) : (
+                              <>≈ {getCryptoAmount().toFixed(8)} {asset.symbol}</>
+                            )}
                           </p>
                         )}
                       </div>

@@ -1528,7 +1528,7 @@ function DashboardContent() {
                   const assetSymbol =
                     activity.asset?.split(" ")[0]?.toUpperCase() || "";
                   const isFiatTransaction = FIAT_CURRENCIES.has(assetSymbol) && 
-                    (activity.type === "deposit" || activity.type === "receive");
+                    (activity.type === "deposit" || activity.type === "receive" || activity.type === "transfer");
 
                   const getFiatValue = () => {
                     // For fiat deposits/receives, value is already in user's currency - don't convert
@@ -1634,9 +1634,14 @@ function DashboardContent() {
                               </span>
                             </div>
                             <span className="font-medium text-xs text-white px-2 py-0.5 rounded-md bg-gray-700/50">
-                              {/* For fiat deposits/receives, show in original currency without re-conversion */}
+                              {/* For fiat receive/deposit with different currency, show in receiver's preferred currency */}
+                              {/* For fiat transfers (sender), show in original currency */}
                               {/* For crypto deposits, use formatAmount which handles USD->preferredCurrency conversion */}
-                              {isFiatTransaction
+                              {isFiatTransaction &&
+                              (activity.type === "receive" || activity.type === "deposit") &&
+                              assetSymbol !== preferredCurrency
+                                ? formatAmount(activity.value || 0, 2)
+                                : isFiatTransaction
                                 ? formatCurrencyUtil(
                                     activity.value || 0,
                                     assetSymbol,

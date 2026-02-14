@@ -208,38 +208,42 @@ const formatPhoneNumber = (value: string, userCountry: string | null | undefined
   const defaultPattern = { prefix: "+1", pattern: [3, 3, 4] };
   const countryPattern = userCountry ? (PHONE_PATTERNS[userCountry] || defaultPattern) : defaultPattern;
   
-  // Remove all non-numeric characters except +
-  let cleaned = value.replace(/[^\d+]/g, '');
+  // Extract only digits from the input
+  let digits = value.replace(/\D/g, '');
   
-  // If it starts with +, extract the digits after it
-  let numbers = cleaned.replace(/\D/g, '');
+  // If no digits, return just the prefix
+  if (!digits) return countryPattern.prefix + ' ';
   
-  // If no numbers, return just the prefix
-  if (!numbers) return countryPattern.prefix + ' ';
+  // Strip the country code digits if the user typed them
+  const prefixDigits = countryPattern.prefix.replace(/\D/g, '');
+  if (digits.startsWith(prefixDigits)) {
+    digits = digits.slice(prefixDigits.length);
+  }
+  
+  // Enforce max local digit count based on the pattern
+  const maxLocalDigits = countryPattern.pattern.reduce((sum, n) => sum + n, 0);
+  digits = digits.slice(0, maxLocalDigits);
+  
+  if (!digits) return countryPattern.prefix + ' ';
   
   // Start with the country prefix
   let formatted = countryPattern.prefix + ' ';
   let numberIndex = 0;
   
   // Apply the pattern
-  for (let i = 0; i < countryPattern.pattern.length && numberIndex < numbers.length; i++) {
+  for (let i = 0; i < countryPattern.pattern.length && numberIndex < digits.length; i++) {
     const groupSize = countryPattern.pattern[i];
-    const group = numbers.substr(numberIndex, groupSize);
+    const group = digits.substr(numberIndex, groupSize);
     
     if (group) {
       formatted += group;
       numberIndex += groupSize;
       
-      // Add space after group if not the last group and we have more numbers
-      if (i < countryPattern.pattern.length - 1 && numberIndex < numbers.length) {
+      // Add space after group if not the last group and we have more digits
+      if (i < countryPattern.pattern.length - 1 && numberIndex < digits.length) {
         formatted += ' ';
       }
     }
-  }
-  
-  // If there are remaining numbers, append them
-  if (numberIndex < numbers.length) {
-    formatted += ' ' + numbers.substr(numberIndex);
   }
   
   return formatted.trim();
@@ -450,128 +454,6 @@ export default function SettingsPage() {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage, languages, currentLanguage } = useLanguage();
   const { toggleSidebar } = useSidebar();
-
-  // Phone number placeholder mapping based on country
-  const getPhoneNumberPlaceholder = (countryName: string | null | undefined): string => {
-    if (!countryName) return "+1 (555) 123-4567";
-    
-    const phoneFormats: Record<string, string> = {
-      "Brazil": "+55 (11) 98765-4321",
-      "United States": "+1 (555) 123-4567",
-      "United Kingdom": "+44 20 7123 4567",
-      "Canada": "+1 (555) 123-4567",
-      "Nigeria": "+234 802 123 4567",
-      "South Africa": "+27 82 123 4567",
-      "India": "+91 98765 43210",
-      "Australia": "+61 4 1234 5678",
-      "Germany": "+49 151 23456789",
-      "France": "+33 6 12 34 56 78",
-      "Spain": "+34 612 34 56 78",
-      "Italy": "+39 312 345 6789",
-      "Mexico": "+52 55 1234 5678",
-      "Argentina": "+54 9 11 1234-5678",
-      "China": "+86 138 0000 0000",
-      "Japan": "+81 90-1234-5678",
-      "South Korea": "+82 10-1234-5678",
-      "Russia": "+7 (999) 123-45-67",
-      "Turkey": "+90 532 123 45 67",
-      "Netherlands": "+31 6 12345678",
-      "Belgium": "+32 470 12 34 56",
-      "Switzerland": "+41 76 123 45 67",
-      "Sweden": "+46 70 123 45 67",
-      "Norway": "+47 412 34 567",
-      "Denmark": "+45 12 34 56 78",
-      "Finland": "+358 40 123 4567",
-      "Poland": "+48 512 345 678",
-      "Portugal": "+351 912 345 678",
-      "Greece": "+30 691 234 5678",
-      "Egypt": "+20 100 123 4567",
-      "Kenya": "+254 712 345678",
-      "Ghana": "+233 24 123 4567",
-      "Saudi Arabia": "+966 50 123 4567",
-      "United Arab Emirates": "+971 50 123 4567",
-      "Singapore": "+65 8123 4567",
-      "Malaysia": "+60 12-345 6789",
-      "Thailand": "+66 81 234 5678",
-      "Vietnam": "+84 91 234 56 78",
-      "Philippines": "+63 917 123 4567",
-      "Indonesia": "+62 812-3456-7890",
-      "New Zealand": "+64 21 123 4567",
-      "Ireland": "+353 85 123 4567",
-      "Israel": "+972 50-123-4567",
-      "Chile": "+56 9 1234 5678",
-      "Colombia": "+57 312 345 6789",
-      "Peru": "+51 987 654 321",
-      "Venezuela": "+58 412-1234567",
-      "Pakistan": "+92 300 1234567",
-      "Bangladesh": "+880 1712-345678",
-      "Czech Republic": "+420 601 234 567",
-      "Austria": "+43 664 123456",
-      "Hungary": "+36 20 123 4567",
-      "Romania": "+40 712 345 678",
-      "Ukraine": "+380 67 123 4567",
-    };
-    
-    return phoneFormats[countryName] || "+1 (555) 123-4567";
-  };
-
-  // Format phone number based on country
-  const formatPhoneNumber = (value: string, countryName: string | null | undefined): string => {
-    // Remove all non-numeric characters except +
-    const cleaned = value.replace(/[^\d+]/g, '');
-    
-    if (!countryName || !cleaned) return cleaned;
-
-    // Extract just the digits (no +)
-    const digits = cleaned.replace(/\+/g, '');
-
-    // Format patterns for each country
-    const formatPatterns: Record<string, (digits: string) => string> = {
-      "Brazil": (d) => {
-        // +55 (11) 98765-4321
-        if (d.length <= 2) return `+${d}`;
-        if (d.length <= 4) return `+${d.slice(0, 2)} (${d.slice(2)}`;
-        if (d.length <= 9) return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4)}`;
-        return `+${d.slice(0, 2)} (${d.slice(2, 4)}) ${d.slice(4, 9)}-${d.slice(9, 13)}`;
-      },
-      "United States": (d) => {
-        // +1 (555) 123-4567
-        if (d.length <= 1) return `+${d}`;
-        if (d.length <= 4) return `+${d.slice(0, 1)} (${d.slice(1)}`;
-        if (d.length <= 7) return `+${d.slice(0, 1)} (${d.slice(1, 4)}) ${d.slice(4)}`;
-        return `+${d.slice(0, 1)} (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7, 11)}`;
-      },
-      "Canada": (d) => {
-        // Same as US: +1 (555) 123-4567
-        if (d.length <= 1) return `+${d}`;
-        if (d.length <= 4) return `+${d.slice(0, 1)} (${d.slice(1)}`;
-        if (d.length <= 7) return `+${d.slice(0, 1)} (${d.slice(1, 4)}) ${d.slice(4)}`;
-        return `+${d.slice(0, 1)} (${d.slice(1, 4)}) ${d.slice(4, 7)}-${d.slice(7, 11)}`;
-      },
-      "Nigeria": (d) => {
-        // +234 802 123 4567
-        if (d.length <= 3) return `+${d}`;
-        if (d.length <= 6) return `+${d.slice(0, 3)} ${d.slice(3)}`;
-        if (d.length <= 9) return `+${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}`;
-        return `+${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 9)} ${d.slice(9, 13)}`;
-      },
-      "United Kingdom": (d) => {
-        // +44 20 7123 4567
-        if (d.length <= 2) return `+${d}`;
-        if (d.length <= 4) return `+${d.slice(0, 2)} ${d.slice(2)}`;
-        if (d.length <= 8) return `+${d.slice(0, 2)} ${d.slice(2, 4)} ${d.slice(4)}`;
-        return `+${d.slice(0, 2)} ${d.slice(2, 4)} ${d.slice(4, 8)} ${d.slice(8, 12)}`;
-      },
-    };
-
-    const formatter = formatPatterns[countryName];
-    if (formatter) {
-      return formatter(digits);
-    }
-
-    // Default: just add + at the start
-    return `+${digits}`;
-  };
 
   // Handle phone number input with formatting
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -2064,7 +1946,7 @@ export default function SettingsPage() {
                               ? "bg-gray-700/80 text-gray-300 opacity-70 cursor-not-allowed border-gray-600/50"
                               : "bg-gray-700/80 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-600/50"
                           }`}
-                          placeholder={getPhoneNumberPlaceholder(session?.user?.country)}
+                          placeholder={getPhonePlaceholder(session?.user?.country)}
                         />
                         {phoneVerified ? (
                           <div className="flex items-center gap-2 mt-2">
@@ -3479,12 +3361,15 @@ export default function SettingsPage() {
                           id="nationality"
                           required
                           value={kycData.nationality}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const newCountry = e.target.value;
+                            const newPrefix = PHONE_PATTERNS[newCountry]?.prefix || "+1";
                             setKycData({
                               ...kycData,
-                              nationality: e.target.value,
-                            })
-                          }
+                              nationality: newCountry,
+                              phoneNumber: newPrefix + " ",
+                            });
+                          }}
                           className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-300 dark:border-gray-600"
                         >
                           <option value="" disabled className="text-gray-500">
@@ -3549,6 +3434,23 @@ export default function SettingsPage() {
                           if (!kycData.phoneNumber.trim()) {
                             showWarning("Please enter your Phone Number");
                             return;
+                          }
+                          // Validate phone number matches the selected country
+                          const selectedCountry = kycData.nationality.trim();
+                          const expectedPattern = PHONE_PATTERNS[selectedCountry];
+                          if (expectedPattern) {
+                            const phoneDigits = kycData.phoneNumber.replace(/\D/g, '');
+                            const prefixDigits = expectedPattern.prefix.replace(/\D/g, '');
+                            if (!phoneDigits.startsWith(prefixDigits)) {
+                              showWarning(`Phone number must start with ${expectedPattern.prefix} for ${selectedCountry}`);
+                              return;
+                            }
+                            const localDigits = phoneDigits.slice(prefixDigits.length);
+                            const expectedLength = expectedPattern.pattern.reduce((sum, n) => sum + n, 0);
+                            if (localDigits.length < expectedLength) {
+                              showWarning(`Please enter a complete phone number for ${selectedCountry}`);
+                              return;
+                            }
                           }
                           setKycStage(2);
                         }}
@@ -3965,13 +3867,13 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Navigation Buttons with Submit */}
-                    <div className="flex justify-between mt-6">
+                    <div className="flex justify-between mt-4">
                       <button
                         type="button"
                         onClick={() => setKycStage(2)}
-                        className="bg-gray-700 hover:bg-gray-600 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white"
+                        className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 text-white"
                       >
-                        <ChevronRight className="w-4 h-4 rotate-180" />
+                        <ChevronRight className="w-3.5 h-3.5 rotate-180" />
                         Previous
                       </button>
                       <button
@@ -3985,7 +3887,7 @@ export default function SettingsPage() {
                           !documents.proofOfAddress ||
                           !documents.selfie
                         }
-                        className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-medium transition-colors text-white"
+                        className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-xs font-medium transition-colors text-white"
                       >
                         {submittingKyc
                           ? "Submitting..."

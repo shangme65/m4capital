@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useToast } from "@/contexts/ToastContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import CustomWalletDeposit from "./CustomWalletDeposit";
+import SuccessModal from "./SuccessModal";
 
 interface PaymentMethodSelectorProps {
   isOpen: boolean;
@@ -35,6 +36,12 @@ export default function PaymentMethodSelector({
   const [showCustomWallet, setShowCustomWallet] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const { showInfo, showSuccess: showToast, showError } = useToast();
+
+  const handleDone = () => {
+    setShowSuccess(false);
+    onClose();
+    window.location.reload();
+  };
 
   const handlePurchase = async () => {
     if (!selectedMethod) return;
@@ -73,13 +80,6 @@ export default function PaymentMethodSelector({
         // Show success modal
         setIsProcessing(false);
         setShowSuccess(true);
-
-        // Close after 3 seconds and refresh
-        setTimeout(() => {
-          setShowSuccess(false);
-          onClose();
-          window.location.reload();
-        }, 3000);
       } else if (selectedMethod === "custom-wallet") {
         // Open custom wallet deposit modal
         setShowCustomWallet(true);
@@ -195,8 +195,8 @@ export default function PaymentMethodSelector({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-4">
+          <div className="flex items-center justify-between mb-3">
             {selectedMethod && (
               <button
                 onClick={() => {
@@ -208,7 +208,7 @@ export default function PaymentMethodSelector({
                 <ArrowLeft className="w-5 h-5" />
               </button>
             )}
-            <h2 className="text-2xl font-bold text-white flex-1 text-center">
+            <h2 className="text-lg font-bold text-white flex-1 text-center">
               {selectedMethod === "usd-balance"
                 ? "Confirm Purchase"
                 : "Select Payment Method"}
@@ -222,24 +222,24 @@ export default function PaymentMethodSelector({
           </div>
 
           {/* Purchase Summary */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-white">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm opacity-80">You're buying</span>
-              <span className="text-lg font-bold">
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white">
+            <div className="flex justify-between items-center mb-1.5">
+              <span className="text-xs opacity-80">You're buying</span>
+              <span className="text-base font-bold">
                 {Number(amount).toFixed(8)} {asset}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-sm opacity-80">Total Amount</span>
-              <span className="text-xl font-bold">
-                ${usdValue.toLocaleString()}
+              <span className="text-xs opacity-80">Total Cost</span>
+              <span className="text-lg font-bold">
+                {formatAmount(usdValue * 1.015, 2)}
               </span>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-280px)]">
+        <div className="p-4 overflow-y-auto max-h-[calc(90vh-280px)]">
           {!selectedMethod && (
             <div className="space-y-3">
               <h3 className="text-gray-400 text-sm font-medium mb-3">
@@ -250,23 +250,23 @@ export default function PaymentMethodSelector({
                   key={method.id}
                   onClick={() => setSelectedMethod(method.id)}
                   disabled={!method.enabled}
-                  className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
                     method.enabled
                       ? "border-gray-700 hover:border-purple-500 bg-gray-800 hover:bg-gray-750"
                       : "border-gray-800 bg-gray-900 opacity-50 cursor-not-allowed"
                   }`}
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center text-white">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white">
                         {method.icon}
                       </div>
                       <div>
-                        <div className="text-white font-semibold">
+                        <div className="text-white text-sm font-semibold">
                           {method.name}
                         </div>
                         <div
-                          className={`text-sm ${
+                          className={`text-xs ${
                             method.enabled
                               ? method.id === "usd-balance" &&
                                 userBalance < usdValue
@@ -369,36 +369,42 @@ export default function PaymentMethodSelector({
           )}
 
           {selectedMethod === "usd-balance" && (
-            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
               <div className="text-center">
-                <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Wallet className="w-8 h-8 text-white" />
+                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <Wallet className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">
+                <h3 className="text-base font-bold text-white mb-1">
                   Confirm Purchase
                 </h3>
-                <p className="text-gray-400 mb-4">
-                  {formatAmount(usdValue, 2)} will be deducted from your{" "}
+                <p className="text-gray-400 text-sm mb-3">
+                  {formatAmount(usdValue * 1.015, 2)} will be deducted from your{" "}
                   {preferredCurrency} balance
                 </p>
-                <div className="bg-gray-900 rounded-lg p-4 mb-4">
-                  <div className="flex justify-between text-sm mb-2">
+                <div className="bg-gray-900 rounded-lg p-3 mb-3">
+                  <div className="flex justify-between text-xs mb-1.5">
                     <span className="text-gray-400">Current Balance:</span>
                     <span className="text-white font-medium">
                       {formatBalanceDisplay(userBalance)}
                     </span>
                   </div>
-                  <div className="flex justify-between text-sm mb-2">
+                  <div className="flex justify-between text-xs mb-1.5">
                     <span className="text-gray-400">Purchase Amount:</span>
-                    <span className="text-red-400 font-medium">
-                      -{formatAmount(usdValue, 2)}
+                    <span className="text-white font-medium">
+                      {formatAmount(usdValue, 2)}
                     </span>
                   </div>
-                  <div className="border-t border-gray-700 my-2" />
-                  <div className="flex justify-between">
+                  <div className="flex justify-between text-xs mb-1.5">
+                    <span className="text-gray-400">Fee (1.5%):</span>
+                    <span className="text-white font-medium">
+                      {formatAmount(usdValue * 0.015, 2)}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-700 my-1.5" />
+                  <div className="flex justify-between text-xs">
                     <span className="text-gray-400">New Balance:</span>
                     <span className="text-green-400 font-bold">
-                      {formatBalanceDisplay(userBalance - usdValue)}
+                      {formatBalanceDisplay(userBalance - (usdValue * 1.015))}
                     </span>
                   </div>
                 </div>
@@ -409,11 +415,11 @@ export default function PaymentMethodSelector({
 
         {/* Footer Button */}
         {selectedMethod && (
-          <div className="p-6 border-t border-gray-800">
+          <div className="p-4 border-t border-gray-800">
             <button
               onClick={handlePurchase}
               disabled={isProcessing}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold text-lg transition-all"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white py-3 rounded-xl font-bold text-base transition-all"
             >
               {isProcessing
                 ? "Processing..."
@@ -435,79 +441,14 @@ export default function PaymentMethodSelector({
       />
 
       {/* Success Modal */}
-      {showSuccess && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[10002]"
-        >
-          <motion.div
-            initial={{ scale: 0.5, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="bg-gray-900 rounded-2xl p-8 max-w-md w-full mx-4"
-          >
-            <div className="text-center">
-              {/* Green Checkmark Animation */}
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 200,
-                  damping: 15,
-                  delay: 0.2,
-                }}
-                className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4"
-              >
-                <motion.svg
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 0.5, delay: 0.5 }}
-                  className="w-8 h-8 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={3}
-                >
-                  <motion.path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M5 13l4 4L19 7"
-                  />
-                </motion.svg>
-              </motion.div>
-
-              {/* Success Message */}
-              <h3 className="text-lg font-bold text-white mb-1">
-                Purchase Successful!
-              </h3>
-              <p className="text-gray-400 text-xs mb-4">
-                You&apos;ve successfully purchased {amount.toFixed(8)} {asset}
-              </p>
-
-              {/* Transaction Details */}
-              <div className="bg-gray-800 rounded-lg p-3 mb-3">
-                <div className="flex justify-between text-xs mb-2">
-                  <span className="text-gray-400">Amount:</span>
-                  <span className="text-white font-medium">
-                    {amount.toFixed(8)} {asset}
-                  </span>
-                </div>
-                <div className="flex justify-between text-xs">
-                  <span className="text-gray-400">Total Paid:</span>
-                  <span className="text-green-400 font-bold">
-                    ${usdValue.toLocaleString()}
-                  </span>
-                </div>
-              </div>
-
-              <p className="text-gray-500 text-xs">
-                Redirecting to dashboard...
-              </p>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
+      <SuccessModal
+        isOpen={showSuccess}
+        onClose={handleDone}
+        type="buy"
+        asset={asset}
+        amount={amount.toString()}
+        value={formatAmount(usdValue * 1.015, 2)}
+      />
     </motion.div>
   );
 }

@@ -761,6 +761,7 @@ const AdminDashboard = () => {
     userEmail: string;
     transactionHash?: string;
     type: string;
+    fiatAmount?: string;
   } | null>(null);
 
   // System stats state
@@ -1193,19 +1194,17 @@ const AdminDashboard = () => {
           );
         }
       } else if (amountInputType === "usd" && depositType === "crypto") {
-        // Crypto deposit: User entered fiat amount, convert to crypto
+        // Crypto deposit: Admin entered fiat amount in USER's preferred currency, convert to crypto
         const cryptoPrice = prices[cryptoAsset]?.price || 0;
         if (cryptoPrice > 0) {
-          // First convert admin currency to USD
-          const amountInUSD = convertAmount(amountNum, true);
+          // The input is in user's preferred currency, convert to USD
+          const userCurrency = selectedUser?.preferredCurrency || "USD";
+          const userRate = exchangeRates[userCurrency] || 1;
+          const amountInUSD = userCurrency === "USD" ? amountNum : amountNum / userRate;
           cryptoAmount = amountInUSD / cryptoPrice; // Convert USD to crypto
           finalAmount = amountInUSD;
-          // Convert from USD to user's preferred currency
-          amountInUserCurrency = convertCurrency(
-            finalAmount,
-            selectedUser?.preferredCurrency || "USD",
-            exchangeRates
-          );
+          // amountInUserCurrency IS the input since admin entered it in user's currency
+          amountInUserCurrency = Math.round(amountNum * 100) / 100;
         } else {
           // If crypto price is not available, show error
           showPopupNotification(
@@ -1302,6 +1301,10 @@ const AdminDashboard = () => {
           userEmail: selectedUser!.email || "",
           transactionHash: generatedHash,
           type: depositType === "crypto" ? "Crypto Deposit" : "Fiat Deposit",
+          fiatAmount:
+            depositType === "crypto"
+              ? `${getCurrencySymbol(userCurr)}${amountInUserCurrency.toFixed(2)} ${userCurr}`
+              : undefined,
         });
         setShowSuccessModal(true);
 
@@ -3963,6 +3966,11 @@ const AdminDashboard = () => {
                 <p className="text-lg sm:text-xl font-bold text-green-400">
                   {successDetails.amount}
                 </p>
+                {successDetails.fiatAmount && (
+                  <p className="text-sm text-gray-400 mt-0.5">
+                    ≈ {successDetails.fiatAmount}
+                  </p>
+                )}
               </div>
 
               {/* User */}

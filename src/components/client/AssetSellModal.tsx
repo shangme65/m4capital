@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, TrendingDown, AlertCircle } from "lucide-react";
+import { ArrowLeft, TrendingDown, AlertCircle, ArrowUpDown } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
@@ -25,6 +25,7 @@ export default function AssetSellModal({
   asset,
 }: AssetSellModalProps) {
   const [sellAmount, setSellAmount] = useState("");
+  const [inputMode, setInputMode] = useState<"crypto" | "fiat">("crypto");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState<{
     asset: string;
@@ -35,12 +36,48 @@ export default function AssetSellModal({
   const { addTransaction, addNotification } = useNotifications();
   const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
 
+  // Currency symbol helper
+  const getCurrencySymbol = () => {
+    const symbols: { [key: string]: string } = {
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+      JPY: "¥",
+      AUD: "A$",
+      CAD: "C$",
+      CHF: "Fr",
+      CNY: "¥",
+      INR: "₹",
+      BRL: "R$",
+      ZAR: "R",
+      MXN: "$",
+    };
+    return symbols[preferredCurrency] || preferredCurrency;
+  };
+
+  // Get crypto amount based on input mode
+  const getCryptoAmount = () => {
+    if (!sellAmount) return "";
+    const value = parseFloat(sellAmount);
+    if (isNaN(value)) return "";
+
+    if (inputMode === "crypto") {
+      return sellAmount;
+    } else {
+      // Convert fiat to USD then to crypto
+      const usdValue = convertAmount(value, true);
+      const cryptoAmount = usdValue / asset.price;
+      return cryptoAmount.toString();
+    }
+  };
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
       setSellAmount("");
+      setInputMode("crypto");
       setErrors({});
     }
     return () => {
@@ -50,7 +87,8 @@ export default function AssetSellModal({
 
   const calculateUSDValue = () => {
     if (!sellAmount) return 0;
-    return parseFloat(sellAmount) * asset.price;
+    const cryptoAmount = parseFloat(getCryptoAmount());
+    return cryptoAmount * asset.price;
   };
 
   const validateForm = () => {
@@ -60,7 +98,8 @@ export default function AssetSellModal({
       newErrors.sellAmount = "Please enter a valid amount";
     }
 
-    if (parseFloat(sellAmount) > asset.amount) {
+    const cryptoAmount = parseFloat(getCryptoAmount());
+    if (cryptoAmount > asset.amount) {
       newErrors.sellAmount = "Insufficient balance";
     }
 
@@ -76,7 +115,7 @@ export default function AssetSellModal({
     setIsProcessing(true);
 
     try {
-      const amount = parseFloat(sellAmount);
+      const amount = parseFloat(getCryptoAmount());
       const usdValue = calculateUSDValue();
 
       // Call the sell crypto API - this actually updates the database
@@ -133,13 +172,6 @@ export default function AssetSellModal({
       setShowSuccessModal(true);
       setSellAmount("");
       setErrors({});
-
-      // Close modal after delay and refresh page
-      setTimeout(() => {
-        setShowSuccessModal(false);
-        onClose();
-        window.location.reload();
-      }, 3000);
     } catch (error) {
       console.error("Error processing sale:", error);
       setErrors({
@@ -250,11 +282,15 @@ export default function AssetSellModal({
                   <div className="relative mb-3">
                     <input
                       type="number"
-                      step="0.00000001"
+                      step={inputMode === "crypto" ? "0.00000001" : "0.01"}
                       value={sellAmount}
                       onChange={(e) => setSellAmount(e.target.value)}
-                      placeholder="0.00000000"
-                      className="w-full px-3 py-3 pr-16 rounded-xl text-white text-xl font-bold focus:outline-none transition-all"
+                      placeholder={
+                        inputMode === "crypto"
+                          ? "0.00000000"
+                          : `${getCurrencySymbol()}0.00`
+                      }
+                      className="w-full px-3 py-3 pr-20 rounded-xl text-white text-xl font-bold focus:outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       style={{
                         background: "rgba(15, 23, 42, 0.8)",
                         boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)",
@@ -263,9 +299,30 @@ export default function AssetSellModal({
                           : "1px solid rgba(255, 255, 255, 0.08)",
                       }}
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
-                      {asset.symbol}
-                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const currentValue = parseFloat(sellAmount);
+                        if (!isNaN(currentValue) && currentValue > 0) {
+                          if (inputMode === "crypto") {
+                            // Convert crypto to fiat
+                            const usdValue = currentValue * asset.price;
+                            const fiatValue = convertAmount(usdValue);
+                            setSellAmount(fiatValue.toFixed(2));
+                          } else {
+                            // Convert fiat to crypto
+                            const usdValue = convertAmount(currentValue, true);
+                            const cryptoValue = usdValue / asset.price;
+                            setSellAmount(cryptoValue.toFixed(8));
+                          }
+                        }
+                        setInputMode(inputMode === "crypto" ? "fiat" : "crypto");
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+                    >
+                      <ArrowUpDown className="w-3.5 h-3.5" />
+                      <span>{inputMode === "crypto" ? asset.symbol : preferredCurrency}</span>
+                    </button>
                   </div>
 
                   {/* Quick sell buttons - Compact */}
@@ -273,20 +330,23 @@ export default function AssetSellModal({
                     {quickSellPercentages.map((percent) => (
                       <button
                         key={percent}
-                        onClick={() =>
-                          setSellAmount(
-                            ((asset.amount * percent) / 100).toString()
-                          )
-                        }
+                        onClick={() => {
+                          const cryptoAmount = (asset.amount * percent) / 100;
+                          if (inputMode === "fiat") {
+                            // Convert crypto to fiat
+                            const usdValue = cryptoAmount * asset.price;
+                            const fiatValue = convertAmount(usdValue);
+                            setSellAmount(fiatValue.toFixed(2));
+                          } else {
+                            // Set crypto amount directly
+                            setSellAmount(cryptoAmount.toFixed(8));
+                          }
+                        }}
                         className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
                         style={{
                           background: "rgba(55, 65, 81, 0.5)",
                           border: "1px solid rgba(255, 255, 255, 0.06)",
-                          color:
-                            sellAmount ===
-                            ((asset.amount * percent) / 100).toString()
-                              ? "#f87171"
-                              : "#9ca3af",
+                          color: "#9ca3af",
                         }}
                       >
                         {percent}%
@@ -305,7 +365,9 @@ export default function AssetSellModal({
                     parseFloat(sellAmount) > 0 &&
                     !errors.sellAmount && (
                       <p className="text-right text-xs text-gray-400">
-                        ≈ {formatAmount(usdValue, 2)}
+                        {inputMode === "crypto"
+                          ? `≈ ${formatAmount(parseFloat(sellAmount) * asset.price, 2)}`
+                          : `≈ ${parseFloat(getCryptoAmount()).toFixed(8)} ${asset.symbol}`}
                       </p>
                     )}
                 </div>
@@ -331,7 +393,7 @@ export default function AssetSellModal({
                         <div className="flex justify-between text-xs">
                           <span className="text-gray-400">You&apos;re selling</span>
                           <span className="font-bold text-white">
-                            {parseFloat(sellAmount).toFixed(8)} {asset.symbol}
+                            {parseFloat(getCryptoAmount()).toFixed(8)} {asset.symbol}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
@@ -392,7 +454,7 @@ export default function AssetSellModal({
                   {isProcessing
                     ? "Processing..."
                     : sellAmount && parseFloat(sellAmount) > 0
-                    ? `Sell ${parseFloat(sellAmount).toFixed(8)} ${
+                    ? `Sell ${parseFloat(getCryptoAmount()).toFixed(8)} ${
                         asset.symbol
                       }`
                     : `Sell ${asset.symbol}`}
@@ -408,7 +470,11 @@ export default function AssetSellModal({
 
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={() => {
+          setShowSuccessModal(false);
+          onClose();
+          window.location.reload();
+        }}
         type="sell"
         asset={successData?.asset || ""}
         amount={successData?.amount.toString() || "0"}

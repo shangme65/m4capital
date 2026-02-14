@@ -7,6 +7,8 @@ import { revalidatePath } from "next/cache";
 import { Decimal } from "@prisma/client/runtime/library";
 import { generateId } from "@/lib/generate-id";
 import { generateTransactionReference } from "@/lib/p2p-transfer-utils";
+import { getCurrencySymbol } from "@/lib/currencies";
+import { convertCurrency } from "@/lib/telegram-bot-helper";
 
 interface TransferActionResult {
   success: boolean;
@@ -128,8 +130,8 @@ export async function transferCryptoAction(
               memo: memo || "P2P Transfer",
               senderAmount: displaySenderAmount,
               senderCurrency: senderCurrency,
-              receiverAmount: displaySenderAmount, // In same currency for display
-              receiverCurrency: recipientCurrency,
+              receiverAmount: displaySenderAmount, // Same amount in same currency
+              receiverCurrency: senderCurrency, // Both see sender's currency (what was actually sent)
               usdAmount: amount, // The actual USD amount transferred
             }),
             senderAccountNumber: sender.accountNumber || "",
@@ -142,20 +144,46 @@ export async function transferCryptoAction(
           },
         });
 
-        // Create notifications for both parties
+        // Create notifications for both parties with proper currency formatting
+        const senderSymbol = getCurrencySymbol(senderCurrency);
+        const displayAmount = originalInputAmount ?? amount;
+
         await tx.notification.create({
           data: {
             id: generateId(),
             userId: sender.id,
             type: "TRANSACTION",
             title: "Transfer Sent",
-            message: `Sent $${amount.toFixed(2)} to ${
+            message: `Sent ${senderSymbol}${displayAmount.toFixed(2)} to ${
               recipient.name || recipient.email
             }`,
-            amount: amount,
-            asset: "USD",
+            amount: displayAmount,
+            asset: senderCurrency,
           },
         });
+
+        // For receiver notification, show both original amount and converted amount
+        const recipientSymbol = getCurrencySymbol(recipientCurrency);
+        let receiverMessage = `Received ${senderSymbol}${displayAmount.toFixed(2)} from ${
+          sender.name || sender.email
+        }`;
+
+        // If currencies are different, show conversion
+        if (senderCurrency !== recipientCurrency) {
+          try {
+            const convertedAmount = await convertCurrency(
+              displayAmount,
+              senderCurrency,
+              recipientCurrency
+            );
+            receiverMessage = `Received ${senderSymbol}${displayAmount.toFixed(2)} → ${recipientSymbol}${convertedAmount.toFixed(2)} from ${
+              sender.name || sender.email
+            }`;
+          } catch (error) {
+            console.error("Failed to convert currency for notification:", error);
+            // Keep original message if conversion fails
+          }
+        }
 
         await tx.notification.create({
           data: {
@@ -163,11 +191,9 @@ export async function transferCryptoAction(
             userId: recipient.id,
             type: "TRANSACTION",
             title: "Transfer Received",
-            message: `Received $${amount.toFixed(2)} from ${
-              sender.name || sender.email
-            }`,
-            amount: amount,
-            asset: "USD",
+            message: receiverMessage,
+            amount: displayAmount,
+            asset: senderCurrency,
           },
         });
       });
@@ -268,15 +294,38 @@ export async function transferCryptoAction(
           },
         });
 
+        // For receiver notification, show crypto amount and fiat value in their currency
+        const cryptoPrice = senderAssetData.averagePrice || 0;
+        const usdValue = amount * cryptoPrice;
+        const recipientSymbol = getCurrencySymbol(recipientCurrency);
+        let receiverMessage = `Received ${amount.toFixed(8)} ${asset} from ${
+          sender.name || sender.email
+        }`;
+
+        // Add fiat value in receiver's currency
+        if (usdValue > 0) {
+          try {
+            const fiatValue = await convertCurrency(
+              usdValue,
+              "USD",
+              recipientCurrency
+            );
+            receiverMessage = `Received ${amount.toFixed(8)} ${asset} → ${recipientSymbol}${fiatValue.toFixed(2)} from ${
+              sender.name || sender.email
+            }`;
+          } catch (error) {
+            console.error("Failed to convert crypto value for notification:", error);
+            // Keep original message if conversion fails
+          }
+        }
+
         await tx.notification.create({
           data: {
             id: generateId(),
             userId: recipient.id,
             type: "TRANSACTION",
             title: "Transfer Received",
-            message: `Received ${amount.toFixed(8)} ${asset} from ${
-              sender.name || sender.email
-            }`,
+            message: receiverMessage,
             amount: amount,
             asset: asset,
           },

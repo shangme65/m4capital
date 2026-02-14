@@ -10,6 +10,7 @@ import {
   Check,
   ChevronDown,
   ArrowDownUp,
+  ArrowUpDown,
   Info,
   Search,
   TrendingUp,
@@ -43,6 +44,7 @@ export default function AssetSwapModal({
 }: AssetSwapModalProps) {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [fromAmount, setFromAmount] = useState("");
+  const [inputMode, setInputMode] = useState<"crypto" | "fiat">("crypto");
   const [toAsset, setToAsset] = useState("");
   const [showToDropdown, setShowToDropdown] = useState(false);
   const [assetSearch, setAssetSearch] = useState("");
@@ -64,6 +66,41 @@ export default function AssetSwapModal({
   const [userCountry, setUserCountry] = useState<string>("US");
 
   const toAssetData = availableAssets.find((a) => a.symbol === toAsset);
+
+  // Currency symbol helper
+  const getCurrencySymbol = () => {
+    const symbols: { [key: string]: string } = {
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+      JPY: "¥",
+      AUD: "A$",
+      CAD: "C$",
+      CHF: "Fr",
+      CNY: "¥",
+      INR: "₹",
+      BRL: "R$",
+      ZAR: "R",
+      MXN: "$",
+    };
+    return symbols[preferredCurrency] || preferredCurrency;
+  };
+
+  // Get crypto amount based on input mode
+  const getCryptoAmount = () => {
+    if (!fromAmount) return "";
+    const value = parseFloat(fromAmount);
+    if (isNaN(value)) return "";
+
+    if (inputMode === "crypto") {
+      return fromAmount;
+    } else {
+      // Convert fiat to USD then to crypto
+      const usdValue = convertAmount(value, true);
+      const cryptoAmount = usdValue / asset.price;
+      return cryptoAmount.toString();
+    }
+  };
 
   // 3D card styling - Cyan theme
   const card3DStyle = {
@@ -132,6 +169,7 @@ export default function AssetSwapModal({
       document.body.style.overflow = "unset";
       document.body.style.paddingRight = "0px";
       setFromAmount("");
+      setInputMode("crypto");
       setToAsset("");
       setErrors({});
       setShowToDropdown(false);
@@ -205,9 +243,9 @@ export default function AssetSwapModal({
 
   const getEstimatedReceiveAmount = () => {
     if (!fromAmount || !toAssetData) return 0;
-    const inputAmount = parseFloat(fromAmount);
+    const cryptoAmount = parseFloat(getCryptoAmount());
     const rate = getConversionRate();
-    const gross = inputAmount * rate;
+    const gross = cryptoAmount * rate;
     const fee = gross * (conversionFee / 100);
     return gross - fee;
   };
@@ -234,7 +272,8 @@ export default function AssetSwapModal({
       newErrors.fromAmount = "Please enter a valid amount";
     }
 
-    if (parseFloat(fromAmount) > asset.amount) {
+    const cryptoAmount = parseFloat(getCryptoAmount());
+    if (cryptoAmount > asset.amount) {
       newErrors.fromAmount = "Insufficient balance";
     }
 
@@ -257,7 +296,7 @@ export default function AssetSwapModal({
   const confirmSwap = async () => {
     setIsProcessing(true);
     try {
-      const fromAmt = parseFloat(fromAmount);
+      const fromAmt = parseFloat(getCryptoAmount());
       const toAmt = getEstimatedReceiveAmount();
       const value = fromAmt * asset.price;
       const rate = getConversionRate();
@@ -356,7 +395,14 @@ export default function AssetSwapModal({
   };
 
   const setMaxAmount = () => {
-    setFromAmount(asset.amount.toFixed(8));
+    if (inputMode === "crypto") {
+      setFromAmount(asset.amount.toFixed(8));
+    } else {
+      // Convert max crypto to fiat
+      const usdValue = asset.amount * asset.price;
+      const fiatValue = convertAmount(usdValue);
+      setFromAmount(fiatValue.toFixed(2));
+    }
   };
 
   if (!isOpen) return null;
@@ -671,28 +717,62 @@ export default function AssetSwapModal({
                     <div className="relative">
                       <input
                         type="number"
-                        step="0.00000001"
+                        step={inputMode === "crypto" ? "0.00000001" : "0.01"}
                         value={fromAmount}
                         onChange={(e) => setFromAmount(e.target.value)}
-                        className="w-full rounded-lg px-3 py-3 pr-16 text-white text-lg font-medium focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        className="w-full rounded-lg px-3 py-3 pr-20 text-white text-lg font-medium focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         style={{
                           background: "rgba(15, 23, 42, 0.8)",
                           border: "1px solid rgba(6, 182, 212, 0.2)",
                         }}
-                        placeholder="0.00000000"
+                        placeholder={
+                          inputMode === "crypto"
+                            ? "0.00000000"
+                            : `${getCurrencySymbol()}0.00`
+                        }
                       />
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-md text-cyan-300 text-xs font-medium bg-cyan-500/20">
-                        {asset.symbol}
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentValue = parseFloat(fromAmount);
+                          if (!isNaN(currentValue) && currentValue > 0) {
+                            if (inputMode === "crypto") {
+                              // Convert crypto to fiat
+                              const usdValue = currentValue * asset.price;
+                              const fiatValue = convertAmount(usdValue);
+                              setFromAmount(fiatValue.toFixed(2));
+                            } else {
+                              // Convert fiat to crypto
+                              const usdValue = convertAmount(currentValue, true);
+                              const cryptoValue = usdValue / asset.price;
+                              setFromAmount(cryptoValue.toFixed(8));
+                            }
+                          }
+                          setInputMode(inputMode === "crypto" ? "fiat" : "crypto");
+                        }}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-cyan-400 hover:text-cyan-300 text-xs font-medium transition-colors"
+                      >
+                        <ArrowUpDown className="w-3.5 h-3.5" />
+                        <span>{inputMode === "crypto" ? asset.symbol : preferredCurrency}</span>
+                      </button>
                     </div>
                     {errors.fromAmount && (
                       <p className="text-red-400 text-xs mt-1.5">
                         {errors.fromAmount}
                       </p>
                     )}
-                    <p className="text-gray-500 text-xs mt-1.5">
-                      Available: {asset.amount.toFixed(8)} {asset.symbol}
-                    </p>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <p className="text-gray-500 text-xs">
+                        Available: {asset.amount.toFixed(8)} {asset.symbol}
+                      </p>
+                      {fromAmount && parseFloat(fromAmount) > 0 && (
+                        <p className="text-cyan-400 text-xs">
+                          {inputMode === "crypto"
+                            ? `≈ ${formatAmount(parseFloat(fromAmount) * asset.price, 2)}`
+                            : `≈ ${(parseFloat(getCryptoAmount())).toFixed(8)} ${asset.symbol}`}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   {/* You Will Receive */}
@@ -746,7 +826,7 @@ export default function AssetSwapModal({
                           </span>
                           <span className="text-white">
                             {(
-                              parseFloat(fromAmount || "0") *
+                              parseFloat(getCryptoAmount() || "0") *
                               getConversionRate() *
                               (conversionFee / 100)
                             ).toFixed(8)}{" "}
@@ -785,19 +865,19 @@ export default function AssetSwapModal({
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
-                  className="p-6"
+                  className="space-y-3"
                 >
-                  <div className="text-center mb-3">
+                  <div className="text-center">
                     <div
-                      className="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center"
+                      className="w-10 h-10 mx-auto mb-1.5 rounded-full flex items-center justify-center"
                       style={{
                         background:
                           "linear-gradient(135deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.2) 100%)",
                       }}
                     >
-                      <RefreshCw className="w-6 h-6 text-cyan-400" />
+                      <RefreshCw className="w-5 h-5 text-cyan-400" />
                     </div>
-                    <h2 className="text-lg font-bold text-white mb-1">
+                    <h2 className="text-base font-bold text-white mb-0.5">
                       Confirm Swap
                     </h2>
                     <p className="text-gray-400 text-xs">
@@ -807,7 +887,7 @@ export default function AssetSwapModal({
 
                   {/* Swap Display */}
                   <div
-                    className="text-center py-3 mb-3 rounded-xl"
+                    className="text-center py-2 rounded-xl"
                     style={{
                       background:
                         "linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(20, 184, 166, 0.1) 100%)",
@@ -817,29 +897,29 @@ export default function AssetSwapModal({
                     <div className="text-gray-400 text-xs mb-1">
                       You&apos;re swapping
                     </div>
-                    <div className="flex items-center justify-center gap-2 mb-2">
-                      <CryptoIcon symbol={asset.symbol} size="md" />
-                      <div className="text-xl font-bold text-white">
-                        {parseFloat(fromAmount || "0").toFixed(8)}
+                    <div className="flex items-center justify-center gap-1.5 mb-1">
+                      <CryptoIcon symbol={asset.symbol} size="sm" />
+                      <div className="text-base font-bold text-white">
+                        {parseFloat(getCryptoAmount() || "0").toFixed(8)}
                       </div>
-                      <span className="text-gray-400 text-sm">
+                      <span className="text-gray-400 text-xs">
                         {asset.symbol}
                       </span>
                     </div>
-                    <div className="text-cyan-400 text-lg my-1">↓</div>
-                    <div className="flex items-center justify-center gap-2">
-                      <CryptoIcon symbol={toAsset} size="md" />
-                      <div className="text-xl font-bold text-cyan-400">
+                    <div className="text-cyan-400 text-sm my-0.5">↓</div>
+                    <div className="flex items-center justify-center gap-1.5">
+                      <CryptoIcon symbol={toAsset} size="sm" />
+                      <div className="text-base font-bold text-cyan-400">
                         {getEstimatedReceiveAmount().toFixed(8)}
                       </div>
-                      <span className="text-gray-400 text-sm">{toAsset}</span>
+                      <span className="text-gray-400 text-xs">{toAsset}</span>
                     </div>
                   </div>
 
                   {/* Details */}
-                  <div className="space-y-2 mb-3">
+                  <div className="space-y-1.5">
                     <div
-                      className="flex justify-between p-2 rounded-lg text-sm"
+                      className="flex justify-between p-1.5 rounded-lg text-xs"
                       style={{ background: "rgba(15, 23, 42, 0.6)" }}
                     >
                       <span className="text-gray-400">Exchange Rate</span>
@@ -849,17 +929,17 @@ export default function AssetSwapModal({
                       </span>
                     </div>
                     <div
-                      className="flex justify-between p-2 rounded-lg text-sm"
+                      className="flex justify-between p-1.5 rounded-lg text-xs"
                       style={{ background: "rgba(15, 23, 42, 0.6)" }}
                     >
                       <span className="text-gray-400">You Send</span>
                       <span className="text-white font-medium">
-                        {parseFloat(fromAmount || "0").toFixed(8)}{" "}
+                        {parseFloat(getCryptoAmount() || "0").toFixed(8)}{" "}
                         {asset.symbol}
                       </span>
                     </div>
                     <div
-                      className="flex justify-between p-2 rounded-lg text-sm"
+                      className="flex justify-between p-1.5 rounded-lg text-xs"
                       style={{ background: "rgba(15, 23, 42, 0.6)" }}
                     >
                       <span className="text-gray-400">
@@ -867,7 +947,7 @@ export default function AssetSwapModal({
                       </span>
                       <span className="text-white font-medium">
                         {(
-                          parseFloat(fromAmount || "0") *
+                          parseFloat(getCryptoAmount() || "0") *
                           getConversionRate() *
                           (conversionFee / 100)
                         ).toFixed(8)}{" "}
@@ -875,7 +955,7 @@ export default function AssetSwapModal({
                       </span>
                     </div>
                     <div
-                      className="flex justify-between p-2 rounded-lg text-sm"
+                      className="flex justify-between p-1.5 rounded-lg text-xs"
                       style={{
                         background: "rgba(6, 182, 212, 0.1)",
                         border: "1px solid rgba(6, 182, 212, 0.2)",
@@ -891,12 +971,12 @@ export default function AssetSwapModal({
                   </div>
 
                   {/* Buttons */}
-                  <div className="flex gap-3">
+                  <div className="flex gap-2">
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setStep(2)}
-                      className="flex-1 py-3 rounded-xl font-bold text-white transition-colors"
+                      className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white transition-colors"
                       style={{
                         background:
                           "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
@@ -911,7 +991,7 @@ export default function AssetSwapModal({
                       whileTap={{ scale: 0.98 }}
                       onClick={confirmSwap}
                       disabled={isProcessing}
-                      className="flex-1 py-3 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         background:
                           "linear-gradient(135deg, #06b6d4 0%, #14b8a6 50%, #06b6d4 100%)",
@@ -921,7 +1001,7 @@ export default function AssetSwapModal({
                     >
                       {isProcessing ? (
                         <span className="flex items-center justify-center gap-2">
-                          <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                           Processing...
                         </span>
                       ) : (
@@ -937,9 +1017,9 @@ export default function AssetSwapModal({
                 <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="p-6"
+                  className="space-y-3"
                 >
-                  <div className="text-center mb-6">
+                  <div className="text-center">
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
@@ -948,7 +1028,7 @@ export default function AssetSwapModal({
                         stiffness: 200,
                         damping: 15,
                       }}
-                      className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+                      className="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center"
                       style={{
                         background:
                           "linear-gradient(135deg, #22c55e 0%, #10b981 50%, #22c55e 100%)",
@@ -961,48 +1041,48 @@ export default function AssetSwapModal({
                         animate={{ scale: 1, rotate: 0 }}
                         transition={{ delay: 0.2, type: "spring" }}
                       >
-                        <Check className="w-10 h-10 text-white" />
+                        <Check className="w-6 h-6 text-white" />
                       </motion.div>
                     </motion.div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
+                    <h2 className="text-lg font-bold text-white mb-0.5">
                       Swap Successful!
                     </h2>
-                    <p className="text-gray-400">Your conversion is complete</p>
+                    <p className="text-gray-400 text-xs">Your conversion is complete</p>
                   </div>
 
                   {/* Swap Result */}
                   <div
-                    className="text-center py-6 mb-6 rounded-xl"
+                    className="text-center py-3 rounded-xl"
                     style={{
                       background:
                         "linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(20, 184, 166, 0.1) 100%)",
                       border: "1px solid rgba(6, 182, 212, 0.2)",
                     }}
                   >
-                    <div className="flex items-center justify-center gap-3 mb-1">
-                      <CryptoIcon symbol={successData.fromAsset} size="md" />
-                      <span className="text-white text-xl font-medium">
+                    <div className="flex items-center justify-center gap-2 mb-0.5">
+                      <CryptoIcon symbol={successData.fromAsset} size="sm" />
+                      <span className="text-white text-base font-medium">
                         {successData.fromAmount.toFixed(8)}{" "}
                         {successData.fromAsset}
                       </span>
                     </div>
-                    <div className="text-gray-400 text-sm mb-3">
+                    <div className="text-gray-400 text-xs mb-1.5">
                       ≈ {formatAmount(successData.value, 2)}
                     </div>
-                    <div className="text-cyan-400 text-2xl my-2">↓</div>
-                    <div className="flex items-center justify-center gap-3 mb-1">
-                      <CryptoIcon symbol={successData.toAsset} size="md" />
-                      <span className="text-cyan-400 text-xl font-bold">
+                    <div className="text-cyan-400 text-base my-1">↓</div>
+                    <div className="flex items-center justify-center gap-2 mb-0.5">
+                      <CryptoIcon symbol={successData.toAsset} size="sm" />
+                      <span className="text-cyan-400 text-base font-bold">
                         {successData.toAmount.toFixed(8)} {successData.toAsset}
                       </span>
                     </div>
-                    <div className="text-gray-400 text-sm">
+                    <div className="text-gray-400 text-xs">
                       ≈ {formatAmount(successData.toValue, 2)}
                     </div>
                   </div>
 
                   {/* Success Details */}
-                  <div className="space-y-3 mb-6">
+                  <div className="space-y-1.5">
                     {successData.timestamp &&
                       (() => {
                         const { date, time } = getLocalizedDateTime(
@@ -1011,7 +1091,7 @@ export default function AssetSwapModal({
                         return (
                           <>
                             <div
-                              className="flex justify-between p-3 rounded-lg"
+                              className="flex justify-between p-1.5 rounded-lg text-xs"
                               style={{ background: "rgba(15, 23, 42, 0.6)" }}
                             >
                               <span className="text-gray-400">Date</span>
@@ -1020,7 +1100,7 @@ export default function AssetSwapModal({
                               </span>
                             </div>
                             <div
-                              className="flex justify-between p-3 rounded-lg"
+                              className="flex justify-between p-1.5 rounded-lg text-xs"
                               style={{ background: "rgba(15, 23, 42, 0.6)" }}
                             >
                               <span className="text-gray-400">Time</span>
@@ -1035,14 +1115,14 @@ export default function AssetSwapModal({
 
                   {/* Status */}
                   <div
-                    className="flex items-center justify-center gap-2 p-3 rounded-xl mb-6"
+                    className="flex items-center justify-center gap-1.5 p-2 rounded-xl"
                     style={{
                       background: "rgba(34, 197, 94, 0.1)",
                       border: "1px solid rgba(34, 197, 94, 0.2)",
                     }}
                   >
-                    <Check className="w-4 h-4 text-green-400" />
-                    <span className="text-green-400 text-sm font-medium">
+                    <Check className="w-3.5 h-3.5 text-green-400" />
+                    <span className="text-green-400 text-xs font-medium">
                       Swap completed successfully
                     </span>
                   </div>
@@ -1052,7 +1132,7 @@ export default function AssetSwapModal({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleDone}
-                    className="w-full py-4 rounded-xl font-bold text-white transition-all"
+                    className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all"
                     style={{
                       background:
                         "linear-gradient(135deg, #06b6d4 0%, #14b8a6 50%, #06b6d4 100%)",

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, AlertCircle } from "lucide-react";
+import { X, Send, User, AlertCircle, ArrowUpDown, CheckCircle } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
@@ -39,8 +39,26 @@ export default function AssetSendModal({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [receiverName, setReceiverName] = useState<string | null>(null);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [inputMode, setInputMode] = useState<"crypto" | "fiat">("crypto");
   const { addTransaction, addNotification } = useNotifications();
   const { preferredCurrency, convertAmount } = useCurrency();
+
+  const getCurrencySymbol = (currency: string) => {
+    const symbols: Record<string, string> = { USD: "$", EUR: "€", GBP: "£", BRL: "R$", NGN: "₦", JPY: "¥", KRW: "₩", INR: "₹", ZAR: "R", CHF: "CHF", CAD: "C$", AUD: "A$" };
+    return symbols[currency] || currency + " ";
+  };
+
+  // Get the crypto amount regardless of input mode
+  const getCryptoAmount = (): number => {
+    const val = parseFloat(sendData.amount);
+    if (isNaN(val) || val <= 0) return 0;
+    if (inputMode === "fiat") {
+      // Convert fiat (in preferred currency) to USD, then to crypto
+      const usdValue = convertAmount(val, true);
+      return usdValue / asset.price;
+    }
+    return val;
+  };
 
   const transferFee = 0.0001;
 
@@ -52,6 +70,7 @@ export default function AssetSendModal({
       setSendData({ amount: "", destination: "", memo: "" });
       setReceiverName(null);
       setErrors({});
+      setInputMode("crypto");
     }
     return () => {
       document.body.style.overflow = "unset";
@@ -87,11 +106,13 @@ export default function AssetSendModal({
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!sendData.amount || parseFloat(sendData.amount) <= 0) {
+    const cryptoAmount = getCryptoAmount();
+
+    if (!sendData.amount || cryptoAmount <= 0) {
       newErrors.amount = "Please enter a valid amount";
     }
 
-    if (parseFloat(sendData.amount) > asset.amount) {
+    if (cryptoAmount > asset.amount) {
       newErrors.amount = "Insufficient balance";
     }
 
@@ -118,79 +139,45 @@ export default function AssetSendModal({
   const handleSend = async () => {
     if (validateForm()) {
       try {
-        const amount = parseFloat(sendData.amount);
+        const amount = getCryptoAmount();
         const value = amount * asset.price;
 
-        const transaction = {
-          id: `send_${Date.now()}`,
-          type: "transfer" as const,
-          asset: asset.symbol,
-          amount: amount,
-          value: value,
-          timestamp: new Date().toLocaleString(),
-          status: "pending" as const,
-          fee: transferFee,
-          method: "P2P Transfer",
-          description: `Transfer ${amount.toFixed(8)} ${asset.symbol} to ${
-            sendData.destination
-          }`,
-          memo: sendData.memo,
-        };
-
-        addTransaction(transaction);
-
-        const notificationTitle = `Transfer Initiated`;
-        const notificationMessage = `Transfer of ${amount.toFixed(8)} ${
-          asset.symbol
-        } to ${receiverName || sendData.destination} is being processed`;
-
-        addNotification({
-          type: "transaction",
-          title: notificationTitle,
-          message: notificationMessage,
-          amount: value,
-          asset: asset.symbol,
-        });
-
-        // Send email notification
-        await fetch("/api/notifications/send-email", {
+        // Call the API to process the transfer on the server
+        const response = await fetch("/api/crypto/transfer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            type: "crypto_transfer",
-            title: notificationTitle,
-            message: notificationMessage,
-            amount: value,
             asset: asset.symbol,
+            amount: amount,
+            destination: sendData.destination,
+            memo: sendData.memo,
           }),
         });
 
-        // Send push notification
-        await fetch("/api/notifications/send-push", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "crypto_transfer",
-            title: notificationTitle,
-            message: notificationMessage,
-            amount: value,
-            asset: asset.symbol,
-          }),
-        });
+        const data = await response.json();
 
+        if (!response.ok) {
+          // Show error message
+          setErrors({ destination: data.error || "Transfer failed" });
+          return;
+        }
+
+        // Transfer successful - show success modal
         setSuccessData({
           asset: asset.symbol,
           amount: amount,
           value: value,
-          recipient: sendData.destination,
+          recipient: data.recipientName || sendData.destination,
         });
         setShowSuccessModal(true);
 
+        // Reset form
         setSendData({ amount: "", destination: "", memo: "" });
+        setReceiverName(null);
         setErrors({});
-        onClose();
       } catch (error) {
         console.error("Error processing transfer:", error);
+        setErrors({ destination: "Network error. Please try again." });
       }
     }
   };
@@ -370,10 +357,13 @@ export default function AssetSendModal({
                         </p>
                       )}
                       {receiverName && (
-                        <p className="text-sm text-blue-400 mt-2 flex items-center gap-1.5 font-medium">
-                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                          {receiverName}
-                        </p>
+                        <div className="mt-2 flex flex-row items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-green-500/30 bg-green-500/10 w-fit">
+                          <span className="text-sm font-medium text-white whitespace-nowrap leading-none">{receiverName}</span>
+                          <svg className="w-5 h-5 flex-shrink-0 self-center" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 1l2.09 3.36L18 3.27l-.91 3.87L20.18 10l-3.36 2.09.09 4.73-3.87-.91L10 18.18l-2.09-3.36L4 15.73l.91-3.87L1.82 10l3.36-2.09L5.09 3.18l3.87.91L12 1z" fill="#25D366" />
+                            <path d="M8.5 10.5l2.5 2.5 4.5-4.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        </div>
                       )}
                       {errors.destination && (
                         <p className="text-sm text-red-400 mt-1 flex items-center gap-1">
@@ -391,7 +381,7 @@ export default function AssetSendModal({
                       <div className="relative">
                         <input
                           type="number"
-                          step="0.00000001"
+                          step={inputMode === "crypto" ? "0.00000001" : "0.01"}
                           value={sendData.amount}
                           onChange={(e) =>
                             setSendData((prev) => ({
@@ -399,8 +389,8 @@ export default function AssetSendModal({
                               amount: e.target.value,
                             }))
                           }
-                          placeholder="0.00000000"
-                          className="w-full px-4 py-3 pr-16 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                          placeholder={inputMode === "crypto" ? "0.00000000" : "0.00"}
+                          className="w-full px-4 py-3 pr-24 rounded-xl text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                           style={{
                             background:
                               "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -408,17 +398,49 @@ export default function AssetSendModal({
                             border: "1px solid rgba(255, 255, 255, 0.1)",
                           }}
                         />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">
-                          {asset.symbol}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = parseFloat(sendData.amount);
+                            if (!isNaN(val) && val > 0) {
+                              if (inputMode === "crypto") {
+                                // crypto → fiat
+                                const usdValue = val * asset.price;
+                                const fiatValue = convertAmount(usdValue);
+                                setSendData((prev) => ({ ...prev, amount: fiatValue.toFixed(2) }));
+                              } else {
+                                // fiat → crypto
+                                const usdValue = convertAmount(val, true);
+                                const cryptoVal = usdValue / asset.price;
+                                setSendData((prev) => ({ ...prev, amount: cryptoVal.toFixed(8) }));
+                              }
+                            }
+                            setInputMode(inputMode === "crypto" ? "fiat" : "crypto");
+                          }}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors cursor-pointer px-1.5 py-0.5 rounded-md hover:bg-blue-500/10"
+                        >
+                          <ArrowUpDown className="w-3.5 h-3.5" />
+                          {inputMode === "crypto" ? asset.symbol : preferredCurrency}
+                        </button>
                       </div>
+                      {/* Show equivalent in the other currency */}
+                      {sendData.amount && parseFloat(sendData.amount) > 0 && (
+                        <p className="text-xs text-gray-500 mt-1">
+                          ≈{" "}
+                          {inputMode === "crypto"
+                            ? `${getCurrencySymbol(preferredCurrency)}${convertAmount(parseFloat(sendData.amount) * asset.price).toFixed(2)} ${preferredCurrency}`
+                            : `${getCryptoAmount().toFixed(8)} ${asset.symbol}`}
+                        </p>
+                      )}
                       <button
-                        onClick={() =>
-                          setSendData((prev) => ({
-                            ...prev,
-                            amount: asset.amount.toString(),
-                          }))
-                        }
+                        onClick={() => {
+                          if (inputMode === "crypto") {
+                            setSendData((prev) => ({ ...prev, amount: asset.amount.toString() }));
+                          } else {
+                            const maxFiat = convertAmount(asset.amount * asset.price);
+                            setSendData((prev) => ({ ...prev, amount: maxFiat.toFixed(2) }));
+                          }
+                        }}
                         className="text-sm text-blue-400 hover:text-blue-300 font-medium mt-2"
                       >
                         Use Max
@@ -488,7 +510,11 @@ export default function AssetSendModal({
 
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={() => {
+          setShowSuccessModal(false);
+          onClose();
+          window.location.reload();
+        }}
         type="transfer"
         asset={successData?.asset || ""}
         amount={successData?.amount.toString() || "0"}

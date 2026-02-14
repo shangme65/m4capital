@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, X } from "lucide-react";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface SuccessModalProps {
   isOpen: boolean;
@@ -27,11 +28,25 @@ export default function SuccessModal({
   toAmount = "",
   recipient = "",
 }: SuccessModalProps) {
+  const { formatAmount } = useCurrency();
+
   // Format crypto amount to 8 decimal places
-  const formatCryptoAmount = (amt: string) => {
-    const num = parseFloat(amt);
-    if (isNaN(num)) return amt;
+  const formatCryptoAmount = (amt: string | number) => {
+    const num = typeof amt === "string" ? parseFloat(amt) : amt;
+    if (isNaN(num)) return "0.00000000";
     return num.toFixed(8);
+  };
+
+  // Format fiat value - check if already formatted (contains currency symbols/letters)
+  const formatFiatValue = (val: string) => {
+    // If value already contains non-numeric characters (currency symbols), return as-is
+    if (/[^0-9.]/.test(val)) {
+      return val;
+    }
+    // Otherwise, parse and format with currency symbol
+    const num = parseFloat(val);
+    if (isNaN(num)) return formatAmount(0, 2);
+    return formatAmount(num, 2);
   };
 
   const getTitle = () => {
@@ -81,17 +96,17 @@ export default function SuccessModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[10005]"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998]"
           />
 
-          {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 z-[10006] overflow-hidden"
-          >
+          {/* Modal Container */}
+          <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden"
+            >
             {/* Header */}
             <div className="relative p-6 bg-gradient-to-r from-green-600 to-emerald-600">
               <button
@@ -165,7 +180,7 @@ export default function SuccessModal({
                 {value && (
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400">Value</span>
-                    <span className="text-white font-semibold">{value}</span>
+                    <span className="text-white font-semibold">{formatFiatValue(value)}</span>
                   </div>
                 )}
 
@@ -212,6 +227,7 @@ export default function SuccessModal({
               </button>
             </div>
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>

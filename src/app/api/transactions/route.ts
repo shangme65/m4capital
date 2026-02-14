@@ -284,6 +284,9 @@ export async function GET(req: NextRequest) {
         // Include crypto-specific data for proper display
         isCrypto: isCryptoTransfer && !isFiatCurrency,
         cryptoPrice: cryptoPrice,
+        memo: displayMemo !== "P2P Transfer" ? displayMemo : undefined,
+        receiverName: t.Receiver?.name || t.receiverName || undefined,
+        receiverEmail: t.Receiver?.email || t.receiverEmail || undefined,
       };
     });
 
@@ -367,6 +370,9 @@ export async function GET(req: NextRequest) {
         hash: t.transactionReference,
         isCrypto: isCryptoTransfer && !isFiatCurrency,
         cryptoPrice: cryptoPrice,
+        memo: displayMemo !== "P2P Transfer" ? displayMemo : undefined,
+        senderName: t.Sender?.name || undefined,
+        senderEmail: t.Sender?.email || undefined,
       };
     });
 
