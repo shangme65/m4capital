@@ -49,8 +49,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Update portfolio with real-time prices
+    console.log(`[Portfolio] Updating prices for user ${user.id}`);
     const updatedPortfolio = await updatePortfolioRealtime(user.id);
     if (!updatedPortfolio) {
+      console.error(`[Portfolio] Failed to update portfolio for user ${user.id}`);
       await sendTelegramMessage(
         chatId,
         "❌ Failed to update portfolio. Please try again."
@@ -61,6 +63,7 @@ export async function POST(req: NextRequest) {
     const balance = Number(updatedPortfolio.balance);
     const balanceCurrency = updatedPortfolio.balanceCurrency || "USD";
     const assets = (updatedPortfolio.assets as any[]) || [];
+    console.log(`[Portfolio] User has ${assets.length} assets:`, JSON.stringify(assets, null, 2));
     const userCurrency = user.preferredCurrency || "USD";
 
     // Convert balance from its stored currency to user's preferred currency
@@ -88,9 +91,11 @@ export async function POST(req: NextRequest) {
         const amount = Number(asset.amount || 0);
         const priceUSD = Number(asset.price || 0);
         
+        console.log(`[Portfolio] Asset ${asset.symbol}: amount=${amount}, priceUSD=${priceUSD}`);
+        
         // Log if price is missing or 0
         if (!priceUSD || priceUSD === 0) {
-          console.warn(`Warning: Asset ${asset.symbol} has invalid price: ${priceUSD}`);
+          console.warn(`[Portfolio] Warning: Asset ${asset.symbol} has invalid price: ${priceUSD}`);
         }
         
         const valueUSD = amount * priceUSD;

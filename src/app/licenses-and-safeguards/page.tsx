@@ -814,282 +814,39 @@ export default function LicensesAndSafeguardsPage() {
         </div>
       </main>
 
-      {/* Footer Links Section */}
-      <section className="py-8 bg-gray-50 border-t border-gray-200">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
-            {/* Markets & Assets */}
-            <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                MARKETS & ASSETS
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/news-feed"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    News feed
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/assets"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Assets
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/stock-collections"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Stock collections
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/industries"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Industries
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Analytics & Tools */}
-            <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                ANALYTICS & TOOLS
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/historical-quotes"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Historical quotes
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/calendars"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Calendars
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/trading-specifications"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Trading specifications
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Education & Learning */}
-            <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                EDUCATION & LEARNING
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/video-tutorials"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Video tutorials
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/margin-trading-basics"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    The basics of margin trading
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Events & Community */}
-            <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                EVENTS & COMMUNITY
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/blog"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Our blog
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* About Us */}
-            <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                ABOUT US
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/in-numbers"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    In Numbers
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/press"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    In the Press
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/awards"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Awards
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Contact Us
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/site-map"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Sitemap
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/licenses-and-safeguards"
-                    className="text-orange-500 hover:text-orange-600 text-sm font-medium"
-                  >
-                    Licenses and Safeguards
-                  </Link>
-                </li>
-              </ul>
-            </div>
-
-            {/* Support & Services */}
-            <div>
-              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-4">
-                SUPPORT & SERVICES
-              </h4>
-              <ul className="space-y-2">
-                <li>
-                  <Link
-                    href="/download"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Download app
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/help"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Help
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/finance"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Deposits & withdrawals
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/terms"
-                    className="text-gray-600 hover:text-orange-500 text-sm"
-                  >
-                    Terms & Conditions
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Social Links */}
-          <div className="flex items-center justify-start gap-6 mt-8 pt-8 border-t border-gray-200">
-            <Link
-              href="https://facebook.com"
-              target="_blank"
-              className="text-gray-500 hover:text-orange-500 flex items-center gap-2 text-sm"
-            >
-              <span>📘</span> Facebook <ExternalLink className="w-3 h-3" />
-            </Link>
-            <Link
-              href="https://youtube.com"
-              target="_blank"
-              className="text-gray-500 hover:text-orange-500 flex items-center gap-2 text-sm"
-            >
-              <span>▶️</span> Youtube <ExternalLink className="w-3 h-3" />
-            </Link>
-          </div>
-
-          {/* AI Bot Help */}
-          <a 
-            href="https://t.me/m4capital_bot"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-6 flex items-center gap-3 group cursor-pointer"
-          >
-            <span className="text-gray-500 text-sm group-hover:text-gray-700 transition-colors">Got questions?</span>
-            <span className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition-colors">
-              AI Bot will help
-            </span>
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300">
-              <img
-                src="/socials/Telegram.png"
-                alt="Telegram"
-                className="w-6 h-6"
-              />
-            </div>
-          </a>
-        </div>
-      </section>
-
       {/* Breadcrumb */}
-      <section className="py-4 bg-gray-50 border-t border-gray-200">
+      <section className="py-6 bg-gray-900 border-t border-gray-800">
         <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <Link href="/" className="text-gray-500 hover:text-orange-500">
-                Home
-              </Link>
-              <span className="text-orange-500">▸</span>
-              <span className="text-gray-700">Licenses and Safeguards</span>
-            </div>
-            <button
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              className="p-2 border border-orange-500 rounded-full text-orange-500 hover:bg-orange-500/10 transition-colors"
-            >
-              <ChevronUp className="w-5 h-5" />
-            </button>
+          {/* Breadcrumb Navigation */}
+          <div className="flex items-center gap-2 text-sm mb-4">
+            <Link href="/" className="text-orange-500 hover:text-orange-400">
+              Home
+            </Link>
+            <span className="text-gray-500">›</span>
+            <span className="text-gray-300">Licenses and Safeguards</span>
+          </div>
+          
+          {/* Navigation Links */}
+          <div className="flex flex-wrap items-center gap-4 text-sm">
+            <Link href="/terms-and-conditions" className="text-gray-400 hover:text-orange-500 transition-colors">
+              Terms & Conditions
+            </Link>
+            <span className="text-gray-600">|</span>
+            <Link href="/contact" className="text-gray-400 hover:text-orange-500 transition-colors">
+              Contact Us
+            </Link>
+            <span className="text-gray-600">|</span>
+            <Link href="/blog" className="text-gray-400 hover:text-orange-500 transition-colors">
+              Our Blog
+            </Link>
+            <span className="text-gray-600">|</span>
+            <Link href="/vip" className="flex items-center gap-1 text-gray-400 hover:text-orange-500 transition-colors">
+              <span className="text-orange-500">👑</span> VIP
+            </Link>
+            <span className="text-gray-600">|</span>
+            <Link href="/site-map" className="text-gray-400 hover:text-orange-500 transition-colors">
+              Sitemap
+            </Link>
           </div>
         </div>
       </section>

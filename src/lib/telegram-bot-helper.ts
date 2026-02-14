@@ -85,37 +85,48 @@ export async function sendInlineKeyboard(
  */
 export async function getCryptoPrice(symbol: string): Promise<number | null> {
   try {
+    console.log(`[getCryptoPrice] Fetching price for ${symbol}`);
     // Use internal API which already handles all crypto symbols correctly
     const apiUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const response = await fetch(
-      `${apiUrl}/api/crypto/prices?symbols=${symbol.toUpperCase()}`,
-      {
-        cache: "no-store",
-      }
-    );
+    const url = `${apiUrl}/api/crypto/prices?symbols=${symbol.toUpperCase()}`;
+    console.log(`[getCryptoPrice] Fetching from: ${url}`);
+    
+    const response = await fetch(url, {
+      cache: "no-store",
+    });
+
+    console.log(`[getCryptoPrice] Response status: ${response.status}`);
 
     if (response.ok) {
       const data = await response.json();
+      console.log(`[getCryptoPrice] Response data:`, JSON.stringify(data, null, 2));
       if (data.prices && data.prices.length > 0) {
+        console.log(`[getCryptoPrice] Returning price: ${data.prices[0].price}`);
         return data.prices[0].price;
       }
     }
 
     // Fallback to direct Binance API call
+    console.log(`[getCryptoPrice] Falling back to Binance API`);
     const binanceSymbol = `${symbol.toUpperCase()}USDT`;
-    const binanceResponse = await fetch(
-      `https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`,
-      { cache: "no-store" }
-    );
+    const binanceUrl = `https://api.binance.com/api/v3/ticker/price?symbol=${binanceSymbol}`;
+    console.log(`[getCryptoPrice] Binance URL: ${binanceUrl}`);
+    
+    const binanceResponse = await fetch(binanceUrl, { cache: "no-store" });
+    console.log(`[getCryptoPrice] Binance response status: ${binanceResponse.status}`);
 
     if (binanceResponse.ok) {
       const binanceData = await binanceResponse.json();
-      return parseFloat(binanceData.price);
+      console.log(`[getCryptoPrice] Binance data:`, JSON.stringify(binanceData, null, 2));
+      const price = parseFloat(binanceData.price);
+      console.log(`[getCryptoPrice] Returning Binance price: ${price}`);
+      return price;
     }
 
+    console.error(`[getCryptoPrice] Both APIs failed for ${symbol}`);
     return null;
   } catch (error) {
-    console.error(`Error fetching price for ${symbol}:`, error);
+    console.error(`[getCryptoPrice] Error fetching price for ${symbol}:`, error);
     return null;
   }
 }
@@ -175,25 +186,31 @@ export async function convertCurrency(
  */
 export async function updatePortfolioRealtime(userId: string) {
   try {
+    console.log(`[updatePortfolioRealtime] Starting update for user ${userId}`);
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { Portfolio: true },
     });
 
     if (!user || !user.Portfolio) {
+      console.error(`[updatePortfolioRealtime] User or portfolio not found for ${userId}`);
       return null;
     }
 
     const assets = (user.Portfolio.assets as any[]) || [];
+    console.log(`[updatePortfolioRealtime] Found ${assets.length} assets in portfolio`);
 
     // Always update prices, even if no assets exist
     if (assets.length === 0) {
+      console.log(`[updatePortfolioRealtime] No assets to update`);
       return user.Portfolio;
     }
 
     // Fetch all symbols at once for better performance
     const symbols = assets.map((asset) => asset.symbol).join(",");
+    console.log(`[updatePortfolioRealtime] Fetching prices for symbols: ${symbols}`);
     const apiUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    console.log(`[updatePortfolioRealtime] API URL: ${apiUrl}`);
 
     let priceMap: Record<string, number> = {};
 
@@ -205,17 +222,23 @@ export async function updatePortfolioRealtime(userId: string) {
         }
       );
 
+      console.log(`[updatePortfolioRealtime] API response status: ${response.status}`);
+
       if (response.ok) {
         const data = await response.json();
+        console.log(`[updatePortfolioRealtime] API response data:`, JSON.stringify(data, null, 2));
         if (data.prices && Array.isArray(data.prices)) {
           data.prices.forEach((priceData: any) => {
             priceMap[priceData.symbol] = priceData.price;
+            console.log(`[updatePortfolioRealtime] Mapped ${priceData.symbol} = ${priceData.price}`);
           });
         }
+      } else {
+        console.error(`[updatePortfolioRealtime] API request failed with status ${response.status}`);
       }
     } catch (fetchError) {
       console.error(
-        "Error fetching bulk prices, falling back to individual fetches:",
+        "[updatePortfolioRealtime] Error fetching bulk prices, falling back to individual fetches:",
         fetchError
       );
     }
@@ -228,17 +251,24 @@ export async function updatePortfolioRealtime(userId: string) {
 
         // If not found, fetch individually
         if (!currentPrice) {
+          console.log(`[updatePortfolioRealtime] Price not in bulk fetch for ${asset.symbol}, fetching individually`);
           currentPrice = await getCryptoPrice(asset.symbol);
+          console.log(`[updatePortfolioRealtime] Individual fetch for ${asset.symbol}: ${currentPrice}`);
         }
+
+        const finalPrice = currentPrice || asset.price || 0;
+        console.log(`[updatePortfolioRealtime] Final price for ${asset.symbol}: ${finalPrice}`);
 
         // Always update the price, even if asset amount is 0
         return {
           ...asset,
-          price: currentPrice || asset.price || 0,
+          price: finalPrice,
           lastUpdated: new Date().toISOString(),
         };
       })
     );
+
+    console.log(`[updatePortfolioRealtime] Updated assets:`, JSON.stringify(updatedAssets, null, 2));
 
     // Update portfolio with new prices
     await prisma.portfolio.update({
@@ -247,6 +277,8 @@ export async function updatePortfolioRealtime(userId: string) {
         assets: updatedAssets,
       },
     });
+
+    console.log(`[updatePortfolioRealtime] Portfolio updated successfully`);
 
     return await prisma.portfolio.findUnique({
       where: { id: user.Portfolio.id },
