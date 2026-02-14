@@ -1052,48 +1052,24 @@ export default function LicensesAndSafeguardsPage() {
           </div>
 
           {/* AI Bot Help */}
-          <div className="mt-6 flex items-center gap-3">
-            <span className="text-gray-500 text-sm">Got questions?</span>
-            <span className="font-medium text-gray-900 text-sm">
+          <a 
+            href="https://t.me/m4capital_bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 flex items-center gap-3 group cursor-pointer"
+          >
+            <span className="text-gray-500 text-sm group-hover:text-gray-700 transition-colors">Got questions?</span>
+            <span className="font-medium text-gray-900 text-sm group-hover:text-blue-600 transition-colors">
               AI Bot will help
             </span>
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-lg">✈️</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300">
+              <img
+                src="/socials/Telegram.png"
+                alt="Telegram"
+                className="w-6 h-6"
+              />
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Risk Warning */}
-      <section className="py-8 bg-white">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h3 className="font-bold text-gray-900 mb-4">Risk Warning</h3>
-          <div className="space-y-4 text-gray-600 text-sm leading-relaxed">
-            <p>
-              The Financial Products offered by the company include Contracts
-              for Difference (&apos;CFDs&apos;) and other complex financial
-              products. Trading CFDs carries a high level of risk since leverage
-              can work both to your advantage and disadvantage. As a result,
-              CFDs may not be suitable for all investors because it is possible
-              to lose all of your invested capital. You should never invest
-              money that you cannot afford to lose. Before trading in the
-              complex financial products offered, please ensure you understand
-              the risks involved.
-            </p>
-            <p>
-              You are granted limited non-exclusive non-transferable rights to
-              use the IP provided on this website for personal and
-              non-commercial purposes in relation to the services offered on the
-              Website only.
-            </p>
-            <p>
-              The information on this website is not directed at residents of
-              certain jurisdictions, including, without limitation, EU/EEA
-              member states, and is not intended for distribution to any person
-              in any country or jurisdiction where such distribution or use
-              would be contrary to local law or regulation.
-            </p>
-          </div>
+          </a>
         </div>
       </section>
 

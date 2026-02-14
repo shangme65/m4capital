@@ -42,13 +42,13 @@ export default function SitemapPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-blue-50 to-purple-50">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-gradient-to-r from-orange-700 via-orange-800 to-red-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">Sitemap</h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
+            <h1 className="text-3xl font-bold text-white mb-3">Sitemap</h1>
+            <p className="text-orange-100 max-w-2xl mx-auto text-sm">
               Navigate through all the pages available on M4Capital. Find everything from trading tools 
               to educational resources and company information.
             </p>
@@ -56,12 +56,12 @@ export default function SitemapPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-8">
         <div className="grid gap-12">
           {/* Main Pages */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <div className="w-1 h-8 bg-orange-500 rounded"></div>
+              <div className="w-1 h-8 bg-gradient-to-b from-orange-400 to-orange-600 rounded-full shadow-lg"></div>
               Main Pages
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -69,16 +69,18 @@ export default function SitemapPage() {
                 <Link
                   key={page.href}
                   href={page.href}
-                  className="group bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md hover:border-orange-200 transition-all duration-200"
+                  className="group relative bg-gradient-to-br from-white to-orange-50 rounded-xl p-4 shadow-lg hover:shadow-2xl border border-orange-100 transition-all duration-300 transform hover:-translate-y-2 hover:scale-105"
+                  style={{ perspective: '1000px' }}
                 >
-                  <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 mb-2">
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-400/10 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <h3 className="font-bold text-gray-900 group-hover:text-orange-600 transition-colors text-base">
                     {page.title}
                   </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p className="text-gray-600 text-xs leading-snug mt-1">
                     {page.description}
                   </p>
-                  <div className="mt-3 text-orange-500 text-sm font-medium">
-                    Visit page →
+                  <div className="mt-2 text-orange-500 text-xs font-semibold flex items-center gap-1">
+                    Visit page <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </div>
                 </Link>
               ))}
@@ -88,7 +90,7 @@ export default function SitemapPage() {
           {/* Authentication Pages */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <div className="w-1 h-8 bg-blue-500 rounded"></div>
+              <div className="w-1 h-8 bg-gradient-to-b from-blue-400 to-blue-600 rounded-full shadow-lg"></div>
               Authentication
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -96,16 +98,18 @@ export default function SitemapPage() {
                 <Link
                   key={page.href}
                   href={page.href}
-                  className="group bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-200 transition-all duration-200"
+                  className="group relative bg-gradient-to-br from-white to-blue-50 rounded-xl p-4 shadow-lg hover:shadow-2xl border border-blue-100 transition-all duration-300 transform hover:-translate-y-2 hover:scale-105"
+                  style={{ perspective: '1000px' }}
                 >
-                  <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 mb-2">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400/10 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <h3 className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors text-base">
                     {page.title}
                   </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p className="text-gray-600 text-xs leading-snug mt-1">
                     {page.description}
                   </p>
-                  <div className="mt-3 text-blue-500 text-sm font-medium">
-                    Visit page →
+                  <div className="mt-2 text-blue-500 text-xs font-semibold flex items-center gap-1">
+                    Visit page <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </div>
                 </Link>
               ))}
@@ -115,10 +119,10 @@ export default function SitemapPage() {
           {/* Dashboard Pages */}
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-              <div className="w-1 h-8 bg-green-500 rounded"></div>
+              <div className="w-1 h-8 bg-gradient-to-b from-green-400 to-green-600 rounded-full shadow-lg"></div>
               Dashboard & Trading
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-700 mb-6 text-sm font-medium bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded">
               Access requires authentication - sign in to use these features.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -126,16 +130,18 @@ export default function SitemapPage() {
                 <Link
                   key={page.href}
                   href={page.href}
-                  className="group bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md hover:border-green-200 transition-all duration-200"
+                  className="group relative bg-gradient-to-br from-white to-green-50 rounded-xl p-4 shadow-lg hover:shadow-2xl border border-green-100 transition-all duration-300 transform hover:-translate-y-2 hover:scale-105"
+                  style={{ perspective: '1000px' }}
                 >
-                  <h3 className="font-semibold text-gray-900 group-hover:text-green-600 mb-2">
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-400/10 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <h3 className="font-bold text-gray-900 group-hover:text-green-600 transition-colors text-base">
                     {page.title}
                   </h3>
-                  <p className="text-gray-600 text-sm leading-relaxed">
+                  <p className="text-gray-600 text-xs leading-snug mt-1">
                     {page.description}
                   </p>
-                  <div className="mt-3 text-green-500 text-sm font-medium">
-                    Visit page →
+                  <div className="mt-2 text-green-500 text-xs font-semibold flex items-center gap-1">
+                    Visit page <span className="group-hover:translate-x-1 transition-transform">→</span>
                   </div>
                 </Link>
               ))}
@@ -143,14 +149,14 @@ export default function SitemapPage() {
           </section>
 
           {/* Footer */}
-          <section className="border-t border-gray-200 pt-8">
-            <div className="text-center text-gray-500">
-              <p className="mb-2">
+          <section className="border-t border-gray-300 pt-8">
+            <div className="text-center">
+              <p className="text-gray-600 mb-3 text-sm">
                 Can't find what you're looking for?
               </p>
               <Link
                 href="/help"
-                className="text-orange-500 hover:text-orange-600 font-medium"
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-full font-semibold text-sm shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
               >
                 Visit our Help Center →
               </Link>

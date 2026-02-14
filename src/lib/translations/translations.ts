@@ -112,7 +112,7 @@ export const translations = {
     "cta.badge": "Get Started",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. All rights reserved.",
+    "footer.copyright": "© 2013-2026 M4Capital. All rights reserved.",
     "footer.privacy": "Privacy Policy",
     "footer.terms": "Terms of Service",
     "footer.disclaimer": "Trading involves risk",
@@ -309,7 +309,7 @@ export const translations = {
     "cta.badge": "Começar",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Todos os direitos reservados.",
+    "footer.copyright": "© 2013-2026 M4Capital. Todos os direitos reservados.",
     "footer.privacy": "Política de Privacidade",
     "footer.terms": "Termos de Serviço",
     "footer.disclaimer": "Trading envolve risco",
@@ -501,7 +501,7 @@ export const translations = {
     "cta.badge": "Comenzar",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Todos los derechos reservados.",
+    "footer.copyright": "© 2013-2026 M4Capital. Todos los derechos reservados.",
     "footer.privacy": "Política de Privacidad",
     "footer.terms": "Términos de Servicio",
     "footer.disclaimer": "El trading implica riesgo",
@@ -697,7 +697,7 @@ export const translations = {
     "cta.badge": "Commencer",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Tous droits réservés.",
+    "footer.copyright": "© 2013-2026 M4Capital. Tous droits réservés.",
     "footer.privacy": "Politique de Confidentialité",
     "footer.terms": "Conditions d'Utilisation",
     "footer.disclaimer": "Le trading comporte des risques",
@@ -894,7 +894,7 @@ export const translations = {
     "cta.badge": "Starten",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Alle Rechte vorbehalten.",
+    "footer.copyright": "© 2013-2026 M4Capital. Alle Rechte vorbehalten.",
     "footer.privacy": "Datenschutzrichtlinie",
     "footer.terms": "Nutzungsbedingungen",
     "footer.disclaimer": "Trading birgt Risiken",
@@ -1071,7 +1071,7 @@ export const translations = {
     "cta.badge": "Magsimula",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Lahat ng karapatan ay nakalaan.",
+    "footer.copyright": "© 2013-2026 M4Capital. Lahat ng karapatan ay nakalaan.",
     "footer.privacy": "Patakaran sa Privacy",
     "footer.terms": "Mga Tuntunin ng Serbisyo",
     "footer.disclaimer": "Ang trading ay may kasamang panganib",
@@ -1248,7 +1248,7 @@ export const translations = {
     "cta.badge": "शुरू करें",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital। सर्वाधिकार सुरक्षित।",
+    "footer.copyright": "© 2013-2026 M4Capital। सर्वाधिकार सुरक्षित।",
     "footer.privacy": "गोपनीयता नीति",
     "footer.terms": "सेवा की शर्तें",
     "footer.disclaimer": "ट्रेडिंग में जोखिम शामिल है",
@@ -1445,7 +1445,7 @@ export const translations = {
     "cta.badge": "始める",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital。全著作権所有。",
+    "footer.copyright": "© 2013-2026 M4Capital。全著作権所有。",
     "footer.privacy": "プライバシーポリシー",
     "footer.terms": "利用規約",
     "footer.disclaimer": "取引にはリスクが伴います",
@@ -1642,7 +1642,7 @@ export const translations = {
     "cta.badge": "Rozpocznij",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Wszelkie prawa zastrzeżone.",
+    "footer.copyright": "© 2013-2026 M4Capital. Wszelkie prawa zastrzeżone.",
     "footer.privacy": "Polityka prywatności",
     "footer.terms": "Warunki usługi",
     "footer.disclaimer": "Handel wiąże się z ryzykiem",
@@ -1839,7 +1839,7 @@ export const translations = {
     "cta.badge": "Začít",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Všechna práva vyhrazena.",
+    "footer.copyright": "© 2013-2026 M4Capital. Všechna práva vyhrazena.",
     "footer.privacy": "Zásady ochrany osobních údajů",
     "footer.terms": "Podmínky služby",
     "footer.disclaimer": "Obchodování zahrnuje rizika",
@@ -2036,7 +2036,7 @@ export const translations = {
     "cta.badge": "Başlayın",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Tüm hakları saklıdır.",
+    "footer.copyright": "© 2013-2026 M4Capital. Tüm hakları saklıdır.",
     "footer.privacy": "Gizlilik politikası",
     "footer.terms": "Hizmet şartları",
     "footer.disclaimer": "İşlem risk içerir",
@@ -2233,7 +2233,7 @@ export const translations = {
     "cta.badge": "Начать",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Все права защищены.",
+    "footer.copyright": "© 2013-2026 M4Capital. Все права защищены.",
     "footer.privacy": "Политика конфиденциальности",
     "footer.terms": "Условия обслуживания",
     "footer.disclaimer": "Торговля сопряжена с рисками",
@@ -2430,7 +2430,7 @@ export const translations = {
     "cta.badge": "시작하기",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. 모든 권리 보유.",
+    "footer.copyright": "© 2013-2026 M4Capital. 모든 권리 보유.",
     "footer.privacy": "개인정보 보호정책",
     "footer.terms": "서비스 약관",
     "footer.disclaimer": "거래에는 위험이 따릅니다",
@@ -2627,7 +2627,7 @@ export const translations = {
     "cta.badge": "Inizia",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Tutti i diritti riservati.",
+    "footer.copyright": "© 2013-2026 M4Capital. Tutti i diritti riservati.",
     "footer.privacy": "Informativa sulla privacy",
     "footer.terms": "Termini di servizio",
     "footer.disclaimer": "Il trading comporta rischi",
@@ -2824,7 +2824,7 @@ export const translations = {
     "cta.badge": "Tomana",
 
     // Footer
-    "footer.copyright": "© 2024 M4Capital. Kecega na dikevi e taqomaki.",
+    "footer.copyright": "© 2013-2026 M4Capital. Kecega na dikevi e taqomaki.",
     "footer.privacy": "Privacy Policy",
     "footer.terms": "Terms of Service",
     "footer.disclaimer": "Na veiveiganitaki e vakamuria na rawa ni veivakalailaitaki",

@@ -155,23 +155,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
-    // Get current crypto price
-    const coinGeckoIds: Record<string, string> = {
-      BTC: "bitcoin",
-      ETH: "ethereum",
-      XRP: "ripple",
-      TRX: "tron",
-      TON: "the-open-network",
-      LTC: "litecoin",
-      BCH: "bitcoin-cash",
-      ETC: "ethereum-classic",
-      USDT: "tether",
-      USDC: "usd-coin",
-    };
-
-    const currentPrice = await getCryptoPrice(
-      coinGeckoIds[cryptoSymbol] || cryptoSymbol.toLowerCase()
-    );
+    // Get current crypto price (using symbol, not CoinGecko ID)
+    const currentPrice = await getCryptoPrice(cryptoSymbol);
 
     if (!currentPrice) {
       await sendTelegramMessage(

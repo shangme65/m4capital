@@ -179,9 +179,7 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="/sitemap.xml"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/site-map"
                   className="text-white hover:text-orange-500 font-medium text-sm"
                 >
                   {t("footer.about.sitemap")}
@@ -461,21 +459,19 @@ export function Footer() {
           href="https://t.me/m4capital_bot" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="flex items-center gap-3 mb-4 mt-6 hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 mb-4 mt-6 group"
         >
-          <span className="text-gray-400 text-sm">Got questions?</span>
-          <div className="flex items-center gap-2 bg-gray-800 rounded-full px-3 py-1.5">
+          <span className="text-gray-400 text-sm group-hover:text-gray-300 transition-colors">Got questions?</span>
+          <div className="flex items-center gap-2 bg-gray-800 rounded-full px-3 py-1.5 group-hover:bg-gray-700 transition-all duration-300 group-hover:scale-105">
             <span className="text-white text-sm font-medium">
               AI Bot will help
             </span>
-            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
-              <svg
-                className="w-4 h-4 text-white"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-              </svg>
+            <div className="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center group-hover:rotate-12 group-hover:scale-110 transition-transform duration-300">
+              <img
+                src="/socials/Telegram.png"
+                alt="Telegram"
+                className="w-4 h-4"
+              />
             </div>
           </div>
         </a>
