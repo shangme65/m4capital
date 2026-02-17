@@ -55,45 +55,45 @@ function generateTransferEmailHtml(
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
     <body style="margin: 0; padding: 0; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
-      <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 40px 20px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 20px 15px;">
         <tr>
           <td align="center">
-            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
+            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border-radius: 16px; overflow: hidden; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);">
               <!-- Logo Header -->
               <tr>
-                <td style="text-align: center; padding: 24px 20px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
-                  <img src="https://www.m4capital.online/m4capitallogo1.png" alt="M4Capital" width="140" style="display: inline-block; max-width: 140px; height: auto;" />
+                <td style="text-align: center; padding: 16px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                  <img src="https://www.m4capital.online/m4capitallogo1.png" alt="M4Capital" width="100" style="display: inline-block; max-width: 100px; height: auto;" />
                 </td>
               </tr>
               <!-- Header -->
               <tr>
-                <td style="padding: 30px 40px 20px; text-align: center; background: linear-gradient(135deg, ${
+                <td style="padding: 20px 30px 15px; text-align: center; background: linear-gradient(135deg, ${
                   direction === "received" ? "#22c55e20" : "#3b82f620"
                 } 0%, transparent 100%);">
-                  <div style="display: inline-block; width: 80px; height: 80px; background: linear-gradient(135deg, ${
+                  <div style="display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, ${
                     direction === "received" ? "#22c55e" : "#3b82f6"
                   } 0%, ${
     direction === "received" ? "#16a34a" : "#2563eb"
-  } 100%); border-radius: 50%; margin-bottom: 20px; line-height: 80px; font-size: 36px;">
+  } 100%); border-radius: 50%; margin-bottom: 12px; line-height: 60px; font-size: 28px;">
                     ${direction === "received" ? "📥" : "📤"}
                   </div>
-                  <h1 style="margin: 0; color: white; font-size: 28px; font-weight: 700;">${titleText}</h1>
-                  <p style="margin: 10px 0 0; color: #9ca3af; font-size: 16px;">${subtitleText}</p>
+                  <h1 style="margin: 0; color: white; font-size: 22px; font-weight: 700;">${titleText}</h1>
+                  <p style="margin: 6px 0 0; color: #9ca3af; font-size: 14px;">${subtitleText}</p>
                 </td>
               </tr>
               <!-- Content -->
               <tr>
-                <td style="padding: 30px 40px;">
-                  <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(0,0,0,0.3); border-radius: 16px; padding: 20px;">
+                <td style="padding: 20px 30px;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background: rgba(0,0,0,0.3); border-radius: 12px; padding: 16px;">
                     <tr>
-                      <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">Amount</td>
-                      <td align="right" style="padding: 12px 0; color: white; font-size: 18px; font-weight: 700;">${amountDisplay}</td>
+                      <td style="padding: 8px 0; color: #9ca3af; font-size: 13px;">Amount</td>
+                      <td align="right" style="padding: 8px 0; color: white; font-size: 16px; font-weight: 700;">${amountDisplay}</td>
                     </tr>
                     <tr>
-                      <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">${
+                      <td style="padding: 8px 0; color: #9ca3af; font-size: 13px;">${
                         direction === "received" ? "From" : "To"
                       }</td>
-                      <td align="right" style="padding: 12px 0; color: white; font-size: 16px;">${
+                      <td align="right" style="padding: 8px 0; color: white; font-size: 14px;">${
                         direction === "received" ? senderName : recipientName
                       }</td>
                     </tr>
@@ -101,16 +101,16 @@ function generateTransferEmailHtml(
                       memo
                         ? `
                     <tr>
-                      <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">Memo</td>
-                      <td align="right" style="padding: 12px 0; color: white; font-size: 16px;">${memo}</td>
+                      <td style="padding: 8px 0; color: #9ca3af; font-size: 13px;">Memo</td>
+                      <td align="right" style="padding: 8px 0; color: white; font-size: 14px;">${memo}</td>
                     </tr>
                     `
                         : ""
                     }
                     <tr>
-                      <td style="padding: 12px 0; color: #9ca3af; font-size: 14px;">Status</td>
-                      <td align="right" style="padding: 12px 0;">
-                        <span style="display: inline-block; background: #22c55e20; color: #22c55e; padding: 4px 12px; border-radius: 20px; font-size: 14px; font-weight: 600;">Completed</span>
+                      <td style="padding: 8px 0; color: #9ca3af; font-size: 13px;">Status</td>
+                      <td align="right" style="padding: 8px 0;">
+                        <span style="display: inline-block; background: #22c55e20; color: #22c55e; padding: 3px 10px; border-radius: 16px; font-size: 12px; font-weight: 600;">Completed</span>
                       </td>
                     </tr>
                   </table>
@@ -118,9 +118,8 @@ function generateTransferEmailHtml(
               </tr>
               <!-- Footer -->
               <tr>
-                <td style="padding: 20px 40px 40px; text-align: center;">
-                  <p style="margin: 0; color: #6b7280; font-size: 13px;">This is an automated notification from M4Capital.</p>
-                  <p style="margin: 10px 0 0; color: #6b7280; font-size: 12px;">© ${new Date().getFullYear()} M4Capital. All rights reserved.</p>
+                <td style="padding: 16px 30px 24px; text-align: center;">
+                  <p style="margin: 0; color: #6b7280; font-size: 11px;">© ${new Date().getFullYear()} M4Capital. All rights reserved.</p>
                 </td>
               </tr>
             </table>
