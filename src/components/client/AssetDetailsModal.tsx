@@ -273,7 +273,7 @@ export default function AssetDetailsModal({
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
 
   // Currency context for user's preferred currency
-  const { preferredCurrency, formatAmount, convertAmount } = useCurrency();
+  const { preferredCurrency, formatAmount, convertAmount, exchangeRates } = useCurrency();
 
   // Helper to format user balance - always show in user's preferred currency
   const formatUserBalance = (balance: number): string => {
@@ -287,8 +287,18 @@ export default function AssetDetailsModal({
         maximumFractionDigits: 2,
       })}`;
     }
-    // Different currency - formatAmount converts from USD to preferred
-    return formatAmount(balance, 2);
+    // Different currency - need to convert from balanceCurrency to preferredCurrency
+    // First convert from balanceCurrency to USD, then formatAmount converts USD to preferredCurrency
+    if (balanceCurrency === "USD") {
+      // Already in USD, just format to preferred currency
+      return formatAmount(balance, 2);
+    }
+    // Convert from balanceCurrency to USD first
+    // exchangeRates is { "BRL": 5.36, "EUR": 0.95, ... } (rate to convert 1 USD to that currency)
+    const rate = exchangeRates?.[balanceCurrency] ?? 1;
+    const balanceInUSD = rate > 0 ? balance / rate : balance;
+    // Now convert from USD to preferredCurrency
+    return formatAmount(balanceInUSD, 2);
   };
 
   // Prevent body scroll when modal is open

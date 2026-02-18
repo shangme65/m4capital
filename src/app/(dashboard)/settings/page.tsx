@@ -437,7 +437,7 @@ function SettingsModal({
         </div>
 
         {/* Content area with card wrapper */}
-        <div className="max-w-4xl mx-auto px-4 pt-4 pb-4 space-y-4">
+        <div className="max-w-4xl mx-auto px-4 pt-4 pb-24 sm:pb-8 space-y-4">
           {children}
         </div>
       </div>
@@ -1388,6 +1388,17 @@ export default function SettingsPage() {
     type: "idDocumentFront" | "idDocumentBack" | "proofOfAddress" | "selfie",
     file: File | null
   ) => {
+    // Validate file size (20MB = 20 * 1024 * 1024 bytes)
+    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB in bytes
+    
+    if (file && file.size > MAX_FILE_SIZE) {
+      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      showError(
+        `File size (${fileSizeMB}MB) exceeds the maximum allowed size of 20MB. Please upload a smaller file.`
+      );
+      return;
+    }
+    
     setDocuments((prev) => ({ ...prev, [type]: file }));
   };
 
@@ -3408,7 +3419,7 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className="flex justify-end mt-4">
+                    <div className="flex justify-end mt-6 pt-4 border-t border-gray-700">
                       <button
                         type="button"
                         onClick={() => {
@@ -3454,7 +3465,7 @@ export default function SettingsPage() {
                           }
                           setKycStage(2);
                         }}
-                        className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white"
+                        className="bg-orange-600 hover:bg-orange-500 px-6 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[44px]"
                       >
                         Next
                         <ChevronRight className="w-4 h-4" />
@@ -3569,11 +3580,11 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className="flex justify-between mt-4">
+                    <div className="flex justify-between mt-6 pt-4 border-t border-gray-700">
                       <button
                         type="button"
                         onClick={() => setKycStage(1)}
-                        className="bg-gray-700 hover:bg-gray-600 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white"
+                        className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[44px]"
                       >
                         <ChevronRight className="w-4 h-4 rotate-180" />
                         Previous
@@ -3596,7 +3607,7 @@ export default function SettingsPage() {
                           }
                           setKycStage(3);
                         }}
-                        className="bg-orange-600 hover:bg-orange-500 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white"
+                        className="bg-orange-600 hover:bg-orange-500 px-6 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[44px]"
                       >
                         Next
                         <ChevronRight className="w-4 h-4" />
@@ -3742,7 +3753,7 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                          Please upload clear images of both sides of your ID (max 10MB each)
+                          Please upload clear images of both sides of your ID (max 20MB each)
                         </p>
                       </div>
 
@@ -3789,7 +3800,7 @@ export default function SettingsPage() {
                                   Click to upload or drag and drop
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  PNG, JPG or PDF (max 10MB)
+                                  PNG, JPG or PDF (max 20MB)
                                 </p>
                               </div>
                             )}
@@ -3836,7 +3847,7 @@ export default function SettingsPage() {
                                   Click to upload or drag and drop
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  PNG or JPG (max 10MB)
+                                  PNG or JPG (max 20MB)
                                 </p>
                               </div>
                             )}
@@ -3867,13 +3878,13 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Navigation Buttons with Submit */}
-                    <div className="flex justify-between mt-4">
+                    <div className="flex justify-between mt-6 pt-4 border-t border-gray-700">
                       <button
                         type="button"
                         onClick={() => setKycStage(2)}
-                        className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-xs font-medium transition-colors flex items-center gap-1.5 text-white"
+                        className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
                       >
-                        <ChevronRight className="w-3.5 h-3.5 rotate-180" />
+                        <ChevronRight className="w-4 h-4 rotate-180" />
                         Previous
                       </button>
                       <button
@@ -3887,7 +3898,7 @@ export default function SettingsPage() {
                           !documents.proofOfAddress ||
                           !documents.selfie
                         }
-                        className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-xs font-medium transition-colors text-white"
+                        className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-lg text-sm font-medium transition-colors text-white min-h-[40px]"
                       >
                         {submittingKyc
                           ? "Submitting..."
@@ -3895,7 +3906,7 @@ export default function SettingsPage() {
                             kycStatus === "UNDER_REVIEW"
                           ? "Under Review"
                           : !documents.idDocumentFront || !documents.idDocumentBack || !documents.proofOfAddress || !documents.selfie
-                          ? "Upload All Documents"
+                          ? "Upload Documents"
                           : "Submit for Verification"}
                       </button>
                     </div>
@@ -3989,7 +4000,6 @@ export default function SettingsPage() {
               <div className="p-4 bg-gray-700/50 rounded-lg border border-gray-600">
                 <div className="flex items-start justify-between mb-1 pb-3 border-b border-gray-600">
                   <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-indigo-400" />
                     <h3 className="font-semibold text-white text-base">
                       Email Notifications
                     </h3>

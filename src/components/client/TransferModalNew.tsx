@@ -70,7 +70,7 @@ export default function TransferModalNew({
   const [lookupLoading, setLookupLoading] = useState(false);
 
   const { portfolio, refetch } = usePortfolio();
-  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
+  const { preferredCurrency, convertAmount, formatAmount, exchangeRates } = useCurrency();
   const { addTransaction, addNotification } = useNotifications();
 
   const currencySymbol =
@@ -91,8 +91,18 @@ export default function TransferModalNew({
         maximumFractionDigits: 2,
       })}`;
     }
-    // Different currencies - convert using formatAmount (USD to preferred)
-    return formatAmount(balance, 2);
+    // Different currency - need to convert from balanceCurrency to preferredCurrency
+    // First convert from balanceCurrency to USD, then formatAmount converts USD to preferredCurrency
+    if (balanceCurrency === "USD") {
+      // Already in USD, just format to preferred currency
+      return formatAmount(balance, 2);
+    }
+    // Convert from balanceCurrency to USD first
+    // exchangeRates is { "BRL": 5.36, "EUR": 0.95, ... } (rate to convert 1 USD to that currency)
+    const rate = exchangeRates?.[balanceCurrency] ?? 1;
+    const balanceInUSD = rate > 0 ? balance / rate : balance;
+    // Now convert from USD to preferredCurrency
+    return formatAmount(balanceInUSD, 2);
   };
 
   // Fetch real-time crypto prices

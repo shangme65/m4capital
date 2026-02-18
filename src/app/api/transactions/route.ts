@@ -69,8 +69,23 @@ export async function GET(req: NextRequest) {
       // Determine if this is a crypto deposit
       const isCryptoDeposit = d.targetAsset || d.cryptoCurrency;
       // Get fiat value from metadata if available, otherwise use amount
-      const metadata = d.metadata as { fiatAmount?: number } | null;
+      const metadata = d.metadata as { fiatAmount?: number; usdValue?: number } | null;
       const fiatValue = metadata?.fiatAmount || Number(d.amount);
+      
+      // For fiat deposits, get the USD value stored in metadata
+      // If not available, the amount is assumed to be in USD already
+      const depositCurrency = d.currency || "USD";
+      const depositAmount = Number(d.amount);
+      let usdValue = depositAmount; // Default: assume USD
+      
+      if (!isCryptoDeposit && metadata?.usdValue !== undefined) {
+        // Use the stored USD value from metadata (calculated at time of deposit)
+        usdValue = metadata.usdValue;
+      } else if (!isCryptoDeposit && depositCurrency !== "USD") {
+        // Fallback: if no USD value stored and currency is not USD, use the amount as-is
+        // (This maintains backward compatibility with old deposits that don't have usdValue)
+        usdValue = depositAmount;
+      }
 
       return {
         id: d.id,
@@ -79,10 +94,11 @@ export async function GET(req: NextRequest) {
         // For crypto deposits, use cryptoAmount; for fiat, use amount
         amount: isCryptoDeposit
           ? Number(d.cryptoAmount || d.amount)
-          : Number(d.amount),
-        // For crypto deposits, use fiatAmount from metadata (USD value at time of deposit)
-        // For fiat deposits, the amount is already in user's currency
-        value: isCryptoDeposit ? fiatValue : Number(d.amount),
+          : depositAmount,
+        // CRITICAL: value must ALWAYS be in USD for proper currency conversion
+        // For crypto: use fiatValue (USD at time of deposit)
+        // For fiat: use usdValue from metadata (converted to USD at time of deposit)
+        value: isCryptoDeposit ? fiatValue : usdValue,
         timestamp: d.createdAt.toISOString(),
         status:
           d.status === "COMPLETED"

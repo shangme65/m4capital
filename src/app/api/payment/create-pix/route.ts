@@ -113,9 +113,24 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Convert BRL to USD for internal tracking (simplified - use real exchange rate API)
-    const BRL_TO_USD_RATE = 0.2; // Example rate - should fetch from API
-    const amountUSD = amount * BRL_TO_USD_RATE;
+    // Fetch real-time BRL to USD exchange rate from Frankfurter API
+    let amountUSD = amount * 0.2; // Fallback rate
+    let exchangeRate = 0.2;
+    try {
+      const rateResponse = await fetch(
+        "https://api.frankfurter.app/latest?from=BRL&to=USD"
+      );
+      if (rateResponse.ok) {
+        const rateData = await rateResponse.json();
+        exchangeRate = rateData.rates?.USD || 0.2;
+        amountUSD = amount * exchangeRate;
+        console.log(
+          `💱 PIX: Converted ${amount} BRL to ${amountUSD.toFixed(2)} USD (rate: ${exchangeRate})`
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching BRL/USD rate:", error);
+    }
 
     // Create deposit record in database first
     const deposit = await prisma.deposit.create({
@@ -135,7 +150,8 @@ export async function POST(request: NextRequest) {
           payerDocument: documentClean,
           payerEmail,
           originalAmountBRL: amount,
-          brlToUsdRate: BRL_TO_USD_RATE,
+          brlToUsdRate: exchangeRate,
+          usdValue: amountUSD, // Store USD value for proper currency conversion
         },
       },
     });

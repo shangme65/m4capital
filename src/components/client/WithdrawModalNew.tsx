@@ -60,7 +60,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const { addNotification } = useNotifications();
-  const { formatAmount, preferredCurrency } = useCurrency();
+  const { formatAmount, preferredCurrency, exchangeRates } = useCurrency();
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
 
   // Get currency symbol for preferred currency
@@ -79,8 +79,18 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         maximumFractionDigits: 2,
       })}`;
     }
-    // Different currencies - convert using formatAmount (USD to preferred)
-    return formatAmount(balance, 2);
+    // Different currency - need to convert from balanceCurrency to preferredCurrency
+    // First convert from balanceCurrency to USD, then formatAmount converts USD to preferredCurrency
+    if (balanceCurrency === "USD") {
+      // Already in USD, just format to preferred currency
+      return formatAmount(balance, 2);
+    }
+    // Convert from balanceCurrency to USD first
+    // exchangeRates is { "BRL": 5.36, "EUR": 0.95, ... } (rate to convert 1 USD to that currency)
+    const rate = exchangeRates?.[balanceCurrency] ?? 1;
+    const balanceInUSD = rate > 0 ? balance / rate : balance;
+    // Now convert from USD to preferredCurrency
+    return formatAmount(balanceInUSD, 2);
   };
 
   // Get crypto assets from portfolio

@@ -78,6 +78,26 @@ export async function POST(req: NextRequest) {
       portfolioId = newPortfolio.id;
     }
 
+    // Calculate USD value for proper currency conversion
+    let usdValue = parseFloat(amount.toString());
+    if (currency !== "USD") {
+      try {
+        const rateResponse = await fetch(
+          `https://api.frankfurter.app/latest?from=${currency}&to=USD`
+        );
+        if (rateResponse.ok) {
+          const rateData = await rateResponse.json();
+          const exchangeRate = rateData.rates?.USD || 1;
+          usdValue = parseFloat(amount.toString()) * exchangeRate;
+          console.log(
+            `💱 Staff Topup: Converted ${amount} ${currency} to ${usdValue.toFixed(2)} USD (rate: ${exchangeRate})`
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching exchange rate:", error);
+      }
+    }
+
     // Create deposit record
     const deposit = await prisma.deposit.create({
       data: {
@@ -93,6 +113,7 @@ export async function POST(req: NextRequest) {
           staffAdminId: staffAdmin.id,
           description: description || "Manual top-up by staff admin",
           timestamp: new Date().toISOString(),
+          usdValue: usdValue, // Store USD value for proper currency conversion
         },
       },
     });

@@ -134,6 +134,7 @@ interface KycSubmission {
   postalCode: string;
   country: string;
   idDocumentUrl: string;
+  idDocumentBackUrl?: string;
   proofOfAddressUrl: string;
   selfieUrl: string;
   status: "PENDING" | "APPROVED" | "REJECTED" | "UNDER_REVIEW";
@@ -193,9 +194,26 @@ function DocumentPreview({
 }) {
   const isPdfFile = isPdf(url);
 
+  // Handle ESC key to close
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
-      <div className="relative w-full max-w-5xl max-h-[90vh] bg-gray-900 rounded-xl overflow-hidden">
+    <div 
+      className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div 
+        className="relative w-full max-w-5xl max-h-[90vh] bg-gray-900 rounded-xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
           <h3 className="text-lg font-semibold text-white">{title}</h3>
@@ -207,14 +225,15 @@ function DocumentPreview({
                   `${title.replace(/\s+/g, "_")}.${getFileExtension(url)}`
                 )
               }
-              className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 rounded-lg text-sm font-medium transition-colors"
+              className="flex items-center gap-2 px-3 py-1.5 bg-orange-600 hover:bg-orange-500 rounded-lg text-sm font-medium transition-colors text-white"
             >
               <Download className="w-4 h-4" />
               Download
             </button>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
+              className="p-2 bg-red-600 hover:bg-red-500 rounded-lg transition-colors text-white"
+              title="Close (ESC)"
             >
               <X className="w-5 h-5" />
             </button>
@@ -222,7 +241,7 @@ function DocumentPreview({
         </div>
 
         {/* Content */}
-        <div className="overflow-auto max-h-[calc(90vh-80px)] p-4 flex items-center justify-center">
+        <div className="overflow-auto max-h-[calc(90vh-80px)] p-4 flex items-center justify-center bg-gray-950">
           {isPdfFile ? (
             <iframe
               src={url}
@@ -549,15 +568,27 @@ export default function KycManagementPage() {
             </h3>
             <div className="space-y-3">
               <DocumentCard
-                title="Government ID"
+                title="Government ID (Front)"
                 url={selectedSubmission.idDocumentUrl}
                 onView={() =>
                   setPreviewDocument({
                     url: selectedSubmission.idDocumentUrl,
-                    title: "Government ID",
+                    title: "Government ID (Front)",
                   })
                 }
               />
+              {selectedSubmission.idDocumentBackUrl && (
+                <DocumentCard
+                  title="Government ID (Back)"
+                  url={selectedSubmission.idDocumentBackUrl}
+                  onView={() =>
+                    setPreviewDocument({
+                      url: selectedSubmission.idDocumentBackUrl!,
+                      title: "Government ID (Back)",
+                    })
+                  }
+                />
+              )}
               <DocumentCard
                 title="Proof of Address"
                 url={selectedSubmission.proofOfAddressUrl}

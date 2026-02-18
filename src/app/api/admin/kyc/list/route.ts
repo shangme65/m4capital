@@ -61,6 +61,7 @@ export async function GET(req: NextRequest) {
         postalCode: kyc.postalCode,
         country: kyc.country,
         idDocumentUrl: kyc.idDocumentUrl,
+        idDocumentBackUrl: kyc.idDocumentBackUrl,
         proofOfAddressUrl: kyc.proofOfAddressUrl,
         selfieUrl: kyc.selfieUrl,
         status: kyc.status,

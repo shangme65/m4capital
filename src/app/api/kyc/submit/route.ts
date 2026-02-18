@@ -8,8 +8,8 @@ import {
   sendKycAdminNotification,
 } from "@/lib/kyc-emails";
 
-// Maximum file size: 10MB
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+// Maximum file size: 20MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 // Allowed file types
 const ALLOWED_TYPES = [
@@ -98,25 +98,25 @@ export async function POST(req: NextRequest) {
     // Validate file sizes
     if (idDocumentFront.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "ID document front file is too large. Maximum size is 10MB." },
+        { error: "ID document front file is too large. Maximum size is 20MB." },
         { status: 400 }
       );
     }
     if (idDocumentBack.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "ID document back file is too large. Maximum size is 10MB." },
+        { error: "ID document back file is too large. Maximum size is 20MB." },
         { status: 400 }
       );
     }
     if (proofOfAddress.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "Proof of address file is too large. Maximum size is 10MB." },
+        { error: "Proof of address file is too large. Maximum size is 20MB." },
         { status: 400 }
       );
     }
     if (selfie.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "Selfie file is too large. Maximum size is 10MB." },
+        { error: "Selfie file is too large. Maximum size is 20MB." },
         { status: 400 }
       );
     }

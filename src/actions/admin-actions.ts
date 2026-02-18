@@ -105,6 +105,26 @@ export async function adminTopUpAction(params: {
 
     const txHash = generateTxHash();
 
+    // For fiat deposits, calculate USD value for proper currency conversion
+    let usdValue = fiatAmount || amount;
+    if (depositType === "fiat" && userPreferredCurrency !== "USD") {
+      try {
+        const rateResponse = await fetch(
+          `https://api.frankfurter.app/latest?from=${userPreferredCurrency}&to=USD`
+        );
+        if (rateResponse.ok) {
+          const rateData = await rateResponse.json();
+          const exchangeRate = rateData.rates?.USD || 1;
+          usdValue = (fiatAmount || amount) * exchangeRate;
+          console.log(
+            `💱 Admin Action: Converted ${fiatAmount || amount} ${userPreferredCurrency} to ${usdValue.toFixed(2)} USD (rate: ${exchangeRate})`
+          );
+        }
+      } catch (error) {
+        console.error("Error fetching exchange rate:", error);
+      }
+    }
+
     // Create deposit record
     const deposit = await prisma.deposit.create({
       data: {
@@ -136,6 +156,7 @@ export async function adminTopUpAction(params: {
           depositType,
           isAdminManual: true,
           fiatAmount: fiatAmount || amount,
+          usdValue: depositType === "fiat" ? usdValue : undefined, // Store USD value for proper currency conversion
           cryptoAmount,
           cryptoPrice,
         },
