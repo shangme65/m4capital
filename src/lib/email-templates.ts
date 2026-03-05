@@ -101,13 +101,13 @@ export const emailTemplate = (content: string) => `
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
                       <tr>
                         <td style="padding: 0 6px;">
-                          <a href="https://t.me/m4capitalbot" style="display: inline-block; width: 32px; height: 32px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none;">
-                            <img src="${baseUrl}/socials/telegram.svg" alt="Telegram" width="16" height="16" style="vertical-align: middle;" />
+                          <a href="https://t.me/m4capital_bot" style="display: inline-block; width: 32px; height: 32px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none;">
+                            <img src="${baseUrl}/socials/Telegram.png" alt="Telegram" width="16" height="16" style="vertical-align: middle;" />
                           </a>
                         </td>
                         <td style="padding: 0 6px;">
                           <a href="${baseUrl}" style="display: inline-block; width: 32px; height: 32px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none;">
-                            <img src="${baseUrl}/icons/icon-64.png" alt="Website" width="16" height="16" style="vertical-align: middle; border-radius: 4px;" />
+                            <img src="${baseUrl}/m4capitallogo2.png" alt="Website" width="16" height="16" style="vertical-align: middle; border-radius: 4px;" />
                           </a>
                         </td>
                       </tr>

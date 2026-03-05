@@ -2371,10 +2371,11 @@ const AdminDashboard = () => {
                           )
                         }
                         disabled={loading}
-                        className="bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white disabled:opacity-50 p-1 rounded shadow-[0_1px_0_0_#991b1b] hover:shadow-[0_0.5px_0_0_#991b1b] active:shadow-none active:translate-y-0.5 transition-all"
+                        className="bg-gradient-to-b from-red-500 to-red-600 hover:from-red-400 hover:to-red-500 text-white disabled:opacity-50 flex items-center gap-0.5 text-[8px] px-1.5 py-0.5 rounded shadow-[0_1px_0_0_#991b1b] hover:shadow-[0_0.5px_0_0_#991b1b] active:shadow-none active:translate-y-0.5 transition-all font-medium"
                         title="Delete Forever"
                       >
-                        <Trash2 size={10} />
+                        <Trash2 size={8} />
+                        Delete
                       </button>
                     </div>
                     {/* Row 2: Name + Role + Restore */}

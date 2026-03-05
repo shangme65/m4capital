@@ -773,24 +773,23 @@ export default function TransactionDetailsModal({
                           Value
                         </label>
                         <div className="text-white text-xl font-bold">
-                          {/* For fiat receive/deposit with different currency, show in user's preferred currency */}
-                          {/* For fiat transfers (sender) or same currency, show in original currency */}
-                          {/* For crypto, convert USD value to user's preferred currency */}
+                          {/* For fiat deposits/transfers:
+                              - If asset currency matches user's preferred currency: show original amount
+                              - If asset currency differs: convert USD value to user's preferred currency
+                              For crypto transactions: convert USD value to user's preferred currency */}
                           {FIAT_CURRENCIES.has(
                             transaction.asset?.toUpperCase() || ""
                           ) &&
-                          (transaction.type === "receive" ||
-                            transaction.type === "deposit") &&
-                          transaction.asset?.toUpperCase() !== preferredCurrency
-                            ? formatAmount(transaction.value, 2)
+                          transaction.asset?.toUpperCase() === preferredCurrency
+                            ? formatCurrencyUtil(
+                                transaction.amount,
+                                transaction.asset?.toUpperCase() || "USD",
+                                2
+                              )
                             : FIAT_CURRENCIES.has(
                                 transaction.asset?.toUpperCase() || ""
                               )
-                            ? formatCurrencyUtil(
-                                transaction.value,
-                                transaction.asset?.toUpperCase() || "BRL",
-                                2
-                              )
+                            ? formatAmount(transaction.value, 2)
                             : transaction.valueCurrency &&
                               transaction.valueCurrency === preferredCurrency
                             ? formatCurrencyUtil(
@@ -803,14 +802,7 @@ export default function TransactionDetailsModal({
                             {FIAT_CURRENCIES.has(
                               transaction.asset?.toUpperCase() || ""
                             ) &&
-                            (transaction.type === "receive" ||
-                              transaction.type === "deposit") &&
-                            transaction.asset?.toUpperCase() !==
-                              preferredCurrency
-                              ? preferredCurrency
-                              : FIAT_CURRENCIES.has(
-                                  transaction.asset?.toUpperCase() || ""
-                                )
+                            transaction.asset?.toUpperCase() === preferredCurrency
                               ? transaction.asset?.toUpperCase()
                               : preferredCurrency}
                           </span>

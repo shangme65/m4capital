@@ -1634,19 +1634,14 @@ function DashboardContent() {
                               </span>
                             </div>
                             <span className="font-medium text-xs text-white px-2 py-0.5 rounded-md bg-gray-700/50">
-                              {/* For fiat receive/deposit with different currency, show in receiver's preferred currency */}
-                              {/* For fiat transfers (sender), show in original currency */}
-                              {/* For crypto deposits, use formatAmount which handles USD->preferredCurrency conversion */}
-                              {isFiatTransaction &&
-                              (activity.type === "receive" || activity.type === "deposit") &&
-                              assetSymbol !== preferredCurrency
-                                ? formatAmount(activity.value || 0, 2)
+                              {/* For fiat deposits/transfers:
+                                  - If asset currency matches user's preferred currency: show original amount
+                                  - If asset currency differs: convert USD value to user's preferred currency
+                                  For crypto transactions: convert USD value to user's preferred currency */}
+                              {isFiatTransaction && assetSymbol === preferredCurrency
+                                ? formatCurrencyUtil(activity.amount || 0, assetSymbol, 2)
                                 : isFiatTransaction
-                                ? formatCurrencyUtil(
-                                    activity.value || 0,
-                                    assetSymbol,
-                                    2
-                                  )
+                                ? formatAmount(activity.value || 0, 2)
                                 : formatAmount(activity.value || 0, 2)}
                             </span>
                           </div>

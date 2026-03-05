@@ -304,38 +304,43 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
       {/* Full-screen Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 bg-white dark:bg-gray-900 z-30 flex flex-col md:hidden overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <motion.div
+          initial={{ x: "100%", opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: "100%", opacity: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="fixed inset-0 bg-white dark:bg-gray-900 z-30 flex flex-col md:hidden overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+        >
           {/* Header with logo and close button */}
-          <div className="flex items-center justify-between px-4 h-[60px] border-b border-gray-600 sticky top-0 bg-gray-700 z-10">
+          <div className="flex items-center justify-between px-4 h-[140px] pb-4 border-b border-gray-600 sticky top-0 bg-gray-700 z-10">
             <Link
               href="/"
-              className="flex items-center"
+              className="flex items-center mt-4"
               onClick={() => setMobileMenuOpen(false)}
             >
               <Image
                 src="/m4capitallogo1.png"
                 alt="M4 Capital Logo"
-                width={80}
-                height={27}
-                className="object-contain"
+                width={100}
+                height={34}
+                className="object-contain w-20"
               />
             </Link>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center space-x-2 mt-4">
               {session ? (
                 <>
                   <Link
                     href="/dashboard"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center gap-2 text-xs font-bold text-white"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, #fb923c 0%, #c2410c 50%, #f97316 100%)",
-                      padding: "8px 14px",
-                      borderRadius: "10px",
-                    }}
                   >
-                    <LayoutDashboard size={14} />
-                    Dashboard
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="!px-3 flex items-center space-x-1"
+                    >
+                      <LayoutDashboard size={16} />
+                      <span className="text-xs font-bold">Dashboard</span>
+                    </Button>
                   </Link>
                 </>
               ) : (
@@ -687,7 +692,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       )}
     </header>
   );
