@@ -6,5 +6,10 @@
       "master": true,
       "develop": true
     }
+  },
+  "functions": {
+    "src/app/api/kyc/submit/route.ts": {
+      "maxDuration": 60
+    }
   }
 }

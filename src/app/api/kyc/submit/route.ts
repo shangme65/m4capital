@@ -8,6 +8,9 @@ import {
   sendKycAdminNotification,
 } from "@/lib/kyc-emails";
 
+// Maximum function duration (60 seconds for file uploads)
+export const maxDuration = 60;
+
 // Maximum file size: 20MB
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 

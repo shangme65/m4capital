@@ -117,6 +117,13 @@ const nextConfig = {
       },
     },
   },
+
+  // Experimental features - increase body size limit for file uploads
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "25mb",
+    },
+  },
 };
 
 export default withBundleAnalyzer(nextConfig);
