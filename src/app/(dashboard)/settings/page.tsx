@@ -1388,13 +1388,13 @@ export default function SettingsPage() {
     type: "idDocumentFront" | "idDocumentBack" | "proofOfAddress" | "selfie",
     file: File | null
   ) => {
-    // Validate file size (20MB = 20 * 1024 * 1024 bytes)
-    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB in bytes
+    // Validate file size (5MB per file to keep total under server limits)
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
     
     if (file && file.size > MAX_FILE_SIZE) {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       showError(
-        `File size (${fileSizeMB}MB) exceeds the maximum allowed size of 20MB. Please upload a smaller file.`
+        `File size (${fileSizeMB}MB) exceeds the maximum allowed size of 5MB. Please compress or resize your image before uploading.`
       );
       return;
     }
@@ -1431,6 +1431,22 @@ export default function SettingsPage() {
       return;
     }
     
+    // Validate total file size (must be under 20MB total for server limits)
+    const MAX_TOTAL_SIZE = 20 * 1024 * 1024; // 20MB total
+    const totalSize = 
+      (documents.idDocumentFront?.size || 0) +
+      (documents.idDocumentBack?.size || 0) +
+      (documents.proofOfAddress?.size || 0) +
+      (documents.selfie?.size || 0);
+    
+    if (totalSize > MAX_TOTAL_SIZE) {
+      const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
+      showError(
+        `Total file size (${totalSizeMB}MB) exceeds the maximum allowed (20MB). Please compress your images or use smaller files.`
+      );
+      return;
+    }
+
     setSubmittingKyc(true);
 
     try {
@@ -1458,6 +1474,14 @@ export default function SettingsPage() {
         body: formData,
       });
 
+      // Handle 413 error specifically (payload too large)
+      if (response.status === 413) {
+        showError(
+          "Your files are too large to upload. Please compress your images (under 5MB each) and try again. You can use online tools like TinyPNG or ILoveIMG to reduce file sizes."
+        );
+        return;
+      }
+
       const data = await response.json();
 
       if (response.ok) {
@@ -1466,9 +1490,16 @@ export default function SettingsPage() {
       } else {
         showError(data.error || "Failed to submit KYC verification");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("KYC submission error:", error);
-      showError("Failed to submit KYC verification. Please try again.");
+      // Check if it's a network error due to large payload
+      if (error.message?.includes("413") || error.message?.includes("too large")) {
+        showError(
+          "Your files are too large to upload. Please compress your images (under 5MB each) and try again."
+        );
+      } else {
+        showError("Failed to submit KYC verification. Please check your internet connection and try again.");
+      }
     } finally {
       setSubmittingKyc(false);
     }
@@ -3753,7 +3784,7 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         <p className="text-xs text-gray-500 mt-2">
-                          Please upload clear images of both sides of your ID (max 20MB each)
+                          Please upload clear images of both sides of your ID (max 5MB each)
                         </p>
                       </div>
 
@@ -3800,7 +3831,7 @@ export default function SettingsPage() {
                                   Click to upload or drag and drop
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  PNG, JPG or PDF (max 20MB)
+                                  PNG, JPG or PDF (max 5MB)
                                 </p>
                               </div>
                             )}
@@ -3847,7 +3878,7 @@ export default function SettingsPage() {
                                   Click to upload or drag and drop
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                  PNG or JPG (max 20MB)
+                                  PNG or JPG (max 5MB)
                                 </p>
                               </div>
                             )}
