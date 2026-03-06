@@ -345,9 +345,9 @@ export default function TransferModalNew({
       addNotification({
         type: "transaction",
         title: "Transfer Sent",
-        message: `Transferred ${currencySymbol}${inputAmount.toFixed(2)} to ${
+        message: `Your transfer of ${currencySymbol}${inputAmount.toFixed(2)} to ${
           receiverName || transferData.destination
-        }`,
+        } has been sent successfully`,
       });
 
       setSuccessData({
