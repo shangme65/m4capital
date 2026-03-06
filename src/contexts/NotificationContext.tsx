@@ -76,13 +76,6 @@ interface NotificationContextType {
   refetchTransactions: () => Promise<void>;
   refetchNotifications: () => Promise<void>;
 }
-  markAllAsRead: () => void;
-  clearNotifications: () => void;
-  archiveNotification: (id: string) => void;
-  deleteNotification: (id: string) => void;
-  refetchTransactions: () => Promise<void>;
-  refetchNotifications: () => Promise<void>;
-}
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
   undefined
