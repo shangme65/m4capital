@@ -98,16 +98,16 @@ export const emailTemplate = (content: string) => `
                 <tr>
                   <td align="center">
                     <!-- Social Links -->
-                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
                       <tr>
-                        <td style="padding: 0 12px;">
-                          <a href="https://t.me/m4capital_bot" style="display: inline-block; width: 52px; height: 52px; border-radius: 50%; text-align: center; text-decoration: none; box-shadow: 0 4px 12px rgba(0, 136, 204, 0.5); overflow: hidden;">
-                            <img src="${baseUrl}/socials/Telegram.png" alt="Telegram" width="52" height="52" style="display: block; width: 52px; height: 52px; border-radius: 50%; object-fit: cover;" />
+                        <td style="padding: 0 4px;">
+                          <a href="https://t.me/m4capital_bot" style="display: inline-block; width: 28px; height: 28px; border-radius: 50%; text-align: center; text-decoration: none; box-shadow: 0 2px 6px rgba(0, 136, 204, 0.4); overflow: hidden;">
+                            <img src="${baseUrl}/socials/Telegram.png" alt="Telegram" width="28" height="28" style="display: block; width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
                           </a>
                         </td>
-                        <td style="padding: 0 12px;">
-                          <a href="${baseUrl}" style="display: inline-block; width: 52px; height: 52px; border-radius: 50%; text-align: center; text-decoration: none; box-shadow: 0 4px 12px rgba(249, 115, 22, 0.5); overflow: hidden;">
-                            <img src="${baseUrl}/m4capitallogo2.png" alt="M4 Capital" width="52" height="52" style="display: block; width: 52px; height: 52px; border-radius: 50%; object-fit: cover;" />
+                        <td style="padding: 0 4px;">
+                          <a href="${baseUrl}" style="display: inline-block; width: 28px; height: 28px; border-radius: 50%; text-align: center; text-decoration: none; box-shadow: 0 2px 6px rgba(249, 115, 22, 0.4); overflow: hidden;">
+                            <img src="${baseUrl}/m4capitallogo2.png" alt="M4 Capital" width="28" height="28" style="display: block; width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
                           </a>
                         </td>
                       </tr>
