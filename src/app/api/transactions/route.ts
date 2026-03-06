@@ -234,6 +234,11 @@ export async function GET(req: NextRequest) {
           senderCurrency = metadata.senderCurrency;
         }
 
+        // Use stored USD value for proper frontend currency conversion
+        if (metadata.usdValue) {
+          usdValue = Number(metadata.usdValue);
+        }
+
         if (metadata.type === "crypto" && metadata.cryptoAmount) {
           isCryptoTransfer = true;
           cryptoAmount = metadata.cryptoAmount;
@@ -281,8 +286,9 @@ export async function GET(req: NextRequest) {
         // For crypto transfers, show the crypto amount; for fiat, show the fiat amount
         amount:
           isCryptoTransfer && cryptoAmount > 0 ? cryptoAmount : senderAmount,
-        // Value is USD value for crypto, or fiat amount for fiat transfers
-        value: isCryptoTransfer ? usdValue : senderAmount,
+        // CRITICAL: value MUST be in USD for proper frontend conversion
+        // The frontend's formatAmount() assumes value is USD and converts to user's preferred currency
+        value: usdValue,
         timestamp: t.createdAt.toISOString(),
         status:
           t.status === "COMPLETED"
@@ -316,6 +322,7 @@ export async function GET(req: NextRequest) {
       let isCryptoTransfer = false;
       let cryptoAmount = 0;
       let cryptoPrice = 0;
+      // USD value for proper frontend conversion - default to amount (assuming USD if no metadata)
       let usdValue = Number(t.amount);
 
       try {
@@ -333,6 +340,11 @@ export async function GET(req: NextRequest) {
           // Fiat cross-currency transfer
           receiverAmount = Number(metadata.receiverAmount);
           receiverCurrency = metadata.receiverCurrency;
+          // Use stored USD value for proper frontend currency conversion
+          // The frontend expects value in USD and converts to user's preferred currency
+          if (metadata.usdValue) {
+            usdValue = Number(metadata.usdValue);
+          }
         }
       } catch {
         // Old format: "P2P Transfer of X BTC"
@@ -369,7 +381,9 @@ export async function GET(req: NextRequest) {
         type: "receive" as const, // Show received transfers as received
         asset: receiverCurrency, // Receiver's currency or crypto symbol
         amount: receiverAmount,
-        value: isCryptoTransfer ? usdValue : receiverAmount,
+        // CRITICAL: value MUST be in USD for proper frontend conversion
+        // The frontend's formatAmount() assumes value is USD and converts to user's preferred currency
+        value: usdValue,
         timestamp: t.createdAt.toISOString(),
         status:
           t.status === "COMPLETED"

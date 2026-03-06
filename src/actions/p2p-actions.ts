@@ -192,6 +192,15 @@ export async function sendP2PTransferAction(
     const roundedReceiverDisplay =
       Math.round(receiverDisplayAmount * 100) / 100;
 
+    // Calculate USD value for proper frontend conversion
+    // This is needed because the frontend always expects value in USD
+    const usdValue = convertCurrency(
+      roundedDeductAmount,
+      senderBalanceCurrency,
+      "USD"
+    );
+    const roundedUsdValue = Math.round(usdValue * 100) / 100;
+
     // Generate transaction reference
     const transactionReference = generateTransactionReference();
 
@@ -240,6 +249,8 @@ export async function sendP2PTransferAction(
             senderCurrency: senderPreferredCurrency,
             receiverAmount: roundedReceiverDisplay,
             receiverCurrency: receiverPreferredCurrency,
+            // USD value for proper frontend currency conversion
+            usdValue: roundedUsdValue,
           }),
           senderAccountNumber: sender.accountNumber!,
           receiverAccountNumber: receiver.accountNumber!,
@@ -259,19 +270,17 @@ export async function sendP2PTransferAction(
             userId: sender.id,
             type: "TRANSACTION",
             title: "Transfer Sent",
-            message: `You sent ${senderSymbol}${amount.toFixed(2)} to ${
+            message: `Your transfer of ${senderSymbol}${amount.toFixed(2)} to ${
               receiver.name || receiver.email
-            }`,
+            } has been sent successfully`,
             read: false,
           },
           {
             id: `notif-receiver-${transactionReference}`,
             userId: receiver.id,
             type: "TRANSACTION",
-            title: "Money Received",
-            message: `You received ${receiverSymbol}${roundedReceiverDisplay.toFixed(
-              2
-            )} from ${sender.name || sender.email}`,
+            title: "Transfer Received",
+            message: `You have successfully received a transfer of ${senderSymbol}${amount.toFixed(2)} → ${receiverSymbol}${roundedReceiverDisplay.toFixed(2)} from ${sender.name || sender.email}`,
             read: false,
           },
         ],
