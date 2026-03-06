@@ -374,7 +374,7 @@ export default function TransferModalNew({
     setStep(1);
     onClose();
     refetch();
-    window.location.reload();
+    window.location.href = "/dashboard";
   };
 
   if (!isOpen) return null;

@@ -513,7 +513,7 @@ export default function AssetSendModal({
         onClose={() => {
           setShowSuccessModal(false);
           onClose();
-          window.location.reload();
+          window.location.href = "/dashboard";
         }}
         type="transfer"
         asset={successData?.asset || ""}

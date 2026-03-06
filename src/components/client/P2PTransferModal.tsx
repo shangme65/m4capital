@@ -207,9 +207,9 @@ export default function P2PTransferModal({
           // Refresh portfolio data
           await refetch();
 
-          // Reload page after delay to show updated transaction history
+          // Redirect to dashboard after delay to show updated transaction history
           setTimeout(() => {
-            window.location.reload();
+            window.location.href = "/dashboard";
           }, 2500);
         } else {
           throw new Error(result.error || "Transfer failed");

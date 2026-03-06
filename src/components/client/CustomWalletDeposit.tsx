@@ -111,7 +111,7 @@ export default function CustomWalletDeposit({
         showSuccess("Payment confirmed! Your account has been credited.");
         setTimeout(() => {
           onClose();
-          window.location.reload();
+          window.location.href = "/dashboard";
         }, 2000);
       } else if (data.confirmations > 0) {
         showInfo(data.message || `${data.confirmations}/3 confirmations`);

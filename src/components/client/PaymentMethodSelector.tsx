@@ -40,7 +40,8 @@ export default function PaymentMethodSelector({
   const handleDone = () => {
     setShowSuccess(false);
     onClose();
-    window.location.reload();
+    // Redirect to dashboard without asset query param to prevent modal from reopening
+    window.location.href = "/dashboard";
   };
 
   const handlePurchase = async () => {
@@ -101,7 +102,14 @@ export default function PaymentMethodSelector({
     }
   };
 
-  const { formatAmount, preferredCurrency, exchangeRates } = useCurrency();
+  const { formatAmount, preferredCurrency, exchangeRates, convertAmount } = useCurrency();
+
+  // Convert USD to balance currency for accurate new balance calculation
+  const convertUsdToBalanceCurrency = (usdAmount: number): number => {
+    if (balanceCurrency === "USD") return usdAmount;
+    const rate = exchangeRates?.[balanceCurrency] ?? 1;
+    return usdAmount * rate;
+  };
 
   // Format balance display - only convert if currencies don't match
   const formatBalanceDisplay = (balance: number): string => {
@@ -414,7 +422,7 @@ export default function PaymentMethodSelector({
                   <div className="flex justify-between text-xs">
                     <span className="text-gray-400">New Balance:</span>
                     <span className="text-green-400 font-bold">
-                      {formatBalanceDisplay(userBalance - (usdValue * 1.015))}
+                      {formatBalanceDisplay(userBalance - convertUsdToBalanceCurrency(usdValue * 1.015))}
                     </span>
                   </div>
                 </div>

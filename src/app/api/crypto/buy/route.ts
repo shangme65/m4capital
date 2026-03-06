@@ -235,8 +235,10 @@ export async function POST(request: NextRequest) {
         let displayTotalCost = totalCostUSD;
         let displayNewBalance = newBalance;
 
+        // Always need to fetch exchange rates for balance conversion
+        const exchangeRates = await getExchangeRates();
+
         if (preferredCurrency !== "USD") {
-          const exchangeRates = await getExchangeRates();
           displayPrice = convertCurrency(
             price,
             preferredCurrency,
@@ -247,16 +249,15 @@ export async function POST(request: NextRequest) {
             preferredCurrency,
             exchangeRates
           );
-          // Note: newBalance is already in balanceCurrency
-          if (balanceCurrency === preferredCurrency) {
-            displayNewBalance = newBalance;
-          } else {
-            displayNewBalance = convertCurrency(
-              newBalance,
-              preferredCurrency,
-              exchangeRates
-            );
-          }
+        }
+
+        // Convert balance from balanceCurrency to preferredCurrency if different
+        if (balanceCurrency !== preferredCurrency) {
+          // First convert to USD (divide by source rate), then to target (multiply by target rate)
+          const sourceRate = exchangeRates[balanceCurrency] || 1;
+          const targetRate = exchangeRates[preferredCurrency] || 1;
+          const balanceInUSD = newBalance / sourceRate;
+          displayNewBalance = balanceInUSD * targetRate;
         }
 
         const emailResult = await sendEmail({

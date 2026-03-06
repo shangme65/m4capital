@@ -208,8 +208,10 @@ export async function POST(request: NextRequest) {
         let displayNetReceived = netReceivedUSD;
         let displayNewBalance = parseFloat(newBalance.toString());
 
+        // Always need to fetch exchange rates for balance conversion
+        const exchangeRates = await getExchangeRates();
+
         if (preferredCurrency !== "USD") {
-          const exchangeRates = await getExchangeRates();
           displayPrice = convertCurrency(
             price,
             preferredCurrency,
@@ -226,17 +228,15 @@ export async function POST(request: NextRequest) {
             preferredCurrency,
             exchangeRates
           );
-          // Note: newBalance is already in balanceCurrency, convert from that
-          if (balanceCurrency === preferredCurrency) {
-            displayNewBalance = parseFloat(newBalance.toString());
-          } else {
-            // If balanceCurrency differs from preferredCurrency, we need to convert
-            displayNewBalance = convertCurrency(
-              parseFloat(newBalance.toString()),
-              preferredCurrency,
-              exchangeRates
-            );
-          }
+        }
+
+        // Convert balance from balanceCurrency to preferredCurrency if different
+        if (balanceCurrency !== preferredCurrency) {
+          // First convert to USD (divide by source rate), then to target (multiply by target rate)
+          const sourceRate = exchangeRates[balanceCurrency] || 1;
+          const targetRate = exchangeRates[preferredCurrency] || 1;
+          const balanceInUSD = parseFloat(newBalance.toString()) / sourceRate;
+          displayNewBalance = balanceInUSD * targetRate;
         }
 
         const assetName =

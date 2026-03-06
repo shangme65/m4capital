@@ -18,6 +18,8 @@ import {
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
+import { CRYPTO_METADATA } from "@/lib/crypto-constants";
 
 interface AssetSwapModalProps {
   isOpen: boolean;
@@ -65,7 +67,35 @@ export default function AssetSwapModal({
   const [conversionFee] = useState(0.5); // 0.5% fee
   const [userCountry, setUserCountry] = useState<string>("US");
 
-  const toAssetData = availableAssets.find((a) => a.symbol === toAsset);
+  // Get all supported crypto symbols for price fetching
+  const allCryptoSymbols = Object.keys(CRYPTO_METADATA);
+  const cryptoPrices = useCryptoPrices(allCryptoSymbols);
+
+  // Get real price for a symbol from live prices
+  const getRealPrice = (symbol: string): number => {
+    const priceData = cryptoPrices[symbol];
+    return priceData?.price || 0;
+  };
+
+  // Get current asset price from live prices
+  const currentAssetPrice = getRealPrice(asset.symbol) || asset.price;
+
+  // Build available assets with real prices
+  const availableAssetsWithPrices = allCryptoSymbols
+    .filter((symbol) => symbol !== asset.symbol)
+    .map((symbol) => {
+      const meta = CRYPTO_METADATA[symbol];
+      const existingAsset = availableAssets.find((a) => a.symbol === symbol);
+      return {
+        symbol,
+        name: meta?.name || symbol,
+        amount: existingAsset?.amount || 0,
+        price: getRealPrice(symbol),
+      };
+    })
+    .filter((a) => a.price > 0); // Only show assets with valid prices
+
+  const toAssetData = availableAssetsWithPrices.find((a) => a.symbol === toAsset);
 
   // Currency symbol helper
   const getCurrencySymbol = () => {
@@ -97,7 +127,9 @@ export default function AssetSwapModal({
     } else {
       // Convert fiat to USD then to crypto
       const usdValue = convertAmount(value, true);
-      const cryptoAmount = usdValue / asset.price;
+      const price = currentAssetPrice;
+      if (price <= 0) return "0";
+      const cryptoAmount = usdValue / price;
       return cryptoAmount.toString();
     }
   };
@@ -120,11 +152,10 @@ export default function AssetSwapModal({
   };
 
   // Filter assets based on search
-  const filteredAssets = availableAssets.filter(
+  const filteredAssets = availableAssetsWithPrices.filter(
     (a) =>
-      a.symbol !== asset.symbol &&
-      (a.symbol.toLowerCase().includes(assetSearch.toLowerCase()) ||
-        a.name.toLowerCase().includes(assetSearch.toLowerCase()))
+      a.symbol.toLowerCase().includes(assetSearch.toLowerCase()) ||
+      a.name.toLowerCase().includes(assetSearch.toLowerCase())
   );
 
   // Handle back navigation
@@ -236,9 +267,31 @@ export default function AssetSwapModal({
   };
 
   const getConversionRate = () => {
-    if (!toAssetData) return 0;
+    if (!toAssetData || toAssetData.price <= 0) return 0;
     if (asset.symbol === toAsset) return 1;
-    return asset.price / toAssetData.price;
+    // Use live prices for accurate conversion
+    const fromPrice = currentAssetPrice;
+    const toPrice = toAssetData.price;
+    if (fromPrice <= 0 || toPrice <= 0) return 0;
+    return fromPrice / toPrice;
+  };
+
+  // Safely format the conversion rate for display
+  const formatRate = () => {
+    const rate = getConversionRate();
+    if (!rate || !isFinite(rate) || isNaN(rate) || rate <= 0) {
+      return "Loading...";
+    }
+    return rate.toFixed(8);
+  };
+
+  // Safely format the estimated receive amount for display
+  const formatReceiveAmount = () => {
+    const amount = getEstimatedReceiveAmount();
+    if (!amount || !isFinite(amount) || isNaN(amount) || amount <= 0) {
+      return "0.00000000";
+    }
+    return amount.toFixed(8);
   };
 
   const getEstimatedReceiveAmount = () => {
@@ -298,10 +351,10 @@ export default function AssetSwapModal({
     try {
       const fromAmt = parseFloat(getCryptoAmount());
       const toAmt = getEstimatedReceiveAmount();
-      const value = fromAmt * asset.price;
+      const value = fromAmt * currentAssetPrice;
       const rate = getConversionRate();
       const feeAmount = fromAmt * rate * (conversionFee / 100);
-      const fromPriceUSD = asset.price;
+      const fromPriceUSD = currentAssetPrice;
       const toPriceUSD = toAssetData?.price || 0;
 
       // Call API to process swap
@@ -390,8 +443,8 @@ export default function AssetSwapModal({
     setStep(1);
     onClose();
     refetchTransactions();
-    // Reload page to show updated balance and transaction history
-    window.location.reload();
+    // Redirect to dashboard to show updated balance and transaction history
+    window.location.href = "/dashboard";
   };
 
   const setMaxAmount = () => {
@@ -399,7 +452,7 @@ export default function AssetSwapModal({
       setFromAmount(asset.amount.toFixed(8));
     } else {
       // Convert max crypto to fiat
-      const usdValue = asset.amount * asset.price;
+      const usdValue = asset.amount * currentAssetPrice;
       const fiatValue = convertAmount(usdValue);
       setFromAmount(fiatValue.toFixed(2));
     }
@@ -649,7 +702,7 @@ export default function AssetSwapModal({
                       <div className="flex items-center justify-between">
                         <span className="text-gray-400 text-xs">Rate</span>
                         <span className="text-white text-xs font-medium">
-                          1 {asset.symbol} = {getConversionRate().toFixed(8)} {toAsset}
+                          1 {asset.symbol} = {formatRate()} {toAsset}
                         </span>
                       </div>
                     </div>
@@ -738,13 +791,13 @@ export default function AssetSwapModal({
                           if (!isNaN(currentValue) && currentValue > 0) {
                             if (inputMode === "crypto") {
                               // Convert crypto to fiat
-                              const usdValue = currentValue * asset.price;
+                              const usdValue = currentValue * currentAssetPrice;
                               const fiatValue = convertAmount(usdValue);
                               setFromAmount(fiatValue.toFixed(2));
                             } else {
                               // Convert fiat to crypto
                               const usdValue = convertAmount(currentValue, true);
-                              const cryptoValue = usdValue / asset.price;
+                              const cryptoValue = usdValue / currentAssetPrice;
                               setFromAmount(cryptoValue.toFixed(8));
                             }
                           }
@@ -768,7 +821,7 @@ export default function AssetSwapModal({
                       {fromAmount && parseFloat(fromAmount) > 0 && (
                         <p className="text-cyan-400 text-xs">
                           {inputMode === "crypto"
-                            ? `≈ ${formatAmount(parseFloat(fromAmount) * asset.price, 2)}`
+                            ? `≈ ${formatAmount(parseFloat(fromAmount) * currentAssetPrice, 2)}`
                             : `≈ ${(parseFloat(getCryptoAmount())).toFixed(8)} ${asset.symbol}`}
                         </p>
                       )}
@@ -790,7 +843,7 @@ export default function AssetSwapModal({
                       <div className="flex items-center gap-3">
                         <CryptoIcon symbol={toAsset} size="md" />
                         <span className="text-2xl font-bold text-cyan-400">
-                          {getEstimatedReceiveAmount().toFixed(8)}
+                          {formatReceiveAmount()}
                         </span>
                         <span className="text-gray-400">{toAsset}</span>
                       </div>
@@ -816,7 +869,7 @@ export default function AssetSwapModal({
                         <div className="flex justify-between">
                           <span className="text-gray-400">Exchange Rate</span>
                           <span className="text-white">
-                            1 {asset.symbol} = {getConversionRate().toFixed(8)}{" "}
+                            1 {asset.symbol} = {formatRate()}{" "}
                             {toAsset}
                           </span>
                         </div>
@@ -825,11 +878,12 @@ export default function AssetSwapModal({
                             Fee ({conversionFee}%)
                           </span>
                           <span className="text-white">
-                            {(
-                              parseFloat(getCryptoAmount() || "0") *
-                              getConversionRate() *
-                              (conversionFee / 100)
-                            ).toFixed(8)}{" "}
+                            {(() => {
+                              const rate = getConversionRate();
+                              const cryptoAmt = parseFloat(getCryptoAmount() || "0");
+                              const fee = cryptoAmt * rate * (conversionFee / 100);
+                              return isFinite(fee) && !isNaN(fee) ? fee.toFixed(8) : "0.00000000";
+                            })()}{" "}
                             {toAsset}
                           </span>
                         </div>

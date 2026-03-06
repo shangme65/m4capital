@@ -64,33 +64,38 @@ export default function CookieConsent() {
                 }}
               ></div>
 
-              <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                {/* Cookie icon */}
-                <motion.div
-                  animate={{
-                    rotate: [0, -10, 10, -10, 0],
-                    scale: [1, 1.1, 1],
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Infinity,
-                    repeatDelay: 3,
-                  }}
-                  className="flex-shrink-0"
-                >
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-orange-500 to-purple-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
-                    <Cookie className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
-                  </div>
-                </motion.div>
+              <div className="relative flex flex-col gap-3 sm:gap-4">
+                {/* Header row: Icon + Title */}
+                <div className="flex items-center gap-3 sm:gap-4">
+                  {/* Cookie icon */}
+                  <motion.div
+                    animate={{
+                      rotate: [0, -10, 10, -10, 0],
+                      scale: [1, 1.1, 1],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      repeatDelay: 3,
+                    }}
+                    className="flex-shrink-0"
+                  >
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-orange-500 to-purple-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg">
+                      <Cookie className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                    </div>
+                  </motion.div>
 
-                {/* Content */}
-                <div className="flex-1 space-y-2 sm:space-y-3">
+                  {/* Title */}
                   <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
                     We Value Your{" "}
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-400">
                       Privacy
                     </span>
                   </h3>
+                </div>
+
+                {/* Description */}
+                <div className="space-y-2 sm:space-y-3">
                   <p className="text-gray-300 text-xs sm:text-sm md:text-base leading-relaxed">
                     We use cookies to enhance your browsing experience, serve
                     personalized content, and analyze our traffic. By clicking

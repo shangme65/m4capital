@@ -473,7 +473,7 @@ export default function AssetSellModal({
         onClose={() => {
           setShowSuccessModal(false);
           onClose();
-          window.location.reload();
+          window.location.href = "/dashboard";
         }}
         type="sell"
         asset={successData?.asset || ""}

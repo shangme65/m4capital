@@ -58,7 +58,7 @@ export default function AssetReceiveModal({
     // If user generated a deposit address, refresh to check for any incoming deposits
     if (paymentData) {
       onClose();
-      window.location.reload();
+      window.location.href = "/dashboard";
     } else {
       onClose();
     }

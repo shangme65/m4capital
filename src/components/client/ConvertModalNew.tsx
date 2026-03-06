@@ -177,8 +177,8 @@ export default function ConvertModalNew({
     onClose();
     refetch();
     refetchTransactions();
-    // Reload page to show updated balance and transaction history
-    window.location.reload();
+    // Redirect to dashboard to show updated balance and transaction history
+    window.location.href = "/dashboard";
   };
 
   // Refetch portfolio when modal opens to get latest balance

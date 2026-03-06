@@ -100,14 +100,24 @@ export const emailTemplate = (content: string) => `
                     <!-- Social Links -->
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
                       <tr>
-                        <td style="padding: 0 6px;">
-                          <a href="https://t.me/m4capital_bot" style="display: inline-block; width: 32px; height: 32px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none;">
-                            <img src="${baseUrl}/socials/Telegram.png" alt="Telegram" width="16" height="16" style="vertical-align: middle;" />
+                        <td style="padding: 0 5px;">
+                          <a href="https://t.me/m4capital_bot" style="display: inline-block; width: 36px; height: 36px; background: linear-gradient(135deg, #0088cc 0%, #00aced 100%); border-radius: 50%; text-align: center; text-decoration: none; box-shadow: 0 2px 8px rgba(0, 136, 204, 0.4); overflow: hidden;">
+                            <img src="${baseUrl}/socials/Telegram.png" alt="Telegram" width="36" height="36" style="display: block; border-radius: 50%;" />
                           </a>
                         </td>
-                        <td style="padding: 0 6px;">
-                          <a href="${baseUrl}" style="display: inline-block; width: 32px; height: 32px; background: rgba(99, 102, 241, 0.2); border-radius: 50%; text-align: center; line-height: 32px; text-decoration: none;">
-                            <img src="${baseUrl}/m4capitallogo2.png" alt="Website" width="16" height="16" style="vertical-align: middle; border-radius: 4px;" />
+                        <td style="padding: 0 5px;">
+                          <a href="https://www.facebook.com/m4capital" style="display: inline-block; width: 36px; height: 36px; background: linear-gradient(135deg, #1877f2 0%, #0d65d9 100%); border-radius: 50%; text-align: center; line-height: 36px; text-decoration: none; box-shadow: 0 2px 8px rgba(24, 119, 242, 0.4);">
+                            <span style="color: #ffffff; font-size: 18px; font-weight: 700;">f</span>
+                          </a>
+                        </td>
+                        <td style="padding: 0 5px;">
+                          <a href="https://www.instagram.com/m4capital" style="display: inline-block; width: 36px; height: 36px; background: linear-gradient(135deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border-radius: 50%; text-align: center; line-height: 36px; text-decoration: none; box-shadow: 0 2px 8px rgba(225, 48, 108, 0.4);">
+                            <span style="color: #ffffff; font-size: 16px; font-weight: 700;">📷</span>
+                          </a>
+                        </td>
+                        <td style="padding: 0 5px;">
+                          <a href="${baseUrl}" style="display: inline-block; width: 36px; height: 36px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 50%; text-align: center; text-decoration: none; box-shadow: 0 2px 8px rgba(249, 115, 22, 0.4); overflow: hidden;">
+                            <img src="${baseUrl}/m4capitallogo2.png" alt="M4 Capital" width="36" height="36" style="display: block; border-radius: 50%;" />
                           </a>
                         </td>
                       </tr>
