@@ -9,6 +9,7 @@ import React, {
   ReactNode,
 } from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export interface TutorialStep {
   id: string;
@@ -121,7 +122,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     id: "complete",
     target: "center",
-    title: "You're All Set! 🚀",
+    title: "You're All Set!",
     description:
       "Great job completing the tour! To unlock all features like deposits, transfers, and trading, you'll need to verify your account. Click 'Complete' to proceed to verification.",
     position: "center",
@@ -199,6 +200,8 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
     }
   }, [currentStep]);
 
+  const router = useRouter();
+
   const completeTutorial = useCallback(async () => {
     try {
       // Immediately restore UI interactivity
@@ -213,11 +216,13 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         setTutorialCompleted(true);
+        // Refresh the dashboard to show updated state
+        router.refresh();
       }
     } catch (error) {
       console.error("Failed to complete tutorial:", error);
     }
-  }, []);
+  }, [router]);
 
   const startTutorial = useCallback(() => {
     setIsActive(true);

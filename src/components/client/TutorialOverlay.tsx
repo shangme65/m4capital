@@ -286,7 +286,6 @@ export default function TutorialOverlay() {
                   className="flex-1 flex items-center justify-center gap-1 sm:gap-2 px-4 sm:px-6 py-2 sm:py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-[0_4px_16px_rgba(34,197,94,0.4)] text-sm sm:text-base"
                 >
                   Complete
-                  <Sparkles className="w-4 h-4" />
                 </button>
               ) : (
                 <button
