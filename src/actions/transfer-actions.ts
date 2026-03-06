@@ -154,9 +154,9 @@ export async function transferCryptoAction(
             userId: sender.id,
             type: "TRANSACTION",
             title: "Transfer Sent",
-            message: `Sent ${senderSymbol}${displayAmount.toFixed(2)} to ${
+            message: `Your transfer of ${senderSymbol}${displayAmount.toFixed(2)} to ${
               recipient.name || recipient.email
-            }`,
+            } has been sent successfully`,
             amount: displayAmount,
             asset: senderCurrency,
           },
@@ -164,7 +164,7 @@ export async function transferCryptoAction(
 
         // For receiver notification, show both original amount and converted amount
         const recipientSymbol = getCurrencySymbol(recipientCurrency);
-        let receiverMessage = `Received ${senderSymbol}${displayAmount.toFixed(2)} from ${
+        let receiverMessage = `You have successfully received a transfer of ${senderSymbol}${displayAmount.toFixed(2)} from ${
           sender.name || sender.email
         }`;
 
@@ -176,7 +176,7 @@ export async function transferCryptoAction(
               senderCurrency,
               recipientCurrency
             );
-            receiverMessage = `Received ${senderSymbol}${displayAmount.toFixed(2)} → ${recipientSymbol}${convertedAmount.toFixed(2)} from ${
+            receiverMessage = `You have successfully received a transfer of ${senderSymbol}${displayAmount.toFixed(2)} → ${recipientSymbol}${convertedAmount.toFixed(2)} from ${
               sender.name || sender.email
             }`;
           } catch (error) {
@@ -286,9 +286,9 @@ export async function transferCryptoAction(
             userId: sender.id,
             type: "TRANSACTION",
             title: "Transfer Sent",
-            message: `Sent ${amount.toFixed(8)} ${asset} to ${
+            message: `Your transfer of ${amount.toFixed(8)} ${asset} to ${
               recipient.name || recipient.email
-            }`,
+            } has been sent successfully`,
             amount: amount,
             asset: asset,
           },
@@ -298,7 +298,7 @@ export async function transferCryptoAction(
         const cryptoPrice = senderAssetData.averagePrice || 0;
         const usdValue = amount * cryptoPrice;
         const recipientSymbol = getCurrencySymbol(recipientCurrency);
-        let receiverMessage = `Received ${amount.toFixed(8)} ${asset} from ${
+        let receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} from ${
           sender.name || sender.email
         }`;
 
@@ -310,7 +310,7 @@ export async function transferCryptoAction(
               "USD",
               recipientCurrency
             );
-            receiverMessage = `Received ${amount.toFixed(8)} ${asset} → ${recipientSymbol}${fiatValue.toFixed(2)} from ${
+            receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} → ${recipientSymbol}${fiatValue.toFixed(2)} from ${
               sender.name || sender.email
             }`;
           } catch (error) {
