@@ -73,6 +73,7 @@ export default function NotificationsPanel({
     unreadCount,
     markNotificationAsRead,
     archiveNotification,
+    unarchiveNotification,
     deleteNotification,
   } = useNotifications();
   const { formatAmount } = useCurrency();
@@ -80,6 +81,7 @@ export default function NotificationsPanel({
   const [filter, setFilter] = useState<"all" | "unread" | "archived">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Ensure we only render portal on client
   useEffect(() => {
@@ -564,9 +566,20 @@ export default function NotificationsPanel({
                                     )}
                                   </div>
 
-                                  {/* Archive and Delete Actions */}
+                                  {/* Archive/Unarchive and Delete Actions */}
                                   <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                                    {!notification.archived && (
+                                    {notification.archived ? (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          unarchiveNotification(notification.id);
+                                        }}
+                                        className="p-1.5 rounded-md hover:bg-gray-700/50 text-gray-400 hover:text-green-400 transition-colors"
+                                        title="Unarchive"
+                                      >
+                                        <Archive className="w-3.5 h-3.5" />
+                                      </button>
+                                    ) : (
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -581,7 +594,7 @@ export default function NotificationsPanel({
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        deleteNotification(notification.id);
+                                        setDeleteConfirmId(notification.id);
                                       }}
                                       className="p-1.5 rounded-md hover:bg-gray-700/50 text-gray-400 hover:text-red-400 transition-colors"
                                       title="Delete"
@@ -604,6 +617,58 @@ export default function NotificationsPanel({
               )}
             </div>
           </motion.div>
+
+          {/* Delete Confirmation Dialog */}
+          <AnimatePresence>
+            {deleteConfirmId && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ zIndex: 10 }}
+                onClick={() => setDeleteConfirmId(null)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-2xl max-w-xs w-full mx-4"
+                >
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+                      <Trash2 className="w-5 h-5 text-red-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold">Delete Notification</h3>
+                      <p className="text-gray-400 text-xs">This action cannot be undone</p>
+                    </div>
+                  </div>
+                  <p className="text-gray-300 text-sm mb-5">
+                    Are you sure you want to permanently delete this notification?
+                  </p>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setDeleteConfirmId(null)}
+                      className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        deleteNotification(deleteConfirmId);
+                        setDeleteConfirmId(null);
+                      }}
+                      className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Custom Scrollbar Styles */}
           <style jsx global>{`

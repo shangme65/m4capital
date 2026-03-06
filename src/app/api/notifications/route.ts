@@ -67,7 +67,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { notificationId, markAllAsRead, archive } = body;
+    const { notificationId, markAllAsRead, archive, unarchive } = body;
 
     if (markAllAsRead) {
       // Mark all user notifications as read
@@ -86,7 +86,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (notificationId) {
-      // Mark specific notification as read (or archived via metadata)
+      // Mark specific notification as read (or archived/unarchived via metadata)
       const updateData: { read?: boolean; metadata?: any } = {};
 
       if (archive) {
@@ -96,6 +96,12 @@ export async function PATCH(request: NextRequest) {
           archivedAt: new Date().toISOString(),
         };
         updateData.read = true; // Also mark as read when archiving
+      } else if (unarchive) {
+        // For unarchive, we update the metadata field to remove archived status
+        updateData.metadata = {
+          archived: false,
+          unarchivedAt: new Date().toISOString(),
+        };
       } else {
         updateData.read = true;
       }
@@ -112,6 +118,8 @@ export async function PATCH(request: NextRequest) {
         success: true,
         message: archive
           ? "Notification archived"
+          : unarchive
+          ? "Notification unarchived"
           : "Notification marked as read",
       });
     }

@@ -71,6 +71,14 @@ interface NotificationContextType {
   markAllAsRead: () => void;
   clearNotifications: () => void;
   archiveNotification: (id: string) => void;
+  unarchiveNotification: (id: string) => void;
+  deleteNotification: (id: string) => void;
+  refetchTransactions: () => Promise<void>;
+  refetchNotifications: () => Promise<void>;
+}
+  markAllAsRead: () => void;
+  clearNotifications: () => void;
+  archiveNotification: (id: string) => void;
   deleteNotification: (id: string) => void;
   refetchTransactions: () => Promise<void>;
   refetchNotifications: () => Promise<void>;
@@ -302,6 +310,28 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const unarchiveNotification = async (id: string) => {
+    // Optimistically update UI - set archived to false
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.id === id
+          ? { ...notification, archived: false }
+          : notification
+      )
+    );
+
+    // Update on server
+    try {
+      await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notificationId: id, unarchive: true }),
+      });
+    } catch (error) {
+      console.error("Failed to unarchive notification:", error);
+    }
+  };
+
   const deleteNotification = async (id: string) => {
     // Optimistically update UI - remove from list
     setNotifications((prev) =>
@@ -332,6 +362,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         markAllAsRead,
         clearNotifications,
         archiveNotification,
+        unarchiveNotification,
         deleteNotification,
         refetchTransactions: fetchTransactions,
         refetchNotifications: fetchNotifications,
