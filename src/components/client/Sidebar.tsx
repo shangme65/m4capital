@@ -39,7 +39,7 @@ const Sidebar = () => {
     { icon: <Settings size={24} />, name: "Settings", href: "/settings" },
   ];
 
-  // Check if user is admin for Traderoom access
+  // Check if user is admin for Admin panel access
   const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "STAFF_ADMIN";
 
   const adminItem = {
@@ -134,35 +134,21 @@ const Sidebar = () => {
                         }}
                       >
                         {item.name === "Traderoom" ? (
-                          isAdmin ? (
-                            // Traderoom link for admins (under development)
-                            <Link
-                              href={item.href}
-                              className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
-                              onClick={closeSidebar}
-                              onMouseEnter={() => setHoveredItem(item.name)}
-                              onMouseLeave={() => setHoveredItem(null)}
-                            >
-                              <motion.div className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300">
-                                {item.icon}
-                              </motion.div>
-                              <motion.span className="ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-400 transition-colors duration-300">
-                                {item.name}
-                                <span className="ml-2">👑</span>
-                              </motion.span>
-                            </Link>
-                          ) : (
-                            // Traderoom is disabled for non-admins - coming soon
-                            <div className="flex items-center p-2 sm:p-3 rounded-lg opacity-50 cursor-not-allowed w-full">
-                              <motion.div className="text-gray-500">
-                                {item.icon}
-                              </motion.div>
-                              <motion.span className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-500">
-                                {item.name}
-                                <span className="ml-2">👑</span>
-                              </motion.span>
-                            </div>
-                          )
+                          // Traderoom link for all users
+                          <Link
+                            href={item.href}
+                            className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
+                            onClick={closeSidebar}
+                            onMouseEnter={() => setHoveredItem(item.name)}
+                            onMouseLeave={() => setHoveredItem(null)}
+                          >
+                            <motion.div className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300">
+                              {item.icon}
+                            </motion.div>
+                            <motion.span className="ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-400 transition-colors duration-300">
+                              {item.name}
+                            </motion.span>
+                          </Link>
                         ) : item.name === "Settings" ? (
                           // Special Settings item with synchronized hover effects
                           <Link

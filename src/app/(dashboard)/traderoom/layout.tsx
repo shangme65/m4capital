@@ -30,11 +30,6 @@ export default async function TraderoomLayout({
     redirect("/login");
   }
 
-  // Only allow ADMIN and STAFF_ADMIN to access Traderoom (under development)
-  if (session.user.role !== "ADMIN" && session.user.role !== "STAFF_ADMIN") {
-    redirect("/dashboard");
-  }
-
   return (
     <AuthProvider>
       <ModalProvider>
