@@ -914,13 +914,13 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         </div>
 
                         {/* Crypto Grid */}
-                        <div className="space-y-2 max-h-[400px] overflow-y-auto pr-1">
+                        <div className="space-y-1.5 max-h-[400px] overflow-y-auto pr-1">
                           {supportedCryptos.map((crypto) => (
                             <button
                               key={crypto.id}
                               type="button"
                               onClick={() => setSelectedCrypto(crypto.id)}
-                              className="w-full text-left transition-all duration-300 rounded-xl p-3"
+                              className="w-full text-left transition-all duration-300 rounded-lg p-2"
                               style={{
                                 background:
                                   selectedCrypto === crypto.id
@@ -935,44 +935,44 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                               }}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-2">
                                   {/* 3D Crypto Logo */}
                                   <div
-                                    className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center"
                                     style={{
                                       background:
                                         cryptoGradients[crypto.symbol] ||
                                         "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
                                       boxShadow:
-                                        "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)",
+                                        "0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)",
                                     }}
                                   >
                                     <CryptoIcon
                                       symbol={crypto.symbol}
-                                      className="w-6 h-6 text-white"
+                                      className="w-5 h-5 text-white"
                                     />
                                   </div>
                                   <div>
-                                    <div className="text-sm font-semibold text-white">
+                                    <div className="text-xs font-semibold text-white">
                                       {crypto.name}
                                     </div>
-                                    <div className="text-[10px] text-gray-400">
+                                    <div className="text-[9px] text-gray-400">
                                       {crypto.network}
                                     </div>
                                   </div>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1.5">
                                   <div className="text-right">
-                                    <div className="text-xs font-semibold text-white">
+                                    <div className="text-[10px] font-semibold text-white">
                                       {crypto.symbol}
                                     </div>
-                                    <div className="text-[10px] text-yellow-400">
+                                    <div className="text-[9px] text-yellow-400">
                                       Min: {formatAmount(crypto.minUSD, 0)}
                                     </div>
                                   </div>
                                   {selectedCrypto === crypto.id && (
                                     <svg
-                                      className="w-5 h-5 text-green-400"
+                                      className="w-4 h-4 text-green-400"
                                       fill="currentColor"
                                       viewBox="0 0 20 20"
                                     >
@@ -994,7 +994,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           <button
                             type="button"
                             onClick={handleBack}
-                            className="flex-1 py-3 px-3 rounded-xl font-semibold transition-all text-white text-sm"
+                            className="flex-1 py-2 px-3 rounded-lg font-semibold transition-all text-white text-xs"
                             style={card3DStyle}
                           >
                             Back
@@ -1003,12 +1003,12 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                             type="button"
                             onClick={handleProceedToPayment}
                             disabled={!selectedCrypto}
-                            className="flex-1 py-3 px-3 rounded-xl font-bold transition-all text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-[1.5] py-2 px-3 rounded-lg font-bold transition-all text-white text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                             style={{
                               background:
                                 "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",
                               boxShadow:
-                                "0 8px 20px -5px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
+                                "0 6px 15px -5px rgba(34, 197, 94, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                             }}
                           >
                             Proceed to Payment

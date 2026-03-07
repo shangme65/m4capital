@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { generateId } from "@/lib/generate-id";
-import { getCurrencySymbol } from "@/lib/currencies";
+import { getCurrencySymbol, getExchangeRates, convertCurrency } from "@/lib/currencies";
 
 interface ActionResult {
   success: boolean;
@@ -128,6 +128,14 @@ export async function createWithdrawalAction(params: {
     const fees = calculateWithdrawalFees(amount, withdrawalMethod, currency);
     const totalRequired = amount + fees.totalFees;
 
+    console.log("[Withdrawal Action] Balance check:", {
+      currentBalance,
+      amount,
+      fees: fees.totalFees,
+      totalRequired,
+      sufficient: currentBalance >= totalRequired,
+    });
+
     if (currentBalance < totalRequired) {
       return {
         success: false,
@@ -218,6 +226,9 @@ export async function payWithdrawalFeeAction(params: {
 
     const userCurrency = user.preferredCurrency || "USD";
     const currSymbol = getCurrencySymbol(userCurrency);
+    
+    // Get exchange rates for currency conversion
+    const exchangeRates = await getExchangeRates();
 
     const withdrawal = await prisma.withdrawal.findUnique({
       where: { id: withdrawalId },
@@ -279,13 +290,15 @@ export async function payWithdrawalFeeAction(params: {
           userId: user.id,
           type: "WITHDRAW",
           title: "Withdrawal Pending",
-          message: `Your withdrawal of ${currSymbol}${withdrawAmount.toLocaleString()} is pending.`,
-          amount: withdrawAmount,
+          message: `Your withdrawal of ${currSymbol}${convertCurrency(withdrawAmount, userCurrency, exchangeRates).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is pending.`,
+          // Store converted amount so frontend displays correctly
+          amount: convertCurrency(withdrawAmount, userCurrency, exchangeRates),
           asset: userCurrency,
           metadata: {
             withdrawalId: withdrawal.id,
             fees: totalFees,
             method: withdrawal.type,
+            amountUSD: withdrawAmount, // Keep original USD amount for reference
           },
         },
       }),

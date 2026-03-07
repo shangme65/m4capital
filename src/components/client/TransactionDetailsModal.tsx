@@ -21,6 +21,22 @@ const FIAT_CURRENCIES = new Set([
   "CNY",
   "KRW",
   "NGN",
+  "MXN",
+  "SGD",
+  "HKD",
+  "NOK",
+  "SEK",
+  "DKK",
+  "NZD",
+  "ZAR",
+  "RUB",
+  "TRY",
+  "PLN",
+  "THB",
+  "IDR",
+  "MYR",
+  "PHP",
+  "VND",
 ]);
 
 export interface DetailedTransaction {

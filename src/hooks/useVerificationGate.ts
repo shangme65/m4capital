@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -22,6 +22,9 @@ interface UseVerificationGateReturn {
   pendingAction: string | null;
 }
 
+// Poll interval for KYC status when pending/under review (10 seconds)
+const KYC_POLL_INTERVAL = 10000;
+
 export function useVerificationGate(): UseVerificationGateReturn {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -34,6 +37,27 @@ export function useVerificationGate(): UseVerificationGateReturn {
     });
   const [showVerificationModal, setShowVerificationModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<string | null>(null);
+  const previousKycStatus = useRef<string | null>(null);
+
+  // Helper function to fetch verification status
+  const fetchVerificationStatus = useCallback(async () => {
+    if (!session?.user?.email) return null;
+
+    try {
+      const response = await fetch("/api/user/onboarding-status");
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          isVerified: data.isVerified,
+          tutorialCompleted: data.tutorialCompleted,
+          kycStatus: data.kycStatus,
+        };
+      }
+    } catch (error) {
+      console.error("Failed to fetch verification status:", error);
+    }
+    return null;
+  }, [session?.user?.email]);
 
   // Fetch verification status on mount and when session changes
   useEffect(() => {
@@ -45,25 +69,74 @@ export function useVerificationGate(): UseVerificationGateReturn {
         return;
       }
 
-      try {
-        const response = await fetch("/api/user/onboarding-status");
-        if (response.ok) {
-          const data = await response.json();
-          setVerificationStatus({
-            isVerified: data.isVerified,
-            tutorialCompleted: data.tutorialCompleted,
-            kycStatus: data.kycStatus,
-          });
-        }
-      } catch (error) {
-        console.error("Failed to fetch verification status:", error);
-      } finally {
-        setIsLoading(false);
+      const data = await fetchVerificationStatus();
+      if (data) {
+        setVerificationStatus(data);
+        previousKycStatus.current = data.kycStatus;
       }
+      setIsLoading(false);
     };
 
     fetchStatus();
-  }, [session?.user?.email, status]);
+  }, [session?.user?.email, status, fetchVerificationStatus]);
+
+  // Poll for KYC status updates when status is PENDING or UNDER_REVIEW
+  useEffect(() => {
+    const shouldPoll =
+      verificationStatus.kycStatus === "PENDING" ||
+      verificationStatus.kycStatus === "UNDER_REVIEW";
+
+    if (!shouldPoll || !session?.user?.email) return;
+
+    const pollStatus = async () => {
+      // Only poll when document is visible
+      if (document.visibilityState !== "visible") return;
+
+      const data = await fetchVerificationStatus();
+      if (data) {
+        // Check if status changed from pending/under_review to approved/rejected
+        const statusChanged =
+          previousKycStatus.current !== data.kycStatus &&
+          (data.kycStatus === "APPROVED" || data.kycStatus === "REJECTED");
+
+        setVerificationStatus(data);
+        previousKycStatus.current = data.kycStatus;
+
+        // If status was just approved, close any open verification modals
+        if (statusChanged && data.kycStatus === "APPROVED") {
+          setShowVerificationModal(false);
+        }
+      }
+    };
+
+    // Set up polling interval
+    const pollInterval = setInterval(pollStatus, KYC_POLL_INTERVAL);
+
+    // Also poll on visibility change (when user returns to tab)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        pollStatus();
+      }
+    };
+
+    // Poll on window focus
+    const handleFocus = () => {
+      pollStatus();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      clearInterval(pollInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [
+    verificationStatus.kycStatus,
+    session?.user?.email,
+    fetchVerificationStatus,
+  ]);
 
   // Check verification and return status
   const checkVerification = useCallback(async (): Promise<boolean> => {

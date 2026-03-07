@@ -59,6 +59,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   const [showCryptoDropdown, setShowCryptoDropdown] = useState(false);
   const [selectedCrypto, setSelectedCrypto] = useState("BTC");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const { addNotification } = useNotifications();
   const { formatAmount, preferredCurrency, exchangeRates } = useCurrency();
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
@@ -69,6 +70,50 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
   const availableBalance = portfolio?.portfolio?.balance || 0;
   const balanceCurrency = portfolio?.portfolio?.balanceCurrency || "USD";
+
+  // Get balance converted to preferred currency (numeric value)
+  const getBalanceInPreferredCurrency = (balance: number): number => {
+    if (balanceCurrency === preferredCurrency) {
+      // Same currency - return directly
+      return balance;
+    }
+    // Different currency - need to convert from balanceCurrency to preferredCurrency
+    // First convert from balanceCurrency to USD, then to preferredCurrency
+    let balanceInUSD = balance;
+    if (balanceCurrency !== "USD") {
+      // Convert from balanceCurrency to USD
+      const rateFrom = exchangeRates?.[balanceCurrency] ?? 1;
+      balanceInUSD = rateFrom > 0 ? balance / rateFrom : balance;
+    }
+    // Now convert from USD to preferredCurrency
+    const rateTo = exchangeRates?.[preferredCurrency] ?? 1;
+    return balanceInUSD * rateTo;
+  };
+
+  // Available balance in user's preferred currency for validation and display
+  const availableBalanceInPreferredCurrency = getBalanceInPreferredCurrency(availableBalance);
+
+  // Convert amount from preferred currency to balance currency for server
+  const convertToBalanceCurrency = (amountInPreferred: number): number => {
+    if (balanceCurrency === preferredCurrency) {
+      // Same currency - return directly
+      return amountInPreferred;
+    }
+    // Different currency - need to convert from preferredCurrency to balanceCurrency
+    // First convert from preferredCurrency to USD, then to balanceCurrency
+    let amountInUSD = amountInPreferred;
+    if (preferredCurrency !== "USD") {
+      // Convert from preferredCurrency to USD
+      const rateFrom = exchangeRates?.[preferredCurrency] ?? 1;
+      amountInUSD = rateFrom > 0 ? amountInPreferred / rateFrom : amountInPreferred;
+    }
+    // Now convert from USD to balanceCurrency
+    if (balanceCurrency === "USD") {
+      return amountInUSD;
+    }
+    const rateTo = exchangeRates?.[balanceCurrency] ?? 1;
+    return amountInUSD * rateTo;
+  };
 
   // Format balance display - only convert if currencies don't match
   const formatBalanceDisplay = (balance: number): string => {
@@ -300,7 +345,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     if (currentStep === 1) {
       if (!withdrawData.amount || parseFloat(withdrawData.amount) <= 0) {
         newErrors.amount = "Please enter a valid amount";
-      } else if (parseFloat(withdrawData.amount) > availableBalance) {
+      } else if (parseFloat(withdrawData.amount) > availableBalanceInPreferredCurrency) {
         newErrors.amount = "Insufficient balance";
       }
 
@@ -328,17 +373,49 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
   const createWithdrawal = async () => {
     setLoading(true);
+    setApiError(null);
     try {
+      // Ensure exchange rates are loaded for conversion
+      if (balanceCurrency !== preferredCurrency && (!exchangeRates || Object.keys(exchangeRates).length === 0)) {
+        setApiError("Exchange rates not loaded yet. Please wait and try again.");
+        setLoading(false);
+        return;
+      }
+      
+      // Convert user's input from preferred currency to balance currency for server
+      const amountInBalanceCurrency = convertToBalanceCurrency(parseFloat(withdrawData.amount));
+      
+      // Ensure currency is set
+      const currency = withdrawData.currency || balanceCurrency || "USD";
+      
+      console.log("[Withdrawal] Creating withdrawal:", {
+        originalAmount: withdrawData.amount,
+        convertedAmount: amountInBalanceCurrency,
+        currency,
+        balanceCurrency,
+        preferredCurrency,
+        exchangeRates,
+        method: withdrawData.withdrawalMethod,
+      });
+      
       const result = await createWithdrawalAction({
-        amount: parseFloat(withdrawData.amount),
-        currency: withdrawData.currency,
+        amount: amountInBalanceCurrency,
+        currency: currency,
         withdrawalMethod: withdrawData.withdrawalMethod,
         address: withdrawData.address,
         memo: withdrawData.memo,
       });
 
+      console.log("[Withdrawal] Result:", result);
+
       if (!result.success) {
-        throw new Error(result.error || "Failed to create withdrawal");
+        // Show detailed error with balance info if available
+        let errorMsg = result.error || "Failed to create withdrawal";
+        if (result.data?.currentBalance !== undefined) {
+          errorMsg += ` (Balance: ${result.data.currentBalance.toFixed(2)}, Required: ${result.data.totalRequired?.toFixed(2)})`;
+        }
+        setApiError(errorMsg);
+        return; // Don't throw, just return to keep UI in current state
       }
 
       setWithdrawalId(result.data.id);
@@ -350,10 +427,12 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
         message: "Please review and pay the required fees to proceed.",
       });
     } catch (error: unknown) {
+      console.error("[Withdrawal] Error:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
           : "Failed to create withdrawal request";
+      setApiError(errorMessage);
       addNotification({
         type: "warning",
         title: "Withdrawal Failed",
@@ -1067,9 +1146,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
                         <button
                           onClick={() => {
-                            // Withdrawals always come from fiat balance
+                            // Withdrawals always come from fiat balance in user's preferred currency
                             // Crypto selection is just for the withdrawal network
-                            const maxAmount = availableBalance;
+                            const maxAmount = availableBalanceInPreferredCurrency;
 
                             setWithdrawData((prev) => ({
                               ...prev,
@@ -1183,6 +1262,25 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   {/* Step 2: Review */}
                   {step === 2 && fees && (
                     <div className="space-y-4">
+                      {/* API Error Display */}
+                      {apiError && (
+                        <div
+                          className="rounded-xl p-3 text-red-400 text-sm"
+                          style={{
+                            background:
+                              "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(185, 28, 28, 0.1) 100%)",
+                            border: "1px solid rgba(239, 68, 68, 0.3)",
+                          }}
+                        >
+                          <div className="flex items-start gap-2">
+                            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                            <span>{apiError}</span>
+                          </div>
+                        </div>
+                      )}
+                      
                       {/* Withdrawal Summary - 3D Card */}
                       <div
                         className="rounded-xl p-4 space-y-3"

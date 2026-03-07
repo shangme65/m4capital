@@ -33,7 +33,7 @@ function generateTransferEmailHtml(
   currencySymbol?: string
 ) {
   const currSym = currencySymbol || (asset === "USD" ? "$" : "");
-  const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN"].includes(asset);
+  const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN", "PHP", "MXN", "SGD", "HKD", "NOK", "SEK", "DKK", "NZD", "ZAR", "RUB", "TRY", "PLN", "THB", "IDR", "MYR", "VND", "JPY", "CAD", "AUD", "CHF", "CNY", "KRW"].includes(asset);
   const amountDisplay = isCrypto
     ? `${amount.toFixed(8)} ${asset}`
     : `${currSym}${amount.toFixed(2)}`;
@@ -143,7 +143,7 @@ async function sendTransferReceivedEmail(
 ) {
   try {
     const currSym = currencySymbol || (asset === "USD" ? "$" : "");
-    const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN"].includes(
+    const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN", "PHP", "MXN", "SGD", "HKD", "NOK", "SEK", "DKK", "NZD", "ZAR", "RUB", "TRY", "PLN", "THB", "IDR", "MYR", "VND", "JPY", "CAD", "AUD", "CHF", "CNY", "KRW"].includes(
       asset
     );
     const amountDisplay = isCrypto
@@ -184,7 +184,7 @@ async function sendTransferSentEmail(
 ) {
   try {
     const currSym = currencySymbol || (asset === "USD" ? "$" : "");
-    const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN"].includes(
+    const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN", "PHP", "MXN", "SGD", "HKD", "NOK", "SEK", "DKK", "NZD", "ZAR", "RUB", "TRY", "PLN", "THB", "IDR", "MYR", "VND", "JPY", "CAD", "AUD", "CHF", "CNY", "KRW"].includes(
       asset
     );
     const amountDisplay = isCrypto

@@ -98,17 +98,30 @@ export async function buyCryptoAction(
 
     const currentBalance = parseFloat(portfolio.balance.toString());
     const balanceCurrency = portfolio.balanceCurrency || "USD";
+    const userPreferredCurrency = user.preferredCurrency || "USD";
+
+    // Get exchange rates for currency conversion
+    const { getExchangeRates, convertCurrency } = await import(
+      "@/lib/currencies"
+    );
+    const exchangeRates = await getExchangeRates();
 
     // Convert totalCost from USD to the portfolio's balance currency for comparison and deduction
     let totalCostInBalanceCurrency = totalCostUSD;
     if (balanceCurrency !== "USD") {
-      const { getExchangeRates, convertCurrency } = await import(
-        "@/lib/currencies"
-      );
-      const exchangeRates = await getExchangeRates();
       totalCostInBalanceCurrency = convertCurrency(
         totalCostUSD,
         balanceCurrency,
+        exchangeRates
+      );
+    }
+
+    // Convert totalCost from USD to user's preferred currency for display
+    let totalCostInPreferredCurrency = totalCostUSD;
+    if (userPreferredCurrency !== "USD") {
+      totalCostInPreferredCurrency = convertCurrency(
+        totalCostUSD,
+        userPreferredCurrency,
         exchangeRates
       );
     }
@@ -202,10 +215,10 @@ export async function buyCryptoAction(
 
     const newBalance = parseFloat(updatedPortfolio.balance.toString());
 
-    // Create notification
+    // Create notification - use user's preferred currency for display
     const cryptoName = CRYPTO_NAMES[symbol] || symbol;
-    const currencySymbol = getCurrencySymbol(balanceCurrency);
-    const displayAmount = Math.round(totalCostInBalanceCurrency * 100) / 100;
+    const preferredCurrencySymbol = getCurrencySymbol(userPreferredCurrency);
+    const displayAmountInPreferred = Math.round(totalCostInPreferredCurrency * 100) / 100;
 
     await prisma.notification.create({
       data: {
@@ -215,23 +228,21 @@ export async function buyCryptoAction(
         title: "Crypto Purchase Successful",
         message: `You successfully purchased ${amount.toFixed(
           8
-        )} ${symbol} (${cryptoName}) for ${currencySymbol}${displayAmount.toFixed(
-          2
-        )}`,
-        amount: displayAmount,
-        asset: balanceCurrency,
+        )} ${symbol} (${cryptoName}) for ${preferredCurrencySymbol}${displayAmountInPreferred.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        amount: displayAmountInPreferred,
+        asset: userPreferredCurrency,
         read: false,
         createdAt: new Date(),
       },
     });
 
-    // Send push notification
+    // Send push notification - use user's preferred currency
     try {
       await sendWebPushToUser(user.id, {
         title: "Crypto Purchase Successful",
         body: `You purchased ${amount.toFixed(
           8
-        )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`,
+        )} ${symbol} for ${preferredCurrencySymbol}${displayAmountInPreferred.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         icon: `/crypto/${symbol.toLowerCase()}.png`,
       });
     } catch (pushError) {
@@ -306,17 +317,30 @@ export async function sellCryptoAction(
 
     const portfolio = user.Portfolio;
     const balanceCurrency = portfolio.balanceCurrency || "USD";
+    const userPreferredCurrency = user.preferredCurrency || "USD";
+
+    // Get exchange rates for currency conversion
+    const { getExchangeRates, convertCurrency } = await import(
+      "@/lib/currencies"
+    );
+    const exchangeRates = await getExchangeRates();
 
     // Convert netReceived from USD to the portfolio's balance currency
     let netReceivedInBalanceCurrency = netReceivedUSD;
     if (balanceCurrency !== "USD") {
-      const { getExchangeRates, convertCurrency } = await import(
-        "@/lib/currencies"
-      );
-      const exchangeRates = await getExchangeRates();
       netReceivedInBalanceCurrency = convertCurrency(
         netReceivedUSD,
         balanceCurrency,
+        exchangeRates
+      );
+    }
+
+    // Convert netReceived from USD to user's preferred currency for display
+    let netReceivedInPreferredCurrency = netReceivedUSD;
+    if (userPreferredCurrency !== "USD") {
+      netReceivedInPreferredCurrency = convertCurrency(
+        netReceivedUSD,
+        userPreferredCurrency,
         exchangeRates
       );
     }
@@ -410,10 +434,10 @@ export async function sellCryptoAction(
 
     const newBalance = parseFloat(updatedPortfolio.balance.toString());
 
-    // Create notification
+    // Create notification - use user's preferred currency for display
     const cryptoName = CRYPTO_NAMES[symbol] || symbol;
-    const currencySymbol = getCurrencySymbol(balanceCurrency);
-    const displayAmount = Math.round(netReceivedInBalanceCurrency * 100) / 100;
+    const preferredCurrencySymbol = getCurrencySymbol(userPreferredCurrency);
+    const displayAmountInPreferred = Math.round(netReceivedInPreferredCurrency * 100) / 100;
 
     await prisma.notification.create({
       data: {
@@ -423,23 +447,21 @@ export async function sellCryptoAction(
         title: "Crypto Sale Successful",
         message: `You successfully sold ${amount.toFixed(
           8
-        )} ${symbol} (${cryptoName}) for ${currencySymbol}${displayAmount.toFixed(
-          2
-        )}`,
-        amount: displayAmount,
-        asset: balanceCurrency,
+        )} ${symbol} (${cryptoName}) for ${preferredCurrencySymbol}${displayAmountInPreferred.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        amount: displayAmountInPreferred,
+        asset: userPreferredCurrency,
         read: false,
         createdAt: new Date(),
       },
     });
 
-    // Send push notification
+    // Send push notification - use user's preferred currency
     try {
       await sendWebPushToUser(user.id, {
         title: "Crypto Sale Successful",
         body: `You sold ${amount.toFixed(
           8
-        )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`,
+        )} ${symbol} for ${preferredCurrencySymbol}${displayAmountInPreferred.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         icon: `/crypto/${symbol.toLowerCase()}.png`,
       });
     } catch (pushError) {

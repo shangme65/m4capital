@@ -352,7 +352,7 @@ export async function POST(request: NextRequest) {
       const notificationTitle = `You've bought ${assetName}`;
       const notificationMessage = `You successfully purchased ${amount.toFixed(
         8
-      )} ${symbol} for ${currencySymbol}${displayAmount.toFixed(2)}`;
+      )} ${symbol} for ${currencySymbol}${displayAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
       await sendWebPushToUser(user.id, {
         title: notificationTitle,

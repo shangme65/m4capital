@@ -80,7 +80,9 @@ export async function GET(req: NextRequest) {
       userName: d.User?.name || "Unknown User",
       userEmail: d.User?.email || "unknown@email.com",
       userId: d.User?.id || "",
-      isManual: d.method?.toLowerCase().includes("manual") || false,
+      isManual:
+        d.method?.toLowerCase().includes("manual") ||
+        (d.metadata as Record<string, unknown>)?.isAdminManual === true,
     }));
 
     // Transform withdrawals into transaction format
