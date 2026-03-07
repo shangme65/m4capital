@@ -444,13 +444,13 @@ export default function TransactionDetailsModal({
               style={{ minHeight: 0 }}
             >
               {/* Mobile Header with Back Button */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-700 sticky top-0 bg-gray-900/95 backdrop-blur-sm z-20">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700 sticky top-0 bg-gray-900/95 backdrop-blur-sm z-20">
                 <button
                   onClick={onClose}
-                  className="text-gray-300 hover:text-white transition-colors flex items-center gap-2"
+                  className="text-gray-300 hover:text-white transition-colors flex items-center gap-1.5"
                 >
                   <svg
-                    className="w-6 h-6"
+                    className="w-5 h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -462,19 +462,19 @@ export default function TransactionDetailsModal({
                       d="M15 19l-7-7 7-7"
                     />
                   </svg>
-                  <span className="text-sm font-medium">Back</span>
+                  <span className="text-xs font-medium">Back</span>
                 </button>
-                <h1 className="text-lg font-bold text-white">
+                <h1 className="text-base font-bold text-white">
                   Transaction Details
                 </h1>
-                <div className="w-16"></div> {/* Spacer for centering */}
+                <div className="w-14"></div> {/* Spacer for centering */}
               </div>
 
               {/* Header Section with Gradient Background */}
-              <div className="relative bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 p-4 pb-8">
+              <div className="relative bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 p-3 pb-6">
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/50"></div>
                 <div className="relative z-[5]">
-                  <div className="flex items-start gap-3 mb-4">
+                  <div className="flex items-start gap-2 mb-3">
                     <div className="flex-shrink-0">
                       {/* For swap/convert transactions, show overlapping asset icons */}
                       {(transaction.type === "convert" ||
@@ -509,7 +509,7 @@ export default function TransactionDetailsModal({
                       )}
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-xl font-bold text-white mb-2">
+                      <h2 className="text-lg font-bold text-white mb-1.5">
                         {getTransactionTitle()}
                       </h2>
                       <div className="flex items-center gap-2 flex-wrap">
@@ -539,7 +539,7 @@ export default function TransactionDetailsModal({
 
                   {/* Transaction ID */}
                   <div
-                    className="rounded-xl p-3"
+                    className="rounded-xl p-2.5"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -548,16 +548,16 @@ export default function TransactionDetailsModal({
                       border: "1px solid rgba(255, 255, 255, 0.06)",
                     }}
                   >
-                    <label className="block text-gray-400 text-xs font-medium mb-2 uppercase tracking-wider">
+                    <label className="block text-gray-400 text-[10px] font-medium mb-1.5 uppercase tracking-wider">
                       Transaction ID
                     </label>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 text-white font-mono text-sm break-all">
+                      <code className="flex-1 text-white font-mono text-xs break-all">
                         {transaction.id}
                       </code>
                       <button
                         onClick={() => copyToClipboard(transaction.id)}
-                        className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-xl transition-all active:scale-95"
+                        className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 rounded-lg transition-all active:scale-95"
                         aria-label="Copy transaction ID"
                       >
                         {copied ? (
@@ -595,9 +595,9 @@ export default function TransactionDetailsModal({
                 </div>
               </div>
 
-              <div className="p-4 pt-0">
+              <div className="p-3 pt-0">
                 {/* Main Transaction Details */}
-                <div className="space-y-3 mb-4 -mt-4">
+                <div className="space-y-2 mb-3 -mt-3">
                   {/* For Convert/Swap transactions, show FROM and TO cards separately */}
                   {(transaction.type === "convert" ||
                     transaction.type === "swap") &&
@@ -743,7 +743,7 @@ export default function TransactionDetailsModal({
                     <>
                       {/* Amount Card (for non-convert transactions) */}
                       <div
-                        className="rounded-xl p-4"
+                        className="rounded-xl p-3"
                         style={{
                           background:
                             "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -752,10 +752,10 @@ export default function TransactionDetailsModal({
                           border: "1px solid rgba(59, 130, 246, 0.2)",
                         }}
                       >
-                        <label className="block text-blue-400 text-xs font-semibold mb-2 uppercase tracking-wider">
+                        <label className="block text-blue-400 text-[10px] font-semibold mb-1 uppercase tracking-wider">
                           Amount
                         </label>
-                        <div className="text-white text-xl font-bold">
+                        <div className="text-white text-lg font-bold">
                           {/* For fiat currencies, show 2 decimals; for crypto, show up to 8 */}
                           {FIAT_CURRENCIES.has(
                             transaction.asset?.toUpperCase() || ""
@@ -776,7 +776,7 @@ export default function TransactionDetailsModal({
 
                       {/* Value Card (for non-convert transactions) */}
                       <div
-                        className="rounded-xl p-4"
+                        className="rounded-xl p-3"
                         style={{
                           background:
                             "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -785,10 +785,10 @@ export default function TransactionDetailsModal({
                           border: "1px solid rgba(168, 85, 247, 0.2)",
                         }}
                       >
-                        <label className="block text-purple-400 text-xs font-semibold mb-2 uppercase tracking-wider">
+                        <label className="block text-purple-400 text-[10px] font-semibold mb-1 uppercase tracking-wider">
                           Value
                         </label>
-                        <div className="text-white text-xl font-bold">
+                        <div className="text-white text-lg font-bold">
                           {/* For fiat deposits/transfers:
                               - If asset currency matches user's preferred currency: show original amount
                               - If asset currency differs: convert USD value to user's preferred currency
@@ -829,10 +829,10 @@ export default function TransactionDetailsModal({
                 </div>
 
                 {/* Additional Details Grid */}
-                <div className="space-y-3 mb-4">
+                <div className="space-y-2 mb-3">
                   {/* Date & Time */}
                   <div
-                    className="rounded-xl p-4 flex items-center justify-between"
+                    className="rounded-xl p-3 flex items-center justify-between"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -841,10 +841,10 @@ export default function TransactionDetailsModal({
                       border: "1px solid rgba(255, 255, 255, 0.06)",
                     }}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-gray-700/50 flex items-center justify-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-gray-700/50 flex items-center justify-center">
                         <svg
-                          className="w-5 h-5 text-gray-400"
+                          className="w-4 h-4 text-gray-400"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -858,10 +858,10 @@ export default function TransactionDetailsModal({
                         </svg>
                       </div>
                       <div>
-                        <label className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                        <label className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">
                           Date & Time
                         </label>
-                        <div className="text-white font-medium">
+                        <div className="text-white font-medium text-sm">
                           {transaction.date
                             ? formatDate(transaction.date)
                             : transaction.timestamp}
@@ -873,7 +873,7 @@ export default function TransactionDetailsModal({
                   {/* Fee */}
                   {transaction.fee !== undefined && transaction.fee > 0 && (
                     <div
-                      className="rounded-xl p-4 flex items-center justify-between"
+                      className="rounded-xl p-3 flex items-center justify-between"
                       style={{
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -882,10 +882,10 @@ export default function TransactionDetailsModal({
                         border: "1px solid rgba(255, 255, 255, 0.06)",
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-orange-500/20 flex items-center justify-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
                           <svg
-                            className="w-5 h-5 text-orange-400"
+                            className="w-4 h-4 text-orange-400"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -899,10 +899,10 @@ export default function TransactionDetailsModal({
                           </svg>
                         </div>
                         <div>
-                          <label className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                          <label className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">
                             Network Fee
                           </label>
-                          <div className="text-white font-medium">
+                          <div className="text-white font-medium text-sm">
                             {formatAmount(transaction.fee, 2)}
                           </div>
                         </div>
@@ -913,7 +913,7 @@ export default function TransactionDetailsModal({
                   {/* Payment Method */}
                   {transaction.method && (
                     <div
-                      className="rounded-xl p-4 flex items-center justify-between"
+                      className="rounded-xl p-3 flex items-center justify-between"
                       style={{
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -922,10 +922,10 @@ export default function TransactionDetailsModal({
                         border: "1px solid rgba(255, 255, 255, 0.06)",
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
                           <svg
-                            className="w-5 h-5 text-green-400"
+                            className="w-4 h-4 text-green-400"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -939,10 +939,10 @@ export default function TransactionDetailsModal({
                           </svg>
                         </div>
                         <div>
-                          <label className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                          <label className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">
                             Payment Method
                           </label>
-                          <div className="text-white font-medium capitalize">
+                          <div className="text-white font-medium text-sm capitalize">
                             {transaction.method}
                           </div>
                         </div>
@@ -953,7 +953,7 @@ export default function TransactionDetailsModal({
                   {/* Exchange Rate */}
                   {transaction.rate && (
                     <div
-                      className="rounded-xl p-4 flex items-center justify-between"
+                      className="rounded-xl p-3 flex items-center justify-between"
                       style={{
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -962,10 +962,10 @@ export default function TransactionDetailsModal({
                         border: "1px solid rgba(255, 255, 255, 0.06)",
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
                           <svg
-                            className="w-5 h-5 text-cyan-400"
+                            className="w-4 h-4 text-cyan-400"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -979,10 +979,10 @@ export default function TransactionDetailsModal({
                           </svg>
                         </div>
                         <div>
-                          <label className="text-gray-500 text-xs font-medium uppercase tracking-wider">
+                          <label className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">
                             Exchange Rate
                           </label>
-                          <div className="text-white font-medium text-sm">
+                          <div className="text-white font-medium text-xs">
                             {(transaction.type === "convert" ||
                               transaction.type === "swap") &&
                             transaction.fromAsset &&
@@ -1013,7 +1013,7 @@ export default function TransactionDetailsModal({
                 {(transaction.type === "transfer" || transaction.type === "send" || transaction.type === "receive") &&
                   (transaction.receiverName || transaction.receiverEmail || transaction.senderName || transaction.senderEmail) && (
                   <div
-                    className="rounded-xl p-4 mb-4"
+                    className="rounded-xl p-3 mb-3"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -1022,10 +1022,10 @@ export default function TransactionDetailsModal({
                       border: "1px solid rgba(255, 255, 255, 0.06)",
                     }}
                   >
-                    <h3 className="text-white font-bold text-base mb-4 flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
                         <svg
-                          className="w-4 h-4 text-purple-400"
+                          className="w-3 h-3 text-purple-400"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1040,53 +1040,53 @@ export default function TransactionDetailsModal({
                       </div>
                       Transfer Details
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {transaction.receiverName && (
                         <div>
-                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
                             Recipient Name
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm">
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs">
                             {transaction.receiverName}
                           </div>
                         </div>
                       )}
                       {transaction.receiverEmail && (
                         <div>
-                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
                             Recipient Email
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm break-all">
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs break-all">
                             {transaction.receiverEmail}
                           </div>
                         </div>
                       )}
                       {transaction.senderName && (
                         <div>
-                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
                             Sender Name
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm">
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs">
                             {transaction.senderName}
                           </div>
                         </div>
                       )}
                       {transaction.senderEmail && (
                         <div>
-                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
                             Sender Email
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm break-all">
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs break-all">
                             {transaction.senderEmail}
                           </div>
                         </div>
                       )}
                       {transaction.memo && (
                         <div>
-                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
                             Memo
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white text-sm">
+                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs">
                             {transaction.memo}
                           </div>
                         </div>
@@ -1101,7 +1101,7 @@ export default function TransactionDetailsModal({
                   transaction.network ||
                   transaction.confirmations !== undefined) && (
                   <div
-                    className="rounded-xl p-4 mb-4"
+                    className="rounded-xl p-3 mb-3"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -1110,10 +1110,10 @@ export default function TransactionDetailsModal({
                       border: "1px solid rgba(255, 255, 255, 0.06)",
                     }}
                   >
-                    <h3 className="text-white font-bold text-base mb-4 flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                    <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
                         <svg
-                          className="w-4 h-4 text-blue-400"
+                          className="w-3 h-3 text-blue-400"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1128,19 +1128,19 @@ export default function TransactionDetailsModal({
                       </div>
                       Network Information
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {transaction.hash && (
                         <div>
-                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
                             Transaction Hash
                           </label>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white font-mono text-sm break-all">
+                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs break-all">
                               {transaction.hash}
                             </div>
                             <button
                               onClick={() => copyToClipboard(transaction.hash!)}
-                              className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition-all shadow-lg hover:shadow-orange-500/50 active:scale-95"
+                              className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all shadow-lg hover:shadow-orange-500/50 active:scale-95"
                               aria-label="Copy transaction hash"
                             >
                               {copied ? (
@@ -1179,18 +1179,18 @@ export default function TransactionDetailsModal({
 
                       {transaction.address && (
                         <div>
-                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
                             Wallet Address
                           </label>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2 text-white font-mono text-sm break-all">
+                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs break-all">
                               {transaction.address}
                             </div>
                             <button
                               onClick={() =>
                                 copyToClipboard(transaction.address!)
                               }
-                              className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition-all shadow-lg hover:shadow-orange-500/50 active:scale-95"
+                              className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-all shadow-lg hover:shadow-orange-500/50 active:scale-95"
                               aria-label="Copy wallet address"
                             >
                               {copied ? (
@@ -1229,10 +1229,10 @@ export default function TransactionDetailsModal({
 
                       {transaction.network && (
                         <div>
-                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
                             Network
                           </label>
-                          <div className="text-white font-semibold bg-black/40 border border-gray-600/30 rounded-lg px-3 py-2">
+                          <div className="text-white font-semibold text-xs bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5">
                             {transaction.network}
                           </div>
                         </div>
@@ -1240,11 +1240,11 @@ export default function TransactionDetailsModal({
 
                       {transaction.confirmations !== undefined && (
                         <div>
-                          <label className="block text-gray-500 text-xs font-medium mb-2 uppercase tracking-wider">
+                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
                             Confirmations
                           </label>
-                          <div className="flex items-center gap-3">
-                            <div className="flex-1 bg-gray-700/50 rounded-full h-3 overflow-hidden border border-gray-600/30">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 bg-gray-700/50 rounded-full h-2 overflow-hidden border border-gray-600/30">
                               <div
                                 className="bg-gradient-to-r from-green-500 to-green-400 h-full rounded-full transition-all duration-500 shadow-lg"
                                 style={{
@@ -1257,7 +1257,7 @@ export default function TransactionDetailsModal({
                                 }}
                               ></div>
                             </div>
-                            <div className="flex-shrink-0 text-white font-bold text-sm bg-gray-700/50 border border-gray-600/30 rounded-lg px-3 py-1">
+                            <div className="flex-shrink-0 text-white font-bold text-xs bg-gray-700/50 border border-gray-600/30 rounded-lg px-2 py-0.5">
                               {transaction.confirmations}/
                               {transaction.maxConfirmations || 6}
                             </div>
@@ -1271,7 +1271,7 @@ export default function TransactionDetailsModal({
                 {/* Description */}
                 {transaction.description && (
                   <div
-                    className="rounded-xl p-4 mb-4"
+                    className="rounded-xl p-3 mb-3"
                     style={{
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -1280,9 +1280,9 @@ export default function TransactionDetailsModal({
                       border: "1px solid rgba(255, 255, 255, 0.06)",
                     }}
                   >
-                    <h3 className="text-white font-semibold text-sm mb-2 flex items-center gap-2">
+                    <h3 className="text-white font-semibold text-xs mb-1.5 flex items-center gap-1.5">
                       <svg
-                        className="w-4 h-4 text-gray-400"
+                        className="w-3 h-3 text-gray-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1296,7 +1296,7 @@ export default function TransactionDetailsModal({
                       </svg>
                       Description
                     </h3>
-                    <p className="text-gray-300 text-sm leading-relaxed">
+                    <p className="text-gray-300 text-xs leading-relaxed">
                       {transaction.description}
                     </p>
                   </div>

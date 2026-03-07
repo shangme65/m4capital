@@ -144,33 +144,37 @@ export async function convertCryptoAction(
         data: { assets: assets },
       });
 
-      // Create trade record for the sell side
+      // Calculate fee for trade record
+      const feeAmount = amount * rate * 0.5 / 100; // 0.5% fee
+
+      // Create a single trade record for the swap transaction (for history tracking)
+      // Using combined symbol and SWAP metadata for proper display
       await tx.trade.create({
         data: {
           id: generateId(),
           userId: user.id,
-          symbol: fromAsset.toUpperCase(),
-          side: "SELL",
-          entryPrice: new Decimal(fromPriceUSD),
+          symbol: `${fromAsset.toUpperCase()}/${toAsset.toUpperCase()}`,
+          side: "BUY", // Using BUY as placeholder, metadata indicates swap
+          entryPrice: new Decimal(rate),
           quantity: new Decimal(amount),
+          commission: new Decimal(feeAmount),
           status: "CLOSED",
-          exitPrice: new Decimal(fromPriceUSD),
           closedAt: new Date(),
           updatedAt: new Date(),
-        },
-      });
-
-      // Create trade record for the buy side
-      await tx.trade.create({
-        data: {
-          id: generateId(),
-          userId: user.id,
-          symbol: toAsset.toUpperCase(),
-          side: "BUY",
-          entryPrice: new Decimal(toPriceUSD),
-          quantity: new Decimal(toAmount),
-          status: "OPEN",
-          updatedAt: new Date(),
+          metadata: {
+            type: "SWAP",
+            fromAsset: fromAsset.toUpperCase(),
+            toAsset: toAsset.toUpperCase(),
+            fromAmount: amount,
+            toAmount: toAmount,
+            fromPriceUSD,
+            toPriceUSD,
+            fromValueUSD,
+            toValueUSD: toAmount * toPriceUSD,
+            rate,
+            fee: feeAmount,
+            feePercentage: 0.5,
+          },
         },
       });
 

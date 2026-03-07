@@ -126,20 +126,25 @@ function LightweightChart({
       'script[src="https://s3.tradingview.com/tv.js"]'
     );
 
+    // Retry function to wait for TradingView to be available
+    const waitForTradingView = (retries = 10, delay = 200) => {
+      if ((window as any).TradingView) {
+        createWidget();
+      } else if (retries > 0) {
+        setTimeout(() => waitForTradingView(retries - 1, delay), delay);
+      } else {
+        console.warn("TradingView library not available after retries");
+        setIsLoading(false);
+      }
+    };
+
     if (existingScript) {
       // Script already loaded, check if TradingView is available
       if (typeof window !== "undefined" && (window as any).TradingView) {
         createWidget();
       } else {
-        // Script loaded but TradingView not available yet, wait a bit
-        setTimeout(() => {
-          if ((window as any).TradingView) {
-            createWidget();
-          } else {
-            console.error("TradingView script loaded but library not available");
-            setIsLoading(false);
-          }
-        }, 1000);
+        // Script loaded but TradingView not available yet, retry with backoff
+        waitForTradingView();
       }
     } else {
       const script = document.createElement("script");

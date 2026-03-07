@@ -713,7 +713,7 @@ export default function AssetSwapModal({
               {/* Bottom Action for Step 1 */}
               {step === 1 && (
                 <div
-                  className="px-4 py-3 border-t"
+                  className="px-4 py-2.5 border-t"
                   style={{
                     borderColor: "rgba(255, 255, 255, 0.08)",
                     background: "rgba(15, 23, 42, 0.9)",
@@ -722,7 +722,7 @@ export default function AssetSwapModal({
                   <button
                     onClick={handleContinueStep1}
                     disabled={!toAsset}
-                    className="w-full py-3 rounded-xl font-bold text-sm text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       background: "linear-gradient(135deg, #06b6d4 0%, #14b8a6 100%)",
                       boxShadow: "0 4px 12px -2px rgba(6, 182, 212, 0.4)",
@@ -831,21 +831,21 @@ export default function AssetSwapModal({
                   {/* You Will Receive */}
                   {fromAmount && parseFloat(fromAmount) > 0 && (
                     <div
-                      className="mb-6 p-4 rounded-xl"
+                      className="mb-3 p-3 rounded-xl"
                       style={{
                         background: "rgba(6, 182, 212, 0.1)",
                         border: "1px solid rgba(6, 182, 212, 0.2)",
                       }}
                     >
-                      <div className="text-gray-400 text-sm mb-2">
+                      <div className="text-gray-400 text-xs mb-1.5">
                         You will receive
                       </div>
-                      <div className="flex items-center gap-3">
-                        <CryptoIcon symbol={toAsset} size="md" />
-                        <span className="text-2xl font-bold text-cyan-400">
+                      <div className="flex items-center gap-2">
+                        <CryptoIcon symbol={toAsset} size="sm" />
+                        <span className="text-xl font-bold text-cyan-400">
                           {formatReceiveAmount()}
                         </span>
-                        <span className="text-gray-400">{toAsset}</span>
+                        <span className="text-gray-400 text-sm">{toAsset}</span>
                       </div>
                     </div>
                   )}
@@ -853,19 +853,19 @@ export default function AssetSwapModal({
                   {/* Swap Summary */}
                   {fromAmount && parseFloat(fromAmount) > 0 && (
                     <div
-                      className="mb-6 p-4 rounded-xl"
+                      className="mb-3 p-3 rounded-xl"
                       style={{
                         background: "rgba(15, 23, 42, 0.6)",
                         border: "1px solid rgba(255, 255, 255, 0.05)",
                       }}
                     >
-                      <div className="flex items-center gap-2 mb-3">
-                        <Info className="w-4 h-4 text-cyan-400" />
-                        <span className="text-gray-300 text-sm font-medium">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <Info className="w-3.5 h-3.5 text-cyan-400" />
+                        <span className="text-gray-300 text-xs font-medium">
                           Swap Summary
                         </span>
                       </div>
-                      <div className="space-y-2 text-sm">
+                      <div className="space-y-1.5 text-xs">
                         <div className="flex justify-between">
                           <span className="text-gray-400">Exchange Rate</span>
                           <span className="text-white">
@@ -897,7 +897,7 @@ export default function AssetSwapModal({
                     whileTap={{ scale: 0.98 }}
                     onClick={handleContinueStep2}
                     disabled={!fromAmount || parseFloat(fromAmount) <= 0}
-                    className="w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       background:
                         "linear-gradient(135deg, #06b6d4 0%, #14b8a6 50%, #06b6d4 100%)",
@@ -907,7 +907,7 @@ export default function AssetSwapModal({
                   >
                     <span className="flex items-center justify-center gap-2">
                       Continue
-                      <ArrowRight className="w-4 h-4" />
+                      <ArrowRight className="w-3.5 h-3.5" />
                     </span>
                   </motion.button>
                 </motion.div>

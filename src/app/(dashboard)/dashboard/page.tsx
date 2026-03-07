@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
-import { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
@@ -83,7 +83,7 @@ function DashboardContent() {
     useState<Transaction | null>(null);
   const [showTransactionDetails, setShowTransactionDetails] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
-  const isClosingModalRef = useRef(false);
+
   const [showAssetDetails, setShowAssetDetails] = useState(false);
   const [showAllAssets, setShowAllAssets] = useState(false);
   const [showAllActivity, setShowAllActivity] = useState(false);
@@ -143,42 +143,14 @@ function DashboardContent() {
 
 
 
-  // Restore asset modal from URL on page load/refresh
-  // This needs to be before any early returns to maintain hooks order
+  // Clear URL asset param on page load/refresh to prevent stale modal restoration
+  // User should return to clean dashboard after refresh
   useEffect(() => {
-    // Skip if we're intentionally closing the modal
-    if (isClosingModalRef.current) {
-      isClosingModalRef.current = false;
-      return;
+    if (urlAssetSymbol) {
+      // Clear the URL param without reloading the page
+      window.history.replaceState(null, "", "/dashboard");
     }
-    if (
-      urlAssetSymbol &&
-      (portfolio?.portfolio?.assets?.length ?? 0) > 0 &&
-      !selectedAsset
-    ) {
-      const portfolioAssets = portfolio!.portfolio!.assets!;
-      const assetFromUrl = portfolioAssets.find(
-        (a: any) => a.symbol.toUpperCase() === urlAssetSymbol.toUpperCase()
-      );
-      if (assetFromUrl) {
-        const meta = getCryptoMetadata(assetFromUrl.symbol);
-        // Build asset object matching what handleAssetClick expects
-        const restoredAsset = {
-          symbol: assetFromUrl.symbol,
-          name: meta.name,
-          amount: assetFromUrl.amount,
-          currentPrice: assetFromUrl.averagePrice || 0,
-          value: (assetFromUrl.averagePrice || 0) * assetFromUrl.amount,
-          change: 0,
-          icon: meta.icon,
-          color: meta.gradient,
-          metadata: { iconBg: meta.iconBg },
-        };
-        setSelectedAsset(restoredAsset);
-        setShowAssetDetails(true);
-      }
-    }
-  }, [urlAssetSymbol, portfolio?.portfolio?.assets, selectedAsset]);
+  }, []); // Only run once on mount
 
   // Handle browser back button - close modal if open
   useEffect(() => {
@@ -493,7 +465,6 @@ function DashboardContent() {
 
   // Close asset details and clear URL parameter
   const handleCloseAssetDetails = () => {
-    isClosingModalRef.current = true;
     setShowAssetDetails(false);
     setSelectedAsset(null);
     // Remove asset param from URL using replace (no history entry)

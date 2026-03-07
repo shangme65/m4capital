@@ -505,19 +505,19 @@ export default function AssetDetailsModal({
               style={{ minHeight: "100vh", height: "100%" }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-700">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-700">
                 <button
                   onClick={onClose}
                   className="text-gray-300 hover:text-white transition-colors"
                   aria-label="Go back"
                 >
-                  <ArrowLeft size={24} />
+                  <ArrowLeft size={20} />
                 </button>
                 <div className="text-center">
-                  <h1 className="text-xl font-bold text-white">
+                  <h1 className="text-lg font-bold text-white">
                     {asset.symbol}
                   </h1>
-                  <p className="text-sm text-gray-400">COIN | {asset.name}</p>
+                  <p className="text-xs text-gray-400">COIN | {asset.name}</p>
                 </div>
                 <button
                   onClick={() => setIsStarred(!isStarred)}
@@ -526,7 +526,7 @@ export default function AssetDetailsModal({
                   }`}
                   aria-label="Add to favorites"
                 >
-                  <Star size={24} fill={isStarred ? "currentColor" : "none"} />
+                  <Star size={20} fill={isStarred ? "currentColor" : "none"} />
                 </button>
               </div>
 
