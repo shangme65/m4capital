@@ -221,7 +221,7 @@ export default function SuccessModal({
               {/* Action Button */}
               <button
                 onClick={onClose}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 rounded-xl transition-all"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 text-xs rounded-xl transition-all"
               >
                 Done
               </button>

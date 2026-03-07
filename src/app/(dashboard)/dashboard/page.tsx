@@ -1560,7 +1560,7 @@ function DashboardContent() {
                   const assetSymbol =
                     activity.asset?.split(" ")[0]?.toUpperCase() || "";
                   const isFiatTransaction = FIAT_CURRENCIES.has(assetSymbol) && 
-                    (activity.type === "deposit" || activity.type === "receive" || activity.type === "transfer");
+                    (activity.type === "deposit" || activity.type === "withdraw" || activity.type === "receive" || activity.type === "transfer");
 
                   const getFiatValue = () => {
                     // For fiat deposits/receives, value is already in user's currency - don't convert
@@ -1602,18 +1602,28 @@ function DashboardContent() {
                     }
                   };
 
-                  const formatFullDateTime = (timestamp: string) => {
+                  const formatDate = (timestamp: string) => {
                     try {
                       const date = new Date(timestamp);
-                      return date.toLocaleString("en-US", {
+                      return date.toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "short",
                         day: "numeric",
+                      });
+                    } catch {
+                      return timestamp;
+                    }
+                  };
+
+                  const formatTime = (timestamp: string) => {
+                    try {
+                      const date = new Date(timestamp);
+                      return date.toLocaleTimeString("en-US", {
                         hour: "2-digit",
                         minute: "2-digit",
                       });
                     } catch {
-                      return timestamp;
+                      return "";
                     }
                   };
 
@@ -1621,61 +1631,72 @@ function DashboardContent() {
                     <div
                       key={activity.id}
                       onClick={() => handleTransactionClick(activity)}
-                      className="group relative p-2.5 bg-gradient-to-br from-gray-800/60 to-gray-900/80 rounded-xl border border-gray-700/60 hover:border-blue-500/50 cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.2)] backdrop-blur-sm hover:-translate-y-0.5"
+                      className="group relative p-2 bg-gradient-to-br from-gray-800/60 to-gray-900/80 rounded-xl border border-gray-700/60 hover:border-blue-500/50 cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.2)] backdrop-blur-sm hover:-translate-y-0.5"
                     >
-                      <div className="flex items-start gap-2">
+                      <div className="flex items-start gap-1.5">
                         {/* Transaction Icon */}
                         {getTransactionIcon()}
 
                         {/* Transaction Details */}
                         <div className="flex-1 min-w-0">
                           {/* Header Row with Title, Date and Status */}
-                          <div className="flex items-start justify-between gap-2 mb-1.5">
+                          <div className="flex items-start justify-between gap-1.5 mb-1">
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-white font-semibold text-sm sm:text-base mb-0.5 truncate">
+                              <h3 className="text-white font-semibold text-sm truncate">
                                 {getTransactionText()}
                               </h3>
-                              <p className="text-gray-400 text-[10px] truncate">
-                                {formatFullDateTime(activity.timestamp)}
+                              <p className="text-gray-400 text-[11px] truncate">
+                                {formatDate(activity.timestamp)}
                               </p>
                             </div>
-                            <div
-                              className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase tracking-wider flex-shrink-0 ${
-                                activity.status === "completed"
-                                  ? "bg-gradient-to-r from-gray-700 to-gray-800 text-green-400 border border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] animate-pulse-glow"
-                                  : activity.status === "pending"
-                                  ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                                  : "bg-red-500/20 text-red-400 border border-red-500/30"
-                              }`}
-                            >
-                              {activity.status}
+                            <div className="flex flex-col items-end flex-shrink-0">
+                              <div
+                                className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase tracking-wider ${
+                                  activity.status === "completed"
+                                    ? "bg-gradient-to-r from-gray-700 to-gray-800 text-green-400 border border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] animate-pulse-glow"
+                                    : activity.status === "pending"
+                                    ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                    : "bg-red-500/20 text-red-400 border border-red-500/30"
+                                }`}
+                              >
+                                {activity.status}
+                              </div>
+                              <p className="text-gray-400 text-[11px] mt-0.5">
+                                {formatTime(activity.timestamp)}
+                              </p>
                             </div>
                           </div>
 
-                          {/* Amount Row - Crypto and Fiat on same line */}
-                          <div className="flex items-baseline justify-between gap-2">
-                            <div className="flex items-baseline gap-1 px-2 py-0.5 rounded-md bg-gray-700/50">
-                              <span className="font-medium text-xs text-white">
+                          {/* Amount Row - Labels on same row, values below */}
+                          <div className="flex justify-between gap-3 mt-0.5">
+                            <div className="flex flex-col">
+                              <span className="text-gray-400 text-[10px] font-medium">Amount:</span>
+                              <span className={`font-semibold text-xs px-1.5 py-0.5 rounded-lg bg-gray-700/50 ${
+                                activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw"
+                                  ? "text-red-400"
+                                  : "text-green-400"
+                              }`}>
+                                {activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw" ? "-" : "+"}
                                 {formatCryptoAmount(
                                   activity.amount || 0,
                                   activity.asset?.split(" ")[0] || ""
-                                )}
-                              </span>
-                              <span className="font-medium text-[10px] text-gray-300">
-                                {activity.asset?.split(" ")[0]}
+                                )} {activity.asset?.split(" ")[0]}
                               </span>
                             </div>
-                            <span className="font-medium text-xs text-white px-2 py-0.5 rounded-md bg-gray-700/50">
-                              {/* For fiat deposits/transfers:
-                                  - If asset currency matches user's preferred currency: show original amount
-                                  - If asset currency differs: convert USD value to user's preferred currency
-                                  For crypto transactions: convert USD value to user's preferred currency */}
-                              {isFiatTransaction && assetSymbol === preferredCurrency
-                                ? formatCurrencyUtil(activity.amount || 0, assetSymbol, 2)
-                                : isFiatTransaction
-                                ? formatAmount(activity.value || 0, 2)
-                                : formatAmount(activity.value || 0, 2)}
-                            </span>
+                            <div className="flex flex-col items-end">
+                              <span className="text-gray-400 text-[10px] font-medium">Value:</span>
+                              <span className="font-semibold text-xs text-white px-1.5 py-0.5 rounded-lg bg-gray-700/50">
+                                {/* For fiat deposits/transfers:
+                                    - If asset currency matches user's preferred currency: show original amount
+                                    - If asset currency differs: convert USD value to user's preferred currency
+                                    For crypto transactions: convert USD value to user's preferred currency */}
+                                {isFiatTransaction && assetSymbol === preferredCurrency
+                                  ? formatCurrencyUtil(activity.amount || 0, assetSymbol, 2)
+                                  : isFiatTransaction
+                                  ? formatAmount(activity.value || 0, 2)
+                                  : formatAmount(activity.value || 0, 2)}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Show confirmation progress for pending deposits */}

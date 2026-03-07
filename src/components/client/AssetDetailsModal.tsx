@@ -659,7 +659,7 @@ export default function AssetDetailsModal({
                     </button>
                   </div>
                   {/* Quick amount buttons */}
-                  <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="flex flex-wrap gap-1.5 mb-2">
                     {quickBuyAmountsUSD.map((usdAmount) => {
                       // Convert USD amount to user's preferred currency for display and storage
                       const convertedAmount = Math.round(convertAmount(usdAmount));
@@ -667,7 +667,7 @@ export default function AssetDetailsModal({
                         <button
                           key={usdAmount}
                           onClick={() => setSelectedBuyAmount(convertedAmount)}
-                          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
                             selectedBuyAmount === convertedAmount
                               ? "text-white"
                               : "text-gray-300 hover:text-white"
@@ -820,7 +820,7 @@ export default function AssetDetailsModal({
                       Recent Transactions
                     </h3>
                     {history.length > 0 ? (
-                      <div className="space-y-4">
+                      <div className="space-y-2">
                         {history.map((tx) => (
                           <div
                             key={tx.id}
@@ -915,7 +915,7 @@ export default function AssetDetailsModal({
                               setSelectedTransaction(detailedTx);
                               setShowTransactionDetails(true);
                             }}
-                            className="rounded-xl p-4 transition-all duration-200 hover:scale-[1.01] cursor-pointer active:scale-[0.99]"
+                            className="rounded-xl p-2 transition-all duration-200 hover:scale-[1.01] cursor-pointer active:scale-[0.99]"
                             style={{
                               background:
                                 "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
@@ -924,10 +924,10 @@ export default function AssetDetailsModal({
                               border: "1px solid rgba(255, 255, 255, 0.06)",
                             }}
                           >
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-3">
+                            <div className="flex items-start justify-between mb-1.5">
+                              <div className="flex items-center gap-1.5">
                                 <div
-                                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
                                     tx.type === "buy" ||
                                     tx.type === "deposit" ||
                                     tx.type === "receive" ||
@@ -942,7 +942,7 @@ export default function AssetDetailsModal({
                                   }`}
                                 >
                                   <span
-                                    className={`text-lg ${
+                                    className={`text-sm ${
                                       tx.type === "buy" ||
                                       tx.type === "deposit" ||
                                       tx.type === "receive" ||
@@ -969,63 +969,72 @@ export default function AssetDetailsModal({
                                   </span>
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-white capitalize text-base">
+                                  <div className="font-semibold text-white capitalize text-sm">
                                     {tx.type === "swap"
                                       ? `${tx.fromAsset} → ${tx.toAsset}`
                                       : `${tx.type} ${
                                           tx.cryptoCurrency || asset.symbol
                                         }`}
                                   </div>
-                                  <div className="text-xs text-gray-500">
+                                  <div className="text-[11px] text-gray-400">
                                     {new Date(tx.date).toLocaleDateString(
                                       "en-US",
                                       {
                                         year: "numeric",
                                         month: "short",
                                         day: "numeric",
-                                        hour: "2-digit",
-                                        minute: "2-digit",
                                       }
                                     )}
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    tx.status?.toLowerCase() === "completed" ||
-                                    tx.status?.toLowerCase() === "closed"
-                                      ? "bg-green-500/20 text-green-400"
-                                      : tx.status?.toLowerCase() ===
-                                          "pending" ||
-                                        tx.status?.toLowerCase() ===
-                                          "confirming"
-                                      ? "bg-yellow-500/20 text-yellow-400"
-                                      : "bg-gray-500/20 text-gray-400"
-                                  }`}
-                                >
-                                  {tx.status || "completed"}
+                              <div className="flex flex-col items-end">
+                                <div className="flex items-center gap-1.5">
+                                  <div
+                                    className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase ${
+                                      tx.status?.toLowerCase() === "completed" ||
+                                      tx.status?.toLowerCase() === "closed"
+                                        ? "bg-green-500/20 text-green-400"
+                                        : tx.status?.toLowerCase() ===
+                                            "pending" ||
+                                          tx.status?.toLowerCase() ===
+                                            "confirming"
+                                        ? "bg-yellow-500/20 text-yellow-400"
+                                        : "bg-gray-500/20 text-gray-400"
+                                    }`}
+                                  >
+                                    {tx.status || "completed"}
+                                  </div>
+                                  {/* Chevron indicator for clickable */}
+                                  <svg
+                                    className="w-3.5 h-3.5 text-gray-500"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M9 5l7 7-7 7"
+                                    />
+                                  </svg>
                                 </div>
-                                {/* Chevron indicator for clickable */}
-                                <svg
-                                  className="w-4 h-4 text-gray-500"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M9 5l7 7-7 7"
-                                  />
-                                </svg>
+                                <div className="text-[11px] text-gray-400 mt-0.5">
+                                  {new Date(tx.date).toLocaleTimeString(
+                                    "en-US",
+                                    {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    }
+                                  )}
+                                </div>
                               </div>
                             </div>
 
-                            <div className="flex items-center justify-between pt-1.5 border-t border-gray-700/50">
-                              <div className="flex items-baseline gap-1">
-                                <span className="text-[10px] text-gray-500">
+                            <div className="flex justify-between pt-1 border-t border-gray-700/50 mt-1">
+                              <div className="flex flex-col">
+                                <span className="text-[10px] text-gray-400 font-medium">
                                   {tx.type === "swap"
                                     ? tx.isFromAssetView
                                       ? "Sent:"
@@ -1033,7 +1042,7 @@ export default function AssetDetailsModal({
                                     : "Amount:"}
                                 </span>
                                 <span
-                                  className={`font-bold text-sm ${
+                                  className={`font-bold text-xs px-1.5 py-0.5 rounded-lg bg-gray-700/50 ${
                                     tx.type === "buy" ||
                                     tx.type === "deposit" ||
                                     tx.type === "receive" ||
@@ -1087,11 +1096,11 @@ export default function AssetDetailsModal({
                                   )}
                                 </span>
                               </div>
-                              <div className="flex items-baseline gap-1">
-                                <span className="text-[10px] text-gray-500">
+                              <div className="flex flex-col items-end">
+                                <span className="text-[10px] text-gray-400 font-medium">
                                   Value:
                                 </span>
-                                <span className="font-semibold text-white text-sm">
+                                <span className="font-semibold text-white text-xs px-1.5 py-0.5 rounded-lg bg-gray-700/50">
                                   {/* For swaps, use fromValueUSD or toValueUSD depending on view */}
                                   {tx.type === "swap" ? (
                                     formatAmount(

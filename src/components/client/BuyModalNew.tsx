@@ -312,20 +312,20 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="rounded-2xl p-4 mb-4"
+                className="rounded-2xl p-3 mb-3"
                 style={card3DStyle}
               >
-                <div className="flex items-center justify-center gap-3 mb-3">
+                <div className="flex items-center justify-center gap-2 mb-2">
                   <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                    className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{
                       background:
                         "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
-                      boxShadow: "0 8px 20px -5px rgba(34, 197, 94, 0.5)",
+                      boxShadow: "0 6px 15px -4px rgba(34, 197, 94, 0.5)",
                     }}
                   >
                     <svg
-                      className="w-6 h-6 text-white"
+                      className="w-5 h-5 text-white"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -338,26 +338,26 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       />
                     </svg>
                   </div>
-                  <h2 className="text-2xl font-bold text-white">Buy Crypto</h2>
+                  <h2 className="text-xl font-bold text-white">Buy Crypto</h2>
                 </div>
 
                 {/* Progress Steps */}
                 {step < 4 && (
                   <>
-                    <div className="flex items-center justify-center gap-2 mt-3">
+                    <div className="flex items-center justify-center gap-1.5 mt-2">
                       {[1, 2, 3].map((s) => (
-                        <div key={s} className="flex items-center gap-2">
+                        <div key={s} className="flex items-center gap-1.5">
                           <div
-                            className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-all ${
+                            className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] transition-all ${
                               step >= s
-                                ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-md shadow-green-500/30"
+                                ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm shadow-green-500/30"
                                 : "bg-gray-800/50 text-gray-500"
                             }`}
                             style={step >= s ? {} : inputStyle}
                           >
                             {step > s ? (
                               <svg
-                                className="w-4 h-4"
+                                className="w-3 h-3"
                                 fill="currentColor"
                                 viewBox="0 0 20 20"
                               >
@@ -373,7 +373,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                           </div>
                           {s < 3 && (
                             <div
-                              className={`w-8 h-0.5 rounded-full ${
+                              className={`w-6 h-0.5 rounded-full ${
                                 step > s
                                   ? "bg-gradient-to-r from-green-500 to-emerald-500"
                                   : "bg-gray-700"
@@ -383,8 +383,8 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         </div>
                       ))}
                     </div>
-                    <div className="flex justify-center mt-2">
-                      <span className="text-gray-400 text-xs">
+                    <div className="flex justify-center mt-1">
+                      <span className="text-gray-400 text-[10px]">
                         {step === 1 && "Select Asset"}
                         {step === 2 && "Enter Amount"}
                         {step === 3 && "Confirm"}
@@ -499,7 +499,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
                     <button
                       onClick={handleContinue}
-                      className="w-full py-3 text-white rounded-xl font-bold transition-all text-sm"
+                      className="w-full py-2 text-white rounded-xl font-bold transition-all text-xs"
                       style={{
                         background:
                           "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",
@@ -586,7 +586,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         />
                       </div>
                       {/* Quick amounts */}
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-1.5 mt-2">
                         {[50, 100, 250, 500].map((amount) => (
                           <button
                             key={amount}
@@ -596,11 +596,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                 amount: amount.toString(),
                               }))
                             }
-                            className="px-3 py-1.5 rounded-full text-xs font-medium text-gray-300 hover:text-white transition-all"
+                            className="px-2 py-1 rounded-full text-[10px] font-medium text-gray-300 hover:text-white transition-all"
                             style={{
                               background:
                                 "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                              boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.4)",
+                              boxShadow: "0 2px 8px -2px rgba(0, 0, 0, 0.4)",
                               border: "1px solid rgba(255, 255, 255, 0.06)",
                             }}
                           >
@@ -656,7 +656,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <div className="flex gap-2">
                       <button
                         onClick={handleBack}
-                        className="flex-1 py-3 px-3 rounded-xl font-semibold text-white text-sm"
+                        className="flex-1 py-2 px-3 rounded-xl font-semibold text-white text-xs"
                         style={card3DStyle}
                       >
                         Back
@@ -664,7 +664,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <button
                         onClick={handleContinue}
                         disabled={!buyData.amount}
-                        className="flex-1 py-3 px-3 rounded-xl font-bold text-white text-sm disabled:opacity-50"
+                        className="flex-1 py-2 px-3 rounded-xl font-bold text-white text-xs disabled:opacity-50"
                         style={{
                           background:
                             "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",
@@ -753,7 +753,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <button
                         onClick={handleBack}
                         disabled={isPending}
-                        className="flex-1 py-2.5 px-3 rounded-xl font-semibold text-white text-sm disabled:opacity-50"
+                        className="flex-1 py-2 px-3 rounded-xl font-semibold text-white text-xs disabled:opacity-50"
                         style={card3DStyle}
                       >
                         Back
@@ -761,7 +761,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <button
                         onClick={confirmBuy}
                         disabled={isPending}
-                        className="flex-1 py-2.5 px-3 rounded-xl font-bold text-white text-sm disabled:opacity-50 flex items-center justify-center gap-2"
+                        className="flex-1 py-2 px-3 rounded-xl font-bold text-white text-xs disabled:opacity-50 flex items-center justify-center gap-2"
                         style={{
                           background:
                             "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",

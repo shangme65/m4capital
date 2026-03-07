@@ -290,15 +290,18 @@ export async function payWithdrawalFeeAction(params: {
           userId: user.id,
           type: "WITHDRAW",
           title: "Withdrawal Pending",
-          message: `Your withdrawal of ${currSymbol}${convertCurrency(withdrawAmount, userCurrency, exchangeRates).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is pending.`,
-          // Store converted amount so frontend displays correctly
-          amount: convertCurrency(withdrawAmount, userCurrency, exchangeRates),
+          // If withdrawal currency matches user's preferred currency, don't convert
+          // Otherwise convert from withdrawal currency (treated as USD) to user's currency
+          message: `Your withdrawal of ${currSymbol}${(withdrawal.currency === userCurrency ? withdrawAmount : convertCurrency(withdrawAmount, userCurrency, exchangeRates)).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} is pending.`,
+          // Store amount in user's preferred currency for display
+          amount: withdrawal.currency === userCurrency ? withdrawAmount : convertCurrency(withdrawAmount, userCurrency, exchangeRates),
           asset: userCurrency,
           metadata: {
             withdrawalId: withdrawal.id,
             fees: totalFees,
             method: withdrawal.type,
-            amountUSD: withdrawAmount, // Keep original USD amount for reference
+            amountUSD: withdrawAmount, // Keep original amount for reference
+            originalCurrency: withdrawal.currency,
           },
         },
       }),

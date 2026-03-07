@@ -527,7 +527,7 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
                         )}`}
                       >
                         {tx.type.toUpperCase()}
-                        {tx.isManual && <span className="ml-1">🔧</span>}
+                        {tx.isManual && tx.type !== "deposit" && <span className="ml-1">🔧</span>}
                       </span>
                     </td>
                   </tr>
@@ -581,7 +581,7 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
                     )}`}
                   >
                     {selectedTransaction.type.toUpperCase()}
-                    {selectedTransaction.isManual && <span className="ml-1">🔧</span>}
+                    {selectedTransaction.isManual && selectedTransaction.type !== "deposit" && <span className="ml-1">🔧</span>}
                   </span>
                 </div>
               </div>

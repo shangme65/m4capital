@@ -276,7 +276,7 @@ export default function BuyCryptoModal({
                   </div>
 
                   {/* Quick Amount Buttons - Compact */}
-                  <div className="grid grid-cols-4 gap-1.5 mb-3">
+                  <div className="grid grid-cols-4 gap-1 mb-2">
                     {[100, 250, 500, 1000].map((value) => (
                       <button
                         key={value}
@@ -287,7 +287,7 @@ export default function BuyCryptoModal({
                               : value.toString()
                           )
                         }
-                        className="py-2 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
+                        className="py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
                         style={{
                           background: "rgba(55, 65, 81, 0.5)",
                           border: "1px solid rgba(255, 255, 255, 0.06)",

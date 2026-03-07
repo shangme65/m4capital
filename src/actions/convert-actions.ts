@@ -58,6 +58,10 @@ export async function convertCryptoAction(
     const portfolio = user.Portfolio;
     const assets = (portfolio.assets as any[]) || [];
 
+    // Get user's preferred currency and convert USD to it
+    const userPreferredCurrency = user.preferredCurrency || "USD";
+    let valueInPreferredCurrency = 0;
+
     // Find the source asset
     const fromAssetIndex = assets.findIndex(
       (a) => a.symbol.toUpperCase() === fromAsset.toUpperCase()
@@ -78,6 +82,22 @@ export async function convertCryptoAction(
     const toAmount = amount * rate;
     const fromValueUSD = amount * fromPriceUSD;
     const toValueUSD = toAmount * toPriceUSD;
+
+    // Convert to user's preferred currency for notification
+    if (userPreferredCurrency !== "USD") {
+      const { getExchangeRates, convertCurrency } = await import(
+        "@/lib/currencies"
+      );
+      const rates = await getExchangeRates();
+      valueInPreferredCurrency = convertCurrency(
+        fromValueUSD,
+        userPreferredCurrency,
+        rates
+      );
+    } else {
+      valueInPreferredCurrency = fromValueUSD;
+    }
+    const displayAmount = Math.round(valueInPreferredCurrency * 100) / 100;
 
     // Update portfolio within a transaction
     await prisma.$transaction(async (tx) => {
@@ -154,7 +174,7 @@ export async function convertCryptoAction(
         },
       });
 
-      // Create notification
+      // Create notification - use user's preferred currency
       await tx.notification.create({
         data: {
           id: generateId(),
@@ -164,8 +184,8 @@ export async function convertCryptoAction(
           message: `Swapped ${amount.toFixed(
             8
           )} ${fromAsset} to ${toAmount.toFixed(8)} ${toAsset}`,
-          amount: fromValueUSD,
-          asset: "USD",
+          amount: displayAmount,
+          asset: userPreferredCurrency,
         },
       });
     });
