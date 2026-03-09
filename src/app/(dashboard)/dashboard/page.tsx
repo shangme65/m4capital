@@ -1641,8 +1641,8 @@ function DashboardContent() {
                           {/* Amount Row - Labels on same row, values below */}
                           <div className="flex justify-between gap-3 mt-0.5">
                             <div className="flex flex-col">
-                              <span className="text-gray-400 text-[10px] font-medium">Amount:</span>
-                              <span className={`font-semibold text-xs px-1.5 py-0.5 rounded-lg bg-gray-700/50 ${
+                              <span className="text-gray-400 text-[11px] font-medium">Amount:</span>
+                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg bg-gray-700/50 ${
                                 activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw"
                                   ? "text-red-400"
                                   : "text-green-400"
@@ -1655,8 +1655,8 @@ function DashboardContent() {
                               </span>
                             </div>
                             <div className="flex flex-col items-end">
-                              <span className="text-gray-400 text-[10px] font-medium">Value:</span>
-                              <span className="font-semibold text-xs text-white px-1.5 py-0.5 rounded-lg bg-gray-700/50">
+                              <span className="text-gray-400 text-[11px] font-medium">Value:</span>
+                              <span className="font-semibold text-[11px] text-white px-1.5 py-0.5 rounded-lg bg-gray-700/50">
                                 {/* For fiat deposits/transfers:
                                     - If asset currency matches user's preferred currency: show original amount
                                     - If asset currency differs: convert USD value to user's preferred currency

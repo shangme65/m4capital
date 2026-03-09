@@ -80,6 +80,22 @@ export function useVerificationGate(): UseVerificationGateReturn {
     fetchStatus();
   }, [session?.user?.email, status, fetchVerificationStatus]);
 
+  // Listen for tutorial completion event to refresh verification status
+  useEffect(() => {
+    const handleTutorialCompleted = async () => {
+      const data = await fetchVerificationStatus();
+      if (data) {
+        setVerificationStatus(data);
+        previousKycStatus.current = data.kycStatus;
+      }
+    };
+
+    window.addEventListener("tutorial-completed", handleTutorialCompleted);
+    return () => {
+      window.removeEventListener("tutorial-completed", handleTutorialCompleted);
+    };
+  }, [fetchVerificationStatus]);
+
   // Poll for KYC status updates when status is PENDING or UNDER_REVIEW
   useEffect(() => {
     const shouldPoll =

@@ -216,6 +216,8 @@ export function TutorialProvider({ children }: { children: ReactNode }) {
 
       if (response.ok) {
         setTutorialCompleted(true);
+        // Dispatch custom event to notify other hooks (like useVerificationGate) to refetch
+        window.dispatchEvent(new CustomEvent("tutorial-completed"));
         // Refresh the dashboard to show updated state
         router.refresh();
       }

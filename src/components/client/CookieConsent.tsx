@@ -117,7 +117,7 @@ export default function CookieConsent() {
                   className="relative group flex-shrink-0 w-full sm:w-auto"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-purple-600 rounded-xl blur-md opacity-75 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="relative bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white font-bold px-6 py-3 sm:px-8 sm:py-4 rounded-lg sm:rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
+                  <div className="relative bg-gradient-to-r from-orange-500 to-purple-600 hover:from-orange-600 hover:to-purple-700 text-white font-bold px-6 py-2 sm:px-8 sm:py-2.5 rounded-lg sm:rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2">
                     <span className="text-base sm:text-lg">OK</span>
                     <motion.div
                       animate={{ x: [0, 3, 0] }}

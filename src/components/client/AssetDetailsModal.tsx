@@ -1034,7 +1034,7 @@ export default function AssetDetailsModal({
 
                             <div className="flex justify-between pt-1 border-t border-gray-700/50 mt-1">
                               <div className="flex flex-col">
-                                <span className="text-[10px] text-gray-400 font-medium">
+                                <span className="text-[11px] text-gray-400 font-medium">
                                   {tx.type === "swap"
                                     ? tx.isFromAssetView
                                       ? "Sent:"
@@ -1042,7 +1042,7 @@ export default function AssetDetailsModal({
                                     : "Amount:"}
                                 </span>
                                 <span
-                                  className={`font-bold text-xs px-1.5 py-0.5 rounded-lg bg-gray-700/50 ${
+                                  className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg bg-gray-700/50 ${
                                     tx.type === "buy" ||
                                     tx.type === "deposit" ||
                                     tx.type === "receive" ||
@@ -1097,10 +1097,10 @@ export default function AssetDetailsModal({
                                 </span>
                               </div>
                               <div className="flex flex-col items-end">
-                                <span className="text-[10px] text-gray-400 font-medium">
+                                <span className="text-[11px] text-gray-400 font-medium">
                                   Value:
                                 </span>
-                                <span className="font-semibold text-white text-xs px-1.5 py-0.5 rounded-lg bg-gray-700/50">
+                                <span className="font-semibold text-white text-[11px] px-1.5 py-0.5 rounded-lg bg-gray-700/50">
                                   {/* For swaps, use fromValueUSD or toValueUSD depending on view */}
                                   {tx.type === "swap" ? (
                                     formatAmount(
