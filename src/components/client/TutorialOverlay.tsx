@@ -143,8 +143,15 @@ export default function TutorialOverlay() {
       document.body.style.overflow = "";
     }
 
+    // Listen for emergency UI reset
+    const handleEmergencyReset = () => {
+      document.body.style.overflow = "";
+    };
+    window.addEventListener("emergency-ui-reset", handleEmergencyReset);
+
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("emergency-ui-reset", handleEmergencyReset);
     };
   }, [isActive]);
 
@@ -167,6 +174,7 @@ export default function TutorialOverlay() {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3 }}
         className="fixed inset-0 z-[99999] pointer-events-none"
+        data-tutorial-overlay="true"
       >
         {/* Dark overlay with spotlight cutout */}
         <svg

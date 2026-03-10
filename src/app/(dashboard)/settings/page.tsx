@@ -360,12 +360,14 @@ function SettingsModal({
   title,
   children,
   toggleSidebar,
+  isDark = true,
 }: {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
   toggleSidebar: () => void;
+  isDark?: boolean;
 }) {
   // Handle browser back button
   useEffect(() => {
@@ -390,12 +392,14 @@ function SettingsModal({
     <div
       className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen"
       style={{
-        background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
+        background: isDark 
+          ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
+          : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
       }}
     >
       <div className="h-full overflow-y-auto">
         {/* Custom Header for Modal */}
-        <div className="sticky top-0 z-10 bg-gray-900/100 backdrop-blur-sm">
+        <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-gray-400"}`}>
           <div className="flex justify-between items-center p-3 sm:p-6">
             <Image
               src="/m4capitallogo1.png"
@@ -408,7 +412,7 @@ function SettingsModal({
             <div className="flex items-center gap-3">
               <button
                 onClick={onClose}
-                className="relative text-gray-400 hover:text-white transition-colors"
+                className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-white hover:text-gray-100"}`}
                 title="Notifications"
               >
                 <Bell size={18} className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6" />
@@ -419,7 +423,7 @@ function SettingsModal({
                 className="flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5"
                 aria-label="Open sidebar"
               >
-                <Menu size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] text-gray-400" />
+                <Menu size={20} className={`mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] ${isDark ? "text-gray-400" : "text-white"}`} />
               </button>
             </div>
           </div>
@@ -429,7 +433,7 @@ function SettingsModal({
         <div className="max-w-4xl mx-auto px-4 pt-4">
           <button
             onClick={onClose}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            className={`flex items-center gap-2 transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
           >
             <ArrowLeft size={20} />
             <span className="text-sm font-medium">Back to Dashboard</span>
@@ -452,6 +456,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { showSuccess, showError, showWarning, showInfo } = useToast();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const { language, setLanguage, languages, currentLanguage } = useLanguage();
   const { toggleSidebar } = useSidebar();
 
@@ -1486,6 +1491,7 @@ export default function SettingsPage() {
 
       if (response.ok) {
         setKycStatus("PENDING");
+        setShowKycDetails(false);
         setShowKycSuccessModal(true);
       } else {
         showError(data.error || "Failed to submit KYC verification");
@@ -1788,6 +1794,7 @@ export default function SettingsPage() {
           onClose={closeModal}
           title="Profile"
           toggleSidebar={toggleSidebar}
+          isDark={isDark}
         >
           {/* Personal Data Card Button */}
           <button
@@ -2287,6 +2294,7 @@ export default function SettingsPage() {
           onClose={closeModal}
           title="Security"
           toggleSidebar={toggleSidebar}
+          isDark={isDark}
         >
           {/* Change Password Card Button */}
           <button
@@ -3185,6 +3193,7 @@ export default function SettingsPage() {
           onClose={closeModal}
           title="KYC Verification"
           toggleSidebar={toggleSidebar}
+          isDark={isDark}
         >
           <div className="space-y-4">
             {/* KYC Status Banner */}
@@ -3496,7 +3505,7 @@ export default function SettingsPage() {
                           }
                           setKycStage(2);
                         }}
-                        className="bg-orange-600 hover:bg-orange-500 px-6 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[44px]"
+                        className="bg-orange-600 hover:bg-orange-500 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
                       >
                         Next
                         <ChevronRight className="w-4 h-4" />
@@ -3615,7 +3624,7 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => setKycStage(1)}
-                        className="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[44px]"
+                        className="bg-gray-700 hover:bg-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
                       >
                         <ChevronRight className="w-4 h-4 rotate-180" />
                         Previous
@@ -3638,7 +3647,7 @@ export default function SettingsPage() {
                           }
                           setKycStage(3);
                         }}
-                        className="bg-orange-600 hover:bg-orange-500 px-6 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[44px]"
+                        className="bg-orange-600 hover:bg-orange-500 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
                       >
                         Next
                         <ChevronRight className="w-4 h-4" />
@@ -3951,11 +3960,11 @@ export default function SettingsPage() {
             {/* Approved Status */}
             {kycStatus === "APPROVED" && (
               <div className="text-center py-8">
-                <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-white mb-2">
+                <CheckCircle className={`w-16 h-16 mx-auto mb-4 ${isDark ? "text-green-400" : "text-green-500"}`} />
+                <h3 className={`text-xl font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                   You're all set!
                 </h3>
-                <p className="text-gray-400">
+                <p className={isDark ? "text-gray-400" : "text-gray-600"}>
                   Your account is fully verified and you have access to all
                   features.
                 </p>
@@ -3966,11 +3975,11 @@ export default function SettingsPage() {
 
         {/* KYC Success Modal */}
         {showKycSuccessModal && ReactDOM.createPortal(
-          <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900 flex flex-col items-center justify-center px-6">
+          <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen flex flex-col items-center justify-center px-6 ${isDark ? "bg-gray-900" : "bg-gradient-to-b from-gray-50 to-white"}`}>
             {/* Background Gradient Effect */}
             <div className="absolute inset-0 overflow-hidden">
-              <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-green-500/10 rounded-full blur-[100px] animate-pulse" />
-              <div className="absolute bottom-1/4 left-1/3 w-[300px] h-[300px] bg-orange-500/10 rounded-full blur-[80px] animate-pulse delay-1000" />
+              <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-[100px] animate-pulse ${isDark ? "bg-green-500/10" : "bg-green-500/20"}`} />
+              <div className={`absolute bottom-1/4 left-1/3 w-[300px] h-[300px] rounded-full blur-[80px] animate-pulse delay-1000 ${isDark ? "bg-orange-500/10" : "bg-orange-500/15"}`} />
             </div>
 
             {/* Content */}
@@ -3981,17 +3990,17 @@ export default function SettingsPage() {
                   {/* Outer ring with 3D shadow */}
                   <div className="absolute inset-0 rounded-full bg-gradient-to-b from-green-400 to-green-600 shadow-[0_10px_30px_rgba(34,197,94,0.4),inset_0_-5px_20px_rgba(0,0,0,0.3)] animate-pulse" />
                   {/* Inner ring */}
-                  <div className="absolute inset-2 rounded-full bg-gray-900 flex items-center justify-center shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)]">
-                    <CheckCircle className="w-12 h-12 text-green-400" />
+                  <div className={`absolute inset-2 rounded-full flex items-center justify-center ${isDark ? "bg-gray-900 shadow-[inset_0_5px_15px_rgba(0,0,0,0.5)]" : "bg-white shadow-[inset_0_2px_8px_rgba(0,0,0,0.1)]"}`}>
+                    <CheckCircle className={`w-12 h-12 ${isDark ? "text-green-400" : "text-green-500"}`} />
                   </div>
                 </div>
               </div>
 
               {/* Title */}
-              <h2 className="text-2xl font-bold text-white mb-3">
+              <h2 className={`text-2xl font-bold mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
                 Verification Submitted!
               </h2>
-              <p className="text-gray-400 text-sm mb-8">
+              <p className={`text-sm mb-8 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 Thank you for submitting your documents. We'll review your KYC verification within 24-48 hours and notify you once complete.
               </p>
 
@@ -4001,7 +4010,7 @@ export default function SettingsPage() {
                   setShowKycSuccessModal(false);
                   closeModal();
                 }}
-                className="bg-green-600 hover:bg-green-500 px-8 py-3 rounded-lg font-medium transition-colors text-white"
+                className="bg-green-600 hover:bg-green-500 px-6 py-2.5 rounded-lg font-medium transition-colors text-white"
               >
                 Got it
               </button>
@@ -4016,6 +4025,7 @@ export default function SettingsPage() {
           onClose={closeModal}
           title="Email Notifications"
           toggleSidebar={toggleSidebar}
+          isDark={isDark}
         >
           {loadingEmailPrefs ? (
             <div className="flex items-center justify-center py-8">
@@ -4023,18 +4033,18 @@ export default function SettingsPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              <p className="text-sm text-gray-300 mb-4">
+              <p className={`text-sm mb-4 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                 Control which email notifications you receive from M4 Capital.
               </p>
 
               {/* Master toggle */}
-              <div className="p-4 bg-gray-700/50 rounded-lg border border-gray-600">
-                <div className="flex items-start justify-between mb-1 pb-3 border-b border-gray-600">
+              <div className={`p-4 rounded-lg border ${isDark ? "bg-gray-700/50 border-gray-600" : "bg-white border-gray-200"}`}>
+                <div className={`flex items-start justify-between mb-1 pb-3 border-b ${isDark ? "border-gray-600" : "border-gray-200"}`}>
                   <div className="flex items-center gap-3">
-                    <h3 className="font-semibold text-white text-base">
+                    <h3 className={`font-semibold text-base ${isDark ? "text-white" : "text-gray-900"}`}>
                       Email Notifications
                     </h3>
-                    <span className="text-xs text-gray-400 bg-gray-800 px-2 py-0.5 rounded">Main Toggle</span>
+                    <span className={`text-xs px-2 py-0.5 rounded ${isDark ? "text-gray-400 bg-gray-800" : "text-gray-500 bg-gray-100"}`}>Main Toggle</span>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -4049,10 +4059,10 @@ export default function SettingsPage() {
                       }
                       disabled={savingEmailPrefs}
                     />
-                    <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}></div>
                   </label>
                 </div>
-                <p className="text-sm text-gray-400 mb-4 mt-3">
+                <p className={`text-sm mb-4 mt-3 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   Receive all email notifications. Turning this off will
                   disable all email alerts.
                 </p>
@@ -4060,12 +4070,12 @@ export default function SettingsPage() {
               {/* Sub-toggles */}
               <div className="space-y-0 -mx-4">
                 {/* KYC Notifications */}
-                <div className="flex items-start justify-between px-4 py-3 border-t border-gray-700/50">
+                <div className={`flex items-start justify-between px-4 py-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
                   <div>
-                    <h4 className="font-medium text-white text-sm">
+                    <h4 className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       KYC Verification
                     </h4>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Updates about your identity verification status
                     </p>
                   </div>
@@ -4084,17 +4094,17 @@ export default function SettingsPage() {
                         savingEmailPrefs || !emailPreferences.emailNotifications
                       }
                     />
-                    <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50"></div>
+                    <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}></div>
                   </label>
                 </div>
 
                 {/* Trading Notifications */}
-                <div className="flex items-start justify-between px-4 py-3 border-t border-gray-700/50">
+                <div className={`flex items-start justify-between px-4 py-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
                   <div>
-                    <h4 className="font-medium text-white text-sm">
+                    <h4 className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Trading & Transactions
                     </h4>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Alerts for deposits, withdrawals, and trade executions
                     </p>
                   </div>
@@ -4113,17 +4123,17 @@ export default function SettingsPage() {
                         savingEmailPrefs || !emailPreferences.emailNotifications
                       }
                     />
-                    <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50"></div>
+                    <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}></div>
                   </label>
                 </div>
 
                 {/* Security Notifications */}
-                <div className="flex items-start justify-between px-4 py-3 border-t border-gray-700/50">
+                <div className={`flex items-start justify-between px-4 py-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
                   <div>
-                    <h4 className="font-medium text-white text-sm">
+                    <h4 className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Security Alerts
                     </h4>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Important security notifications and account changes
                     </p>
                   </div>
@@ -4142,14 +4152,14 @@ export default function SettingsPage() {
                         savingEmailPrefs || !emailPreferences.emailNotifications
                       }
                     />
-                    <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50"></div>
+                    <div className={`w-11 h-6 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-indigo-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600 peer-disabled:opacity-50 ${isDark ? "bg-gray-600" : "bg-gray-300"}`}></div>
                   </label>
                 </div>
               </div>
               </div>
 
               {savingEmailPrefs && (
-                <div className="text-sm text-gray-400 flex items-center gap-2">
+                <div className={`text-sm flex items-center gap-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
                   Saving preferences...
                 </div>
@@ -4164,6 +4174,7 @@ export default function SettingsPage() {
           onClose={closeModal}
           title="Telegram Integration"
           toggleSidebar={toggleSidebar}
+          isDark={isDark}
         >
           {loadingTelegram ? (
             <div className="flex items-center justify-center py-8">
@@ -4180,11 +4191,11 @@ export default function SettingsPage() {
                     height={40}
                     className="drop-shadow-[0_4px_8px_rgba(0,0,0,0.4)]"
                   />
-                  <h3 className="font-medium text-white">
+                  <h3 className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                     Connect your Telegram account
                   </h3>
                 </div>
-                <p className="text-sm text-gray-400 mb-4">
+                <p className={`text-sm mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   Link your M4 Capital account to Telegram to receive instant
                   notifications, view your portfolio, and get real-time price
                   alerts directly in Telegram.
@@ -4194,11 +4205,11 @@ export default function SettingsPage() {
               {!telegramLinked ? (
                 <>
                   {/* Linking Instructions */}
-                  <div className="bg-gray-700/50 rounded-lg p-3 border border-gray-600">
-                    <h4 className="font-medium text-white mb-2">
+                  <div className={`rounded-lg p-3 border ${isDark ? "bg-gray-700/50 border-gray-600" : "bg-gray-50 border-gray-200"}`}>
+                    <h4 className={`font-medium mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                       How to link:
                     </h4>
-                    <ol className="space-y-1.5 text-sm text-gray-300">
+                    <ol className={`space-y-1.5 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       <li className="flex gap-2">
                         <span className="font-semibold text-blue-400">1.</span>
                         <span>
@@ -4218,7 +4229,7 @@ export default function SettingsPage() {
                         <span className="font-semibold text-blue-400">2.</span>
                         <span>
                           Send the command{" "}
-                          <span className="font-mono bg-gray-800 px-2 py-0.5 rounded">
+                          <span className={`font-mono px-2 py-0.5 rounded ${isDark ? "bg-gray-800" : "bg-gray-200"}`}>
                             /link
                           </span>
                         </span>
@@ -4239,7 +4250,7 @@ export default function SettingsPage() {
                     <div>
                       <label
                         htmlFor="linkCode"
-                        className="block text-sm font-medium mb-2 text-white"
+                        className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
                       >
                         Enter your 6-digit linking code
                       </label>
@@ -4253,7 +4264,7 @@ export default function SettingsPage() {
                           maxLength={6}
                           pattern="[0-9]{6}"
                           required
-                          className="w-48 bg-gray-700 rounded-lg px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base tracking-wider text-white"
+                          className={`w-48 rounded-lg px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base tracking-wider ${isDark ? "bg-gray-700 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           disabled={linkingTelegram}
                         />
                         <button
@@ -4288,17 +4299,17 @@ export default function SettingsPage() {
               ) : (
                 <>
                   {/* Linked Status */}
-                  <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
+                  <div className={`rounded-lg p-4 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}>
                     <div className="flex items-start gap-3">
                       <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
-                        <h3 className="font-semibold text-white mb-1">
+                        <h3 className={`font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
                           Telegram Connected
                         </h3>
-                        <p className="text-sm text-gray-300">
+                        <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                           Your account is linked to{" "}
                           {telegramUsername ? (
-                            <span className="font-mono bg-gray-800 px-2 py-0.5 rounded">
+                            <span className={`font-mono px-2 py-0.5 rounded ${isDark ? "bg-gray-800" : "bg-gray-200"}`}>
                               @{telegramUsername}
                             </span>
                           ) : (
@@ -4310,11 +4321,11 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Features Available */}
-                  <div className="bg-gray-700/30 rounded-lg p-4">
-                    <h4 className="font-medium text-white mb-3">
+                  <div className={`rounded-lg p-4 ${isDark ? "bg-gray-700/30" : "bg-gray-50"}`}>
+                    <h4 className={`font-medium mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
                       What you can do in Telegram:
                     </h4>
-                    <ul className="space-y-2 text-sm text-gray-300">
+                    <ul className={`space-y-2 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       <li className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-400" />
                         <span>View your portfolio balance and holdings</span>
@@ -4357,11 +4368,12 @@ export default function SettingsPage() {
           onClose={closeModal}
           title="Preferences"
           toggleSidebar={toggleSidebar}
+          isDark={isDark}
         >
           <div className="space-y-4">
             {/* Theme Preference */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 Theme
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -4369,8 +4381,10 @@ export default function SettingsPage() {
                   onClick={() => setTheme("light")}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 ${
                     theme === "light"
-                      ? "bg-blue-500/20 border-2 border-blue-500 text-white"
-                      : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                      ? "bg-blue-500/20 border-2 border-blue-500 text-blue-600"
+                      : isDark 
+                        ? "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                        : "bg-gray-100 border-2 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
                   <Sun className="w-5 h-5" />
@@ -4380,8 +4394,10 @@ export default function SettingsPage() {
                   onClick={() => setTheme("dark")}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 ${
                     theme === "dark"
-                      ? "bg-blue-500/20 border-2 border-blue-500 text-white"
-                      : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                      ? "bg-blue-500/20 border-2 border-blue-500 text-blue-600"
+                      : isDark 
+                        ? "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                        : "bg-gray-100 border-2 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
                   <Moon className="w-5 h-5" />
@@ -4391,15 +4407,17 @@ export default function SettingsPage() {
                   onClick={() => setTheme("system")}
                   className={`flex flex-col items-center gap-1.5 p-3 rounded-xl transition-all duration-200 ${
                     theme === "system"
-                      ? "bg-blue-500/20 border-2 border-blue-500 text-white"
-                      : "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                      ? "bg-blue-500/20 border-2 border-blue-500 text-blue-600"
+                      : isDark 
+                        ? "bg-gray-800/50 border-2 border-gray-700 text-gray-400 hover:border-gray-600 hover:text-gray-300"
+                        : "bg-gray-100 border-2 border-gray-200 text-gray-500 hover:border-gray-300 hover:text-gray-700"
                   }`}
                 >
                   <Monitor className="w-5 h-5" />
                   <span className="text-xs font-medium">System</span>
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-1.5">
+              <p className={`text-xs mt-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 {theme === "system"
                   ? `Using system preference (currently ${resolvedTheme})`
                   : `Currently using ${theme} theme`}
@@ -4408,7 +4426,7 @@ export default function SettingsPage() {
 
             {/* Language Preference */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 Preferred Language
               </label>
               <div className="relative">
@@ -4418,7 +4436,7 @@ export default function SettingsPage() {
                     setLanguage(e.target.value);
                     showSuccess("Language preference updated");
                   }}
-                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white appearance-none cursor-pointer focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
+                  className={`w-full border rounded-lg px-4 py-2 appearance-none cursor-pointer focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 ${isDark ? "bg-gray-800 border-gray-700 text-white" : "bg-white border-gray-300 text-gray-900"}`}
                 >
                   {languages.map((lang) => (
                     <option key={lang.code} value={lang.code}>
@@ -4426,9 +4444,9 @@ export default function SettingsPage() {
                     </option>
                   ))}
                 </select>
-                <Globe className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <Globe className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none ${isDark ? "text-gray-400" : "text-gray-500"}`} />
               </div>
-              <p className="text-xs text-gray-400 mt-1.5">
+              <p className={`text-xs mt-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 This will be used for displaying content throughout the
                 platform.
               </p>
@@ -4436,11 +4454,11 @@ export default function SettingsPage() {
 
             {/* Currency Preference */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 Preferred Currency
               </label>
               {loadingCurrency ? (
-                <div className="animate-pulse bg-gray-700 h-10 rounded-lg"></div>
+                <div className={`animate-pulse h-10 rounded-lg ${isDark ? "bg-gray-700" : "bg-gray-200"}`}></div>
               ) : (
                 <CurrencySelector
                   value={preferredCurrency}
@@ -4448,7 +4466,7 @@ export default function SettingsPage() {
                   disabled={savingCurrency}
                 />
               )}
-              <p className="text-xs text-gray-400 mt-1.5">
+              <p className={`text-xs mt-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 This will be used for displaying balances and portfolio values
                 throughout the platform.
               </p>
@@ -4462,16 +4480,17 @@ export default function SettingsPage() {
           onClose={closeModal}
           title="Data & Privacy"
           toggleSidebar={toggleSidebar}
+          isDark={isDark}
         >
           <div className="space-y-4">
             {/* Download Account Data */}
-            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
+            <div className={`rounded-lg p-4 border ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}>
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="text-sm font-medium text-white mb-1">
+                  <h3 className={`text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
                     Download Your Data
                   </h3>
-                  <p className="text-xs text-gray-400">
+                  <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     Export all your account information, portfolio history, and transaction records
                   </p>
                 </div>
@@ -4504,31 +4523,31 @@ export default function SettingsPage() {
             </div>
 
             {/* Delete Account */}
-            <div className="bg-gray-800/50 rounded-lg p-4 border border-red-900/30">
+            <div className={`rounded-lg p-4 border ${isDark ? "bg-gray-800/50 border-red-900/30" : "bg-red-50 border-red-200"}`}>
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <h3 className="text-sm font-medium text-white mb-1">
+                  <h3 className={`text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
                     Delete Account
                   </h3>
-                  <p className="text-xs text-gray-400">
+                  <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                     Submit a request to permanently delete your account. Our team will review your request.
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setShowDeletionModal(true)}
-                className="w-full px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-sm font-medium rounded-lg transition-colors border border-red-600/30"
+                className="w-full px-4 py-2 bg-red-600/20 hover:bg-red-600/30 text-red-500 text-sm font-medium rounded-lg transition-colors border border-red-600/30"
               >
                 Request Account Deletion
               </button>
             </div>
 
             {/* Privacy & Consent */}
-            <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700/50">
-              <h3 className="text-sm font-medium text-white mb-3">
+            <div className={`rounded-lg p-4 border ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}>
+              <h3 className={`text-sm font-medium mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
                 Privacy & Consent
               </h3>
-              <div className="space-y-3 text-xs text-gray-400">
+              <div className={`space-y-3 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 <div className="flex items-start space-x-2">
                   <div className="w-1 h-1 bg-blue-500 rounded-full mt-1.5 flex-shrink-0"></div>
                   <p>
@@ -4548,7 +4567,7 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
-              <div className="mt-4 pt-3 border-t border-gray-700/50">
+              <div className={`mt-4 pt-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
                 <a
                   href="/privacy"
                   target="_blank"
@@ -4557,7 +4576,7 @@ export default function SettingsPage() {
                 >
                   Read our Privacy Policy
                 </a>
-                <span className="text-gray-600 mx-2">•</span>
+                <span className={`mx-2 ${isDark ? "text-gray-600" : "text-gray-400"}`}>•</span>
                 <a
                   href="/terms"
                   target="_blank"

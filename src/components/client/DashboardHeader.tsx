@@ -7,6 +7,7 @@ import { useSidebar } from "./SidebarContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import NotificationsPanel from "./NotificationsPanel";
 import Image from "next/image";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const DashboardHeader = () => {
   const { data: session, status } = useSession(); // Removed 'update' to prevent infinite session refresh loop
@@ -14,6 +15,8 @@ const DashboardHeader = () => {
   const { unreadCount } = useNotifications();
   const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] =
     useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   // Session update removed - it was causing continuous /api/auth/csrf and /api/auth/session spam
   // The session will update naturally when needed via NextAuth's built-in mechanisms
@@ -33,9 +36,9 @@ const DashboardHeader = () => {
 
   return (
     <motion.header
-      className={`flex justify-between items-center mobile:p-2 p-3 sm:p-6 relative z-[70] transition-colors duration-300 bg-gray-900/100 backdrop-blur-sm ${
-        isSidebarOpen ? "" : ""
-      }`}
+      className={`flex justify-between items-center mobile:p-2 p-3 sm:p-6 relative z-[70] transition-colors duration-300 backdrop-blur-sm ${
+        isDark ? "bg-gray-900/100" : "bg-gray-400 shadow-sm"
+      } ${isSidebarOpen ? "" : ""}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -51,7 +54,7 @@ const DashboardHeader = () => {
       <div className="flex items-center mobile:gap-2 gap-3">
         <button
           onClick={() => setIsNotificationsPanelOpen(true)}
-          className="relative text-gray-400 hover:text-white transition-colors"
+          className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-white hover:text-gray-100"}`}
           title="Notifications"
           data-tutorial="notifications"
         >
@@ -92,10 +95,10 @@ const DashboardHeader = () => {
               </div>
             )}
             <div className="text-left">
-              <p className="font-semibold leading-tight text-white truncate max-w-[100px] sm:max-w-[140px] text-sm sm:text-base">
+              <p className={`font-semibold leading-tight truncate max-w-[100px] sm:max-w-[140px] text-sm sm:text-base text-white`}>
                 {session?.user?.name || "User"}
               </p>
-              <p className="text-xs text-gray-400 uppercase tracking-wide">
+              <p className={`text-xs uppercase tracking-wide ${isDark ? "text-gray-400" : "text-white/80"}`}>
                 {secondaryLabel}
               </p>
             </div>
@@ -103,7 +106,7 @@ const DashboardHeader = () => {
           {/* Hamburger icon */}
           <Menu
             size={20}
-            className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] text-gray-400 sm:ml-2"
+            className={`mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] sm:ml-2 ${isDark ? "text-gray-400" : "text-white"}`}
           />
         </button>
       </div>

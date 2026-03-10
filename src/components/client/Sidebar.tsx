@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useSidebar } from "./SidebarContext";
 import { useState, useEffect } from "react";
 import LogoutConfirmationModal from "./LogoutConfirmationModal";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Sidebar = () => {
   const { data: session, status } = useSession(); // Removed 'update' to prevent session refresh loops
@@ -21,6 +22,8 @@ const Sidebar = () => {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [baseUrl, setBaseUrl] = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     // Set the base URL on the client side
@@ -111,7 +114,7 @@ const Sidebar = () => {
             <motion.div
               key="sidebar-content"
               data-tutorial="sidebar"
-              className="fixed left-0 top-0 h-full bg-gray-800 text-white w-60 sm:w-72 p-4 sm:p-6 pt-20 flex flex-col z-[60]"
+              className={`fixed left-0 top-0 h-full w-60 sm:w-72 p-4 sm:p-6 pt-20 flex flex-col z-[60] transition-colors ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}`}
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
@@ -137,15 +140,15 @@ const Sidebar = () => {
                           // Traderoom link for all users
                           <Link
                             href={item.href}
-                            className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
+                            className={`flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                             onClick={closeSidebar}
                             onMouseEnter={() => setHoveredItem(item.name)}
                             onMouseLeave={() => setHoveredItem(null)}
                           >
-                            <motion.div className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300">
+                            <motion.div className={`group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                               {item.icon}
                             </motion.div>
-                            <motion.span className="ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-400 transition-colors duration-300">
+                            <motion.span className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-400 transition-colors duration-300 ${isDark ? "" : "text-gray-700"}`}>
                               {item.name}
                             </motion.span>
                           </Link>
@@ -153,13 +156,13 @@ const Sidebar = () => {
                           // Special Settings item with synchronized hover effects
                           <Link
                             href={item.href}
-                            className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
+                            className={`flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                             onClick={closeSidebar}
                             onMouseEnter={() => setHoveredItem(item.name)}
                             onMouseLeave={() => setHoveredItem(null)}
                           >
                             <motion.div
-                              className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                              className={`group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                               animate={{
                                 rotate: 0,
                                 scale: 1,
@@ -190,7 +193,7 @@ const Sidebar = () => {
                               </motion.div>
                             </motion.div>
                             <motion.span
-                              className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                              className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                               whileHover={{
                                 x: [0, 3, 0],
                                 transition: {
@@ -236,13 +239,13 @@ const Sidebar = () => {
                           // Regular navigation items
                           <Link
                             href={item.href}
-                            className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
+                            className={`flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                             onClick={closeSidebar}
                             onMouseEnter={() => setHoveredItem(item.name)}
                             onMouseLeave={() => setHoveredItem(null)}
                           >
                             <motion.div
-                              className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                              className={`group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                               animate={
                                 hoveredItem === item.name
                                   ? {
@@ -287,7 +290,7 @@ const Sidebar = () => {
                               {item.icon}
                             </motion.div>
                             <motion.span
-                              className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                              className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                               whileHover={{
                                 x: [0, 3, 0],
                                 transition: {
@@ -354,13 +357,13 @@ const Sidebar = () => {
                               ? "/staff-admin"
                               : adminItem.href
                           }
-                          className="flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 group"
+                          className={`flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                           onClick={closeSidebar}
                           onMouseEnter={() => setHoveredItem(session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : "Admin")}
                           onMouseLeave={() => setHoveredItem(null)}
                         >
                           <motion.div
-                            className="text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                            className={`group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                             animate={
                               hoveredItem === (session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : "Admin")
                                 ? {
@@ -405,7 +408,7 @@ const Sidebar = () => {
                             {adminItem.icon}
                           </motion.div>
                           <motion.span
-                            className="ml-3 sm:ml-4 text-base sm:text-lg text-gray-300 group-hover:text-orange-500 transition-colors duration-300"
+                            className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                             whileHover={{
                               x: [0, 3, 0],
                               transition: {
@@ -453,7 +456,7 @@ const Sidebar = () => {
                 </ul>
               </nav>
               {/* Logout button at bottom */}
-              <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-700">
+              <div className={`mt-3 sm:mt-4 pt-3 sm:pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
                 <motion.div
                   animate={{
                     y: [0, -3, 0],
@@ -468,14 +471,14 @@ const Sidebar = () => {
                 >
                   <motion.button
                     onClick={handleLogoutClick}
-                    className="w-full flex items-center p-2 sm:p-3 rounded-lg hover:bg-gray-700/50 transition-all duration-300 text-left group"
+                    className={`w-full flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 text-left group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onMouseEnter={() => setHoveredItem("Logout")}
                     onMouseLeave={() => setHoveredItem(null)}
                   >
                     <motion.div
-                      className="text-red-400 group-hover:text-orange-500 transition-colors duration-300"
+                      className={`group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-red-400" : "text-red-500"}`}
                       animate={
                         hoveredItem === "Logout"
                           ? {
@@ -519,7 +522,7 @@ const Sidebar = () => {
                       <LogOut size={22} />
                     </motion.div>
                     <motion.span
-                      className="ml-3 sm:ml-4 text-base sm:text-lg text-red-400 group-hover:text-orange-500 transition-colors duration-300"
+                      className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-red-400" : "text-red-500"}`}
                       whileHover={{
                         x: [0, 3, 0],
                         transition: {

@@ -56,28 +56,28 @@ export class ErrorBoundary extends Component<Props, State> {
       // Default fallback UI
       return (
         <div className="min-h-[400px] flex items-center justify-center p-6">
-          <div className="max-w-md w-full bg-gray-800/50 border border-red-500/20 rounded-xl p-8 text-center">
+          <div className="max-w-md w-full bg-white/80 dark:bg-gray-800/50 border border-red-500/20 rounded-xl p-8 text-center">
             <div className="flex justify-center mb-4">
               <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
                 <AlertTriangle className="w-8 h-8 text-red-500" />
               </div>
             </div>
 
-            <h2 className="text-xl font-semibold text-white mb-2">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               Something went wrong
             </h2>
 
-            <p className="text-gray-400 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               We encountered an unexpected error. Please try again or contact
               support if the problem persists.
             </p>
 
             {process.env.NODE_ENV === "development" && this.state.error && (
-              <details className="text-left mb-6 bg-gray-900 rounded-lg p-4">
+              <details className="text-left mb-6 bg-gray-100 dark:bg-gray-900 rounded-lg p-4">
                 <summary className="cursor-pointer text-sm text-red-400 font-mono mb-2">
                   Error Details (Dev Mode)
                 </summary>
-                <pre className="text-xs text-gray-300 overflow-auto max-h-40">
+                <pre className="text-xs text-gray-700 dark:text-gray-300 overflow-auto max-h-40">
                   {this.state.error.toString()}
                   {this.state.error.stack}
                 </pre>

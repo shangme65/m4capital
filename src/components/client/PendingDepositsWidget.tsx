@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import CryptoWallet from "./CryptoWallet";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface PendingDeposit {
   id: string;
@@ -30,6 +31,8 @@ export default function PendingDepositsWidget() {
   );
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { formatAmount } = useCurrency();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   useEffect(() => {
     fetchPendingDeposits();
@@ -68,13 +71,17 @@ export default function PendingDepositsWidget() {
     return (
       <div
         className="rounded-2xl p-4 animate-pulse"
-        style={{
+        style={isDark ? {
           background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
           border: "1px solid rgba(255, 255, 255, 0.1)",
+        } : {
+          background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+          boxShadow: "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
+          border: "1px solid rgba(0, 0, 0, 0.15)",
         }}
       >
-        <div className="h-6 bg-gray-700 rounded w-1/3 mb-4"></div>
-        <div className="h-20 bg-gray-700 rounded"></div>
+        <div className={`h-6 rounded w-1/3 mb-4 ${isDark ? "bg-gray-700" : "bg-gray-200"}`}></div>
+        <div className={`h-20 rounded ${isDark ? "bg-gray-700" : "bg-gray-200"}`}></div>
       </div>
     );
   }
@@ -88,22 +95,26 @@ export default function PendingDepositsWidget() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl p-4"
-        style={{
+        className="rounded-2xl p-4 mb-4"
+        style={isDark ? {
           background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
           boxShadow:
             "0 20px 50px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
           border: "1px solid rgba(255, 255, 255, 0.1)",
+        } : {
+          background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+          boxShadow: "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
+          border: "1px solid rgba(0, 0, 0, 0.15)",
         }}
       >
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></div>
-            <h3 className="text-sm font-semibold text-white">
+            <h3 className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
               Pending Deposits
             </h3>
           </div>
-          <span className="text-xs text-gray-400">
+          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             {pendingDeposits.length} payment
             {pendingDeposits.length !== 1 ? "s" : ""} awaiting
           </span>
@@ -119,12 +130,12 @@ export default function PendingDepositsWidget() {
               <motion.button
                 key={deposit.id}
                 onClick={() => handleViewPayment(deposit)}
-                className="w-full p-3 rounded-xl text-left transition-all hover:scale-[1.02]"
-                style={{
+                className={`w-full p-3 rounded-xl text-left transition-all hover:scale-[1.02] ${!isDark ? "bg-gray-50 border border-gray-200 hover:bg-gray-100" : ""}`}
+                style={isDark ? {
                   background:
                     "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
                   border: "1px solid rgba(255, 255, 255, 0.1)",
-                }}
+                } : undefined}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
@@ -140,10 +151,10 @@ export default function PendingDepositsWidget() {
                       <CryptoIcon symbol={deposit.cryptoCurrency} size="md" />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-white">
+                      <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                         {deposit.cryptoCurrency} Deposit
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         {formatAmount(deposit.amount, 2)} • {timeElapsed}m ago
                       </div>
                     </div>
@@ -152,7 +163,7 @@ export default function PendingDepositsWidget() {
                     <div className="text-xs font-medium text-orange-400">
                       Awaiting Payment
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                       {deposit.cryptoAmount || deposit.paymentAmount}{" "}
                       {deposit.cryptoCurrency}
                     </div>
@@ -163,8 +174,8 @@ export default function PendingDepositsWidget() {
           })}
         </div>
 
-        <div className="mt-3 pt-3 border-t border-gray-700">
-          <p className="text-xs text-gray-400 text-center">
+        <div className={`mt-3 pt-3 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+          <p className={`text-xs text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             Click any deposit to view payment details and QR code
           </p>
         </div>

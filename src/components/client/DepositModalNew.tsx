@@ -6,6 +6,7 @@ import Image from "next/image";
 import CryptoWallet from "./CryptoWallet";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { CURRENCIES } from "@/lib/currencies";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
@@ -57,6 +58,10 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
     name: string;
   } | null>(null);
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
+
+  // Theme support
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   // Supported cryptocurrencies from NowPayments
   // All crypto minimum deposit: $25 USD (covers Bitcoin's 0.0002625 BTC minimum with price fluctuations)
@@ -358,25 +363,27 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[10000] overflow-hidden"
-          style={{
+          className={`fixed inset-0 z-[10000] overflow-hidden ${!isDark ? "bg-gray-100" : ""}`}
+          style={isDark ? {
             background:
               "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #1e1b4b 50%, #0f172a 75%, #0a0a0f 100%)",
-          }}
+          } : undefined}
         >
           {/* Animated background elements */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-3xl" />
-          </div>
+          {isDark && (
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 rounded-full blur-3xl" />
+            </div>
+          )}
 
           {/* Back button - top left */}
           {!showCryptoWallet && (
             <button
               onClick={handleBack}
-              className="absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50"
-              style={card3DStyle}
+              className={`absolute top-4 left-4 w-10 h-10 flex items-center justify-center rounded-xl transition-all z-50 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900 bg-white shadow-lg border border-gray-200"}`}
+              style={isDark ? card3DStyle : undefined}
               aria-label="Back"
             >
               <svg
@@ -415,8 +422,8 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="rounded-2xl p-4 mb-4"
-                    style={card3DStyle}
+                    className={`rounded-2xl p-4 mb-4 ${!isDark ? "bg-white border border-gray-200 shadow-lg" : ""}`}
+                    style={isDark ? card3DStyle : undefined}
                   >
                     {/* Icon and Title in same row */}
                     <div className="flex items-center justify-center gap-3 mb-3">
@@ -442,7 +449,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           />
                         </svg>
                       </div>
-                      <h2 className="text-2xl font-bold text-white">
+                      <h2 className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                         Deposit Funds
                       </h2>
                     </div>
@@ -455,9 +462,9 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                             className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-all ${
                               step >= s
                                 ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md shadow-blue-500/30"
-                                : "bg-gray-800/50 text-gray-500"
+                                : isDark ? "bg-gray-800/50 text-gray-500" : "bg-gray-100 text-gray-400 border border-gray-200"
                             }`}
-                            style={step >= s ? {} : inputStyle}
+                            style={step >= s ? {} : (isDark ? inputStyle : undefined)}
                           >
                             {step > s ? (
                               <svg
@@ -480,7 +487,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                               className={`w-8 h-0.5 rounded-full ${
                                 step > s
                                   ? "bg-gradient-to-r from-blue-500 to-purple-500"
-                                  : "bg-gray-700"
+                                  : isDark ? "bg-gray-700" : "bg-gray-200"
                               }`}
                             />
                           )}
@@ -488,7 +495,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                       ))}
                     </div>
                     <div className="flex justify-center mt-2">
-                      <span className="text-gray-400 text-xs">
+                      <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         {step === 1 && "Enter Details"}
                         {step === 2 && "Select Crypto"}
                       </span>
@@ -500,20 +507,20 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="rounded-2xl p-4"
-                    style={card3DStyle}
+                    className={`rounded-2xl p-4 ${!isDark ? "bg-white border border-gray-200 shadow-lg" : ""}`}
+                    style={isDark ? card3DStyle : undefined}
                   >
                     {/* Step 1: Amount and Method */}
                     {step === 1 && (
                       <form onSubmit={handleSubmit} className="space-y-4">
                         {error && (
                           <div
-                            className="rounded-xl p-3 text-red-400 text-sm"
-                            style={{
+                            className={`rounded-xl p-3 text-sm ${isDark ? "text-red-400" : "text-red-600 bg-red-50 border border-red-200"}`}
+                            style={isDark ? {
                               background:
                                 "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(185, 28, 28, 0.1) 100%)",
                               border: "1px solid rgba(239, 68, 68, 0.2)",
-                            }}
+                            } : undefined}
                           >
                             {error}
                           </div>
@@ -521,11 +528,14 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
                         {/* Amount Input */}
                         <div>
-                          <label className="block text-xs font-semibold text-gray-300 mb-2">
+                          <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                             Deposit Amount ({preferredCurrency})
                           </label>
-                          <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">
+                          <div 
+                            className={`flex items-center rounded-xl px-3 py-3 focus-within:ring-2 focus-within:ring-blue-500/50 transition-all ${isDark ? "text-white" : "bg-gray-50 border border-gray-200"}`}
+                            style={isDark ? inputStyle : undefined}
+                          >
+                            <span className={`text-sm font-semibold mr-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                               {currencySymbol}
                             </span>
                             <input
@@ -533,14 +543,13 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                               step="0.01"
                               value={amount}
                               onChange={(e) => setAmount(e.target.value)}
-                              className="w-full rounded-xl px-4 py-3 pl-8 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
-                              style={inputStyle}
+                              className={`flex-1 bg-transparent text-sm font-medium focus:outline-none ${isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"}`}
                               placeholder="0.00"
                               min={minDepositAmount.toString()}
                               required
                             />
                           </div>
-                          <p className="mt-1.5 text-[10px] text-gray-400 flex items-center gap-1.5">
+                          <p className={`mt-1.5 text-[10px] flex items-center gap-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                             <svg
                               className="w-3 h-3"
                               fill="currentColor"
@@ -559,7 +568,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
 
                         {/* Payment Method */}
                         <div>
-                          <label className="block text-sm font-semibold text-gray-300 mb-3">
+                          <label className={`block text-sm font-semibold mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                             Payment Method
                           </label>
                           <div className="relative">
@@ -568,14 +577,14 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                               onClick={() =>
                                 setShowPaymentDropdown(!showPaymentDropdown)
                               }
-                              className="w-full px-4 py-3 rounded-xl text-white text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all flex items-center justify-between"
-                              style={{
+                              className={`w-full px-4 py-3 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all flex items-center justify-between ${isDark ? "text-white" : "text-gray-900 bg-gray-50 border border-gray-200"}`}
+                              style={isDark ? {
                                 background:
                                   "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                                 boxShadow:
                                   "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.1)",
                                 border: "1px solid rgba(59, 130, 246, 0.3)",
-                              }}
+                              } : undefined}
                             >
                               <span className="flex items-center gap-2">
                                 {paymentMethod === "crypto" ? (
@@ -655,10 +664,12 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                   exit={{ opacity: 0, y: -10 }}
                                   className="absolute top-full left-0 right-0 mt-2 rounded-xl shadow-2xl z-20 overflow-hidden"
                                   style={{
-                                    background:
-                                      "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                                    border:
-                                      "1px solid rgba(255, 255, 255, 0.1)",
+                                    background: isDark
+                                      ? "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)"
+                                      : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%)",
+                                    border: isDark
+                                      ? "1px solid rgba(255, 255, 255, 0.1)"
+                                      : "1px solid rgba(0, 0, 0, 0.1)",
                                   }}
                                 >
                                   <div className="py-2 px-2 space-y-2">
@@ -674,19 +685,24 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                         background:
                                           paymentMethod === "crypto"
                                             ? "linear-gradient(145deg, rgba(59, 130, 246, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)"
-                                            : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
-                                        boxShadow:
-                                          "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                            : isDark
+                                              ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
+                                              : "linear-gradient(145deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%)",
+                                        boxShadow: isDark
+                                          ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
+                                          : "0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
                                         border:
                                           paymentMethod === "crypto"
                                             ? "1px solid rgba(59, 130, 246, 0.3)"
-                                            : "1px solid rgba(255, 255, 255, 0.05)",
+                                            : isDark
+                                              ? "1px solid rgba(255, 255, 255, 0.05)"
+                                              : "1px solid rgba(0, 0, 0, 0.08)",
                                       }}
                                     >
                                       <div className="flex items-center gap-3 w-full">
                                         <div className="flex flex-col gap-1.5 w-full">
                                           <div className="flex items-center justify-between">
-                                            <div className="text-sm font-semibold text-white flex items-center gap-1.5">
+                                            <div className={`text-sm font-semibold flex items-center gap-1.5 ${isDark ? "text-white" : "text-gray-900"}`}>
                                               Deposit via Crypto
                                               {paymentMethod === "crypto" && (
                                                 <svg
@@ -708,32 +724,32 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                                 alt="BTC"
                                                 width={28}
                                                 height={28}
-                                                className="w-7 h-7 rounded-full border-2 border-gray-800 relative z-10"
+                                                className={`w-7 h-7 rounded-full border-2 relative z-10 ${isDark ? "border-gray-800" : "border-gray-200"}`}
                                               />
                                               <Image
                                                 src="/crypto/eth.svg"
                                                 alt="ETH"
                                                 width={28}
                                                 height={28}
-                                                className="w-7 h-7 rounded-full border-2 border-gray-800 relative z-20"
+                                                className={`w-7 h-7 rounded-full border-2 relative z-20 ${isDark ? "border-gray-800" : "border-gray-200"}`}
                                               />
                                               <Image
                                                 src="/crypto/usdt.svg"
                                                 alt="USDT"
                                                 width={28}
                                                 height={28}
-                                                className="w-7 h-7 rounded-full border-2 border-gray-800 relative z-30"
+                                                className={`w-7 h-7 rounded-full border-2 relative z-30 ${isDark ? "border-gray-800" : "border-gray-200"}`}
                                               />
                                               <Image
                                                 src="/crypto/ltc.svg"
                                                 alt="LTC"
                                                 width={28}
                                                 height={28}
-                                                className="w-7 h-7 rounded-full border-2 border-gray-800 relative z-40"
+                                                className={`w-7 h-7 rounded-full border-2 relative z-40 ${isDark ? "border-gray-800" : "border-gray-200"}`}
                                               />
                                             </div>
                                           </div>
-                                          <p className="text-[10px] text-gray-400">
+                                          <p className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                                             Fast deposits with BTC, ETH, USDT,
                                             LTC and more. Confirmed after
                                             blockchain verification.
@@ -754,18 +770,23 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                         background:
                                           paymentMethod === "pix"
                                             ? "linear-gradient(145deg, rgba(59, 130, 246, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)"
-                                            : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
-                                        boxShadow:
-                                          "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                            : isDark
+                                              ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
+                                              : "linear-gradient(145deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.9) 100%)",
+                                        boxShadow: isDark
+                                          ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
+                                          : "0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)",
                                         border:
                                           paymentMethod === "pix"
                                             ? "1px solid rgba(59, 130, 246, 0.3)"
-                                            : "1px solid rgba(255, 255, 255, 0.05)",
+                                            : isDark
+                                              ? "1px solid rgba(255, 255, 255, 0.05)"
+                                              : "1px solid rgba(0, 0, 0, 0.08)",
                                       }}
                                     >
                                       <div className="flex flex-col gap-1 w-full">
                                         <div className="flex items-center justify-between">
-                                          <div className="text-sm font-semibold text-white flex items-center gap-1.5">
+                                          <div className={`text-sm font-semibold flex items-center gap-1.5 ${isDark ? "text-white" : "text-gray-900"}`}>
                                             Deposit via PIX
                                             {paymentMethod === "pix" && (
                                               <svg
@@ -789,7 +810,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                             className="w-25 h-10 object-contain"
                                           />
                                         </div>
-                                        <p className="text-[10px] text-gray-400">
+                                        <p className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                                           Instant payment for Brazilian
                                           customers. Available 24/7.
                                         </p>
@@ -806,8 +827,9 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         <div
                           className="rounded-xl p-3"
                           style={{
-                            background:
-                              "linear-gradient(145deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)",
+                            background: isDark
+                              ? "linear-gradient(145deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%)"
+                              : "linear-gradient(145deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 51, 234, 0.1) 100%)",
                             boxShadow:
                               "0 8px 20px -5px rgba(59, 130, 246, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                             border: "1px solid rgba(59, 130, 246, 0.2)",
@@ -815,7 +837,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         >
                           <div className="flex items-start gap-2">
                             <svg
-                              className="w-4 h-4 text-blue-400 mt-0.5 flex-shrink-0"
+                              className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isDark ? "text-blue-400" : "text-blue-600"}`}
                               fill="currentColor"
                               viewBox="0 0 20 20"
                             >
@@ -825,7 +847,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                 clipRule="evenodd"
                               />
                             </svg>
-                            <p className="text-[10px] text-blue-200 leading-relaxed">
+                            <p className={`text-[10px] leading-relaxed ${isDark ? "text-blue-200" : "text-blue-800"}`}>
                               {paymentMethod === "crypto"
                                 ? "You will be redirected to select your preferred cryptocurrency. Deposits are processed instantly after blockchain confirmation."
                                 : "PIX payments are processed instantly 24/7. Perfect for Brazilian customers."}
@@ -895,18 +917,20 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                         <div
                           className="rounded-xl p-3"
                           style={{
-                            background:
-                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                            boxShadow:
-                              "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                            background: isDark
+                              ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                              : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                            boxShadow: isDark
+                              ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                              : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                            border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                           }}
                         >
                           <div className="flex justify-between items-center">
-                            <span className="text-gray-400 text-xs font-medium">
+                            <span className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                               Deposit Amount:
                             </span>
-                            <span className="text-lg font-bold text-white">
+                            <span className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                               {currencySymbol}
                               {parseFloat(amount).toFixed(2)}
                             </span>
@@ -925,13 +949,18 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                 background:
                                   selectedCrypto === crypto.id
                                     ? "linear-gradient(145deg, rgba(59, 130, 246, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)"
-                                    : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
-                                boxShadow:
-                                  "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                    : isDark
+                                      ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
+                                      : "linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(241, 245, 249, 0.9) 100%)",
+                                boxShadow: isDark
+                                  ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
+                                  : "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
                                 border:
                                   selectedCrypto === crypto.id
                                     ? "1px solid rgba(59, 130, 246, 0.3)"
-                                    : "1px solid rgba(255, 255, 255, 0.05)",
+                                    : isDark
+                                      ? "1px solid rgba(255, 255, 255, 0.05)"
+                                      : "1px solid rgba(0, 0, 0, 0.08)",
                               }}
                             >
                               <div className="flex items-center justify-between">
@@ -953,20 +982,20 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                     />
                                   </div>
                                   <div>
-                                    <div className="text-xs font-semibold text-white">
+                                    <div className={`text-xs font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                       {crypto.name}
                                     </div>
-                                    <div className="text-[9px] text-gray-400">
+                                    <div className={`text-[9px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                       {crypto.network}
                                     </div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <div className="text-right">
-                                    <div className="text-[10px] font-semibold text-white">
+                                    <div className={`text-[10px] font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                       {crypto.symbol}
                                     </div>
-                                    <div className="text-[9px] text-yellow-400">
+                                    <div className={`text-[9px] ${isDark ? "text-yellow-400" : "text-yellow-600"}`}>
                                       Min: {formatAmount(crypto.minUSD, 0)}
                                     </div>
                                   </div>
@@ -994,8 +1023,8 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                           <button
                             type="button"
                             onClick={handleBack}
-                            className="flex-1 py-2 px-3 rounded-lg font-semibold transition-all text-white text-xs"
-                            style={card3DStyle}
+                            className={`flex-1 py-2 px-3 rounded-lg font-semibold transition-all text-xs ${isDark ? "text-white" : "text-gray-700 bg-gray-200 hover:bg-gray-300"}`}
+                            style={isDark ? card3DStyle : undefined}
                           >
                             Back
                           </button>

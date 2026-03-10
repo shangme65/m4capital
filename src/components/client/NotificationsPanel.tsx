@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { useNotifications, Notification } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // Common fiat currency codes
 const FIAT_CURRENCIES = new Set([
@@ -77,6 +78,8 @@ export default function NotificationsPanel({
     deleteNotification,
   } = useNotifications();
   const { formatAmount } = useCurrency();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const [filter, setFilter] = useState<"all" | "unread" | "archived">("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -253,13 +256,13 @@ export default function NotificationsPanel({
             animate={{ opacity: 1, x: 0, scale: 1 }}
             exit={{ opacity: 0, x: 400, scale: 0.9 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="absolute right-0 top-0 h-full w-full sm:w-[480px] bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-l border-gray-700/50 flex flex-col shadow-2xl"
+            className={`absolute right-0 top-0 h-full w-full sm:w-[480px] border-l flex flex-col shadow-2xl ${isDark ? "bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-gray-700/50" : "bg-gradient-to-br from-white via-gray-50 to-gray-100 border-gray-200"}`}
             style={{ zIndex: 3 }}
           >
             {/* Smaller Header */}
             <div className="relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-purple-500/10 to-blue-500/10"></div>
-              <div className="relative flex items-center justify-between p-4 border-b border-gray-700/50">
+              <div className={`absolute inset-0 ${isDark ? "bg-gradient-to-r from-orange-500/10 via-purple-500/10 to-blue-500/10" : "bg-gradient-to-r from-orange-500/5 via-purple-500/5 to-blue-500/5"}`}></div>
+              <div className={`relative flex items-center justify-between p-4 border-b ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
                 <div className="flex items-center space-x-2">
                   <div className="relative">
                     <Bell className="w-5 h-5 text-orange-500" />
@@ -276,17 +279,17 @@ export default function NotificationsPanel({
                     )}
                   </div>
                   <div>
-                    <h2 className="text-lg font-bold text-white">
+                    <h2 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                       Notifications
                     </h2>
-                    <p className="text-[10px] text-gray-400">
+                    <p className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       {notifications.length} total
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={onClose}
-                  className="text-gray-400 hover:text-white transition-all hover:rotate-90 duration-300"
+                  className={`transition-all hover:rotate-90 duration-300 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}
                   aria-label="Close notifications panel"
                   title="Close"
                 >
@@ -295,19 +298,19 @@ export default function NotificationsPanel({
               </div>
 
               {/* Smaller Filter Tabs */}
-              <div className="relative flex items-center space-x-2 px-4 py-2 bg-gray-800/50">
+              <div className={`relative flex items-center space-x-2 px-4 py-2 ${isDark ? "bg-gray-800/50" : "bg-gray-100/50"}`}>
                 <button
                   onClick={() => setFilter("all")}
                   className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     filter === "all"
-                      ? "text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? isDark ? "text-white" : "text-gray-900"
+                      : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
                   }`}
                 >
                   {filter === "all" && (
                     <motion.div
                       layoutId="filterBg"
-                      className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-purple-500/20 rounded-lg border border-orange-500/30"
+                      className={`absolute inset-0 rounded-lg border ${isDark ? "bg-gradient-to-r from-orange-500/20 to-purple-500/20 border-orange-500/30" : "bg-gradient-to-r from-orange-500/10 to-purple-500/10 border-orange-500/20"}`}
                       transition={{
                         type: "spring",
                         damping: 25,
@@ -321,14 +324,14 @@ export default function NotificationsPanel({
                   onClick={() => setFilter("unread")}
                   className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     filter === "unread"
-                      ? "text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? isDark ? "text-white" : "text-gray-900"
+                      : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
                   }`}
                 >
                   {filter === "unread" && (
                     <motion.div
                       layoutId="filterBg"
-                      className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-purple-500/20 rounded-lg border border-orange-500/30"
+                      className={`absolute inset-0 rounded-lg border ${isDark ? "bg-gradient-to-r from-orange-500/20 to-purple-500/20 border-orange-500/30" : "bg-gradient-to-r from-orange-500/10 to-purple-500/10 border-orange-500/20"}`}
                       transition={{
                         type: "spring",
                         damping: 25,
@@ -349,14 +352,14 @@ export default function NotificationsPanel({
                   onClick={() => setFilter("archived")}
                   className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     filter === "archived"
-                      ? "text-white"
-                      : "text-gray-400 hover:text-white"
+                      ? isDark ? "text-white" : "text-gray-900"
+                      : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
                   }`}
                 >
                   {filter === "archived" && (
                     <motion.div
                       layoutId="filterBg"
-                      className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-purple-500/20 rounded-lg border border-orange-500/30"
+                      className={`absolute inset-0 rounded-lg border ${isDark ? "bg-gradient-to-r from-orange-500/20 to-purple-500/20 border-orange-500/30" : "bg-gradient-to-r from-orange-500/10 to-purple-500/10 border-orange-500/20"}`}
                       transition={{
                         type: "spring",
                         damping: 25,
@@ -378,20 +381,20 @@ export default function NotificationsPanel({
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="flex flex-col items-center justify-center h-full text-gray-500 p-8"
+                  className={`flex flex-col items-center justify-center h-full p-8 ${isDark ? "text-gray-500" : "text-gray-400"}`}
                 >
                   <div className="relative mb-6">
-                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/20 to-purple-500/20 rounded-full blur-xl"></div>
-                    <div className="relative w-24 h-24 bg-gradient-to-br from-gray-800 to-gray-700 rounded-full flex items-center justify-center border border-gray-600/50">
-                      <Bell className="w-12 h-12 text-gray-600" />
+                    <div className={`absolute inset-0 rounded-full blur-xl ${isDark ? "bg-gradient-to-br from-orange-500/20 to-purple-500/20" : "bg-gradient-to-br from-orange-500/10 to-purple-500/10"}`}></div>
+                    <div className={`relative w-24 h-24 rounded-full flex items-center justify-center border ${isDark ? "bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600/50" : "bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300/50"}`}>
+                      <Bell className={`w-12 h-12 ${isDark ? "text-gray-600" : "text-gray-400"}`} />
                     </div>
                   </div>
-                  <p className="text-xl font-bold text-white mb-2">
+                  <p className={`text-xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                     {filter === "unread"
                       ? "All caught up!"
                       : "No notifications"}
                   </p>
-                  <p className="text-sm text-center text-gray-400 max-w-xs">
+                  <p className={`text-sm text-center max-w-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     {filter === "unread"
                       ? "You've read all your notifications. Great job staying on top of things!"
                       : "You're all caught up! New notifications will appear here."}
@@ -429,8 +432,12 @@ export default function NotificationsPanel({
                           }}
                           className={`group relative overflow-hidden rounded-lg border transition-all duration-300 cursor-pointer ${
                             !notification.read
-                              ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-orange-500/30 shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20"
-                              : "bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50"
+                              ? isDark
+                                ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-orange-500/30 shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20"
+                                : "bg-gradient-to-br from-orange-50 to-amber-50/50 border-orange-300/50 shadow-lg shadow-orange-200/30 hover:shadow-orange-300/40"
+                              : isDark
+                                ? "bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50"
+                                : "bg-gray-50/50 border-gray-200/50 hover:bg-gray-100/70"
                           }`}
                         >
                           {/* Gradient overlay for unread */}
@@ -456,21 +463,21 @@ export default function NotificationsPanel({
                                   <h3
                                     className={`text-xs font-bold ${
                                       !notification.read
-                                        ? "text-white"
-                                        : "text-gray-300"
+                                        ? isDark ? "text-white" : "text-gray-900"
+                                        : isDark ? "text-gray-300" : "text-gray-600"
                                     }`}
                                   >
                                     {notification.title}
                                   </h3>
                                   <div className="flex items-center space-x-1.5 ml-2">
-                                    <span className="text-[10px] text-gray-500 flex-shrink-0 font-medium">
+                                    <span className={`text-[10px] flex-shrink-0 font-medium ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                                       {formatTimeAgo(notification.timestamp)}
                                     </span>
                                     <motion.div
                                       animate={{ rotate: isExpanded ? 180 : 0 }}
                                       transition={{ duration: 0.2 }}
                                     >
-                                      <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                                      <ChevronDown className={`w-3.5 h-3.5 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
                                     </motion.div>
                                   </div>
                                 </div>
@@ -486,7 +493,7 @@ export default function NotificationsPanel({
                                     >
                                       {/* Message */}
                                       {notification.message && (
-                                        <p className="text-xs text-gray-400 leading-relaxed mb-2 mt-1">
+                                        <p className={`text-xs leading-relaxed mb-2 mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                           {notification.message}
                                         </p>
                                       )}
@@ -558,8 +565,8 @@ export default function NotificationsPanel({
                                       </div>
                                     ) : (
                                       <div className="flex items-center space-x-1">
-                                        <MailOpen className="w-3 h-3 text-gray-500" />
-                                        <span className="text-[10px] text-gray-500">
+                                        <MailOpen className={`w-3 h-3 ${isDark ? "text-gray-500" : "text-gray-400"}`} />
+                                        <span className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                                           Read
                                         </span>
                                       </div>
@@ -574,7 +581,7 @@ export default function NotificationsPanel({
                                           e.stopPropagation();
                                           unarchiveNotification(notification.id);
                                         }}
-                                        className="p-1.5 rounded-md hover:bg-gray-700/50 text-gray-400 hover:text-green-400 transition-colors"
+                                        className={`p-1.5 rounded-md transition-colors ${isDark ? "hover:bg-gray-700/50 text-gray-400" : "hover:bg-gray-200/70 text-gray-500"} hover:text-green-400`}
                                         title="Unarchive"
                                       >
                                         <Archive className="w-3.5 h-3.5" />
@@ -585,7 +592,7 @@ export default function NotificationsPanel({
                                           e.stopPropagation();
                                           archiveNotification(notification.id);
                                         }}
-                                        className="p-1.5 rounded-md hover:bg-gray-700/50 text-gray-400 hover:text-yellow-400 transition-colors"
+                                        className={`p-1.5 rounded-md transition-colors ${isDark ? "hover:bg-gray-700/50 text-gray-400" : "hover:bg-gray-200/70 text-gray-500"} hover:text-yellow-400`}
                                         title="Archive"
                                       >
                                         <Archive className="w-3.5 h-3.5" />
@@ -596,7 +603,7 @@ export default function NotificationsPanel({
                                         e.stopPropagation();
                                         setDeleteConfirmId(notification.id);
                                       }}
-                                      className="p-1.5 rounded-md hover:bg-gray-700/50 text-gray-400 hover:text-red-400 transition-colors"
+                                      className={`p-1.5 rounded-md transition-colors ${isDark ? "hover:bg-gray-700/50 text-gray-400" : "hover:bg-gray-200/70 text-gray-500"} hover:text-red-400`}
                                       title="Delete"
                                     >
                                       <Trash2 className="w-3.5 h-3.5" />
@@ -634,24 +641,24 @@ export default function NotificationsPanel({
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.9, opacity: 0 }}
                   onClick={(e) => e.stopPropagation()}
-                  className="bg-gray-800 border border-gray-700 rounded-xl p-5 shadow-2xl max-w-xs w-full mx-4"
+                  className={`rounded-xl p-5 shadow-2xl max-w-xs w-full mx-4 ${isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"}`}
                 >
                   <div className="flex items-center space-x-3 mb-4">
                     <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
                       <Trash2 className="w-5 h-5 text-red-400" />
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold">Delete Notification</h3>
-                      <p className="text-gray-400 text-xs">This action cannot be undone</p>
+                      <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Delete Notification</h3>
+                      <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>This action cannot be undone</p>
                     </div>
                   </div>
-                  <p className="text-gray-300 text-sm mb-5">
+                  <p className={`text-sm mb-5 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                     Are you sure you want to permanently delete this notification?
                   </p>
                   <div className="flex space-x-3">
                     <button
                       onClick={() => setDeleteConfirmId(null)}
-                      className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm font-medium transition-colors"
+                      className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
                     >
                       Cancel
                     </button>

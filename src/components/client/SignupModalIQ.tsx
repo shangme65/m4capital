@@ -174,7 +174,7 @@ export default function SignupModalIQ({
                   {/* Proceed with email button */}
                   <button
                     onClick={onProceedWithEmail}
-                    className="w-full bg-gradient-to-b from-orange-600 to-orange-800 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(80,20,3,1),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(251,146,60,0.8),0_10px_8px_-2px_rgba(251,146,60,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(251,146,60,0.5)] hover:translate-y-[2px] text-white py-3 px-4 rounded-lg font-semibold transition-all"
+                    className="w-full bg-gradient-to-b from-orange-600 to-orange-800 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(80,20,3,1),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(251,146,60,0.8),0_10px_8px_-2px_rgba(251,146,60,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(251,146,60,0.5)] hover:translate-y-[2px] text-white py-2 px-4 rounded-lg font-semibold transition-all"
                   >
                     Proceed with email
                   </button>

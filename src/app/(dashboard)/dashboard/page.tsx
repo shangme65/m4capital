@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import { useToast } from "@/contexts/ToastContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   CryptoMarketProvider,
   useCryptoPrices,
@@ -40,6 +41,8 @@ function DashboardContent() {
   const { data: session, status } = useSession();
   const { preferredCurrency, convertAmount, formatAmount, exchangeRates } =
     useCurrency();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -172,11 +175,11 @@ function DashboardContent() {
   // Wait for session to fully load before rendering dashboard
   if (status === "loading" || !session) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className={`flex items-center justify-center min-h-screen ${isDark ? "" : "bg-gray-50"}`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading dashboard...</p>
-          <p className="text-gray-500 text-sm mt-2">Please wait...</p>
+          <p className={isDark ? "text-gray-400" : "text-gray-600"}>Loading dashboard...</p>
+          <p className={`text-sm mt-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>Please wait...</p>
         </div>
       </div>
     );
@@ -698,26 +701,31 @@ function DashboardContent() {
         data-tutorial="portfolio-balance"
         className="relative rounded-2xl p-4 sm:p-6 overflow-hidden transition-all duration-300 mb-4"
         style={{
-          background:
-            "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-          boxShadow:
-            "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          background: isDark
+            ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+            : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+          boxShadow: isDark
+            ? "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)"
+            : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
+          border: isDark 
+            ? "1px solid rgba(255, 255, 255, 0.08)"
+            : "1px solid rgba(0, 0, 0, 0.15)",
         }}
       >
         {/* Ambient glow effect */}
         <div
           className="absolute inset-0 opacity-30 pointer-events-none"
           style={{
-            background:
-              "radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.2) 0%, transparent 50%)",
+            background: isDark
+              ? "radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.2) 0%, transparent 50%)"
+              : "radial-gradient(ellipse at 50% 0%, rgba(59, 130, 246, 0.15) 0%, transparent 50%)",
           }}
         />
 
         {/* Portfolio Value Header */}
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-white">
+            <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
               Portfolio Value
             </h1>
           </div>
@@ -725,11 +733,15 @@ function DashboardContent() {
           <div className="mb-6 sm:mb-8">
             <div className="flex items-center gap-2">
               <div
-                className="text-3xl sm:text-5xl font-bold text-white mb-2 bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
-                style={{ WebkitTextStroke: "0.5px rgba(255,255,255,0.1)" }}
+                className={`text-3xl sm:text-5xl font-bold mb-2 bg-clip-text text-transparent ${
+                  isDark 
+                    ? "bg-gradient-to-r from-blue-400 via-white to-blue-400 drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+                    : "bg-gradient-to-r from-blue-600 via-gray-900 to-blue-600 drop-shadow-[0_2px_10px_rgba(59,130,246,0.15)]"
+                }`}
+                style={{ WebkitTextStroke: isDark ? "0.5px rgba(255,255,255,0.1)" : "0.5px rgba(0,0,0,0.05)" }}
               >
                 {portfolioLoading ? (
-                  <div className="animate-pulse bg-gray-700 h-12 w-48 rounded"></div>
+                  <div className={`animate-pulse h-12 w-48 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
                 ) : showBalances ? (
                   formatAmount(portfolioValueInUSD || 0, 2)
                 ) : (
@@ -738,7 +750,7 @@ function DashboardContent() {
               </div>
               <button
                 onClick={() => setShowBalances(!showBalances)}
-                className="text-gray-400 hover:opacity-70 transition-opacity p-2 mb-2"
+                className={`hover:opacity-70 transition-opacity p-2 mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                 aria-label={showBalances ? "Hide balances" : "Show balances"}
               >
                 {showBalances ? (
@@ -781,24 +793,26 @@ function DashboardContent() {
 
             <div className="flex items-center gap-2">
               {portfolioLoading ? (
-                <div className="animate-pulse bg-gray-700 h-6 w-24 rounded"></div>
+                <div className={`animate-pulse h-6 w-24 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
               ) : (
                 <>
                   <span
                     className={`text-base sm:text-lg font-medium ${
-                      incomePercent >= 0 ? "text-green-400" : "text-red-400"
+                      incomePercent >= 0 
+                        ? isDark ? "text-green-400" : "text-green-600" 
+                        : isDark ? "text-red-400" : "text-red-600"
                     }`}
                   >
                     {incomePercent >= 0 ? "+" : ""}
                     {incomePercent.toFixed(2)}%
                   </span>
-                  <span className="text-gray-400 text-sm sm:text-base">
+                  <span className={`text-sm sm:text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     24hrs
                   </span>
                   {/* Info icon for tooltip */}
                   <div className="group relative">
                     <svg
-                      className="w-4 h-4 text-gray-400 hover:text-gray-300 cursor-help"
+                      className={`w-4 h-4 cursor-help transition-colors ${isDark ? "text-gray-400 hover:text-gray-300" : "text-gray-500 hover:text-gray-600"}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -811,14 +825,14 @@ function DashboardContent() {
                       />
                     </svg>
                     {/* Tooltip */}
-                    <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 border border-gray-700">
+                    <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-2 text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 ${isDark ? "bg-gray-900 text-white border border-gray-700" : "bg-white text-gray-800 border border-gray-200"}`}>
                       <div className="text-center">
                         This percentage measures changes to your account balance
                         from deposits, withdrawals and trading results (not
                         market price movement).
                       </div>
                       <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                        <div className="border-4 border-transparent border-t-gray-900"></div>
+                        <div className={`border-4 border-transparent ${isDark ? "border-t-gray-900" : "border-t-white"}`}></div>
                       </div>
                     </div>
                   </div>
@@ -843,7 +857,7 @@ function DashboardContent() {
             <button
               data-tutorial="deposit-button"
               onClick={handleDeposit}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-4 sm:px-6 py-3 rounded-xl font-semibold transition-all text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/30"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-4 sm:px-6 py-2.5 rounded-xl font-semibold transition-all text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/30"
               style={{
                 boxShadow:
                   "0 4px 15px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
@@ -867,7 +881,7 @@ function DashboardContent() {
             <button
               data-tutorial="withdraw-button"
               onClick={handleWithdraw}
-              className="flex-1 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white px-4 sm:px-6 py-3 rounded-xl font-semibold border border-gray-600/50 transition-all text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg"
+              className="flex-1 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white px-4 sm:px-6 py-2.5 rounded-xl font-semibold border border-gray-600/50 transition-all text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg"
               style={{
                 boxShadow:
                   "0 4px 15px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
@@ -897,26 +911,28 @@ function DashboardContent() {
               data-tutorial="available-balance"
               className="relative w-full p-3 rounded-xl transition-all duration-300 overflow-hidden"
               style={{
-                background:
-                  "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
-                boxShadow:
-                  "inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(59, 130, 246, 0.2)",
+                background: isDark
+                  ? "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)"
+                  : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                boxShadow: isDark
+                  ? "inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
+                  : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
+                border: isDark ? "1px solid rgba(59, 130, 246, 0.2)" : "1px solid rgba(0, 0, 0, 0.15)",
               }}
             >
               <div className="relative z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-300 text-xs font-semibold">
+                    <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       {preferredCurrency} Balance
                     </span>
                   </div>
                   <span
-                    className="text-sm sm:text-base font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
-                    style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+                    className={`text-sm sm:text-base font-bold bg-clip-text text-transparent ${isDark ? "bg-gradient-to-r from-blue-400 via-white to-blue-400 drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]" : "bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600"}`}
+                    style={{ WebkitTextStroke: isDark ? "0.3px rgba(255,255,255,0.1)" : "none" }}
                   >
                     {portfolioLoading ? (
-                      <div className="animate-pulse bg-gray-700 h-4 w-16 rounded"></div>
+                      <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
                     ) : showBalances ? (
                       formatBalanceDisplay(availableBalance || 0)
                     ) : (
@@ -926,7 +942,7 @@ function DashboardContent() {
                 </div>
                 {/* Balance Progress bar - Blue */}
                 <div className="mt-2">
-                  <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden">
+                  <div className={`h-1 rounded-full overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-300/50"}`}>
                     <div
                       className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
                       style={{
@@ -945,26 +961,28 @@ function DashboardContent() {
             <div
               className="relative w-full p-3 rounded-xl transition-all duration-300 overflow-hidden"
               style={{
-                background:
-                  "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)",
-                boxShadow:
-                  "inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05)",
-                border: "1px solid rgba(34, 197, 94, 0.2)",
+                background: isDark
+                  ? "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)"
+                  : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                boxShadow: isDark
+                  ? "inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
+                  : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
+                border: isDark ? "1px solid rgba(34, 197, 94, 0.2)" : "1px solid rgba(0, 0, 0, 0.15)",
               }}
             >
               <div className="relative z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-300 text-xs font-semibold">
+                    <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       Traderoom Balance
                     </span>
                   </div>
                   <span
-                    className="text-sm sm:text-base font-bold bg-gradient-to-r from-green-400 via-green-300 to-green-400 bg-clip-text text-transparent drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
-                    style={{ WebkitTextStroke: "0.3px rgba(255,255,255,0.1)" }}
+                    className={`text-sm sm:text-base font-bold bg-clip-text text-transparent ${isDark ? "bg-gradient-to-r from-green-400 via-green-300 to-green-400 drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]" : "bg-gradient-to-r from-green-600 via-green-500 to-green-600"}`}
+                    style={{ WebkitTextStroke: isDark ? "0.3px rgba(255,255,255,0.1)" : "none" }}
                   >
                     {portfolioLoading ? (
-                      <div className="animate-pulse bg-gray-700 h-4 w-16 rounded"></div>
+                      <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
                     ) : showBalances ? (
                       formatAmount(traderoomBalance || 0, 2)
                     ) : (
@@ -974,7 +992,7 @@ function DashboardContent() {
                 </div>
                 {/* Traderoom Progress bar - Green */}
                 <div className="mt-2">
-                  <div className="h-1 bg-gray-700/50 rounded-full overflow-hidden">
+                  <div className={`h-1 rounded-full overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-300/50"}`}>
                     <div
                       className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out"
                       style={{
@@ -1092,7 +1110,18 @@ function DashboardContent() {
 
       {/* Crypto and History Toggle View */}
       <div className="grid grid-cols-1" data-tutorial="crypto-assets">
-        <div className="bg-gray-800/50 rounded-2xl p-1.5 sm:p-3 border border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]">
+        <div 
+          className="rounded-2xl p-1.5 sm:p-3 transition-colors"
+          style={{
+            background: isDark 
+              ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+              : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+            boxShadow: isDark 
+              ? "0 0 20px rgba(59,130,246,0.3), 0 20px 50px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+              : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
+            border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.15)",
+          }}
+        >
           {/* Header with Toggle and Add Button */}
           <div className="flex items-center gap-1.5 mb-4">
             {/* Crypto Tab */}
@@ -1100,8 +1129,12 @@ function DashboardContent() {
               onClick={() => setActiveView("crypto")}
               className={`flex-1 flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg font-semibold transition-all text-xs ${
                 activeView === "crypto"
-                  ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
-                  : "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
+                  ? isDark 
+                    ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
+                    : "text-gray-900 border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
+                  : isDark
+                    ? "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
+                    : "text-gray-500 hover:text-gray-900 hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.3)]"
               }`}
             >
               <svg
@@ -1125,8 +1158,12 @@ function DashboardContent() {
               onClick={() => setActiveView("history")}
               className={`flex-1 flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg font-semibold transition-all text-xs ${
                 activeView === "history"
-                  ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
-                  : "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
+                  ? isDark 
+                    ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
+                    : "text-gray-900 border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
+                  : isDark
+                    ? "text-gray-400 hover:text-white hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
+                    : "text-gray-500 hover:text-gray-900 hover:shadow-[0_4px_12px_-4px_rgba(59,130,246,0.3)]"
               }`}
             >
               <svg
@@ -1177,9 +1214,9 @@ function DashboardContent() {
             <div className="space-y-4 pb-4">
               {userAssets.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDark ? "bg-gray-700" : "bg-gray-200"}`}>
                     <svg
-                      className="w-8 h-8 text-gray-400"
+                      className={`w-8 h-8 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1192,10 +1229,10 @@ function DashboardContent() {
                       />
                     </svg>
                   </div>
-                  <p className="text-gray-400 mb-4">No crypto assets yet</p>
+                  <p className={`mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>No crypto assets yet</p>
                   <button
                     onClick={handleAddCrypto}
-                    className="text-blue-400 hover:text-blue-300 font-medium"
+                    className="text-blue-500 hover:text-blue-400 font-medium"
                   >
                     Add your first crypto →
                   </button>
@@ -1205,13 +1242,15 @@ function DashboardContent() {
                   <div
                     key={asset.symbol}
                     onClick={() => handleAssetClick(asset)}
-                    className="relative flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]"
+                    className={`relative flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group ${isDark ? "hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]" : "hover:shadow-[0_12px_40px_rgba(0,0,0,0.15),0_0_20px_rgba(59,130,246,0.15),0_0_30px_rgba(59,130,246,0.2)]"}`}
                     style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                      boxShadow:
-                        "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      background: isDark
+                        ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                        : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                      boxShadow: isDark
+                        ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                        : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
+                      border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.15)",
                     }}
                   >
                     {/* Left side: Icon and Info */}
@@ -1238,22 +1277,22 @@ function DashboardContent() {
                       </div>
                       <div className="flex flex-col">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-white font-bold text-sm">
+                          <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                             {asset.symbol}
                           </span>
-                          <span className="text-gray-300 text-[10px] bg-gray-700/50 px-1 py-[1px] rounded-md leading-tight border border-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)]">
+                          <span className={`text-[10px] px-1 py-[1px] rounded-md leading-tight border border-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)] ${isDark ? "text-gray-300 bg-gray-700/50" : "text-gray-600 bg-gray-200/50"}`}>
                             {asset.name}
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="text-white font-medium text-xs">
+                          <span className={`font-medium text-xs ${isDark ? "text-white" : "text-gray-900"}`}>
                             {formatAmount(asset.currentPrice || 0, 2)}
                           </span>
                           <span
                             className={`text-xs font-medium ${
                               asset.change >= 0
-                                ? "text-green-400"
-                                : "text-red-400"
+                                ? isDark ? "text-green-400" : "text-green-600"
+                                : isDark ? "text-red-400" : "text-red-600"
                             }`}
                           >
                             {asset.change >= 0 ? "+" : ""}
@@ -1265,13 +1304,13 @@ function DashboardContent() {
 
                     {/* Right side: Holdings */}
                     <div className="text-right">
-                      <div className="text-white font-bold text-sm">
+                      <div className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                         {(asset.amount || 0).toLocaleString("en-US", {
                           minimumFractionDigits: 0,
                           maximumFractionDigits: 8,
                         })}
                       </div>
-                      <div className="text-gray-400 text-xs mt-0.5">
+                      <div className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         {formatAmount(asset.value || 0, 2)}
                       </div>
                     </div>
@@ -1286,9 +1325,9 @@ function DashboardContent() {
             <div className="space-y-3">
               {recentActivity.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className="w-20 h-20 bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl">
+                  <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl ${isDark ? "bg-gradient-to-br from-gray-700 to-gray-800" : "bg-gradient-to-br from-gray-200 to-gray-300"}`}>
                     <svg
-                      className="w-10 h-10 text-gray-400"
+                      className={`w-10 h-10 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1301,10 +1340,10 @@ function DashboardContent() {
                       />
                     </svg>
                   </div>
-                  <p className="text-gray-400 text-lg font-medium">
+                  <p className={`text-lg font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     No transaction history yet
                   </p>
-                  <p className="text-gray-500 text-sm mt-2">
+                  <p className={`text-sm mt-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
                     Your transactions will appear here
                   </p>
                 </div>

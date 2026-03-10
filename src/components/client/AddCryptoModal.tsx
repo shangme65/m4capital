@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import ReactDOM from "react-dom";
 import { useToast } from "@/contexts/ToastContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { getCryptoMetadata } from "@/lib/crypto-constants";
@@ -50,6 +51,8 @@ export default function AddCryptoModal({
   const [isMounted, setIsMounted] = useState(false);
   const { showWarning } = useToast();
   const { preferredCurrency, convertAmount } = useCurrency();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   // Memoize symbols to prevent re-renders
   const cryptoPrices = useCryptoPrices(ALL_SYMBOLS);
@@ -119,13 +122,13 @@ export default function AddCryptoModal({
       />
 
       {/* Modal */}
-      <div className="absolute inset-x-4 top-20 bottom-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-md sm:max-h-[85vh] bg-gray-900 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden flex flex-col">
+      <div className={`absolute inset-x-4 top-16 bottom-4 sm:inset-auto sm:left-1/2 sm:top-1/2 sm:-translate-x-1/2 sm:-translate-y-1/2 sm:w-full sm:max-w-sm sm:max-h-[80vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col ${isDark ? "bg-gray-900 border border-gray-700" : "bg-white border border-gray-200"}`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800">
-          <h2 className="text-xl font-bold text-white">Add Cryptocurrency</h2>
+        <div className={`flex items-center justify-between px-4 py-3 border-b ${isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-gray-50"}`}>
+          <h2 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Add Cryptocurrency</h2>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className={`p-2 rounded-lg transition-colors ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-700" : "text-gray-500 hover:text-gray-900 hover:bg-gray-200"}`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -134,10 +137,10 @@ export default function AddCryptoModal({
         </div>
 
         {/* Search */}
-        <div className="p-4 border-b border-gray-700">
+        <div className={`px-4 py-2.5 border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
           <div className="relative">
             <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+              className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -149,16 +152,16 @@ export default function AddCryptoModal({
               placeholder="Search cryptocurrency..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+              className={`w-full pl-9 pr-3 py-2 rounded-lg text-sm focus:outline-none focus:border-blue-500 transition-colors ${isDark ? "bg-gray-800 border border-gray-600 text-white placeholder-gray-400" : "bg-gray-100 border border-gray-300 text-gray-900 placeholder-gray-500"}`}
             />
           </div>
         </div>
 
         {/* List */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5">
           {filteredCryptos.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-gray-400">No cryptocurrencies found</p>
+            <div className="text-center py-8">
+              <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No cryptocurrencies found</p>
             </div>
           ) : (
             filteredCryptos.map((crypto) => {
@@ -171,31 +174,31 @@ export default function AddCryptoModal({
               return (
                 <div
                   key={crypto.symbol}
-                  className="flex items-center justify-between p-4 bg-gray-800 hover:bg-gray-750 rounded-xl border border-gray-700 transition-colors"
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-colors ${isDark ? "bg-gray-800 hover:bg-gray-750 border-gray-700" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2.5">
                     <div
-                      className={`w-10 h-10 rounded-xl bg-gradient-to-br ${metadata.gradient} flex items-center justify-center`}
+                      className={`w-9 h-9 rounded-lg bg-gradient-to-br ${metadata.gradient} flex items-center justify-center shadow-sm`}
                     >
-                      <CryptoIcon symbol={crypto.symbol} size="md" showNetwork={true} />
+                      <CryptoIcon symbol={crypto.symbol} size="sm" showNetwork={true} />
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-white font-semibold">{crypto.symbol}</span>
-                        <span className="text-xs text-gray-400 bg-gray-700 px-1.5 py-0.5 rounded">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>{crypto.symbol}</span>
+                        <span className={`text-[10px] px-1 py-0.5 rounded ${isDark ? "text-gray-400 bg-gray-700" : "text-gray-600 bg-gray-200"}`}>
                           {crypto.name}
                         </span>
                       </div>
                       {priceData && (
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-white text-sm">
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-xs ${isDark ? "text-white" : "text-gray-900"}`}>
                             {preferredCurrency === "USD" ? "$" : preferredCurrency === "EUR" ? "€" : preferredCurrency === "GBP" ? "£" : "R$"}
                             {convertAmount(priceData.price).toLocaleString("en-US", {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: priceData.price < 1 ? 6 : 2,
                             })}
                           </span>
-                          <span className={`text-xs ${priceData.changePercent24h >= 0 ? "text-green-400" : "text-red-400"}`}>
+                          <span className={`text-[10px] ${priceData.changePercent24h >= 0 ? (isDark ? "text-green-400" : "text-green-600") : (isDark ? "text-red-400" : "text-red-600")}`}>
                             {priceData.changePercent24h >= 0 ? "+" : ""}
                             {priceData.changePercent24h.toFixed(2)}%
                           </span>
@@ -217,15 +220,15 @@ export default function AddCryptoModal({
                     className="flex-shrink-0"
                   >
                     <div
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors ${
                         isInPortfolio
                           ? "bg-blue-600"
-                          : "bg-gray-600"
+                          : isDark ? "bg-gray-600" : "bg-gray-300"
                       } ${hasBalance ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-                          isInPortfolio ? "translate-x-6" : "translate-x-1"
+                        className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                          isInPortfolio ? "translate-x-5" : "translate-x-1"
                         }`}
                       />
                     </div>

@@ -11,6 +11,27 @@ import { depositConfirmedTemplate } from "@/lib/email-templates";
 // Force dynamic for API routes that use headers
 export const dynamic = "force-dynamic";
 
+// Promo constants
+const PROMO_DURATION_DAYS = 7;
+const PROMO_BONUS_PERCENT = 50;
+
+/**
+ * Check if the deposit bonus promo is active for a user
+ * Promo lasts 7 days from user signup
+ */
+function isPromoBonusActive(userCreatedAt: Date): boolean {
+  const promoEndDate = new Date(userCreatedAt);
+  promoEndDate.setDate(promoEndDate.getDate() + PROMO_DURATION_DAYS);
+  return promoEndDate.getTime() > Date.now();
+}
+
+/**
+ * Calculate bonus amount (50% of deposit)
+ */
+function calculateBonusAmount(amount: number): number {
+  return amount * (PROMO_BONUS_PERCENT / 100);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -229,12 +250,24 @@ export async function POST(req: NextRequest) {
       // Round to 2 decimal places for fiat currencies
       const depositCurrency = userPreferredCurrency;
       const roundedFiatAmount = Math.round((fiatAmount || amount) * 100) / 100;
+      
+      // Check if promo bonus applies
+      let bonusAmount = 0;
+      let totalCredit = roundedFiatAmount;
+      const promoActive = isPromoBonusActive(user.createdAt);
+      
+      if (promoActive) {
+        bonusAmount = calculateBonusAmount(roundedFiatAmount);
+        bonusAmount = Math.round(bonusAmount * 100) / 100; // Round to 2 decimal places
+        totalCredit = roundedFiatAmount + bonusAmount;
+        console.log(`🎁 Promo bonus active! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+      }
 
       await prisma.portfolio.update({
         where: { id: portfolio.id },
         data: {
           balance: {
-            increment: roundedFiatAmount,
+            increment: totalCredit,
           },
           balanceCurrency: depositCurrency,
         },
@@ -243,11 +276,17 @@ export async function POST(req: NextRequest) {
       console.log(
         `✅ Credited ${getCurrencySymbol(
           depositCurrency
-        )}${roundedFiatAmount.toFixed(2)} to user ${
+        )}${totalCredit.toFixed(2)} to user ${
           user.email
-        } (currency: ${depositCurrency})`
+        } (currency: ${depositCurrency})${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ''}`
       );
     }
+
+    // Track bonus for notifications
+    const promoActive = isPromoBonusActive(user.createdAt);
+    const fiatBonusAmount = depositType === "fiat" && promoActive 
+      ? Math.round(calculateBonusAmount((fiatAmount || amount)) * 100) / 100 
+      : 0;
 
     // Create in-app notification for COMPLETED deposit
     // Round fiat amounts to 2 decimal places for display
@@ -255,6 +294,7 @@ export async function POST(req: NextRequest) {
       depositType === "fiat"
         ? Math.round((fiatAmount || amount) * 100) / 100
         : amount;
+    const totalFiatWithBonus = roundedFiatAmountForNotification + fiatBonusAmount;
     const displayFiatAmount = roundedFiatAmountForNotification.toFixed(2);
 
     // For crypto notifications, format the cryptoAmount to 8 decimal places
@@ -270,25 +310,29 @@ export async function POST(req: NextRequest) {
         ? Math.round((fiatAmountUserCurrency || fiatAmount || 0) * 100) / 100
         : 0;
 
+    const bonusMessage = fiatBonusAmount > 0 && depositType === "fiat"
+      ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userPreferredCurrency)}${fiatBonusAmount.toFixed(2)}!`
+      : '';
+
     await prisma.notification.create({
       data: {
         id: generateId(),
         userId: user.id,
         type: "SUCCESS",
-        title: `${
-          depositType === "crypto" ? cryptoAsset : userPreferredCurrency
-        } Deposit Completed`,
+        title: fiatBonusAmount > 0 && depositType === "fiat"
+          ? `${userPreferredCurrency} Deposit + Bonus!`
+          : `${depositType === "crypto" ? cryptoAsset : userPreferredCurrency} Deposit Completed`,
         message: `Your deposit of ${
           depositType === "crypto"
             ? `${formattedCryptoAmount} ${cryptoAsset}`
             : `${getCurrencySymbol(userPreferredCurrency)}${displayFiatAmount}`
-        } has been confirmed and credited to your account.`,
+        } has been confirmed and credited to your account.${bonusMessage}`,
         // For crypto deposits, store the fiat value in user's currency for the badge display
-        // For fiat deposits, use the rounded fiat amount
+        // For fiat deposits, use the total amount including bonus
         amount:
           depositType === "crypto"
             ? cryptoFiatValueForNotification
-            : roundedFiatAmountForNotification,
+            : totalFiatWithBonus,
         // For crypto deposits, use user's preferred currency so badge shows fiat value (e.g., R$4,000.00)
         // For fiat deposits, use the user's preferred currency
         asset: userPreferredCurrency,
@@ -301,6 +345,8 @@ export async function POST(req: NextRequest) {
           targetConfirmations: 6,
           fee: fee,
           status: "COMPLETED",
+          bonusAmount: fiatBonusAmount > 0 ? fiatBonusAmount : undefined,
+          bonusPercent: fiatBonusAmount > 0 ? PROMO_BONUS_PERCENT : undefined,
         },
       },
     });

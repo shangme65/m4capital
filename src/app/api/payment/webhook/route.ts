@@ -9,6 +9,27 @@ import { depositConfirmedTemplate } from "@/lib/email-templates";
 
 export const dynamic = "force-dynamic";
 
+// Promo constants
+const PROMO_DURATION_DAYS = 7;
+const PROMO_BONUS_PERCENT = 50;
+
+/**
+ * Check if the deposit bonus promo is active for a user
+ * Promo lasts 7 days from user signup
+ */
+function isPromoBonusActive(userCreatedAt: Date): boolean {
+  const promoEndDate = new Date(userCreatedAt);
+  promoEndDate.setDate(promoEndDate.getDate() + PROMO_DURATION_DAYS);
+  return promoEndDate.getTime() > Date.now();
+}
+
+/**
+ * Calculate bonus amount (50% of deposit)
+ */
+function calculateBonusAmount(amount: number): number {
+  return amount * (PROMO_BONUS_PERCENT / 100);
+}
+
 /**
  * POST /api/payment/webhook
  * Webhook endpoint for NOWPayments IPN callbacks
@@ -278,14 +299,30 @@ export async function POST(request: NextRequest) {
       // Check if this is a traderoom deposit
       if (deposit.targetAsset === "TRADEROOM") {
         console.log("🎮 Processing TRADEROOM deposit...");
-        // Credit to traderoom balance
+        
+        // Check if promo bonus applies
+        let bonusAmount = 0;
+        let totalCredit = depositAmount;
+        const promoActive = isPromoBonusActive(deposit.User.createdAt);
+        
+        if (promoActive) {
+          bonusAmount = calculateBonusAmount(depositAmount);
+          totalCredit = depositAmount + bonusAmount;
+          console.log(`🎁 Promo bonus active! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+        }
+        
+        // Credit to traderoom balance (including bonus if applicable)
         const currentTraderoomBalance = parseFloat(
           (portfolio.traderoomBalance || 0).toString()
         );
-        const newTraderoomBalance = currentTraderoomBalance + depositAmount;
+        const newTraderoomBalance = currentTraderoomBalance + totalCredit;
 
         console.log("  - Current traderoom balance:", currentTraderoomBalance);
-        console.log("  - Adding:", depositAmount);
+        console.log("  - Deposit amount:", depositAmount);
+        if (bonusAmount > 0) {
+          console.log("  - Bonus amount:", bonusAmount);
+        }
+        console.log("  - Total credit:", totalCredit);
         console.log("  - New traderoom balance:", newTraderoomBalance);
 
         await prisma.portfolio.update({
@@ -296,13 +333,16 @@ export async function POST(request: NextRequest) {
         });
 
         console.log(
-          `✅ Credited ${deposit.amount} ${depositCurrency} to TRADEROOM balance for user ${deposit.User.email}`
+          `✅ Credited ${totalCredit} ${depositCurrency} to TRADEROOM balance for user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ''}`
         );
         console.log(
           `New traderoom balance: ${newTraderoomBalance} ${depositCurrency}`
         );
 
         const userCurrency = deposit.User.preferredCurrency || depositCurrency;
+        const bonusMessage = bonusAmount > 0 
+          ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userCurrency)}${bonusAmount.toFixed(2)}!`
+          : '';
 
         console.log("📧 Creating TRADEROOM deposit notification...");
         // Create notification for successful traderoom deposit
@@ -311,17 +351,19 @@ export async function POST(request: NextRequest) {
             id: generateId(),
             userId: deposit.User.id,
             type: "DEPOSIT",
-            title: `${userCurrency} Traderoom Deposit Completed`,
+            title: bonusAmount > 0 ? `${userCurrency} Traderoom Deposit + Bonus!` : `${userCurrency} Traderoom Deposit Completed`,
             message: `Your deposit of ${getCurrencySymbol(userCurrency)}${
               deposit.amount
-            } has been successfully credited to your Traderoom balance.`,
-            amount: deposit.amount,
+            } has been successfully credited to your Traderoom balance.${bonusMessage}`,
+            amount: totalCredit, // Include bonus in the displayed amount
             asset: userCurrency,
             metadata: {
               depositId: deposit.id,
               transactionId: payment_id,
               method: deposit.method,
               target: "TRADEROOM",
+              bonusAmount: bonusAmount > 0 ? bonusAmount : undefined,
+              bonusPercent: bonusAmount > 0 ? PROMO_BONUS_PERCENT : undefined,
             },
           },
         });
@@ -351,13 +393,14 @@ export async function POST(request: NextRequest) {
 
         // Send web push notification
         try {
+          const pushBonusText = bonusAmount > 0 ? ` (includes ${PROMO_BONUS_PERCENT}% bonus!)` : '';
           await sendPushNotification(
             deposit.User.id,
-            `${userCurrency} Traderoom Deposit Completed!`,
-            `Your deposit of ${getCurrencySymbol(userCurrency)}${depositAmount.toFixed(2)} has been credited to your Traderoom balance.`,
+            bonusAmount > 0 ? `${userCurrency} Traderoom Deposit + Bonus!` : `${userCurrency} Traderoom Deposit Completed!`,
+            `Your deposit of ${getCurrencySymbol(userCurrency)}${depositAmount.toFixed(2)} has been credited to your Traderoom balance.${pushBonusText}`,
             {
               type: "deposit",
-              amount: depositAmount,
+              amount: totalCredit,
               asset: depositCurrency,
               url: "/dashboard",
             }
@@ -368,12 +411,28 @@ export async function POST(request: NextRequest) {
         }
       } else {
         console.log("💰 Processing REGULAR deposit...");
-        // Credit to regular fiat balance
+        
+        // Check if promo bonus applies
+        let bonusAmount = 0;
+        let totalCredit = depositAmount;
+        const promoActive = isPromoBonusActive(deposit.User.createdAt);
+        
+        if (promoActive) {
+          bonusAmount = calculateBonusAmount(depositAmount);
+          totalCredit = depositAmount + bonusAmount;
+          console.log(`🎁 Promo bonus active! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+        }
+        
+        // Credit to regular fiat balance (including bonus if applicable)
         const newBalance =
-          parseFloat(portfolio.balance.toString()) + depositAmount;
+          parseFloat(portfolio.balance.toString()) + totalCredit;
 
         console.log("  - Current balance:", parseFloat(portfolio.balance.toString()));
-        console.log("  - Adding:", depositAmount);
+        console.log("  - Deposit amount:", depositAmount);
+        if (bonusAmount > 0) {
+          console.log("  - Bonus amount:", bonusAmount);
+        }
+        console.log("  - Total credit:", totalCredit);
         console.log("  - New balance:", newBalance);
 
         await prisma.portfolio.update({
@@ -385,28 +444,33 @@ export async function POST(request: NextRequest) {
         });
 
         console.log(
-          `✅ Credited ${deposit.amount} ${depositCurrency} to user ${deposit.User.email}`
+          `✅ Credited ${totalCredit} ${depositCurrency} to user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ''}`
         );
         console.log(`New balance: ${newBalance} ${depositCurrency}`);
 
         console.log("📧 Creating deposit notification...");
         // Create notification for successful deposit
         const userCurrency2 = deposit.User.preferredCurrency || depositCurrency;
+        const bonusMessage = bonusAmount > 0 
+          ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userCurrency2)}${bonusAmount.toFixed(2)}!`
+          : '';
         await prisma.notification.create({
           data: {
             id: generateId(),
             userId: deposit.User.id,
             type: "DEPOSIT",
-            title: `${userCurrency2} Deposit Completed`,
+            title: bonusAmount > 0 ? `${userCurrency2} Deposit + Bonus!` : `${userCurrency2} Deposit Completed`,
             message: `Your deposit of ${getCurrencySymbol(userCurrency2)}${
               deposit.amount
-            } has been successfully credited to your account.`,
-            amount: deposit.amount,
+            } has been successfully credited to your account.${bonusMessage}`,
+            amount: totalCredit, // Include bonus in the displayed amount
             asset: userCurrency2,
             metadata: {
               depositId: deposit.id,
               transactionId: payment_id,
               method: deposit.method,
+              bonusAmount: bonusAmount > 0 ? bonusAmount : undefined,
+              bonusPercent: bonusAmount > 0 ? PROMO_BONUS_PERCENT : undefined,
             },
           },
         });
@@ -436,13 +500,14 @@ export async function POST(request: NextRequest) {
 
         // Send web push notification
         try {
+          const pushBonusText = bonusAmount > 0 ? ` (includes ${PROMO_BONUS_PERCENT}% bonus!)` : '';
           await sendPushNotification(
             deposit.User.id,
-            `${userCurrency2} Deposit Completed!`,
-            `Your deposit of ${getCurrencySymbol(userCurrency2)}${depositAmount.toFixed(2)} has been credited to your account.`,
+            bonusAmount > 0 ? `${userCurrency2} Deposit + Bonus!` : `${userCurrency2} Deposit Completed!`,
+            `Your deposit of ${getCurrencySymbol(userCurrency2)}${depositAmount.toFixed(2)} has been credited to your account.${pushBonusText}`,
             {
               type: "deposit",
-              amount: depositAmount,
+              amount: totalCredit,
               asset: depositCurrency,
               url: "/dashboard",
             }

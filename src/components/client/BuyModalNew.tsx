@@ -4,6 +4,7 @@ import { useState, useEffect, useOptimistic, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
@@ -17,19 +18,25 @@ interface BuyModalProps {
 }
 
 // 3D Card styling constants - GREEN theme for Buy
-const card3DStyle = {
-  background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-  boxShadow:
-    "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
-  border: "1px solid rgba(255, 255, 255, 0.08)",
-};
+const getCard3DStyle = (isDark: boolean) => ({
+  background: isDark
+    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+    : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+  boxShadow: isDark
+    ? "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)"
+    : "0 8px 30px -4px rgba(0, 0, 0, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 2px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.1)",
+});
 
-const inputStyle = {
-  background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-  boxShadow:
-    "inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-};
+const getInputStyle = (isDark: boolean) => ({
+  background: isDark
+    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)"
+    : "linear-gradient(145deg, #f8fafc 0%, #ffffff 100%)",
+  boxShadow: isDark
+    ? "inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
+    : "inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.8)",
+  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
+});
 
 // Crypto gradient colors
 const cryptoGradients: Record<string, string> = {
@@ -65,6 +72,12 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   const { portfolio, refetch } = usePortfolio();
   const { preferredCurrency, convertAmount, formatAmount, exchangeRates } = useCurrency();
   const { addTransaction } = useNotifications();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
+  // Get dynamic styles based on theme
+  const card3DStyle = getCard3DStyle(isDark);
+  const inputStyle = getInputStyle(isDark);
 
   const currencySymbol =
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
@@ -269,22 +282,23 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[10000] overflow-hidden"
           style={{
-            background:
-              "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #052e16 50%, #0f172a 75%, #0a0a0f 100%)",
+            background: isDark
+              ? "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #052e16 50%, #0f172a 75%, #0a0a0f 100%)"
+              : "linear-gradient(135deg, #f8fafc 0%, #f1f5f9 25%, #ecfdf5 50%, #f1f5f9 75%, #f8fafc 100%)",
           }}
         >
           {/* Animated background elements - GREEN theme */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-green-500/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-green-500/5 rounded-full blur-3xl" />
+            <div className={`absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse ${isDark ? "bg-green-500/10" : "bg-green-500/20"}`} />
+            <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse delay-1000 ${isDark ? "bg-emerald-500/10" : "bg-emerald-500/15"}`} />
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full blur-3xl ${isDark ? "bg-green-500/5" : "bg-green-500/10"}`} />
           </div>
 
           {/* Back button - top left (hidden on success) */}
           {step !== 4 && (
             <button
               onClick={handleBack}
-              className="absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50"
+              className={`absolute top-4 left-4 w-10 h-10 flex items-center justify-center rounded-xl transition-all z-50 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}
               style={card3DStyle}
               aria-label="Back"
             >
@@ -338,7 +352,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-bold text-white">Buy Crypto</h2>
+                  <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Buy Crypto</h2>
                 </div>
 
                 {/* Progress Steps */}
@@ -351,7 +365,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] transition-all ${
                               step >= s
                                 ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-sm shadow-green-500/30"
-                                : "bg-gray-800/50 text-gray-500"
+                                : isDark ? "bg-gray-800/50 text-gray-500" : "bg-gray-200 text-gray-500"
                             }`}
                             style={step >= s ? {} : inputStyle}
                           >
@@ -376,7 +390,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                               className={`w-6 h-0.5 rounded-full ${
                                 step > s
                                   ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                                  : "bg-gray-700"
+                                  : isDark ? "bg-gray-700" : "bg-gray-300"
                               }`}
                             />
                           )}
@@ -384,7 +398,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       ))}
                     </div>
                     <div className="flex justify-center mt-1">
-                      <span className="text-gray-400 text-[10px]">
+                      <span className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         {step === 1 && "Select Asset"}
                         {step === 2 && "Enter Amount"}
                         {step === 3 && "Confirm"}
@@ -408,24 +422,26 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <div
                       className="rounded-xl p-3"
                       style={{
-                        background:
-                          "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                        boxShadow:
-                          "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        background: isDark
+                          ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                          : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                        boxShadow: isDark
+                          ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                          : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
+                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                       }}
                     >
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400 text-xs font-medium">
+                        <span className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           Available Balance:
                         </span>
-                        <span className="text-lg font-bold text-white">
+                        <span className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {formatBalanceDisplay(availableBalance)}
                         </span>
                       </div>
                     </div>
 
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                       Select Cryptocurrency
                     </label>
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
@@ -442,14 +458,19 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             style={{
                               background:
                                 buyData.asset === symbol
-                                  ? "linear-gradient(145deg, rgba(34, 197, 94, 0.15) 0%, rgba(22, 163, 74, 0.15) 100%)"
-                                  : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
-                              boxShadow:
-                                "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                  ? isDark
+                                    ? "linear-gradient(145deg, rgba(34, 197, 94, 0.15) 0%, rgba(22, 163, 74, 0.15) 100%)"
+                                    : "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)"
+                                  : isDark
+                                    ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
+                                    : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                              boxShadow: isDark
+                                ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
+                                : "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
                               border:
                                 buyData.asset === symbol
                                   ? "1px solid rgba(34, 197, 94, 0.3)"
-                                  : "1px solid rgba(255, 255, 255, 0.05)",
+                                  : isDark ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.08)",
                             }}
                           >
                             <div className="flex items-center justify-between">
@@ -470,10 +491,10 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                   />
                                 </div>
                                 <div>
-                                  <div className="text-sm font-semibold text-white">
+                                  <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                     {symbol}
                                   </div>
-                                  <div className="text-[10px] text-gray-400">
+                                  <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                     {formatAmount(price, 2)}
                                   </div>
                                 </div>
@@ -519,8 +540,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <div
                         className="rounded-xl p-3 text-red-400 text-sm"
                         style={{
-                          background:
-                            "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(185, 28, 28, 0.1) 100%)",
+                          background: isDark
+                            ? "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(185, 28, 28, 0.1) 100%)"
+                            : "linear-gradient(145deg, rgba(239, 68, 68, 0.08) 0%, rgba(185, 28, 28, 0.08) 100%)",
                           border: "1px solid rgba(239, 68, 68, 0.2)",
                         }}
                       >
@@ -532,8 +554,9 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <div
                       className="rounded-xl p-3 flex items-center gap-3"
                       style={{
-                        background:
-                          "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)",
+                        background: isDark
+                          ? "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)"
+                          : "linear-gradient(145deg, rgba(34, 197, 94, 0.08) 0%, rgba(22, 163, 74, 0.08) 100%)",
                         border: "1px solid rgba(34, 197, 94, 0.2)",
                       }}
                     >
@@ -552,10 +575,10 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         />
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-white">
+                        <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           Buying {buyData.asset}
                         </div>
-                        <div className="text-[10px] text-gray-400">
+                        <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           Price: {formatAmount(getCurrentPrice(), 2)}
                         </div>
                       </div>
@@ -563,11 +586,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
                     {/* Amount Input */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-300 mb-2">
+                      <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                         Amount ({preferredCurrency})
                       </label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-semibold">
+                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           {currencySymbol}
                         </span>
                         <input
@@ -580,7 +603,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                               amount: e.target.value,
                             }))
                           }
-                          className="w-full rounded-xl px-4 py-3 pl-8 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          className={`w-full rounded-xl px-4 py-3 pl-8 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-green-500/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${isDark ? "text-white" : "text-gray-900"}`}
                           style={inputStyle}
                           placeholder="0.00"
                         />
@@ -596,12 +619,13 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                 amount: amount.toString(),
                               }))
                             }
-                            className="px-2 py-1 rounded-full text-[10px] font-medium text-gray-300 hover:text-white transition-all"
+                            className={`px-2 py-1 rounded-full text-[10px] font-medium transition-all ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
                             style={{
-                              background:
-                                "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                              boxShadow: "0 2px 8px -2px rgba(0, 0, 0, 0.4)",
-                              border: "1px solid rgba(255, 255, 255, 0.06)",
+                              background: isDark
+                                ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
+                                : "linear-gradient(145deg, #f3f4f6 0%, #e5e7eb 100%)",
+                              boxShadow: isDark ? "0 2px 8px -2px rgba(0, 0, 0, 0.4)" : "0 2px 6px -2px rgba(0, 0, 0, 0.15)",
+                              border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0, 0, 0, 0.08)",
                             }}
                           >
                             {currencySymbol}
@@ -616,13 +640,14 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <div
                         className="rounded-xl p-3"
                         style={{
-                          background:
-                            "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)",
+                          background: isDark
+                            ? "linear-gradient(145deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.1) 100%)"
+                            : "linear-gradient(145deg, rgba(34, 197, 94, 0.08) 0%, rgba(22, 163, 74, 0.08) 100%)",
                           border: "1px solid rgba(34, 197, 94, 0.2)",
                         }}
                       >
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-400 text-xs">
+                          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                             You will receive:
                           </span>
                           <span className="text-green-400 font-bold">
@@ -636,18 +661,20 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <div
                       className="rounded-xl p-3"
                       style={{
-                        background:
-                          "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                        boxShadow:
-                          "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        background: isDark
+                          ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                          : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                        boxShadow: isDark
+                          ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                          : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
+                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                       }}
                     >
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-400 text-xs font-medium">
+                        <span className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           Available Balance:
                         </span>
-                        <span className="text-lg font-bold text-white">
+                        <span className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {formatBalanceDisplay(availableBalance)}
                         </span>
                       </div>
@@ -656,7 +683,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <div className="flex gap-2">
                       <button
                         onClick={handleBack}
-                        className="flex-1 py-2 px-3 rounded-xl font-semibold text-white text-xs"
+                        className={`flex-1 py-2 px-3 rounded-xl font-semibold text-xs ${isDark ? "text-white" : "text-gray-700"}`}
                         style={card3DStyle}
                       >
                         Back
@@ -696,10 +723,10 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                           className="w-6 h-6 text-white"
                         />
                       </div>
-                      <p className="text-gray-400 text-xs mb-0.5">
+                      <p className={`text-xs mb-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         You&apos;re buying
                       </p>
-                      <p className="text-xl font-bold text-white">
+                      <p className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                         {getEstimatedCrypto().toFixed(8)}
                       </p>
                       <p className="text-green-400 font-semibold text-sm">
@@ -710,38 +737,40 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <div
                       className="rounded-xl p-3 space-y-2"
                       style={{
-                        background:
-                          "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                        boxShadow:
-                          "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        background: isDark
+                          ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                          : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                        boxShadow: isDark
+                          ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                          : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
+                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                       }}
                     >
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>
                           Price per {buyData.asset}:
                         </span>
-                        <span className="text-white font-medium">
+                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                           {formatAmount(getCurrentPrice(), 2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Amount:</span>
-                        <span className="text-white font-medium">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount:</span>
+                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                           {currencySymbol}
                           {parseFloat(buyData.amount).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Fee (1.5%):</span>
-                        <span className="text-white font-medium">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Fee (1.5%):</span>
+                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                           {currencySymbol}
                           {(parseFloat(buyData.amount) * 0.015).toFixed(2)}
                         </span>
                       </div>
-                      <hr className="border-gray-700" />
+                      <hr className={isDark ? "border-gray-700" : "border-gray-200"} />
                       <div className="flex justify-between font-bold text-sm">
-                        <span className="text-gray-300">Total Cost:</span>
+                        <span className={isDark ? "text-gray-300" : "text-gray-700"}>Total Cost:</span>
                         <span className="text-green-400">
                           {currencySymbol}
                           {(parseFloat(buyData.amount) * 1.015).toFixed(2)}
@@ -753,7 +782,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <button
                         onClick={handleBack}
                         disabled={isPending}
-                        className="flex-1 py-2 px-3 rounded-xl font-semibold text-white text-xs disabled:opacity-50"
+                        className={`flex-1 py-2 px-3 rounded-xl font-semibold text-xs disabled:opacity-50 ${isDark ? "text-white" : "text-gray-700"}`}
                         style={card3DStyle}
                       >
                         Back

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface PaymentData {
@@ -121,6 +122,8 @@ export default function CryptoWallet({
 
   const { addNotification, addTransaction } = useNotifications();
   const { preferredCurrency, formatAmount, convertAmount } = useCurrency();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const cryptoConfig =
     CRYPTO_CONFIG[cryptoSymbol.toUpperCase()] || CRYPTO_CONFIG.BTC;
@@ -367,13 +370,13 @@ export default function CryptoWallet({
   // Show error state
   if (error) {
     return (
-      <div className="space-y-6 text-center py-8">
-        <div className="flex items-center justify-center mb-4">
+      <div className={`space-y-5 text-center py-6 px-6 rounded-2xl ${isDark ? "bg-gray-900/90 border border-gray-700" : "bg-white border border-gray-200 shadow-xl"}`}>
+        <div className="flex items-center justify-center mb-3">
           <CryptoIcon symbol={cryptoSymbol} size="lg" />
         </div>
-        <div className="text-red-500 mb-4">
+        <div className="mb-3">
           <svg
-            className="w-16 h-16 mx-auto mb-4"
+            className="w-14 h-14 mx-auto mb-3 text-red-500"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -385,19 +388,19 @@ export default function CryptoWallet({
               d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <h3 className="text-xl font-bold mb-2">Payment Creation Failed</h3>
-          <p className="text-gray-400">{error}</p>
+          <h3 className={`text-lg font-bold mb-2 ${isDark ? "text-red-500" : "text-red-600"}`}>Payment Creation Failed</h3>
+          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>{error}</p>
         </div>
-        <div className="flex gap-3 justify-center">
+        <div className="flex gap-2 justify-center">
           <button
             onClick={onBack}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg transition-colors"
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDark ? "bg-gray-600 hover:bg-gray-700 text-white" : "bg-gray-300 hover:bg-gray-400 text-gray-800"}`}
           >
             Go Back
           </button>
           <button
             onClick={createPayment}
-            className={`${cryptoConfig.bgColor} hover:opacity-90 text-white px-6 py-3 rounded-lg transition-colors`}
+            className={`${cryptoConfig.bgColor} hover:opacity-90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors`}
           >
             Try Again
           </button>
@@ -444,16 +447,16 @@ export default function CryptoWallet({
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 p-6 rounded-2xl ${isDark ? "bg-gray-900/90 border border-gray-700" : "bg-white border border-gray-200 shadow-xl"}`}>
       {/* Header */}
       <div className="text-center">
         <div className="flex items-center justify-center mb-4">
           <CryptoIcon symbol={cryptoSymbol} size="lg" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-2">
+        <h2 className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
           {cryptoName} Deposit
         </h2>
-        <p className="text-gray-400 mb-3">
+        <p className={`mb-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
           Send exactly{" "}
           <span className={`text-${cryptoConfig.color} font-bold`}>
             {formatCryptoAmount(cryptoAmount)} {cryptoSymbol.toUpperCase()}
@@ -470,37 +473,37 @@ export default function CryptoWallet({
         <div className={`text-${cryptoConfig.color} text-sm font-medium mb-1`}>
           Time remaining to send payment
         </div>
-        <div className="text-white text-2xl font-bold">
+        <div className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
           {formatTime(timeLeft)}
         </div>
-        <div className="text-gray-400 text-xs mt-1">
+        <div className={`text-xs mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
           Payment will expire after this time
         </div>
       </div>
 
       {/* Amount Summary */}
-      <div className="bg-gray-800/50 rounded-lg p-4 space-y-3">
+      <div className={`rounded-lg p-3 space-y-1.5 text-sm ${isDark ? "bg-gray-800/50" : "bg-gray-50 border border-gray-200"}`}>
         <div className="flex justify-between">
-          <span className="text-gray-400">
+          <span className={isDark ? "text-gray-400" : "text-gray-600"}>
             Deposit Amount ({preferredCurrency})
           </span>
-          <span className="text-white font-medium">
+          <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
             {formatAmount(parseFloat(amount), 2)}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-400">{cryptoName} Amount</span>
+          <span className={isDark ? "text-gray-400" : "text-gray-600"}>{cryptoName} Amount</span>
           <span className={`text-${cryptoConfig.color} font-medium`}>
             {formatCryptoAmount(cryptoAmount)} {cryptoSymbol.toUpperCase()}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-400">Network Fee</span>
+          <span className={isDark ? "text-gray-400" : "text-gray-600"}>Network Fee</span>
           <span className="text-green-500 font-medium">Included</span>
         </div>
-        <hr className="border-gray-600" />
+        <hr className={isDark ? "border-gray-600" : "border-gray-200"} />
         <div className="flex justify-between">
-          <span className="text-white font-medium">Total to Send</span>
+          <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>Total to Send</span>
           <span className={`text-${cryptoConfig.color} font-bold`}>
             {formatCryptoAmount(cryptoAmount)} {cryptoSymbol.toUpperCase()}
           </span>
@@ -509,39 +512,39 @@ export default function CryptoWallet({
 
       {/* QR Code */}
       <div className="text-center">
-        <div className="bg-white p-4 rounded-lg inline-block mb-4">
+        <div className={`p-3 rounded-lg inline-block mb-2 ${isDark ? "bg-white" : "bg-white border border-gray-200 shadow-sm"}`}>
           {qrCodeUrl ? (
             <img
               src={qrCodeUrl}
               alt={`${cryptoName} QR Code`}
-              className="w-48 h-48"
+              className="w-36 h-36"
             />
           ) : (
-            <div className="w-48 h-48 bg-gray-200 animate-pulse"></div>
+            <div className="w-36 h-36 bg-gray-200 animate-pulse"></div>
           )}
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
           Scan QR code with your {cryptoName} wallet
         </p>
       </div>
 
       {/* Wallet Address */}
       <div>
-        <label className="block text-gray-400 text-sm mb-2">
+        <label className={`block text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
           {cryptoName} Wallet Address
         </label>
         <div className="flex items-center space-x-2">
-          <div className="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-3 text-white font-mono text-sm break-all">
+          <div className={`flex-1 rounded-lg px-2 py-2 font-mono text-xs break-all ${isDark ? "bg-gray-800 border border-gray-600 text-white" : "bg-gray-50 border border-gray-200 text-gray-900"}`}>
             {walletAddress || "Loading..."}
           </div>
           <button
             onClick={copyToClipboard}
             disabled={!walletAddress}
-            className={`${cryptoConfig.bgColor} hover:opacity-90 text-white px-4 py-3 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`${cryptoConfig.bgColor} hover:opacity-90 text-white px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             {copied ? (
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -555,7 +558,7 @@ export default function CryptoWallet({
               </svg>
             ) : (
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -609,10 +612,10 @@ export default function CryptoWallet({
       )}
 
       {/* Important Notes */}
-      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-        <div className="flex items-start space-x-3">
+      <div className={`rounded-lg p-4 ${isDark ? "bg-blue-500/10 border border-blue-500/30" : "bg-blue-50 border border-blue-200"}`}>
+        <div className="flex items-center gap-2 mb-2">
           <svg
-            className="w-5 h-5 text-blue-400 mt-0.5 flex-shrink-0"
+            className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-blue-400" : "text-blue-500"}`}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -624,25 +627,23 @@ export default function CryptoWallet({
               d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <div>
-            <p className="text-blue-400 font-medium text-sm mb-2">
-              Important Instructions:
-            </p>
-            <ul className="text-gray-300 text-xs space-y-1">
-              <li>
-                • Send exactly {formatCryptoAmount(cryptoAmount)}{" "}
-                {cryptoSymbol.toUpperCase()} to the address above
-              </li>
-              <li>
-                • Only send {cryptoName} ({cryptoSymbol.toUpperCase()}) - other
-                cryptocurrencies will be lost
-              </li>
-              <li>• Payment will be auto-detected when received</li>
-              <li>• Your balance will be credited automatically</li>
-              <li>• Keep this window open to monitor status</li>
-            </ul>
-          </div>
+          <p className="font-medium text-sm text-blue-500">
+            Important Instructions:
+          </p>
         </div>
+        <ul className={`text-xs space-y-1 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+          <li>
+            • Send exactly {formatCryptoAmount(cryptoAmount)}{" "}
+            {cryptoSymbol.toUpperCase()} to the address above
+          </li>
+          <li>
+            • Only send {cryptoName} ({cryptoSymbol.toUpperCase()}) - other
+            cryptocurrencies will be lost
+          </li>
+          <li>• Payment will be auto-detected when received</li>
+          <li>• Your balance will be credited automatically</li>
+          <li>• Keep this window open to monitor status</li>
+        </ul>
       </div>
 
       {/* Cancel Confirmation Modal */}
@@ -651,12 +652,12 @@ export default function CryptoWallet({
           <motion.div
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="bg-gray-800 rounded-xl p-6 max-w-md w-full border border-gray-700"
+            className={`rounded-xl p-5 max-w-md w-full ${isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200 shadow-xl"}`}
           >
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center mb-5">
+              <div className="w-14 h-14 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
                 <svg
-                  className="w-8 h-8 text-red-500"
+                  className="w-7 h-7 text-red-500"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -669,26 +670,26 @@ export default function CryptoWallet({
                   />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-white mb-2">
+              <h3 className={`text-lg font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                 Cancel Payment?
               </h3>
-              <p className="text-gray-400 text-sm">
+              <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 Are you sure you want to cancel this payment? If you've already
                 sent {cryptoName}, it may be lost.
               </p>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex space-x-2">
               <button
                 onClick={() => setShowCancelConfirm(false)}
                 disabled={isCancelling}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50"
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-100 hover:bg-gray-200 text-gray-700"}`}
               >
                 Keep Payment
               </button>
               <button
                 onClick={handleCancelPayment}
                 disabled={isCancelling}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50"
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white py-2 px-3 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
               >
                 {isCancelling ? "Cancelling..." : "Yes, Cancel"}
               </button>
@@ -698,17 +699,17 @@ export default function CryptoWallet({
       )}
 
       {/* Action Buttons */}
-      <div className="flex space-x-3">
+      <div className="flex space-x-2">
         <button
           onClick={onBack}
-          className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-3 px-4 rounded-lg font-medium transition-colors"
+          className={`flex-1 py-1.5 px-2 rounded-lg text-sm font-medium transition-colors ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-300 hover:bg-gray-400 text-gray-800"}`}
         >
-          ← Back
+          Back
         </button>
         <button
           onClick={() => setShowCancelConfirm(true)}
           disabled={isCancelling || paymentStatus === "COMPLETED"}
-          className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-500 py-3 px-4 rounded-lg font-medium transition-colors border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-500 py-1.5 px-2 rounded-lg text-sm font-medium transition-colors border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isCancelling ? "Cancelling..." : "Cancel Payment"}
         </button>
@@ -716,7 +717,7 @@ export default function CryptoWallet({
 
       {/* Status Check */}
       <div className="text-center">
-        <p className="text-gray-400 text-sm mb-2">
+        <p className={`text-sm mb-2 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
           {paymentStatus === "PENDING"
             ? "Waiting for payment confirmation..."
             : paymentStatus === "PROCESSING"
@@ -727,7 +728,7 @@ export default function CryptoWallet({
           <div
             className={`w-2 h-2 ${cryptoConfig.bgColor} rounded-full animate-pulse`}
           ></div>
-          <span className="text-gray-500 text-xs">
+          <span className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
             Auto-checking every 10 seconds
           </span>
         </div>

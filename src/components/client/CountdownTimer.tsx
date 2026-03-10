@@ -4,6 +4,19 @@ import { motion } from "framer-motion";
 import { Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 
+export const COUNTDOWN_STORAGE_KEY = "m4capital-promo-end-date";
+export const PROMO_DURATION_DAYS = 7;
+export const PROMO_BONUS_PERCENT = 50;
+
+// Helper to check if promo is active (can be used by other components)
+export function isPromoActive(): boolean {
+  if (typeof window === "undefined") return false;
+  const storedEndDate = localStorage.getItem(COUNTDOWN_STORAGE_KEY);
+  if (!storedEndDate) return false;
+  const targetDate = new Date(storedEndDate);
+  return targetDate.getTime() > Date.now();
+}
+
 export default function CountdownTimer() {
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -11,14 +24,33 @@ export default function CountdownTimer() {
     minutes: 0,
     seconds: 0,
   });
+  const [isExpired, setIsExpired] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Set target date to 7 days from now
-    const targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() + 7);
+    // Get or create the target date from localStorage
+    let targetDate: Date;
+    const storedEndDate = localStorage.getItem(COUNTDOWN_STORAGE_KEY);
+    
+    if (storedEndDate) {
+      targetDate = new Date(storedEndDate);
+      // If the stored date has passed, the promo is expired
+      if (targetDate.getTime() <= Date.now()) {
+        setIsExpired(true);
+        setIsInitialized(true);
+        return;
+      }
+    } else {
+      // First visit - set target date to 7 days from now
+      targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + PROMO_DURATION_DAYS);
+      localStorage.setItem(COUNTDOWN_STORAGE_KEY, targetDate.toISOString());
+    }
 
-    const interval = setInterval(() => {
-      const now = new Date().getTime();
+    setIsInitialized(true);
+
+    const updateCountdown = () => {
+      const now = Date.now();
       const distance = targetDate.getTime() - now;
 
       if (distance > 0) {
@@ -28,11 +60,24 @@ export default function CountdownTimer() {
           minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
           seconds: Math.floor((distance % (1000 * 60)) / 1000),
         });
+      } else {
+        // Timer expired - don't reset
+        setIsExpired(true);
       }
-    }, 1000);
+    };
+
+    // Initial update
+    updateCountdown();
+    
+    const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
   }, []);
+
+  // Don't render if expired or not initialized
+  if (!isInitialized || isExpired) {
+    return null;
+  }
 
   return (
     <motion.div

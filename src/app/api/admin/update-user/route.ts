@@ -290,6 +290,95 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    // If user was promoted to ADMIN, send notifications
+    if (role === "ADMIN" && userBefore.role !== "ADMIN") {
+      // 1. Send email notification to the promoted user
+      try {
+        if (userBefore.email) {
+          await sendEmail({
+            to: userBefore.email,
+            subject: "You've Been Promoted to Administrator - M4 Capital",
+            html: roleUpdateTemplate(userBefore.name || "User", "Administrator", true),
+            text: roleUpdateTextTemplate(userBefore.name || "User", "Administrator", true),
+          });
+        }
+
+        console.log(`✅ Admin promotion email sent to ${userBefore.email}`);
+      } catch (emailError) {
+        console.error("Failed to send admin promotion email:", emailError);
+      }
+
+      // 2. Create push notification for the promoted user
+      try {
+        await prisma.notification.create({
+          data: {
+            id: generateId(),
+            userId: userBefore.id,
+            type: "INFO",
+            title: "Promoted to Administrator",
+            message: `Congratulations! You have been promoted to Administrator. You now have full access to all administrative features.`,
+          },
+        });
+      } catch (notifError) {
+        console.error("Failed to create admin promotion notification:", notifError);
+      }
+
+      // 3. Get origin admin and send notification (if promoter is not the origin admin)
+      try {
+        const originAdmin = await prisma.user.findFirst({
+          where: {
+            role: "ADMIN",
+            isOriginAdmin: true,
+            isDeleted: false,
+          },
+          select: { id: true, email: true, name: true },
+        });
+
+        // Only notify origin admin if they didn't perform the action themselves
+        if (originAdmin && originAdmin.id !== session?.user?.id) {
+          // Send email to origin admin
+          if (originAdmin.email) {
+            await sendEmail({
+              to: originAdmin.email,
+              subject: "New Administrator Promoted - M4 Capital",
+              html: adminRoleNotificationTemplate(
+                userBefore.name || "User",
+                userBefore.email || "",
+                userBefore.id,
+                userBefore.role || "User",
+                "Administrator",
+                true
+              ),
+              text: adminRoleNotificationTextTemplate(
+                userBefore.name || "User",
+                userBefore.email || "",
+                userBefore.role || "User",
+                "Administrator",
+                true
+              ),
+            });
+          }
+
+          console.log(
+            `✅ Origin admin notification email sent to ${originAdmin.email}`
+          );
+
+          // Create push notification for origin admin
+          await prisma.notification.create({
+            data: {
+              id: generateId(),
+              userId: originAdmin.id,
+              type: "INFO",
+              title: "New Administrator",
+              message: `${userBefore.name} has been promoted to Administrator.`,
+            },
+          });
+        }
+      } catch (adminNotifError) {
+        console.error("Failed to notify origin admin of admin promotion:", adminNotifError);
+      }
+    }
+
     return createSuccessResponse(
       {
         user: updatedUser,
