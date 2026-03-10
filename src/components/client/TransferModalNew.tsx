@@ -721,13 +721,13 @@ export default function TransferModalNew({
                         )}
                       </div>
                       <div>
-                        <div className="text-sm font-semibold text-white">
+                        <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           Sending{" "}
                           {transferData.asset === "FIAT"
                             ? preferredCurrency
                             : transferData.asset}
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                           Balance:{" "}
                           {transferData.asset === "FIAT"
                             ? formatBalanceDisplay(currentBalance)
@@ -793,7 +793,7 @@ export default function TransferModalNew({
                         Amount ({preferredCurrency})
                       </label>
                       <div className="relative">
-                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400" : "text-gray-500"} font-medium`}>
+                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400" : "text-gray-500"} font-medium text-sm`}>
                           {currencySymbol}
                         </span>
                         <input
@@ -806,7 +806,7 @@ export default function TransferModalNew({
                               amount: e.target.value,
                             }))
                           }
-                          className={`w-full rounded-xl pl-8 pr-4 py-3 ${isDark ? "text-white" : "text-gray-900"} text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
+                          className={`w-full rounded-xl pl-10 pr-4 py-3 ${isDark ? "text-white" : "text-gray-900"} text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
                           style={inputStyle}
                           placeholder="0.00"
                         />

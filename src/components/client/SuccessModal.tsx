@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, X } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
@@ -29,6 +30,8 @@ export default function SuccessModal({
   recipient = "",
 }: SuccessModalProps) {
   const { formatAmount } = useCurrency();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   // Format crypto amount to 8 decimal places
   const formatCryptoAmount = (amt: string | number) => {
@@ -96,7 +99,10 @@ export default function SuccessModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[99998]"
+            className="fixed inset-0 backdrop-blur-sm z-[99998]"
+            style={{
+              background: isDark ? "rgba(0, 0, 0, 0.6)" : "rgba(0, 0, 0, 0.3)",
+            }}
           />
 
           {/* Modal Container */}
@@ -105,7 +111,11 @@ export default function SuccessModal({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 overflow-hidden"
+              className="w-full max-w-md rounded-2xl shadow-2xl border overflow-hidden"
+              style={{
+                background: isDark ? "#1f2937" : "#ffffff",
+                borderColor: isDark ? "#374151" : "#e5e7eb",
+              }}
             >
             {/* Header */}
             <div className="relative p-6 bg-gradient-to-r from-green-600 to-emerald-600">
@@ -130,17 +140,22 @@ export default function SuccessModal({
             {/* Content */}
             <div className="p-6">
               <div className="text-center mb-6">
-                <p className="text-gray-300 text-lg">{getMessage()}</p>
+                <p className={`text-lg ${isDark ? "text-gray-300" : "text-gray-700"}`}>{getMessage()}</p>
               </div>
 
               {/* Transaction Details */}
-              <div className="bg-gray-900/50 rounded-xl p-4 mb-6 space-y-3">
+              <div
+                className="rounded-xl p-4 mb-6 space-y-3"
+                style={{
+                  background: isDark ? "rgba(17, 24, 39, 0.5)" : "rgba(243, 244, 246, 0.8)",
+                }}
+              >
                 {type !== "swap" && asset && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Asset</span>
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Asset</span>
                     <div className="flex items-center gap-2">
                       <CryptoIcon symbol={asset} size="sm" />
-                      <span className="text-white font-semibold">{asset}</span>
+                      <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>{asset}</span>
                     </div>
                   </div>
                 )}
@@ -148,19 +163,19 @@ export default function SuccessModal({
                 {type === "swap" && (
                   <>
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-400">From</span>
+                      <span className={isDark ? "text-gray-400" : "text-gray-500"}>From</span>
                       <div className="flex items-center gap-2">
                         <CryptoIcon symbol={asset} size="sm" />
-                        <span className="text-white font-semibold">
+                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {formatCryptoAmount(amount)} {asset}
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-gray-400">To</span>
+                      <span className={isDark ? "text-gray-400" : "text-gray-500"}>To</span>
                       <div className="flex items-center gap-2">
                         <CryptoIcon symbol={toAsset} size="sm" />
-                        <span className="text-white font-semibold">
+                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {formatCryptoAmount(toAmount)} {toAsset}
                         </span>
                       </div>
@@ -170,8 +185,8 @@ export default function SuccessModal({
 
                 {amount && type !== "swap" && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Amount</span>
-                    <span className="text-white font-semibold">
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount</span>
+                    <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                       {formatCryptoAmount(amount)}
                     </span>
                   </div>
@@ -179,30 +194,30 @@ export default function SuccessModal({
 
                 {value && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Value</span>
-                    <span className="text-white font-semibold">{formatFiatValue(value)}</span>
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Value</span>
+                    <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>{formatFiatValue(value)}</span>
                   </div>
                 )}
 
                 {recipient && (
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400">Recipient</span>
-                    <span className="text-white font-semibold truncate max-w-[200px]">
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Recipient</span>
+                    <span className={`font-semibold truncate max-w-[200px] ${isDark ? "text-white" : "text-gray-900"}`}>
                       {recipient}
                     </span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Status</span>
-                  <span className="text-green-400 font-semibold">
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Status</span>
+                  <span className={`font-semibold ${isDark ? "text-green-400" : "text-green-600"}`}>
                     Completed
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Date</span>
-                  <span className="text-white">
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Date</span>
+                  <span className={isDark ? "text-white" : "text-gray-900"}>
                     {new Date()
                       .toLocaleString("en-CA", {
                         year: "numeric",

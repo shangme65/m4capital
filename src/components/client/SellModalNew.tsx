@@ -452,7 +452,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         </p>
                         <button
                           onClick={onClose}
-                          className="mt-4 text-red-400 hover:text-red-300"
+                          className={`mt-4 ${isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-500"}`}
                         >
                           Close
                         </button>
@@ -511,7 +511,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                                       >
                                         <CryptoIcon
                                           symbol={asset.symbol}
-                                          className="w-6 h-6 text-white"
+                                          className={`w-6 h-6 ${isDark ? "text-white" : "text-gray-700"}`}
                                         />
                                       </div>
                                       <div>
@@ -935,7 +935,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount Received:</span>
-                        <span className="text-red-400 font-bold">
+                        <span className={`font-bold ${isDark ? "text-red-400" : "text-red-600"}`}>
                           {currencySymbol}
                           {successData.value.toFixed(2)}
                         </span>

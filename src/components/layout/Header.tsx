@@ -20,6 +20,7 @@ import AboutUsDropdown from "../client/AboutUsDropdown";
 import LanguageDropdown from "../client/LanguageDropdown";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTranslation } from "@/lib/translations";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface HeaderProps {
   onLoginClick?: () => void;
@@ -34,6 +35,8 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
   const { language, setLanguage, languages, currentLanguage } = useLanguage();
   const { t } = useTranslation();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const router = useRouter();
@@ -110,8 +113,8 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
     <header
       className={`fixed top-0 left-0 right-0 z-50 h-[56px] ${
         isScrolled
-          ? "bg-gray-700 text-white shadow-md dark:shadow-none"
-          : "bg-transparent text-white"
+          ? isDark ? "bg-gray-700 text-white shadow-md" : "bg-gray-400 text-white shadow-md"
+          : isDark ? "bg-transparent text-white" : "bg-gray-400 text-white"
       }`}
     >
       <nav className="container mx-auto px-4 sm:px-8 md:px-16 h-full flex justify-between items-center">

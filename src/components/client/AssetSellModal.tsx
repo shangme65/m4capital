@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, TrendingDown, AlertCircle, ArrowUpDown } from "lucide-react";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import SuccessModal from "@/components/client/SuccessModal";
 
@@ -35,6 +36,8 @@ export default function AssetSellModal({
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const { addTransaction, addNotification } = useNotifications();
   const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   // Currency symbol helper
   const getCurrencySymbol = () => {
@@ -200,7 +203,7 @@ export default function AssetSellModal({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
             style={{
-              background: "rgba(0, 0, 0, 0.7)",
+              background: isDark ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.5)",
               backdropFilter: "blur(4px)",
             }}
             onClick={onClose}
@@ -211,9 +214,15 @@ export default function AssetSellModal({
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-sm max-h-[80vh] flex flex-col rounded-2xl overflow-hidden"
               style={{
-                background: "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)",
-                boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
-                border: "1px solid rgba(255, 255, 255, 0.1)",
+                background: isDark
+                  ? "linear-gradient(180deg, #1e293b 0%, #0f172a 100%)"
+                  : "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)",
+                boxShadow: isDark
+                  ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)"
+                  : "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+                border: isDark
+                  ? "1px solid rgba(255, 255, 255, 0.1)"
+                  : "1px solid rgba(0, 0, 0, 0.1)",
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -221,26 +230,38 @@ export default function AssetSellModal({
               <div
                 className="flex items-center justify-between px-4 py-3 border-b"
                 style={{
-                  borderColor: "rgba(255, 255, 255, 0.08)",
-                  background: "rgba(30, 41, 59, 0.5)",
+                  borderColor: isDark
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(0, 0, 0, 0.08)",
+                  background: isDark
+                    ? "rgba(30, 41, 59, 0.5)"
+                    : "rgba(248, 250, 252, 0.8)",
                 }}
               >
                 <button
                   onClick={onClose}
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200 hover:scale-110 active:scale-95"
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 ${
+                    isDark
+                      ? "text-gray-300 hover:text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
                   style={{
-                    background:
-                      "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                    boxShadow:
-                      "0 2px 8px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    background: isDark
+                      ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
+                      : "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
+                    boxShadow: isDark
+                      ? "0 2px 8px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)"
+                      : "0 2px 8px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
+                    border: isDark
+                      ? "1px solid rgba(255, 255, 255, 0.06)"
+                      : "1px solid rgba(0, 0, 0, 0.06)",
                   }}
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </button>
                 <div className="flex items-center gap-2">
                   <CryptoIcon symbol={asset.symbol} size="xs" />
-                  <span className="text-lg font-bold text-white">
+                  <span className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                     Sell {asset.symbol}
                   </span>
                 </div>
@@ -253,30 +274,34 @@ export default function AssetSellModal({
                 <div
                   className="p-3 rounded-xl"
                   style={{
-                    background: "rgba(239, 68, 68, 0.1)",
-                    border: "1px solid rgba(239, 68, 68, 0.2)",
+                    background: isDark
+                      ? "rgba(239, 68, 68, 0.1)"
+                      : "rgba(239, 68, 68, 0.08)",
+                    border: isDark
+                      ? "1px solid rgba(239, 68, 68, 0.2)"
+                      : "1px solid rgba(239, 68, 68, 0.15)",
                   }}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <CryptoIcon symbol={asset.symbol} size="xs" />
                       <div>
-                        <p className="text-xs text-gray-400">Available</p>
-                        <p className="text-sm font-bold text-white">
-                          {asset.amount.toFixed(8)} <span className="text-gray-400 text-xs">{asset.symbol}</span>
+                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Available</p>
+                        <p className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                          {asset.amount.toFixed(8)} <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>{asset.symbol}</span>
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-gray-400">Price</p>
-                      <p className="text-sm font-semibold text-red-400">{formatAmount(asset.price, 2)}</p>
+                      <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Price</p>
+                      <p className={`text-sm font-semibold ${isDark ? "text-red-400" : "text-red-600"}`}>{formatAmount(asset.price, 2)}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Amount Input - Compact */}
                 <div>
-                  <label className="block text-xs font-semibold text-gray-400 mb-2">
+                  <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-400" : "text-gray-700"}`}>
                     Amount to Sell
                   </label>
                   <div className="relative mb-3">
@@ -290,13 +315,21 @@ export default function AssetSellModal({
                           ? "0.00000000"
                           : `${getCurrencySymbol()}0.00`
                       }
-                      className="w-full px-3 py-3 pr-20 rounded-xl text-white text-xl font-bold focus:outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className={`w-full px-3 py-3 pr-20 rounded-xl font-bold focus:outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                        isDark ? "text-white text-xl" : "text-gray-900 text-xl"
+                      }`}
                       style={{
-                        background: "rgba(15, 23, 42, 0.8)",
-                        boxShadow: "inset 0 2px 4px rgba(0, 0, 0, 0.3)",
+                        background: isDark
+                          ? "rgba(15, 23, 42, 0.8)"
+                          : "rgba(248, 250, 252, 0.9)",
+                        boxShadow: isDark
+                          ? "inset 0 2px 4px rgba(0, 0, 0, 0.3)"
+                          : "inset 0 2px 4px rgba(0, 0, 0, 0.06)",
                         border: errors.sellAmount
                           ? "1px solid rgba(239, 68, 68, 0.5)"
-                          : "1px solid rgba(255, 255, 255, 0.08)",
+                          : isDark
+                          ? "1px solid rgba(255, 255, 255, 0.08)"
+                          : "1px solid rgba(0, 0, 0, 0.08)",
                       }}
                     />
                     <button
@@ -318,7 +351,11 @@ export default function AssetSellModal({
                         }
                         setInputMode(inputMode === "crypto" ? "fiat" : "crypto");
                       }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-red-400 hover:text-red-300 text-sm font-medium transition-colors"
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 text-sm font-medium transition-colors ${
+                        isDark
+                          ? "text-red-400 hover:text-red-300"
+                          : "text-red-600 hover:text-red-500"
+                      }`}
                     >
                       <ArrowUpDown className="w-3.5 h-3.5" />
                       <span>{inputMode === "crypto" ? asset.symbol : preferredCurrency}</span>
@@ -344,9 +381,13 @@ export default function AssetSellModal({
                         }}
                         className="flex-1 py-2 rounded-lg text-xs font-semibold transition-all duration-200 hover:scale-105 active:scale-95"
                         style={{
-                          background: "rgba(55, 65, 81, 0.5)",
-                          border: "1px solid rgba(255, 255, 255, 0.06)",
-                          color: "#9ca3af",
+                          background: isDark
+                            ? "rgba(55, 65, 81, 0.5)"
+                            : "rgba(226, 232, 240, 0.8)",
+                          border: isDark
+                            ? "1px solid rgba(255, 255, 255, 0.06)"
+                            : "1px solid rgba(0, 0, 0, 0.08)",
+                          color: isDark ? "#9ca3af" : "#64748b",
                         }}
                       >
                         {percent}%
@@ -355,7 +396,7 @@ export default function AssetSellModal({
                   </div>
 
                   {errors.sellAmount && (
-                    <p className="text-xs text-red-400 flex items-center gap-1 mb-2">
+                    <p className={`text-xs flex items-center gap-1 mb-2 ${isDark ? "text-red-400" : "text-red-600"}`}>
                       <AlertCircle className="w-3 h-3" />
                       {errors.sellAmount}
                     </p>
@@ -364,7 +405,7 @@ export default function AssetSellModal({
                   {sellAmount &&
                     parseFloat(sellAmount) > 0 &&
                     !errors.sellAmount && (
-                      <p className="text-right text-xs text-gray-400">
+                      <p className={`text-right text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                         {inputMode === "crypto"
                           ? `≈ ${formatAmount(parseFloat(sellAmount) * asset.price, 2)}`
                           : `≈ ${parseFloat(getCryptoAmount()).toFixed(8)} ${asset.symbol}`}
@@ -381,33 +422,44 @@ export default function AssetSellModal({
                       animate={{ opacity: 1, y: 0 }}
                       className="p-3 rounded-xl"
                       style={{
-                        background: "rgba(239, 68, 68, 0.1)",
-                        border: "1px solid rgba(239, 68, 68, 0.2)",
+                        background: isDark
+                          ? "rgba(239, 68, 68, 0.1)"
+                          : "rgba(239, 68, 68, 0.08)",
+                        border: isDark
+                          ? "1px solid rgba(239, 68, 68, 0.2)"
+                          : "1px solid rgba(239, 68, 68, 0.15)",
                       }}
                     >
-                      <p className="text-xs text-gray-300 mb-2 font-semibold flex items-center gap-1.5">
-                        <TrendingDown className="w-3 h-3 text-red-400" />
+                      <p className={`text-xs mb-2 font-semibold flex items-center gap-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <TrendingDown className={`w-3 h-3 ${isDark ? "text-red-400" : "text-red-600"}`} />
                         Sale Preview
                       </p>
                       <div className="space-y-1.5">
                         <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">You&apos;re selling</span>
-                          <span className="font-bold text-white">
+                          <span className={isDark ? "text-gray-400" : "text-gray-600"}>(You&apos;re selling</span>
+                          <span className={`font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                             {parseFloat(getCryptoAmount()).toFixed(8)} {asset.symbol}
                           </span>
                         </div>
                         <div className="flex justify-between text-xs">
-                          <span className="text-gray-400">Rate</span>
-                          <span className="text-gray-300">
+                          <span className={isDark ? "text-gray-400" : "text-gray-600"}>Rate</span>
+                          <span className={isDark ? "text-gray-300" : "text-gray-700"}>
                             1 {asset.symbol} = {formatAmount(asset.price, 2)}
                           </span>
                         </div>
-                        <div className="h-px my-1" style={{ background: "rgba(239, 68, 68, 0.2)" }} />
+                        <div
+                          className="h-px my-1"
+                          style={{
+                            background: isDark
+                              ? "rgba(239, 68, 68, 0.2)"
+                              : "rgba(239, 68, 68, 0.15)",
+                          }}
+                        />
                         <div className="flex justify-between items-center">
-                          <span className="text-xs font-semibold text-gray-300">
+                          <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                             You&apos;ll receive
                           </span>
-                          <span className="font-bold text-lg text-red-400">
+                          <span className={`font-bold text-lg ${isDark ? "text-red-400" : "text-red-600"}`}>
                             {formatAmount(usdValue, 2)}
                           </span>
                         </div>
@@ -420,8 +472,12 @@ export default function AssetSellModal({
               <div
                 className="px-4 py-3 border-t"
                 style={{
-                  borderColor: "rgba(255, 255, 255, 0.08)",
-                  background: "rgba(15, 23, 42, 0.9)",
+                  borderColor: isDark
+                    ? "rgba(255, 255, 255, 0.08)"
+                    : "rgba(0, 0, 0, 0.08)",
+                  background: isDark
+                    ? "rgba(15, 23, 42, 0.9)"
+                    : "rgba(248, 250, 252, 0.95)",
                 }}
               >
                 <button
@@ -439,7 +495,9 @@ export default function AssetSellModal({
                       !sellAmount ||
                       parseFloat(sellAmount) <= 0 ||
                       !!errors.sellAmount
-                        ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
+                        ? isDark
+                          ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
+                          : "linear-gradient(145deg, #cbd5e1 0%, #94a3b8 100%)"
                         : "linear-gradient(145deg, #ef4444 0%, #dc2626 100%)",
                     boxShadow:
                       isProcessing ||
@@ -448,7 +506,9 @@ export default function AssetSellModal({
                       !!errors.sellAmount
                         ? "none"
                         : "0 4px 12px -2px rgba(239, 68, 68, 0.4)",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    border: isDark
+                      ? "1px solid rgba(255, 255, 255, 0.1)"
+                      : "1px solid rgba(0, 0, 0, 0.1)",
                   }}
                 >
                   {isProcessing
@@ -459,7 +519,7 @@ export default function AssetSellModal({
                       }`
                     : `Sell ${asset.symbol}`}
                 </button>
-                <p className="text-[10px] text-center text-gray-500 mt-2">
+                <p className={`text-[10px] text-center mt-2 ${isDark ? "text-gray-500" : "text-gray-600"}`}>
                   1.5% fee • Instant settlement
                 </p>
               </div>

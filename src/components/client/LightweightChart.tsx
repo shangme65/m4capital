@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, memo } from "react";
+import { useState, memo } from "react";
 
 interface LightweightChartProps {
   symbol: string;
@@ -8,30 +8,19 @@ interface LightweightChartProps {
   height?: number;
 }
 
-// Map crypto symbols to TradingView format (BINANCE exchange)
 function getTradingViewSymbol(symbol: string): string {
-  const symbolUpper = symbol.toUpperCase();
-  // TradingView uses EXCHANGE:PAIR format
-  return `BINANCE:${symbolUpper}USDT`;
+  return `BINANCE:${symbol.toUpperCase()}USDT`;
 }
 
-// Map interval to TradingView interval format
 function getTradingViewInterval(interval: string): string {
   switch (interval) {
-    case "1H":
-      return "60"; // 60 minutes
-    case "1D":
-      return "D"; // Daily
-    case "1W":
-      return "W"; // Weekly
-    case "1M":
-      return "M"; // Monthly
-    case "1Y":
-      return "12M"; // 12 months
-    case "All":
-      return "M"; // Monthly for all-time view
-    default:
-      return "D";
+    case "1H": return "60";
+    case "1D": return "D";
+    case "1W": return "W";
+    case "1M": return "M";
+    case "1Y": return "12M";
+    case "All": return "M";
+    default: return "D";
   }
 }
 
@@ -40,158 +29,48 @@ function LightweightChart({
   interval = "1D",
   height = 320,
 }: LightweightChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const widgetIdRef = useRef<string>(
-    `tradingview_${Math.random().toString(36).substring(7)}`
-  );
 
-  useEffect(() => {
-    if (!containerRef.current) return;
+  const tvSymbol = encodeURIComponent(getTradingViewSymbol(symbol));
+  const tvInterval = getTradingViewInterval(interval);
 
-    const tvSymbol = getTradingViewSymbol(symbol);
-    const tvInterval = getTradingViewInterval(interval);
-
-    // Clear any existing content
-    containerRef.current.innerHTML = "";
-
-    // Create container for the widget
-    const widgetContainer = document.createElement("div");
-    widgetContainer.id = widgetIdRef.current;
-    widgetContainer.style.height = "100%";
-    widgetContainer.style.width = "100%";
-    containerRef.current.appendChild(widgetContainer);
-
-    // Widget configuration
-    const widgetConfig = {
-      container_id: widgetIdRef.current,
-      symbol: tvSymbol,
-      interval: tvInterval,
-      timezone: "Etc/UTC",
-      theme: "dark",
-      style: "1", // Candlestick
-      locale: "en",
-      toolbar_bg: "#0f172a",
-      enable_publishing: false,
-      hide_top_toolbar: false,
-      hide_legend: true,
-      save_image: false,
-      hide_volume: false,
-      allow_symbol_change: false,
-      hide_symbol_search_button: true,
-      backgroundColor: "#0f172a",
-      autosize: true,
-      withdateranges: true,
-      details: false,
-      hotlist: false,
-      calendar: false,
-      hide_side_toolbar: true,
-      studies: [],
-      overrides: {
-        "paneProperties.background": "#0f172a",
-        "paneProperties.backgroundType": "solid",
-        "paneProperties.vertGridProperties.color": "rgba(75, 85, 99, 0.2)",
-        "paneProperties.horzGridProperties.color": "rgba(75, 85, 99, 0.2)",
-        "scalesProperties.textColor": "#9ca3af",
-        "scalesProperties.lineColor": "rgba(75, 85, 99, 0.3)",
-        "mainSeriesProperties.candleStyle.upColor": "#22c55e",
-        "mainSeriesProperties.candleStyle.downColor": "#ef4444",
-        "mainSeriesProperties.candleStyle.borderUpColor": "#22c55e",
-        "mainSeriesProperties.candleStyle.borderDownColor": "#ef4444",
-        "mainSeriesProperties.candleStyle.wickUpColor": "#22c55e",
-        "mainSeriesProperties.candleStyle.wickDownColor": "#ef4444",
-      },
-    };
-
-    // Create widget function
-    const createWidget = () => {
-      // @ts-expect-error - TradingView is loaded globally
-      if (typeof TradingView !== "undefined" && widgetContainer) {
-        try {
-          // @ts-expect-error - TradingView widget constructor
-          new TradingView.widget(widgetConfig);
-          setIsLoading(false);
-        } catch (error) {
-          console.error("Failed to create TradingView widget:", error);
-          setIsLoading(false);
-        }
-      } else {
-        console.warn("TradingView library not available");
-        setIsLoading(false);
-      }
-    };
-
-    // Load TradingView widget script
-    const existingScript = document.querySelector(
-      'script[src="https://s3.tradingview.com/tv.js"]'
-    );
-
-    // Retry function to wait for TradingView to be available
-    const waitForTradingView = (retries = 10, delay = 200) => {
-      if ((window as any).TradingView) {
-        createWidget();
-      } else if (retries > 0) {
-        setTimeout(() => waitForTradingView(retries - 1, delay), delay);
-      } else {
-        console.warn("TradingView library not available after retries");
-        setIsLoading(false);
-      }
-    };
-
-    if (existingScript) {
-      // Script already loaded, check if TradingView is available
-      if (typeof window !== "undefined" && (window as any).TradingView) {
-        createWidget();
-      } else {
-        // Script loaded but TradingView not available yet, retry with backoff
-        waitForTradingView();
-      }
-    } else {
-      const script = document.createElement("script");
-      script.src = "https://s3.tradingview.com/tv.js";
-      script.async = true;
-      script.onload = () => {
-        // Wait a bit for TradingView to initialize
-        setTimeout(() => {
-          createWidget();
-        }, 100);
-      };
-      script.onerror = (error) => {
-        console.error("Failed to load TradingView widget script:", error);
-        setIsLoading(false);
-      };
-      
-      try {
-        document.head.appendChild(script);
-      } catch (error) {
-        console.error("Failed to append TradingView script:", error);
-        setIsLoading(false);
-      }
-    }
-
-    return () => {
-      // Cleanup
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-      }
-    };
-  }, [symbol, interval]);
+  const src =
+    `https://s.tradingview.com/widgetembed/` +
+    `?frameElementId=tv_embed_${symbol}` +
+    `&symbol=${tvSymbol}` +
+    `&interval=${tvInterval}` +
+    `&hidesidetoolbar=1` +
+    `&hidetoptoolbar=0` +
+    `&symboledit=0` +
+    `&saveimage=0` +
+    `&toolbarbg=0f172a` +
+    `&theme=dark` +
+    `&style=1` +
+    `&timezone=Etc%2FUTC` +
+    `&withdateranges=1` +
+    `&locale=en` +
+    `&allow_symbol_change=0`;
 
   return (
     <div
       className="relative w-full rounded-xl overflow-hidden"
       style={{
         height: `${height}px`,
-        background:
-          "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+        background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
       }}
     >
-      {/* TradingView widget container */}
-      <div ref={containerRef} className="w-full h-full" />
+      <iframe
+        src={src}
+        className="w-full h-full border-0"
+        allowFullScreen
+        onLoad={() => setIsLoading(false)}
+      />
 
-      {/* Loading overlay */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm rounded-xl" style={{ zIndex: 10000 }}>
+        <div
+          className="absolute inset-0 flex items-center justify-center bg-gray-900/80 backdrop-blur-sm rounded-xl"
+          style={{ zIndex: 10000 }}
+        >
           <div className="text-center">
             <div className="w-10 h-10 border-3 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             <div className="text-sm text-gray-400">Loading chart...</div>

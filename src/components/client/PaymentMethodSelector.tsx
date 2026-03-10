@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { X, CreditCard, Wallet, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import Image from "next/image";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import CustomWalletDeposit from "./CustomWalletDeposit";
@@ -36,6 +37,8 @@ export default function PaymentMethodSelector({
   const [showCustomWallet, setShowCustomWallet] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const { showInfo, showSuccess: showToast, showError } = useToast();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   const handleDone = () => {
     setShowSuccess(false);
@@ -202,14 +205,21 @@ export default function PaymentMethodSelector({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[10001] p-4"
+      className="fixed inset-0 flex items-center justify-center z-[10001] p-4"
+      style={{
+        background: isDark ? "rgba(0, 0, 0, 0.7)" : "rgba(0, 0, 0, 0.4)",
+        backdropFilter: "blur(4px)",
+      }}
       onClick={onClose}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className="bg-gray-900 rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden"
+        className="rounded-2xl max-w-lg w-full max-h-[90vh] overflow-hidden"
+        style={{
+          background: isDark ? "#111827" : "#ffffff",
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -221,26 +231,32 @@ export default function PaymentMethodSelector({
                   setSelectedMethod(null);
                   setSelectedProvider(null);
                 }}
-                className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+                className="p-2 rounded-lg transition-colors"
+                style={{
+                  color: "white",
+                }}
               >
                 <ArrowLeft className="w-5 h-5" />
               </button>
             )}
-            <h2 className="text-lg font-bold text-white flex-1 text-center">
+            <h2 className="text-lg font-bold flex-1 text-center" style={{ color: "white" }}>
               {selectedMethod === "usd-balance"
                 ? "Confirm Purchase"
                 : "Select Payment Method"}
             </h2>
             <button
               onClick={onClose}
-              className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
+              className="p-2 rounded-lg transition-colors"
+              style={{
+                color: "white",
+              }}
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Purchase Summary */}
-          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 text-white">
+          <div className="backdrop-blur-sm rounded-lg p-3" style={{ background: "rgba(255, 255, 255, 0.1)", color: "white" }}>
             <div className="flex justify-between items-center mb-1.5">
               <span className="text-xs opacity-80">You're buying</span>
               <span className="text-base font-bold">
@@ -260,7 +276,7 @@ export default function PaymentMethodSelector({
         <div className="p-4 overflow-y-auto max-h-[calc(90vh-280px)]">
           {!selectedMethod && (
             <div className="space-y-3">
-              <h3 className="text-gray-400 text-sm font-medium mb-3">
+              <h3 className={`text-sm font-medium mb-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 Payment method
               </h3>
               {paymentMethods.map((method) => (
@@ -268,11 +284,17 @@ export default function PaymentMethodSelector({
                   key={method.id}
                   onClick={() => setSelectedMethod(method.id)}
                   disabled={!method.enabled}
-                  className={`w-full p-3 rounded-xl border-2 transition-all text-left ${
-                    method.enabled
-                      ? "border-gray-700 hover:border-purple-500 bg-gray-800 hover:bg-gray-750"
-                      : "border-gray-800 bg-gray-900 opacity-50 cursor-not-allowed"
-                  }`}
+                  className="w-full p-3 rounded-xl border-2 transition-all text-left"
+                  style={{
+                    borderColor: method.enabled
+                      ? isDark ? "#374151" : "#e5e7eb"
+                      : isDark ? "#1f2937" : "#d1d5db",
+                    background: method.enabled
+                      ? isDark ? "#1f2937" : "#f9fafb"
+                      : isDark ? "#111827" : "#e5e7eb",
+                    opacity: method.enabled ? 1 : 0.5,
+                    cursor: method.enabled ? "pointer" : "not-allowed",
+                  }}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2.5">
@@ -280,7 +302,7 @@ export default function PaymentMethodSelector({
                         {method.icon}
                       </div>
                       <div>
-                        <div className="text-white text-sm font-semibold">
+                        <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {method.name}
                         </div>
                         <div
@@ -289,8 +311,8 @@ export default function PaymentMethodSelector({
                               ? method.id === "usd-balance" &&
                                 userBalance < usdValue
                                 ? "text-red-400"
-                                : "text-gray-400"
-                              : "text-gray-600"
+                                : isDark ? "text-gray-400" : "text-gray-500"
+                              : isDark ? "text-gray-600" : "text-gray-400"
                           }`}
                         >
                           {method.description}
@@ -298,7 +320,12 @@ export default function PaymentMethodSelector({
                       </div>
                     </div>
                     {method.enabled && (
-                      <div className="w-6 h-6 rounded-full border-2 border-gray-600" />
+                      <div
+                        className="w-6 h-6 rounded-full border-2"
+                        style={{
+                          borderColor: isDark ? "#4b5563" : "#9ca3af",
+                        }}
+                      />
                     )}
                   </div>
                 </button>
@@ -309,27 +336,38 @@ export default function PaymentMethodSelector({
           {selectedMethod &&
             selectedMethod !== "usd-balance" &&
             selectedMethod !== "card" && (
-              <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+              <div
+                className="rounded-xl p-6 border"
+                style={{
+                  background: isDark ? "#1f2937" : "#f9fafb",
+                  borderColor: isDark ? "#374151" : "#e5e7eb",
+                }}
+              >
                 <div className="text-center">
                   <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <CreditCard className="w-8 h-8 text-white" />
+                    <CreditCard className={`w-8 h-8 ${isDark ? "text-white" : "text-gray-900"}`} />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">
+                  <h3 className={`text-xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                     {paymentMethods.find((m) => m.id === selectedMethod)?.name}
                   </h3>
-                  <p className="text-gray-400 mb-4">
+                  <p className={`mb-4 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                     You will be redirected to complete your purchase
                   </p>
-                  <div className="bg-gray-900 rounded-lg p-4">
+                  <div
+                    className="rounded-lg p-4"
+                    style={{
+                      background: isDark ? "#111827" : "#f3f4f6",
+                    }}
+                  >
                     <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-400">Amount:</span>
-                      <span className="text-white font-medium">
+                      <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount:</span>
+                      <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                         {amount} {asset}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Total:</span>
-                      <span className="text-white font-medium">
+                      <span className={isDark ? "text-gray-400" : "text-gray-500"}>Total:</span>
+                      <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                         ${usdValue.toLocaleString()}
                       </span>
                     </div>
@@ -340,7 +378,7 @@ export default function PaymentMethodSelector({
 
           {selectedMethod === "card" && (
             <div className="space-y-3">
-              <h3 className="text-gray-400 text-sm font-medium mb-3">
+              <h3 className={`text-sm font-medium mb-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 Providers
               </h3>
               {cryptoProviders.map((provider) => (
@@ -387,40 +425,56 @@ export default function PaymentMethodSelector({
           )}
 
           {selectedMethod === "usd-balance" && (
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700">
+            <div
+              className="rounded-xl p-4 border"
+              style={{
+                background: isDark ? "#1f2937" : "#f9fafb",
+                borderColor: isDark ? "#374151" : "#e5e7eb",
+              }}
+            >
               <div className="text-center">
                 <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
                   <Wallet className="w-6 h-6 text-white" />
                 </div>
-                <h3 className="text-base font-bold text-white mb-1">
+                <h3 className={`text-base font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
                   Confirm Purchase
                 </h3>
-                <p className="text-gray-400 text-sm mb-3">
+                <p className={`text-sm mb-3 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                   {formatAmount(usdValue * 1.015, 2)} will be deducted from your{" "}
                   {preferredCurrency} balance
                 </p>
-                <div className="bg-gray-900 rounded-lg p-3 mb-3">
+                <div
+                  className="rounded-lg p-3 mb-3"
+                  style={{
+                    background: isDark ? "#111827" : "#f3f4f6",
+                  }}
+                >
                   <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-gray-400">Current Balance:</span>
-                    <span className="text-white font-medium">
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Current Balance:</span>
+                    <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                       {formatBalanceDisplay(userBalance)}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-gray-400">Purchase Amount:</span>
-                    <span className="text-white font-medium">
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Purchase Amount:</span>
+                    <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                       {formatAmount(usdValue, 2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-gray-400">Fee (1.5%):</span>
-                    <span className="text-white font-medium">
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Fee (1.5%):</span>
+                    <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                       {formatAmount(usdValue * 0.015, 2)}
                     </span>
                   </div>
-                  <div className="border-t border-gray-700 my-1.5" />
+                  <div
+                    className="border-t my-1.5"
+                    style={{
+                      borderColor: isDark ? "#374151" : "#d1d5db",
+                    }}
+                  />
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-400">New Balance:</span>
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>New Balance:</span>
                     <span className="text-green-400 font-bold">
                       {formatBalanceDisplay(userBalance - convertUsdToBalanceCurrency(usdValue * 1.015))}
                     </span>
@@ -433,7 +487,12 @@ export default function PaymentMethodSelector({
 
         {/* Footer Button */}
         {selectedMethod && (
-          <div className="p-4 border-t border-gray-800">
+          <div
+            className="p-4 border-t"
+            style={{
+              borderColor: isDark ? "#1f2937" : "#e5e7eb",
+            }}
+          >
             <button
               onClick={handlePurchase}
               disabled={isProcessing}

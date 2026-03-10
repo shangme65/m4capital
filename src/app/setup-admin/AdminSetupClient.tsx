@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, signOut } from "next-auth/react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/contexts/ToastContext";
 import ConfirmDialog from "@/components/client/ConfirmDialog";
 import {
@@ -40,6 +41,8 @@ export default function AdminSetupClient({
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const router = useRouter();
   const { showSuccess, showError } = useToast();
 
@@ -234,21 +237,23 @@ export default function AdminSetupClient({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 relative overflow-hidden">
+    <div className={`min-h-screen relative overflow-hidden ${isDark ? "bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950" : "bg-slate-50"}`}>
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+        <div className={`absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl animate-blob ${isDark ? "bg-purple-500 opacity-20" : "bg-gray-300 opacity-30"}`}></div>
+        <div className={`absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000 ${isDark ? "bg-blue-500 opacity-20" : "bg-gray-400 opacity-20"}`}></div>
+        <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000 ${isDark ? "bg-indigo-500 opacity-20" : "bg-slate-300 opacity-20"}`}></div>
       </div>
 
       {/* Grid Pattern Overlay */}
       <div
-        className="absolute inset-0 opacity-10"
+        className="absolute inset-0"
         style={{
-          backgroundImage: `linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px),
-                           linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)`,
+          backgroundImage: isDark
+            ? `linear-gradient(rgba(139, 92, 246, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(139, 92, 246, 0.1) 1px, transparent 1px)`
+            : `linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px)`,
           backgroundSize: "50px 50px",
+          opacity: isDark ? 0.1 : 0.4,
         }}
       ></div>
 
@@ -263,10 +268,10 @@ export default function AdminSetupClient({
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-2xl mb-3 animate-pulse">
               <Shield className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2 tracking-tight">
-              Admin <span className="text-purple-400">Setup</span>
+            <h1 className={`text-3xl sm:text-4xl font-bold mb-2 tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
+              Admin <span className={isDark ? "text-purple-400" : "text-purple-600"}>Setup</span>
             </h1>
-            <p className="text-gray-400 text-base">
+            <p className={`text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}>
               Initialize and manage your super admin account
             </p>
 
@@ -296,24 +301,24 @@ export default function AdminSetupClient({
           </div>
 
           {adminExists && !isAuthenticated && (
-            <div className="mb-4 bg-yellow-500/10 backdrop-blur-xl border border-yellow-500/20 rounded-xl p-4 shadow-xl">
+            <div className={`mb-4 backdrop-blur-xl rounded-xl p-4 shadow-xl ${isDark ? "bg-yellow-500/10 border border-yellow-500/20" : "bg-yellow-50 border border-yellow-200"}`}>
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center">
-                    <Lock className="w-5 h-5 text-yellow-400" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? "bg-yellow-500/20" : "bg-yellow-100"}`}>
+                    <Lock className={`w-5 h-5 ${isDark ? "text-yellow-400" : "text-yellow-600"}`} />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-yellow-300 font-semibold text-base mb-1">
+                  <h3 className={`font-semibold text-base mb-1 ${isDark ? "text-yellow-300" : "text-yellow-700"}`}>
                     Admin Already Exists
                   </h3>
-                  <p className="text-yellow-200/80 text-xs leading-relaxed">
+                  <p className={`text-xs leading-relaxed ${isDark ? "text-yellow-200/80" : "text-yellow-600"}`}>
                     An admin account exists in the database. You can still
                     reinitialize or update the origin admin from your .env file.
                     For security operations,{" "}
                     <a
                       href="/?login=true"
-                      className="underline font-semibold hover:text-yellow-300 transition-colors"
+                      className={`underline font-semibold transition-colors ${isDark ? "hover:text-yellow-300" : "hover:text-yellow-800"}`}
                     >
                       login as admin
                     </a>
@@ -328,16 +333,16 @@ export default function AdminSetupClient({
           <div className="mb-4">
             {/* Initialize Admin Card */}
             <div
-              className={`bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-5 shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 ${
+              className={`backdrop-blur-xl rounded-xl p-5 shadow-2xl hover:shadow-purple-500/20 transition-all duration-300 ${
                 activeStep === 1 ? "ring-2 ring-purple-500" : ""
-              }`}
+              } ${isDark ? "bg-white/5 border border-white/10" : "bg-white border border-gray-200"}`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
                     <Shield className="w-4 h-4 text-white" />
                   </div>
-                  <h2 className="text-lg font-bold text-white">
+                  <h2 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                     Initialize Origin Admin
                   </h2>
                 </div>
@@ -346,34 +351,34 @@ export default function AdminSetupClient({
                 )}
               </div>
 
-              <p className="text-gray-300 text-sm mb-3 leading-relaxed">
+              <p className={`text-sm mb-3 leading-relaxed ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                 Create or update the super admin account using credentials from
                 your environment configuration.
               </p>
 
-              <div className="bg-white/5 rounded-xl p-4 mb-4 border border-white/10">
+              <div className={`rounded-xl p-4 mb-4 ${isDark ? "bg-white/5 border border-white/10" : "bg-gray-50 border border-gray-200"}`}>
                 <div className="flex items-center gap-2 mb-3">
-                  <Terminal className="w-4 h-4 text-purple-400" />
-                  <span className="text-sm font-semibold text-purple-300">
+                  <Terminal className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-600"}`} />
+                  <span className={`text-sm font-semibold ${isDark ? "text-purple-300" : "text-purple-700"}`}>
                     Required Environment Variables
                   </span>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <Mail className="w-4 h-4 text-gray-400" />
-                    <code className="text-gray-300 font-mono text-xs">
+                    <Mail className={`w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                    <code className={`font-mono text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                       ORIGIN_ADMIN_EMAIL
                     </code>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Key className="w-4 h-4 text-gray-400" />
-                    <code className="text-gray-300 font-mono text-xs">
+                    <Key className={`w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                    <code className={`font-mono text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                       ORIGIN_ADMIN_PASSWORD
                     </code>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <code className="text-gray-300 font-mono text-xs">
+                    <User className={`w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                    <code className={`font-mono text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                       ORIGIN_ADMIN_NAME
                     </code>
                   </div>
@@ -423,18 +428,18 @@ export default function AdminSetupClient({
 
           {/* Result Display */}
           {result && (
-            <div className="mb-4 bg-green-500/10 backdrop-blur-xl border border-green-500/20 rounded-xl p-4 shadow-xl animate-slideIn">
+            <div className={`mb-4 backdrop-blur-xl rounded-xl p-4 shadow-xl animate-slideIn ${isDark ? "bg-green-500/10 border border-green-500/20" : "bg-green-50 border border-green-200"}`}>
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? "bg-green-500/20" : "bg-green-100"}`}>
+                    <CheckCircle className={`w-5 h-5 ${isDark ? "text-green-400" : "text-green-600"}`} />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-green-300 font-semibold text-base mb-1">
+                  <h3 className={`font-semibold text-base mb-1 ${isDark ? "text-green-300" : "text-green-700"}`}>
                     Operation Successful
                   </h3>
-                  <p className="text-green-200/80 text-xs">{result.message}</p>
+                  <p className={`text-xs ${isDark ? "text-green-200/80" : "text-green-600"}`}>{result.message}</p>
                 </div>
               </div>
             </div>
@@ -442,18 +447,18 @@ export default function AdminSetupClient({
 
           {/* Error Display */}
           {error && (
-            <div className="mb-4 bg-red-500/10 backdrop-blur-xl border border-red-500/20 rounded-xl p-4 shadow-xl animate-shake">
+            <div className={`mb-4 backdrop-blur-xl rounded-xl p-4 shadow-xl animate-shake ${isDark ? "bg-red-500/10 border border-red-500/20" : "bg-red-50 border border-red-200"}`}>
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-10 h-10 bg-red-500/20 rounded-lg flex items-center justify-center">
-                    <XCircle className="w-5 h-5 text-red-400" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? "bg-red-500/20" : "bg-red-100"}`}>
+                    <XCircle className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-red-300 font-semibold text-base mb-1">
+                  <h3 className={`font-semibold text-base mb-1 ${isDark ? "text-red-300" : "text-red-700"}`}>
                     Error Occurred
                   </h3>
-                  <p className="text-red-200/80 text-xs leading-relaxed">
+                  <p className={`text-xs leading-relaxed ${isDark ? "text-red-200/80" : "text-red-600"}`}>
                     {error}
                   </p>
                 </div>
