@@ -15,6 +15,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { formatCurrency as formatCurrencyUtil, getCurrencySymbol } from "@/lib/currencies";
+import { CRYPTO_METADATA } from "@/lib/crypto-constants";
 
 interface Asset {
   symbol: string;
@@ -277,6 +278,7 @@ export default function AssetDetailsModal({
   const { preferredCurrency, formatAmount, convertAmount, exchangeRates } = useCurrency();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+  const cryptoColor = CRYPTO_METADATA[asset?.symbol || ""]?.color || "#F7931A";
 
   // Helper to format user balance - always show in user's preferred currency
   const formatUserBalance = (balance: number): string => {
@@ -628,12 +630,12 @@ export default function AssetDetailsModal({
                   className="rounded-xl p-4 mb-6"
                   style={isDark ? {
                     background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                    boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(0,0,0,0.2)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    boxShadow: "0 28px 70px -10px rgba(0, 0, 0, 0.95), 0 14px 32px -5px rgba(0, 0, 0, 0.80), 0 5px 14px -2px rgba(0,0,0,0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(0,0,0,0.2)",
+                    border: "none",
                   } : {
                     background: "linear-gradient(160deg, #ffffff 0%, #f1f5f9 100%)",
-                    boxShadow: "0 8px 24px -6px rgba(0,0,0,0.14), 0 4px 12px -3px rgba(0,0,0,0.08), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.06), inset 1px 0 0 rgba(255,255,255,0.9), inset -1px 0 0 rgba(0,0,0,0.04)",
-                    border: "1px solid rgba(0,0,0,0.10)",
+                    boxShadow: "0 28px 80px -10px rgba(0,0,0,0.48), 0 14px 38px -5px rgba(0,0,0,0.32), 0 5px 16px -3px rgba(0,0,0,0.18)",
+                    border: "none",
                   }}
                 >
                   {/* Header row with amount and Buy button */}
@@ -724,12 +726,12 @@ export default function AssetDetailsModal({
                 className="mx-4 rounded-xl overflow-hidden"
                 style={isDark ? {
                   background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                  border: "1px solid rgba(255, 255, 255, 0.06)",
+                  boxShadow: "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                  border: "none",
                 } : {
                   background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                  boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 8px -2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
-                  border: "1px solid rgba(0,0,0,0.08)",
+                  boxShadow: "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                  border: "none",
                 }}
               >
                 <div className="flex">
@@ -757,20 +759,20 @@ export default function AssetDetailsModal({
               <div className="p-4 pb-40">
                 {activeTab === "holdings" && (
                   <div>
-                    <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"} mb-4`}>
+                    <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"} mb-2`}>
                       My Balance
                     </h3>
                     {/* 3D Card with depth effect */}
                     <div
-                      className="relative rounded-xl p-3 flex items-center justify-between overflow-hidden"
+                      className="relative rounded-xl px-3 py-2 flex items-center justify-between overflow-hidden"
                       style={isDark ? {
                         background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                        boxShadow: "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        boxShadow: "0 28px 70px -10px rgba(0, 0, 0, 0.95), 0 14px 32px -6px rgba(0, 0, 0, 0.80), 0 6px 14px -2px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                        border: "none",
                       } : {
                         background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                        boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 8px -2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
-                        border: "1px solid rgba(0,0,0,0.08)",
+                        boxShadow: "0 28px 80px -12px rgba(0,0,0,0.50), 0 14px 40px -6px rgba(0,0,0,0.35), 0 6px 16px -3px rgba(0,0,0,0.22)",
+                        border: "none",
                       }}
                     >
                       {/* Subtle glow effect */}
@@ -788,10 +790,10 @@ export default function AssetDetailsModal({
                           className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                           style={isDark ? {
                             background: "linear-gradient(135deg, #334155 0%, #1e293b 100%)",
-                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                            boxShadow: `0 10px 32px rgba(0, 0, 0, 0.8), 0 5px 16px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0,0,0,0.6), 0 0 24px ${cryptoColor}60, inset 0 1px 2px rgba(255,255,255,0.2)`,
                           } : {
                             background: "#ffffff",
-                            boxShadow: "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                            boxShadow: `0 12px 36px rgba(0,0,0,0.28), 0 6px 18px rgba(0,0,0,0.20), 0 2px 8px rgba(0,0,0,0.14), 0 0 20px ${cryptoColor}50, inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.10)`,
                           }}
                         >
                           {/* Inner glow */}
@@ -807,16 +809,28 @@ export default function AssetDetailsModal({
                           <div className={`font-bold ${isDark ? "text-white" : "text-gray-900"} text-lg`}>
                             {asset.name}
                           </div>
-                          <div className={`${isDark ? "text-gray-400" : "text-gray-500"} text-sm`}>
-                            {asset.symbol}
+                          <div className="flex items-center gap-1.5">
+                            <div className={`${isDark ? "text-gray-400" : "text-gray-500"} text-sm`}>
+                              {asset.symbol}
+                            </div>
+                            <div
+                              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-xs font-semibold ${
+                                priceChange >= 0
+                                  ? isDark ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-700"
+                                  : isDark ? "bg-red-500/20 text-red-400" : "bg-red-100 text-red-700"
+                              }`}
+                            >
+                              {priceChange >= 0 ? "▲" : "▼"}{" "}
+                              {Math.abs(priceChange).toFixed(2)}%
+                            </div>
                           </div>
                         </div>
                       </div>
                       <div className="text-right relative z-10">
-                        <div className={`font-bold ${isDark ? "text-white" : "text-gray-900"} text-xl`}>
+                        <div className={`font-bold ${isDark ? "text-white" : "text-gray-900"} text-lg`}>
                           {formatAmount(asset.value, 2)}
                         </div>
-                        <div className={`${isDark ? "text-gray-400" : "text-gray-500"} text-sm`}>
+                        <div className={`${isDark ? "text-gray-300" : "text-gray-600"} text-sm`}>
                           {asset.amount.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 8,
@@ -824,8 +838,6 @@ export default function AssetDetailsModal({
                         </div>
                       </div>
                     </div>
-                    {/* Bottom margin spacer */}
-                    <div className="mb-16"></div>
                   </div>
                 )}
 
@@ -933,12 +945,12 @@ export default function AssetDetailsModal({
                             className="rounded-xl p-2 transition-all duration-200 hover:scale-[1.01] cursor-pointer active:scale-[0.99]"
                             style={isDark ? {
                               background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                              border: "1px solid rgba(255, 255, 255, 0.06)",
+                              boxShadow: "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                              border: "none",
                             } : {
                               background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                              boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08), 0 2px 6px -2px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)",
-                              border: "1px solid rgba(0,0,0,0.08)",
+                              boxShadow: "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                              border: "none",
                             }}
                           >
                             <div className="flex items-start justify-between mb-1.5">
@@ -1059,12 +1071,12 @@ export default function AssetDetailsModal({
                                     : "Amount:"}
                                 </span>
                                 <span
-                                  className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg ${isDark ? "bg-gray-700/50" : "bg-gray-200"} ${
+                                  className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg ${isDark ? "bg-gray-800" : "bg-gray-200"} ${
                                     tx.type === "buy" ||
                                     tx.type === "deposit" ||
                                     tx.type === "receive" ||
                                     (tx.type === "swap" && !tx.isFromAssetView)
-                                      ? "text-green-400"
+                                      ? isDark ? "text-green-500" : "text-green-600"
                                       : tx.type === "sell" ||
                                         tx.type === "send" ||
                                         (tx.type === "swap" &&
@@ -1117,7 +1129,7 @@ export default function AssetDetailsModal({
                                 <span className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"} font-medium`}>
                                   Value:
                                 </span>
-                                <span className={`font-semibold ${isDark ? "text-white bg-gray-700/50" : "text-gray-900 bg-gray-200"} text-[11px] px-1.5 py-0.5 rounded-lg`}>
+                                <span className={`font-semibold ${isDark ? "text-white bg-gray-800" : "text-gray-900 bg-gray-200"} text-[11px] px-1.5 py-0.5 rounded-lg`}>
                                   {/* For swaps, use fromValueUSD or toValueUSD depending on view */}
                                   {tx.type === "swap" ? (
                                     formatAmount(
@@ -1229,12 +1241,12 @@ export default function AssetDetailsModal({
                           className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
                           style={isDark ? {
                             background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                            boxShadow: "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                            boxShadow: "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                            border: "none",
                           } : {
                             background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                            boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
-                            border: "1px solid rgba(0,0,0,0.08)",
+                            boxShadow: "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                            border: "none",
                           }}
                         >
                           {/* Subtle glow effect */}
@@ -1258,12 +1270,12 @@ export default function AssetDetailsModal({
                           className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
                           style={isDark ? {
                             background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                            boxShadow: "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                            boxShadow: "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                            border: "none",
                           } : {
                             background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                            boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
-                            border: "1px solid rgba(0,0,0,0.08)",
+                            boxShadow: "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                            border: "none",
                           }}
                         >
                           {/* Subtle glow effect */}
@@ -1289,12 +1301,12 @@ export default function AssetDetailsModal({
                           className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
                           style={isDark ? {
                             background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                            boxShadow: "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                            border: "1px solid rgba(255, 255, 255, 0.08)",
+                            boxShadow: "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                            border: "none",
                           } : {
                             background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                            boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
-                            border: "1px solid rgba(0,0,0,0.08)",
+                            boxShadow: "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                            border: "none",
                           }}
                         >
                           {/* Subtle glow effect */}
@@ -1330,12 +1342,12 @@ export default function AssetDetailsModal({
                             className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl ${isDark ? "text-white" : "text-gray-900"} font-medium transition-all duration-200 hover:scale-105 active:scale-95 group overflow-hidden`}
                             style={isDark ? {
                               background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                              boxShadow: "0 8px 20px -4px rgba(0, 0, 0, 0.5), 0 4px 10px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                              boxShadow: "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                              border: "none",
                             } : {
                               background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                              boxShadow: "0 4px 12px -4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1)",
-                              border: "1px solid rgba(0,0,0,0.08)",
+                              boxShadow: "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                              border: "none",
                             }}
                           >
                             {/* Hover glow effect */}

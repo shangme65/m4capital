@@ -678,7 +678,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                             amount: maxValue.toFixed(2),
                           }));
                         }}
-                        className="text-red-400 text-sm mt-2 hover:text-red-300 font-semibold"
+                        className={`text-sm mt-2 font-semibold ${isDark ? "text-red-400 hover:text-red-300" : "text-red-600 hover:text-red-700"}`}
                       >
                         Sell All ({currentBalance.toFixed(6)} {sellData.asset})
                       </button>
@@ -707,7 +707,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                           <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                             You will receive (after 1.5% fee):
                           </span>
-                          <span className="text-red-400 font-bold">
+                          <span className={`font-bold ${isDark ? "text-red-400" : "text-red-600"}`}>
                             {currencySymbol}
                             {(getEstimatedValue() * 0.985).toFixed(2)}
                           </span>
@@ -766,7 +766,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       <p className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                         {getCryptoAmountFromCurrency().toFixed(8)}
                       </p>
-                      <p className="text-red-400 font-semibold">
+                      <p className={`font-semibold ${isDark ? "text-red-400" : "text-red-600"}`}>
                         {sellData.asset}
                       </p>
                     </div>
@@ -810,7 +810,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                         <span className={isDark ? "text-gray-300" : "text-gray-700"}>
                           You&apos;ll receive:
                         </span>
-                        <span className="text-red-400">
+                        <span className={isDark ? "text-red-400" : "text-red-600"}>
                           {currencySymbol}
                           {(getEstimatedValue() * 0.985).toFixed(2)}
                         </span>

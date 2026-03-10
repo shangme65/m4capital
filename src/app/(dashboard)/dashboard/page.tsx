@@ -1643,8 +1643,8 @@ function DashboardContent() {
                       onClick={() => handleTransactionClick(activity)}
                       className={`group relative p-2 rounded-xl border cursor-pointer transition-all duration-300 backdrop-blur-sm hover:-translate-y-0.5 ${
                         isDark
-                          ? "bg-gradient-to-br from-gray-800/60 to-gray-900/80 border-gray-700/60 hover:border-blue-500/50 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.2)]"
-                          : "bg-white border-gray-200 hover:border-blue-400/60 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-[0_6px_16px_rgba(59,130,246,0.12)]"
+                          ? "bg-gradient-to-br from-gray-800/60 to-gray-900/80 border-gray-700/60 hover:border-blue-500/50 shadow-[0_18px_48px_-8px_rgba(0,0,0,0.85),0_8px_20px_-4px_rgba(0,0,0,0.70),0_4px_10px_-2px_rgba(0,0,0,0.55)] hover:shadow-[0_22px_60px_-10px_rgba(0,0,0,0.95),0_12px_32px_-6px_rgba(59,130,246,0.4),0_6px_16px_-2px_rgba(59,130,246,0.3)]"
+                          : "bg-white border-gray-200 hover:border-blue-400/60 shadow-[0_18px_48px_-8px_rgba(0,0,0,0.35),0_8px_20px_-4px_rgba(0,0,0,0.25),0_4px_10px_-2px_rgba(0,0,0,0.15)] hover:shadow-[0_22px_60px_-10px_rgba(0,0,0,0.45),0_12px_32px_-6px_rgba(59,130,246,0.25),0_6px_16px_-2px_rgba(59,130,246,0.18)]"
                       }`}
                     >
                       <div className="flex items-start gap-1.5">

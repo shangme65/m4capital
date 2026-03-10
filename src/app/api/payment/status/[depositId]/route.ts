@@ -41,6 +41,46 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
+    // Check if deposit has expired locally
+    const now = new Date();
+    if (
+      deposit.status === "PENDING" &&
+      deposit.expiresAt &&
+      deposit.expiresAt < now
+    ) {
+      console.log(`⏰ Deposit ${depositId} has expired, marking as FAILED`);
+      
+      // Update to FAILED status
+      await prisma.deposit.update({
+        where: { id: depositId },
+        data: {
+          status: "FAILED",
+          paymentStatus: "expired",
+          updatedAt: now,
+        },
+      });
+
+      // Return failed status
+      return NextResponse.json({
+        success: true,
+        deposit: {
+          id: deposit.id,
+          amount: parseFloat(deposit.amount.toString()),
+          currency: deposit.currency,
+          status: "FAILED",
+          method: deposit.method,
+          createdAt: deposit.createdAt,
+          paymentId: deposit.paymentId,
+          paymentAddress: deposit.paymentAddress,
+          paymentAmount: deposit.paymentAmount
+            ? parseFloat(deposit.paymentAmount.toString())
+            : null,
+          paymentStatus: "expired",
+          cryptoCurrency: deposit.cryptoCurrency,
+        },
+      });
+    }
+
     // If payment has a NOWPayments ID, fetch latest status
     // Note: For invoices, we rely on webhook callbacks instead of polling
     // because NOWPayments doesn't provide a direct invoice status endpoint

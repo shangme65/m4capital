@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/currencies";
 
@@ -98,6 +99,8 @@ export default function TransactionDetailsModal({
   // State must be declared at the top before any conditional returns
   const [copied, setCopied] = useState(false);
   const { formatAmount, preferredCurrency } = useCurrency();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -427,7 +430,9 @@ export default function TransactionDetailsModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed top-0 left-0 right-0 bottom-0 bg-black/80 backdrop-blur-md z-[9998] overflow-hidden"
+            className={`fixed top-0 left-0 right-0 bottom-0 backdrop-blur-md z-[9998] overflow-hidden ${
+              isDark ? "bg-black/80" : "bg-black/40"
+            }`}
             style={{ touchAction: "none", margin: 0, padding: 0 }}
           />
           <motion.div
@@ -440,14 +445,20 @@ export default function TransactionDetailsModal({
             style={{ touchAction: "auto", margin: 0, padding: 0 }}
           >
             <div
-              className="bg-gray-900 w-full flex-1 overflow-y-auto"
+              className={`w-full flex-1 overflow-y-auto ${
+                isDark ? "bg-gray-900" : "bg-white"
+              }`}
               style={{ minHeight: 0 }}
             >
               {/* Mobile Header with Back Button */}
-              <div className="flex items-center justify-between px-3 py-2 border-b border-gray-700 sticky top-0 bg-gray-900/95 backdrop-blur-sm z-20">
+              <div className={`flex items-center justify-between px-3 py-2 sticky top-0 backdrop-blur-sm z-20 ${
+                isDark ? "border-b border-gray-700 bg-gray-900/95" : "border-b border-gray-200 bg-white/95"
+              }`}>
                 <button
                   onClick={onClose}
-                  className="text-gray-300 hover:text-white transition-colors flex items-center gap-1.5"
+                  className={`transition-colors flex items-center gap-1.5 ${
+                    isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"
+                  }`}
                 >
                   <svg
                     className="w-5 h-5"
@@ -464,15 +475,21 @@ export default function TransactionDetailsModal({
                   </svg>
                   <span className="text-xs font-medium">Back</span>
                 </button>
-                <h1 className="text-base font-bold text-white">
+                <h1 className={`text-base font-bold ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>
                   Transaction Details
                 </h1>
                 <div className="w-14"></div> {/* Spacer for centering */}
               </div>
 
               {/* Header Section with Gradient Background */}
-              <div className="relative bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20 p-3 pb-6">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-gray-900/50"></div>
+              <div className={`relative p-3 pb-6 ${
+                isDark ? "bg-gradient-to-r from-blue-600/20 via-purple-600/20 to-pink-600/20" : "bg-gradient-to-r from-blue-100 via-purple-50 to-pink-50"
+              }`}>
+                <div className={`absolute inset-0 bg-gradient-to-b from-transparent ${
+                  isDark ? "to-gray-900/50" : "to-white/50"
+                }`}></div>
                 <div className="relative z-[5]">
                   <div className="flex items-start gap-2 mb-3">
                     <div className="flex-shrink-0">
@@ -509,12 +526,14 @@ export default function TransactionDetailsModal({
                       )}
                     </div>
                     <div className="flex-1">
-                      <h2 className="text-lg font-bold text-white mb-1.5">
+                      <h2 className={`text-lg font-bold mb-1.5 ${
+                        isDark ? "text-white" : "text-gray-900"
+                      }`}>
                         {getTransactionTitle()}
                       </h2>
                       <div className="flex items-center gap-2 flex-wrap">
                         <div
-                          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border font-semibold text-xs uppercase tracking-wide ${
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-semibold text-[10px] uppercase tracking-wide ${
                             transaction.status === "completed"
                               ? "bg-green-500/20 text-green-400 border-green-500/40 shadow-[0_0_12px_rgba(34,197,94,0.4)]"
                               : transaction.status === "pending"
@@ -523,7 +542,7 @@ export default function TransactionDetailsModal({
                           }`}
                         >
                           <div
-                            className={`w-2 h-2 rounded-full ${
+                            className={`w-1.5 h-1.5 rounded-full ${
                               transaction.status === "completed"
                                 ? "bg-green-400"
                                 : transaction.status === "pending"
@@ -540,19 +559,25 @@ export default function TransactionDetailsModal({
                   {/* Transaction ID */}
                   <div
                     className="rounded-xl p-2.5"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                      boxShadow:
-                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    style={isDark ? {
+                      background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
                       border: "1px solid rgba(255, 255, 255, 0.06)",
+                    } : {
+                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow: "0 10px 35px -8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,1)",
+                      border: "1px solid rgba(0,0,0,0.1)",
                     }}
                   >
-                    <label className="block text-gray-400 text-[10px] font-medium mb-1.5 uppercase tracking-wider">
+                    <label className={`block text-[10px] font-medium mb-1.5 uppercase tracking-wider ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}>
                       Transaction ID
                     </label>
                     <div className="flex items-center gap-2">
-                      <code className="flex-1 text-white font-mono text-xs break-all">
+                      <code className={`flex-1 font-mono text-xs break-all ${
+                        isDark ? "text-white" : "text-gray-900"
+                      }`}>
                         {transaction.id}
                       </code>
                       <button
@@ -595,9 +620,9 @@ export default function TransactionDetailsModal({
                 </div>
               </div>
 
-              <div className="p-3 pt-0">
+              <div className="p-3 pt-2">
                 {/* Main Transaction Details */}
-                <div className="space-y-2 mb-3 -mt-3">
+                <div className="space-y-2 mb-3">
                   {/* For Convert/Swap transactions, show FROM and TO cards separately */}
                   {(transaction.type === "convert" ||
                     transaction.type === "swap") &&
@@ -607,12 +632,14 @@ export default function TransactionDetailsModal({
                       {/* FROM Card */}
                       <div
                         className="rounded-xl p-3"
-                        style={{
-                          background:
-                            "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                          boxShadow:
-                            "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                        style={isDark ? {
+                          background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
                           border: "1px solid rgba(239, 68, 68, 0.2)",
+                        } : {
+                          background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                          boxShadow: "0 10px 35px -8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,1)",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
                         }}
                       >
                         <div className="flex items-center gap-2 mb-1">
@@ -641,7 +668,9 @@ export default function TransactionDetailsModal({
                             size="sm"
                           />
                           <div>
-                            <div className="text-white text-lg font-bold">
+                            <div className={`text-lg font-bold ${
+                              isDark ? "text-white" : "text-gray-900"
+                            }`}>
                               {(
                                 transaction.fromAmount ||
                                 transaction.amount ||
@@ -650,11 +679,15 @@ export default function TransactionDetailsModal({
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 8,
                               })}
-                              <span className="text-gray-400 text-base ml-2">
+                              <span className={`text-base ml-2 ${
+                                isDark ? "text-gray-400" : "text-gray-500"
+                              }`}>
                                 {transaction.fromAsset}
                               </span>
                             </div>
-                            <div className="text-gray-400 text-sm">
+                            <div className={`text-sm ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}>
                               ≈{" "}
                               {formatAmount(
                                 transaction.fromValueUSD ||
@@ -689,12 +722,14 @@ export default function TransactionDetailsModal({
                       {/* TO Card */}
                       <div
                         className="rounded-xl p-3"
-                        style={{
-                          background:
-                            "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                          boxShadow:
-                            "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                        style={isDark ? {
+                          background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                          boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
                           border: "1px solid rgba(34, 197, 94, 0.2)",
+                        } : {
+                          background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                          boxShadow: "0 10px 35px -8px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,1)",
+                          border: "1px solid rgba(34, 197, 94, 0.3)",
                         }}
                       >
                         <div className="flex items-center gap-2 mb-1">
@@ -720,7 +755,9 @@ export default function TransactionDetailsModal({
                         <div className="flex items-center gap-2">
                           <CryptoIcon symbol={transaction.toAsset} size="sm" />
                           <div>
-                            <div className="text-white text-lg font-bold">
+                            <div className={`text-lg font-bold ${
+                              isDark ? "text-white" : "text-gray-900"
+                            }`}>
                               {(transaction.toAmount || 0).toLocaleString(
                                 "en-US",
                                 {
@@ -728,11 +765,15 @@ export default function TransactionDetailsModal({
                                   maximumFractionDigits: 8,
                                 }
                               )}
-                              <span className="text-gray-400 text-base ml-2">
+                              <span className={`text-base ml-2 ${
+                                isDark ? "text-gray-400" : "text-gray-500"
+                              }`}>
                                 {transaction.toAsset}
                               </span>
                             </div>
-                            <div className="text-gray-400 text-sm">
+                            <div className={`text-sm ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}>
                               ≈ {formatAmount(transaction.toValueUSD || 0, 2)}
                             </div>
                           </div>
@@ -744,18 +785,28 @@ export default function TransactionDetailsModal({
                       {/* Amount Card (for non-convert transactions) */}
                       <div
                         className="rounded-xl p-3"
-                        style={{
+                        style={isDark ? {
                           background:
                             "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                           boxShadow:
-                            "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                          border: "1px solid rgba(59, 130, 246, 0.2)",
+                            "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6)",
+                          border: "none",
+                        } : {
+                          background:
+                            "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                          boxShadow:
+                            "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                          border: "none",
                         }}
                       >
-                        <label className="block text-blue-400 text-[10px] font-semibold mb-1 uppercase tracking-wider">
+                        <label className={`block text-[10px] font-semibold mb-1 uppercase tracking-wider ${
+                          isDark ? "text-blue-400" : "text-blue-600"
+                        }`}>
                           Amount
                         </label>
-                        <div className="text-white text-lg font-bold">
+                        <div className={`text-lg font-bold ${
+                          isDark ? "text-white" : "text-gray-900"
+                        }`}>
                           {/* For fiat currencies, show 2 decimals; for crypto, show up to 8 */}
                           {FIAT_CURRENCIES.has(
                             transaction.asset?.toUpperCase() || ""
@@ -768,7 +819,9 @@ export default function TransactionDetailsModal({
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 8,
                               })}
-                          <span className="text-gray-400 text-base ml-2">
+                          <span className={`text-base ml-2 ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}>
                             {transaction.asset}
                           </span>
                         </div>
@@ -777,18 +830,28 @@ export default function TransactionDetailsModal({
                       {/* Value Card (for non-convert transactions) */}
                       <div
                         className="rounded-xl p-3"
-                        style={{
+                        style={isDark ? {
                           background:
                             "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                           boxShadow:
-                            "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                          border: "1px solid rgba(168, 85, 247, 0.2)",
+                            "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6)",
+                          border: "none",
+                        } : {
+                          background:
+                            "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                          boxShadow:
+                            "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                          border: "none",
                         }}
                       >
-                        <label className="block text-purple-400 text-[10px] font-semibold mb-1 uppercase tracking-wider">
+                        <label className={`block text-[10px] font-semibold mb-1 uppercase tracking-wider ${
+                          isDark ? "text-purple-400" : "text-purple-600"
+                        }`}>
                           Value
                         </label>
-                        <div className="text-white text-lg font-bold">
+                        <div className={`text-lg font-bold ${
+                          isDark ? "text-white" : "text-gray-900"
+                        }`}>
                           {/* For fiat deposits/transfers:
                               - If asset currency matches user's preferred currency: show original amount
                               - If asset currency differs: convert USD value to user's preferred currency
@@ -814,7 +877,9 @@ export default function TransactionDetailsModal({
                                 2
                               )
                             : formatAmount(transaction.value, 2)}
-                          <span className="text-gray-400 text-base ml-2">
+                          <span className={`text-base ml-2 ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}>
                             {FIAT_CURRENCIES.has(
                               transaction.asset?.toUpperCase() || ""
                             ) &&
@@ -833,18 +898,28 @@ export default function TransactionDetailsModal({
                   {/* Date & Time */}
                   <div
                     className="rounded-xl p-3 flex items-center justify-between"
-                    style={{
+                    style={isDark ? {
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                       boxShadow:
-                        "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                        "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6)",
+                      border: "none",
+                    } : {
+                      background:
+                        "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow:
+                        "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                      border: "none",
                     }}
                   >
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-gray-700/50 flex items-center justify-center">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        isDark ? "bg-gray-700/50" : "bg-gray-200/80"
+                      }`}>
                         <svg
-                          className="w-4 h-4 text-gray-400"
+                          className={`w-4 h-4 ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -858,10 +933,14 @@ export default function TransactionDetailsModal({
                         </svg>
                       </div>
                       <div>
-                        <label className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">
+                        <label className={`text-[10px] font-medium uppercase tracking-wider ${
+                          isDark ? "text-gray-500" : "text-gray-600"
+                        }`}>
                           Date & Time
                         </label>
-                        <div className="text-white font-medium text-sm">
+                        <div className={`font-medium text-sm ${
+                          isDark ? "text-white" : "text-gray-900"
+                        }`}>
                           {transaction.date
                             ? formatDate(transaction.date)
                             : transaction.timestamp}
@@ -874,18 +953,28 @@ export default function TransactionDetailsModal({
                   {transaction.fee !== undefined && transaction.fee > 0 && (
                     <div
                       className="rounded-xl p-3 flex items-center justify-between"
-                      style={{
+                      style={isDark ? {
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                         boxShadow:
-                          "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
-                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                          "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6)",
+                        border: "none",
+                      } : {
+                        background:
+                          "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                        boxShadow:
+                          "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                        border: "none",
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-orange-500/20 flex items-center justify-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          isDark ? "bg-orange-500/20" : "bg-orange-100"
+                        }`}>
                           <svg
-                            className="w-4 h-4 text-orange-400"
+                            className={`w-4 h-4 ${
+                              isDark ? "text-orange-400" : "text-orange-600"
+                            }`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -899,10 +988,14 @@ export default function TransactionDetailsModal({
                           </svg>
                         </div>
                         <div>
-                          <label className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">
+                          <label className={`text-[10px] font-medium uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Network Fee
                           </label>
-                          <div className="text-white font-medium text-sm">
+                          <div className={`font-medium text-sm ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}>
                             {formatAmount(transaction.fee, 2)}
                           </div>
                         </div>
@@ -914,18 +1007,28 @@ export default function TransactionDetailsModal({
                   {transaction.method && (
                     <div
                       className="rounded-xl p-3 flex items-center justify-between"
-                      style={{
+                      style={isDark ? {
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                         boxShadow:
-                          "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
-                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                          "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6)",
+                        border: "none",
+                      } : {
+                        background:
+                          "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                        boxShadow:
+                          "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                        border: "none",
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          isDark ? "bg-green-500/20" : "bg-green-100"
+                        }`}>
                           <svg
-                            className="w-4 h-4 text-green-400"
+                            className={`w-4 h-4 ${
+                              isDark ? "text-green-400" : "text-green-600"
+                            }`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -939,10 +1042,14 @@ export default function TransactionDetailsModal({
                           </svg>
                         </div>
                         <div>
-                          <label className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">
+                          <label className={`text-[10px] font-medium uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Payment Method
                           </label>
-                          <div className="text-white font-medium text-sm capitalize">
+                          <div className={`font-medium text-sm capitalize ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}>
                             {transaction.method}
                           </div>
                         </div>
@@ -954,18 +1061,28 @@ export default function TransactionDetailsModal({
                   {transaction.rate && (
                     <div
                       className="rounded-xl p-3 flex items-center justify-between"
-                      style={{
+                      style={isDark ? {
                         background:
                           "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                         boxShadow:
-                          "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
-                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                          "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6)",
+                        border: "none",
+                      } : {
+                        background:
+                          "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                        boxShadow:
+                          "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                        border: "none",
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-full bg-cyan-500/20 flex items-center justify-center">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                          isDark ? "bg-cyan-500/20" : "bg-cyan-100"
+                        }`}>
                           <svg
-                            className="w-4 h-4 text-cyan-400"
+                            className={`w-4 h-4 ${
+                              isDark ? "text-cyan-400" : "text-cyan-600"
+                            }`}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -979,10 +1096,14 @@ export default function TransactionDetailsModal({
                           </svg>
                         </div>
                         <div>
-                          <label className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">
+                          <label className={`text-[10px] font-medium uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Exchange Rate
                           </label>
-                          <div className="text-white font-medium text-xs">
+                          <div className={`font-medium text-xs ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}>
                             {(transaction.type === "convert" ||
                               transaction.type === "swap") &&
                             transaction.fromAsset &&
@@ -1014,18 +1135,30 @@ export default function TransactionDetailsModal({
                   (transaction.receiverName || transaction.receiverEmail || transaction.senderName || transaction.senderEmail) && (
                   <div
                     className="rounded-xl p-3 mb-3"
-                    style={{
+                    style={isDark ? {
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                       boxShadow:
-                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                        "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6)",
+                      border: "none",
+                    } : {
+                      background:
+                        "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow:
+                        "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                      border: "none",
                     }}
                   >
-                    <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center">
+                    <h3 className={`font-bold text-sm mb-3 flex items-center gap-2 ${
+                      isDark ? "text-white" : "text-gray-900"
+                    }`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                        isDark ? "bg-purple-500/20" : "bg-purple-100"
+                      }`}>
                         <svg
-                          className="w-3 h-3 text-purple-400"
+                          className={`w-3 h-3 ${
+                            isDark ? "text-purple-400" : "text-purple-600"
+                          }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1043,50 +1176,80 @@ export default function TransactionDetailsModal({
                     <div className="space-y-2">
                       {transaction.receiverName && (
                         <div>
-                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
+                          <label className={`block text-[10px] font-medium mb-1 uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Recipient Name
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs">
+                          <div className={`rounded-lg px-2.5 py-1.5 text-xs ${
+                            isDark
+                              ? "bg-black/40 border border-gray-600/30 text-white"
+                              : "bg-gray-100 border border-gray-300 text-gray-900"
+                          }`}>
                             {transaction.receiverName}
                           </div>
                         </div>
                       )}
                       {transaction.receiverEmail && (
                         <div>
-                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
+                          <label className={`block text-[10px] font-medium mb-1 uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Recipient Email
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs break-all">
+                          <div className={`rounded-lg px-2.5 py-1.5 text-xs break-all ${
+                            isDark
+                              ? "bg-black/40 border border-gray-600/30 text-white"
+                              : "bg-gray-100 border border-gray-300 text-gray-900"
+                          }`}>
                             {transaction.receiverEmail}
                           </div>
                         </div>
                       )}
                       {transaction.senderName && (
                         <div>
-                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
+                          <label className={`block text-[10px] font-medium mb-1 uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Sender Name
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs">
+                          <div className={`rounded-lg px-2.5 py-1.5 text-xs ${
+                            isDark
+                              ? "bg-black/40 border border-gray-600/30 text-white"
+                              : "bg-gray-100 border border-gray-300 text-gray-900"
+                          }`}>
                             {transaction.senderName}
                           </div>
                         </div>
                       )}
                       {transaction.senderEmail && (
                         <div>
-                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
+                          <label className={`block text-[10px] font-medium mb-1 uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Sender Email
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs break-all">
+                          <div className={`rounded-lg px-2.5 py-1.5 text-xs break-all ${
+                            isDark
+                              ? "bg-black/40 border border-gray-600/30 text-white"
+                              : "bg-gray-100 border border-gray-300 text-gray-900"
+                          }`}>
                             {transaction.senderEmail}
                           </div>
                         </div>
                       )}
                       {transaction.memo && (
                         <div>
-                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
+                          <label className={`block text-[10px] font-medium mb-1 uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Memo
                           </label>
-                          <div className="bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white text-xs">
+                          <div className={`rounded-lg px-2.5 py-1.5 text-xs ${
+                            isDark
+                              ? "bg-black/40 border border-gray-600/30 text-white"
+                              : "bg-gray-100 border border-gray-300 text-gray-900"
+                          }`}>
                             {transaction.memo}
                           </div>
                         </div>
@@ -1102,18 +1265,30 @@ export default function TransactionDetailsModal({
                   transaction.confirmations !== undefined) && (
                   <div
                     className="rounded-xl p-3 mb-3"
-                    style={{
+                    style={isDark ? {
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                       boxShadow:
-                        "0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                        "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6)",
+                      border: "none",
+                    } : {
+                      background:
+                        "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow:
+                        "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                      border: "none",
                     }}
                   >
-                    <h3 className="text-white font-bold text-sm mb-3 flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center">
+                    <h3 className={`font-bold text-sm mb-3 flex items-center gap-2 ${
+                      isDark ? "text-white" : "text-gray-900"
+                    }`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                        isDark ? "bg-blue-500/20" : "bg-blue-100"
+                      }`}>
                         <svg
-                          className="w-3 h-3 text-blue-400"
+                          className={`w-3 h-3 ${
+                            isDark ? "text-blue-400" : "text-blue-600"
+                          }`}
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -1131,11 +1306,17 @@ export default function TransactionDetailsModal({
                     <div className="space-y-2">
                       {transaction.hash && (
                         <div>
-                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
+                          <label className={`block text-[10px] font-medium mb-1 uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Transaction Hash
                           </label>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs break-all">
+                            <div className={`flex-1 rounded-lg px-2.5 py-1.5 font-mono text-xs break-all ${
+                              isDark
+                                ? "bg-black/40 border border-gray-600/30 text-white"
+                                : "bg-gray-100 border border-gray-300 text-gray-900"
+                            }`}>
                               {transaction.hash}
                             </div>
                             <button
@@ -1179,11 +1360,17 @@ export default function TransactionDetailsModal({
 
                       {transaction.address && (
                         <div>
-                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
+                          <label className={`block text-[10px] font-medium mb-1 uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Wallet Address
                           </label>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5 text-white font-mono text-xs break-all">
+                            <div className={`flex-1 rounded-lg px-2.5 py-1.5 font-mono text-xs break-all ${
+                              isDark
+                                ? "bg-black/40 border border-gray-600/30 text-white"
+                                : "bg-gray-100 border border-gray-300 text-gray-900"
+                            }`}>
                               {transaction.address}
                             </div>
                             <button
@@ -1229,10 +1416,16 @@ export default function TransactionDetailsModal({
 
                       {transaction.network && (
                         <div>
-                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
+                          <label className={`block text-[10px] font-medium mb-1 uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Network
                           </label>
-                          <div className="text-white font-semibold text-xs bg-black/40 border border-gray-600/30 rounded-lg px-2.5 py-1.5">
+                          <div className={`font-semibold text-xs rounded-lg px-2.5 py-1.5 ${
+                            isDark
+                              ? "bg-black/40 border border-gray-600/30 text-white"
+                              : "bg-gray-100 border border-gray-300 text-gray-900"
+                          }`}>
                             {transaction.network}
                           </div>
                         </div>
@@ -1240,11 +1433,17 @@ export default function TransactionDetailsModal({
 
                       {transaction.confirmations !== undefined && (
                         <div>
-                          <label className="block text-gray-500 text-[10px] font-medium mb-1 uppercase tracking-wider">
+                          <label className={`block text-[10px] font-medium mb-1 uppercase tracking-wider ${
+                            isDark ? "text-gray-500" : "text-gray-600"
+                          }`}>
                             Confirmations
                           </label>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-700/50 rounded-full h-2 overflow-hidden border border-gray-600/30">
+                            <div className={`flex-1 rounded-full h-2 overflow-hidden border ${
+                              isDark
+                                ? "bg-gray-700/50 border-gray-600/30"
+                                : "bg-gray-200 border-gray-300"
+                            }`}>
                               <div
                                 className="bg-gradient-to-r from-green-500 to-green-400 h-full rounded-full transition-all duration-500 shadow-lg"
                                 style={{
@@ -1257,7 +1456,11 @@ export default function TransactionDetailsModal({
                                 }}
                               ></div>
                             </div>
-                            <div className="flex-shrink-0 text-white font-bold text-xs bg-gray-700/50 border border-gray-600/30 rounded-lg px-2 py-0.5">
+                            <div className={`flex-shrink-0 font-bold text-xs rounded-lg px-2 py-0.5 border ${
+                              isDark
+                                ? "bg-gray-700/50 border-gray-600/30 text-white"
+                                : "bg-gray-100 border-gray-300 text-gray-900"
+                            }`}>
                               {transaction.confirmations}/
                               {transaction.maxConfirmations || 6}
                             </div>
@@ -1272,17 +1475,27 @@ export default function TransactionDetailsModal({
                 {transaction.description && (
                   <div
                     className="rounded-xl p-3 mb-3"
-                    style={{
+                    style={isDark ? {
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
                       boxShadow:
-                        "0 8px 20px -5px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
-                      border: "1px solid rgba(255, 255, 255, 0.06)",
+                        "0 24px 60px -8px rgba(0, 0, 0, 0.95), 0 12px 28px -5px rgba(0, 0, 0, 0.80), 0 5px 12px -2px rgba(0,0,0,0.6)",
+                      border: "none",
+                    } : {
+                      background:
+                        "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow:
+                        "0 24px 70px -10px rgba(0,0,0,0.48), 0 12px 32px -5px rgba(0,0,0,0.32), 0 5px 14px -3px rgba(0,0,0,0.18)",
+                      border: "none",
                     }}
                   >
-                    <h3 className="text-white font-semibold text-xs mb-1.5 flex items-center gap-1.5">
+                    <h3 className={`font-semibold text-xs mb-1.5 flex items-center gap-1.5 ${
+                      isDark ? "text-white" : "text-gray-900"
+                    }`}>
                       <svg
-                        className="w-3 h-3 text-gray-400"
+                        className={`w-3 h-3 ${
+                          isDark ? "text-gray-400" : "text-gray-600"
+                        }`}
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -1296,7 +1509,9 @@ export default function TransactionDetailsModal({
                       </svg>
                       Description
                     </h3>
-                    <p className="text-gray-300 text-xs leading-relaxed">
+                    <p className={`text-xs leading-relaxed ${
+                      isDark ? "text-gray-300" : "text-gray-700"
+                    }`}>
                       {transaction.description}
                     </p>
                   </div>
@@ -1305,17 +1520,29 @@ export default function TransactionDetailsModal({
             </div>
 
             {/* Action Buttons - Fixed at bottom */}
-            <div className="flex-shrink-0 bg-gray-900 border-t border-gray-700/50 p-3">
+            <div className={`flex-shrink-0 p-3 ${
+              isDark
+                ? "bg-gray-900 border-t border-gray-700/50"
+                : "bg-white border-t border-gray-300"
+            }`}>
               <div className="flex gap-2">
                 <button
                   onClick={onClose}
-                  className="flex-1 py-2 px-3 rounded-lg font-medium text-xs transition-all active:scale-95 text-white"
-                  style={{
+                  className={`flex-1 py-2 px-3 rounded-lg font-medium text-xs transition-all active:scale-95 ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}
+                  style={isDark ? {
                     background:
                       "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
                     boxShadow:
                       "0 2px 8px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
                     border: "1px solid rgba(255, 255, 255, 0.08)",
+                  } : {
+                    background:
+                      "linear-gradient(145deg, #f3f4f6 0%, #e5e7eb 100%)",
+                    boxShadow:
+                      "0 2px 8px -2px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.5)",
+                    border: "1px solid rgba(0, 0, 0, 0.08)",
                   }}
                 >
                   Close

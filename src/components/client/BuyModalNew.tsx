@@ -653,7 +653,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                           <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                             You will receive:
                           </span>
-                          <span className="text-green-400 font-bold">
+                          <span className={`font-bold ${isDark ? "text-green-400" : "text-green-600"}`}>
                             {getEstimatedCrypto().toFixed(8)} {buyData.asset}
                           </span>
                         </div>
@@ -734,7 +734,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <p className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                         {getEstimatedCrypto().toFixed(8)}
                       </p>
-                      <p className="text-green-400 font-semibold text-sm">
+                      <p className={`font-semibold text-sm ${isDark ? "text-green-400" : "text-green-600"}`}>
                         {buyData.asset}
                       </p>
                     </div>
@@ -776,7 +776,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       <hr className={isDark ? "border-gray-700" : "border-gray-200"} />
                       <div className="flex justify-between font-bold text-sm">
                         <span className={isDark ? "text-gray-300" : "text-gray-700"}>Total Cost:</span>
-                        <span className="text-green-400">
+                        <span className={isDark ? "text-green-400" : "text-green-600"}>
                           {currencySymbol}
                           {(parseFloat(buyData.amount) * 1.015).toFixed(2)}
                         </span>

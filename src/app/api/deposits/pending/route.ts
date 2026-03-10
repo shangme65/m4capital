@@ -69,6 +69,40 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // Check for expired deposits and mark them as FAILED
+    const now = new Date();
+    const expiredDeposits = pendingDeposits.filter(
+      (deposit) => deposit.expiresAt && deposit.expiresAt < now
+    );
+
+    if (expiredDeposits.length > 0) {
+      console.log(`⏰ Found ${expiredDeposits.length} expired deposits, marking as FAILED`);
+      
+      // Update all expired deposits to FAILED status
+      await prisma.deposit.updateMany({
+        where: {
+          id: {
+            in: expiredDeposits.map((d) => d.id),
+          },
+        },
+        data: {
+          status: "FAILED",
+          paymentStatus: "expired",
+          updatedAt: now,
+        },
+      });
+
+      // Remove expired deposits from the list
+      return createSuccessResponse(
+        {
+          deposits: pendingDeposits.filter(
+            (d) => !expiredDeposits.some((exp) => exp.id === d.id)
+          ),
+        },
+        "Pending deposits retrieved successfully"
+      );
+    }
+
     return createSuccessResponse(
       {
         deposits: pendingDeposits,
