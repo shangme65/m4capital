@@ -217,25 +217,25 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
 
   // Crypto gradient colors
   const cryptoGradients: Record<string, string> = {
-    BTC: "linear-gradient(145deg, #f7931a 0%, #c77800 100%)",
-    ETH: "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)",
-    USDT: "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)",
-    LTC: "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-    XRP: "linear-gradient(145deg, #23292f 0%, #1a1e23 100%)",
-    SOL: "linear-gradient(145deg, #9945ff 0%, #14f195 100%)",
-    DOGE: "linear-gradient(145deg, #c2a633 0%, #8b7724 100%)",
-    ADA: "linear-gradient(145deg, #0033ad 0%, #002280 100%)",
-    DOT: "linear-gradient(145deg, #e6007a 0%, #b30060 100%)",
-    MATIC: "linear-gradient(145deg, #8247e5 0%, #5a2fa0 100%)",
-    TRX: "linear-gradient(145deg, #ff0013 0%, #b3000d 100%)",
-    TON: "linear-gradient(145deg, #0098ea 0%, #006bb3 100%)",
-    BCH: "linear-gradient(145deg, #8dc351 0%, #5a8033 100%)",
-    ETC: "linear-gradient(145deg, #328332 0%, #1f511f 100%)",
-    USDC: "linear-gradient(145deg, #2775ca 0%, #1a4d8a 100%)",
-    BNB: "linear-gradient(145deg, #f3ba2f 0%, #c99520 100%)",
-    AVAX: "linear-gradient(145deg, #e84142 0%, #b33333 100%)",
-    LINK: "linear-gradient(145deg, #2a5ada 0%, #1c3d99 100%)",
-    SHIB: "linear-gradient(145deg, #ffa409 0%, #cc8307 100%)",
+    BTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    ETH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    USDT: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    LTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    XRP: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    SOL: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    DOGE: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    ADA: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    DOT: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    MATIC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    TRX: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    TON: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    BCH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    ETC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    USDC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    BNB: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    AVAX: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    LINK: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    SHIB: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
   };
 
   // Available cryptos for withdrawal (only those with balance from user's portfolio)
@@ -1004,14 +1004,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                 <div
                                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                                   style={{
-                                    background:
-                                      selectedCrypto === "BTC"
-                                        ? "linear-gradient(145deg, #f7931a 0%, #c77800 100%)"
-                                        : selectedCrypto === "ETH"
-                                        ? "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)"
-                                        : selectedCrypto === "USDT"
-                                        ? "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)"
-                                        : "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                                    background: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
                                     boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
                                   }}
                                 >
@@ -1120,10 +1113,12 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                               <div
                                                 className="w-10 h-10 rounded-xl flex items-center justify-center"
                                                 style={{
-                                                  background:
-                                                    cryptoGradients[crypto] ||
-                                                    "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-                                                  boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
+                                                  background: isDark
+                                                    ? cryptoGradients[crypto] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                                    : "#ffffff",
+                                                  boxShadow: isDark
+                                                    ? "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)"
+                                                    : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                                                 }}
                                               >
                                                 <Image

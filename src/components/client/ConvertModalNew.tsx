@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition, useOptimistic } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
@@ -15,55 +16,72 @@ interface ConvertModalNewProps {
   onClose: () => void;
 }
 
-// 3D Card styling constants - CYAN theme for Convert/Swap
-const card3DStyle = {
-  background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-  boxShadow:
-    "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
-  border: "1px solid rgba(255, 255, 255, 0.08)",
-};
+// 3D Card styling functions - CYAN theme for Convert/Swap
+const getCard3DStyle = (isDark: boolean) => ({
+  background: isDark
+    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+    : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+  boxShadow: isDark
+    ? "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)"
+    : "0 8px 30px -4px rgba(0, 0, 0, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+});
 
 // 3D Dropdown card with depth effect
-const dropdown3DStyle = {
-  background: "linear-gradient(160deg, #1a2744 0%, #0d1829 40%, #0a1220 100%)",
-  boxShadow:
-    "0 30px 60px -15px rgba(0, 0, 0, 0.9), 0 15px 35px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.5)",
-  border: "1px solid rgba(6, 182, 212, 0.15)",
-};
+const getDropdown3DStyle = (isDark: boolean) => ({
+  background: isDark
+    ? "linear-gradient(160deg, #1a2744 0%, #0d1829 40%, #0a1220 100%)"
+    : "linear-gradient(160deg, #f0f9ff 0%, #e8f5fe 40%, #f0f9ff 100%)",
+  boxShadow: isDark
+    ? "0 30px 60px -15px rgba(0, 0, 0, 0.9), 0 15px 35px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.5)"
+    : "0 8px 25px -5px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.04)",
+  border: isDark ? "1px solid rgba(6, 182, 212, 0.15)" : "1px solid rgba(6, 182, 212, 0.25)",
+});
 
 // 3D Card item with inset depth effect
-const cardItem3DStyle = (isSelected: boolean) => ({
+const getCardItem3DStyle = (isDark: boolean, isSelected: boolean) => ({
   background: isSelected
-    ? "linear-gradient(145deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.15) 50%, rgba(6, 182, 212, 0.1) 100%)"
-    : "linear-gradient(155deg, #1e2d42 0%, #162338 40%, #0f1a2a 100%)",
+    ? isDark
+      ? "linear-gradient(145deg, rgba(6, 182, 212, 0.2) 0%, rgba(20, 184, 166, 0.15) 50%, rgba(6, 182, 212, 0.1) 100%)"
+      : "linear-gradient(145deg, rgba(6, 182, 212, 0.12) 0%, rgba(20, 184, 166, 0.08) 50%, rgba(6, 182, 212, 0.06) 100%)"
+    : isDark
+      ? "linear-gradient(155deg, #1e2d42 0%, #162338 40%, #0f1a2a 100%)"
+      : "linear-gradient(155deg, #ffffff 0%, #f8fafc 40%, #f1f5f9 100%)",
   boxShadow: isSelected
     ? "0 8px 25px -5px rgba(6, 182, 212, 0.4), inset 0 2px 0 rgba(255,255,255,0.15), inset 0 -2px 4px rgba(0,0,0,0.3)"
-    : "0 8px 20px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 2px rgba(0,0,0,0.4)",
+    : isDark
+      ? "0 8px 20px -8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 2px rgba(0,0,0,0.4)"
+      : "0 4px 12px -4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.04)",
   border: isSelected
     ? "1px solid rgba(6, 182, 212, 0.4)"
-    : "1px solid rgba(255, 255, 255, 0.06)",
+    : isDark
+      ? "1px solid rgba(255, 255, 255, 0.06)"
+      : "1px solid rgba(0, 0, 0, 0.08)",
   transform: isSelected ? "scale(1.02)" : "scale(1)",
 });
 
-const inputStyle = {
-  background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-  boxShadow:
-    "inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-};
+const getInputStyle = (isDark: boolean) => ({
+  background: isDark
+    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)"
+    : "linear-gradient(145deg, #f8fafc 0%, #ffffff 100%)",
+  boxShadow: isDark
+    ? "inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
+    : "inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 1)",
+  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
+});
 
 // Crypto gradient colors
 const cryptoGradients: Record<string, string> = {
-  BTC: "linear-gradient(145deg, #f7931a 0%, #c77800 100%)",
-  ETH: "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)",
-  USDT: "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)",
-  LTC: "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-  XRP: "linear-gradient(145deg, #23292f 0%, #1a1e23 100%)",
-  TRX: "linear-gradient(145deg, #ff0013 0%, #b3000d 100%)",
-  TON: "linear-gradient(145deg, #0098ea 0%, #006bb3 100%)",
-  BCH: "linear-gradient(145deg, #8dc351 0%, #5a8033 100%)",
-  ETC: "linear-gradient(145deg, #328332 0%, #1f511f 100%)",
-  USDC: "linear-gradient(145deg, #2775ca 0%, #1a4d8a 100%)",
+  BTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  ETH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  USDT: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  LTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  XRP: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  TRX: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  TON: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  BCH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  ETC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  USDC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
 };
 
 const cryptoNames: Record<string, string> = {
@@ -110,6 +128,11 @@ export default function ConvertModalNew({
   const { formatAmount, preferredCurrency, convertAmount } = useCurrency();
   const { addTransaction, addNotification, refetchTransactions } =
     useNotifications();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+  const card3DStyle = getCard3DStyle(isDark);
+  const dropdown3DStyle = getDropdown3DStyle(isDark);
+  const inputStyle = getInputStyle(isDark);
 
   const currencySymbol =
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
@@ -431,28 +454,31 @@ export default function ConvertModalNew({
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[10000] overflow-hidden"
         style={{
-          background:
-            "linear-gradient(180deg, #0a0f1a 0%, #0d1929 30%, #0f2235 50%, #0d1929 70%, #0a0f1a 100%)",
+          background: isDark
+            ? "linear-gradient(180deg, #0a0f1a 0%, #0d1929 30%, #0f2235 50%, #0d1929 70%, #0a0f1a 100%)"
+            : "linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 30%, #f0fdf4 50%, #e0f2fe 70%, #f0f9ff 100%)",
         }}
       >
         {/* Animated background effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-cyan-500/5 rounded-full blur-3xl" />
+          <div className={`absolute top-0 left-1/4 w-96 h-96 ${isDark ? "bg-cyan-500/10" : "bg-cyan-400/15"} rounded-full blur-3xl`} />
+          <div className={`absolute bottom-0 right-1/4 w-96 h-96 ${isDark ? "bg-teal-500/10" : "bg-teal-400/15"} rounded-full blur-3xl`} />
+          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] ${isDark ? "bg-cyan-500/5" : "bg-cyan-400/10"} rounded-full blur-3xl`} />
         </div>
 
         {/* Back Button - Fixed at top left */}
         {step < 4 && (
           <button
             onClick={handleBack}
-            className="absolute top-4 left-4 z-20 w-10 h-10 rounded-xl flex items-center justify-center text-white/80 hover:text-white transition-all"
+            className={`absolute top-4 left-4 z-20 w-10 h-10 rounded-xl flex items-center justify-center ${isDark ? "text-white/80 hover:text-white" : "text-gray-600 hover:text-gray-900"} transition-all`}
             style={{
-              background:
-                "linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)",
-              boxShadow:
-                "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              background: isDark
+                ? "linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.9) 100%)"
+                : "linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%)",
+              boxShadow: isDark
+                ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1)"
+                : "0 4px 12px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1)",
+              border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.08)",
             }}
           >
             <svg
@@ -505,7 +531,7 @@ export default function ConvertModalNew({
                     />
                   </svg>
                 </div>
-                <h2 className="text-xl font-bold text-white">Swap Crypto</h2>
+                <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Swap Crypto</h2>
               </div>
 
               {/* Progress Steps */}
@@ -518,7 +544,7 @@ export default function ConvertModalNew({
                           className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] transition-all ${
                             step >= s
                               ? "bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-sm shadow-cyan-500/30"
-                              : "bg-gray-800/50 text-gray-500"
+                              : isDark ? "bg-gray-800/50 text-gray-500" : "bg-gray-200/80 text-gray-400"
                           }`}
                           style={step >= s ? {} : inputStyle}
                         >
@@ -543,7 +569,7 @@ export default function ConvertModalNew({
                             className={`w-6 h-0.5 rounded-full ${
                               step > s
                                 ? "bg-gradient-to-r from-cyan-500 to-teal-500"
-                                : "bg-gray-700"
+                                : isDark ? "bg-gray-700" : "bg-gray-200"
                             }`}
                           />
                         )}
@@ -551,7 +577,7 @@ export default function ConvertModalNew({
                     ))}
                   </div>
                   <div className="flex justify-center mt-1">
-                    <span className="text-gray-400 text-[10px]">
+                    <span className={`${isDark ? "text-gray-400" : "text-gray-500"} text-[10px]`}>
                       {step === 1 && "Select Assets"}
                       {step === 2 && "Enter Amount"}
                       {step === 3 && "Confirm Swap"}
@@ -582,7 +608,7 @@ export default function ConvertModalNew({
 
                   {/* From Asset Selection - Only show user's owned crypto */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
                       From
                     </label>
                     {userOwnedCrypto.length === 0 ? (
@@ -605,10 +631,10 @@ export default function ConvertModalNew({
                             />
                           </svg>
                         </div>
-                        <p className="text-gray-400 text-sm">
+                        <p className={`${isDark ? "text-gray-400" : "text-gray-500"} text-sm`}>
                           No crypto assets to swap
                         </p>
-                        <p className="text-gray-500 text-xs mt-1">
+                        <p className={`${isDark ? "text-gray-500" : "text-gray-400"} text-xs mt-1`}>
                           Buy crypto first to start swapping
                         </p>
                       </div>
@@ -633,18 +659,19 @@ export default function ConvertModalNew({
                                 }))
                               }
                               className="w-full text-left transition-all duration-200 rounded-lg p-2 hover:scale-[1.01]"
-                              style={cardItem3DStyle(isSelected)}
+                              style={getCardItem3DStyle(isDark, isSelected)}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div
                                     className="w-10 h-10 rounded-lg flex items-center justify-center"
                                     style={{
-                                      background:
-                                        cryptoGradients[symbol] ||
-                                        "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-                                      boxShadow:
-                                        "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                                      background: isDark
+                                        ? cryptoGradients[symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                        : "#ffffff",
+                                      boxShadow: isDark
+                                        ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                                        : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                                     }}
                                   >
                                     <CryptoIcon
@@ -653,16 +680,16 @@ export default function ConvertModalNew({
                                     />
                                   </div>
                                   <div>
-                                    <div className="text-sm font-bold text-white">
+                                    <div className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                                       {symbol}
                                     </div>
-                                    <div className="text-[10px] text-gray-400">
+                                    <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                       {balance.toFixed(8)}
                                     </div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <div className="text-xs font-semibold text-white">
+                                  <div className={`text-xs font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                     {formatAmount(value, 2)}
                                   </div>
                                   {isSelected && (
@@ -717,7 +744,7 @@ export default function ConvertModalNew({
 
                   {/* To Asset Selection */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
                       To
                     </label>
                     <div
@@ -740,18 +767,19 @@ export default function ConvertModalNew({
                                 }))
                               }
                               className="w-full text-left transition-all duration-200 rounded-lg p-2 hover:scale-[1.01]"
-                              style={cardItem3DStyle(isSelected)}
+                              style={getCardItem3DStyle(isDark, isSelected)}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div
                                     className="w-10 h-10 rounded-lg flex items-center justify-center"
                                     style={{
-                                      background:
-                                        cryptoGradients[symbol] ||
-                                        "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-                                      boxShadow:
-                                        "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)",
+                                      background: isDark
+                                        ? cryptoGradients[symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                        : "#ffffff",
+                                      boxShadow: isDark
+                                        ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                                        : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                                     }}
                                   >
                                     <CryptoIcon
@@ -760,7 +788,7 @@ export default function ConvertModalNew({
                                     />
                                   </div>
                                   <div>
-                                    <div className="text-sm font-bold text-white">
+                                    <div className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                                       {symbol}
                                     </div>
                                     <div className="text-[10px] text-cyan-400 font-medium">
@@ -769,7 +797,7 @@ export default function ConvertModalNew({
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <div className="text-xs font-semibold text-white">
+                                  <div className={`text-xs font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                     {formatAmount(price, 2)}
                                   </div>
                                   {isSelected && (
@@ -796,13 +824,7 @@ export default function ConvertModalNew({
                   {/* Exchange Rate Display */}
                   <div
                     className="rounded-xl p-3"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                      boxShadow:
-                        "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    }}
+                    style={card3DStyle}
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -827,10 +849,10 @@ export default function ConvertModalNew({
                         </svg>
                       </div>
                       <div>
-                        <div className="text-xs text-gray-400">
+                        <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           Exchange Rate
                         </div>
-                        <div className="text-sm font-bold text-white">
+                        <div className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                           1 {convertData.fromAsset} ={" "}
                           {getConversionRate().toFixed(8)} {convertData.toAsset}
                         </div>
@@ -860,22 +882,19 @@ export default function ConvertModalNew({
                   {/* Selected Assets Display */}
                   <div
                     className="rounded-xl p-3"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                      boxShadow:
-                        "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    }}
+                    style={card3DStyle}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-8 h-8 rounded-lg flex items-center justify-center"
                           style={{
-                            background:
-                              cryptoGradients[convertData.fromAsset] ||
-                              "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                            background: isDark
+                              ? cryptoGradients[convertData.fromAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                              : "#ffffff",
+                            boxShadow: isDark
+                              ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                              : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                           }}
                         >
                           <CryptoIcon
@@ -883,7 +902,7 @@ export default function ConvertModalNew({
                             className="w-5 h-5 text-white"
                           />
                         </div>
-                        <span className="text-white font-medium">
+                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                           {convertData.fromAsset}
                         </span>
                       </div>
@@ -904,9 +923,12 @@ export default function ConvertModalNew({
                         <div
                           className="w-8 h-8 rounded-lg flex items-center justify-center"
                           style={{
-                            background:
-                              cryptoGradients[convertData.toAsset] ||
-                              "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                            background: isDark
+                              ? cryptoGradients[convertData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                              : "#ffffff",
+                            boxShadow: isDark
+                              ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                              : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                           }}
                         >
                           <CryptoIcon
@@ -914,7 +936,7 @@ export default function ConvertModalNew({
                             className="w-5 h-5 text-white"
                           />
                         </div>
-                        <span className="text-white font-medium">
+                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                           {convertData.toAsset}
                         </span>
                       </div>
@@ -924,25 +946,19 @@ export default function ConvertModalNew({
                   {/* Available Balance */}
                   <div
                     className="rounded-xl p-3"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                      boxShadow:
-                        "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    }}
+                    style={card3DStyle}
                   >
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-400 text-xs font-medium">
+                      <span className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         Available {convertData.fromAsset}:
                       </span>
                       <div className="text-right">
-                        <span className="text-lg font-bold text-white">
+                        <span className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {(
                             availableBalances[convertData.fromAsset] || 0
                           ).toFixed(8)}
                         </span>
-                        <div className="text-xs text-gray-400">
+                        <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           ≈{" "}
                           {formatAmount(
                             (availableBalances[convertData.fromAsset] || 0) *
@@ -957,17 +973,17 @@ export default function ConvertModalNew({
                   {/* Amount Input */}
                   <div>
                     <div className="flex justify-between items-center mb-2">
-                      <label className="text-sm font-semibold text-gray-300">
+                      <label className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                         Amount to Swap
                       </label>
                       {/* Fiat/Crypto Toggle */}
-                      <div className="flex items-center gap-1 p-0.5 rounded-lg bg-slate-800/50">
+                      <div className={`flex items-center gap-1 p-0.5 rounded-lg ${isDark ? "bg-slate-800/50" : "bg-gray-100/80"}`}>
                         <button
                           onClick={() => setInputMode("crypto")}
                           className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
                             inputMode === "crypto"
                               ? "bg-cyan-500 text-white"
-                              : "text-gray-400 hover:text-white"
+                              : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
                           }`}
                         >
                           {convertData.fromAsset}
@@ -977,7 +993,7 @@ export default function ConvertModalNew({
                           className={`px-2 py-1 text-xs font-medium rounded-md transition-all ${
                             inputMode === "fiat"
                               ? "bg-cyan-500 text-white"
-                              : "text-gray-400 hover:text-white"
+                              : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
                           }`}
                         >
                           {preferredCurrency}
@@ -998,7 +1014,7 @@ export default function ConvertModalNew({
                         placeholder={
                           inputMode === "crypto" ? "0.00000000" : "0.00"
                         }
-                        className="w-full rounded-xl py-2.5 px-3 pr-24 text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
+                        className={`w-full rounded-xl py-2.5 px-3 pr-24 ${isDark ? "text-white" : "text-gray-900"} text-base font-medium focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all`}
                         style={inputStyle}
                       />
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -1029,12 +1045,15 @@ export default function ConvertModalNew({
                               amount: amount.toString(),
                             }))
                           }
-                          className="px-2 py-1 rounded-full text-[10px] font-medium text-gray-300 hover:text-white transition-all"
+                          className={`px-2 py-1 rounded-full text-[10px] font-medium transition-all ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
                           style={{
-                            background:
-                              "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                            boxShadow: "0 2px 8px -2px rgba(0, 0, 0, 0.4)",
-                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                            background: isDark
+                              ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
+                              : "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
+                            boxShadow: isDark
+                              ? "0 2px 8px -2px rgba(0, 0, 0, 0.4)"
+                              : "0 2px 6px -2px rgba(0, 0, 0, 0.12)",
+                            border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0, 0, 0, 0.08)",
                           }}
                         >
                           {inputMode === "fiat"
@@ -1060,10 +1079,10 @@ export default function ConvertModalNew({
                     }}
                   >
                     <div className="flex justify-between items-center mb-2">
-                      <span className="text-gray-400 text-sm">
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                         You Will Receive
                       </span>
-                      <span className="text-xs text-gray-500">
+                      <span className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                         Fee: {conversionFee}%
                       </span>
                     </div>
@@ -1071,9 +1090,12 @@ export default function ConvertModalNew({
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center"
                         style={{
-                          background:
-                            cryptoGradients[convertData.toAsset] ||
-                            "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                          background: isDark
+                            ? cryptoGradients[convertData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                            : "#ffffff",
+                          boxShadow: isDark
+                            ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                            : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                         }}
                       >
                         <CryptoIcon
@@ -1082,10 +1104,10 @@ export default function ConvertModalNew({
                         />
                       </div>
                       <div>
-                        <div className="text-2xl font-bold text-white">
+                        <div className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {getReceiveAmount().toFixed(8)}
                         </div>
-                        <div className="text-sm text-gray-400">
+                        <div className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           {convertData.toAsset} ≈{" "}
                           {formatAmount(getUsdValue(), 2)}
                         </div>
@@ -1116,10 +1138,10 @@ export default function ConvertModalNew({
               {step === 3 && (
                 <div className="space-y-3">
                   <div className="text-center mb-3">
-                    <h3 className="text-base font-bold text-white">
+                    <h3 className={`text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                       Confirm Swap
                     </h3>
-                    <p className="text-gray-400 text-xs">
+                    <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Review your transaction details
                     </p>
                   </div>
@@ -1127,22 +1149,19 @@ export default function ConvertModalNew({
                   {/* Swap Summary */}
                   <div
                     className="rounded-xl p-3"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                      boxShadow:
-                        "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    }}
+                    style={card3DStyle}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-center">
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-1"
                           style={{
-                            background:
-                              cryptoGradients[convertData.fromAsset] ||
-                              "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                            background: isDark
+                              ? cryptoGradients[convertData.fromAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                              : "#ffffff",
+                            boxShadow: isDark
+                              ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                              : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                           }}
                         >
                           <CryptoIcon
@@ -1150,10 +1169,10 @@ export default function ConvertModalNew({
                             className="w-6 h-6 text-white"
                           />
                         </div>
-                        <div className="text-white font-bold text-xs">
+                        <div className={`font-bold text-xs ${isDark ? "text-white" : "text-gray-900"}`}>
                           {getCryptoAmountFromInput().toFixed(8)}
                         </div>
-                        <div className="text-gray-400 text-[10px]">
+                        <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           {convertData.fromAsset}
                         </div>
                       </div>
@@ -1184,9 +1203,12 @@ export default function ConvertModalNew({
                         <div
                           className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-1"
                           style={{
-                            background:
-                              cryptoGradients[convertData.toAsset] ||
-                              "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                            background: isDark
+                              ? cryptoGradients[convertData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                              : "#ffffff",
+                            boxShadow: isDark
+                              ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                              : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                           }}
                         >
                           <CryptoIcon
@@ -1197,30 +1219,30 @@ export default function ConvertModalNew({
                         <div className="text-cyan-400 font-bold text-xs">
                           {getReceiveAmount().toFixed(8)}
                         </div>
-                        <div className="text-gray-400 text-[10px]">
+                        <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           {convertData.toAsset}
                         </div>
                       </div>
                     </div>
 
                     {/* Details */}
-                    <div className="space-y-1 pt-2 border-t border-gray-700/50">
+                    <div className={`space-y-1 pt-2 border-t ${isDark ? "border-gray-700/50" : "border-gray-200/70"}`}>
                       <div className="flex flex-col sm:flex-row sm:justify-between text-xs gap-1">
-                        <span className="text-gray-400">Exchange Rate</span>
-                        <span className="text-white text-[10px] sm:text-xs break-all">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Exchange Rate</span>
+                        <span className={`text-[10px] sm:text-xs break-all ${isDark ? "text-white" : "text-gray-900"}`}>
                           1 {convertData.fromAsset} ={" "}
                           {getConversionRate().toFixed(8)} {convertData.toAsset}
                         </span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">Network Fee</span>
-                        <span className="text-white">{conversionFee}%</span>
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Network Fee</span>
+                        <span className={isDark ? "text-white" : "text-gray-900"}>{conversionFee}%</span>
                       </div>
                       <div className="flex justify-between text-xs">
-                        <span className="text-gray-400">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>
                           {preferredCurrency} Value
                         </span>
-                        <span className="text-white">
+                        <span className={isDark ? "text-white" : "text-gray-900"}>
                           {formatAmount(getUsdValue(), 2)}
                         </span>
                       </div>
@@ -1296,31 +1318,28 @@ export default function ConvertModalNew({
                     </svg>
                   </motion.div>
 
-                  <h3 className="text-2xl font-bold text-white mb-2">
+                  <h3 className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                     Swap Successful!
                   </h3>
-                  <p className="text-gray-400 mb-6">
+                  <p className={`mb-6 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     Your assets have been exchanged
                   </p>
 
                   <div
                     className="rounded-xl p-4 mb-6"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                      boxShadow:
-                        "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
-                    }}
+                    style={card3DStyle}
                   >
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div
                           className="w-8 h-8 rounded-lg flex items-center justify-center"
                           style={{
-                            background:
-                              cryptoGradients[successData.asset] ||
-                              "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                            background: isDark
+                              ? cryptoGradients[successData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                              : "#ffffff",
+                            boxShadow: isDark
+                              ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                              : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                           }}
                         >
                           <CryptoIcon
@@ -1328,13 +1347,13 @@ export default function ConvertModalNew({
                             className="w-5 h-5 text-white"
                           />
                         </div>
-                        <span className="text-gray-400 text-sm">Sold</span>
+                        <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Sold</span>
                       </div>
                       <div className="text-right">
-                        <span className="text-white font-bold block">
+                        <span className={`font-bold block ${isDark ? "text-white" : "text-gray-900"}`}>
                           -{successData.amount.toFixed(8)} {successData.asset}
                         </span>
-                        <span className="text-gray-400 text-xs">
+                        <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           ≈ {formatAmount(successData.value, 2)}
                         </span>
                       </div>
@@ -1344,9 +1363,12 @@ export default function ConvertModalNew({
                         <div
                           className="w-8 h-8 rounded-lg flex items-center justify-center"
                           style={{
-                            background:
-                              cryptoGradients[successData.toAsset] ||
-                              "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
+                            background: isDark
+                              ? cryptoGradients[successData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                              : "#ffffff",
+                            boxShadow: isDark
+                              ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
+                              : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                           }}
                         >
                           <CryptoIcon
@@ -1354,14 +1376,14 @@ export default function ConvertModalNew({
                             className="w-5 h-5 text-white"
                           />
                         </div>
-                        <span className="text-gray-400 text-sm">Received</span>
+                        <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Received</span>
                       </div>
                       <div className="text-right">
                         <span className="text-cyan-400 font-bold block">
                           +{successData.toAmount.toFixed(8)}{" "}
                           {successData.toAsset}
                         </span>
-                        <span className="text-gray-400 text-xs">
+                        <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           ≈ {formatAmount(successData.toValue, 2)}
                         </span>
                       </div>

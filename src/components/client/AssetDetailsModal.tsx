@@ -12,6 +12,7 @@ import TransactionDetailsModal, {
   DetailedTransaction,
 } from "./TransactionDetailsModal";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { formatCurrency as formatCurrencyUtil, getCurrencySymbol } from "@/lib/currencies";
 
@@ -274,6 +275,8 @@ export default function AssetDetailsModal({
 
   // Currency context for user's preferred currency
   const { preferredCurrency, formatAmount, convertAmount, exchangeRates } = useCurrency();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
 
   // Helper to format user balance - always show in user's preferred currency
   const formatUserBalance = (balance: number): string => {
@@ -501,23 +504,23 @@ export default function AssetDetailsModal({
             style={{ touchAction: "auto", margin: 0, padding: 0 }}
           >
             <div
-              className="bg-gray-900 w-full h-full overflow-y-auto"
+              className={`${isDark ? "bg-gray-900" : "bg-gray-50"} w-full h-full overflow-y-auto`}
               style={{ minHeight: "100vh", height: "100%" }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-700">
+              <div className={`flex items-center justify-between px-4 py-2.5 border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
                 <button
                   onClick={onClose}
-                  className="text-gray-300 hover:text-white transition-colors"
+                  className={`${isDark ? "text-gray-300 hover:text-white" : "text-gray-500 hover:text-gray-900"} transition-colors`}
                   aria-label="Go back"
                 >
                   <ArrowLeft size={20} />
                 </button>
                 <div className="text-center">
-                  <h1 className="text-lg font-bold text-white">
+                  <h1 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                     {asset.symbol}
                   </h1>
-                  <p className="text-xs text-gray-400">COIN | {asset.name}</p>
+                  <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>COIN | {asset.name}</p>
                 </div>
                 <button
                   onClick={() => setIsStarred(!isStarred)}
@@ -531,11 +534,11 @@ export default function AssetDetailsModal({
               </div>
 
               {/* Price Section */}
-              <div className="p-4 bg-gray-900">
+              <div className={`p-4 ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
                 {/* Network Fee Indicator - Shows estimated transfer fee for this asset */}
                 <div className="flex items-center gap-2 mb-4">
-                  <span className="text-gray-400 text-sm">⛽</span>
-                  <span className="text-gray-400 text-sm">
+                  <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>⛽</span>
+                  <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     {(() => {
                       // Estimated network fees per asset (in USD equivalent)
                       const networkFees: { [key: string]: number } = {
@@ -561,7 +564,7 @@ export default function AssetDetailsModal({
                 </div>
 
                 <div className="text-center mb-6">
-                  <div className="text-4xl md:text-5xl font-bold text-white mb-2">
+                  <div className={`text-4xl md:text-5xl font-bold ${isDark ? "text-white" : "text-gray-900"} mb-2`}>
                     {formatAmount(currentPrice, 2)}
                   </div>
                   <div
@@ -612,7 +615,7 @@ export default function AssetDetailsModal({
                       className={`px-3 py-1 text-sm transition-colors rounded ${
                         selectedPeriod === period.key
                           ? "bg-blue-600 text-white"
-                          : "text-gray-400 hover:text-white"
+                          : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
                       }`}
                     >
                       {period.label}
@@ -623,23 +626,25 @@ export default function AssetDetailsModal({
                 {/* Buy Now Section - 3D Card Style */}
                 <div
                   className="rounded-xl p-4 mb-6"
-                  style={{
-                    background:
-                      "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                    boxShadow:
-                      "0 15px 30px -8px rgba(0, 0, 0, 0.6), 0 8px 16px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                  style={isDark ? {
+                    background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                    boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4), inset 1px 0 0 rgba(255,255,255,0.05), inset -1px 0 0 rgba(0,0,0,0.2)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                  } : {
+                    background: "linear-gradient(160deg, #ffffff 0%, #f1f5f9 100%)",
+                    boxShadow: "0 8px 24px -6px rgba(0,0,0,0.14), 0 4px 12px -3px rgba(0,0,0,0.08), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.06), inset 1px 0 0 rgba(255,255,255,0.9), inset -1px 0 0 rgba(0,0,0,0.04)",
+                    border: "1px solid rgba(0,0,0,0.10)",
                   }}
                 >
                   {/* Header row with amount and Buy button */}
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-400 mb-1">
+                      <h3 className={`text-sm font-medium ${isDark ? "text-gray-400" : "text-gray-500"} mb-1`}>
                         Buy now
                       </h3>
-                      <div className="text-2xl font-bold text-white">
+                      <div className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                         {getCurrencySymbol(preferredCurrency)}{selectedBuyAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
-                        <span className="text-gray-400 text-lg font-medium">
+                        <span className={`${isDark ? "text-gray-400" : "text-gray-500"} text-lg font-medium`}>
                           {preferredCurrency}
                         </span>
                       </div>
@@ -670,7 +675,7 @@ export default function AssetDetailsModal({
                           className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
                             selectedBuyAmount === convertedAmount
                               ? "text-white"
-                              : "text-gray-300 hover:text-white"
+                              : isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"
                           }`}
                           style={
                             selectedBuyAmount === convertedAmount
@@ -681,12 +686,14 @@ export default function AssetDetailsModal({
                                     "0 4px 12px -2px rgba(37, 99, 235, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
                                   border: "1px solid rgba(59, 130, 246, 0.4)",
                                 }
-                              : {
-                                  background:
-                                    "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                                  boxShadow:
-                                    "0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                              : isDark ? {
+                                  background: "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
+                                  boxShadow: "0 4px 12px -2px rgba(0, 0, 0, 0.4), 0 2px 6px -1px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
                                   border: "1px solid rgba(255, 255, 255, 0.06)",
+                                } : {
+                                  background: "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
+                                  boxShadow: "0 2px 6px -1px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+                                  border: "1px solid rgba(0,0,0,0.08)",
                                 }
                           }
                         >
@@ -695,16 +702,16 @@ export default function AssetDetailsModal({
                       );
                     })}
                   </div>
-                  <p className="text-sm text-gray-400">
+                  <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     Buying {(convertAmount(selectedBuyAmount, true) / currentPrice).toFixed(5)}{" "}
                     {asset.symbol} from available balance:{" "}
                     <span
-                      className="font-bold bg-gradient-to-r from-blue-400 via-white to-blue-400 bg-clip-text text-transparent"
-                      style={{
-                        textShadow:
-                          "0 0 15px rgba(59,130,246,0.1), 0 2px 4px rgba(0,0,0,0.8)",
-                        WebkitTextStroke: "0.3px rgba(255,255,255,0.1)",
-                      }}
+                      className={`font-bold bg-clip-text text-transparent ${
+                        isDark
+                          ? "bg-gradient-to-r from-blue-400 via-white to-blue-400 drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
+                          : "bg-gradient-to-r from-blue-600 via-gray-900 to-blue-600 drop-shadow-[0_2px_10px_rgba(59,130,246,0.15)]"
+                      }`}
+                      style={{ WebkitTextStroke: isDark ? "0.5px rgba(255,255,255,0.1)" : "0.5px rgba(0,0,0,0.05)" }}
                     >
                       {formatUserBalance(userBalance)}
                     </span>
@@ -715,12 +722,14 @@ export default function AssetDetailsModal({
               {/* 3D Tabs Card */}
               <div
                 className="mx-4 rounded-xl overflow-hidden"
-                style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                  boxShadow:
-                    "0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                style={isDark ? {
+                  background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                  boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
                   border: "1px solid rgba(255, 255, 255, 0.06)",
+                } : {
+                  background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                  boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 8px -2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
+                  border: "1px solid rgba(0,0,0,0.08)",
                 }}
               >
                 <div className="flex">
@@ -735,7 +744,7 @@ export default function AssetDetailsModal({
                       className={`flex-1 py-3 px-4 text-center font-medium transition-all duration-200 ${
                         activeTab === tab.key
                           ? "text-blue-400 border-b-2 border-blue-500 shadow-[0_2px_8px_rgba(59,130,246,0.3)]"
-                          : "text-gray-400 hover:text-white"
+                          : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
                       }`}
                     >
                       {tab.label}
@@ -748,18 +757,20 @@ export default function AssetDetailsModal({
               <div className="p-4 pb-40">
                 {activeTab === "holdings" && (
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-4">
+                    <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"} mb-4`}>
                       My Balance
                     </h3>
                     {/* 3D Card with depth effect */}
                     <div
                       className="relative rounded-xl p-3 flex items-center justify-between overflow-hidden"
-                      style={{
-                        background:
-                          "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                        boxShadow:
-                          "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                      style={isDark ? {
+                        background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                        boxShadow: "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
                         border: "1px solid rgba(255, 255, 255, 0.08)",
+                      } : {
+                        background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                        boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1), 0 2px 8px -2px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
+                        border: "1px solid rgba(0,0,0,0.08)",
                       }}
                     >
                       {/* Subtle glow effect */}
@@ -774,9 +785,13 @@ export default function AssetDetailsModal({
                       <div className="flex items-center gap-3 relative z-10">
                         {/* 3D Logo matching dashboard style */}
                         <div
-                          className="w-10 h-10 rounded-xl bg-gradient-to-br from-gray-700 to-gray-800 flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
-                          style={{
-                            boxShadow: `0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)`,
+                          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                          style={isDark ? {
+                            background: "linear-gradient(135deg, #334155 0%, #1e293b 100%)",
+                            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.2)",
+                          } : {
+                            background: "#ffffff",
+                            boxShadow: "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                           }}
                         >
                           {/* Inner glow */}
@@ -789,19 +804,19 @@ export default function AssetDetailsModal({
                           />
                         </div>
                         <div>
-                          <div className="font-bold text-white text-lg">
+                          <div className={`font-bold ${isDark ? "text-white" : "text-gray-900"} text-lg`}>
                             {asset.name}
                           </div>
-                          <div className="text-gray-400 text-sm">
+                          <div className={`${isDark ? "text-gray-400" : "text-gray-500"} text-sm`}>
                             {asset.symbol}
                           </div>
                         </div>
                       </div>
                       <div className="text-right relative z-10">
-                        <div className="font-bold text-white text-xl">
+                        <div className={`font-bold ${isDark ? "text-white" : "text-gray-900"} text-xl`}>
                           {formatAmount(asset.value, 2)}
                         </div>
-                        <div className="text-gray-400 text-sm">
+                        <div className={`${isDark ? "text-gray-400" : "text-gray-500"} text-sm`}>
                           {asset.amount.toLocaleString("en-US", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 8,
@@ -816,7 +831,7 @@ export default function AssetDetailsModal({
 
                 {activeTab === "history" && (
                   <div>
-                    <h3 className="text-lg font-semibold text-white mb-4">
+                    <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"} mb-4`}>
                       Recent Transactions
                     </h3>
                     {history.length > 0 ? (
@@ -916,12 +931,14 @@ export default function AssetDetailsModal({
                               setShowTransactionDetails(true);
                             }}
                             className="rounded-xl p-2 transition-all duration-200 hover:scale-[1.01] cursor-pointer active:scale-[0.99]"
-                            style={{
-                              background:
-                                "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                              boxShadow:
-                                "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                            style={isDark ? {
+                              background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                              boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 6px 12px -3px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
                               border: "1px solid rgba(255, 255, 255, 0.06)",
+                            } : {
+                              background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                              boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08), 0 2px 6px -2px rgba(0,0,0,0.05), inset 0 1px 0 rgba(255,255,255,1)",
+                              border: "1px solid rgba(0,0,0,0.08)",
                             }}
                           >
                             <div className="flex items-start justify-between mb-1.5">
@@ -969,14 +986,14 @@ export default function AssetDetailsModal({
                                   </span>
                                 </div>
                                 <div>
-                                  <div className="font-semibold text-white capitalize text-sm">
+                                  <div className={`font-semibold ${isDark ? "text-white" : "text-gray-900"} capitalize text-sm`}>
                                     {tx.type === "swap"
                                       ? `${tx.fromAsset} → ${tx.toAsset}`
                                       : `${tx.type} ${
                                           tx.cryptoCurrency || asset.symbol
                                         }`}
                                   </div>
-                                  <div className="text-[11px] text-gray-400">
+                                  <div className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                     {new Date(tx.date).toLocaleDateString(
                                       "en-US",
                                       {
@@ -994,13 +1011,13 @@ export default function AssetDetailsModal({
                                     className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase ${
                                       tx.status?.toLowerCase() === "completed" ||
                                       tx.status?.toLowerCase() === "closed"
-                                        ? "bg-green-500/20 text-green-400"
+                                        ? isDark ? "bg-green-500/20 text-green-400" : "bg-green-50 text-green-600 border border-green-400"
                                         : tx.status?.toLowerCase() ===
                                             "pending" ||
                                           tx.status?.toLowerCase() ===
                                             "confirming"
-                                        ? "bg-yellow-500/20 text-yellow-400"
-                                        : "bg-gray-500/20 text-gray-400"
+                                        ? isDark ? "bg-yellow-500/20 text-yellow-400" : "bg-yellow-50 text-yellow-600 border border-yellow-400"
+                                        : isDark ? "bg-gray-500/20 text-gray-400" : "bg-red-50 text-red-500 border border-red-400"
                                     }`}
                                   >
                                     {tx.status || "completed"}
@@ -1020,7 +1037,7 @@ export default function AssetDetailsModal({
                                     />
                                   </svg>
                                 </div>
-                                <div className="text-[11px] text-gray-400 mt-0.5">
+                                <div className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"} mt-0.5`}>
                                   {new Date(tx.date).toLocaleTimeString(
                                     "en-US",
                                     {
@@ -1032,9 +1049,9 @@ export default function AssetDetailsModal({
                               </div>
                             </div>
 
-                            <div className="flex justify-between pt-1 border-t border-gray-700/50 mt-1">
+                            <div className={`flex justify-between pt-1 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"} mt-1`}>
                               <div className="flex flex-col">
-                                <span className="text-[11px] text-gray-400 font-medium">
+                                <span className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"} font-medium`}>
                                   {tx.type === "swap"
                                     ? tx.isFromAssetView
                                       ? "Sent:"
@@ -1042,7 +1059,7 @@ export default function AssetDetailsModal({
                                     : "Amount:"}
                                 </span>
                                 <span
-                                  className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg bg-gray-700/50 ${
+                                  className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg ${isDark ? "bg-gray-700/50" : "bg-gray-200"} ${
                                     tx.type === "buy" ||
                                     tx.type === "deposit" ||
                                     tx.type === "receive" ||
@@ -1097,10 +1114,10 @@ export default function AssetDetailsModal({
                                 </span>
                               </div>
                               <div className="flex flex-col items-end">
-                                <span className="text-[11px] text-gray-400 font-medium">
+                                <span className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"} font-medium`}>
                                   Value:
                                 </span>
-                                <span className="font-semibold text-white text-[11px] px-1.5 py-0.5 rounded-lg bg-gray-700/50">
+                                <span className={`font-semibold ${isDark ? "text-white bg-gray-700/50" : "text-gray-900 bg-gray-200"} text-[11px] px-1.5 py-0.5 rounded-lg`}>
                                   {/* For swaps, use fromValueUSD or toValueUSD depending on view */}
                                   {tx.type === "swap" ? (
                                     formatAmount(
@@ -1144,7 +1161,7 @@ export default function AssetDetailsModal({
                       </div>
                     ) : (
                       <div className="text-center py-12">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-slate-700/50 to-slate-800/50 flex items-center justify-center border border-slate-600/30">
+                        <div className={`w-16 h-16 mx-auto mb-4 rounded-full ${isDark ? "bg-gradient-to-br from-slate-700/50 to-slate-800/50 border-slate-600/30" : "bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300/50"} flex items-center justify-center border`}>
                           <svg
                             className="w-8 h-8 text-gray-400"
                             fill="none"
@@ -1159,13 +1176,13 @@ export default function AssetDetailsModal({
                             />
                           </svg>
                         </div>
-                        <h4 className="text-white font-medium mb-2">
+                        <h4 className={`${isDark ? "text-white" : "text-gray-900"} font-medium mb-2`}>
                           No {asset.symbol} Transactions Yet
                         </h4>
-                        <p className="text-gray-400 text-sm mb-1">
+                        <p className={`${isDark ? "text-gray-400" : "text-gray-500"} text-sm mb-1`}>
                           Your {asset.name} transaction history will appear here
                         </p>
-                        <p className="text-gray-500 text-xs mb-6">
+                        <p className={`${isDark ? "text-gray-500" : "text-gray-400"} text-xs mb-6`}>
                           Start trading to see your buy, sell, send, and receive
                           activity
                         </p>
@@ -1194,28 +1211,30 @@ export default function AssetDetailsModal({
                 {activeTab === "about" && info && (
                   <div className="space-y-6">
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-2">
+                      <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"} mb-2`}>
                         About {asset.symbol}
                       </h3>
-                      <p className="text-gray-400 leading-relaxed">
+                      <p className={`${isDark ? "text-gray-400" : "text-gray-600"} leading-relaxed`}>
                         {info.description}
                       </p>
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-4">
+                      <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"} mb-4`}>
                         Stats
                       </h3>
                       <div className="space-y-4">
                         {/* Market Cap - 3D Card */}
                         <div
                           className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
-                          style={{
-                            background:
-                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                            boxShadow:
-                              "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                          style={isDark ? {
+                            background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                            boxShadow: "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
                             border: "1px solid rgba(255, 255, 255, 0.08)",
+                          } : {
+                            background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                            boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
+                            border: "1px solid rgba(0,0,0,0.08)",
                           }}
                         >
                           {/* Subtle glow effect */}
@@ -1226,10 +1245,10 @@ export default function AssetDetailsModal({
                                 "radial-gradient(ellipse at 30% 0%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)",
                             }}
                           />
-                          <span className="text-gray-400 relative z-10">
+                          <span className={`${isDark ? "text-gray-400" : "text-gray-500"} relative z-10`}>
                             Market cap
                           </span>
-                          <span className="font-semibold text-white relative z-10">
+                          <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"} relative z-10`}>
                             {marketData?.marketCap || info?.marketCap || "—"}
                           </span>
                         </div>
@@ -1237,12 +1256,14 @@ export default function AssetDetailsModal({
                         {/* Circulating Supply - 3D Card */}
                         <div
                           className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
-                          style={{
-                            background:
-                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                            boxShadow:
-                              "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                          style={isDark ? {
+                            background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                            boxShadow: "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
                             border: "1px solid rgba(255, 255, 255, 0.08)",
+                          } : {
+                            background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                            boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
+                            border: "1px solid rgba(0,0,0,0.08)",
                           }}
                         >
                           {/* Subtle glow effect */}
@@ -1253,10 +1274,10 @@ export default function AssetDetailsModal({
                                 "radial-gradient(ellipse at 50% 0%, rgba(16, 185, 129, 0.3) 0%, transparent 50%)",
                             }}
                           />
-                          <span className="text-gray-400 relative z-10">
+                          <span className={`${isDark ? "text-gray-400" : "text-gray-500"} relative z-10`}>
                             Circulating Supply
                           </span>
-                          <span className="font-semibold text-white relative z-10">
+                          <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"} relative z-10`}>
                             {marketData?.circulatingSupply ||
                               info?.circulatingSupply ||
                               "—"}
@@ -1266,12 +1287,14 @@ export default function AssetDetailsModal({
                         {/* Total Supply - 3D Card */}
                         <div
                           className="relative rounded-xl p-4 flex justify-between items-center overflow-hidden"
-                          style={{
-                            background:
-                              "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                            boxShadow:
-                              "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                          style={isDark ? {
+                            background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                            boxShadow: "0 15px 30px -8px rgba(0, 0, 0, 0.7), 0 8px 16px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
                             border: "1px solid rgba(255, 255, 255, 0.08)",
+                          } : {
+                            background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                            boxShadow: "0 4px 12px -4px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
+                            border: "1px solid rgba(0,0,0,0.08)",
                           }}
                         >
                           {/* Subtle glow effect */}
@@ -1282,10 +1305,10 @@ export default function AssetDetailsModal({
                                 "radial-gradient(ellipse at 70% 0%, rgba(168, 85, 247, 0.3) 0%, transparent 50%)",
                             }}
                           />
-                          <span className="text-gray-400 relative z-10">
+                          <span className={`${isDark ? "text-gray-400" : "text-gray-500"} relative z-10`}>
                             Total Supply
                           </span>
-                          <span className="font-semibold text-white relative z-10">
+                          <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"} relative z-10`}>
                             {marketData?.totalSupply ||
                               info?.totalSupply ||
                               "—"}
@@ -1295,7 +1318,7 @@ export default function AssetDetailsModal({
                     </div>
 
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-4">
+                      <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"} mb-4`}>
                         Links
                       </h3>
                       <div className="flex flex-wrap gap-3">
@@ -1304,13 +1327,15 @@ export default function AssetDetailsModal({
                             href={info.links.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-white font-medium transition-all duration-200 hover:scale-105 active:scale-95 group overflow-hidden"
-                            style={{
-                              background:
-                                "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                              boxShadow:
-                                "0 8px 20px -4px rgba(0, 0, 0, 0.5), 0 4px 10px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                            className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl ${isDark ? "text-white" : "text-gray-900"} font-medium transition-all duration-200 hover:scale-105 active:scale-95 group overflow-hidden`}
+                            style={isDark ? {
+                              background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                              boxShadow: "0 8px 20px -4px rgba(0, 0, 0, 0.5), 0 4px 10px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
                               border: "1px solid rgba(255, 255, 255, 0.08)",
+                            } : {
+                              background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                              boxShadow: "0 4px 12px -4px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,1)",
+                              border: "1px solid rgba(0,0,0,0.08)",
                             }}
                           >
                             {/* Hover glow effect */}
@@ -1361,12 +1386,16 @@ export default function AssetDetailsModal({
               {/* Bottom Action Bar - Unique Branded Design */}
               <div
                 className="fixed bottom-0 left-0 right-0 z-[9999] p-2"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
+                style={isDark ? {
+                  background: "linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)",
                   backdropFilter: "blur(20px)",
                   borderTop: "1px solid rgba(255, 255, 255, 0.08)",
                   boxShadow: "0 -10px 40px -10px rgba(0, 0, 0, 0.5)",
+                } : {
+                  background: "linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.98) 100%)",
+                  backdropFilter: "blur(20px)",
+                  borderTop: "1px solid rgba(0,0,0,0.08)",
+                  boxShadow: "0 -4px 20px -4px rgba(0,0,0,0.08)",
                 }}
               >
                 <div className="flex justify-center gap-2 max-w-lg mx-auto">
@@ -1374,11 +1403,13 @@ export default function AssetDetailsModal({
                   <button
                     onClick={handleSend}
                     className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                      boxShadow:
-                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    style={isDark ? {
+                      background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow: "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(139, 92, 246, 0.3)",
+                    } : {
+                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow: "0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
                       border: "1px solid rgba(139, 92, 246, 0.3)",
                     }}
                   >
@@ -1405,7 +1436,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-purple-400 transition-colors">
+                    <span className={`text-[10px] font-semibold ${isDark ? "text-gray-300" : "text-gray-600"} group-hover:text-purple-400 transition-colors`}>
                       Send
                     </span>
                   </button>
@@ -1414,11 +1445,13 @@ export default function AssetDetailsModal({
                   <button
                     onClick={handleReceive}
                     className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                      boxShadow:
-                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    style={isDark ? {
+                      background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow: "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(20, 184, 166, 0.3)",
+                    } : {
+                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow: "0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
                       border: "1px solid rgba(20, 184, 166, 0.3)",
                     }}
                   >
@@ -1445,7 +1478,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-teal-400 transition-colors">
+                    <span className={`text-[10px] font-semibold ${isDark ? "text-gray-300" : "text-gray-600"} group-hover:text-teal-400 transition-colors`}>
                       Receive
                     </span>
                   </button>
@@ -1454,11 +1487,13 @@ export default function AssetDetailsModal({
                   <button
                     onClick={handleSwap}
                     className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                      boxShadow:
-                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    style={isDark ? {
+                      background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow: "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(6, 182, 212, 0.3)",
+                    } : {
+                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow: "0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
                       border: "1px solid rgba(6, 182, 212, 0.3)",
                     }}
                   >
@@ -1485,7 +1520,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-cyan-400 transition-colors">
+                    <span className={`text-[10px] font-semibold ${isDark ? "text-gray-300" : "text-gray-600"} group-hover:text-cyan-400 transition-colors`}>
                       Swap
                     </span>
                   </button>
@@ -1494,11 +1529,13 @@ export default function AssetDetailsModal({
                   <button
                     onClick={handleBuy}
                     className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                      boxShadow:
-                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    style={isDark ? {
+                      background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow: "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(34, 197, 94, 0.3)",
+                    } : {
+                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow: "0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
                       border: "1px solid rgba(34, 197, 94, 0.3)",
                     }}
                   >
@@ -1525,7 +1562,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-green-400 transition-colors">
+                    <span className={`text-[10px] font-semibold ${isDark ? "text-gray-300" : "text-gray-600"} group-hover:text-green-400 transition-colors`}>
                       Buy
                     </span>
                   </button>
@@ -1534,11 +1571,13 @@ export default function AssetDetailsModal({
                   <button
                     onClick={handleSell}
                     className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 group"
-                    style={{
-                      background:
-                        "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                      boxShadow:
-                        "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                    style={isDark ? {
+                      background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
+                      boxShadow: "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08)",
+                      border: "1px solid rgba(249, 115, 22, 0.3)",
+                    } : {
+                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow: "0 2px 8px -2px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
                       border: "1px solid rgba(249, 115, 22, 0.3)",
                     }}
                   >
@@ -1565,7 +1604,7 @@ export default function AssetDetailsModal({
                         />
                       </svg>
                     </div>
-                    <span className="text-[10px] font-semibold text-gray-300 group-hover:text-orange-400 transition-colors">
+                    <span className={`text-[10px] font-semibold ${isDark ? "text-gray-300" : "text-gray-600"} group-hover:text-orange-400 transition-colors`}>
                       Sell
                     </span>
                   </button>

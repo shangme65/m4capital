@@ -178,7 +178,10 @@ export default function AddCryptoModal({
                 >
                   <div className="flex items-center gap-2.5">
                     <div
-                      className={`w-9 h-9 rounded-lg bg-gradient-to-br ${metadata.gradient} flex items-center justify-center shadow-sm`}
+                      className={`w-9 h-9 rounded-lg bg-gradient-to-br ${metadata.gradient} flex items-center justify-center`}
+                      style={{
+                        boxShadow: "0 4px 10px -2px rgba(0,0,0,0.45), inset 0 2px 0 rgba(255,255,255,0.18), inset 0 -2px 0 rgba(0,0,0,0.22)",
+                      }}
                     >
                       <CryptoIcon symbol={crypto.symbol} size="sm" showNetwork={true} />
                     </div>

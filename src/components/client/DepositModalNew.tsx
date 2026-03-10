@@ -32,17 +32,17 @@ const inputStyle = {
 
 // Crypto gradient colors
 const cryptoGradients: Record<string, string> = {
-  BTC: "linear-gradient(145deg, #f7931a 0%, #c77800 100%)",
-  ETH: "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)",
-  USDT: "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)",
-  LTC: "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-  XRP: "linear-gradient(145deg, #23292f 0%, #1a1e23 100%)",
-  SOL: "linear-gradient(145deg, #9945ff 0%, #14f195 100%)",
-  TRX: "linear-gradient(145deg, #ff0013 0%, #b3000d 100%)",
-  TON: "linear-gradient(145deg, #0098ea 0%, #006bb3 100%)",
-  BCH: "linear-gradient(145deg, #8dc351 0%, #5a8033 100%)",
-  ETC: "linear-gradient(145deg, #328332 0%, #1f511f 100%)",
-  USDC: "linear-gradient(145deg, #2775ca 0%, #1a4d8a 100%)",
+  BTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  ETH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  USDT: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  LTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  XRP: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  SOL: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  TRX: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  TON: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  BCH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  ETC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  USDC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
 };
 
 function DepositModal({ isOpen, onClose }: DepositModalProps) {
@@ -969,11 +969,12 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                   <div
                                     className="w-8 h-8 rounded-lg flex items-center justify-center"
                                     style={{
-                                      background:
-                                        cryptoGradients[crypto.symbol] ||
-                                        "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-                                      boxShadow:
-                                        "0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)",
+                                      background: isDark
+                                        ? cryptoGradients[crypto.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                        : "#ffffff",
+                                      boxShadow: isDark
+                                        ? "0 3px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2), inset 0 -1px 0 rgba(0,0,0,0.2)"
+                                        : "0 2px 8px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,1), inset 0 -1px 0 rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.05)",
                                     }}
                                   >
                                     <CryptoIcon

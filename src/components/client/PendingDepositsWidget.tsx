@@ -145,7 +145,7 @@ export default function PendingDepositsWidget() {
                       className="w-10 h-10 rounded-full flex items-center justify-center"
                       style={{
                         background:
-                          "linear-gradient(145deg, #f7931a 0%, #c77800 100%)",
+                          "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
                       }}
                     >
                       <CryptoIcon symbol={deposit.cryptoCurrency} size="md" />
@@ -160,10 +160,10 @@ export default function PendingDepositsWidget() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs font-medium text-orange-400">
+                    <div className="text-xs font-semibold text-orange-400">
                       Awaiting Payment
                     </div>
-                    <div className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                    <div className={`text-xs font-medium ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       {deposit.cryptoAmount || deposit.paymentAmount}{" "}
                       {deposit.cryptoCurrency}
                     </div>

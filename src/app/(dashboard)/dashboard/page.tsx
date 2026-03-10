@@ -928,8 +928,8 @@ function DashboardContent() {
                     </span>
                   </div>
                   <span
-                    className={`text-sm sm:text-base font-bold bg-clip-text text-transparent ${isDark ? "bg-gradient-to-r from-blue-400 via-white to-blue-400 drop-shadow-[0_2px_8px_rgba(59,130,246,0.2)] [text-shadow:_0_0_15px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]" : "bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600"}`}
-                    style={{ WebkitTextStroke: isDark ? "0.3px rgba(255,255,255,0.1)" : "none" }}
+                    className={`text-sm sm:text-base font-bold bg-clip-text text-transparent ${isDark ? "bg-gradient-to-r from-blue-400 via-white to-blue-400 drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]" : "bg-gradient-to-r from-blue-600 via-gray-900 to-blue-600 drop-shadow-[0_2px_10px_rgba(59,130,246,0.15)]"}`}
+                    style={{ WebkitTextStroke: isDark ? "0.5px rgba(255,255,255,0.1)" : "0.5px rgba(0,0,0,0.05)" }}
                   >
                     {portfolioLoading ? (
                       <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
@@ -978,8 +978,8 @@ function DashboardContent() {
                     </span>
                   </div>
                   <span
-                    className={`text-sm sm:text-base font-bold bg-clip-text text-transparent ${isDark ? "bg-gradient-to-r from-green-400 via-green-300 to-green-400 drop-shadow-[0_2px_8px_rgba(34,197,94,0.2)] [text-shadow:_0_0_15px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]" : "bg-gradient-to-r from-green-600 via-green-500 to-green-600"}`}
-                    style={{ WebkitTextStroke: isDark ? "0.3px rgba(255,255,255,0.1)" : "none" }}
+                    className={`text-sm sm:text-base font-bold bg-clip-text text-transparent ${isDark ? "bg-gradient-to-r from-green-400 via-white to-green-400 drop-shadow-[0_2px_10px_rgba(34,197,94,0.2)] [text-shadow:_0_0_20px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]" : "bg-gradient-to-r from-green-600 via-gray-900 to-green-600 drop-shadow-[0_2px_10px_rgba(34,197,94,0.15)]"}`}
+                    style={{ WebkitTextStroke: isDark ? "0.5px rgba(255,255,255,0.1)" : "0.5px rgba(0,0,0,0.05)" }}
                   >
                     {portfolioLoading ? (
                       <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
@@ -1641,7 +1641,11 @@ function DashboardContent() {
                     <div
                       key={activity.id}
                       onClick={() => handleTransactionClick(activity)}
-                      className="group relative p-2 bg-gradient-to-br from-gray-800/60 to-gray-900/80 rounded-xl border border-gray-700/60 hover:border-blue-500/50 cursor-pointer transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.2)] backdrop-blur-sm hover:-translate-y-0.5"
+                      className={`group relative p-2 rounded-xl border cursor-pointer transition-all duration-300 backdrop-blur-sm hover:-translate-y-0.5 ${
+                        isDark
+                          ? "bg-gradient-to-br from-gray-800/60 to-gray-900/80 border-gray-700/60 hover:border-blue-500/50 shadow-[0_4px_12px_rgba(0,0,0,0.4)] hover:shadow-[0_8px_20px_rgba(59,130,246,0.2)]"
+                          : "bg-white border-gray-200 hover:border-blue-400/60 shadow-[0_2px_8px_rgba(0,0,0,0.06)] hover:shadow-[0_6px_16px_rgba(59,130,246,0.12)]"
+                      }`}
                     >
                       <div className="flex items-start gap-1.5">
                         {/* Transaction Icon */}
@@ -1652,10 +1656,10 @@ function DashboardContent() {
                           {/* Header Row with Title, Date and Status */}
                           <div className="flex items-start justify-between gap-1.5 mb-1">
                             <div className="flex-1 min-w-0">
-                              <h3 className="text-white font-semibold text-sm truncate">
+                              <h3 className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>
                                 {getTransactionText()}
                               </h3>
-                              <p className="text-gray-400 text-[11px] truncate">
+                              <p className={`text-[11px] truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                 {formatDate(activity.timestamp)}
                               </p>
                             </div>
@@ -1663,15 +1667,21 @@ function DashboardContent() {
                               <div
                                 className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase tracking-wider ${
                                   activity.status === "completed"
-                                    ? "bg-gradient-to-r from-gray-700 to-gray-800 text-green-400 border border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] animate-pulse-glow"
+                                    ? isDark
+                                      ? "bg-gradient-to-r from-gray-700 to-gray-800 text-green-400 border border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] animate-pulse-glow"
+                                      : "bg-green-50 text-green-600 border border-green-400"
                                     : activity.status === "pending"
-                                    ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                                    : "bg-red-500/20 text-red-400 border border-red-500/30"
+                                    ? isDark
+                                      ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                      : "bg-yellow-50 text-yellow-600 border border-yellow-400/60"
+                                    : isDark
+                                      ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                                      : "bg-red-50 text-red-500 border border-red-400/60"
                                 }`}
                               >
                                 {activity.status}
                               </div>
-                              <p className="text-gray-400 text-[11px] mt-0.5">
+                              <p className={`text-[11px] mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                 {formatTime(activity.timestamp)}
                               </p>
                             </div>
@@ -1680,11 +1690,11 @@ function DashboardContent() {
                           {/* Amount Row - Labels on same row, values below */}
                           <div className="flex justify-between gap-3 mt-0.5">
                             <div className="flex flex-col">
-                              <span className="text-gray-400 text-[11px] font-medium">Amount:</span>
-                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg bg-gray-700/50 ${
+                              <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Amount:</span>
+                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg ${isDark ? "bg-gray-700/50" : "bg-gray-200"} ${
                                 activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw"
                                   ? "text-red-400"
-                                  : "text-green-400"
+                                  : "text-green-500"
                               }`}>
                                 {activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw" ? "-" : "+"}
                                 {formatCryptoAmount(
@@ -1694,8 +1704,8 @@ function DashboardContent() {
                               </span>
                             </div>
                             <div className="flex flex-col items-end">
-                              <span className="text-gray-400 text-[11px] font-medium">Value:</span>
-                              <span className="font-semibold text-[11px] text-white px-1.5 py-0.5 rounded-lg bg-gray-700/50">
+                              <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Value:</span>
+                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg ${isDark ? "text-white bg-gray-700/50" : "text-gray-900 bg-gray-200"}`}>
                                 {/* For fiat deposits/transfers:
                                     - If asset currency matches user's preferred currency: show original amount
                                     - If asset currency differs: convert USD value to user's preferred currency
@@ -1713,8 +1723,8 @@ function DashboardContent() {
                           {activity.status === "pending" &&
                             activity.type === "deposit" &&
                             activity.confirmations !== undefined && (
-                              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-700/50">
-                                <div className="flex-1 bg-gray-700/50 rounded-full h-2 overflow-hidden">
+                              <div className={`flex items-center gap-2 mt-3 pt-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
+                                <div className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-200"}`}>
                                   <div
                                     className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded-full transition-all duration-500"
                                     style={{
@@ -1727,7 +1737,7 @@ function DashboardContent() {
                                     }}
                                   ></div>
                                 </div>
-                                <span className="text-xs text-gray-400 font-medium flex-shrink-0">
+                                <span className={`text-xs font-medium flex-shrink-0 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                   {activity.confirmations}/
                                   {activity.maxConfirmations || 6} confirmations
                                 </span>

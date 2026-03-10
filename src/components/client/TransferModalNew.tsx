@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
@@ -15,34 +16,40 @@ interface TransferModalNewProps {
   onClose: () => void;
 }
 
-// 3D Card styling constants - PURPLE theme for Transfer
-const card3DStyle = {
-  background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-  boxShadow:
-    "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)",
-  border: "1px solid rgba(255, 255, 255, 0.08)",
-};
+// 3D Card styling functions - PURPLE theme for Transfer
+const getCard3DStyle = (isDark: boolean) => ({
+  background: isDark
+    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+    : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+  boxShadow: isDark
+    ? "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)"
+    : "0 8px 30px -4px rgba(0, 0, 0, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+});
 
-const inputStyle = {
-  background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-  boxShadow:
-    "inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)",
-  border: "1px solid rgba(255, 255, 255, 0.1)",
-};
+const getInputStyle = (isDark: boolean) => ({
+  background: isDark
+    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)"
+    : "linear-gradient(145deg, #f8fafc 0%, #ffffff 100%)",
+  boxShadow: isDark
+    ? "inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
+    : "inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 1)",
+  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
+});
 
 // Crypto gradient colors
 const cryptoGradients: Record<string, string> = {
-  USD: "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)",
-  BTC: "linear-gradient(145deg, #f7931a 0%, #c77800 100%)",
-  ETH: "linear-gradient(145deg, #627eea 0%, #3c4f9a 100%)",
-  USDT: "linear-gradient(145deg, #26a17b 0%, #1a7555 100%)",
-  LTC: "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-  XRP: "linear-gradient(145deg, #23292f 0%, #1a1e23 100%)",
-  TRX: "linear-gradient(145deg, #ff0013 0%, #b3000d 100%)",
-  TON: "linear-gradient(145deg, #0098ea 0%, #006bb3 100%)",
-  BCH: "linear-gradient(145deg, #8dc351 0%, #5a8033 100%)",
-  ETC: "linear-gradient(145deg, #328332 0%, #1f511f 100%)",
-  USDC: "linear-gradient(145deg, #2775ca 0%, #1a4d8a 100%)",
+  USD: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  BTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  ETH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  USDT: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  LTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  XRP: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  TRX: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  TON: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  BCH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  ETC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  USDC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
 };
 
 export default function TransferModalNew({
@@ -72,6 +79,11 @@ export default function TransferModalNew({
   const { portfolio, refetch } = usePortfolio();
   const { preferredCurrency, convertAmount, formatAmount, exchangeRates } = useCurrency();
   const { addTransaction, addNotification } = useNotifications();
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
+  const card3DStyle = getCard3DStyle(isDark);
+  const inputStyle = getInputStyle(isDark);
 
   const currencySymbol =
     CURRENCIES.find((c) => c.code === preferredCurrency)?.symbol || "$";
@@ -389,22 +401,23 @@ export default function TransferModalNew({
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[10000] overflow-hidden"
           style={{
-            background:
-              "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #2e1065 50%, #0f172a 75%, #0a0a0f 100%)",
+            background: isDark
+              ? "linear-gradient(135deg, #0a0a0f 0%, #0f172a 25%, #2e1065 50%, #0f172a 75%, #0a0a0f 100%)"
+              : "linear-gradient(135deg, #f8fafc 0%, #ffffff 25%, #f5f3ff 50%, #ffffff 75%, #f8fafc 100%)",
           }}
         >
           {/* Animated background elements - PURPLE theme */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-3xl" />
+            <div className={`absolute top-1/4 left-1/4 w-96 h-96 ${isDark ? "bg-purple-500/10" : "bg-purple-200/30"} rounded-full blur-3xl animate-pulse`} />
+            <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 ${isDark ? "bg-violet-500/10" : "bg-violet-200/30"} rounded-full blur-3xl animate-pulse delay-1000`} />
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] ${isDark ? "bg-purple-500/5" : "bg-purple-100/40"} rounded-full blur-3xl`} />
           </div>
 
           {/* Back button - top left (hidden on success) */}
           {step !== 4 && (
             <button
               onClick={handleBack}
-              className="absolute top-4 left-4 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white rounded-xl transition-all z-50"
+              className={`absolute top-4 left-4 w-10 h-10 flex items-center justify-center ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"} rounded-xl transition-all z-50`}
               style={card3DStyle}
               aria-label="Back"
             >
@@ -458,7 +471,7 @@ export default function TransferModalNew({
                       />
                     </svg>
                   </div>
-                  <h2 className="text-xl font-bold text-white">Transfer</h2>
+                  <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Transfer</h2>
                 </div>
 
                 {/* Progress Steps */}
@@ -471,7 +484,9 @@ export default function TransferModalNew({
                             className={`w-6 h-6 rounded-md flex items-center justify-center font-bold text-[10px] transition-all ${
                               step >= s
                                 ? "bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-sm shadow-purple-500/30"
-                                : "bg-gray-800/50 text-gray-500"
+                                : isDark
+                                ? "bg-gray-800/50 text-gray-500"
+                                : "bg-gray-100 text-gray-400"
                             }`}
                             style={step >= s ? {} : inputStyle}
                           >
@@ -496,7 +511,7 @@ export default function TransferModalNew({
                               className={`w-6 h-0.5 rounded-full ${
                                 step > s
                                   ? "bg-gradient-to-r from-purple-500 to-violet-500"
-                                  : "bg-gray-700"
+                                  : isDark ? "bg-gray-700" : "bg-gray-200"
                               }`}
                             />
                           )}
@@ -504,7 +519,7 @@ export default function TransferModalNew({
                       ))}
                     </div>
                     <div className="flex justify-center mt-1">
-                      <span className="text-gray-400 text-[10px]">
+                      <span className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         {step === 1 && "Select Asset"}
                         {step === 2 && "Enter Details"}
                         {step === 3 && "Confirm"}
@@ -525,7 +540,7 @@ export default function TransferModalNew({
                 {/* Step 1: Select Asset */}
                 {step === 1 && (
                   <div className="space-y-4">
-                    <label className="block text-sm font-semibold text-gray-300 mb-2">
+                    <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
                       Select Asset to Send
                     </label>
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
@@ -552,13 +567,19 @@ export default function TransferModalNew({
                               background:
                                 transferData.asset === asset.symbol
                                   ? "linear-gradient(145deg, rgba(168, 85, 247, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)"
-                                  : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
+                                  : isDark
+                                  ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
+                                  : "linear-gradient(145deg, rgba(248, 250, 252, 1) 0%, rgba(241, 245, 249, 1) 100%)",
                               boxShadow:
-                                "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                                isDark
+                                  ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
+                                  : "0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
                               border:
                                 transferData.asset === asset.symbol
                                   ? "1px solid rgba(168, 85, 247, 0.3)"
-                                  : "1px solid rgba(255, 255, 255, 0.05)",
+                                  : isDark
+                                  ? "1px solid rgba(255, 255, 255, 0.05)"
+                                  : "1px solid rgba(0, 0, 0, 0.08)",
                             }}
                           >
                             <div className="flex items-center justify-between">
@@ -566,13 +587,18 @@ export default function TransferModalNew({
                                 <div
                                   className="w-10 h-10 rounded-xl flex items-center justify-center"
                                   style={{
-                                    background: isFiat
-                                      ? cryptoGradients["USD"] ||
-                                        "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
-                                      : cryptoGradients[asset.symbol] ||
-                                        "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-                                    boxShadow:
-                                      "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)",
+                                    background: isDark
+                                      ? isFiat
+                                        ? cryptoGradients["USD"] || "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
+                                        : cryptoGradients[asset.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                      : isFiat
+                                        ? "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
+                                        : "#ffffff",
+                                    boxShadow: isDark
+                                      ? "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)"
+                                      : isFiat
+                                        ? "0 4px 12px rgba(168,85,247,0.3), inset 0 2px 0 rgba(255,255,255,0.2)"
+                                        : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                                   }}
                                 >
                                   {isFiat ? (
@@ -587,12 +613,12 @@ export default function TransferModalNew({
                                   )}
                                 </div>
                                 <div>
-                                  <div className="text-sm font-semibold text-white">
+                                  <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                     {isFiat
                                       ? `${preferredCurrency} Balance`
                                       : asset.symbol}
                                   </div>
-                                  <div className="text-[10px] text-gray-400">
+                                  <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                     {isFiat
                                       ? formatBalanceDisplay(asset.amount)
                                       : formatAmount(cryptoValue, 2)}
@@ -601,7 +627,7 @@ export default function TransferModalNew({
                               </div>
                               <div className="flex items-center gap-2">
                                 <div className="text-right">
-                                  <div className="text-sm font-semibold text-white">
+                                  <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                     {isFiat
                                       ? formatBalanceDisplay(asset.amount)
                                       : formatAmount(cryptoValue, 2)}
@@ -671,10 +697,16 @@ export default function TransferModalNew({
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center"
                         style={{
-                          background:
-                            cryptoGradients[transferData.asset] ||
-                            "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+                          background: isDark
+                            ? cryptoGradients[transferData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                            : transferData.asset === "FIAT"
+                              ? "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
+                              : "#ffffff",
+                          boxShadow: isDark
+                            ? "0 4px 12px rgba(0,0,0,0.4)"
+                            : transferData.asset === "FIAT"
+                              ? "0 4px 12px rgba(168,85,247,0.3), inset 0 2px 0 rgba(255,255,255,0.2)"
+                              : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                         }}
                       >
                         {transferData.asset === "FIAT" ? (
@@ -706,7 +738,7 @@ export default function TransferModalNew({
 
                     {/* Recipient Input */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-300 mb-2">
+                      <label className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
                         Recipient (Email or Account Number)
                       </label>
                       <input
@@ -719,7 +751,7 @@ export default function TransferModalNew({
                           }));
                           lookupReceiver(e.target.value);
                         }}
-                        className="w-full rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                        className={`w-full rounded-xl px-4 py-3 ${isDark ? "text-white" : "text-gray-900"} text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
                         style={inputStyle}
                         placeholder="user@example.com or 12345678"
                       />
@@ -757,11 +789,11 @@ export default function TransferModalNew({
 
                     {/* Amount Input - Always in preferred currency */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-300 mb-2">
+                      <label className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
                         Amount ({preferredCurrency})
                       </label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400" : "text-gray-500"} font-medium`}>
                           {currencySymbol}
                         </span>
                         <input
@@ -774,7 +806,7 @@ export default function TransferModalNew({
                               amount: e.target.value,
                             }))
                           }
-                          className="w-full rounded-xl pl-8 pr-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                          className={`w-full rounded-xl pl-8 pr-4 py-3 ${isDark ? "text-white" : "text-gray-900"} text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
                           style={inputStyle}
                           placeholder="0.00"
                         />
@@ -790,12 +822,13 @@ export default function TransferModalNew({
                                 amount: amount.toString(),
                               }))
                             }
-                            className="px-2 py-1 rounded-full text-[10px] font-medium text-gray-300 hover:text-white transition-all"
+                            className={`px-2 py-1 rounded-full text-[10px] font-medium ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"} transition-all`}
                             style={{
-                              background:
-                                "linear-gradient(145deg, #374151 0%, #1f2937 100%)",
-                              boxShadow: "0 2px 8px -2px rgba(0, 0, 0, 0.4)",
-                              border: "1px solid rgba(255, 255, 255, 0.06)",
+                              background: isDark
+                                ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
+                                : "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
+                              boxShadow: isDark ? "0 2px 8px -2px rgba(0, 0, 0, 0.4)" : "0 2px 6px -2px rgba(0, 0, 0, 0.1)",
+                              border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0, 0, 0, 0.08)",
                             }}
                           >
                             {currencySymbol}
@@ -840,7 +873,7 @@ export default function TransferModalNew({
 
                     {/* Memo Input */}
                     <div>
-                      <label className="block text-xs font-semibold text-gray-300 mb-2">
+                      <label className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
                         Memo (Optional)
                       </label>
                       <textarea
@@ -851,7 +884,7 @@ export default function TransferModalNew({
                             memo: e.target.value,
                           }))
                         }
-                        className="w-full rounded-xl px-4 py-3 text-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none"
+                        className={`w-full rounded-xl px-4 py-3 ${isDark ? "text-white" : "text-gray-900"} text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none`}
                         style={inputStyle}
                         placeholder="Add a note..."
                         rows={2}
@@ -869,18 +902,18 @@ export default function TransferModalNew({
                         }}
                       >
                         <div className="flex justify-between items-center mb-2">
-                          <span className="text-gray-400 text-xs">Amount:</span>
-                          <span className="text-white font-medium text-sm">
+                          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>Amount:</span>
+                          <span className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                             {currencySymbol}
                             {parseFloat(transferData.amount).toFixed(2)}
                           </span>
                         </div>
                         {transferData.asset !== "FIAT" && (
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-gray-400 text-xs">
+                            <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                               You send:
                             </span>
-                            <span className="text-white font-medium text-sm">
+                            <span className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                               {getAssetAmount(
                                 parseFloat(transferData.amount)
                               ).toFixed(8)}{" "}
@@ -889,7 +922,7 @@ export default function TransferModalNew({
                           </div>
                         )}
                         <div className="flex justify-between items-center">
-                          <span className="text-gray-400 text-xs">To:</span>
+                          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>To:</span>
                           <span className="text-purple-400 font-bold">
                             {receiverName || transferData.destination}
                           </span>
@@ -900,7 +933,7 @@ export default function TransferModalNew({
                     <div className="flex gap-2">
                       <button
                         onClick={handleBack}
-                        className="flex-1 py-2 px-3 rounded-xl font-semibold text-white text-xs"
+                        className={`flex-1 py-2 px-3 rounded-xl font-semibold ${isDark ? "text-white" : "text-gray-900"} text-xs`}
                         style={card3DStyle}
                       >
                         Back
@@ -933,10 +966,16 @@ export default function TransferModalNew({
                       <div
                         className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-3"
                         style={{
-                          background:
-                            cryptoGradients[transferData.asset] ||
-                            "linear-gradient(145deg, #345d9d 0%, #1e3a5f 100%)",
-                          boxShadow: "0 10px 30px -5px rgba(0, 0, 0, 0.5)",
+                          background: isDark
+                            ? cryptoGradients[transferData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                            : transferData.asset === "FIAT"
+                              ? "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
+                              : "#ffffff",
+                          boxShadow: isDark
+                            ? "0 10px 30px -5px rgba(0, 0, 0, 0.5)"
+                            : transferData.asset === "FIAT"
+                              ? "0 6px 18px rgba(168,85,247,0.3), inset 0 2px 0 rgba(255,255,255,0.25)"
+                              : "0 6px 18px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                         }}
                       >
                         {transferData.asset === "FIAT" ? (
@@ -950,10 +989,10 @@ export default function TransferModalNew({
                           />
                         )}
                       </div>
-                      <p className="text-gray-400 text-xs mb-1">
+                      <p className={`text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         You&apos;re sending
                       </p>
-                      <p className="text-2xl font-bold text-white">
+                      <p className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                         {transferData.asset === "FIAT"
                           ? `${currencySymbol}${parseFloat(
                               transferData.amount
@@ -967,30 +1006,24 @@ export default function TransferModalNew({
                           ? preferredCurrency
                           : transferData.asset}
                       </p>
-                      <p className="text-gray-400 text-xs mt-2">
+                      <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         To: {receiverName || transferData.destination}
                       </p>
                     </div>
 
                     <div
                       className="rounded-xl p-4 space-y-3"
-                      style={{
-                        background:
-                          "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                        boxShadow:
-                          "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                      }}
+                      style={getCard3DStyle(isDark)}
                     >
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Recipient:</span>
-                        <span className="text-white font-medium">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Recipient:</span>
+                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                           {receiverName || transferData.destination}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Amount:</span>
-                        <span className="text-white font-medium">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount:</span>
+                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                           {transferData.asset === "FIAT"
                             ? `${currencySymbol}${parseFloat(
                                 transferData.amount
@@ -1001,22 +1034,22 @@ export default function TransferModalNew({
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Network Fee:</span>
-                        <span className="text-white font-medium">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Network Fee:</span>
+                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                           {formatAmount(transferFee, 4)}
                         </span>
                       </div>
                       {transferData.memo && (
                         <div className="flex justify-between text-sm">
-                          <span className="text-gray-400">Memo:</span>
-                          <span className="text-white font-medium truncate max-w-[150px]">
+                          <span className={isDark ? "text-gray-400" : "text-gray-500"}>Memo:</span>
+                          <span className={`font-medium truncate max-w-[150px] ${isDark ? "text-white" : "text-gray-900"}`}>
                             {transferData.memo}
                           </span>
                         </div>
                       )}
-                      <hr className="border-gray-700" />
+                      <hr className={isDark ? "border-gray-700" : "border-gray-200"} />
                       <div className="flex justify-between font-bold">
-                        <span className="text-gray-300">Total:</span>
+                        <span className={isDark ? "text-gray-300" : "text-gray-700"}>Total:</span>
                         <span className="text-purple-400">
                           {transferData.asset === "FIAT"
                             ? `${currencySymbol}${parseFloat(
@@ -1033,7 +1066,7 @@ export default function TransferModalNew({
                       <button
                         onClick={handleBack}
                         disabled={isPending}
-                        className="flex-1 py-2 px-3 rounded-xl font-semibold text-white text-xs disabled:opacity-50"
+                        className={`flex-1 py-2 px-3 rounded-xl font-semibold ${isDark ? "text-white" : "text-gray-900"} text-xs disabled:opacity-50`}
                         style={card3DStyle}
                       >
                         Back
@@ -1119,10 +1152,10 @@ export default function TransferModalNew({
                       </motion.div>
                     </div>
 
-                    <h3 className="text-xl font-bold text-white text-center">
+                    <h3 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"} text-center`}>
                       Transfer Successful!
                     </h3>
-                    <p className="text-gray-400 text-sm text-center">
+                    <p className={`text-sm text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Your transfer has been sent
                     </p>
 
@@ -1135,35 +1168,35 @@ export default function TransferModalNew({
                       }}
                     >
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Sent To:</span>
-                        <span className="text-white font-semibold">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Sent To:</span>
+                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {successData.recipientName || successData.recipient}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Asset:</span>
-                        <span className="text-white font-semibold">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Asset:</span>
+                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {successData.asset === "FIAT"
                             ? preferredCurrency
                             : successData.asset}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Amount Sent:</span>
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount Sent:</span>
                         <span className="text-purple-400 font-bold">
                           {currencySymbol}
                           {parseFloat(transferData.amount).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Date:</span>
-                        <span className="text-white font-semibold">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Date:</span>
+                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {new Date().toLocaleDateString()}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-gray-400">Time:</span>
-                        <span className="text-white font-semibold">
+                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Time:</span>
+                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {new Date().toLocaleTimeString()}
                         </span>
                       </div>
