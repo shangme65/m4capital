@@ -699,7 +699,7 @@ function DashboardContent() {
       {/* Portfolio Section - Single 3D Card */}
       <div
         data-tutorial="portfolio-balance"
-        className="relative rounded-2xl p-4 sm:p-6 overflow-hidden transition-all duration-300 mb-4"
+        className="relative rounded-2xl p-4 sm:p-6 overflow-hidden transition-all duration-300 mb-4 mt-4 sm:mt-5"
         style={{
           background: isDark
             ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"

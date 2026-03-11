@@ -83,7 +83,7 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
   return (
     <div className={`${className}`}>
       <div
-        className={`relative rounded-xl p-2.5 sm:p-3 overflow-hidden transition-all duration-500 ${
+        className={`relative rounded-xl p-2 overflow-hidden transition-all duration-500 ${
           isDark 
             ? "bg-gradient-to-br from-gray-800/90 via-gray-900/95 to-black/90" 
             : "bg-gradient-to-br from-white/95 via-gray-50/90 to-gray-100/95"
@@ -136,22 +136,22 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
 
         <div className="relative z-10">
           {/* Header */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5">
               <div 
-                className="w-2 h-2 rounded-full animate-pulse"
+                className="w-1.5 h-1.5 rounded-full animate-pulse"
                 style={{ 
                   background: colors.primary,
-                  boxShadow: `0 0 10px ${colors.glow}`,
+                  boxShadow: `0 0 6px ${colors.glow}`,
                 }}
               />
-              <span className={`text-xs font-bold tracking-wider uppercase ${
+              <span className={`text-[10px] font-bold tracking-wider uppercase ${
                 isDark ? "text-gray-400" : "text-gray-500"
               }`}>
                 Signal Strength
               </span>
             </div>
-            <div className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+            <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${
               isDark ? "bg-gray-800/80" : "bg-gray-200/80"
             }`} style={{ color: colors.primary }}>
               {colors.text}
@@ -159,9 +159,9 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
           </div>
 
           {/* 3D Gauge Container */}
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2">
             {/* Circular 3D Gauge */}
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20">
+            <div className="relative w-12 h-12">
               {/* Outer glow ring */}
               <div
                 className="absolute inset-0 rounded-full"
@@ -244,7 +244,7 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
               {/* Center display */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div
-                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center"
+                  className="w-8 h-8 rounded-full flex items-center justify-center"
                   style={{
                     background: isDark
                       ? "linear-gradient(145deg, rgba(30,30,30,0.9), rgba(15,15,15,0.9))"
@@ -255,7 +255,7 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
                   }}
                 >
                   <span
-                    className="text-base sm:text-lg font-black"
+                    className="text-xs font-black"
                     style={{ color: colors.primary }}
                   >
                     {Math.round(strength)}
@@ -265,15 +265,15 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
             </div>
 
             {/* Stats Panel */}
-            <div className="flex-1 space-y-1.5">
+            <div className="flex-1 space-y-1">
               {/* Signal bars visualization */}
-              <div className="flex items-end gap-1 h-7">
-                {[20, 40, 60, 80, 100].map((threshold, i) => (
+              <div className="flex items-end gap-0.5 h-5">
+                {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((threshold, i) => (
                   <div
                     key={i}
                     className="flex-1 rounded-sm transition-all duration-300"
                     style={{
-                      height: `${40 + i * 15}%`,
+                      height: `${25 + i * 8}%`,
                       background: strength >= threshold
                         ? `linear-gradient(180deg, ${colors.primary}, ${colors.secondary})`
                         : isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
@@ -300,12 +300,6 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
                     style={{ animation: "shimmer 2s infinite" }}
                   />
                 </div>
-              </div>
-
-              {/* Mini stats */}
-              <div className="flex justify-between text-[10px]">
-                <span className={isDark ? "text-gray-500" : "text-gray-400"}>Min: 0%</span>
-                <span className={isDark ? "text-gray-500" : "text-gray-400"}>Max: 100%</span>
               </div>
             </div>
           </div>

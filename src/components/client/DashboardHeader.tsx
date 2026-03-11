@@ -37,7 +37,7 @@ const DashboardHeader = () => {
   return (
     <motion.header
       className={`flex justify-between items-center mobile:p-2 p-3 sm:p-6 relative z-[70] transition-colors duration-300 backdrop-blur-sm ${
-        isDark ? "bg-gray-900/100" : "bg-gray-400 shadow-sm"
+        isDark ? "bg-gray-900/100" : "bg-gray-600 shadow-sm"
       } ${isSidebarOpen ? "" : ""}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}

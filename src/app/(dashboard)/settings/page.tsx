@@ -399,7 +399,7 @@ function SettingsModal({
     >
       <div className="h-full overflow-y-auto">
         {/* Custom Header for Modal */}
-        <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-gray-400"}`}>
+        <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}>
           <div className="flex justify-between items-center p-3 sm:p-6">
             <Image
               src="/m4capitallogo1.png"
@@ -412,7 +412,7 @@ function SettingsModal({
             <div className="flex items-center gap-3">
               <button
                 onClick={onClose}
-                className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-white hover:text-gray-100"}`}
+                className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
                 title="Notifications"
               >
                 <Bell size={18} className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6" />
@@ -423,7 +423,7 @@ function SettingsModal({
                 className="flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5"
                 aria-label="Open sidebar"
               >
-                <Menu size={20} className={`mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] ${isDark ? "text-gray-400" : "text-white"}`} />
+                <Menu size={20} className={`mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] ${isDark ? "text-gray-400" : "text-gray-600"}`} />
               </button>
             </div>
           </div>
@@ -1567,8 +1567,8 @@ export default function SettingsPage() {
 
       <div className="mobile:max-w-full max-w-4xl mx-auto mobile:p-0 p-6 space-y-6">
         <header className="mobile:px-4 mobile:pt-2 mobile:pb-4">
-          <h1 className="text-2xl font-bold text-white mb-1">Settings</h1>
-          <p className="text-gray-400 text-sm">
+          <h1 className={`text-2xl font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>Settings</h1>
+          <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
             Manage your account preferences and platform experience.
           </p>
         </header>
@@ -1576,7 +1576,7 @@ export default function SettingsPage() {
         {/* Back Button */}
         <button
           onClick={() => router.push("/dashboard")}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg mobile:mx-2"
+          className={`flex items-center gap-2 transition-colors p-2 rounded-lg mobile:mx-2 ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
         >
           <ArrowLeft size={20} />
           <span className="text-sm font-medium">Back to Dashboard</span>
@@ -1643,15 +1643,22 @@ export default function SettingsPage() {
                 <div
                   className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
                   style={{
-                    background:
-                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
-                    boxShadow: `
+                    background: isDark
+                      ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)"
+                      : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #f1f5f9 100%)",
+                    boxShadow: isDark
+                      ? `
                       0 10px 20px -10px rgba(0, 0, 0, 0.5),
                       0 4px 8px -2px rgba(0, 0, 0, 0.3),
                       inset 0 1px 0 rgba(255, 255, 255, 0.06),
                       inset 0 -1px 0 rgba(0, 0, 0, 0.2)
+                    `
+                      : `
+                      0 4px 16px -4px rgba(0, 0, 0, 0.1),
+                      0 2px 6px -2px rgba(0, 0, 0, 0.06),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.8)
                     `,
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0, 0, 0, 0.08)",
                   }}
                 >
                   {/* Top highlight edge for 3D effect */}
@@ -1774,10 +1781,10 @@ export default function SettingsPage() {
 
                     {/* Text Content */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                      <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
                         {item.title}
                       </h3>
-                      <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                      <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
                         {item.description}
                       </p>
                     </div>
@@ -1804,15 +1811,18 @@ export default function SettingsPage() {
             <div
               className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
               style={{
-                background:
-                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
-                boxShadow: `
+                background: isDark
+                  ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)"
+                  : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                boxShadow: isDark
+                  ? `
                   0 10px 20px -10px rgba(0, 0, 0, 0.5),
                   0 4px 8px -2px rgba(0, 0, 0, 0.3),
                   inset 0 1px 0 rgba(255, 255, 255, 0.06),
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
-                `,
-                border: "1px solid rgba(255, 255, 255, 0.06)",
+                `
+                  : `0 2px 8px -2px rgba(0,0,0,0.1)`,
+                border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0,0,0,0.08)",
               }}
             >
               <div className="relative z-10 flex items-center gap-2.5">
@@ -1846,10 +1856,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
                     Personal Data
                   </h3>
-                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
                     Manage your personal information
                   </p>
                 </div>
@@ -1862,12 +1872,14 @@ export default function SettingsPage() {
             <div
               className="fixed top-0 left-0 right-0 bottom-0 z-[110] min-h-screen w-screen"
               style={{
-                background: "linear-gradient(180deg, #0f172a 0%, #020617 100%)",
+                background: isDark 
+                  ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
+                  : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
               }}
             >
               <div className="h-full overflow-y-auto">
                 {/* Dashboard Header */}
-                <div className="sticky top-0 z-10 bg-gray-900/100 backdrop-blur-sm">
+                <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}>
                   <div className="flex justify-between items-center p-3 sm:p-6">
                     <Image
                       src="/m4capitallogo1.png"
@@ -1880,7 +1892,7 @@ export default function SettingsPage() {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => setShowPersonalDataModal(false)}
-                        className="relative text-gray-400 hover:text-white transition-colors"
+                        className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
                         title="Notifications"
                       >
                         <Bell size={18} className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6" />
@@ -1888,10 +1900,10 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={toggleSidebar}
-                        className="flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5"
+                        className={`flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
                         aria-label="Open sidebar"
                       >
-                        <Menu size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] text-gray-400" />
+                        <Menu size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px]" />
                       </button>
                     </div>
                   </div>
@@ -1901,7 +1913,7 @@ export default function SettingsPage() {
                 <div className="max-w-4xl mx-auto px-4 pt-4">
                   <button
                     onClick={() => setShowPersonalDataModal(false)}
-                    className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+                    className={`flex items-center gap-2 transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
                   >
                     <ArrowLeft size={20} />
                     <span className="text-sm font-medium">Back to Profile</span>
@@ -1912,18 +1924,22 @@ export default function SettingsPage() {
                 <div className="max-w-4xl mx-auto px-4 pt-4 pb-4">
                   <div
                     className="relative rounded-2xl p-5 overflow-hidden"
-                    style={{
+                    style={isDark ? {
                       background:
                         "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
                       boxShadow:
                         "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
                       border: "1px solid rgba(255, 255, 255, 0.08)",
+                    } : {
+                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1)",
+                      border: "1px solid rgba(0, 0, 0, 0.08)",
                     }}
                   >
                     <form onSubmit={handleProfileSave} className="space-y-4 max-w-md">
                       <div>
                         <label
-                          className="block text-sm font-medium text-gray-300 mb-1"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                           htmlFor="name"
                         >
                           Name
@@ -1933,13 +1949,13 @@ export default function SettingsPage() {
                           type="text"
                           value={profileName}
                           onChange={(e) => setProfileName(e.target.value)}
-                          className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                          className={`w-full rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isDark ? "bg-gray-700/80 text-white border border-gray-600/50" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="Your full name"
                         />
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium text-gray-300 mb-1"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                           htmlFor="email"
                         >
                           Email
@@ -1949,12 +1965,12 @@ export default function SettingsPage() {
                           type="email"
                           disabled
                           defaultValue={session?.user?.email || ""}
-                          className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
+                          className={`w-full rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed ${isDark ? "bg-gray-700/80 text-gray-300 border border-gray-600/50" : "bg-gray-100 text-gray-600 border border-gray-300"}`}
                         />
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium text-gray-300 mb-1"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                           htmlFor="accountType"
                         >
                           Account Type
@@ -1969,7 +1985,7 @@ export default function SettingsPage() {
                                 session.user.accountType.slice(1).toLowerCase()
                               : "Investor"
                           }
-                          className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
+                          className={`w-full rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed ${isDark ? "bg-gray-700/80 text-gray-300 border border-gray-600/50" : "bg-gray-100 text-gray-600 border border-gray-300"}`}
                         />
                         <p className="text-xs text-gray-500 mt-1">
                           Account type is chosen at signup. Contact support to change.
@@ -1977,9 +1993,9 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Phone Number Section */}
-                      <div className="pt-4 border-t border-gray-700">
+                      <div className={`pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
                         <label
-                          className="block text-sm font-medium text-gray-300 mb-1"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                           htmlFor="phoneNumber"
                         >
                           Phone Number
@@ -1992,8 +2008,8 @@ export default function SettingsPage() {
                           disabled={phoneVerified}
                           className={`w-full rounded-lg px-3 py-2.5 border ${
                             phoneVerified
-                              ? "bg-gray-700/80 text-gray-300 opacity-70 cursor-not-allowed border-gray-600/50"
-                              : "bg-gray-700/80 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-600/50"
+                              ? isDark ? "bg-gray-700/80 text-gray-300 opacity-70 cursor-not-allowed border-gray-600/50" : "bg-gray-100 text-gray-600 opacity-70 cursor-not-allowed border-gray-300"
+                              : isDark ? "bg-gray-700/80 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-600/50" : "bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 border-gray-300"
                           }`}
                           placeholder={getPhonePlaceholder(session?.user?.country)}
                         />
@@ -2021,12 +2037,12 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Contact Info Section */}
-                      <div className="pt-4 border-t border-gray-700">
-                        <h3 className="text-base font-semibold text-white mb-4">Contact info:</h3>
+                      <div className={`pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+                        <h3 className={`text-base font-semibold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>Contact info:</h3>
                         <div className="space-y-4">
                           <div>
                             <label
-                              className="block text-sm font-medium text-gray-300 mb-1"
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                               htmlFor="dateOfBirth"
                             >
                               Date of Birth
@@ -2036,12 +2052,12 @@ export default function SettingsPage() {
                               type="date"
                               value={dateOfBirth}
                               onChange={(e) => setDateOfBirth(e.target.value)}
-                              className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                              className={`w-full rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isDark ? "bg-gray-700/80 text-white border border-gray-600/50" : "bg-white text-gray-900 border border-gray-300"}`}
                             />
                           </div>
                           <div>
                             <label
-                              className="block text-sm font-medium text-gray-300 mb-1"
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                               htmlFor="country"
                             >
                               Country
@@ -2051,7 +2067,7 @@ export default function SettingsPage() {
                               type="text"
                               disabled
                               value={country || "Not set"}
-                              className="w-full bg-gray-700/80 text-gray-300 rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed border border-gray-600/50"
+                              className={`w-full rounded-lg px-3 py-2.5 opacity-70 cursor-not-allowed ${isDark ? "bg-gray-700/80 text-gray-300 border border-gray-600/50" : "bg-gray-100 text-gray-600 border border-gray-300"}`}
                             />
                             <p className="text-xs text-gray-500 mt-1">
                               Country is set during account creation. Contact support to change.
@@ -2059,7 +2075,7 @@ export default function SettingsPage() {
                           </div>
                           <div>
                             <label
-                              className="block text-sm font-medium text-gray-300 mb-1"
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                               htmlFor="timezone"
                             >
                               Timezone
@@ -2069,13 +2085,13 @@ export default function SettingsPage() {
                               type="text"
                               value={timezone}
                               onChange={(e) => setTimezone(e.target.value)}
-                              className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                              className={`w-full rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isDark ? "bg-gray-700/80 text-white border border-gray-600/50" : "bg-white text-gray-900 border border-gray-300"}`}
                               placeholder="e.g., America/Sao_Paulo"
                             />
                           </div>
                           <div>
                             <label
-                              className="block text-sm font-medium text-gray-300 mb-1"
+                              className={`block text-sm font-medium mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                               htmlFor="citizenship"
                             >
                               Citizenship
@@ -2085,7 +2101,7 @@ export default function SettingsPage() {
                               type="text"
                               value={citizenship}
                               onChange={(e) => setCitizenship(e.target.value)}
-                              className="w-full bg-gray-700/80 text-white rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                              className={`w-full rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 border ${isDark ? "bg-gray-700/80 text-white border-gray-600/50" : "bg-white text-gray-900 border-gray-300"}`}
                               placeholder="Enter citizenship"
                             />
                           </div>
@@ -2115,21 +2131,22 @@ export default function SettingsPage() {
               <div
                 className="mx-4 max-w-sm w-full rounded-2xl p-6"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                  boxShadow: isDark ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)" : "0 10px 40px -10px rgba(0, 0, 0, 0.15)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
                     <AlertCircle className="w-6 h-6 text-amber-500" />
                   </div>
-                  <h3 className="text-lg font-bold text-white">
+                  <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                     Re-verification Required
                   </h3>
                 </div>
-                <p className="text-gray-300 text-sm mb-6">
+                <p className={`text-sm mb-6 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                   Changing your name requires you to re-verify your account by
                   submitting new KYC documents. Your current verification status
                   will be reset.
@@ -2137,7 +2154,7 @@ export default function SettingsPage() {
                 <div className="flex gap-3">
                   <button
                     onClick={() => setShowReVerifyModal(false)}
-                    className="flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-300 bg-gray-700 hover:bg-gray-600 transition-colors"
+                    className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isDark ? "text-gray-300 bg-gray-700 hover:bg-gray-600" : "text-gray-700 bg-gray-200 hover:bg-gray-300"}`}
                   >
                     Cancel
                   </button>
@@ -2160,7 +2177,7 @@ export default function SettingsPage() {
           >
             <div
               className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
-              style={{
+              style={isDark ? {
                 background:
                   "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
                 boxShadow: `
@@ -2170,6 +2187,10 @@ export default function SettingsPage() {
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
                 `,
                 border: "1px solid rgba(255, 255, 255, 0.06)",
+              } : {
+                background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                boxShadow: `0 2px 8px -2px rgba(0,0,0,0.1)`,
+                border: "1px solid rgba(0,0,0,0.08)",
               }}
             >
               <div className="relative z-10 flex items-center gap-2.5">
@@ -2203,10 +2224,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
                     Account Number
                   </h3>
-                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
                     Share to receive P2P transfers
                   </p>
                 </div>
@@ -2220,10 +2241,11 @@ export default function SettingsPage() {
               <div
                 className="mx-4 max-w-md w-full rounded-2xl p-6"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                  boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.8)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                  boxShadow: isDark ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)" : "0 10px 40px -10px rgba(0, 0, 0, 0.15)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center justify-between mb-6">
@@ -2240,17 +2262,17 @@ export default function SettingsPage() {
                       <Copy className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white">
+                      <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                         Account Number
                       </h3>
-                      <p className="text-xs text-gray-400">
+                      <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         Share to receive P2P transfers
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={() => setShowAccountNumberModal(false)}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className={`transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -2260,7 +2282,7 @@ export default function SettingsPage() {
                     type="text"
                     disabled
                     value={accountNumber || "Loading..."}
-                    className="w-full bg-gray-900/80 text-white rounded-lg px-2 py-3 cursor-not-allowed font-mono text-lg font-bold border border-gray-600/50 text-center"
+                    className={`w-full rounded-lg px-2 py-3 cursor-not-allowed font-mono text-lg font-bold border text-center ${isDark ? "bg-gray-900/80 text-white border-gray-600/50" : "bg-gray-100 text-gray-900 border-gray-300"}`}
                     style={{ letterSpacing: '0.5em' }}
                   />
                   <button
@@ -2304,15 +2326,18 @@ export default function SettingsPage() {
             <div
               className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
               style={{
-                background:
-                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
-                boxShadow: `
+                background: isDark
+                  ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)"
+                  : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                boxShadow: isDark
+                  ? `
                   0 10px 20px -10px rgba(0, 0, 0, 0.5),
                   0 4px 8px -2px rgba(0, 0, 0, 0.3),
                   inset 0 1px 0 rgba(255, 255, 255, 0.06),
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
-                `,
-                border: "1px solid rgba(255, 255, 255, 0.06)",
+                `
+                  : `0 2px 8px -2px rgba(0,0,0,0.1)`,
+                border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0,0,0,0.08)",
               }}
             >
               <div className="relative z-10 flex items-center gap-2.5">
@@ -2346,10 +2371,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
                     Change Password
                   </h3>
-                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
                     Update your account password
                   </p>
                 </div>
@@ -2365,15 +2390,18 @@ export default function SettingsPage() {
             <div
               className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
               style={{
-                background:
-                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
-                boxShadow: `
+                background: isDark
+                  ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)"
+                  : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                boxShadow: isDark
+                  ? `
                   0 10px 20px -10px rgba(0, 0, 0, 0.5),
                   0 4px 8px -2px rgba(0, 0, 0, 0.3),
                   inset 0 1px 0 rgba(255, 255, 255, 0.06),
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
-                `,
-                border: "1px solid rgba(255, 255, 255, 0.06)",
+                `
+                  : `0 2px 8px -2px rgba(0,0,0,0.1)`,
+                border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0,0,0,0.08)",
               }}
             >
               <div className="relative z-10 flex items-center gap-2.5">
@@ -2407,10 +2435,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
                     Two-Factor Authentication
                   </h3>
-                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
                     {twoFactorEnabled ? "Manage 2FA settings" : "Add extra layer of security"}
                   </p>
                 </div>
@@ -2426,15 +2454,18 @@ export default function SettingsPage() {
             <div
               className="relative rounded-xl p-2.5 transition-all duration-300 transform hover:scale-[1.01] active:scale-[0.99] overflow-hidden"
               style={{
-                background:
-                  "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)",
-                boxShadow: `
+                background: isDark
+                  ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1a2332 100%)"
+                  : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                boxShadow: isDark
+                  ? `
                   0 10px 20px -10px rgba(0, 0, 0, 0.5),
                   0 4px 8px -2px rgba(0, 0, 0, 0.3),
                   inset 0 1px 0 rgba(255, 255, 255, 0.06),
                   inset 0 -1px 0 rgba(0, 0, 0, 0.2)
-                `,
-                border: "1px solid rgba(255, 255, 255, 0.06)",
+                `
+                  : `0 2px 8px -2px rgba(0,0,0,0.1)`,
+                border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0,0,0,0.08)",
               }}
             >
               <div className="relative z-10 flex items-center gap-2.5">
@@ -2468,10 +2499,10 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-white group-hover:text-white transition-colors truncate">
+                  <h3 className={`text-sm font-semibold transition-colors truncate ${isDark ? "text-white group-hover:text-white" : "text-gray-900"}`}>
                     Transfer PIN
                   </h3>
-                  <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+                  <p className={`text-xs transition-colors line-clamp-1 ${isDark ? "text-gray-400 group-hover:text-gray-300" : "text-gray-500"}`}>
                     {hasTransferPin ? "Manage transfer PIN" : "Set up 4-digit PIN"}
                   </p>
                 </div>
@@ -2483,20 +2514,20 @@ export default function SettingsPage() {
         {/* Change Password Portal Modal */}
         {showChangePasswordModal &&
           ReactDOM.createPortal(
-            <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900 overflow-y-auto">
+            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
               {/* Header */}
-              <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+              <div className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}>
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setShowChangePasswordModal(false)}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                      className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"}`}
                     >
-                      <X className="w-5 h-5 text-gray-400" />
+                      <X className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
                     </button>
                     <div>
-                      <h2 className="text-lg font-semibold text-white">Change Password</h2>
-                      <p className="text-sm text-gray-400">Update your account password</p>
+                      <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Change Password</h2>
+                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Update your account password</p>
                     </div>
                   </div>
                 </div>
@@ -2507,7 +2538,7 @@ export default function SettingsPage() {
                 <form onSubmit={handlePasswordChange} className="space-y-6">
                   {/* Current Password */}
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-300" htmlFor="currentPassword">
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`} htmlFor="currentPassword">
                       Current Password
                     </label>
                     <div className="relative">
@@ -2516,13 +2547,13 @@ export default function SettingsPage() {
                         type={showCurrentPassword ? "text" : "password"}
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                        className={`w-full rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 ${isDark ? "bg-gray-800 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                         placeholder="Enter current password"
                       />
                       <button
                         type="button"
                         onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                        className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                       >
                         {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -2531,7 +2562,7 @@ export default function SettingsPage() {
 
                   {/* New Password */}
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-300" htmlFor="newPassword">
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`} htmlFor="newPassword">
                       New Password
                     </label>
                     <div className="relative">
@@ -2540,13 +2571,13 @@ export default function SettingsPage() {
                         type={showNewPassword ? "text" : "password"}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                        className={`w-full rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 ${isDark ? "bg-gray-800 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                         placeholder="Enter new password (min 8 characters)"
                       />
                       <button
                         type="button"
                         onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                        className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                       >
                         {showNewPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -2555,7 +2586,7 @@ export default function SettingsPage() {
 
                   {/* Confirm Password */}
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-300" htmlFor="confirmPassword">
+                    <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`} htmlFor="confirmPassword">
                       Confirm New Password
                     </label>
                     <div className="relative">
@@ -2564,13 +2595,13 @@ export default function SettingsPage() {
                         type={showConfirmPassword ? "text" : "password"}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full bg-gray-800 rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                        className={`w-full rounded-lg px-4 py-3 pr-10 focus:outline-none focus:ring-2 focus:ring-orange-500 ${isDark ? "bg-gray-800 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                         placeholder="Confirm new password"
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+                        className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                       >
                         {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -2614,20 +2645,20 @@ export default function SettingsPage() {
         {/* Two-Factor Authentication Portal Modal */}
         {showTwoFactorModal &&
           ReactDOM.createPortal(
-            <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900 overflow-y-auto">
+            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
               {/* Header */}
-              <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+              <div className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}>
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setShowTwoFactorModal(false)}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                      className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"}`}
                     >
-                      <X className="w-5 h-5 text-gray-400" />
+                      <X className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
                     </button>
                     <div>
-                      <h2 className="text-lg font-semibold text-white">Two-Factor Authentication</h2>
-                      <p className="text-sm text-gray-400">Add an extra layer of security</p>
+                      <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Two-Factor Authentication</h2>
+                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Add an extra layer of security</p>
                     </div>
                   </div>
                 </div>
@@ -2639,7 +2670,7 @@ export default function SettingsPage() {
                   {/* Method Selection Screen - Always show first unless setting up or a method is selected */}
                   {!settingUp2FA && !selected2FAMethod && (
                     <div className="space-y-4">
-                      <p className="text-sm text-gray-400">
+                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                         {twoFactorEnabled 
                           ? "Your 2FA settings. Tap on your active method to manage it."
                           : "Choose your preferred method for two-factor authentication:"}
@@ -2660,8 +2691,8 @@ export default function SettingsPage() {
                             twoFactorEnabled && twoFactorMethod === "authenticator"
                               ? "bg-green-900/20 border-green-700"
                               : twoFactorEnabled
-                              ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed"
-                              : "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50"
+                              ? isDark ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed" : "bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed"
+                              : isDark ? "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50" : "bg-white hover:bg-gray-50 border-gray-200 hover:border-orange-500/50"
                           } border p-4 rounded-lg text-left transition-all duration-300 group`}
                         >
                           <div className="flex items-center gap-3">
@@ -2677,8 +2708,8 @@ export default function SettingsPage() {
                               }`} />
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-medium text-white mb-1">Authenticator App</h4>
-                              <p className="text-xs text-gray-400">
+                              <h4 className={`font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>Authenticator App</h4>
+                              <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                 Use apps like Google Authenticator or Authy
                               </p>
                             </div>
@@ -2702,8 +2733,8 @@ export default function SettingsPage() {
                             twoFactorEnabled && twoFactorMethod === "email"
                               ? "bg-green-900/20 border-green-700"
                               : twoFactorEnabled
-                              ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed"
-                              : "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50"
+                              ? isDark ? "bg-gray-800/50 border-gray-700 opacity-50 cursor-not-allowed" : "bg-gray-100 border-gray-200 opacity-50 cursor-not-allowed"
+                              : isDark ? "bg-gray-800 hover:bg-gray-750 border-gray-700 hover:border-orange-500/50" : "bg-white hover:bg-gray-50 border-gray-200 hover:border-orange-500/50"
                           } border p-4 rounded-lg text-left transition-all duration-300 group`}
                         >
                           <div className="flex items-center gap-3">
@@ -2719,8 +2750,8 @@ export default function SettingsPage() {
                               }`} />
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-medium text-white mb-1">Email Verification</h4>
-                              <p className="text-xs text-gray-400">Receive codes via email</p>
+                              <h4 className={`font-medium mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>Email Verification</h4>
+                              <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>Receive codes via email</p>
                             </div>
                             {twoFactorEnabled && twoFactorMethod === "email" && (
                               <CheckCircle className="w-5 h-5 text-green-500" />
@@ -2736,7 +2767,7 @@ export default function SettingsPage() {
                     <div className="space-y-3">
                       <button
                         onClick={() => setSelected2FAMethod(null)}
-                        className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-2"
+                        className={`flex items-center gap-2 text-sm transition-colors mb-2 ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}
                       >
                         <ArrowLeft className="w-4 h-4" />
                         Back to methods
@@ -2751,18 +2782,18 @@ export default function SettingsPage() {
                           {twoFactorMethod === "authenticator" ? (
                             <>
                               <Smartphone className="w-4 h-4 text-orange-500" />
-                              <span className="text-xs text-gray-300">Using Authenticator App</span>
+                              <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>Using Authenticator App</span>
                             </>
                           ) : twoFactorMethod === "email" ? (
                             <>
                               <Mail className="w-4 h-4 text-orange-500" />
-                              <span className="text-xs text-gray-300">Using Email Verification</span>
+                              <span className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>Using Email Verification</span>
                             </>
                           ) : (
-                            <span className="text-xs text-gray-400">Method: {twoFactorMethod}</span>
+                            <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>Method: {twoFactorMethod}</span>
                           )}
                         </div>
-                        <p className="text-xs text-gray-400 mt-2">
+                        <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           Your account is protected with two-factor authentication.
                         </p>
                       </div>
@@ -2770,26 +2801,26 @@ export default function SettingsPage() {
                       {!showDisable2FA ? (
                         <button
                           onClick={() => setShowDisable2FA(true)}
-                          className="w-full bg-red-600/20 hover:bg-red-600/30 border border-red-700 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2 text-white"
+                          className={`w-full bg-red-600/20 hover:bg-red-600/30 border border-red-700 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 flex items-center justify-center gap-2 ${isDark ? "text-white" : "text-red-600"}`}
                         >
                           <XCircle className="w-3.5 h-3.5" />
                           Disable Two-Factor Authentication
                         </button>
                       ) : (
-                        <form onSubmit={handle2FADisable} className="space-y-3 bg-gray-800/50 p-4 rounded-lg">
-                          <p className="text-xs text-gray-300">
+                        <form onSubmit={handle2FADisable} className={`space-y-3 p-4 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
+                          <p className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                             Enter your password to confirm disabling two-factor authentication.
                           </p>
 
                           <div>
-                            <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                            <label className={`block text-xs font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                               Password
                             </label>
                             <input
                               type="password"
                               value={disable2FAPassword}
                               onChange={(e) => setDisable2FAPassword(e.target.value)}
-                              className="w-full bg-gray-900 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                              className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                               placeholder="Enter your password"
                               required
                             />
@@ -2809,7 +2840,7 @@ export default function SettingsPage() {
                                 setDisable2FAPassword("");
                                 setTwoFactorError(null);
                               }}
-                              className="flex-1 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300"
+                              className={`flex-1 px-4 py-2 rounded-lg text-xs font-semibold transition-all duration-300 ${isDark ? "bg-gray-800 hover:bg-gray-700" : "bg-gray-100 hover:bg-gray-200 text-gray-800"}`}
                             >
                               Cancel
                             </button>
@@ -2839,8 +2870,8 @@ export default function SettingsPage() {
                       {twoFactorCode === null ? (
                         /* Step 1: QR Code */
                         <div className="space-y-3">
-                          <div className="bg-gray-800 p-3 rounded-lg">
-                            <p className="text-xs text-gray-300 mb-3">
+                          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-800" : "bg-gray-100 border border-gray-200"}`}>
+                            <p className={`text-xs mb-3 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                               1. Scan this QR code with your authenticator app:
                             </p>
                             {twoFactorQRCode && (
@@ -2850,9 +2881,9 @@ export default function SettingsPage() {
                             )}
                           </div>
 
-                          <div className="bg-gray-800 p-3 rounded-lg">
-                            <p className="text-xs text-gray-300 mb-1">Or enter this code manually:</p>
-                            <code className="bg-gray-900 px-2 py-1.5 rounded text-orange-400 text-xs font-mono block break-all">
+                          <div className={`p-3 rounded-lg ${isDark ? "bg-gray-800" : "bg-gray-100 border border-gray-200"}`}>
+                            <p className={`text-xs mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>Or enter this code manually:</p>
+                            <code className={`px-2 py-1.5 rounded text-orange-400 text-xs font-mono block break-all ${isDark ? "bg-gray-900" : "bg-gray-200"}`}>
                               {twoFactorSecret}
                             </code>
                           </div>
@@ -2868,7 +2899,7 @@ export default function SettingsPage() {
                         /* Step 2: Verify Code */
                         <form onSubmit={handleVerify2FA} className="space-y-3">
                           <div>
-                            <label className="block text-xs font-medium mb-1.5 text-white">
+                            <label className={`block text-xs font-medium mb-1.5 ${isDark ? "text-white" : "text-gray-700"}`}>
                               2. Enter the 6-digit code from your app:
                             </label>
                             <input
@@ -2877,7 +2908,7 @@ export default function SettingsPage() {
                               onChange={(e) =>
                                 setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))
                               }
-                              className="w-full bg-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-wider"
+                              className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-wider ${isDark ? "bg-gray-800 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                               placeholder="000000"
                               maxLength={6}
                               autoFocus
@@ -2898,7 +2929,7 @@ export default function SettingsPage() {
                                 setTwoFactorCode(null);
                                 setTwoFactorError("");
                               }}
-                              className="flex-1 bg-gray-800 hover:bg-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
+                              className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${isDark ? "bg-gray-800 hover:bg-gray-700" : "bg-gray-100 hover:bg-gray-200 text-gray-800"}`}
                             >
                               Cancel
                             </button>
@@ -2941,7 +2972,7 @@ export default function SettingsPage() {
 
                       <form onSubmit={handleVerify2FA} className="space-y-3">
                         <div>
-                          <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                          <label className={`block text-xs font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                             Enter the 6-digit code from your email:
                           </label>
                           <input
@@ -2950,7 +2981,7 @@ export default function SettingsPage() {
                             onChange={(e) =>
                               setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))
                             }
-                            className="w-full bg-gray-800 rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-wider"
+                            className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-wider ${isDark ? "bg-gray-800 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                             placeholder="000000"
                             maxLength={6}
                             autoFocus
@@ -2971,7 +3002,7 @@ export default function SettingsPage() {
                               setTwoFactorCode(null);
                               setTwoFactorError("");
                             }}
-                            className="flex-1 bg-gray-800 hover:bg-gray-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
+                            className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 ${isDark ? "bg-gray-800 hover:bg-gray-700" : "bg-gray-100 hover:bg-gray-200 text-gray-800"}`}
                           >
                             Cancel
                           </button>
@@ -3002,20 +3033,20 @@ export default function SettingsPage() {
         {/* Transfer PIN Portal Modal */}
         {showTransferPinModal &&
           ReactDOM.createPortal(
-            <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900 overflow-y-auto">
+            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
               {/* Header */}
-              <div className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+              <div className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}>
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setShowTransferPinModal(false)}
-                      className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                      className={`p-2 rounded-lg transition-colors ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"}`}
                     >
-                      <X className="w-5 h-5 text-gray-400" />
+                      <X className={`w-5 h-5 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
                     </button>
                     <div>
-                      <h2 className="text-lg font-semibold text-white">Transfer PIN</h2>
-                      <p className="text-sm text-gray-400">
+                      <h2 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Transfer PIN</h2>
+                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                         {hasTransferPin ? "Manage your transfer PIN" : "Set up a 4-digit PIN"}
                       </p>
                     </div>
@@ -3033,14 +3064,14 @@ export default function SettingsPage() {
                         <CheckCircle className="w-5 h-5" />
                         <span className="font-medium">Transfer PIN is enabled</span>
                       </div>
-                      <p className="text-sm text-gray-400">
+                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                         Your transfers are protected with a 4-digit PIN.
                       </p>
                     </div>
 
-                    <form onSubmit={handleChangePIN} className="space-y-6 bg-gray-800/50 p-6 rounded-lg">
+                    <form onSubmit={handleChangePIN} className={`space-y-6 p-6 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-300">
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                           Current PIN
                         </label>
                         <input
@@ -3049,14 +3080,14 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             setCurrentTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                           }
-                          className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
+                          className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="••••"
                           maxLength={4}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-300">
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                           New PIN
                         </label>
                         <input
@@ -3065,14 +3096,14 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             setTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                           }
-                          className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
+                          className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="••••"
                           maxLength={4}
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-gray-300">
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                           Confirm New PIN
                         </label>
                         <input
@@ -3081,7 +3112,7 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             setConfirmTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                           }
-                          className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
+                          className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="••••"
                           maxLength={4}
                         />
@@ -3117,13 +3148,13 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   /* No PIN - Setup Form */
-                  <form onSubmit={handleSetupPIN} className="space-y-6 bg-gray-800/50 p-6 rounded-lg">
-                    <p className="text-sm text-gray-400">
+                  <form onSubmit={handleSetupPIN} className={`space-y-6 p-6 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
+                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                       Set up a 4-digit PIN to secure your transfers.
                     </p>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                      <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                         New PIN
                       </label>
                       <input
@@ -3132,14 +3163,14 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           setTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                         }
-                        className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
+                        className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                         placeholder="••••"
                         maxLength={4}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                      <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                         Confirm PIN
                       </label>
                       <input
@@ -3148,7 +3179,7 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           setConfirmTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                         }
-                        className="w-full bg-gray-900 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-white text-center text-lg font-mono tracking-widest"
+                        className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                         placeholder="••••"
                         maxLength={4}
                       />
@@ -3200,34 +3231,34 @@ export default function SettingsPage() {
             <div
               className={`rounded-lg p-3 border ${
                 kycStatus === "APPROVED"
-                  ? "bg-green-900/20 border-green-700"
+                  ? isDark ? "bg-green-900/20 border-green-700" : "bg-green-50 border-green-300"
                   : kycStatus === "PENDING"
-                  ? "bg-yellow-900/20 border-yellow-700"
+                  ? isDark ? "bg-yellow-900/20 border-yellow-700" : "bg-yellow-50 border-yellow-300"
                   : kycStatus === "UNDER_REVIEW"
-                  ? "bg-blue-900/20 border-blue-700"
+                  ? isDark ? "bg-blue-900/20 border-blue-700" : "bg-blue-50 border-blue-300"
                   : kycStatus === "REJECTED"
-                  ? "bg-red-900/20 border-red-700"
-                  : "bg-gray-900/20 border-gray-700"
+                  ? isDark ? "bg-red-900/20 border-red-700" : "bg-red-50 border-red-300"
+                  : isDark ? "bg-gray-900/20 border-gray-700" : "bg-gray-100 border-gray-300"
               }`}
             >
               <div className="flex items-start gap-3 mb-2">
                 {kycStatus === "APPROVED" && (
-                  <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  <CheckCircle className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-green-400" : "text-green-600"}`} />
                 )}
                 {kycStatus === "PENDING" && (
-                  <Clock className="w-5 h-5 text-yellow-400 flex-shrink-0" />
+                  <Clock className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-yellow-400" : "text-yellow-600"}`} />
                 )}
                 {kycStatus === "UNDER_REVIEW" && (
-                  <Eye className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                  <Eye className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-blue-400" : "text-blue-600"}`} />
                 )}
                 {kycStatus === "REJECTED" && (
-                  <XCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                  <XCircle className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-red-400" : "text-red-600"}`} />
                 )}
                 {kycStatus === "NOT_STARTED" && (
-                  <AlertCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  <AlertCircle className={`w-5 h-5 flex-shrink-0 ${isDark ? "text-gray-400" : "text-gray-600"}`} />
                 )}
 
-                <h3 className="font-semibold text-white">
+                <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                   {kycStatus === "APPROVED" && "Verification Approved"}
                   {kycStatus === "PENDING" && "Verification Pending"}
                   {kycStatus === "UNDER_REVIEW" && "Under Review"}
@@ -3235,7 +3266,7 @@ export default function SettingsPage() {
                   {kycStatus === "NOT_STARTED" && "Verification Required"}
                 </h3>
               </div>
-              <p className="text-sm text-gray-300">
+              <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                 {kycStatus === "APPROVED" &&
                   "Your identity has been verified. You have full access to all platform features."}
                 {kycStatus === "PENDING" &&
@@ -3253,7 +3284,7 @@ export default function SettingsPage() {
             {kycStatus !== "APPROVED" && (
               <form onSubmit={handleKycSubmit} className="space-y-4">
                 {/* Stage Title */}
-                <p className="text-sm text-gray-400 text-center">
+                <p className={`text-sm text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   {kycStage === 1 && "Step 1 of 3: Personal Information"}
                   {kycStage === 2 && "Step 2 of 3: Address Information"}
                   {kycStage === 3 && "Step 3 of 3: Document Upload"}
@@ -3265,35 +3296,35 @@ export default function SettingsPage() {
                     className={`flex items-center justify-center w-8 h-8 rounded-full ${
                       kycStage >= 1
                         ? "bg-orange-500 text-white"
-                        : "bg-gray-600 text-gray-400"
+                        : isDark ? "bg-gray-600 text-gray-400" : "bg-gray-300 text-gray-500"
                     }`}
                   >
                     {kycStage > 1 ? "✓" : "1"}
                   </div>
                   <div
                     className={`h-1 w-16 ${
-                      kycStage >= 2 ? "bg-orange-500" : "bg-gray-600"
+                      kycStage >= 2 ? "bg-orange-500" : isDark ? "bg-gray-600" : "bg-gray-300"
                     }`}
                   />
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full ${
                       kycStage >= 2
                         ? "bg-orange-500 text-white"
-                        : "bg-gray-600 text-gray-400"
+                        : isDark ? "bg-gray-600 text-gray-400" : "bg-gray-300 text-gray-500"
                     }`}
                   >
                     {kycStage > 2 ? "✓" : "2"}
                   </div>
                   <div
                     className={`h-1 w-16 ${
-                      kycStage >= 3 ? "bg-orange-500" : "bg-gray-600"
+                      kycStage >= 3 ? "bg-orange-500" : isDark ? "bg-gray-600" : "bg-gray-300"
                     }`}
                   />
                   <div
                     className={`flex items-center justify-center w-8 h-8 rounded-full ${
                       kycStage >= 3
                         ? "bg-orange-500 text-white"
-                        : "bg-gray-600 text-gray-400"
+                        : isDark ? "bg-gray-600 text-gray-400" : "bg-gray-300 text-gray-500"
                     }`}
                   >
                     3
@@ -3307,33 +3338,33 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => setShowKycDetails(true)}
-                        className="w-full bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg p-3 text-left transition-colors group"
+                        className={`w-full rounded-lg p-3 text-left transition-colors group border ${isDark ? "bg-gray-700/50 hover:bg-gray-700 border-gray-600" : "bg-gray-100 hover:bg-gray-200 border-gray-300"}`}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
                               <FileCheck className="w-5 h-5 text-orange-500" />
                             </div>
-                            <h4 className="text-base font-semibold text-white">
+                            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                               View Documents
                             </h4>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                          <ChevronRight className={`w-5 h-5 group-hover:text-orange-500 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`} />
                         </div>
-                        <p className="text-sm text-gray-400">
+                        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           Click to enter your personal information
                         </p>
                       </button>
                     ) : (
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-base font-semibold text-white">
+                          <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                             Personal Information
                           </h4>
                           <button
                             type="button"
                             onClick={() => setShowKycDetails(false)}
-                            className="text-sm text-gray-400 hover:text-white transition-colors"
+                            className={`text-sm transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                           >
                             Hide
                           </button>
@@ -3341,7 +3372,7 @@ export default function SettingsPage() {
                     <div className="grid sm:grid-cols-2 gap-3">
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-white"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
                           htmlFor="firstName"
                         >
                           First Name *
@@ -3363,7 +3394,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-white"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
                           htmlFor="lastName"
                         >
                           Last Name (Surname) *
@@ -3382,7 +3413,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-white"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
                           htmlFor="dateOfBirth"
                         >
                           Date of Birth *
@@ -3403,7 +3434,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-white"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
                           htmlFor="nationality"
                         >
                           Nationality *
@@ -3435,7 +3466,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-white"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
                           htmlFor="phoneNumber"
                         >
                           Phone Number *
@@ -3459,7 +3490,7 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className="flex justify-end mt-6 pt-4 border-t border-gray-700">
+                    <div className={`flex justify-end mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
                       <button
                         type="button"
                         onClick={() => {
@@ -3523,33 +3554,33 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => setShowKycDetails(true)}
-                        className="w-full bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg p-3 text-left transition-colors group"
+                        className={`w-full rounded-lg p-3 text-left transition-colors group border ${isDark ? "bg-gray-700/50 hover:bg-gray-700 border-gray-600" : "bg-gray-100 hover:bg-gray-200 border-gray-300"}`}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
                               <FileCheck className="w-5 h-5 text-orange-500" />
                             </div>
-                            <h4 className="text-base font-semibold text-white">
+                            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                               View Documents
                             </h4>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                          <ChevronRight className={`w-5 h-5 group-hover:text-orange-500 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`} />
                         </div>
-                        <p className="text-sm text-gray-400">
+                        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           Click to enter your address information
                         </p>
                       </button>
                     ) : (
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-base font-semibold text-white">
+                          <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                             Address Information
                           </h4>
                           <button
                             type="button"
                             onClick={() => setShowKycDetails(false)}
-                            className="text-sm text-gray-400 hover:text-white transition-colors"
+                            className={`text-sm transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                           >
                             Hide
                           </button>
@@ -3557,7 +3588,7 @@ export default function SettingsPage() {
                     <div className="space-y-3">
                       <div>
                         <label
-                          className="block text-sm font-medium mb-1 text-white"
+                          className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
                           htmlFor="address"
                         >
                           Street Address *
@@ -3577,7 +3608,7 @@ export default function SettingsPage() {
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div>
                           <label
-                            className="block text-sm font-medium mb-1 text-white"
+                            className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
                             htmlFor="city"
                           >
                             City *
@@ -3596,7 +3627,7 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <label
-                            className="block text-sm font-medium mb-1 text-white"
+                            className={`block text-sm font-medium mb-1 ${isDark ? "text-white" : "text-gray-700"}`}
                             htmlFor="postalCode"
                           >
                             Postal Code *
@@ -3620,11 +3651,11 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Navigation Buttons */}
-                    <div className="flex justify-between mt-6 pt-4 border-t border-gray-700">
+                    <div className={`flex justify-between mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
                       <button
                         type="button"
                         onClick={() => setKycStage(1)}
-                        className="bg-gray-700 hover:bg-gray-600 px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
+                        className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 min-h-[40px] ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
                       >
                         <ChevronRight className="w-4 h-4 rotate-180" />
                         Previous
@@ -3665,33 +3696,33 @@ export default function SettingsPage() {
                       <button
                         type="button"
                         onClick={() => setShowKycDetails(true)}
-                        className="w-full bg-gray-700/50 hover:bg-gray-700 border border-gray-600 rounded-lg p-3 text-left transition-colors group"
+                        className={`w-full rounded-lg p-3 text-left transition-colors group border ${isDark ? "bg-gray-700/50 hover:bg-gray-700 border-gray-600" : "bg-gray-100 hover:bg-gray-200 border-gray-300"}`}
                       >
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center group-hover:bg-orange-500/20 transition-colors">
                               <FileCheck className="w-5 h-5 text-orange-500" />
                             </div>
-                            <h4 className="text-base font-semibold text-white">
+                            <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                               View Documents
                             </h4>
                           </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                          <ChevronRight className={`w-5 h-5 group-hover:text-orange-500 transition-colors ${isDark ? "text-gray-400" : "text-gray-500"}`} />
                         </div>
-                        <p className="text-sm text-gray-400">
+                        <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           Click to upload your verification documents
                         </p>
                       </button>
                     ) : (
                       <div>
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-base font-semibold text-white">
+                          <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                             Document Upload
                           </h4>
                           <button
                             type="button"
                             onClick={() => setShowKycDetails(false)}
-                            className="text-sm text-gray-400 hover:text-white transition-colors"
+                            className={`text-sm transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                           >
                             Hide
                           </button>
@@ -3699,18 +3730,18 @@ export default function SettingsPage() {
                     <div className="space-y-3">
                       {/* ID Document - Front and Back */}
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-white">
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
                           Government-Issued ID * (Passport, Driver's License, or
                           National ID)
                         </label>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {/* Front Side */}
                           <div>
-                            <p className="text-xs text-gray-400 mb-2">Front Side</p>
+                            <p className={`text-xs mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Front Side</p>
                             <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
                               documents.idDocumentFront
-                                ? "border-green-500 bg-green-900/10"
-                                : "border-gray-600 hover:border-orange-500"
+                                ? isDark ? "border-green-500 bg-green-900/10" : "border-green-500 bg-green-50"
+                                : isDark ? "border-gray-600 hover:border-orange-500" : "border-gray-300 hover:border-orange-500"
                             }`}>
                               <input
                                 type="file"
@@ -3732,16 +3763,16 @@ export default function SettingsPage() {
                                 {documents.idDocumentFront ? (
                                   <div className="space-y-2">
                                     <CheckCircle className="w-6 h-6 mx-auto text-green-400" />
-                                    <p className="text-xs text-gray-300 truncate">
+                                    <p className={`text-xs truncate ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                                       {documents.idDocumentFront.name}
                                     </p>
                                     <p className="text-xs text-green-400">Uploaded</p>
                                   </div>
                                 ) : (
                                   <div className="space-y-2">
-                                    <Upload className="w-6 h-6 mx-auto text-gray-400" />
-                                    <p className="text-xs text-gray-300">Upload Front</p>
-                                    <p className="text-xs text-gray-500">PNG, JPG or PDF</p>
+                                    <Upload className={`w-6 h-6 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                                    <p className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>Upload Front</p>
+                                    <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>PNG, JPG or PDF</p>
                                   </div>
                                 )}
                               </label>
@@ -3750,11 +3781,11 @@ export default function SettingsPage() {
                           
                           {/* Back Side */}
                           <div>
-                            <p className="text-xs text-gray-400 mb-2">Back Side</p>
+                            <p className={`text-xs mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Back Side</p>
                             <div className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
                               documents.idDocumentBack
-                                ? "border-green-500 bg-green-900/10"
-                                : "border-gray-600 hover:border-orange-500"
+                                ? isDark ? "border-green-500 bg-green-900/10" : "border-green-500 bg-green-50"
+                                : isDark ? "border-gray-600 hover:border-orange-500" : "border-gray-300 hover:border-orange-500"
                             }`}>
                               <input
                                 type="file"
@@ -3776,37 +3807,37 @@ export default function SettingsPage() {
                                 {documents.idDocumentBack ? (
                                   <div className="space-y-2">
                                     <CheckCircle className="w-6 h-6 mx-auto text-green-400" />
-                                    <p className="text-xs text-gray-300 truncate">
+                                    <p className={`text-xs truncate ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                                       {documents.idDocumentBack.name}
                                     </p>
                                     <p className="text-xs text-green-400">Uploaded</p>
                                   </div>
                                 ) : (
                                   <div className="space-y-2">
-                                    <Upload className="w-6 h-6 mx-auto text-gray-400" />
-                                    <p className="text-xs text-gray-300">Upload Back</p>
-                                    <p className="text-xs text-gray-500">PNG, JPG or PDF</p>
+                                    <Upload className={`w-6 h-6 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                                    <p className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>Upload Back</p>
+                                    <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>PNG, JPG or PDF</p>
                                   </div>
                                 )}
                               </label>
                             </div>
                           </div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">
+                        <p className={`text-xs mt-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                           Please upload clear images of both sides of your ID (max 5MB each)
                         </p>
                       </div>
 
                       {/* Proof of Address */}
                       <div>
-                        <label className="block text-sm font-medium mb-2 text-white">
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
                           Proof of Address * (Utility Bill, Bank Statement -
                           less than 3 months old)
                         </label>
                         <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                           documents.proofOfAddress
-                            ? "border-green-500 bg-green-900/10"
-                            : "border-gray-600 hover:border-orange-500"
+                            ? isDark ? "border-green-500 bg-green-900/10" : "border-green-500 bg-green-50"
+                            : isDark ? "border-gray-600 hover:border-orange-500" : "border-gray-300 hover:border-orange-500"
                         }`}>
                           <input
                             type="file"
@@ -3827,19 +3858,19 @@ export default function SettingsPage() {
                           >
                             {documents.proofOfAddress ? (
                               <div className="space-y-2">
-                                <CheckCircle className="w-8 h-8 mx-auto text-green-400" />
-                                <p className="text-sm text-gray-300">
+                                <CheckCircle className={`w-8 h-8 mx-auto ${isDark ? "text-green-400" : "text-green-500"}`} />
+                                <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                                   {documents.proofOfAddress.name}
                                 </p>
-                                <p className="text-xs text-green-400">Uploaded</p>
+                                <p className={`text-xs ${isDark ? "text-green-400" : "text-green-600"}`}>Uploaded</p>
                               </div>
                             ) : (
                               <div className="space-y-2">
-                                <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                                <p className="text-sm text-gray-300">
+                                <Upload className={`w-8 h-8 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                                <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                                   Click to upload or drag and drop
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                                   PNG, JPG or PDF (max 5MB)
                                 </p>
                               </div>
@@ -3850,13 +3881,13 @@ export default function SettingsPage() {
 
                       {/* Selfie */}
                       <div>
-                        <label className="block text-sm font-medium text-white mb-2">
+                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
                           Selfie with ID * (Hold your ID next to your face)
                         </label>
                         <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
                           documents.selfie
-                            ? "border-green-500 bg-green-900/10"
-                            : "border-gray-600 hover:border-orange-500"
+                            ? isDark ? "border-green-500 bg-green-900/10" : "border-green-500 bg-green-50"
+                            : isDark ? "border-gray-600 hover:border-orange-500" : "border-gray-300 hover:border-orange-500"
                         }`}>
                           <input
                             type="file"
@@ -3874,19 +3905,19 @@ export default function SettingsPage() {
                           <label htmlFor="selfie" className="cursor-pointer">
                             {documents.selfie ? (
                               <div className="space-y-2">
-                                <CheckCircle className="w-8 h-8 mx-auto text-green-400" />
-                                <p className="text-sm text-gray-300">
+                                <CheckCircle className={`w-8 h-8 mx-auto ${isDark ? "text-green-400" : "text-green-500"}`} />
+                                <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                                   {documents.selfie.name}
                                 </p>
-                                <p className="text-xs text-green-400">Uploaded</p>
+                                <p className={`text-xs ${isDark ? "text-green-400" : "text-green-600"}`}>Uploaded</p>
                               </div>
                             ) : (
                               <div className="space-y-2">
-                                <Upload className="w-8 h-8 mx-auto text-gray-400" />
-                                <p className="text-sm text-gray-300">
+                                <Upload className={`w-8 h-8 mx-auto ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                                <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                                   Click to upload or drag and drop
                                 </p>
-                                <p className="text-xs text-gray-500">
+                                <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                                   PNG or JPG (max 5MB)
                                 </p>
                               </div>
@@ -3897,17 +3928,17 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Terms & Conditions */}
-                    <div className="bg-gray-700/30 rounded-lg p-4 mt-6">
+                    <div className={`rounded-lg p-4 mt-6 ${isDark ? "bg-gray-700/30" : "bg-gray-100"}`}>
                       <div className="flex items-start gap-3">
                         <input
                           type="checkbox"
                           id="kycTerms"
                           required
-                          className="mt-1 w-4 h-4 rounded border-0 bg-gray-700 focus:ring-0 focus:outline-none accent-orange-500"
+                          className={`mt-1 w-4 h-4 rounded border-0 focus:ring-0 focus:outline-none accent-orange-500 ${isDark ? "bg-gray-700" : "bg-gray-200"}`}
                         />
                         <label
                           htmlFor="kycTerms"
-                          className="text-sm text-gray-300 flex-1"
+                          className={`text-sm flex-1 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                         >
                           I certify that all information provided is accurate
                           and complete. I understand that providing false
@@ -3918,11 +3949,11 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Navigation Buttons with Submit */}
-                    <div className="flex justify-between mt-6 pt-4 border-t border-gray-700">
+                    <div className={`flex justify-between mt-6 pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
                       <button
                         type="button"
                         onClick={() => setKycStage(2)}
-                        className="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 text-white min-h-[40px]"
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 min-h-[40px] ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
                       >
                         <ChevronRight className="w-4 h-4 rotate-180" />
                         Previous
@@ -4603,17 +4634,19 @@ export default function SettingsPage() {
         {/* Phone Verification Modal */}
         {showPhoneVerification &&
           ReactDOM.createPortal(
-            <div className="fixed top-0 left-0 right-0 bottom-0 z-[120] min-h-screen w-screen bg-gray-900 flex items-center justify-center px-4">
+            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[120] min-h-screen w-screen flex items-center justify-center px-4 ${isDark ? "bg-gray-900" : "bg-gray-100"}`}>
               <div className="w-full max-w-md">
                 {/* Card */}
                 <div
                   className="relative rounded-2xl p-6 overflow-hidden"
                   style={{
-                    background:
-                      "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                    boxShadow:
-                      "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    background: isDark
+                      ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                      : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                    boxShadow: isDark
+                      ? "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                      : "0 10px 40px -10px rgba(0, 0, 0, 0.15)",
+                    border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                   }}
                 >
                   {/* Close Button */}
@@ -4623,7 +4656,7 @@ export default function SettingsPage() {
                       setVerificationCode("");
                       setVerificationError(null);
                     }}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                    className={`absolute top-4 right-4 transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -4632,13 +4665,13 @@ export default function SettingsPage() {
                     <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Smartphone className="w-8 h-8 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold text-white mb-2">
+                    <h2 className={`text-2xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                       Verify Phone Number
                     </h2>
-                    <p className="text-gray-400 text-sm">
+                    <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Enter the 6-digit code sent to
                     </p>
-                    <p className="text-white font-medium mt-1">{phoneNumber}</p>
+                    <p className={`font-medium mt-1 ${isDark ? "text-white" : "text-gray-900"}`}>{phoneNumber}</p>
                   </div>
 
                   {devVerificationCode && (
@@ -4652,7 +4685,7 @@ export default function SettingsPage() {
                   {/* Verification Code Input */}
                   <div className="mb-6">
                     <label
-                      className="block text-sm font-medium text-gray-300 mb-2 text-center"
+                      className={`block text-sm font-medium mb-2 text-center ${isDark ? "text-gray-300" : "text-gray-600"}`}
                       htmlFor="verificationCode"
                     >
                       Verification Code
@@ -4667,7 +4700,7 @@ export default function SettingsPage() {
                         setVerificationCode(value);
                         setVerificationError(null);
                       }}
-                      className="w-full bg-gray-700/80 text-white rounded-lg px-4 py-3 text-center text-2xl font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600/50"
+                      className={`w-full rounded-lg px-4 py-3 text-center text-2xl font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 border ${isDark ? "bg-gray-700/80 text-white border-gray-600/50" : "bg-white text-gray-900 border-gray-300"}`}
                       placeholder="000000"
                       autoFocus
                     />
@@ -4698,13 +4731,13 @@ export default function SettingsPage() {
                     <button
                       onClick={handleSendVerificationCode}
                       disabled={sendingCode}
-                      className="w-full bg-gray-700 hover:bg-gray-600 disabled:opacity-50 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors"
+                      className={`w-full disabled:opacity-50 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
                     >
                       {sendingCode ? "Sending..." : "Resend Code"}
                     </button>
                   </div>
 
-                  <p className="text-xs text-gray-500 text-center mt-4">
+                  <p className={`text-xs text-center mt-4 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                     Didn't receive the code? Check your phone and try resending.
                   </p>
                 </div>
@@ -4716,16 +4749,16 @@ export default function SettingsPage() {
       {/* Account Deletion Request Modal */}
       {showDeletionModal &&
         ReactDOM.createPortal(
-          <div className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen bg-gray-900/95 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-gray-800 rounded-xl border border-red-900/30 max-w-md w-full p-6">
+          <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen backdrop-blur-sm flex items-center justify-center p-4 ${isDark ? "bg-gray-900/95" : "bg-gray-100/95"}`}>
+            <div className={`rounded-xl border max-w-md w-full p-6 ${isDark ? "bg-gray-800 border-red-900/30" : "bg-white border-red-200"}`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-white">Request Account Deletion</h2>
+                <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Request Account Deletion</h2>
                 <button
                   onClick={() => {
                     setShowDeletionModal(false);
                     setDeletionReason("");
                   }}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className={`transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -4738,7 +4771,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="mb-4">
-                <label className="block text-sm font-medium text-white mb-2">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-700"}`}>
                   Reason for Deletion <span className="text-red-400">*</span>
                 </label>
                 <textarea
@@ -4746,10 +4779,10 @@ export default function SettingsPage() {
                   onChange={(e) => setDeletionReason(e.target.value)}
                   placeholder="Please tell us why you want to delete your account..."
                   rows={4}
-                  className="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-red-500 resize-none"
+                  className={`w-full px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-red-500 resize-none border ${isDark ? "bg-gray-900 border-gray-700 text-white placeholder-gray-500" : "bg-white border-gray-300 text-gray-900 placeholder-gray-400"}`}
                   maxLength={500}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                   {deletionReason.length}/500 characters
                 </p>
               </div>
@@ -4760,7 +4793,7 @@ export default function SettingsPage() {
                     setShowDeletionModal(false);
                     setDeletionReason("");
                   }}
-                  className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-lg transition-colors"
+                  className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
                   disabled={submittingDeletion}
                 >
                   Cancel
