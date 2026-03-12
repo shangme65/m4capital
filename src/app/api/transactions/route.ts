@@ -158,8 +158,28 @@ export async function GET(req: NextRequest) {
         fromValueUSD?: number;
         toValueUSD?: number;
         rate?: number;
+        profitUSD?: number;
       } | null;
       const isSwap = metadata?.type === "SWAP";
+      const isManualProfit = metadata?.type === "MANUAL_PROFIT";
+
+      if (isManualProfit) {
+        // Manual profit transaction - use profit field for value
+        const profitValue = t.profit ? Number(t.profit) : (metadata?.profitUSD || 0);
+        return {
+          id: t.id,
+          type: "trade_earned" as const,
+          asset: t.symbol,
+          amount: profitValue, // Use profit as amount for display
+          value: profitValue, // USD value of the profit
+          timestamp: t.createdAt.toISOString(),
+          status: "completed" as const,
+          fee: t.commission ? Number(t.commission) : undefined,
+          description: `Trade profit earned from ${t.symbol}`,
+          date: t.createdAt,
+          isManualProfit: true,
+        };
+      }
 
       if (isSwap) {
         // Swap transaction - use stored USD value, or calculate from amount * price

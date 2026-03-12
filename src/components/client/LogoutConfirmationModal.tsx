@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface LogoutConfirmationModalProps {
   isOpen: boolean;
@@ -14,13 +15,16 @@ export default function LogoutConfirmationModal({
   onClose,
   onConfirm,
 }: LogoutConfirmationModalProps) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
           {/* Backdrop */}
           <motion.div
-            className="fixed inset-0 bg-black bg-opacity-60 z-[60]"
+            className="fixed inset-0 bg-black bg-opacity-60 z-[150]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -29,14 +33,18 @@ export default function LogoutConfirmationModal({
 
           {/* Modal */}
           <motion.div
-            className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+            className="fixed inset-0 z-[151] flex items-center justify-center p-4"
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
             transition={{ duration: 0.2 }}
           >
             <motion.div
-              className="bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 border border-gray-700"
+              className={`rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 border ${
+                isDark 
+                  ? "bg-gray-800 border-gray-700" 
+                  : "bg-white border-gray-200"
+              }`}
               onClick={(e) => e.stopPropagation()}
             >
               {/* Icon */}
@@ -58,12 +66,16 @@ export default function LogoutConfirmationModal({
               </div>
 
               {/* Title */}
-              <h2 className="text-xl sm:text-2xl font-bold text-center text-white mb-3">
+              <h2 className={`text-xl sm:text-2xl font-bold text-center mb-3 ${
+                isDark ? "text-white" : "text-gray-900"
+              }`}>
                 Confirm Logout
               </h2>
 
               {/* Message */}
-              <p className="text-gray-300 text-center mb-6 sm:mb-8">
+              <p className={`text-center mb-6 sm:mb-8 ${
+                isDark ? "text-gray-300" : "text-gray-600"
+              }`}>
                 Are you sure you want to logout?
               </p>
 
@@ -72,7 +84,11 @@ export default function LogoutConfirmationModal({
                 {/* No Button */}
                 <motion.button
                   onClick={onClose}
-                  className="flex-1 px-6 py-3 rounded-lg bg-gray-700 hover:bg-gray-600 text-white font-semibold transition-all duration-300 border border-gray-600"
+                  className={`flex-1 px-6 py-3 rounded-lg font-semibold transition-all duration-300 border ${
+                    isDark 
+                      ? "bg-gray-700 hover:bg-gray-600 text-white border-gray-600" 
+                      : "bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
+                  }`}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

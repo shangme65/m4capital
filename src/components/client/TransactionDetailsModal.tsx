@@ -51,7 +51,8 @@ export interface DetailedTransaction {
     | "transfer"
     | "send"
     | "receive"
-    | "swap";
+    | "swap"
+    | "trade_earned";
   asset: string;
   amount: number;
   value: number;
@@ -175,8 +176,9 @@ export default function TransactionDetailsModal({
       send: "Sent",
       receive: "Received",
       swap: "Swapped",
+      trade_earned: "Trade Earned",
     };
-    return `${typeMap[transaction.type] || transaction.type} ${crypto.name}`;
+    return `${typeMap[transaction.type] || transaction.type} ${transaction.type === "trade_earned" ? `(${transaction.asset})` : crypto.name}`;
   };
 
   const getStatusColor = (status: string) => {
@@ -357,10 +359,10 @@ export default function TransactionDetailsModal({
             </svg>
           </div>
         );
-      case "swap":
+      case "trade_earned":
         return (
           <div
-            className={`${baseClasses} bg-gradient-to-br from-purple-500 to-pink-500`}
+            className={`${baseClasses} bg-gradient-to-br from-emerald-500 to-green-600`}
           >
             <svg
               className="w-8 h-8 text-white"
@@ -371,8 +373,8 @@ export default function TransactionDetailsModal({
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2.5}
-                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                strokeWidth={2}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
           </div>
@@ -807,23 +809,29 @@ export default function TransactionDetailsModal({
                         <div className={`text-lg font-bold ${
                           isDark ? "text-white" : "text-gray-900"
                         }`}>
+                          {/* For trade_earned, amount is profit in USD - format as currency */}
                           {/* For fiat currencies, show 2 decimals; for crypto, show up to 8 */}
-                          {FIAT_CURRENCIES.has(
-                            transaction.asset?.toUpperCase() || ""
-                          )
-                            ? transaction.amount.toLocaleString("en-US", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })
-                            : transaction.amount.toLocaleString("en-US", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 8,
-                              })}
-                          <span className={`text-base ml-2 ${
-                            isDark ? "text-gray-400" : "text-gray-600"
-                          }`}>
-                            {transaction.asset}
-                          </span>
+                          {transaction.type === "trade_earned"
+                            ? formatAmount(transaction.amount, 2)
+                            : FIAT_CURRENCIES.has(
+                                transaction.asset?.toUpperCase() || ""
+                              )
+                              ? transaction.amount.toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })
+                              : transaction.amount.toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 8,
+                                })}
+                          {/* Don't show asset symbol for trade_earned since formatAmount includes currency */}
+                          {transaction.type !== "trade_earned" && (
+                            <span className={`text-base ml-2 ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}>
+                              {transaction.asset}
+                            </span>
+                          )}
                         </div>
                       </div>
 

@@ -31,7 +31,7 @@ export interface Notification {
 
 export interface Transaction {
   id: string;
-  type: "buy" | "sell" | "deposit" | "withdraw" | "convert" | "transfer" | "swap" | "receive";
+  type: "buy" | "sell" | "deposit" | "withdraw" | "convert" | "transfer" | "swap" | "receive" | "trade_earned";
   asset: string;
   amount: number;
   value: number;
@@ -57,6 +57,7 @@ export interface Transaction {
   network?: string;
   address?: string;
   memo?: string;
+  isManualProfit?: boolean;
 }
 
 interface NotificationContextType {

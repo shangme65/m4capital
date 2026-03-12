@@ -500,55 +500,57 @@ export default function NotificationsPanel({
 
                                       {/* Amount Display with User's Currency */}
                                       {notification.amount &&
-                                        notification.asset && (
-                                          <div
-                                            className={`inline-flex items-center space-x-1.5 px-2 py-1 rounded-lg ${
-                                              notification.amount < 0
-                                                ? "bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/20"
-                                                : "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
-                                            } mb-2`}
-                                          >
-                                            <span
-                                              className={`text-base font-black ${
+                                        notification.asset && (() => {
+                                          // Check if this is a manual profit notification (TRADE type with non-fiat asset)
+                                          const isFiatAsset = FIAT_CURRENCIES.has(notification.asset?.toUpperCase() || "");
+                                          const isTradeProfit = notification.type?.toUpperCase() === "TRADE" && !isFiatAsset;
+                                          
+                                          // For trade profits, amount is in USD - use formatAmount to convert to user's preferred currency
+                                          // For fiat notifications (deposits/withdrawals), amount is already in user's currency
+                                          const displayAmount = isTradeProfit
+                                            ? formatAmount(Math.abs(notification.amount), 2)
+                                            : isFiatAsset
+                                              ? formatCurrencyUtil(Math.abs(notification.amount), notification.asset || "USD", 2)
+                                              : Math.abs(notification.amount).toLocaleString("en-US", {
+                                                  minimumFractionDigits: 2,
+                                                  maximumFractionDigits: 8,
+                                                });
+                                          
+                                          // For trade profits, don't show asset symbol since formatAmount includes currency symbol
+                                          const showAssetSymbol = !isTradeProfit;
+                                          
+                                          return (
+                                            <div
+                                              className={`inline-flex items-center space-x-1.5 px-2 py-1 rounded-lg ${
                                                 notification.amount < 0
-                                                  ? "bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent"
-                                                  : "bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
-                                              }`}
+                                                  ? "bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/20"
+                                                  : "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
+                                              } mb-2`}
                                             >
-                                              {notification.amount < 0
-                                                ? "-"
-                                                : "+"}
-                                              {/* For fiat currencies, display as-is without conversion */}
-                                              {/* For crypto, amount is the crypto quantity - display directly */}
-                                              {FIAT_CURRENCIES.has(
-                                                notification.asset?.toUpperCase() ||
-                                                  ""
-                                              )
-                                                ? formatCurrencyUtil(
-                                                    Math.abs(
-                                                      notification.amount
-                                                    ),
-                                                    notification.asset || "USD",
-                                                    2
-                                                  )
-                                                : Math.abs(
-                                                    notification.amount
-                                                  ).toLocaleString("en-US", {
-                                                    minimumFractionDigits: 2,
-                                                    maximumFractionDigits: 8,
-                                                  })}
-                                            </span>
-                                            <span
-                                              className={`text-xs font-bold ${
-                                                notification.amount < 0
-                                                  ? "text-red-400"
-                                                  : "text-green-400"
-                                              }`}
-                                            >
-                                              {notification.asset}
-                                            </span>
-                                          </div>
-                                        )}
+                                              <span
+                                                className={`text-base font-black ${
+                                                  notification.amount < 0
+                                                    ? "bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent"
+                                                    : "bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
+                                                }`}
+                                              >
+                                                {notification.amount < 0 ? "-" : "+"}
+                                                {displayAmount}
+                                              </span>
+                                              {showAssetSymbol && (
+                                                <span
+                                                  className={`text-xs font-bold ${
+                                                    notification.amount < 0
+                                                      ? "text-red-400"
+                                                      : "text-green-400"
+                                                  }`}
+                                                >
+                                                  {notification.asset}
+                                                </span>
+                                              )}
+                                            </div>
+                                          );
+                                        })()}
                                     </motion.div>
                                   )}
                                 </AnimatePresence>

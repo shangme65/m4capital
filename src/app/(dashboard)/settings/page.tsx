@@ -8,6 +8,7 @@ import { useToast } from "@/contexts/ToastContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSidebar } from "@/components/client/SidebarContext";
+import NotificationsPanel from "@/components/client/NotificationsPanel";
 import ConfirmModal from "@/components/client/ConfirmModal";
 import CurrencySelector from "@/components/client/CurrencySelector";
 import Image from "next/image";
@@ -369,6 +370,8 @@ function SettingsModal({
   toggleSidebar: () => void;
   isDark?: boolean;
 }) {
+  const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
+
   // Handle browser back button
   useEffect(() => {
     if (!isOpen) return;
@@ -390,7 +393,7 @@ function SettingsModal({
 
   return ReactDOM.createPortal(
     <div
-      className="fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen"
+      className="fixed top-0 left-0 right-0 bottom-0 z-[125] min-h-screen w-screen"
       style={{
         background: isDark 
           ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
@@ -402,16 +405,16 @@ function SettingsModal({
         <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}>
           <div className="flex justify-between items-center p-3 sm:p-6">
             <Image
-              src="/m4capitallogo1.png"
+              src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
               alt="M4 Capital Logo"
               width={120}
               height={40}
-              className="object-contain mobile:w-20 w-24 md:w-auto"
+              className="object-contain w-24 md:w-auto"
               priority
             />
             <div className="flex items-center gap-3">
               <button
-                onClick={onClose}
+                onClick={() => setIsNotificationsPanelOpen(true)}
                 className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
                 title="Notifications"
               >
@@ -445,6 +448,11 @@ function SettingsModal({
           {children}
         </div>
       </div>
+
+      <NotificationsPanel
+        isOpen={isNotificationsPanelOpen}
+        onClose={() => setIsNotificationsPanelOpen(false)}
+      />
     </div>,
     document.body
   );
@@ -456,9 +464,17 @@ export default function SettingsPage() {
   const router = useRouter();
   const { showSuccess, showError, showWarning, showInfo } = useToast();
   const { theme, setTheme, resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
   const { language, setLanguage, languages, currentLanguage } = useLanguage();
   const { toggleSidebar } = useSidebar();
+  
+  // Handle hydration - wait for client to determine theme
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  // Only use resolved theme after mount to prevent hydration mismatch
+  const isDark = mounted ? resolvedTheme === "dark" : true;
 
   // Handle phone number input with formatting
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -513,6 +529,8 @@ export default function SettingsPage() {
   const [showReVerifyModal, setShowReVerifyModal] = useState(false);
   const [showPersonalDataModal, setShowPersonalDataModal] = useState(false);
   const [showAccountNumberModal, setShowAccountNumberModal] = useState(false);
+  const [isPersonalDataNotificationsPanelOpen, setIsPersonalDataNotificationsPanelOpen] = useState(false);
+  const [isAccountNumberNotificationsPanelOpen, setIsAccountNumberNotificationsPanelOpen] = useState(false);
   
   // Security sub-modals
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
@@ -1560,13 +1578,31 @@ export default function SettingsPage() {
     },
   ];
 
+  // Show skeleton until mounted to prevent theme mismatch flash
+  if (!mounted) {
+    return (
+      <div className="mobile:max-w-full max-w-4xl mx-auto mobile:p-0 p-6 space-y-3">
+        <header className="mobile:px-4 mobile:pt-2 mobile:pb-2">
+          <div className="h-8 w-32 bg-gray-300 dark:bg-gray-700 rounded animate-pulse mb-1" />
+          <div className="h-4 w-64 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+        </header>
+        <div className="h-10 w-40 bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse mobile:mx-2" />
+        <div className="mobile:px-3 px-0 space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-20 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Full-screen KYC Submission Loading Modal */}
       {submittingKyc && <KycSubmissionLoadingModal />}
 
-      <div className="mobile:max-w-full max-w-4xl mx-auto mobile:p-0 p-6 space-y-6">
-        <header className="mobile:px-4 mobile:pt-2 mobile:pb-4">
+      <div className="mobile:max-w-full max-w-4xl mx-auto mobile:p-0 p-6 space-y-3">
+        <header className="mobile:px-4 mobile:pt-2 mobile:pb-2">
           <h1 className={`text-2xl font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>Settings</h1>
           <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
             Manage your account preferences and platform experience.
@@ -1870,7 +1906,7 @@ export default function SettingsPage() {
           {/* Personal Data Inner Modal */}
           {showPersonalDataModal && ReactDOM.createPortal(
             <div
-              className="fixed top-0 left-0 right-0 bottom-0 z-[110] min-h-screen w-screen"
+              className="fixed top-0 left-0 right-0 bottom-0 z-[135] min-h-screen w-screen"
               style={{
                 background: isDark 
                   ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
@@ -1882,16 +1918,16 @@ export default function SettingsPage() {
                 <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}>
                   <div className="flex justify-between items-center p-3 sm:p-6">
                     <Image
-                      src="/m4capitallogo1.png"
+                      src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
                       alt="M4 Capital Logo"
                       width={120}
                       height={40}
-                      className="object-contain mobile:w-20 w-24 md:w-auto"
+                      className="object-contain w-24 md:w-auto"
                       priority
                     />
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => setShowPersonalDataModal(false)}
+                        onClick={() => setIsPersonalDataNotificationsPanelOpen(true)}
                         className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
                         title="Notifications"
                       >
@@ -2121,13 +2157,17 @@ export default function SettingsPage() {
                   </div>
                 </div>
               </div>
+              <NotificationsPanel
+                isOpen={isPersonalDataNotificationsPanelOpen}
+                onClose={() => setIsPersonalDataNotificationsPanelOpen(false)}
+              />
             </div>,
             document.body
           )}
 
           {/* Re-verification Warning Modal */}
           {showReVerifyModal && (
-            <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[135] flex items-center justify-center bg-black/60 backdrop-blur-sm">
               <div
                 className="mx-4 max-w-sm w-full rounded-2xl p-6"
                 style={{
@@ -2235,78 +2275,133 @@ export default function SettingsPage() {
             </div>
           </button>
 
-          {/* Account Number Popup Modal */}
-          {showAccountNumberModal && (
-            <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-              <div
-                className="mx-4 max-w-md w-full rounded-2xl p-6"
-                style={{
-                  background: isDark
-                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)"
-                    : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                  boxShadow: isDark ? "0 25px 50px -12px rgba(0, 0, 0, 0.8)" : "0 10px 40px -10px rgba(0, 0, 0, 0.15)",
-                  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.08)",
-                }}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-11 h-11 rounded-xl flex items-center justify-center"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-                        boxShadow:
-                          "0 6px 16px -3px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.2)",
-                      }}
-                    >
-                      <Copy className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-                        Account Number
-                      </h3>
-                      <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                        Share to receive P2P transfers
-                      </p>
+          {/* Account Number Full-Screen Modal */}
+          {showAccountNumberModal && ReactDOM.createPortal(
+            <div 
+              className="fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen"
+              style={{
+                background: isDark
+                  ? "linear-gradient(180deg, #0f172a 0%, #020617 100%)"
+                  : "linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)",
+              }}
+            >
+              <div className="h-full overflow-y-auto">
+                {/* Dashboard Header */}
+                <div className={`sticky top-0 z-10 backdrop-blur-sm ${isDark ? "bg-gray-900/100" : "bg-white/95 border-b border-gray-200"}`}>
+                  <div className="flex justify-between items-center p-3 sm:p-6">
+                    <Image
+                      src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
+                      alt="M4 Capital Logo"
+                      width={120}
+                      height={40}
+                      className="object-contain w-24 md:w-auto"
+                      priority
+                    />
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={() => setIsAccountNumberNotificationsPanelOpen(true)}
+                        className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
+                        title="Notifications"
+                      >
+                        <Bell size={18} className="mobile:w-[18px] mobile:h-[18px] sm:w-6 sm:h-6" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={toggleSidebar}
+                        className={`flex items-center cursor-pointer p-1 sm:p-2 rounded-lg transition-colors focus:outline-none hover:bg-white/5 ${isDark ? "text-gray-400" : "text-gray-600"}`}
+                        aria-label="Open sidebar"
+                      >
+                        <Menu size={20} className="mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px]" />
+                      </button>
                     </div>
                   </div>
+                </div>
+
+                {/* Back Button */}
+                <div className="max-w-4xl mx-auto px-4 pt-4">
                   <button
                     onClick={() => setShowAccountNumberModal(false)}
-                    className={`transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-700"}`}
+                    className={`flex items-center gap-2 transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
                   >
-                    <X className="w-5 h-5" />
+                    <ArrowLeft size={20} />
+                    <span className="text-sm font-medium">Back to Profile</span>
                   </button>
                 </div>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    disabled
-                    value={accountNumber || "Loading..."}
-                    className={`w-full rounded-lg px-2 py-3 cursor-not-allowed font-mono text-lg font-bold border text-center ${isDark ? "bg-gray-900/80 text-white border-gray-600/50" : "bg-gray-100 text-gray-900 border-gray-300"}`}
-                    style={{ letterSpacing: '0.5em' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={copyAccountNumber}
-                    disabled={!accountNumber}
-                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
-                    title="Copy account number"
+
+                {/* Content */}
+                <div className="max-w-4xl mx-auto px-4 pt-4 pb-4">
+                  <div
+                    className="relative rounded-2xl p-6 overflow-hidden"
+                    style={isDark ? {
+                      background:
+                        "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                      boxShadow:
+                        "0 20px 40px -10px rgba(0, 0, 0, 0.7), 0 10px 20px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                    } : {
+                      background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                      boxShadow: "0 4px 16px -4px rgba(0,0,0,0.1)",
+                      border: "1px solid rgba(0, 0, 0, 0.08)",
+                    }}
                   >
-                    {copiedAccountNumber ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        <span>Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        <span>Copy Account Number</span>
-                      </>
-                    )}
-                  </button>
+                    <div className="flex items-center gap-3 mb-6">
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+                          boxShadow:
+                            "0 6px 16px -3px rgba(249,115,22,0.5), inset 0 1px 0 rgba(255,255,255,0.2)",
+                        }}
+                      >
+                        <Copy className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                          Account Number
+                        </h3>
+                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                          Share to receive P2P transfers
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        disabled
+                        value={accountNumber || "Loading..."}
+                        className={`w-full rounded-lg px-2 py-3 cursor-not-allowed font-mono text-lg font-bold border text-center ${isDark ? "bg-gray-900/80 text-white border-gray-600/50" : "bg-gray-100 text-gray-900 border-gray-300"}`}
+                        style={{ letterSpacing: '0.5em' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={copyAccountNumber}
+                        disabled={!accountNumber}
+                        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20"
+                        title="Copy account number"
+                      >
+                        {copiedAccountNumber ? (
+                          <>
+                            <Check className="w-4 h-4" />
+                            <span>Copied!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-4 h-4" />
+                            <span>Copy Account Number</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+              <NotificationsPanel
+                isOpen={isAccountNumberNotificationsPanelOpen}
+                onClose={() => setIsAccountNumberNotificationsPanelOpen(false)}
+              />
+            </div>,
+            document.body
           )}
         </SettingsModal>
 
@@ -2514,7 +2609,7 @@ export default function SettingsPage() {
         {/* Change Password Portal Modal */}
         {showChangePasswordModal &&
           ReactDOM.createPortal(
-            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
               {/* Header */}
               <div className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}>
                 <div className="flex items-center justify-between p-4">
@@ -2625,7 +2720,7 @@ export default function SettingsPage() {
                   <button
                     type="submit"
                     disabled={changingPassword}
-                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg text-sm font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     {changingPassword ? (
                       <>
@@ -2645,7 +2740,7 @@ export default function SettingsPage() {
         {/* Two-Factor Authentication Portal Modal */}
         {showTwoFactorModal &&
           ReactDOM.createPortal(
-            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
               {/* Header */}
               <div className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}>
                 <div className="flex items-center justify-between p-4">
@@ -2890,7 +2985,7 @@ export default function SettingsPage() {
 
                           <button
                             onClick={() => setTwoFactorCode("")}
-                            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300"
+                            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-300"
                           >
                             I&apos;ve Scanned the Code
                           </button>
@@ -2936,7 +3031,7 @@ export default function SettingsPage() {
                             <button
                               type="submit"
                               disabled={verifying2FA || twoFactorCode.length !== 6}
-                              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2"
                             >
                               {verifying2FA ? (
                                 <>
@@ -2956,14 +3051,14 @@ export default function SettingsPage() {
                   {/* Email Setup Flow */}
                   {settingUp2FA && twoFactorMethod === "email" && (
                     <div className="space-y-3">
-                      <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-3">
+                      <div className={`rounded-lg p-3 ${isDark ? "bg-blue-900/20 border border-blue-700" : "bg-blue-50 border border-blue-200"}`}>
                         <div className="flex items-start gap-2">
-                          <Mail className="w-4 h-4 text-blue-400 mt-0.5" />
+                          <Mail className={`w-4 h-4 mt-0.5 ${isDark ? "text-blue-400" : "text-blue-600"}`} />
                           <div>
-                            <p className="text-xs text-blue-300 font-medium">
+                            <p className={`text-xs font-medium ${isDark ? "text-blue-300" : "text-blue-700"}`}>
                               Email verification code sent!
                             </p>
-                            <p className="text-xs text-gray-400 mt-0.5">
+                            <p className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                               Check your email ({session?.user?.email}) for the code.
                             </p>
                           </div>
@@ -3009,7 +3104,7 @@ export default function SettingsPage() {
                           <button
                             type="submit"
                             disabled={verifying2FA || !twoFactorCode || twoFactorCode.length !== 6}
-                            className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                            className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2"
                           >
                             {verifying2FA ? (
                               <>
@@ -3033,7 +3128,7 @@ export default function SettingsPage() {
         {/* Transfer PIN Portal Modal */}
         {showTransferPinModal &&
           ReactDOM.createPortal(
-            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+            <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
               {/* Header */}
               <div className={`sticky top-0 z-50 backdrop-blur-sm border-b ${isDark ? "bg-gray-900/95 border-gray-800" : "bg-white/95 border-gray-200"}`}>
                 <div className="flex items-center justify-between p-4">
@@ -3058,20 +3153,20 @@ export default function SettingsPage() {
               <div className="p-4 max-w-2xl mx-auto">
                 {hasTransferPin ? (
                   /* PIN Exists - Change PIN Form */
-                  <div className="space-y-6">
-                    <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
-                      <div className="flex items-center gap-2 text-green-400 mb-2">
-                        <CheckCircle className="w-5 h-5" />
-                        <span className="font-medium">Transfer PIN is enabled</span>
+                  <div className="space-y-4">
+                    <div className={`rounded-lg p-3 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}>
+                      <div className={`flex items-center gap-2 mb-1 ${isDark ? "text-green-400" : "text-green-700"}`}>
+                        <CheckCircle className="w-4 h-4" />
+                        <span className="font-medium text-sm">Transfer PIN is enabled</span>
                       </div>
-                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                      <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                         Your transfers are protected with a 4-digit PIN.
                       </p>
                     </div>
 
-                    <form onSubmit={handleChangePIN} className={`space-y-6 p-6 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
+                    <form onSubmit={handleChangePIN} className={`space-y-4 p-4 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
                       <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                           Current PIN
                         </label>
                         <input
@@ -3080,14 +3175,14 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             setCurrentTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                           }
-                          className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
+                          className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="••••"
                           maxLength={4}
                         />
                       </div>
 
                       <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                           New PIN
                         </label>
                         <input
@@ -3096,14 +3191,14 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             setTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                           }
-                          className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
+                          className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="••••"
                           maxLength={4}
                         />
                       </div>
 
                       <div>
-                        <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                           Confirm New PIN
                         </label>
                         <input
@@ -3112,28 +3207,28 @@ export default function SettingsPage() {
                           onChange={(e) =>
                             setConfirmTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                           }
-                          className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
+                          className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           placeholder="••••"
                           maxLength={4}
                         />
                       </div>
 
                       {transferPinError && (
-                        <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-                          <p className="text-sm text-red-400">{transferPinError}</p>
+                        <div className={`rounded-lg p-3 ${isDark ? "bg-red-900/20 border border-red-700" : "bg-red-50 border border-red-200"}`}>
+                          <p className={`text-sm ${isDark ? "text-red-400" : "text-red-700"}`}>{transferPinError}</p>
                         </div>
                       )}
 
                       {transferPinSuccess && (
-                        <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
-                          <p className="text-sm text-green-400">{transferPinSuccess}</p>
+                        <div className={`rounded-lg p-3 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}>
+                          <p className={`text-sm ${isDark ? "text-green-400" : "text-green-700"}`}>{transferPinSuccess}</p>
                         </div>
                       )}
 
                       <button
                         type="submit"
                         disabled={settingTransferPin}
-                        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2"
                       >
                         {settingTransferPin ? (
                           <>
@@ -3148,13 +3243,13 @@ export default function SettingsPage() {
                   </div>
                 ) : (
                   /* No PIN - Setup Form */
-                  <form onSubmit={handleSetupPIN} className={`space-y-6 p-6 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
+                  <form onSubmit={handleSetupPIN} className={`space-y-4 p-4 rounded-lg ${isDark ? "bg-gray-800/50" : "bg-white border border-gray-200"}`}>
                     <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                       Set up a 4-digit PIN to secure your transfers.
                     </p>
 
                     <div>
-                      <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                         New PIN
                       </label>
                       <input
@@ -3163,14 +3258,14 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           setTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                         }
-                        className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
+                        className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                         placeholder="••••"
                         maxLength={4}
                       />
                     </div>
 
                     <div>
-                      <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      <label className={`block text-sm font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                         Confirm PIN
                       </label>
                       <input
@@ -3179,28 +3274,28 @@ export default function SettingsPage() {
                         onChange={(e) =>
                           setConfirmTransferPin(e.target.value.replace(/\D/g, "").slice(0, 4))
                         }
-                        className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
+                        className={`w-full rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-center text-lg font-mono tracking-widest ${isDark ? "bg-gray-900 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                         placeholder="••••"
                         maxLength={4}
                       />
                     </div>
 
                     {transferPinError && (
-                      <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
-                        <p className="text-sm text-red-400">{transferPinError}</p>
+                      <div className={`rounded-lg p-3 ${isDark ? "bg-red-900/20 border border-red-700" : "bg-red-50 border border-red-200"}`}>
+                        <p className={`text-sm ${isDark ? "text-red-400" : "text-red-700"}`}>{transferPinError}</p>
                       </div>
                     )}
 
                     {transferPinSuccess && (
-                      <div className="bg-green-900/20 border border-green-700 rounded-lg p-4">
-                        <p className="text-sm text-green-400">{transferPinSuccess}</p>
+                      <div className={`rounded-lg p-3 ${isDark ? "bg-green-900/20 border border-green-700" : "bg-green-50 border border-green-200"}`}>
+                        <p className={`text-sm ${isDark ? "text-green-400" : "text-green-700"}`}>{transferPinSuccess}</p>
                       </div>
                     )}
 
                     <button
                       type="submit"
                       disabled={settingTransferPin}
-                      className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg text-sm font-semibold transition-all duration-300 flex items-center justify-center gap-2"
+                      className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-2.5 rounded-lg text-sm font-semibold text-white transition-all duration-300 flex items-center justify-center gap-2"
                     >
                       {settingTransferPin ? (
                         <>
@@ -4006,7 +4101,7 @@ export default function SettingsPage() {
 
         {/* KYC Success Modal */}
         {showKycSuccessModal && ReactDOM.createPortal(
-          <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen flex flex-col items-center justify-center px-6 ${isDark ? "bg-gray-900" : "bg-gradient-to-b from-gray-50 to-white"}`}>
+          <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen flex flex-col items-center justify-center px-6 ${isDark ? "bg-gray-900" : "bg-gradient-to-b from-gray-50 to-white"}`}>
             {/* Background Gradient Effect */}
             <div className="absolute inset-0 overflow-hidden">
               <div className={`absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] rounded-full blur-[100px] animate-pulse ${isDark ? "bg-green-500/10" : "bg-green-500/20"}`} />
@@ -4277,31 +4372,31 @@ export default function SettingsPage() {
                   </div>
 
                   {/* Code Input Form */}
-                  <form onSubmit={handleTelegramLink} className="space-y-4">
+                  <form onSubmit={handleTelegramLink} className="space-y-3">
                     <div>
                       <label
                         htmlFor="linkCode"
-                        className={`block text-sm font-medium mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                        className={`block text-xs font-medium mb-1.5 ${isDark ? "text-gray-300" : "text-gray-700"}`}
                       >
-                        Enter your 6-digit linking code
+                        6-digit code
                       </label>
-                      <div className="flex gap-3">
+                      <div className="flex gap-2 items-center">
                         <input
                           id="linkCode"
                           type="text"
                           value={linkCode}
                           onChange={(e) => setLinkCode(e.target.value)}
-                          placeholder="123456"
+                          placeholder="000000"
                           maxLength={6}
                           pattern="[0-9]{6}"
                           required
-                          className={`w-48 rounded-lg px-3 py-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-base tracking-wider ${isDark ? "bg-gray-700 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
+                          className={`w-24 rounded-md px-2.5 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono tracking-widest text-center ${isDark ? "bg-gray-700 text-white" : "bg-white border border-gray-300 text-gray-900"}`}
                           disabled={linkingTelegram}
                         />
                         <button
                           type="submit"
                           disabled={linkingTelegram || linkCode.length !== 6}
-                          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-5 py-0.5 rounded-lg text-sm font-medium transition-colors text-white"
+                          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors text-white whitespace-nowrap"
                         >
                           {linkingTelegram ? "Linking..." : "Link Account"}
                         </button>
@@ -4749,7 +4844,7 @@ export default function SettingsPage() {
       {/* Account Deletion Request Modal */}
       {showDeletionModal &&
         ReactDOM.createPortal(
-          <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] min-h-screen w-screen backdrop-blur-sm flex items-center justify-center p-4 ${isDark ? "bg-gray-900/95" : "bg-gray-100/95"}`}>
+          <div className={`fixed top-0 left-0 right-0 bottom-0 z-[130] min-h-screen w-screen backdrop-blur-sm flex items-center justify-center p-4 ${isDark ? "bg-gray-900/95" : "bg-gray-100/95"}`}>
             <div className={`rounded-xl border max-w-md w-full p-6 ${isDark ? "bg-gray-800 border-red-900/30" : "bg-white border-red-200"}`}>
               <div className="flex items-center justify-between mb-4">
                 <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Request Account Deletion</h2>

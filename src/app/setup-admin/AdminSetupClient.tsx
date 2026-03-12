@@ -42,13 +42,15 @@ export default function AdminSetupClient({
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
   const router = useRouter();
   const { showSuccess, showError } = useToast();
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Only use resolved theme after mount to prevent hydration mismatch
+  const isDark = mounted ? resolvedTheme === "dark" : true;
 
   // Subscribe admin to push notifications
   const subscribeAdminToPush = async () => {

@@ -105,27 +105,58 @@ export async function GET(req: NextRequest) {
     }));
 
     // Transform trades into transaction format
-    const tradeTransactions = trades.map((t) => ({
-      id: t.id,
-      type:
-        t.side?.toLowerCase() === "buy" ? ("buy" as const) : ("sell" as const),
-      asset: t.symbol || "Unknown",
-      amount: Number(t.quantity),
-      value: Number(t.entryPrice) * Number(t.quantity),
-      timestamp: t.createdAt.toISOString(),
-      status:
-        t.status === "CLOSED" ? ("completed" as const) : ("pending" as const),
-      fee: Number(t.commission) || 0,
-      method: "Trade",
-      description: `${t.side} ${t.symbol}`,
-      date: t.createdAt,
-      price: Number(t.entryPrice),
-      profit: Number(t.profit),
-      userName: t.User?.name || "Unknown User",
-      userEmail: t.User?.email || "unknown@email.com",
-      userId: t.User?.id || "",
-      isManual: false,
-    }));
+    const tradeTransactions = trades.map((t) => {
+      const metadata = t.metadata as { type?: string; addedBy?: string } | null;
+      const isManualProfit = metadata?.type === "MANUAL_PROFIT";
+      
+      if (isManualProfit) {
+        // Manual profit / trade earned
+        const profitValue = t.profit ? Number(t.profit) : 0;
+        return {
+          id: t.id,
+          type: "trade_earned" as const,
+          asset: t.symbol || "Unknown",
+          amount: profitValue,
+          value: profitValue,
+          timestamp: t.createdAt.toISOString(),
+          status: "completed" as const,
+          fee: Number(t.commission) || 0,
+          method: "Trade Profit",
+          description: `Trade profit from ${t.symbol}`,
+          date: t.createdAt,
+          price: 0,
+          profit: profitValue,
+          userName: t.User?.name || "Unknown User",
+          userEmail: t.User?.email || "unknown@email.com",
+          userId: t.User?.id || "",
+          isManual: true,
+          addedBy: metadata?.addedBy,
+        };
+      }
+      
+      // Regular buy/sell trade
+      return {
+        id: t.id,
+        type:
+          t.side?.toLowerCase() === "buy" ? ("buy" as const) : ("sell" as const),
+        asset: t.symbol || "Unknown",
+        amount: Number(t.quantity),
+        value: Number(t.entryPrice) * Number(t.quantity),
+        timestamp: t.createdAt.toISOString(),
+        status:
+          t.status === "CLOSED" ? ("completed" as const) : ("pending" as const),
+        fee: Number(t.commission) || 0,
+        method: "Trade",
+        description: `${t.side} ${t.symbol}`,
+        date: t.createdAt,
+        price: Number(t.entryPrice),
+        profit: Number(t.profit),
+        userName: t.User?.name || "Unknown User",
+        userEmail: t.User?.email || "unknown@email.com",
+        userId: t.User?.id || "",
+        isManual: false,
+      };
+    });
 
     // Combine all transactions and sort by date
     const allTransactions = [

@@ -38,6 +38,8 @@ export async function GET(request: Request) {
         email: true,
         accountNumber: true,
         isEmailVerified: true,
+        isVerified: true,
+        role: true,
       },
     });
 
@@ -52,6 +54,10 @@ export async function GET(request: Request) {
       );
     }
 
+    // Admin and Staff Admin are always considered verified
+    const isAdmin = receiver.role === "ADMIN" || receiver.role === "STAFF_ADMIN";
+    const isVerified = isAdmin || receiver.isVerified || false;
+
     return NextResponse.json({
       success: true,
       receiver: {
@@ -59,7 +65,7 @@ export async function GET(request: Request) {
         name: receiver.name,
         email: receiver.email,
         accountNumber: receiver.accountNumber,
-        isVerified: receiver.isEmailVerified,
+        isVerified: isVerified,
       },
     });
   } catch (error) {

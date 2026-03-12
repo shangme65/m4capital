@@ -245,6 +245,7 @@ export const authOptions: AuthOptions = {
             role: true,
             accountType: true,
             isEmailVerified: true,
+            isVerified: true,
             image: true,
             preferredCurrency: true,
             country: true,
@@ -258,6 +259,7 @@ export const authOptions: AuthOptions = {
           token.role = dbUser.role;
           token.accountType = dbUser.accountType;
           token.isEmailVerified = dbUser.isEmailVerified;
+          token.isVerified = dbUser.isVerified;
           token.image = dbUser.image;
           token.preferredCurrency = dbUser.preferredCurrency;
           token.country = dbUser.country;
@@ -284,6 +286,7 @@ export const authOptions: AuthOptions = {
                 email: true,
                 name: true,
                 isEmailVerified: true,
+                isVerified: true,
                 image: true,
               },
             });
@@ -294,6 +297,7 @@ export const authOptions: AuthOptions = {
               token.accountType = dbUser.accountType;
               token.role = dbUser.role;
               token.isEmailVerified = dbUser.isEmailVerified;
+              token.isVerified = dbUser.isVerified;
               token.image = dbUser.image;
               token.preferredCurrency = dbUser.preferredCurrency;
               token.country = dbUser.country;
@@ -320,6 +324,7 @@ export const authOptions: AuthOptions = {
         session.user.role = token.role as string;
         session.user.accountType = token.accountType as string | undefined;
         session.user.isEmailVerified = token.isEmailVerified as boolean;
+        session.user.isVerified = token.isVerified as boolean;
         session.user.preferredCurrency = token.preferredCurrency as
           | string
           | undefined;

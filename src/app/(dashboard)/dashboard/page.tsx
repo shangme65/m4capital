@@ -42,7 +42,8 @@ function DashboardContent() {
   const { preferredCurrency, convertAmount, formatAmount, exchangeRates } =
     useCurrency();
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const [mounted, setMounted] = useState(false);
+  const isDark = mounted ? resolvedTheme === "dark" : true;
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -144,7 +145,10 @@ function DashboardContent() {
     fetchTraderoomBalance();
   }, []);
 
-
+  // Set mounted state to prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Clear URL asset param on page load/refresh to prevent stale modal restoration
   // User should return to clean dashboard after refresh
@@ -1355,6 +1359,8 @@ function DashboardContent() {
                     const assetMetadata = getCryptoMetadata(assetSymbol);
                     const fullName = assetMetadata.name;
 
+                    // Check for trade earned (manual profit)
+                    if (activity.type === "trade_earned") return `Trade Earned (${assetSymbol})`;
                     if (activity.type === "buy") return `${fullName} Bought`;
                     if (activity.type === "sell") return `${fullName} Sold`;
                     if (activity.type === "transfer")
@@ -1415,6 +1421,33 @@ function DashboardContent() {
 
                   // Get transaction type icon and color
                   const getTransactionIcon = () => {
+                    // For trade_earned transactions, show a trophy/profit icon
+                    if (activity.type === "trade_earned") {
+                      return (
+                        <div
+                          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{
+                            background: "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
+                            boxShadow: "0 2px 8px rgba(34, 197, 94, 0.4)",
+                          }}
+                        >
+                          <svg
+                            className="w-3.5 h-3.5 text-white"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                        </div>
+                      );
+                    }
+
                     // For swap/convert transactions, show both asset icons vertically with swap arrow
                     if (
                       (activity.type === "convert" || activity.type === "swap") &&
@@ -1697,10 +1730,12 @@ function DashboardContent() {
                                   : "text-green-500"
                               }`}>
                                 {activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw" ? "-" : "+"}
-                                {formatCryptoAmount(
-                                  activity.amount || 0,
-                                  activity.asset?.split(" ")[0] || ""
-                                )} {activity.asset?.split(" ")[0]}
+                                {activity.type === "trade_earned"
+                                  ? formatAmount(activity.amount || 0, 2)
+                                  : `${formatCryptoAmount(
+                                      activity.amount || 0,
+                                      activity.asset?.split(" ")[0] || ""
+                                    )} ${activity.asset?.split(" ")[0]}`}
                               </span>
                             </div>
                             <div className="flex flex-col items-end">

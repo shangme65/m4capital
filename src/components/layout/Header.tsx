@@ -3,7 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Button from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import {
@@ -33,13 +33,24 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const [isDropdownLocked, setIsDropdownLocked] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { language, setLanguage, languages, currentLanguage } = useLanguage();
   const { t } = useTranslation();
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const isDark = mounted ? resolvedTheme === "dark" : true;
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: session } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
+  
+  // Only use light logo on setup-admin page
+  const isSetupAdmin = pathname === "/setup-admin";
+  const logoSrc = isSetupAdmin && !isDark ? "/M4LightLogo.png" : "/m4capitallogo1.png";
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navLinks = [
     { href: "#features", text: "Features" },
@@ -109,22 +120,30 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
     };
   }, []);
 
+  // Determine header background based on page and theme
+  const getHeaderBg = () => {
+    if (isScrolled) {
+      return isSetupAdmin && !isDark 
+        ? "bg-white text-gray-900 shadow-md" 
+        : "bg-gray-700 text-white shadow-md";
+    }
+    return isSetupAdmin && !isDark 
+      ? "bg-transparent text-gray-900" 
+      : "bg-transparent text-white";
+  };
+
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 h-[56px] ${
-        isScrolled
-          ? isDark ? "bg-gray-700 text-white shadow-md" : "bg-gray-400 text-white shadow-md"
-          : isDark ? "bg-transparent text-white" : "bg-gray-400 text-white"
-      }`}
+      className={`fixed top-0 left-0 right-0 z-50 h-[56px] ${getHeaderBg()}`}
     >
       <nav className="container mx-auto px-4 sm:px-8 md:px-16 h-full flex justify-between items-center">
         <Link href="/" className="flex items-center group">
           <Image
-            src="/m4capitallogo1.png"
+            src={logoSrc}
             alt="M4 Capital Logo"
-            width={100}
-            height={34}
-            className="object-contain w-20 md:w-auto"
+            width={120}
+            height={40}
+            className="object-contain w-24 md:w-auto"
             priority
           />
         </Link>
@@ -322,11 +341,11 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               onClick={() => setMobileMenuOpen(false)}
             >
               <Image
-                src="/m4capitallogo1.png"
+                src={logoSrc}
                 alt="M4 Capital Logo"
-                width={100}
-                height={34}
-                className="object-contain w-20"
+                width={120}
+                height={40}
+                className="object-contain w-24"
               />
             </Link>
             <div className="flex items-center space-x-2 mt-4">

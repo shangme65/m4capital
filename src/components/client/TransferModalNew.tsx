@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { VscVerifiedFilled } from "react-icons/vsc";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -775,10 +776,42 @@ export default function TransferModalNew({
                         </div>
                       )}
                       {receiverName && !lookupLoading && (
-                        <p className="text-sm text-blue-400 mt-2 flex items-center gap-1.5 font-medium">
-                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                          {receiverName}
-                        </p>
+                        <div
+                          className="mt-3 rounded-xl p-3"
+                          style={{
+                            background: isDark
+                              ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                              : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                            boxShadow: isDark
+                              ? "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                              : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                            border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.08)",
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${receiverVerified ? "bg-gradient-to-br from-green-500 to-green-600" : "bg-gradient-to-br from-gray-500 to-gray-600"}`}>
+                              {receiverName.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <span className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+                                  {receiverName}
+                                </span>
+                                {receiverVerified && (
+                                  <VscVerifiedFilled className="text-green-500 flex-shrink-0" size={16} />
+                                )}
+                              </div>
+                              <p className={`text-xs ${receiverVerified ? "text-green-500" : "text-yellow-500"}`}>
+                                {receiverVerified ? "✓ Verified Account" : "⚠ Unverified Account"}
+                              </p>
+                            </div>
+                          </div>
+                          {!receiverVerified && (
+                            <div className={`mt-2 p-2 rounded-lg text-xs ${isDark ? "bg-yellow-500/10 border border-yellow-500/20 text-yellow-300" : "bg-yellow-50 border border-yellow-200 text-yellow-700"}`}>
+                              ⚠️ This recipient&apos;s account is not verified. Please ensure you know this person before sending funds.
+                            </div>
+                          )}
+                        </div>
                       )}
                       {errors.destination && (
                         <p className="text-red-400 text-xs mt-1">

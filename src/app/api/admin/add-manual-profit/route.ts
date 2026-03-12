@@ -97,6 +97,8 @@ export async function POST(req: NextRequest) {
     });
 
     // Create notification for user
+    // Store amount in USD, asset as the trading symbol
+    // The frontend will convert USD to user's preferred currency using formatAmount
     await prisma.notification.create({
       data: {
         id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -106,13 +108,14 @@ export async function POST(req: NextRequest) {
         message: `Congratulations! You earned a profit of $${profit.toFixed(
           2
         )} from ${asset} trade.`,
-        amount: new Decimal(profit), // Store USD amount
-        asset: user.preferredCurrency || "USD", // User's currency for display
+        amount: new Decimal(profit), // Store USD amount - frontend will convert
+        asset: asset, // Store the trading asset (BTC, BTC/ETH, EURUSD, etc.)
         metadata: {
           tradeId: trade.id,
-          asset: asset,
+          tradingAsset: asset,
           profitUSD: profit,
           type: "MANUAL_PROFIT",
+          userCurrency: user.preferredCurrency || "USD",
         },
       },
     });

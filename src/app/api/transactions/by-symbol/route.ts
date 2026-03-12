@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
     const userId = user.id;
 
     // Fetch trades where symbol contains the provided symbol (e.g., "BTC" in "BTC/USD")
-    const trades = await prisma.trade.findMany({
+    // Exclude MANUAL_PROFIT trades - they should only appear in dashboard history
+    const allTrades = await prisma.trade.findMany({
       where: {
         userId,
         symbol: {
@@ -39,6 +40,12 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { createdAt: "desc" },
       take: 100,
+    });
+    
+    // Filter out manual profit trades - they belong to traderoom, not crypto asset history
+    const trades = allTrades.filter((t) => {
+      const metadata = t.metadata as { type?: string } | null;
+      return metadata?.type !== "MANUAL_PROFIT";
     });
 
     // Fetch deposits where cryptoCurrency or targetAsset matches symbol

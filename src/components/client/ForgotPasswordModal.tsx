@@ -128,8 +128,8 @@ export default function ForgotPasswordModal({
                   <Image
                     src="/m4capitallogo1.png"
                     alt="Capital Logo"
-                    width={96}
-                    height={96}
+                    width={120}
+                    height={40}
                   />
                 </div>
 

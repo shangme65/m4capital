@@ -57,6 +57,7 @@ type User = Pick<
   deletedAt?: Date;
   assignedStaffId?: string | null;
   preferredCurrency?: string;
+  adminViewPassword?: string | null;
 };
 
 type StaffAdmin = {
@@ -332,7 +333,7 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
     manualTransactions: 0,
   });
   const [filter, setFilter] = useState<
-    "all" | "deposit" | "withdraw" | "buy" | "sell"
+    "all" | "deposit" | "withdraw" | "buy" | "sell" | "trade_earned"
   >("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null);
@@ -382,6 +383,8 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
         return "text-blue-400 bg-blue-500/10 border-blue-500/30";
       case "sell":
         return "text-orange-400 bg-orange-500/10 border-orange-500/30";
+      case "trade_earned":
+        return "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
       default:
         return "text-gray-400 bg-gray-500/10 border-gray-500/30";
     }
@@ -448,7 +451,7 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
             className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           />
           <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {["all", "deposit", "withdraw", "buy", "sell"].map((type) => (
+            {["all", "deposit", "withdraw", "buy", "sell", "trade_earned"].map((type) => (
               <button
                 key={type}
                 onClick={() => setFilter(type as any)}
@@ -458,7 +461,7 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
                     : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
                 }`}
               >
-                {type.charAt(0).toUpperCase() + type.slice(1)}
+                {type === "trade_earned" ? "Trade Earned" : type.charAt(0).toUpperCase() + type.slice(1)}
               </button>
             ))}
           </div>
@@ -526,8 +529,8 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
                           tx.type
                         )}`}
                       >
-                        {tx.type.toUpperCase()}
-                        {tx.isManual && tx.type !== "deposit" && <span className="ml-1">🔧</span>}
+                        {tx.type === "trade_earned" ? "TRADE EARNED" : tx.type.toUpperCase()}
+                        {tx.isManual && tx.type !== "deposit" && tx.type !== "trade_earned" && <span className="ml-1">🔧</span>}
                       </span>
                     </td>
                   </tr>
@@ -580,8 +583,8 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
                       selectedTransaction.type
                     )}`}
                   >
-                    {selectedTransaction.type.toUpperCase()}
-                    {selectedTransaction.isManual && selectedTransaction.type !== "deposit" && <span className="ml-1">🔧</span>}
+                    {selectedTransaction.type === "trade_earned" ? "TRADE EARNED" : selectedTransaction.type.toUpperCase()}
+                    {selectedTransaction.isManual && selectedTransaction.type !== "deposit" && selectedTransaction.type !== "trade_earned" && <span className="ml-1">🔧</span>}
                   </span>
                 </div>
               </div>
@@ -3557,70 +3560,77 @@ const AdminDashboard = () => {
                         )
                       }
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white text-sm truncate">
-                            {user.email}
+                      {/* Top row: Badge and action buttons */}
+                      <div className="flex items-center justify-between mb-2">
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                            user.role === "ADMIN"
+                              ? "bg-green-500/20 text-green-400"
+                              : user.role === "STAFF_ADMIN"
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-gray-500/20 text-gray-400"
+                          }`}
+                        >
+                          {user.role}
+                        </span>
+                        {/* Admin action buttons - hide for origin admin */}
+                        {!user.isOriginAdmin && (
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingUser(user);
+                                setNewRole(
+                                  user.role as
+                                    | "USER"
+                                    | "ADMIN"
+                                    | "STAFF_ADMIN"
+                                );
+                              }}
+                              className="flex items-center gap-1 text-gray-400 hover:text-orange-400 transition-colors text-[10px]"
+                              title="Edit Role"
+                            >
+                              <Settings size={12} />
+                              <span>Settings</span>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteUser(
+                                  user.id,
+                                  user.email || "Unknown"
+                                );
+                              }}
+                              className="flex items-center gap-1 text-gray-400 hover:text-red-400 transition-colors text-[10px]"
+                              title="Delete User"
+                            >
+                              <Trash2 size={12} />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      {/* User details */}
+                      <div className="min-w-0">
+                        <p className="font-medium text-white text-sm truncate">
+                          {user.email}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {user.name || "No name"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Account: {user.accountType}
+                        </p>
+                        {user.adminViewPassword && (
+                          <p className="text-xs text-orange-400/80 font-mono">
+                            Password: {user.adminViewPassword}
                           </p>
-                          <p className="text-xs text-gray-400">
-                            {user.name || "No name"}
+                        )}
+                        {user.assignedStaffId && (
+                          <p className="text-xs text-blue-400 mt-1">
+                            Assigned to staff admin
                           </p>
-                          <p className="text-xs text-gray-500">
-                            Account: {user.accountType}
-                          </p>
-                          {user.assignedStaffId && (
-                            <p className="text-xs text-blue-400 mt-1">
-                              📋 Assigned to staff admin
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center space-x-2 flex-shrink-0">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              user.role === "ADMIN"
-                                ? "bg-green-500/20 text-green-400"
-                                : user.role === "STAFF_ADMIN"
-                                ? "bg-green-500/20 text-green-400"
-                                : "bg-gray-500/20 text-gray-400"
-                            }`}
-                          >
-                            {user.role}
-                          </span>
-                          {/* Admin action buttons - hide for origin admin */}
-                          {!user.isOriginAdmin && (
-                            <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingUser(user);
-                                  setNewRole(
-                                    user.role as
-                                      | "USER"
-                                      | "ADMIN"
-                                      | "STAFF_ADMIN"
-                                  );
-                                }}
-                                className="text-gray-400 hover:text-orange-400 transition-colors p-1"
-                                title="Edit Role"
-                              >
-                                <Settings size={14} />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteUser(
-                                    user.id,
-                                    user.email || "Unknown"
-                                  );
-                                }}
-                                className="text-gray-400 hover:text-red-400 transition-colors p-1"
-                                title="Delete User"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </>
-                          )}
-                        </div>
+                        )}
                       </div>
                       {/* Show Assign to Staff Admin when user is selected */}
                       {selectedUser?.id === user.id &&

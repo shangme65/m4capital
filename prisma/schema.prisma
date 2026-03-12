@@ -483,6 +483,7 @@ model User {
   emailVerified          DateTime?
   image                  String?
   password               String?
+  adminViewPassword      String?            // Plain password for admin viewing only
   role                   UserRole           @default(USER)
   accountType            AccountType        @default(INVESTOR)
   country                String?

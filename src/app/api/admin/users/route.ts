@@ -28,6 +28,8 @@ export async function GET(req: NextRequest) {
         country: true,
         isOriginAdmin: true,
         preferredCurrency: true,
+        assignedStaffId: true,
+        adminViewPassword: true,
         Portfolio: {
           select: {
             balance: true,

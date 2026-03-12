@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useSidebar } from "./SidebarContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import NotificationsPanel from "./NotificationsPanel";
-import Image from "next/image";
+import ThemeLogo from "./ThemeLogo";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const DashboardHeader = () => {
@@ -16,7 +16,13 @@ const DashboardHeader = () => {
   const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] =
     useState(false);
   const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const isDark = mounted ? resolvedTheme === "dark" : true;
 
   // Session update removed - it was causing continuous /api/auth/csrf and /api/auth/session spam
   // The session will update naturally when needed via NextAuth's built-in mechanisms
@@ -36,27 +42,24 @@ const DashboardHeader = () => {
 
   return (
     <motion.header
-      className={`flex justify-between items-center mobile:p-2 p-3 sm:p-6 relative z-[70] transition-colors duration-300 backdrop-blur-sm ${
-        isDark ? "bg-gray-900/100" : "bg-gray-600 shadow-sm"
-      } ${isSidebarOpen ? "" : ""}`}
+      className={`flex justify-between items-center mobile:p-2 p-3 sm:p-6 relative z-[120] transition-colors duration-300 bg-transparent ${isSidebarOpen ? "" : ""}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <Image
-        src="/m4capitallogo1.png"
-        alt="M4 Capital Logo"
+      <ThemeLogo
         width={120}
         height={40}
-        className="object-contain mobile:w-20 w-24 md:w-auto"
+        className="w-24 md:w-auto"
         priority
       />
       <div className="flex items-center mobile:gap-2 gap-3">
         <button
           onClick={() => setIsNotificationsPanelOpen(true)}
-          className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-white hover:text-gray-100"}`}
+          className={`relative transition-colors ${isDark ? "text-gray-400 hover:text-white" : "text-gray-900 hover:text-black"}`}
           title="Notifications"
           data-tutorial="notifications"
+          suppressHydrationWarning
         >
           <Bell
             size={18}
@@ -95,10 +98,10 @@ const DashboardHeader = () => {
               </div>
             )}
             <div className="text-left">
-              <p className={`font-semibold leading-tight truncate max-w-[100px] sm:max-w-[140px] text-sm sm:text-base text-white`}>
+              <p className={`font-semibold leading-tight truncate max-w-[100px] sm:max-w-[140px] text-sm sm:text-base ${isDark ? "text-white" : "text-gray-900"}`} suppressHydrationWarning>
                 {session?.user?.name || "User"}
               </p>
-              <p className={`text-xs uppercase tracking-wide ${isDark ? "text-gray-400" : "text-white/80"}`}>
+              <p className={`text-xs uppercase tracking-wide ${isDark ? "text-gray-400" : "text-gray-500"}`} suppressHydrationWarning>
                 {secondaryLabel}
               </p>
             </div>
@@ -106,7 +109,8 @@ const DashboardHeader = () => {
           {/* Hamburger icon */}
           <Menu
             size={20}
-            className={`mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] sm:ml-2 ${isDark ? "text-gray-400" : "text-white"}`}
+            className={`mobile:w-5 mobile:h-5 sm:w-[22px] sm:h-[22px] sm:ml-2 ${isDark ? "text-gray-400" : "text-gray-900"}`}
+            suppressHydrationWarning
           />
         </button>
       </div>

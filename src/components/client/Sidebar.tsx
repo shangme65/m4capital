@@ -11,10 +11,12 @@ import {
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
+import ThemeLogo from "./ThemeLogo";
 import { useSidebar } from "./SidebarContext";
 import { useState, useEffect } from "react";
 import LogoutConfirmationModal from "./LogoutConfirmationModal";
 import { useTheme } from "@/contexts/ThemeContext";
+import { VscVerifiedFilled } from "react-icons/vsc";
 
 const Sidebar = () => {
   const { data: session, status } = useSession(); // Removed 'update' to prevent session refresh loops
@@ -22,6 +24,7 @@ const Sidebar = () => {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [baseUrl, setBaseUrl] = useState("");
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -31,6 +34,24 @@ const Sidebar = () => {
       setBaseUrl(window.location.origin);
     }
   }, []);
+
+  // Fetch verification status
+  useEffect(() => {
+    const fetchVerificationStatus = async () => {
+      if (session?.user?.id) {
+        try {
+          const res = await fetch("/api/user/verification-status");
+          if (res.ok) {
+            const data = await res.json();
+            setIsVerified(data.isVerified || false);
+          }
+        } catch (error) {
+          console.error("Failed to fetch verification status:", error);
+        }
+      }
+    };
+    fetchVerificationStatus();
+  }, [session?.user?.id]);
 
   // Session update removed to prevent infinite loops and continuous API calls
   // The session will update naturally when needed via NextAuth's built-in mechanisms
@@ -103,7 +124,7 @@ const Sidebar = () => {
             {/* Backdrop */}
             <motion.div
               key="sidebar-backdrop"
-              className="fixed inset-0 bg-black bg-opacity-50 z-30"
+              className="fixed inset-0 bg-black bg-opacity-50 z-[140]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -114,12 +135,41 @@ const Sidebar = () => {
             <motion.div
               key="sidebar-content"
               data-tutorial="sidebar"
-              className={`fixed left-0 top-0 h-full w-60 sm:w-72 p-4 sm:p-6 pt-20 flex flex-col z-[60] transition-colors ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}`}
+              className={`fixed left-0 top-0 h-full w-60 sm:w-72 p-4 sm:p-6 pt-6 flex flex-col z-[145] transition-colors ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}`}
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ duration: 0.3 }}
             >
+              {/* Sidebar Logo */}
+              <div className="mb-6">
+                <ThemeLogo
+                  width={120}
+                  height={40}
+                  className="object-contain"
+                  priority
+                />
+              </div>
+
+              {/* User Name - Mobile Only */}
+              {session?.user?.name && (
+                <div className={`sm:hidden mb-4 pb-4 border-b ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`text-lg font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+                      {session.user.name}
+                    </span>
+                    {isVerified && (
+                      <VscVerifiedFilled
+                        className="text-green-500 flex-shrink-0"
+                        size={16}
+                      />
+                    )}
+                  </div>
+                  <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    {session.user.email}
+                  </p>
+                </div>
+              )}
               <nav className="flex-1 overflow-y-auto">
                 <ul>
                   {navItems.map((item) => (

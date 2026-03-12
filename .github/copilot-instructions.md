@@ -522,7 +522,7 @@ const apiKey = process.env.OPENAI_API_KEY;
 if (!apiKey) {
   return NextResponse.json(
     { error: "API key not configured" },
-    { status: 500 }
+    { status: 500 },
   );
 }
 
@@ -617,7 +617,7 @@ const password = await bcrypt.hash("password123", 10);
 ```typescript
 // ✅ DO: Fetch from real API
 const response = await fetch(
-  "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+  "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT",
 );
 const data = await response.json();
 const price = parseFloat(data.price);
@@ -687,20 +687,68 @@ If you discover:
 
 ---
 
-## 8. PRODUCTION-ONLY CODE RULES
+## 8. DYNAMIC THEMING - ALWAYS SUPPORT BOTH MODES
+
+### 🎨 CRITICAL RULE: All UI Changes Must Be Theme-Aware
+
+**MANDATORY:** Every UI element, color, background, border, and text MUST dynamically respond to both dark and light modes.
+
+**REQUIRED pattern:**
+
+```typescript
+// ✅ CORRECT - Dynamic theming
+<div className={`rounded-lg p-4 ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+  <p className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>Content</p>
+</div>
+
+// ❌ WRONG - Hardcoded dark mode only
+<div className="bg-gray-800 border-gray-700 rounded-lg p-4">
+  <p className="text-gray-300 text-sm">Content</p>
+</div>
+
+// ❌ WRONG - Hardcoded light mode only
+<div className="bg-white border-gray-200 rounded-lg p-4">
+  <p className="text-gray-700 text-sm">Content</p>
+</div>
+```
+
+**Color mapping reference:**
+
+| Element                | Dark Mode          | Light Mode        |
+| ---------------------- | ------------------ | ----------------- |
+| Background (primary)   | `bg-gray-900`      | `bg-white`        |
+| Background (secondary) | `bg-gray-800`      | `bg-gray-50`      |
+| Background (tertiary)  | `bg-gray-700`      | `bg-gray-100`     |
+| Border                 | `border-gray-700`  | `border-gray-200` |
+| Text (primary)         | `text-white`       | `text-gray-900`   |
+| Text (secondary)       | `text-gray-300`    | `text-gray-700`   |
+| Text (muted)           | `text-gray-400`    | `text-gray-500`   |
+| Text (subtle)          | `text-gray-500`    | `text-gray-400`   |
+| Success background     | `bg-green-900/20`  | `bg-green-50`     |
+| Success text           | `text-green-400`   | `text-green-700`  |
+| Error background       | `bg-red-900/20`    | `bg-red-50`       |
+| Error text             | `text-red-400`     | `text-red-700`    |
+| Info background        | `bg-blue-900/20`   | `bg-blue-50`      |
+| Info text              | `text-blue-400`    | `text-blue-700`   |
+| Warning background     | `bg-yellow-900/20` | `bg-yellow-50`    |
+| Warning text           | `text-yellow-400`  | `text-yellow-700` |
+
+**NEVER hardcode colors without theme conditionals. ALWAYS use `isDark ? "dark-class" : "light-class"` pattern.**
+
+---
+
+## 9. PRODUCTION-ONLY CODE RULES
 
 ### Database Seed Scripts
 
 **ABSOLUTE REQUIREMENTS:**
 
 1. **Single Admin Only**
-
    - Create ONLY ONE admin user from environment variables
    - Check if admin exists before creating (idempotent)
    - Exit gracefully if admin already exists
 
 2. **Zero Balance Start**
-
    - Admin portfolio MUST start with `balance: 0`
    - Admin assets MUST be empty array: `assets: []`
    - NO sample crypto holdings
@@ -739,13 +787,12 @@ If you discover:
    if (!apiKey) {
      return NextResponse.json(
        { error: "Configuration missing" },
-       { status: 500 }
+       { status: 500 },
      );
    }
    ```
 
 2. **Authentication Required**
-
    - Check user session for protected routes
    - Verify admin role for admin-only endpoints
    - Return 401 Unauthorized if not authenticated
@@ -798,21 +845,18 @@ const address = "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"; // NEVER
 **ZERO TOLERANCE for hardcoded credentials:**
 
 1. **Email Addresses**
-
    - ❌ NEVER: `"admin@m4capital.com"`
    - ❌ NEVER: `"user@test.com"`
    - ❌ NEVER: `"test@example.com"` in actual logic
    - ✅ ALWAYS: `process.env.ORIGIN_ADMIN_EMAIL`
 
 2. **Passwords**
-
    - ❌ NEVER: `"password123"`
    - ❌ NEVER: `"admin123"`
    - ❌ NEVER: Any hardcoded password value
    - ✅ ALWAYS: `process.env.ORIGIN_ADMIN_PASSWORD`
 
 3. **API Keys**
-
    - ❌ NEVER: `"sk-hardcoded-key"`
    - ❌ NEVER: Any string that looks like an API key
    - ✅ ALWAYS: `process.env.OPENAI_API_KEY`
@@ -937,26 +981,23 @@ NODE_ENV="production"
 
 ---
 
-## 9. Deployment Checklist
+## 10. Deployment Checklist
 
 **Before deploying to production:**
 
 1. **Environment Variables**
-
    - [ ] All required env vars set in hosting platform
    - [ ] No placeholder values in production
    - [ ] Credentials rotated from development
    - [ ] NEXTAUTH_SECRET is random and secure
 
 2. **Database**
-
    - [ ] Migrations run successfully
    - [ ] Seed script executed ONCE
    - [ ] Admin user created from env vars
    - [ ] No test data in database
 
 3. **Security**
-
    - [ ] No hardcoded credentials in code
    - [ ] All API keys from environment
    - [ ] `.env` file not in git
@@ -970,18 +1011,16 @@ NODE_ENV="production"
 
 ---
 
-## 10. Emergency Response
+## 11. Emergency Response
 
 **If production breaks due to missing env vars:**
 
 1. **Identify the issue**
-
    - Check application logs
    - Look for "env var not set" errors
    - Verify which variable is missing
 
 2. **Fix immediately**
-
    - Add missing env var to hosting platform
    - Restart application
    - Verify functionality restored
@@ -995,14 +1034,12 @@ NODE_ENV="production"
 **If hardcoded credentials discovered:**
 
 1. **Immediate action**
-
    - Remove from code
    - Replace with env vars
    - Rotate exposed credentials
    - Deploy fix urgently
 
 2. **Audit**
-
    - Search entire codebase
    - Check git history
    - Review all similar files
@@ -1016,7 +1053,7 @@ NODE_ENV="production"
 
 ---
 
-## 11. Build Error Reporting Protocol
+## 12. Build Error Reporting Protocol
 
 **CRITICAL INSTRUCTION FOR BUILD FAILURES:**
 
@@ -1025,7 +1062,6 @@ When a build fails (`npm run build`, `npm run lint`, or similar), you MUST:
 ### Step-by-Step Process:
 
 1. **STOP and ANALYZE** the error output first
-
    - Read the complete error message
    - Identify ALL files and line numbers with errors
    - Note the type of each error (syntax, type, import, etc.)
@@ -1041,7 +1077,6 @@ When a build fails (`npm run build`, `npm run lint`, or similar), you MUST:
    ```
 
 3. **ONLY AFTER explaining**, proceed to fix the error
-
    - Fix all related errors in one batch if possible
    - Use `multi_replace_string_in_file` for multiple independent fixes
 
@@ -1094,7 +1129,7 @@ Fix: Add a null check: `if (existingAssetIndex >= 0 && assets[existingAssetIndex
 
 ---
 
-## 12. Currency System Rules
+## 13. Currency System Rules
 
 ### Database Storage
 
@@ -1161,7 +1196,7 @@ const total =
 
 ---
 
-## 13. Amount Input & API Storage Rules
+## 14. Amount Input & API Storage Rules
 
 ### ⚠️ CRITICAL: All API Storage Must Use USD
 
@@ -1291,17 +1326,14 @@ Before submitting to API, verify:
 ### Common Bugs to Avoid
 
 1. **Wrong crypto amount calculation:**
-
    - Bug: `cryptoAmount = parseFloat(userInput) / usdPrice`
    - Fix: `cryptoAmount = convertAmount(parseFloat(userInput), true) / usdPrice`
 
 2. **Wrong price stored in trades:**
-
    - Bug: `price: userCurrencyValue / cryptoAmount` (stores BRL price as USD)
    - Fix: `price: usdPrice` (use the actual USD price from market API)
 
 3. **Double-conversion in display:**
-
    - Bug: `formatAmount(convertAmount(value), 2)` (converts twice)
    - Fix: `formatAmount(value, 2)` or `convertAmount(value)` (pick one)
 

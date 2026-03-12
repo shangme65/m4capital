@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, User, AlertCircle, ArrowUpDown, CheckCircle } from "lucide-react";
+import { VscVerifiedFilled } from "react-icons/vsc";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -39,6 +40,7 @@ export default function AssetSendModal({
   } | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [receiverName, setReceiverName] = useState<string | null>(null);
+  const [receiverVerified, setReceiverVerified] = useState<boolean>(false);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [inputMode, setInputMode] = useState<"crypto" | "fiat">("crypto");
   const { addTransaction, addNotification } = useNotifications();
@@ -72,6 +74,7 @@ export default function AssetSendModal({
       document.body.style.overflow = "unset";
       setSendData({ amount: "", destination: "", memo: "" });
       setReceiverName(null);
+      setReceiverVerified(false);
       setErrors({});
       setInputMode("crypto");
     }
@@ -83,6 +86,7 @@ export default function AssetSendModal({
   const lookupReceiver = async (identifier: string) => {
     if (!identifier.trim()) {
       setReceiverName(null);
+      setReceiverVerified(false);
       return;
     }
     setLookupLoading(true);
@@ -95,8 +99,10 @@ export default function AssetSendModal({
       const data = await res.json();
       if (res.ok && data.receiver) {
         setReceiverName(data.receiver.name);
+        setReceiverVerified(data.receiver.isVerified || false);
       } else {
         setReceiverName(null);
+        setReceiverVerified(false);
       }
     } catch (error) {
       console.error("Error looking up receiver:", error);
@@ -335,24 +341,26 @@ export default function AssetSendModal({
                         border: "1px solid rgba(59, 130, 246, 0.3)",
                       }}
                     >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <CryptoIcon symbol={asset.symbol} size="sm" />
-                          <div>
-                            <p className={`text-xs ${
-                              isDark ? "text-gray-400" : "text-gray-600"
-                            }`}>
-                              Available Balance
-                            </p>
-                            <p className={`text-lg font-bold ${
-                              isDark ? "text-white" : "text-gray-900"
-                            }`}>
-                              {asset.amount.toFixed(8)} {asset.symbol}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className={`text-sm ${
+                      <div className="flex items-center gap-3">
+                        <CryptoIcon symbol={asset.symbol} size="sm" />
+                        <div className="flex-1">
+                          <p className={`text-xs ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}>
+                            Available Balance
+                          </p>
+                          <p className={`text-lg font-bold ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}>
+                            {asset.amount < 0.0001 
+                              ? asset.amount.toFixed(8) 
+                              : asset.amount < 1 
+                                ? asset.amount.toFixed(6)
+                                : asset.amount < 100
+                                  ? asset.amount.toFixed(4)
+                                  : asset.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })} {asset.symbol}
+                          </p>
+                          <p className={`text-sm mt-1 ${
                             isDark ? "text-gray-400" : "text-gray-600"
                           }`}>
                             {preferredCurrency === "USD"
@@ -362,9 +370,10 @@ export default function AssetSendModal({
                               : preferredCurrency === "GBP"
                               ? "£"
                               : preferredCurrency}
-                            {convertAmount(asset.amount * asset.price).toFixed(
-                              2
-                            )}
+                            {convertAmount(asset.amount * asset.price).toLocaleString(undefined, { 
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2 
+                            })}
                           </p>
                         </div>
                       </div>
@@ -416,18 +425,66 @@ export default function AssetSendModal({
                         </p>
                       )}
                       {receiverName && (
-                        <div className={`mt-2 flex flex-row items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border w-fit ${
-                          isDark
-                            ? "border-green-500/30 bg-green-500/10"
-                            : "border-green-500/50 bg-green-50"
-                        }`}>
-                          <span className={`text-sm font-medium whitespace-nowrap leading-none ${
-                            isDark ? "text-white" : "text-green-700"
-                          }`}>{receiverName}</span>
-                          <svg className="w-5 h-5 flex-shrink-0 self-center" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 1l2.09 3.36L18 3.27l-.91 3.87L20.18 10l-3.36 2.09.09 4.73-3.87-.91L10 18.18l-2.09-3.36L4 15.73l.91-3.87L1.82 10l3.36-2.09L5.09 3.18l3.87.91L12 1z" fill="#25D366" />
-                            <path d="M8.5 10.5l2.5 2.5 4.5-4.5" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+                        <div className="mt-3 space-y-2">
+                          {/* 3D Recipient Card */}
+                          <div
+                            className="rounded-xl p-3"
+                            style={isDark ? {
+                              background: "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
+                              boxShadow: "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
+                              border: "1px solid rgba(255, 255, 255, 0.08)",
+                            } : {
+                              background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                              boxShadow: "0 8px 20px -4px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 1)",
+                              border: "1px solid rgba(0, 0, 0, 0.08)",
+                            }}
+                          >
+                            <div className="flex items-center gap-3">
+                              {/* Avatar */}
+                              <div
+                                className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                                style={{
+                                  background: "linear-gradient(145deg, #3b82f6 0%, #1d4ed8 100%)",
+                                  boxShadow: "0 4px 10px rgba(59, 130, 246, 0.3)",
+                                }}
+                              >
+                                <span className="text-white font-bold text-sm">
+                                  {receiverName.charAt(0).toUpperCase()}
+                                </span>
+                              </div>
+                              {/* Name and verification */}
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <span className={`font-semibold text-sm truncate ${
+                                    isDark ? "text-white" : "text-gray-900"
+                                  }`}>
+                                    {receiverName}
+                                  </span>
+                                  {receiverVerified && (
+                                    <VscVerifiedFilled className="text-green-500 flex-shrink-0" size={16} />
+                                  )}
+                                </div>
+                                <p className={`text-xs ${
+                                  receiverVerified 
+                                    ? (isDark ? "text-green-400" : "text-green-600")
+                                    : (isDark ? "text-yellow-400" : "text-yellow-600")
+                                }`}>
+                                  {receiverVerified ? "✓ Verified Account" : "⚠ Unverified Account"}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          {/* Warning for unverified recipients */}
+                          {!receiverVerified && (
+                            <div className={`flex items-start gap-2 rounded-lg px-3 py-2 text-xs ${
+                              isDark 
+                                ? "bg-yellow-500/10 text-yellow-300 border border-yellow-500/20"
+                                : "bg-yellow-50 text-yellow-700 border border-yellow-200"
+                            }`}>
+                              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                              <span>This account is not verified. Please double-check the recipient before sending.</span>
+                            </div>
+                          )}
                         </div>
                       )}
                       {errors.destination && (
