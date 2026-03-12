@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { useTutorial } from "@/contexts/TutorialContext";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SpotlightPosition {
   top: number;
@@ -23,6 +24,15 @@ export default function TutorialOverlay() {
     completeTutorial,
   } = useTutorial();
 
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const isDark = mounted ? resolvedTheme === "dark" : true;
+
   const [spotlightPos, setSpotlightPos] = useState<SpotlightPosition | null>(
     null
   );
@@ -41,13 +51,8 @@ export default function TutorialOverlay() {
       const tooltipHeight = isMobile ? 220 : 200;
       const margin = isMobile ? 12 : 16;
 
-      // Center position for welcome/complete steps
-      if (
-        currentStepData.target === "center" ||
-        currentStepData.id === "welcome" ||
-        currentStepData.id === "complete" ||
-        currentStepData.id === "asset-actions"
-      ) {
+      // Center position for welcome/complete steps (only if target is explicitly "center")
+      if (currentStepData.target === "center") {
         setSpotlightPos(null);
         // Center the tooltip
         setTooltipPosition({
@@ -66,6 +71,21 @@ export default function TutorialOverlay() {
           top: Math.max(margin, (window.innerHeight - tooltipHeight) / 2),
           left: Math.max(margin, (window.innerWidth - tooltipWidth) / 2),
         });
+        return;
+      }
+
+      // Scroll the element into view if not visible
+      const elementRect = element.getBoundingClientRect();
+      const isInViewport = 
+        elementRect.top >= 0 &&
+        elementRect.left >= 0 &&
+        elementRect.bottom <= window.innerHeight &&
+        elementRect.right <= window.innerWidth;
+      
+      if (!isInViewport) {
+        element.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+        // Re-run after scroll completes
+        setTimeout(updateSpotlight, 400);
         return;
       }
 
@@ -159,11 +179,7 @@ export default function TutorialOverlay() {
 
   const isFirstStep = currentStep === 0;
   const isLastStep = currentStep === totalSteps - 1;
-  const isCenterStep =
-    currentStepData.target === "center" ||
-    currentStepData.id === "welcome" ||
-    currentStepData.id === "complete" ||
-    currentStepData.id === "asset-actions";
+  const isCenterStep = currentStepData.target === "center";
 
   return (
     <AnimatePresence>
@@ -239,19 +255,19 @@ export default function TutorialOverlay() {
             maxWidth: "calc(100vw - 32px)",
           }}
         >
-          <div className="bg-gradient-to-br from-gray-800/98 to-gray-900/98 backdrop-blur-xl rounded-2xl p-4 sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(59,130,246,0.4)] border border-gray-700/50">
+          <div className={`backdrop-blur-xl rounded-2xl p-4 sm:p-6 border ${isDark ? "bg-gradient-to-br from-gray-800/98 to-gray-900/98 border-gray-700/50 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(59,130,246,0.4)]" : "bg-gradient-to-br from-white to-gray-50 border-gray-200 shadow-[0_20px_60px_rgba(0,0,0,0.15),0_0_40px_rgba(59,130,246,0.2)]"}`}>
             {/* Step indicator */}
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-[0_4px_12px_rgba(59,130,246,0.5)]">
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-blue-400 text-sm font-medium">
+                <span className={`text-sm font-medium ${isDark ? "text-blue-400" : "text-blue-600"}`}>
                   Step {currentStep + 1} of {totalSteps}
                 </span>
               </div>
               {/* Progress bar */}
-              <div className="flex-1 mx-4 h-1.5 bg-gray-700 rounded-full overflow-hidden">
+              <div className={`flex-1 mx-4 h-1.5 rounded-full overflow-hidden ${isDark ? "bg-gray-700" : "bg-gray-200"}`}>
                 <motion.div
                   className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full"
                   initial={{ width: 0 }}
@@ -264,12 +280,12 @@ export default function TutorialOverlay() {
             </div>
 
             {/* Title */}
-            <h3 className="text-lg sm:text-xl font-bold text-white mb-2 sm:mb-3">
+            <h3 className={`text-lg sm:text-xl font-bold mb-2 sm:mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
               {currentStepData.title}
             </h3>
 
             {/* Description */}
-            <p className="text-gray-300 text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6">
+            <p className={`text-xs sm:text-sm leading-relaxed mb-4 sm:mb-6 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
               {currentStepData.description}
             </p>
 
@@ -280,8 +296,8 @@ export default function TutorialOverlay() {
                 disabled={isFirstStep}
                 className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-medium transition-all text-sm sm:text-base ${
                   isFirstStep
-                    ? "bg-gray-700/30 text-gray-500 cursor-not-allowed"
-                    : "bg-gray-700/50 text-white hover:bg-gray-600/50 border border-gray-600/50"
+                    ? isDark ? "bg-gray-700/30 text-gray-500 cursor-not-allowed" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : isDark ? "bg-gray-700/50 text-white hover:bg-gray-600/50 border border-gray-600/50" : "bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300"
                 }`}
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -316,7 +332,7 @@ export default function TutorialOverlay() {
                       ? "bg-blue-500 w-4"
                       : index < currentStep
                       ? "bg-blue-500/50"
-                      : "bg-gray-600"
+                      : isDark ? "bg-gray-600" : "bg-gray-300"
                   }`}
                 />
               ))}

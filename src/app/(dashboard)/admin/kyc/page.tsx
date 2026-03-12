@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   CheckCircle,
   XCircle,
@@ -27,10 +28,12 @@ function SuccessModal({
   isOpen,
   onClose,
   action,
+  isDark = true,
 }: {
   isOpen: boolean;
   onClose: () => void;
   action: "APPROVED" | "REJECTED" | "UNDER_REVIEW";
+  isDark?: boolean;
 }) {
   if (!isOpen) return null;
 
@@ -66,9 +69,9 @@ function SuccessModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
       <div
-        className="relative w-full max-w-sm bg-gray-900 rounded-2xl overflow-hidden"
+        className={`relative w-full max-w-sm rounded-2xl overflow-hidden ${isDark ? "bg-gray-900" : "bg-white"}`}
         style={{
-          boxShadow: `0 25px 50px -12px ${glow}, 0 0 0 1px rgba(255,255,255,0.1)`,
+          boxShadow: `0 25px 50px -12px ${glow}, 0 0 0 1px ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
           transform: "perspective(1000px) rotateX(2deg)",
         }}
       >
@@ -93,18 +96,18 @@ function SuccessModal({
               }}
             />
             <div
-              className="absolute inset-2 rounded-full bg-gray-900 flex items-center justify-center"
+              className={`absolute inset-2 rounded-full flex items-center justify-center ${isDark ? "bg-gray-900" : "bg-gray-100"}`}
               style={{ boxShadow: "inset 0 5px 15px rgba(0,0,0,0.5)" }}
             >
-              <Icon className="w-8 h-8 text-white" />
+              <Icon className={`w-8 h-8 ${isDark ? "text-white" : "text-gray-900"}`} />
             </div>
             {/* Sparkle effects */}
             <Sparkles className="absolute -top-2 -right-2 w-6 h-6 text-yellow-400 animate-pulse" />
           </div>
 
           {/* Title */}
-          <h2 className="text-xl font-bold text-white mb-2">{title}</h2>
-          <p className="text-gray-400 text-sm mb-6">{message}</p>
+          <h2 className={`text-xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>{title}</h2>
+          <p className={`text-sm mb-6 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{message}</p>
 
           {/* Button */}
           <button
@@ -187,10 +190,12 @@ function DocumentPreview({
   url,
   title,
   onClose,
+  isDark = true,
 }: {
   url: string;
   title: string;
   onClose: () => void;
+  isDark?: boolean;
 }) {
   const isPdfFile = isPdf(url);
 
@@ -211,12 +216,12 @@ function DocumentPreview({
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-5xl max-h-[90vh] bg-gray-900 rounded-xl overflow-hidden"
+        className={`relative w-full max-w-5xl max-h-[90vh] rounded-xl overflow-hidden ${isDark ? "bg-gray-900" : "bg-white"}`}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 bg-gray-800 border-b border-gray-700">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <div className={`flex items-center justify-between p-4 border-b ${isDark ? "bg-gray-800 border-gray-700" : "bg-gray-50 border-gray-200"}`}>
+          <h3 className={`text-lg font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>{title}</h3>
           <div className="flex items-center gap-2">
             <button
               onClick={() =>
@@ -241,7 +246,7 @@ function DocumentPreview({
         </div>
 
         {/* Content */}
-        <div className="overflow-auto max-h-[calc(90vh-80px)] p-4 flex items-center justify-center bg-gray-950">
+        <div className={`overflow-auto max-h-[calc(90vh-80px)] p-4 flex items-center justify-center ${isDark ? "bg-gray-950" : "bg-gray-100"}`}>
           {isPdfFile ? (
             <iframe
               src={url}
@@ -266,23 +271,25 @@ function DocumentCard({
   title,
   url,
   onView,
+  isDark = true,
 }: {
   title: string;
   url: string;
   onView: () => void;
+  isDark?: boolean;
 }) {
   const isPdfFile = isPdf(url);
   const filename = `${title.replace(/\s+/g, "_")}.${getFileExtension(url)}`;
 
   return (
-    <div className="bg-gray-700/50 rounded-lg p-4">
-      <h4 className="text-sm font-semibold text-white mb-2">{title}</h4>
+    <div className={`rounded-lg p-4 ${isDark ? "bg-gray-700/50" : "bg-gray-100"}`}>
+      <h4 className={`text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>{title}</h4>
       <div
-        className="relative aspect-video bg-gray-900 rounded overflow-hidden mb-3 group cursor-pointer"
+        className={`relative aspect-video rounded overflow-hidden mb-3 group cursor-pointer ${isDark ? "bg-gray-900" : "bg-gray-200"}`}
         onClick={onView}
       >
         {isPdfFile ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+          <div className={`absolute inset-0 flex flex-col items-center justify-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             <FileText className="w-12 h-12 mb-2" />
             <span className="text-sm">PDF Document</span>
           </div>
@@ -300,14 +307,14 @@ function DocumentCard({
       <div className="flex gap-2">
         <button
           onClick={onView}
-          className="flex-1 flex items-center justify-center gap-2 text-sm text-blue-400 hover:text-blue-300 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+          className={`flex-1 flex items-center justify-center gap-2 text-sm py-2 rounded-lg transition-colors ${isDark ? "text-blue-400 hover:text-blue-300 bg-gray-700 hover:bg-gray-600" : "text-blue-600 hover:text-blue-500 bg-gray-200 hover:bg-gray-300"}`}
         >
           <Eye className="w-4 h-4" />
           View
         </button>
         <button
           onClick={() => downloadBase64File(url, filename)}
-          className="flex-1 flex items-center justify-center gap-2 text-sm text-orange-400 hover:text-orange-300 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+          className={`flex-1 flex items-center justify-center gap-2 text-sm py-2 rounded-lg transition-colors ${isDark ? "text-orange-400 hover:text-orange-300 bg-gray-700 hover:bg-gray-600" : "text-orange-600 hover:text-orange-500 bg-gray-200 hover:bg-gray-300"}`}
         >
           <Download className="w-4 h-4" />
           Download
@@ -320,6 +327,15 @@ function DocumentCard({
 export default function KycManagementPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const isDark = mounted ? resolvedTheme === "dark" : true;
   const [submissions, setSubmissions] = useState<KycSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<
@@ -412,12 +428,19 @@ export default function KycManagementPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const styles = {
+    const darkStyles = {
       PENDING: "bg-yellow-900/30 text-yellow-400 border-yellow-700",
       APPROVED: "bg-green-900/30 text-green-400 border-green-700",
       REJECTED: "bg-red-900/30 text-red-400 border-red-700",
       UNDER_REVIEW: "bg-blue-900/30 text-blue-400 border-blue-700",
     };
+    const lightStyles = {
+      PENDING: "bg-yellow-100 text-yellow-700 border-yellow-300",
+      APPROVED: "bg-green-100 text-green-700 border-green-300",
+      REJECTED: "bg-red-100 text-red-700 border-red-300",
+      UNDER_REVIEW: "bg-blue-100 text-blue-700 border-blue-300",
+    };
+    const styles = isDark ? darkStyles : lightStyles;
     return (
       <span
         className={`px-2 py-1 rounded-full text-xs font-semibold border ${
@@ -432,12 +455,12 @@ export default function KycManagementPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "APPROVED":
-        return <CheckCircle className="w-5 h-5 text-green-400" />;
+        return <CheckCircle className={`w-5 h-5 ${isDark ? "text-green-400" : "text-green-600"}`} />;
       case "REJECTED":
-        return <XCircle className="w-5 h-5 text-red-400" />;
+        return <XCircle className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />;
       case "PENDING":
       case "UNDER_REVIEW":
-        return <Clock className="w-5 h-5 text-yellow-400" />;
+        return <Clock className={`w-5 h-5 ${isDark ? "text-yellow-400" : "text-yellow-600"}`} />;
       default:
         return null;
     }
@@ -445,12 +468,13 @@ export default function KycManagementPage() {
 
   if (selectedSubmission) {
     return (
-      <div className="fixed inset-0 top-20 bg-gray-900 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className={`fixed inset-0 top-20 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
         {/* Success Modal */}
         <SuccessModal
           isOpen={successModal.isOpen}
           onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
           action={successModal.action}
+          isDark={isDark}
         />
 
         {/* Document Preview Modal */}
@@ -459,32 +483,33 @@ export default function KycManagementPage() {
             url={previewDocument.url}
             title={previewDocument.title}
             onClose={() => setPreviewDocument(null)}
+            isDark={isDark}
           />
         )}
 
         {/* Mobile Header */}
-        <div className="sticky top-0 z-[75] bg-gray-900/100 backdrop-blur-sm border-b border-gray-700 px-4 py-4">
+        <div className={`sticky top-0 z-[75] backdrop-blur-sm px-4 py-4 ${isDark ? "bg-gray-900/100 border-b border-gray-700" : "bg-white/100 border-b border-gray-200"}`}>
           <div className="mb-3">
             <h2 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
               Admin Control Panel
             </h2>
-            <p className="text-[10px] xs:text-xs text-gray-400">
+            <p className={`text-[10px] xs:text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
               Complete administrative dashboard
             </p>
           </div>
           <button
             onClick={() => setSelectedSubmission(null)}
-            className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors"
+            className={`flex items-center gap-2 transition-colors ${isDark ? "text-gray-300 hover:text-white" : "text-gray-600 hover:text-gray-900"}`}
           >
             <ArrowLeft size={20} />
             <span className="text-sm font-medium">Back to Dashboard</span>
           </button>
           <div className="flex items-center justify-between mt-4">
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-white truncate">
+              <h3 className={`text-lg font-bold truncate ${isDark ? "text-white" : "text-gray-900"}`}>
                 {selectedSubmission.firstName} {selectedSubmission.lastName}
               </h3>
-              <p className="text-xs text-gray-400 truncate">
+              <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 {selectedSubmission.user.email}
               </p>
             </div>
@@ -497,35 +522,35 @@ export default function KycManagementPage() {
         {/* Content */}
         <div className="p-4 space-y-4 pb-32">
           {/* Personal Information */}
-          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
-            <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
+          <div className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-white border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
+            <h3 className={`text-base font-semibold flex items-center gap-2 mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
               <User className="w-4 h-4 text-orange-500" />
               Personal Information
             </h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b border-gray-700">
-                <span className="text-gray-400">Full Name</span>
-                <span className="text-white font-medium">
+              <div className={`flex justify-between py-2 border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+                <span className={isDark ? "text-gray-400" : "text-gray-500"}>Full Name</span>
+                <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   {selectedSubmission.firstName} {selectedSubmission.lastName}
                 </span>
               </div>
-              <div className="flex justify-between py-2 border-b border-gray-700">
-                <span className="text-gray-400">Date of Birth</span>
-                <span className="text-white font-medium">
+              <div className={`flex justify-between py-2 border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+                <span className={isDark ? "text-gray-400" : "text-gray-500"}>Date of Birth</span>
+                <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   {new Date(
                     selectedSubmission.dateOfBirth
                   ).toLocaleDateString()}
                 </span>
               </div>
-              <div className="flex justify-between py-2 border-b border-gray-700">
-                <span className="text-gray-400">Nationality</span>
-                <span className="text-white font-medium">
+              <div className={`flex justify-between py-2 border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+                <span className={isDark ? "text-gray-400" : "text-gray-500"}>Nationality</span>
+                <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   {selectedSubmission.nationality}
                 </span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-gray-400">Phone</span>
-                <span className="text-white font-medium">
+                <span className={isDark ? "text-gray-400" : "text-gray-500"}>Phone</span>
+                <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   {selectedSubmission.phoneNumber}
                 </span>
               </div>
@@ -533,27 +558,27 @@ export default function KycManagementPage() {
           </div>
 
           {/* Address Information */}
-          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
-            <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
+          <div className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-white border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
+            <h3 className={`text-base font-semibold flex items-center gap-2 mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
               <MapPin className="w-4 h-4 text-orange-500" />
               Address Information
             </h3>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between py-2 border-b border-gray-700">
-                <span className="text-gray-400">Address</span>
-                <span className="text-white font-medium text-right max-w-[180px]">
+              <div className={`flex justify-between py-2 border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+                <span className={isDark ? "text-gray-400" : "text-gray-500"}>Address</span>
+                <span className={`font-medium text-right max-w-[180px] ${isDark ? "text-white" : "text-gray-900"}`}>
                   {selectedSubmission.address}
                 </span>
               </div>
-              <div className="flex justify-between py-2 border-b border-gray-700">
-                <span className="text-gray-400">City</span>
-                <span className="text-white font-medium">
+              <div className={`flex justify-between py-2 border-b ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+                <span className={isDark ? "text-gray-400" : "text-gray-500"}>City</span>
+                <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   {selectedSubmission.city}
                 </span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-gray-400">Postal Code</span>
-                <span className="text-white font-medium">
+                <span className={isDark ? "text-gray-400" : "text-gray-500"}>Postal Code</span>
+                <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                   {selectedSubmission.postalCode}
                 </span>
               </div>
@@ -561,8 +586,8 @@ export default function KycManagementPage() {
           </div>
 
           {/* Documents */}
-          <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
-            <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-3">
+          <div className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-white border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
+            <h3 className={`text-base font-semibold flex items-center gap-2 mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
               <FileText className="w-4 h-4 text-orange-500" />
               Documents
             </h3>
@@ -576,6 +601,7 @@ export default function KycManagementPage() {
                     title: "Government ID (Front)",
                   })
                 }
+                isDark={isDark}
               />
               {selectedSubmission.idDocumentBackUrl && (
                 <DocumentCard
@@ -587,6 +613,7 @@ export default function KycManagementPage() {
                       title: "Government ID (Back)",
                     })
                   }
+                  isDark={isDark}
                 />
               )}
               <DocumentCard
@@ -598,6 +625,7 @@ export default function KycManagementPage() {
                     title: "Proof of Address",
                   })
                 }
+                isDark={isDark}
               />
               <DocumentCard
                 title="Selfie with ID"
@@ -608,30 +636,31 @@ export default function KycManagementPage() {
                     title: "Selfie with ID",
                   })
                 }
+                isDark={isDark}
               />
             </div>
           </div>
 
           {/* Review Info (if already reviewed) */}
           {selectedSubmission.reviewedAt && (
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
-              <h3 className="text-base font-semibold text-white mb-3">
+            <div className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-white border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
+              <h3 className={`text-base font-semibold mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
                 Review Information
               </h3>
-              <div className="text-sm text-gray-300 space-y-2">
+              <div className={`text-sm space-y-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 <p>
-                  <span className="text-gray-400">Reviewed:</span>{" "}
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Reviewed:</span>{" "}
                   {new Date(selectedSubmission.reviewedAt).toLocaleString()}
                 </p>
                 {selectedSubmission.rejectionReason && (
                   <p className="text-red-400">
-                    <span className="text-gray-400">Reason:</span>{" "}
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Reason:</span>{" "}
                     {selectedSubmission.rejectionReason}
                   </p>
                 )}
                 {selectedSubmission.adminNotes && (
                   <p>
-                    <span className="text-gray-400">Notes:</span>{" "}
+                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Notes:</span>{" "}
                     {selectedSubmission.adminNotes}
                   </p>
                 )}
@@ -641,14 +670,14 @@ export default function KycManagementPage() {
 
           {/* Review Section (if not approved) */}
           {selectedSubmission.status !== "APPROVED" && (
-            <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
-              <h3 className="text-base font-semibold text-white mb-4">
+            <div className={`rounded-xl p-4 border ${isDark ? "bg-gray-800 border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-white border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
+              <h3 className={`text-base font-semibold mb-4 ${isDark ? "text-white" : "text-gray-900"}`}>
                 Review Submission
               </h3>
 
               {/* Action Buttons */}
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2 text-gray-300">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                   Action
                 </label>
                 <div className="grid grid-cols-3 gap-2">
@@ -657,7 +686,7 @@ export default function KycManagementPage() {
                     className={`py-2.5 px-3 rounded-lg font-medium text-sm transition-colors ${
                       reviewAction === "APPROVED"
                         ? "bg-green-600 text-white"
-                        : "bg-gray-700 text-gray-300"
+                        : isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700"
                     }`}
                   >
                     Approve
@@ -667,7 +696,7 @@ export default function KycManagementPage() {
                     className={`py-2.5 px-3 rounded-lg font-medium text-sm transition-colors ${
                       reviewAction === "UNDER_REVIEW"
                         ? "bg-blue-600 text-white"
-                        : "bg-gray-700 text-gray-300"
+                        : isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700"
                     }`}
                   >
                     Review
@@ -677,7 +706,7 @@ export default function KycManagementPage() {
                     className={`py-2.5 px-3 rounded-lg font-medium text-sm transition-colors ${
                       reviewAction === "REJECTED"
                         ? "bg-red-600 text-white"
-                        : "bg-gray-700 text-gray-300"
+                        : isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-700"
                     }`}
                   >
                     Reject
@@ -687,13 +716,13 @@ export default function KycManagementPage() {
 
               {reviewAction === "REJECTED" && (
                 <div className="mb-4">
-                  <label className="block text-sm font-medium mb-2 text-gray-300">
+                  <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                     Rejection Reason <span className="text-red-400">*</span>
                   </label>
                   <textarea
                     value={rejectionReason}
                     onChange={(e) => setRejectionReason(e.target.value)}
-                    className="w-full bg-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-red-500 border border-gray-600"
+                    className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 border ${isDark ? "bg-gray-700 text-white border-gray-600" : "bg-gray-50 text-gray-900 border-gray-200"}`}
                     rows={3}
                     placeholder="Explain why this submission is being rejected..."
                   />
@@ -701,13 +730,13 @@ export default function KycManagementPage() {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-medium mb-2 text-gray-300">
+                <label className={`block text-sm font-medium mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                   Admin Notes (Optional)
                 </label>
                 <textarea
                   value={adminNotes}
                   onChange={(e) => setAdminNotes(e.target.value)}
-                  className="w-full bg-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-orange-500 border border-gray-600"
+                  className={`w-full rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 border ${isDark ? "bg-gray-700 text-white border-gray-600" : "bg-gray-50 text-gray-900 border-gray-200"}`}
                   rows={2}
                   placeholder="Internal notes..."
                 />
@@ -718,7 +747,7 @@ export default function KycManagementPage() {
 
         {/* Fixed Bottom Submit Button */}
         {selectedSubmission.status !== "APPROVED" && (
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-gray-900 border-t border-gray-700">
+          <div className={`fixed bottom-0 left-0 right-0 p-4 border-t ${isDark ? "bg-gray-900 border-gray-700" : "bg-white border-gray-200"}`}>
             <button
               onClick={handleReview}
               disabled={reviewing}
@@ -741,41 +770,42 @@ export default function KycManagementPage() {
   }
 
   return (
-    <div className="fixed inset-0 top-20 bg-gray-900 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className={`fixed inset-0 top-20 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
       {/* Success Modal */}
       <SuccessModal
         isOpen={successModal.isOpen}
         onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
         action={successModal.action}
+        isDark={isDark}
       />
 
       {/* Mobile Header */}
-      <div className="sticky top-0 z-[75] bg-gray-900/100 backdrop-blur-sm border-b border-gray-700 px-4 py-4">
+      <div className={`sticky top-0 z-[75] backdrop-blur-sm px-4 py-4 ${isDark ? "bg-gray-900/100 border-b border-gray-700" : "bg-white/100 border-b border-gray-200"}`}>
         <div className="mb-3">
           <h2 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
             Admin Control Panel
           </h2>
-          <p className="text-[10px] xs:text-xs text-gray-400">
+          <p className={`text-[10px] xs:text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             Complete administrative dashboard
           </p>
         </div>
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg -ml-2 mb-3"
+          className={`flex items-center gap-2 transition-colors p-2 rounded-lg -ml-2 mb-3 ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"}`}
         >
           <ArrowLeft size={20} />
           <span className="text-sm font-medium">Back to Dashboard</span>
         </button>
         <div>
-          <h1 className="text-xl font-bold text-white">KYC Management</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <h1 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>KYC Management</h1>
+          <p className={`text-sm mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             Review user verification submissions
           </p>
         </div>
       </div>
 
       {/* Filter Tabs - Scrollable */}
-      <div className="sticky top-[168px] z-[74] bg-gray-900/100 backdrop-blur-sm border-b border-gray-700 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className={`sticky top-[168px] z-[74] backdrop-blur-sm overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isDark ? "bg-gray-900/100 border-b border-gray-700" : "bg-white/100 border-b border-gray-200"}`}>
         <div className="flex w-full">
           {(["ALL", "PENDING", "APPROVED", "REJECTED"] as const).map((status) => (
             <button
@@ -784,7 +814,7 @@ export default function KycManagementPage() {
               className={`flex-1 px-4 py-3 font-medium text-sm whitespace-nowrap transition-colors ${
                 filter === status
                   ? "text-orange-500 border-b-2 border-orange-500"
-                  : "text-gray-400"
+                  : isDark ? "text-gray-400" : "text-gray-500"
               }`}
             >
               {status.replace("_", " ")}
@@ -798,32 +828,32 @@ export default function KycManagementPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-gray-400 mt-4">Loading submissions...</p>
+            <p className={`mt-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Loading submissions...</p>
           </div>
         ) : !submissions || submissions.length === 0 ? (
-          <div className="text-center py-12 bg-gray-800 rounded-xl border border-gray-700">
-            <FileText className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400">No KYC submissions found</p>
+          <div className={`text-center py-12 rounded-xl border ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+            <FileText className={`w-12 h-12 mx-auto mb-4 ${isDark ? "text-gray-600" : "text-gray-400"}`} />
+            <p className={isDark ? "text-gray-400" : "text-gray-500"}>No KYC submissions found</p>
           </div>
         ) : (
           submissions.map((submission) => (
             <button
               key={submission.id}
               onClick={() => setSelectedSubmission(submission)}
-              className="w-full bg-gray-800 rounded-xl p-4 border border-gray-700 text-left transition-all shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
+              className={`w-full rounded-xl p-4 border text-left transition-all ${isDark ? "bg-gray-800 border-gray-700 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] active:shadow-[0_0px_0_0_#1f2937]" : "bg-white border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_2px_0_0_#e5e7eb,0_4px_8px_rgba(0,0,0,0.1)] active:shadow-[0_0px_0_0_#e5e7eb]"} hover:translate-y-0.5 active:translate-y-1`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     {getStatusIcon(submission.status)}
-                    <h3 className="text-base font-semibold text-white truncate">
+                    <h3 className={`text-base font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}>
                       {submission.firstName} {submission.lastName}
                     </h3>
                   </div>
-                  <p className="text-sm text-gray-400 truncate">
+                  <p className={`text-sm truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     {submission.user.email}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className={`text-xs mt-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                     {new Date(submission.submittedAt).toLocaleDateString()}
                   </p>
                 </div>

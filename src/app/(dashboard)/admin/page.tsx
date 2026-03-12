@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { User as PrismaUser } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   Users,
   DollarSign,
@@ -323,7 +324,7 @@ const paymentMethods: PaymentMethod[] = [
 ];
 
 // Transaction History Component
-const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) => void }) => {
+const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: string) => void; isDark: boolean }) => {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -408,7 +409,7 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
       {/* Back Button */}
       <button
         onClick={() => setActiveTab("dashboard")}
-        className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg"
+        className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
       >
         <ArrowLeft size={20} />
         <span className="text-sm font-medium">Back to Dashboard</span>
@@ -702,6 +703,15 @@ const TransactionHistoryView = ({ setActiveTab }: { setActiveTab: (tab: string) 
 const AdminDashboard = () => {
   const { data: session } = useSession();
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const isDark = mounted ? resolvedTheme === "dark" : true;
   const {
     convertAmount,
     formatAmount,
@@ -1588,15 +1598,15 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white px-3 py-4 sm:p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <div className={`min-h-screen px-3 py-4 sm:p-6 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${isDark ? "bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white" : "bg-gradient-to-br from-gray-50 via-white to-gray-100 text-gray-900"}`}>
       {/* Popup Notification */}
       {showNotification && (
         <div className="fixed top-4 right-4 z-[9999] animate-slide-in-right">
           <div
             className={`p-4 rounded-lg border shadow-lg ${
               notificationType === "success"
-                ? "bg-green-900/90 border-green-500/50 text-green-400"
-                : "bg-red-900/90 border-red-500/50 text-red-400"
+                ? isDark ? "bg-green-900/90 border-green-500/50 text-green-400" : "bg-green-50 border-green-500/50 text-green-600"
+                : isDark ? "bg-red-900/90 border-red-500/50 text-red-400" : "bg-red-50 border-red-500/50 text-red-600"
             }`}
           >
             <div className="flex items-center space-x-2">
@@ -1654,7 +1664,7 @@ const AdminDashboard = () => {
       {activeTab === "dashboard" && (
         <div className="space-y-3 sm:space-y-8">
           {/* Quick Actions - 3D Crypto Card Style */}
-          <div className="bg-gray-800/50 rounded-xl p-2 sm:p-3 border border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)] -mx-1 sm:mx-0">
+          <div className={`rounded-xl p-2 sm:p-3 border -mx-1 sm:mx-0 ${isDark ? "bg-gray-800/50 border-gray-700/50 shadow-[0_0_20px_rgba(59,130,246,0.3)]" : "bg-white border-gray-200 shadow-[0_0_20px_rgba(59,130,246,0.15)]"}`}>
             <div className="space-y-2">
               {/* Process Manual Payment */}
               <button
@@ -1664,11 +1674,13 @@ const AdminDashboard = () => {
                 }}
                 className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(34,197,94,0.25),0_0_30px_rgba(34,197,94,0.4)]"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                  boxShadow: isDark
+                    ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                    : "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -1686,10 +1698,10 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
+                    <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Manual Payment
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Process user deposits
                     </span>
                   </div>
@@ -1716,11 +1728,13 @@ const AdminDashboard = () => {
                 onClick={() => setShowManualProfitModal(true)}
                 className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(251,191,36,0.25),0_0_30px_rgba(251,191,36,0.4)]"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                  boxShadow: isDark
+                    ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                    : "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -1738,10 +1752,10 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
+                    <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Manual Trade Profit
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Add profits to user accounts
                     </span>
                   </div>
@@ -1768,11 +1782,13 @@ const AdminDashboard = () => {
                 onClick={() => setActiveTab("users")}
                 className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                  boxShadow: isDark
+                    ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                    : "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -1790,10 +1806,10 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
+                    <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Manage Users
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       View and edit user accounts
                     </span>
                   </div>
@@ -1820,11 +1836,13 @@ const AdminDashboard = () => {
                 onClick={() => setActiveTab("bin")}
                 className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(239,68,68,0.25),0_0_30px_rgba(239,68,68,0.4)]"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                  boxShadow: isDark
+                    ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                    : "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -1842,10 +1860,10 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
+                    <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Deleted Users Bin
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Restore or permanently delete
                     </span>
                   </div>
@@ -1879,11 +1897,13 @@ const AdminDashboard = () => {
                 onClick={() => (window.location.href = "/admin/kyc")}
                 className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(249,115,22,0.25),0_0_30px_rgba(249,115,22,0.4)]"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                  boxShadow: isDark
+                    ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                    : "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -1901,10 +1921,10 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
+                    <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       KYC Verification
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Review identity documents
                     </span>
                   </div>
@@ -1938,11 +1958,13 @@ const AdminDashboard = () => {
                 onClick={() => router.push("/admin/analytics")}
                 className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(6,182,212,0.25),0_0_30px_rgba(6,182,212,0.4)]"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                  boxShadow: isDark
+                    ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                    : "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -1960,10 +1982,10 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
+                    <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Analytics Dashboard
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       View platform statistics
                     </span>
                   </div>
@@ -1990,11 +2012,13 @@ const AdminDashboard = () => {
                 onClick={() => router.push("/admin/withdrawals")}
                 className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(220,38,38,0.25),0_0_30px_rgba(220,38,38,0.4)]"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                  boxShadow: isDark
+                    ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                    : "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -2012,10 +2036,10 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
+                    <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Withdrawals
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Approve user withdrawals
                     </span>
                   </div>
@@ -2042,11 +2066,13 @@ const AdminDashboard = () => {
                 onClick={() => setActiveTab("transactions")}
                 className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(99,102,241,0.25),0_0_30px_rgba(99,102,241,0.4)]"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                  boxShadow: isDark
+                    ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                    : "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -2064,10 +2090,10 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
+                    <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Transaction History
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       View all transactions
                     </span>
                   </div>
@@ -2094,11 +2120,13 @@ const AdminDashboard = () => {
                 onClick={() => setShowSignalModal(true)}
                 className="relative w-full flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] overflow-hidden group hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(34,197,94,0.25),0_0_30px_rgba(34,197,94,0.4)]"
                 style={{
-                  background:
-                    "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)",
-                  boxShadow:
-                    "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                  background: isDark
+                    ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                    : "linear-gradient(145deg, #ffffff 0%, #f1f5f9 50%, #ffffff 100%)",
+                  boxShadow: isDark
+                    ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                    : "0 4px 12px -2px rgba(0, 0, 0, 0.1), 0 2px 6px -1px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
+                  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
                 }}
               >
                 <div className="flex items-center gap-3">
@@ -2116,10 +2144,10 @@ const AdminDashboard = () => {
                     />
                   </div>
                   <div className="flex flex-col text-left">
-                    <span className="text-white font-bold text-sm">
+                    <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                       Signal Strength
                     </span>
-                    <span className="text-gray-400 text-xs">
+                    <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                       Control platform signal
                     </span>
                   </div>
@@ -2144,46 +2172,46 @@ const AdminDashboard = () => {
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
+            <div className={`border rounded-lg p-3 sm:p-6 ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}>
               <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
                 <BarChart3 className="text-blue-400" size={20} />
                 <span>System Overview</span>
               </h3>
               <div className="space-y-2 text-xs sm:text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Server Status:</span>
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Server Status:</span>
                   <span className="text-green-400">
                     {systemStats.serverStatus}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Database:</span>
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Database:</span>
                   <span className="text-green-400">
                     {systemStats.databaseStatus}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Last Backup:</span>
-                  <span className="text-gray-300">
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Last Backup:</span>
+                  <span className={isDark ? "text-gray-300" : "text-gray-700"}>
                     {systemStats.lastBackup}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Total Transactions:</span>
-                  <span className="text-gray-300">
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Total Transactions:</span>
+                  <span className={isDark ? "text-gray-300" : "text-gray-700"}>
                     {systemStats.totalTransactions.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Active Users:</span>
-                  <span className="text-gray-300">
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Active Users:</span>
+                  <span className={isDark ? "text-gray-300" : "text-gray-700"}>
                     {systemStats.activeUsers}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 sm:p-6">
+            <div className={`border rounded-lg p-3 sm:p-6 ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}>
               <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
                 <AlertTriangle className="text-yellow-400" size={20} />
                 <span>Recent Alerts</span>
@@ -2222,7 +2250,7 @@ const AdminDashboard = () => {
                   systemStats.recentDeposits === 0 &&
                   systemStats.failedLogins === 0 &&
                   systemStats.newRegistrations === 0 && (
-                    <div className="text-gray-400">• No recent alerts</div>
+                    <div className={isDark ? "text-gray-400" : "text-gray-500"}>• No recent alerts</div>
                   )}
               </div>
             </div>
@@ -2235,7 +2263,7 @@ const AdminDashboard = () => {
           {/* Back Button */}
           <button
             onClick={() => setActiveTab("dashboard")}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg"
+            className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
           >
             <ArrowLeft size={20} />
             <span className="text-sm font-medium">Back to Dashboard</span>
@@ -2245,14 +2273,14 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <button
               onClick={() => setShowUserStatsModal("total")}
-              className="bg-gradient-to-b from-gray-700/60 to-gray-800/80 border border-gray-600/50 rounded-xl p-4 hover:from-gray-700/80 hover:to-gray-800 transition-all text-left shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
+              className={`border rounded-xl p-4 transition-all text-left ${isDark ? "bg-gradient-to-b from-gray-700/60 to-gray-800/80 border-gray-600/50 hover:from-gray-700/80 hover:to-gray-800 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)]" : "bg-gradient-to-b from-white to-gray-50 border-gray-200 hover:from-gray-50 hover:to-gray-100 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_2px_0_0_#e5e7eb,0_4px_8px_rgba(0,0,0,0.1)]"} hover:translate-y-0.5 active:translate-y-1`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xs sm:text-sm">
+                  <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     Total Users
                   </p>
-                  <p className="text-xl sm:text-2xl font-bold text-white">
+                  <p className={`text-xl sm:text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                     {totalUsers}
                   </p>
                 </div>
@@ -2262,11 +2290,11 @@ const AdminDashboard = () => {
 
             <button
               onClick={() => setShowUserStatsModal("admin")}
-              className="bg-gradient-to-b from-gray-700/60 to-gray-800/80 border border-gray-600/50 rounded-xl p-4 hover:from-gray-700/80 hover:to-gray-800 transition-all text-left shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
+              className={`border rounded-xl p-4 transition-all text-left ${isDark ? "bg-gradient-to-b from-gray-700/60 to-gray-800/80 border-gray-600/50 hover:from-gray-700/80 hover:to-gray-800 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)]" : "bg-gradient-to-b from-white to-gray-50 border-gray-200 hover:from-gray-50 hover:to-gray-100 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_2px_0_0_#e5e7eb,0_4px_8px_rgba(0,0,0,0.1)]"} hover:translate-y-0.5 active:translate-y-1`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xs sm:text-sm">
+                  <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     Admin Users
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-green-400">
@@ -2279,11 +2307,11 @@ const AdminDashboard = () => {
 
             <button
               onClick={() => setShowUserStatsModal("staff")}
-              className="bg-gradient-to-b from-gray-700/60 to-gray-800/80 border border-gray-600/50 rounded-xl p-4 hover:from-gray-700/80 hover:to-gray-800 transition-all text-left shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
+              className={`border rounded-xl p-4 transition-all text-left ${isDark ? "bg-gradient-to-b from-gray-700/60 to-gray-800/80 border-gray-600/50 hover:from-gray-700/80 hover:to-gray-800 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)]" : "bg-gradient-to-b from-white to-gray-50 border-gray-200 hover:from-gray-50 hover:to-gray-100 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_2px_0_0_#e5e7eb,0_4px_8px_rgba(0,0,0,0.1)]"} hover:translate-y-0.5 active:translate-y-1`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xs sm:text-sm">
+                  <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     Staff Admin Users
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-green-400">
@@ -2296,11 +2324,11 @@ const AdminDashboard = () => {
 
             <button
               onClick={() => setShowUserStatsModal("regular")}
-              className="bg-gradient-to-b from-gray-700/60 to-gray-800/80 border border-gray-600/50 rounded-xl p-4 hover:from-gray-700/80 hover:to-gray-800 transition-all text-left shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:translate-y-0.5 active:shadow-[0_0px_0_0_#1f2937] active:translate-y-1"
+              className={`border rounded-xl p-4 transition-all text-left ${isDark ? "bg-gradient-to-b from-gray-700/60 to-gray-800/80 border-gray-600/50 hover:from-gray-700/80 hover:to-gray-800 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] hover:shadow-[0_2px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)]" : "bg-gradient-to-b from-white to-gray-50 border-gray-200 hover:from-gray-50 hover:to-gray-100 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)] hover:shadow-[0_2px_0_0_#e5e7eb,0_4px_8px_rgba(0,0,0,0.1)]"} hover:translate-y-0.5 active:translate-y-1`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-gray-400 text-xs sm:text-sm">
+                  <p className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     Regular Users
                   </p>
                   <p className="text-xl sm:text-2xl font-bold text-blue-400">
@@ -2320,14 +2348,14 @@ const AdminDashboard = () => {
           {/* Back Button */}
           <button
             onClick={() => setActiveTab("dashboard")}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg"
+            className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
           >
             <ArrowLeft size={20} />
             <span className="text-sm font-medium">Back to Dashboard</span>
           </button>
 
           {/* Bin Stats - Compact */}
-          <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-4 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+          <div className={`border rounded-xl p-4 ${isDark ? "bg-gradient-to-b from-gray-700/50 to-gray-800/70 border-gray-600/40 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-gradient-to-b from-white to-gray-50 border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Trash2 className="text-red-400" size={20} />
@@ -2348,22 +2376,22 @@ const AdminDashboard = () => {
           </div>
 
           {/* Deleted Users List - Compact */}
-          <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-2 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+          <div className={`border rounded-xl p-2 ${isDark ? "bg-gradient-to-b from-gray-700/50 to-gray-800/70 border-gray-600/40 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-gradient-to-b from-white to-gray-50 border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
             {deletedUsers.length === 0 ? (
               <div className="text-center py-8">
-                <Trash2 className="mx-auto mb-3 text-gray-600" size={36} />
-                <p className="text-gray-400 text-sm">No deleted users in bin</p>
+                <Trash2 className={`mx-auto mb-3 ${isDark ? "text-gray-600" : "text-gray-400"}`} size={36} />
+                <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No deleted users in bin</p>
               </div>
             ) : (
               <div className="space-y-2">
                 {deletedUsers.map((user: any) => (
                   <div
                     key={user.id}
-                    className="bg-gradient-to-b from-gray-700/40 to-gray-800/60 hover:from-gray-700/60 hover:to-gray-800/80 rounded-xl p-2.5 transition-all border border-gray-600/40 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.25)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.25)] hover:translate-y-0.5"
+                    className={`rounded-xl p-2.5 transition-all border ${isDark ? "bg-gradient-to-b from-gray-700/40 to-gray-800/60 hover:from-gray-700/60 hover:to-gray-800/80 border-gray-600/40 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.25)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.25)]" : "bg-gradient-to-b from-gray-50 to-gray-100 hover:from-white hover:to-gray-50 border-gray-200 shadow-[0_3px_0_0_#e5e7eb,0_4px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_1px_0_0_#e5e7eb,0_2px_4px_rgba(0,0,0,0.08)]"} hover:translate-y-0.5`}
                   >
                     {/* Row 1: Email + Delete */}
                     <div className="flex items-center justify-between mb-1">
-                      <p className="font-medium text-white text-sm">
+                      <p className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                         {user.email}
                       </p>
                       <button
@@ -2384,7 +2412,7 @@ const AdminDashboard = () => {
                     {/* Row 2: Name + Role + Restore */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
-                        <p className="text-xs text-gray-400">
+                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           {user.name || "No name"}
                         </p>
                         <span
@@ -2478,7 +2506,7 @@ const AdminDashboard = () => {
                     setShowPaymentModal(false);
                     setSelectedUser(null);
                   }}
-                  className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg"
+                  className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
                 >
                   <ArrowLeft size={20} />
                   <span className="text-sm font-medium">Back to Dashboard</span>
@@ -2486,7 +2514,7 @@ const AdminDashboard = () => {
 
                 {/* User Selection */}
                 {!selectedUser && (
-                  <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-3 sm:p-4 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)] mb-2">
+                  <div className={`border rounded-xl p-3 sm:p-4 mb-2 ${isDark ? "bg-gradient-to-b from-gray-700/50 to-gray-800/70 border-gray-600/40 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-gradient-to-b from-white to-gray-50 border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
                     <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
                       <Users className="text-blue-400" size={24} />
                       <span>Select User</span>
@@ -2501,14 +2529,14 @@ const AdminDashboard = () => {
                         <button
                           key={user.id}
                           onClick={() => setSelectedUser(user)}
-                          className="w-full p-3 sm:p-4 rounded-xl border bg-gradient-to-b from-gray-700/40 to-gray-800/60 border-gray-600/40 hover:from-gray-700/60 hover:to-gray-800/80 hover:border-orange-500/50 transition-all text-left shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.25)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.25)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
+                          className={`w-full p-3 sm:p-4 rounded-xl border transition-all text-left hover:translate-y-0.5 active:translate-y-1 ${isDark ? "bg-gradient-to-b from-gray-700/40 to-gray-800/60 border-gray-600/40 hover:from-gray-700/60 hover:to-gray-800/80 hover:border-orange-500/50 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.25)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.25)] active:shadow-none" : "bg-gradient-to-b from-gray-50 to-gray-100 border-gray-200 hover:from-white hover:to-gray-50 hover:border-orange-500/50 shadow-[0_3px_0_0_#e5e7eb,0_4px_8px_rgba(0,0,0,0.08)] hover:shadow-[0_1px_0_0_#e5e7eb,0_2px_4px_rgba(0,0,0,0.08)] active:shadow-none"}`}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-white text-sm sm:text-base truncate">
+                              <p className={`font-medium text-sm sm:text-base truncate ${isDark ? "text-white" : "text-gray-900"}`}>
                                 {user.email}
                               </p>
-                              <p className="text-xs sm:text-sm text-gray-400 truncate">
+                              <p className={`text-xs sm:text-sm truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                 {user.name || "No name"}
                               </p>
                             </div>
@@ -2518,7 +2546,7 @@ const AdminDashboard = () => {
                                   ? "bg-green-500/20 text-green-400"
                                   : user.role === "STAFF_ADMIN"
                                   ? "bg-green-500/20 text-green-400"
-                                  : "bg-gray-500/20 text-gray-400"
+                                  : isDark ? "bg-gray-500/20 text-gray-400" : "bg-gray-200 text-gray-600"
                               }`}
                             >
                               {user.role}
@@ -2537,14 +2565,14 @@ const AdminDashboard = () => {
                     {/* Back to User Selection Button */}
                     <button
                       onClick={() => setSelectedUser(null)}
-                      className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg"
+                      className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
                     >
                       <ArrowLeft size={20} />
                       <span className="text-sm font-medium">Back to User Selection</span>
                     </button>
 
                     {/* Manual Top-up Section */}
-                    <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-4 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]">
+                    <div className={`border rounded-xl p-4 ${isDark ? "bg-gradient-to-b from-gray-700/50 to-gray-800/70 border-gray-600/40 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-gradient-to-b from-white to-gray-50 border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
                       <h3 className="text-base xs:text-lg font-bold mb-4 flex items-center space-x-2">
                         <Wallet className="text-green-400" size={20} />
                         <span>Manual Payment Processing</span>
@@ -2552,7 +2580,7 @@ const AdminDashboard = () => {
 
                     {/* Main Deposit Type Selection */}
                     <div className="mb-3 xs:mb-4">
-                      <label className="block text-xs font-semibold text-gray-300 mb-2">
+                      <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                         Deposit Type
                       </label>
                       <div className="grid grid-cols-2 gap-2">
@@ -3261,7 +3289,7 @@ const AdminDashboard = () => {
       )}
 
       {/* Transaction History Tab */}
-      {activeTab === "transactions" && <TransactionHistoryView setActiveTab={setActiveTab} />}
+      {activeTab === "transactions" && <TransactionHistoryView setActiveTab={setActiveTab} isDark={isDark} />}
 
       {/* Analytics Tab */}
       {activeTab === "analytics" && (

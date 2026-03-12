@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { formatTimeAgo } from "@/lib/crypto-constants";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface Withdrawal {
   id: string;
@@ -29,6 +30,15 @@ interface Withdrawal {
 
 export default function AdminWithdrawalsPage() {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  const isDark = mounted ? resolvedTheme === "dark" : true;
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("ALL");
@@ -112,13 +122,20 @@ export default function AdminWithdrawalsPage() {
     }
   };
 
-  const card3DStyle = {
+  const card3DStyle = isDark ? {
     background:
       "linear-gradient(145deg, rgba(17, 24, 39, 0.9), rgba(31, 41, 55, 0.7))",
     boxShadow:
       "0 10px 40px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)",
     backdropFilter: "blur(10px)",
     border: "1px solid rgba(255, 255, 255, 0.05)",
+  } : {
+    background:
+      "linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(249, 250, 251, 0.7))",
+    boxShadow:
+      "0 10px 40px -10px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1)",
+    backdropFilter: "blur(10px)",
+    border: "1px solid rgba(0, 0, 0, 0.08)",
   };
 
   return (
@@ -132,7 +149,7 @@ export default function AdminWithdrawalsPage() {
                 <h1 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                   Admin Control Panel
                 </h1>
-                <p className="text-[10px] xs:text-xs text-gray-400">
+                <p className={`text-[10px] xs:text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                   Complete administrative dashboard
                 </p>
               </div>
@@ -143,7 +160,7 @@ export default function AdminWithdrawalsPage() {
         {/* Back Button */}
         <button
           onClick={() => router.push("/admin")}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-800/50 rounded-lg mb-4"
+          className={`flex items-center gap-2 transition-colors p-2 rounded-lg mb-4 ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-500 hover:text-gray-900 hover:bg-gray-100"}`}
         >
           <ArrowLeft size={20} />
           <span className="text-sm font-medium">Back to Dashboard</span>
@@ -151,10 +168,10 @@ export default function AdminWithdrawalsPage() {
 
         {/* Header */}
         <div className="mb-3">
-          <h2 className="text-lg font-bold text-white">
+          <h2 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
             Withdrawal Management
           </h2>
-          <p className="text-xs text-gray-400">
+          <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
             Review and manage user withdrawal requests
           </p>
         </div>
@@ -164,7 +181,7 @@ export default function AdminWithdrawalsPage() {
           <select
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            className="px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-800 text-white border border-gray-700 focus:outline-none cursor-pointer"
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium focus:outline-none cursor-pointer ${isDark ? "bg-gray-800 text-white border border-gray-700" : "bg-white text-gray-900 border border-gray-200"}`}
           >
             <option value="ALL">ALL</option>
             <option value="PENDING">PENDING</option>
@@ -178,7 +195,7 @@ export default function AdminWithdrawalsPage() {
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-gray-400 mt-4">Loading withdrawals...</p>
+            <p className={`mt-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>Loading withdrawals...</p>
           </div>
         ) : withdrawals.length === 0 ? (
           <motion.div
@@ -188,7 +205,7 @@ export default function AdminWithdrawalsPage() {
             style={card3DStyle}
           >
             <svg
-              className="w-16 h-16 text-gray-600 mx-auto mb-4"
+              className={`w-16 h-16 mx-auto mb-4 ${isDark ? "text-gray-600" : "text-gray-400"}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -200,7 +217,7 @@ export default function AdminWithdrawalsPage() {
                 d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
               />
             </svg>
-            <p className="text-gray-400 text-lg">No withdrawals found</p>
+            <p className={`text-lg ${isDark ? "text-gray-400" : "text-gray-500"}`}>No withdrawals found</p>
           </motion.div>
         ) : (
           <div className="space-y-2">
@@ -226,10 +243,10 @@ export default function AdminWithdrawalsPage() {
                           </span>
                         </div>
                         <div>
-                          <p className="text-white font-medium text-sm">
+                          <p className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                             {withdrawal.User?.name || "Unknown User"}
                           </p>
-                          <p className="text-gray-400 text-xs">
+                          <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                             {withdrawal.User?.email}
                           </p>
                         </div>
@@ -237,28 +254,28 @@ export default function AdminWithdrawalsPage() {
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mt-2">
                         <div>
-                          <p className="text-gray-500 text-[10px]">Amount</p>
-                          <p className="text-white font-medium">
+                          <p className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}>Amount</p>
+                          <p className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                             {Number(withdrawal.amount).toLocaleString()}{" "}
                             {withdrawal.currency}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500 text-[10px]">Method</p>
-                          <p className="text-white">
+                          <p className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}>Method</p>
+                          <p className={isDark ? "text-white" : "text-gray-900"}>
                             {withdrawal.type?.replace("CRYPTO_", "") || "N/A"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500 text-[10px]">Fees</p>
-                          <p className="text-white">
+                          <p className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}>Fees</p>
+                          <p className={isDark ? "text-white" : "text-gray-900"}>
                             {withdrawal.metadata?.fees?.totalFees?.toFixed(2) ||
                               "0.00"}
                           </p>
                         </div>
                         <div>
-                          <p className="text-gray-500 text-[10px]">Created</p>
-                          <p className="text-white">
+                          <p className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}>Created</p>
+                          <p className={isDark ? "text-white" : "text-gray-900"}>
                             {formatTimeAgo(withdrawal.createdAt)}
                           </p>
                         </div>
@@ -266,10 +283,10 @@ export default function AdminWithdrawalsPage() {
 
                       {withdrawal.metadata?.address && (
                         <div className="mt-2">
-                          <p className="text-gray-500 text-[10px]">
+                          <p className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                             Withdrawal Address
                           </p>
-                          <p className="text-white text-xs font-mono bg-gray-900/50 px-2 py-1.5 rounded-lg mt-1 break-all">
+                          <p className={`text-xs font-mono px-2 py-1.5 rounded-lg mt-1 break-all ${isDark ? "text-white bg-gray-900/50" : "text-gray-900 bg-gray-100"}`}>
                             {withdrawal.metadata.address}
                           </p>
                         </div>
@@ -277,8 +294,8 @@ export default function AdminWithdrawalsPage() {
 
                       {withdrawal.status === "PROCESSING" && (
                         <div className="mt-2">
-                          <p className="text-gray-500 text-[10px]">Confirmations</p>
-                          <p className="text-white text-sm">
+                          <p className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}>Confirmations</p>
+                          <p className={`text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                             {withdrawal.metadata?.confirmations || 0} /{" "}
                             {withdrawal.metadata?.requiredConfirmations || 0}
                           </p>
@@ -308,7 +325,7 @@ export default function AdminWithdrawalsPage() {
                                   [withdrawal.id]: parseInt(e.target.value) || 0,
                                 }))
                               }
-                              className="w-24 px-2 py-1.5 bg-gray-900 text-white rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none text-xs"
+                              className={`w-24 px-2 py-1.5 rounded-lg border focus:border-red-500 focus:outline-none text-xs ${isDark ? "bg-gray-900 text-white border-gray-700" : "bg-white text-gray-900 border-gray-200"}`}
                             />
                             <button
                               onClick={() =>
@@ -350,7 +367,7 @@ export default function AdminWithdrawalsPage() {
                                   [withdrawal.id]: parseInt(e.target.value) || 0,
                                 }))
                               }
-                              className="w-24 px-2 py-1.5 bg-gray-900 text-white rounded-lg border border-gray-700 focus:border-red-500 focus:outline-none text-xs"
+                              className={`w-24 px-2 py-1.5 rounded-lg border focus:border-red-500 focus:outline-none text-xs ${isDark ? "bg-gray-900 text-white border-gray-700" : "bg-white text-gray-900 border-gray-200"}`}
                             />
                             <button
                               onClick={() =>
