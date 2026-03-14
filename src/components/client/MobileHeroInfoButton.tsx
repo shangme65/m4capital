@@ -1,15 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, X } from "lucide-react";
 import ReactDOM from "react-dom";
 import CountdownTimer from "./CountdownTimer";
 import GlassmorphismCards from "./GlassmorphismCards";
 import TestimonialSlider from "./TestimonialSlider";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function MobileHeroInfoButton() {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = mounted ? resolvedTheme === "dark" : true;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const togglePanel = () => setIsOpen(!isOpen);
 
@@ -43,7 +51,9 @@ export default function MobileHeroInfoButton() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={togglePanel}
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+                className={`fixed inset-0 backdrop-blur-sm z-[100] ${
+                  isDark ? "bg-black/60" : "bg-black/30"
+                }`}
               />
 
               {/* Sliding Panel from Right */}
@@ -52,17 +62,41 @@ export default function MobileHeroInfoButton() {
                 animate={{ x: 0 }}
                 exit={{ x: "100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="fixed top-0 right-0 bottom-0 w-full sm:w-96 bg-gradient-to-b from-[#2d1f1a] via-[#1a1410] to-[#0a0806] z-[101] overflow-y-auto shadow-2xl"
+                className={`fixed top-0 right-0 bottom-0 w-full sm:w-96 z-[101] overflow-y-auto shadow-2xl ${
+                  isDark
+                    ? "bg-gradient-to-b from-[#2d1f1a] via-[#1a1410] to-[#0a0806]"
+                    : "bg-gradient-to-b from-purple-50 via-white to-pink-50"
+                }`}
               >
                 {/* Header with Close Button */}
-                <div className="sticky top-0 z-10 bg-gradient-to-b from-[#2d1f1a] to-[#1a1410] border-b border-white/10 px-4 py-3 flex items-center justify-between">
-                  <h2 className="text-white text-base font-bold">Live Dashboard</h2>
+                <div
+                  className={`sticky top-0 z-10 border-b px-4 py-3 flex items-center justify-between ${
+                    isDark
+                      ? "bg-gradient-to-b from-[#2d1f1a] to-[#1a1410] border-white/10"
+                      : "bg-gradient-to-b from-purple-100 to-white border-gray-200"
+                  }`}
+                >
+                  <h2
+                    className={`text-base font-bold ${
+                      isDark ? "text-white" : "text-gray-900"
+                    }`}
+                  >
+                    Live Dashboard
+                  </h2>
                   <button
                     onClick={togglePanel}
-                    className="p-1.5 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                    className={`p-1.5 rounded-full transition-colors ${
+                      isDark
+                        ? "bg-white/10 hover:bg-white/20"
+                        : "bg-gray-200 hover:bg-gray-300"
+                    }`}
                     aria-label="Close panel"
                   >
-                    <X className="w-4 h-4 text-white" />
+                    <X
+                      className={`w-4 h-4 ${
+                        isDark ? "text-white" : "text-gray-900"
+                      }`}
+                    />
                   </button>
                 </div>
 

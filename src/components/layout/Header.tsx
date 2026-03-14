@@ -43,9 +43,8 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const router = useRouter();
   const pathname = usePathname();
   
-  // Only use light logo on setup-admin page
-  const isSetupAdmin = pathname === "/setup-admin";
-  const logoSrc = isSetupAdmin && !isDark ? "/M4LightLogo.png" : "/m4capitallogo1.png";
+  // Use light logo in light mode, dark logo in dark mode
+  const logoSrc = !isDark ? "/M4LightLogo.png" : "/m4capitallogo1.png";
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -120,14 +119,14 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
     };
   }, []);
 
-  // Determine header background based on page and theme
+  // Determine header background based on scroll and theme
   const getHeaderBg = () => {
     if (isScrolled) {
-      return isSetupAdmin && !isDark 
+      return !isDark 
         ? "bg-white text-gray-900 shadow-md" 
         : "bg-gray-700 text-white shadow-md";
     }
-    return isSetupAdmin && !isDark 
+    return !isDark 
       ? "bg-transparent text-gray-900" 
       : "bg-transparent text-white";
   };
@@ -334,7 +333,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           className="fixed inset-0 bg-white dark:bg-gray-900 z-30 flex flex-col md:hidden overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {/* Header with logo and close button */}
-          <div className="flex items-center justify-between px-4 h-[140px] pb-4 border-b border-gray-600 sticky top-0 bg-gray-700 z-10">
+          <div className="flex items-center justify-between px-4 h-[140px] pb-4 border-b border-gray-300 dark:border-gray-600 sticky top-0 bg-white dark:bg-gray-900 z-10">
             <Link
               href="/"
               className="flex items-center mt-4"

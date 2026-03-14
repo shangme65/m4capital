@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import AnimatedCounter from "./AnimatedCounter";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const stats = [
   { label: "Active Traders", value: "2M+", position: "top-16 left-8 sm:left-16 md:top-24 md:left-20" },
@@ -12,11 +13,16 @@ const stats = [
 ];
 
 export default function HeroStats() {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     setIsVisible(true);
   }, []);
+
+  const isDark = mounted ? resolvedTheme === "dark" : true;
 
   return (
     <div className="absolute inset-0 pointer-events-none hidden md:block">
@@ -33,14 +39,25 @@ export default function HeroStats() {
           }}
         >
           <motion.div
-            className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 backdrop-blur-sm border border-gray-700/30 rounded-xl px-4 py-3 shadow-xl"
-            whileHover={{ scale: 1.05, borderColor: "rgba(249, 115, 22, 0.5)" }}
+            className={`backdrop-blur-sm border rounded-xl px-4 py-3 shadow-xl ${
+              isDark 
+                ? "bg-gradient-to-br from-gray-800/40 to-gray-900/40 border-gray-700/30" 
+                : "bg-gradient-to-br from-white/60 to-gray-100/60 border-gray-300/40"
+            }`}
+            whileHover={{ 
+              scale: 1.05, 
+              borderColor: isDark ? "rgba(249, 115, 22, 0.5)" : "rgba(249, 115, 22, 0.7)" 
+            }}
             transition={{ duration: 0.2 }}
           >
-            <div className="text-2xl font-bold text-white mb-1">
+            <div className={`text-2xl font-bold mb-1 ${
+              isDark ? "text-white" : "text-gray-900"
+            }`}>
               <AnimatedCounter value={stat.value} duration={2.5} />
             </div>
-            <div className="text-xs text-gray-400 uppercase tracking-wider">{stat.label}</div>
+            <div className={`text-xs uppercase tracking-wider ${
+              isDark ? "text-gray-400" : "text-gray-600"
+            }`}>{stat.label}</div>
           </motion.div>
         </motion.div>
       ))}

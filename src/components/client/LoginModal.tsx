@@ -6,6 +6,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import VerifyEmailModal from "./VerifyEmailModal";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -33,9 +34,16 @@ export default function LoginModal({
   const [twoFactorMethod, setTwoFactorMethod] = useState<"authenticator" | "email" | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [isVerifying2FA, setIsVerifying2FA] = useState(false);
+  const [mounted, setMounted] = useState(false);
   
   const router = useRouter();
   const { update } = useSession();
+  const { resolvedTheme } = useTheme();
+  const isDark = mounted ? resolvedTheme === "dark" : true;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -309,10 +317,18 @@ export default function LoginModal({
               onClick={(e) => e.stopPropagation()}
               style={{ touchAction: "auto" }}
             >
-              <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
+              <div className={`rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden border max-h-[90vh] overflow-y-auto ${
+              isDark
+                ? "bg-[#1f1f1f] border-gray-600/50"
+                : "bg-white border-gray-300"
+            }`}>
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 w-8 h-8 bg-gray-600/30 hover:bg-gray-500/50 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200"
+                  className={`absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    isDark
+                      ? "bg-gray-600/30 hover:bg-gray-500/50 text-gray-300 hover:text-white"
+                      : "bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-900"
+                  }`}
                   title="Close"
                   aria-label="Close"
                 >
@@ -334,16 +350,20 @@ export default function LoginModal({
                 <div className="px-4 pt-12 pb-8">
                   <div className="flex items-center justify-center mb-6">
                     <Image
-                      src="/m4capitallogo1.png"
+                      src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
                       alt="Capital Logo"
                       width={120}
                       height={40}
                     />
                   </div>
-                  <div className="text-sm text-gray-400 mb-2">
+                  <div className={`text-sm mb-2 ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}>
                     Happy to see you
                   </div>
-                  <h2 className={`font-bold text-white mb-8 ${show2FA ? "text-2xl" : "text-3xl"}`}>
+                  <h2 className={`font-bold mb-8 ${show2FA ? "text-2xl" : "text-3xl"} ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}>
                     {show2FA ? "Two-Factor Authentication" : "Welcome back"}
                   </h2>
                   
@@ -370,8 +390,10 @@ export default function LoginModal({
                               </svg>
                               <span className="font-medium">Check Your Email</span>
                             </div>
-                            <p className="text-sm text-gray-400">
-                              We&apos;ve sent a verification code to <span className="text-white">{email}</span>
+                            <p className={`text-sm ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}>
+                              We&apos;ve sent a verification code to <span className={isDark ? "text-white" : "text-gray-900"}>{email}</span>
                             </p>
                           </div>
                         ) : (
@@ -383,7 +405,9 @@ export default function LoginModal({
                               </svg>
                               <span className="font-medium">Authenticator App</span>
                             </div>
-                            <p className="text-sm text-gray-400">
+                            <p className={`text-sm ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}>
                               Enter the code from your authenticator app
                             </p>
                           </div>
@@ -391,7 +415,9 @@ export default function LoginModal({
                       </div>
                       
                       <div>
-                        <label htmlFor="twoFactorCode" className="block text-sm text-gray-300 mb-2">
+                        <label htmlFor="twoFactorCode" className={`block text-sm mb-2 ${
+                          isDark ? "text-gray-300" : "text-gray-700"
+                        }`}>
                           Verification Code
                         </label>
                         <input
@@ -399,7 +425,11 @@ export default function LoginModal({
                           id="twoFactorCode"
                           value={twoFactorCode}
                           onChange={(e) => setTwoFactorCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                          className="w-full px-4 py-3 bg-[#2a2a2a] border border-gray-700 rounded-lg text-white text-center text-xl font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500"
+                          className={`w-full px-4 py-3 bg-transparent border rounded-lg text-center text-xl font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 ${
+                            isDark
+                              ? "border-gray-700 text-white bg-[#2a2a2a]"
+                              : "border-gray-300 text-gray-900 bg-gray-50"
+                          }`}
                           placeholder="000000"
                           maxLength={6}
                           autoFocus
@@ -431,7 +461,11 @@ export default function LoginModal({
                             setTwoFactorMethod(null);
                             setError("");
                           }}
-                          className="text-sm text-gray-400 hover:text-white transition-colors"
+                          className={`text-sm transition-colors ${
+                            isDark
+                              ? "text-gray-400 hover:text-white"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
                         >
                           ← Back to login
                         </button>
@@ -457,7 +491,9 @@ export default function LoginModal({
                       </div>
                     )}
                     <div>
-                      <div className="text-gray-400 text-sm mb-4">
+                      <div className={`text-sm mb-4 ${
+                        isDark ? "text-gray-400" : "text-gray-600"
+                      }`}>
                         Log in with
                       </div>
                       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -465,7 +501,11 @@ export default function LoginModal({
                           type="button"
                           onClick={handleGoogleLogin}
                           disabled={isLoading}
-                          className="bg-[#2a2a2a] hover:bg-[#333] disabled:bg-[#1a1a1a] disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s"
+                          className={`py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s ${
+                            isDark
+                              ? "bg-[#2a2a2a] hover:bg-[#333] disabled:bg-[#1a1a1a] text-white"
+                              : "bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 text-gray-900"
+                          } disabled:cursor-not-allowed`}
                         >
                           <svg
                             width="18"
@@ -492,7 +532,9 @@ export default function LoginModal({
                               fill="#EA4335"
                             />
                           </svg>
-                          <span className="transition-all duration-300 group-hover:text-gray-200 group-hover:font-semibold group-hover:translate-x-1">
+                          <span className={`transition-all duration-300 group-hover:font-semibold group-hover:translate-x-1 ${
+                            isDark ? "group-hover:text-gray-200" : "group-hover:text-black"
+                          }`}>
                             Google
                           </span>
                         </button>
@@ -500,7 +542,11 @@ export default function LoginModal({
                           type="button"
                           onClick={handleFacebookLogin}
                           disabled={isLoading}
-                          className="bg-[#2a2a2a] hover:bg-[#333] disabled:bg-[#1a1a1a] disabled:cursor-not-allowed text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s"
+                          className={`py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s ${
+                            isDark
+                              ? "bg-[#2a2a2a] hover:bg-[#333] disabled:bg-[#1a1a1a] text-white"
+                              : "bg-gray-100 hover:bg-gray-200 disabled:bg-gray-50 text-gray-900"
+                          } disabled:cursor-not-allowed`}
                         >
                           <svg
                             width="18"
@@ -512,7 +558,9 @@ export default function LoginModal({
                           >
                             <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                           </svg>
-                          <span className="transition-all duration-300 group-hover:text-gray-200 group-hover:font-semibold group-hover:translate-x-1">
+                          <span className={`transition-all duration-300 group-hover:font-semibold group-hover:translate-x-1 ${
+                            isDark ? "group-hover:text-gray-200" : "group-hover:text-black"
+                          }`}>
                             Facebook
                           </span>
                         </button>
@@ -520,10 +568,14 @@ export default function LoginModal({
                     </div>
                     <div className="relative my-6">
                       <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-700"></div>
+                        <div className={`w-full border-t ${
+                          isDark ? "border-gray-700" : "border-gray-300"
+                        }`}></div>
                       </div>
                       <div className="relative flex justify-center text-sm">
-                        <span className="bg-[#1f1f1f] px-4 text-gray-400">
+                        <span className={`px-4 ${
+                          isDark ? "bg-[#1f1f1f] text-gray-400" : "bg-white text-gray-600"
+                        }`}>
                           or
                         </span>
                       </div>
@@ -533,7 +585,11 @@ export default function LoginModal({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="Email"
-                      className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-400"
+                      className={`w-full px-4 py-3 bg-transparent border rounded-lg focus:outline-none focus:border-orange-400 ${
+                        isDark
+                          ? "border-gray-600 text-white placeholder-gray-500"
+                          : "border-gray-300 text-gray-900 placeholder-gray-400"
+                      }`}
                       required
                     />
                     <div className="relative">
@@ -542,13 +598,19 @@ export default function LoginModal({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full px-4 py-3 bg-transparent border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 pr-10"
+                        className={`w-full px-4 py-3 bg-transparent border rounded-lg focus:outline-none focus:border-orange-400 pr-10 ${
+                          isDark
+                            ? "border-gray-600 text-white placeholder-gray-500"
+                            : "border-gray-300 text-gray-900 placeholder-gray-400"
+                        }`}
                         required
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-3 text-gray-400 hover:text-orange-500 transition-colors"
+                        className={`absolute right-3 top-3 transition-colors hover:text-orange-500 ${
+                          isDark ? "text-gray-400" : "text-gray-600"
+                        }`}
                         title={showPassword ? "Hide password" : "Show password"}
                       >
                         {showPassword ? (

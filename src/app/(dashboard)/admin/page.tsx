@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
 import { User as PrismaUser } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -377,17 +378,29 @@ const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: 
   const getTypeColor = (type: string) => {
     switch (type) {
       case "deposit":
-        return "text-green-400 bg-green-500/10 border-green-500/30";
+        return isDark
+          ? "text-green-400 bg-green-500/10 border-green-500/30"
+          : "text-green-700 bg-green-100 border-green-400";
       case "withdraw":
-        return "text-red-400 bg-red-500/10 border-red-500/30";
+        return isDark
+          ? "text-red-400 bg-red-500/10 border-red-500/30"
+          : "text-red-700 bg-red-100 border-red-400";
       case "buy":
-        return "text-blue-400 bg-blue-500/10 border-blue-500/30";
+        return isDark
+          ? "text-blue-400 bg-blue-500/10 border-blue-500/30"
+          : "text-blue-700 bg-blue-100 border-blue-400";
       case "sell":
-        return "text-orange-400 bg-orange-500/10 border-orange-500/30";
+        return isDark
+          ? "text-orange-400 bg-orange-500/10 border-orange-500/30"
+          : "text-orange-700 bg-orange-100 border-orange-400";
       case "trade_earned":
-        return "text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+        return isDark
+          ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/30"
+          : "text-emerald-700 bg-emerald-100 border-emerald-400";
       default:
-        return "text-gray-400 bg-gray-500/10 border-gray-500/30";
+        return isDark
+          ? "text-gray-400 bg-gray-500/10 border-gray-500/30"
+          : "text-gray-700 bg-gray-100 border-gray-400";
     }
   };
 
@@ -417,39 +430,71 @@ const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: 
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3">
-          <p className="text-xs text-green-400 mb-1">Total Deposits</p>
-          <p className="text-xl font-bold text-green-400">
+        <div className={`border rounded-lg p-3 ${
+          isDark ? "bg-green-500/10 border-green-500/30" : "bg-green-50 border-green-400"
+        }`}>
+          <p className={`text-xs mb-1 ${
+            isDark ? "text-green-400" : "text-green-700"
+          }`}>Total Deposits</p>
+          <p className={`text-xl font-bold ${
+            isDark ? "text-green-400" : "text-green-700"
+          }`}>
             {stats.totalDeposits}
           </p>
         </div>
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
-          <p className="text-xs text-red-400 mb-1">Total Withdrawals</p>
-          <p className="text-xl font-bold text-red-400">
+        <div className={`border rounded-lg p-3 ${
+          isDark ? "bg-red-500/10 border-red-500/30" : "bg-red-50 border-red-400"
+        }`}>
+          <p className={`text-xs mb-1 ${
+            isDark ? "text-red-400" : "text-red-700"
+          }`}>Total Withdrawals</p>
+          <p className={`text-xl font-bold ${
+            isDark ? "text-red-400" : "text-red-700"
+          }`}>
             {stats.totalWithdrawals}
           </p>
         </div>
-        <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3">
-          <p className="text-xs text-blue-400 mb-1">Total Trades</p>
-          <p className="text-xl font-bold text-blue-400">{stats.totalTrades}</p>
+        <div className={`border rounded-lg p-3 ${
+          isDark ? "bg-blue-500/10 border-blue-500/30" : "bg-blue-50 border-blue-400"
+        }`}>
+          <p className={`text-xs mb-1 ${
+            isDark ? "text-blue-400" : "text-blue-700"
+          }`}>Total Trades</p>
+          <p className={`text-xl font-bold ${
+            isDark ? "text-blue-400" : "text-blue-700"
+          }`}>{stats.totalTrades}</p>
         </div>
-        <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-3">
-          <p className="text-xs text-purple-400 mb-1">Manual Payments</p>
-          <p className="text-xl font-bold text-purple-400">
+        <div className={`border rounded-lg p-3 ${
+          isDark ? "bg-purple-500/10 border-purple-500/30" : "bg-purple-50 border-purple-400"
+        }`}>
+          <p className={`text-xs mb-1 ${
+            isDark ? "text-purple-400" : "text-purple-700"
+          }`}>Manual Payments</p>
+          <p className={`text-xl font-bold ${
+            isDark ? "text-purple-400" : "text-purple-700"
+          }`}>
             {stats.manualTransactions}
           </p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4">
+      <div className={`border rounded-lg p-4 ${
+        isDark
+          ? "bg-gray-800/50 border-gray-700/50"
+          : "bg-white border-gray-200"
+      }`}>
         <div className="flex flex-col sm:flex-row gap-3">
           <input
             type="text"
             placeholder="Search by user name, email, asset..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 bg-gray-700/50 border border-gray-600/50 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className={`flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
+              isDark
+                ? "bg-gray-700/50 border-gray-600/50 text-white"
+                : "bg-gray-50 border-gray-300 text-gray-900"
+            }`}
           />
           <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {["all", "deposit", "withdraw", "buy", "sell", "trade_earned"].map((type) => (
@@ -459,7 +504,9 @@ const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: 
                 className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
                   filter === type
                     ? "bg-blue-500 text-white"
-                    : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                    : isDark
+                    ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 }`}
               >
                 {type === "trade_earned" ? "Trade Earned" : type.charAt(0).toUpperCase() + type.slice(1)}
@@ -470,12 +517,18 @@ const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: 
       </div>
 
       {/* Transactions Table */}
-      <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg overflow-hidden">
+      <div className={`border rounded-lg overflow-hidden ${
+        isDark
+          ? "bg-gray-800/50 border-gray-700/50"
+          : "bg-white border-gray-200"
+      }`}>
         <div className="overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-400">Loading transactions...</p>
+              <p className={isDark ? "text-gray-400" : "text-gray-600"}>
+                Loading transactions...
+              </p>
             </div>
           ) : filteredTransactions.length === 0 ? (
             <div className="text-center py-12">
@@ -484,15 +537,25 @@ const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: 
             </div>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-700/50 border-b border-gray-600">
+              <thead className={`border-b ${
+                isDark
+                  ? "bg-gray-700/50 border-gray-600"
+                  : "bg-gray-200 border-gray-300"
+              }`}>
                 <tr>
-                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
+                  <th className={`text-left p-3 text-xs font-semibold ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}>
                     Date
                   </th>
-                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
+                  <th className={`text-left p-3 text-xs font-semibold ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}>
                     User
                   </th>
-                  <th className="text-left p-3 text-xs font-semibold text-gray-300">
+                  <th className={`text-left p-3 text-xs font-semibold ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}>
                     Type
                   </th>
                 </tr>
@@ -505,21 +568,33 @@ const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: 
                       setSelectedTransaction(tx);
                       setShowTransactionModal(true);
                     }}
-                    className="border-b border-gray-700/50 hover:bg-gray-700/30 transition-colors cursor-pointer"
+                    className={`border-b transition-colors cursor-pointer ${
+                      isDark
+                        ? "border-gray-700/50 hover:bg-gray-700/30"
+                        : "border-gray-300 hover:bg-gray-100"
+                    }`}
                   >
-                    <td className="p-3 text-xs text-gray-400">
+                    <td className={`p-3 text-xs ${
+                      isDark ? "text-gray-400" : "text-gray-700"
+                    }`}>
                       {new Date(tx.timestamp).toLocaleDateString()}
                       <br />
-                      <span className="text-[10px]">
+                      <span className={`text-[10px] ${
+                        isDark ? "text-gray-500" : "text-gray-600"
+                      }`}>
                         {new Date(tx.timestamp).toLocaleTimeString()}
                       </span>
                     </td>
                     <td className="p-3">
                       <div className="text-xs">
-                        <p className="font-semibold text-white">
+                        <p className={`font-semibold ${
+                          isDark ? "text-white" : "text-gray-900"
+                        }`}>
                           {tx.userName || "Unknown"}
                         </p>
-                        <p className="text-[10px] text-gray-500">
+                        <p className={`text-[10px] ${
+                          isDark ? "text-gray-500" : "text-gray-600"
+                        }`}>
                           {tx.userEmail}
                         </p>
                       </div>
@@ -543,157 +618,162 @@ const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: 
       </div>
 
       {/* Transaction Count */}
-      <div className="text-center text-sm text-gray-400">
+      <div className={`text-center text-sm ${
+        isDark ? "text-gray-400" : "text-gray-600"
+      }`}>
         Showing {filteredTransactions.length} of {transactions.length}{" "}
         transactions
       </div>
 
       {/* Transaction Details Modal */}
       {showTransactionModal && selectedTransaction && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-          >
-            {/* Header */}
-            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 p-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                <FileText size={20} className="text-blue-400" />
-                Transaction Details
-              </h2>
-              <button
-                onClick={() => {
-                  setShowTransactionModal(false);
-                  setSelectedTransaction(null);
-                }}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
+        <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+          {/* Spacer for dashboard header */}
+          <div className="h-14 sm:h-[72px]" />
 
-            {/* Content */}
-            <div className="space-y-4">
-              {/* Transaction Type */}
-              <div className="bg-gray-700/30 border-x-0 border-gray-600/30 p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm text-gray-400">Transaction Type</span>
-                  <span
-                    className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold border ${getTypeColor(
-                      selectedTransaction.type
-                    )}`}
-                  >
-                    {selectedTransaction.type === "trade_earned" ? "TRADE EARNED" : selectedTransaction.type.toUpperCase()}
-                    {selectedTransaction.isManual && selectedTransaction.type !== "deposit" && selectedTransaction.type !== "trade_earned" && <span className="ml-1">🔧</span>}
-                  </span>
-                </div>
+          {/* Back button */}
+          <div className="max-w-2xl mx-auto px-4 pt-4 pb-2">
+            <button
+              onClick={() => {
+                setShowTransactionModal(false);
+                setSelectedTransaction(null);
+              }}
+              className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm font-medium">Back to Dashboard</span>
+            </button>
+          </div>
+
+          {/* Card */}
+          <div className="max-w-2xl mx-auto px-4 pb-8">
+            <div className={`border rounded-xl shadow-2xl ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"}`}>
+              {/* Header */}
+              <div className={`border-b p-4 flex items-center ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-300"}`}>
+                <h2 className={`text-lg font-bold flex items-center gap-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <FileText size={20} className="text-blue-400" />
+                  Transaction Details
+                </h2>
               </div>
 
-              {/* User Information */}
-              <div className="bg-gray-700/30 border-x-0 border-gray-600/30 p-4">
-                <h3 className="text-sm font-semibold text-white mb-3">User Information</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-400">Name:</span>
-                    <span className="text-sm font-semibold text-white">
-                      {selectedTransaction.userName || "Unknown"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-400">Email:</span>
-                    <span className="text-sm font-semibold text-white">
-                      {selectedTransaction.userEmail}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Transaction Details */}
-              <div className="bg-gray-700/30 border-x-0 border-gray-600/30 p-4">
-                <h3 className="text-sm font-semibold text-white mb-3">Transaction Details</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-400">Asset:</span>
-                    <span className="text-sm font-bold text-white">
-                      {selectedTransaction.asset}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-400">Amount:</span>
-                    <span className="text-sm font-bold text-white">
-                      {['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'ETC', 'TRX', 'TON', 'USDT', 'USDC'].includes(selectedTransaction.asset)
-                        ? selectedTransaction.amount.toFixed(8)
-                        : selectedTransaction.amount.toFixed(2)}
-                    </span>
-                  </div>
-                  {selectedTransaction.fee > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-400">Fee:</span>
-                      <span className="text-sm font-semibold text-gray-300">
-                        {['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'ETC', 'TRX', 'TON', 'USDT', 'USDC'].includes(selectedTransaction.asset)
-                          ? selectedTransaction.fee.toFixed(8)
-                          : selectedTransaction.fee.toFixed(2)}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-400">Method:</span>
-                    <span className="text-sm font-semibold text-white">
-                      {selectedTransaction.method}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-400">Status:</span>
+              {/* Content */}
+              <div className="space-y-4">
+                {/* Transaction Type */}
+                <div className={`p-4 ${isDark ? "bg-gray-700/30" : "bg-gray-100"}`}>
+                  <div className="flex items-center justify-between mb-3">
+                    <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Transaction Type</span>
                     <span
-                      className={`text-sm font-semibold ${getStatusColor(
-                        selectedTransaction.status
+                      className={`inline-block px-3 py-1 rounded-lg text-sm font-semibold border ${getTypeColor(
+                        selectedTransaction.type
                       )}`}
                     >
-                      {selectedTransaction.status?.toUpperCase() || "N/A"}
+                      {selectedTransaction.type === "trade_earned" ? "TRADE EARNED" : selectedTransaction.type.toUpperCase()}
+                      {selectedTransaction.isManual && selectedTransaction.type !== "deposit" && selectedTransaction.type !== "trade_earned" && <span className="ml-1">🔧</span>}
                     </span>
                   </div>
-                  {selectedTransaction.confirmations !== undefined && (
+                </div>
+
+                {/* User Information */}
+                <div className={`p-4 ${isDark ? "bg-gray-700/30" : "bg-gray-100"}`}>
+                  <h3 className={`text-sm font-semibold mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>User Information</h3>
+                  <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-400">Confirmations:</span>
-                      <span className="text-sm font-semibold text-white">
-                        {selectedTransaction.confirmations}/{selectedTransaction.maxConfirmations}
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Name:</span>
+                      <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        {selectedTransaction.userName || "Unknown"}
                       </span>
                     </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-400">Date:</span>
-                    <span className="text-sm font-semibold text-white">
-                      {new Date(selectedTransaction.timestamp).toLocaleString()}
-                    </span>
+                    <div className="flex justify-between">
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Email:</span>
+                      <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        {selectedTransaction.userEmail}
+                      </span>
+                    </div>
                   </div>
                 </div>
+
+                {/* Transaction Details */}
+                <div className={`p-4 ${isDark ? "bg-gray-700/30" : "bg-gray-100"}`}>
+                  <h3 className={`text-sm font-semibold mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>Transaction Details</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Asset:</span>
+                      <span className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        {selectedTransaction.asset}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Amount:</span>
+                      <span className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        {['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'ETC', 'TRX', 'TON', 'USDT', 'USDC'].includes(selectedTransaction.asset)
+                          ? selectedTransaction.amount.toFixed(8)
+                          : selectedTransaction.amount.toFixed(2)}
+                      </span>
+                    </div>
+                    {selectedTransaction.fee > 0 && (
+                      <div className="flex justify-between">
+                        <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Fee:</span>
+                        <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                          {['BTC', 'ETH', 'XRP', 'LTC', 'BCH', 'ETC', 'TRX', 'TON', 'USDT', 'USDC'].includes(selectedTransaction.asset)
+                            ? selectedTransaction.fee.toFixed(8)
+                            : selectedTransaction.fee.toFixed(2)}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Method:</span>
+                      <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        {selectedTransaction.method}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Status:</span>
+                      <span className={`text-sm font-semibold ${getStatusColor(selectedTransaction.status)}`}>
+                        {selectedTransaction.status?.toUpperCase() || "N/A"}
+                      </span>
+                    </div>
+                    {selectedTransaction.confirmations !== undefined && (
+                      <div className="flex justify-between">
+                        <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Confirmations:</span>
+                        <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                          {selectedTransaction.confirmations}/{selectedTransaction.maxConfirmations}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>Date:</span>
+                      <span className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        {new Date(selectedTransaction.timestamp).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Transaction ID */}
+                {selectedTransaction.id && (
+                  <div className={`p-4 ${isDark ? "bg-gray-700/30" : "bg-gray-100"}`}>
+                    <h3 className={`text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Transaction ID</h3>
+                    <code className={`text-xs px-3 py-2 rounded block break-all ${isDark ? "text-gray-300 bg-gray-900/50" : "text-gray-700 bg-gray-200"}`}>
+                      {selectedTransaction.id}
+                    </code>
+                  </div>
+                )}
               </div>
 
-              {/* Transaction ID */}
-              {selectedTransaction.id && (
-                <div className="bg-gray-700/30 border-x-0 border-gray-600/30 p-4">
-                  <h3 className="text-sm font-semibold text-white mb-2">Transaction ID</h3>
-                  <code className="text-xs text-gray-300 bg-gray-900/50 px-3 py-2 rounded block break-all">
-                    {selectedTransaction.id}
-                  </code>
-                </div>
-              )}
+              {/* Footer */}
+              <div className={`p-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+                <button
+                  onClick={() => {
+                    setShowTransactionModal(false);
+                    setSelectedTransaction(null);
+                  }}
+                  className={`w-full py-2.5 px-4 rounded-lg transition-all font-semibold text-sm ${isDark ? "bg-gray-600 hover:bg-gray-500 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-900"}`}
+                >
+                  Close
+                </button>
+              </div>
             </div>
-
-            {/* Footer */}
-            <div className="p-4 border-t border-gray-700">
-              <button
-                onClick={() => {
-                  setShowTransactionModal(false);
-                  setSelectedTransaction(null);
-                }}
-                className="w-full bg-gray-600 hover:bg-gray-500 text-white py-2.5 px-4 rounded-lg transition-all font-semibold text-sm"
-              >
-                Close
-              </button>
-            </div>
-          </motion.div>
+          </div>
         </div>
       )}
     </div>
@@ -711,7 +791,7 @@ const AdminDashboard = () => {
     setMounted(true);
   }, []);
   
-  const isDark = mounted ? resolvedTheme === "dark" : true;
+  const isDark = mounted ? resolvedTheme === "dark" : false;
   const {
     convertAmount,
     formatAmount,
@@ -1652,7 +1732,7 @@ const AdminDashboard = () => {
               <h1 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                 Admin Control Panel
               </h1>
-              <p className="text-[10px] xs:text-xs text-gray-400">
+              <p className={`text-[10px] xs:text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 Complete administrative dashboard
               </p>
             </div>
@@ -2173,38 +2253,38 @@ const AdminDashboard = () => {
 
           <div className="grid grid-cols-1 gap-4">
             <div className={`border rounded-lg p-3 sm:p-6 ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}>
-              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
+              <h3 className={`text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                 <BarChart3 className="text-blue-400" size={20} />
                 <span>System Overview</span>
               </h3>
               <div className="space-y-2 text-xs sm:text-sm">
                 <div className="flex justify-between">
-                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Server Status:</span>
-                  <span className="text-green-400">
+                  <span className={isDark ? "text-gray-400" : "text-gray-600"}>Server Status:</span>
+                  <span className="text-green-400 font-medium">
                     {systemStats.serverStatus}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Database:</span>
-                  <span className="text-green-400">
+                  <span className={isDark ? "text-gray-400" : "text-gray-600"}>Database:</span>
+                  <span className="text-green-400 font-medium">
                     {systemStats.databaseStatus}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Last Backup:</span>
-                  <span className={isDark ? "text-gray-300" : "text-gray-700"}>
+                  <span className={isDark ? "text-gray-400" : "text-gray-600"}>Last Backup:</span>
+                  <span className={isDark ? "text-gray-300" : "text-gray-900"}>
                     {systemStats.lastBackup}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Total Transactions:</span>
-                  <span className={isDark ? "text-gray-300" : "text-gray-700"}>
+                  <span className={isDark ? "text-gray-400" : "text-gray-600"}>Total Transactions:</span>
+                  <span className={`font-semibold ${isDark ? "text-gray-300" : "text-gray-900"}`}>
                     {systemStats.totalTransactions.toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Active Users:</span>
-                  <span className={isDark ? "text-gray-300" : "text-gray-700"}>
+                  <span className={isDark ? "text-gray-400" : "text-gray-600"}>Active Users:</span>
+                  <span className={`font-semibold ${isDark ? "text-gray-300" : "text-gray-900"}`}>
                     {systemStats.activeUsers}
                   </span>
                 </div>
@@ -2212,37 +2292,37 @@ const AdminDashboard = () => {
             </div>
 
             <div className={`border rounded-lg p-3 sm:p-6 ${isDark ? "bg-gray-800/50 border-gray-700/50" : "bg-white border-gray-200"}`}>
-              <h3 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2">
+              <h3 className={`text-lg sm:text-xl font-bold mb-3 sm:mb-4 flex items-center space-x-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                 <AlertTriangle className="text-yellow-400" size={20} />
                 <span>Recent Alerts</span>
               </h3>
               <div className="space-y-2 text-xs sm:text-sm">
                 {pendingKycCount > 0 && (
                   <div
-                    className="text-orange-400 cursor-pointer hover:text-orange-300 transition-colors"
+                    className="text-orange-500 font-medium cursor-pointer hover:text-orange-400 transition-colors"
                     onClick={() => (window.location.href = "/admin/kyc")}
                   >
                     • Pending KYC verifications: {pendingKycCount}
                   </div>
                 )}
                 {systemStats.recentDeposits > 0 && (
-                  <div className="text-yellow-400">
+                  <div className={`font-medium ${isDark ? "text-yellow-400" : "text-yellow-600"}`}>
                     • Recent deposits: {systemStats.recentDeposits} (last hour)
                   </div>
                 )}
                 {systemStats.failedLogins > 0 && (
-                  <div className="text-red-400">
+                  <div className={`font-medium ${isDark ? "text-red-400" : "text-red-600"}`}>
                     • Failed login attempts: {systemStats.failedLogins}
                   </div>
                 )}
                 {systemStats.newRegistrations > 0 && (
-                  <div className="text-blue-400">
+                  <div className={`font-medium ${isDark ? "text-blue-400" : "text-blue-600"}`}>
                     • New user registrations: {systemStats.newRegistrations}{" "}
                     (today)
                   </div>
                 )}
                 {systemStats.lastBackup !== "Loading..." && (
-                  <div className="text-green-400">
+                  <div className={`font-medium ${isDark ? "text-green-400" : "text-green-600"}`}>
                     • System backup completed
                   </div>
                 )}
@@ -2250,7 +2330,7 @@ const AdminDashboard = () => {
                   systemStats.recentDeposits === 0 &&
                   systemStats.failedLogins === 0 &&
                   systemStats.newRegistrations === 0 && (
-                    <div className={isDark ? "text-gray-400" : "text-gray-500"}>• No recent alerts</div>
+                    <div className={isDark ? "text-gray-400" : "text-gray-600"}>• No recent alerts</div>
                   )}
               </div>
             </div>
@@ -2466,9 +2546,17 @@ const AdminDashboard = () => {
 
       {/* Payment Modal - Fullscreen */}
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 z-50 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        <div className={`fixed inset-0 z-50 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+          isDark
+            ? "bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800"
+            : "bg-gradient-to-br from-gray-50 via-white to-gray-100"
+        }`}>
           {/* Sticky Header Background */}
-          <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-800 px-2 xs:px-3 sm:px-4 lg:px-6 py-3 pt-14">
+          <div className={`sticky top-0 z-10 border-b px-2 xs:px-3 sm:px-4 lg:px-6 py-3 pt-14 ${
+            isDark
+              ? "bg-gray-900 border-gray-800"
+              : "bg-white border-gray-200"
+          }`}>
             <div className="flex items-center justify-between">
               <h1 className="text-base xs:text-lg sm:text-xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                 Admin Control Panel
@@ -2491,7 +2579,7 @@ const AdminDashboard = () => {
                       <h1 className="text-base xs:text-lg sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
                         Manual Payment
                       </h1>
-                      <p className="text-[10px] xs:text-xs text-gray-400">
+                      <p className={`text-[10px] xs:text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                         Complete administrative dashboard
                       </p>
                     </div>
@@ -2573,7 +2661,7 @@ const AdminDashboard = () => {
 
                     {/* Manual Top-up Section */}
                     <div className={`border rounded-xl p-4 ${isDark ? "bg-gradient-to-b from-gray-700/50 to-gray-800/70 border-gray-600/40 shadow-[0_4px_0_0_#1f2937,0_6px_12px_rgba(0,0,0,0.3)]" : "bg-gradient-to-b from-white to-gray-50 border-gray-200 shadow-[0_4px_0_0_#e5e7eb,0_6px_12px_rgba(0,0,0,0.1)]"}`}>
-                      <h3 className="text-base xs:text-lg font-bold mb-4 flex items-center space-x-2">
+                      <h3 className={`text-base xs:text-lg font-bold mb-4 flex items-center space-x-2 ${isDark ? "text-white" : "text-gray-900"}`}>
                         <Wallet className="text-green-400" size={20} />
                         <span>Manual Payment Processing</span>
                       </h3>
@@ -2592,21 +2680,23 @@ const AdminDashboard = () => {
                           className={`p-2.5 xs:p-3 rounded-xl border-2 transition-all ${
                             depositType === "fiat"
                               ? "bg-gradient-to-br from-green-500/20 to-blue-500/20 border-green-500 shadow-[0_3px_0_0_#166534,0_4px_8px_rgba(34,197,94,0.3)] active:shadow-none active:translate-y-1"
-                              : "bg-gradient-to-b from-gray-700/40 to-gray-800/60 border-gray-600/50 hover:border-gray-500 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.2)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.2)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
+                              : isDark
+                              ? "bg-gradient-to-b from-gray-700/40 to-gray-800/60 border-gray-600/50 hover:border-gray-500 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.2)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.2)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
+                              : "bg-gray-100 border-gray-300 hover:border-gray-400 shadow-[0_3px_0_0_#d1d5db,0_4px_8px_rgba(0,0,0,0.1)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
                           }`}
                         >
                           <DollarSign
                             className={`w-5 h-5 xs:w-6 xs:h-6 mx-auto mb-1 ${
                               depositType === "fiat"
                                 ? "text-green-400"
-                                : "text-gray-400"
+                                : isDark ? "text-gray-400" : "text-gray-500"
                             }`}
                           />
                           <span
                             className={`text-xs xs:text-sm font-bold block ${
                               depositType === "fiat"
                                 ? "text-green-400"
-                                : "text-gray-400"
+                                : isDark ? "text-gray-400" : "text-gray-500"
                             }`}
                           >
                             Deposit Fiat
@@ -2617,21 +2707,23 @@ const AdminDashboard = () => {
                           className={`p-2.5 xs:p-3 rounded-xl border-2 transition-all ${
                             depositType === "crypto"
                               ? "bg-gradient-to-br from-orange-500/20 to-purple-500/20 border-orange-500 shadow-[0_3px_0_0_#c2410c,0_4px_8px_rgba(249,115,22,0.3)] active:shadow-none active:translate-y-1"
-                              : "bg-gradient-to-b from-gray-700/40 to-gray-800/60 border-gray-600/50 hover:border-gray-500 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.2)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.2)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
+                              : isDark
+                              ? "bg-gradient-to-b from-gray-700/40 to-gray-800/60 border-gray-600/50 hover:border-gray-500 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.2)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.2)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
+                              : "bg-gray-100 border-gray-300 hover:border-gray-400 shadow-[0_3px_0_0_#d1d5db,0_4px_8px_rgba(0,0,0,0.1)] hover:translate-y-0.5 active:shadow-none active:translate-y-1"
                           }`}
                         >
                           <Wallet
                             className={`w-5 h-5 xs:w-6 xs:h-6 mx-auto mb-1 ${
                               depositType === "crypto"
                                 ? "text-orange-400"
-                                : "text-gray-400"
+                                : isDark ? "text-gray-400" : "text-gray-500"
                             }`}
                           />
                           <span
                             className={`text-xs xs:text-sm font-bold block ${
                               depositType === "crypto"
                                 ? "text-orange-400"
-                                : "text-gray-400"
+                                : isDark ? "text-gray-400" : "text-gray-500"
                             }`}
                           >
                             Cryptocurrency
@@ -2643,10 +2735,10 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 xs:gap-4">
                       <div className="space-y-3">
                         <div>
-                          <p className="text-xs text-gray-400 mb-1">
+                          <p className={`text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                             Selected User:
                           </p>
-                          <p className="font-semibold text-white text-sm">
+                          <p className={`font-semibold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                             {selectedUser.email}
                           </p>
                         </div>
@@ -2655,7 +2747,7 @@ const AdminDashboard = () => {
                         {depositType === "fiat" && (
                           <>
                             <div>
-                              <label className="block text-xs font-semibold text-gray-300 mb-2">
+                              <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                                 Payment Method
                               </label>
                               <div className="grid grid-cols-2 gap-2 mb-2">
@@ -2666,7 +2758,7 @@ const AdminDashboard = () => {
                                   className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                                     paymentMethodType === "traditional"
                                       ? "bg-blue-500 text-white"
-                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                      : isDark ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                                   }`}
                                 >
                                   Traditional
@@ -2676,7 +2768,7 @@ const AdminDashboard = () => {
                                   className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
                                     paymentMethodType === "crypto"
                                       ? "bg-blue-500 text-white"
-                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                      : isDark ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                                   }`}
                                 >
                                   Cryptocurrency
@@ -2688,19 +2780,19 @@ const AdminDashboard = () => {
                                   traditionalPaymentMethods.map((method) => (
                                     <button
                                       key={method.id}
-                                      className="w-full p-2.5 bg-gray-700/30 hover:bg-gray-700/50 border border-gray-600/30 hover:border-blue-500/50 rounded-lg transition-all text-left flex items-center gap-2.5"
+                                      className={`w-full p-2.5 border rounded-lg transition-all text-left flex items-center gap-2.5 ${isDark ? "bg-gray-700/30 hover:bg-gray-700/50 border-gray-600/30 hover:border-blue-500/50" : "bg-gray-100 hover:bg-gray-200 border-gray-300 hover:border-blue-400"}`}
                                     >
                                       <span className="text-lg">
                                         {method.icon}
                                       </span>
-                                      <span className="font-medium text-white text-sm">
+                                      <span className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                                         {method.name}
                                       </span>
                                     </button>
                                   ))
                                 ) : (
                                   <div className="relative">
-                                    <label className="block text-xs font-semibold text-gray-300 mb-2">
+                                    <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                                       Select Cryptocurrency
                                     </label>
                                     <button
@@ -2710,7 +2802,7 @@ const AdminDashboard = () => {
                                           !showCryptoDropdown
                                         )
                                       }
-                                      className="w-full bg-gray-700/50 border border-gray-600/50 hover:border-orange-500/50 rounded-lg p-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 flex items-center justify-between transition-all"
+                                      className={`w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 flex items-center justify-between transition-all ${isDark ? "bg-gray-700/50 border-gray-600/50 hover:border-orange-500/50 text-white" : "bg-gray-100 border-gray-300 hover:border-orange-400 text-gray-900"}`}
                                     >
                                       <div className="flex items-center gap-3">
                                         <CryptoIcon
@@ -2757,7 +2849,11 @@ const AdminDashboard = () => {
                                     </button>
 
                                     {showCryptoDropdown && (
-                                      <div className="absolute top-full left-0 right-0 mt-2 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                                      <div className={`absolute top-full left-0 right-0 mt-2 border rounded-lg shadow-2xl z-50 max-h-64 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+                                        isDark
+                                          ? "bg-gray-800 border-gray-700"
+                                          : "bg-white border-gray-300"
+                                      }`}>
                                         {cryptoPaymentMethods.map((method) => {
                                           const cryptoPrice =
                                             prices[method.name];
@@ -2797,7 +2893,7 @@ const AdminDashboard = () => {
                                               />
                                               <div className="flex-1 text-left">
                                                 <div className="flex items-center justify-between">
-                                                  <p className="font-semibold text-white">
+                                                  <p className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                                     {method.name}
                                                   </p>
                                                   <span
@@ -2815,7 +2911,7 @@ const AdminDashboard = () => {
                                                   <p className="text-xs text-gray-400">
                                                     {method.fullName}
                                                   </p>
-                                                  <p className="text-sm font-medium text-white">
+                                                  <p className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                                                     {currencySymbol}
                                                     {price.toLocaleString()}
                                                   </p>
@@ -2840,7 +2936,7 @@ const AdminDashboard = () => {
                         {/* Crypto Deposit Options */}
                         {depositType === "crypto" && (
                           <div className="relative">
-                            <label className="block text-xs font-semibold text-gray-300 mb-2">
+                            <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                               Select Cryptocurrency
                             </label>
                             <button
@@ -2848,7 +2944,7 @@ const AdminDashboard = () => {
                               onClick={() =>
                                 setShowCryptoDropdown(!showCryptoDropdown)
                               }
-                              className="w-full bg-gray-700/50 border border-gray-600/50 hover:border-orange-500/50 rounded-lg p-3 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 flex items-center justify-between transition-all"
+                              className={`w-full border rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 flex items-center justify-between transition-all ${isDark ? "bg-gray-700/50 border-gray-600/50 hover:border-orange-500/50 text-white" : "bg-gray-100 border-gray-300 hover:border-orange-400 text-gray-900"}`}
                             >
                               <div className="flex items-center gap-3">
                                 <CryptoIcon
@@ -2895,7 +2991,11 @@ const AdminDashboard = () => {
 
                             {showCryptoDropdown && (
                               <div
-                                className="absolute top-full left-0 right-0 mt-2 bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-2xl z-50 max-h-40 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6 py-4 pb-6"
+                                className={`absolute top-full left-0 right-0 mt-2 backdrop-blur-sm border rounded-xl shadow-2xl z-50 max-h-40 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6 py-4 pb-6 ${
+                                  isDark
+                                    ? "bg-gray-900/95 border-gray-700/50"
+                                    : "bg-white/95 border-gray-300/50"
+                                }`}
                                 style={{ perspective: "1000px" }}
                               >
                                 {cryptoAssets.map((asset, index) => {
@@ -2934,7 +3034,9 @@ const AdminDashboard = () => {
                                       className={`w-full p-2.5 mb-2.5 flex items-center gap-2.5 rounded-xl transition-all relative group overflow-hidden ${
                                         isSelected
                                           ? "bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-2 border-orange-500/60 shadow-lg shadow-orange-500/20"
-                                          : "bg-gradient-to-br from-gray-800/80 to-gray-800/40 border border-gray-700/50 hover:border-gray-600 hover:shadow-xl"
+                                          : isDark
+                                          ? "bg-gradient-to-br from-gray-800/80 to-gray-800/40 border border-gray-700/50 hover:border-gray-600 hover:shadow-xl"
+                                          : "bg-gradient-to-br from-gray-100 to-gray-50 border border-gray-200 hover:border-gray-300 hover:shadow-md"
                                       }`}
                                       style={{
                                         transformStyle: "preserve-3d",
@@ -2948,7 +3050,7 @@ const AdminDashboard = () => {
                                         className={`absolute inset-0 rounded-xl opacity-50 ${
                                           isSelected
                                             ? "bg-gradient-to-br from-orange-500/10 to-transparent"
-                                            : "bg-gradient-to-br from-gray-700/20 to-transparent group-hover:from-gray-600/30"
+                                            : isDark ? "bg-gradient-to-br from-gray-700/20 to-transparent group-hover:from-gray-600/30" : "bg-gradient-to-br from-gray-200/30 to-transparent"
                                         }`}
                                         style={{
                                           transform: "translateZ(-10px)",
@@ -2962,7 +3064,7 @@ const AdminDashboard = () => {
                                         className={`relative z-10 w-8 h-8 rounded-lg flex items-center justify-center ${
                                           isSelected
                                             ? "bg-orange-500/20 shadow-lg shadow-orange-500/20"
-                                            : "bg-gray-700/50 group-hover:bg-gray-600/50"
+                                            : isDark ? "bg-gray-700/50 group-hover:bg-gray-600/50" : "bg-gray-200/80 group-hover:bg-gray-300/80"
                                         }`}
                                         style={{
                                           transform: "translateZ(15px)",
@@ -2982,7 +3084,7 @@ const AdminDashboard = () => {
                                       >
                                         <div className="flex items-center justify-between mb-0.5">
                                           <div className="flex items-center gap-2">
-                                            <p className="font-bold text-white text-sm">
+                                            <p className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                                               {asset.symbol}
                                             </p>
                                             <span
@@ -3010,10 +3112,10 @@ const AdminDashboard = () => {
                                           )}
                                         </div>
                                         <div className="flex items-center justify-between">
-                                          <p className="text-[10px] text-gray-400 font-medium">
+                                          <p className={`text-[10px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                             {asset.name}
                                           </p>
-                                          <p className="text-xs font-bold text-white">
+                                          <p className={`text-xs font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                                             {currencySymbol}
                                             {price.toLocaleString()}
                                           </p>
@@ -3025,7 +3127,7 @@ const AdminDashboard = () => {
                                         className={`absolute bottom-0 left-0 right-0 h-1 ${
                                           isSelected
                                             ? "bg-gradient-to-r from-orange-500/40 via-orange-600/60 to-orange-500/40"
-                                            : "bg-gradient-to-r from-gray-700/40 via-gray-600/40 to-gray-700/40"
+                                            : isDark ? "bg-gradient-to-r from-gray-700/40 via-gray-600/40 to-gray-700/40" : "bg-gradient-to-r from-gray-200/60 via-gray-300/60 to-gray-200/60"
                                         }`}
                                         style={{
                                           transform: "translateZ(-5px)",
@@ -3039,7 +3141,7 @@ const AdminDashboard = () => {
                           </div>
                         )}
                         <div className="mt-6">
-                          <label className="block text-xs font-semibold text-gray-300 mb-2">
+                          <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                             Amount
                           </label>
                           {depositType === "fiat" &&
@@ -3050,7 +3152,7 @@ const AdminDashboard = () => {
                                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                     amountInputType === "usd"
                                       ? "bg-green-500 text-white"
-                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                      : isDark ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                                   }`}
                                 >
                                   {selectedUser?.preferredCurrency || "USD"}
@@ -3060,7 +3162,7 @@ const AdminDashboard = () => {
                                   className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                     amountInputType === "crypto"
                                       ? "bg-green-500 text-white"
-                                      : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                      : isDark ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                                   }`}
                                 >
                                   {cryptoAsset}
@@ -3074,7 +3176,7 @@ const AdminDashboard = () => {
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                   amountInputType === "usd"
                                     ? "bg-orange-500 text-white"
-                                    : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                    : isDark ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                                 }`}
                               >
                                 {selectedUser?.preferredCurrency || "USD"} Value
@@ -3084,7 +3186,7 @@ const AdminDashboard = () => {
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                   amountInputType === "crypto"
                                     ? "bg-orange-500 text-white"
-                                    : "bg-gray-700/50 text-gray-400 hover:bg-gray-700"
+                                    : isDark ? "bg-gray-700/50 text-gray-400 hover:bg-gray-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"
                                 }`}
                               >
                                 {cryptoAsset}
@@ -3097,7 +3199,7 @@ const AdminDashboard = () => {
                             min="0"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
-                            className="w-full bg-gray-700/50 border border-gray-600/50 rounded-lg p-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                            className={`w-full border rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 ${isDark ? "bg-gray-700/50 border-gray-600/50 text-white" : "bg-gray-100 border-gray-300 text-gray-900"}`}
                             placeholder={
                               amountInputType === "usd"
                                 ? depositType === "fiat"
@@ -3130,7 +3232,7 @@ const AdminDashboard = () => {
                             )}
                         </div>
                         <div className="mt-4">
-                          <label className="block text-xs font-semibold text-gray-300 mb-2">
+                          <label className={`block text-xs font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                             Notification Message
                           </label>
                           <textarea
@@ -3138,29 +3240,29 @@ const AdminDashboard = () => {
                             onChange={(e) =>
                               setNotificationMessage(e.target.value)
                             }
-                            className="w-full bg-gradient-to-b from-gray-700/50 to-gray-800/70 border border-gray-600/40 rounded-xl p-2.5 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]"
+                            className={`w-full border rounded-xl p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)] ${isDark ? "bg-gradient-to-b from-gray-700/50 to-gray-800/70 border-gray-600/40 text-white" : "bg-gray-100 border-gray-300 text-gray-900"}`}
                             placeholder="Optional note for the user..."
                             rows={2}
                           />
                         </div>
                       </div>
                       <div className="space-y-3">
-                        <div className="bg-gradient-to-b from-gray-700/50 to-gray-800/70 p-3 rounded-xl border border-gray-600/40 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)]">
-                          <h4 className="font-semibold mb-2 text-sm">
+                        <div className={`p-3 rounded-xl border shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] ${isDark ? "bg-gradient-to-b from-gray-700/50 to-gray-800/70 border-gray-600/40" : "bg-gray-100 border-gray-300"}`}>
+                          <h4 className={`font-semibold mb-2 text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
                             Transaction Summary
                           </h4>
                           <div className="space-y-1.5 text-xs">
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Type:</span>
-                              <span className="font-semibold">
+                              <span className={isDark ? "text-gray-400" : "text-gray-500"}>Type:</span>
+                              <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                 {depositType === "fiat"
                                   ? "Fiat Deposit"
                                   : "Crypto Deposit"}
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Method:</span>
-                              <span className="capitalize">
+                              <span className={isDark ? "text-gray-400" : "text-gray-500"}>Method:</span>
+                              <span className={`capitalize ${isDark ? "text-white" : "text-gray-900"}`}>
                                 {depositType === "fiat"
                                   ? paymentMethodType === "crypto"
                                     ? `${cryptoAsset} (→ Fiat)`
@@ -3169,7 +3271,7 @@ const AdminDashboard = () => {
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">Amount:</span>
+                              <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount:</span>
                               <span className="font-semibold text-green-400">
                                 {depositType === "fiat"
                                   ? `${amount || "0"} ${
@@ -3181,13 +3283,13 @@ const AdminDashboard = () => {
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-400">User:</span>
-                              <span className="truncate max-w-[180px]">
+                              <span className={isDark ? "text-gray-400" : "text-gray-500"}>User:</span>
+                              <span className={`truncate max-w-[180px] ${isDark ? "text-white" : "text-gray-900"}`}>
                                 {selectedUser.email}
                               </span>
                             </div>
-                            <div className="flex justify-between pt-2 mt-2 border-t border-gray-600">
-                              <span className="text-gray-400">
+                            <div className={`flex justify-between pt-2 mt-2 border-t ${isDark ? "border-gray-600" : "border-gray-300"}`}>
+                              <span className={isDark ? "text-gray-400" : "text-gray-500"}>
                                 Will be added to:
                               </span>
                               <span className="text-blue-400 font-semibold">
@@ -3202,15 +3304,15 @@ const AdminDashboard = () => {
                         <div
                           className={`border rounded-lg p-2.5 ${
                             depositType === "fiat"
-                              ? "bg-green-900/20 border-green-700"
-                              : "bg-orange-900/20 border-orange-700"
+                              ? isDark ? "bg-green-900/20 border-green-700" : "bg-green-50 border-green-400"
+                              : isDark ? "bg-orange-900/20 border-orange-700" : "bg-orange-50 border-orange-400"
                           }`}
                         >
                           <p
                             className={`text-[10px] leading-relaxed ${
                               depositType === "fiat"
-                                ? "text-green-300"
-                                : "text-orange-300"
+                                ? isDark ? "text-green-300" : "text-green-700"
+                                : isDark ? "text-orange-300" : "text-orange-700"
                             }`}
                           >
                             ℹ️{" "}
@@ -3255,12 +3357,16 @@ const AdminDashboard = () => {
                   {/* Asset Warning Modal */}
                   {showAssetWarning && (
                     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-                      <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full border border-yellow-500/30">
+                      <div className={`rounded-lg p-6 max-w-md w-full border border-yellow-500/30 ${
+                        isDark ? "bg-gray-800" : "bg-white"
+                      }`}>
                         <h3 className="text-xl font-bold text-yellow-400 mb-3 flex items-center gap-2">
                           <AlertCircle size={24} />
                           Asset Not Found
                         </h3>
-                        <p className="text-gray-300 mb-4">
+                        <p className={`mb-4 ${
+                          isDark ? "text-gray-300" : "text-gray-700"
+                        }`}>
                           {assetWarningMessage}
                         </p>
                         <div className="flex gap-3">
@@ -3294,32 +3400,56 @@ const AdminDashboard = () => {
       {/* Analytics Tab */}
       {activeTab === "analytics" && (
         <div className="space-y-6">
-          <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-6">
-            <h3 className="text-xl font-bold mb-4 flex items-center space-x-2">
+          <div className={`border rounded-lg p-6 ${
+            isDark
+              ? "bg-gray-800/50 border-gray-700/50"
+              : "bg-white border-gray-200"
+          }`}>
+            <h3 className={`text-xl font-bold mb-4 flex items-center space-x-2 ${
+              isDark ? "text-white" : "text-gray-900"
+            }`}>
               <BarChart3 className="text-blue-400" />
               <span>Platform Analytics</span>
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-gray-700/30 rounded-lg p-4">
+              <div className={`rounded-lg p-4 ${
+                isDark ? "bg-gray-700/30" : "bg-gray-100"
+              }`}>
                 <h4 className="text-lg font-semibold text-blue-400 mb-2">
                   User Growth
                 </h4>
-                <p className="text-3xl font-bold text-white">+24%</p>
-                <p className="text-sm text-gray-400">This month</p>
+                <p className={`text-3xl font-bold ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>+24%</p>
+                <p className={`text-sm ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}>This month</p>
               </div>
-              <div className="bg-gray-700/30 rounded-lg p-4">
+              <div className={`rounded-lg p-4 ${
+                isDark ? "bg-gray-700/30" : "bg-gray-100"
+              }`}>
                 <h4 className="text-lg font-semibold text-green-400 mb-2">
                   Trading Volume
                 </h4>
-                <p className="text-3xl font-bold text-white">$2.4M</p>
-                <p className="text-sm text-gray-400">Last 30 days</p>
+                <p className={`text-3xl font-bold ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>$2.4M</p>
+                <p className={`text-sm ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}>Last 30 days</p>
               </div>
-              <div className="bg-gray-700/30 rounded-lg p-4">
+              <div className={`rounded-lg p-4 ${
+                isDark ? "bg-gray-700/30" : "bg-gray-100"
+              }`}>
                 <h4 className="text-lg font-semibold text-purple-400 mb-2">
                   Revenue
                 </h4>
-                <p className="text-3xl font-bold text-white">$48.2K</p>
-                <p className="text-sm text-gray-400">Monthly</p>
+                <p className={`text-3xl font-bold ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>$48.2K</p>
+                <p className={`text-sm ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}>Monthly</p>
               </div>
             </div>
           </div>
@@ -3330,625 +3460,684 @@ const AdminDashboard = () => {
 
       {/* Notifications Tab */}
       {/* Edit User Role Modal - Responsive Web UI */}
-      {editingUser && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ duration: 0.2 }}
-            className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
-          >
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-b border-gray-700 px-4 py-3">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Settings className="w-5 h-5 text-orange-400" />
-                Edit User Role
-              </h3>
-            </div>
+      {editingUser && mounted && ReactDOM.createPortal(
+        <div className={`fixed top-0 left-0 right-0 bottom-0 z-[300] overflow-y-auto min-h-screen w-screen ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+          {/* Spacer for dashboard header */}
+          <div className="h-14 sm:h-[72px]" />
 
-            {/* Modal Content */}
-            <div className="p-4 space-y-4">
-              {/* User Info */}
-              <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
-                <p className="text-xs text-gray-400 mb-0.5">User</p>
-                <p className="font-semibold text-white text-sm truncate">
-                  {editingUser.email}
-                </p>
-                {editingUser.name && (
-                  <p className="text-xs text-gray-300">
-                    {editingUser.name}
-                  </p>
-                )}
+          {/* Back button */}
+          <div className="max-w-md mx-auto px-4 pt-4 pb-2">
+            <button
+              onClick={() => setEditingUser(null)}
+              className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm font-medium">Back to Dashboard</span>
+            </button>
+          </div>
+
+          {/* Card */}
+          <div className="max-w-md mx-auto px-4 pb-8">
+            <div className={`rounded-2xl shadow-2xl w-full overflow-hidden border ${
+              isDark
+                ? "bg-gradient-to-br from-gray-800 to-gray-900 border-gray-700"
+                : "bg-white border-gray-200"
+            }`}>
+              {/* Modal Header */}
+              <div className={`bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-b px-4 py-3 ${
+                isDark ? "border-gray-700" : "border-gray-200"
+              }`}>
+                <h3 className={`text-lg font-bold flex items-center gap-2 ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>
+                  <Settings className="w-5 h-5 text-orange-400" />
+                  Edit User Role
+                </h3>
               </div>
 
-              {/* Role Selection */}
-              <div>
-                <label className="block text-xs font-medium text-gray-300 mb-2">
-                  Select Role
-                </label>
-                <div className="space-y-1.5">
-                  {/* USER Role */}
-                  <label className="flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg cursor-pointer transition-all hover:border-orange-500/50 group">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                          newRole === "USER"
-                            ? "border-orange-500 bg-orange-500"
-                            : "border-gray-600 group-hover:border-orange-500/50"
-                        }`}
-                      >
-                        {newRole === "USER" && (
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-white text-sm">User</p>
-                        <p className="text-[10px] text-gray-400">
-                          Standard user account
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="radio"
-                      name="role"
-                      value="USER"
-                      checked={newRole === "USER"}
-                      onChange={(e) =>
-                        setNewRole(
-                          e.target.value as "USER" | "ADMIN" | "STAFF_ADMIN"
-                        )
-                      }
-                      className="sr-only"
-                    />
-                  </label>
+              {/* Modal Content */}
+              <div className="p-4 space-y-4">
+                {/* User Info */}
+                <div className={`rounded-lg p-3 border ${
+                  isDark
+                    ? "bg-gray-800/50 border-gray-700"
+                    : "bg-gray-100 border-gray-200"
+                }`}>
+                  <p className={`text-xs mb-0.5 ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}>User</p>
+                  <p className={`font-semibold text-sm truncate ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}>
+                    {editingUser.email}
+                  </p>
+                  {editingUser.name && (
+                    <p className={`text-xs ${
+                      isDark ? "text-gray-300" : "text-gray-700"
+                    }`}>
+                      {editingUser.name}
+                    </p>
+                  )}
+                </div>
 
-                  {/* ADMIN Role */}
-                  <label className="flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg cursor-pointer transition-all hover:border-orange-500/50 group">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                          newRole === "ADMIN"
-                            ? "border-orange-500 bg-orange-500"
-                            : "border-gray-600 group-hover:border-orange-500/50"
-                        }`}
-                      >
-                        {newRole === "ADMIN" && (
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-white text-sm">Admin</p>
-                        <p className="text-[10px] text-gray-400">
-                          Full system access
-                        </p>
-                      </div>
-                    </div>
-                    <input
-                      type="radio"
-                      name="role"
-                      value="ADMIN"
-                      checked={newRole === "ADMIN"}
-                      onChange={(e) =>
-                        setNewRole(
-                          e.target.value as "USER" | "ADMIN" | "STAFF_ADMIN"
-                        )
-                      }
-                      className="sr-only"
-                    />
+                {/* Role Selection */}
+                <div>
+                  <label className={`block text-xs font-medium mb-2 ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}>
+                    Select Role
                   </label>
+                  <div className="space-y-1.5">
+                    {/* USER Role */}
+                    <label className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all hover:border-orange-500/50 group ${
+                      isDark
+                        ? "bg-gray-800/50 hover:bg-gray-800 border-gray-700"
+                        : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                    }`}>
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                            newRole === "USER"
+                              ? "border-orange-500 bg-orange-500"
+                              : isDark
+                              ? "border-gray-600 group-hover:border-orange-500/50"
+                              : "border-gray-400 group-hover:border-orange-500/50"
+                          }`}
+                        >
+                          {newRole === "USER" && (
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                        <div>
+                          <p className={`font-semibold text-sm ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}>User</p>
+                          <p className={`text-[10px] ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}>
+                            Standard user account
+                          </p>
+                        </div>
+                      </div>
+                      <input
+                        type="radio"
+                        name="role"
+                        value="USER"
+                        checked={newRole === "USER"}
+                        onChange={(e) =>
+                          setNewRole(
+                            e.target.value as "USER" | "ADMIN" | "STAFF_ADMIN"
+                          )
+                        }
+                        className="sr-only"
+                      />
+                    </label>
 
-                  {/* STAFF_ADMIN Role */}
-                  <label className="flex items-center justify-between p-3 bg-gray-800/50 hover:bg-gray-800 border border-gray-700 rounded-lg cursor-pointer transition-all hover:border-orange-500/50 group">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
-                          newRole === "STAFF_ADMIN"
-                            ? "border-orange-500 bg-orange-500"
-                            : "border-gray-600 group-hover:border-orange-500/50"
-                        }`}
-                      >
-                        {newRole === "STAFF_ADMIN" && (
-                          <div className="w-2 h-2 bg-white rounded-full"></div>
-                        )}
+                    {/* ADMIN Role */}
+                    <label className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all hover:border-orange-500/50 group ${
+                      isDark
+                        ? "bg-gray-800/50 hover:bg-gray-800 border-gray-700"
+                        : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                    }`}>
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                            newRole === "ADMIN"
+                              ? "border-orange-500 bg-orange-500"
+                              : isDark
+                              ? "border-gray-600 group-hover:border-orange-500/50"
+                              : "border-gray-400 group-hover:border-orange-500/50"
+                          }`}
+                        >
+                          {newRole === "ADMIN" && (
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                        <div>
+                          <p className={`font-semibold text-sm ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}>Admin</p>
+                          <p className={`text-[10px] ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}>
+                            Full system access
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-white text-sm">Staff Admin</p>
-                        <p className="text-[10px] text-gray-400">
-                          Manage assigned users only
-                        </p>
+                      <input
+                        type="radio"
+                        name="role"
+                        value="ADMIN"
+                        checked={newRole === "ADMIN"}
+                        onChange={(e) =>
+                          setNewRole(
+                            e.target.value as "USER" | "ADMIN" | "STAFF_ADMIN"
+                          )
+                        }
+                        className="sr-only"
+                      />
+                    </label>
+
+                    {/* STAFF_ADMIN Role */}
+                    <label className={`flex items-center justify-between p-3 border rounded-lg cursor-pointer transition-all hover:border-orange-500/50 group ${
+                      isDark
+                        ? "bg-gray-800/50 hover:bg-gray-800 border-gray-700"
+                        : "bg-gray-50 hover:bg-gray-100 border-gray-200"
+                    }`}>
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${
+                            newRole === "STAFF_ADMIN"
+                              ? "border-orange-500 bg-orange-500"
+                              : isDark
+                              ? "border-gray-600 group-hover:border-orange-500/50"
+                              : "border-gray-400 group-hover:border-orange-500/50"
+                          }`}
+                        >
+                          {newRole === "STAFF_ADMIN" && (
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          )}
+                        </div>
+                        <div>
+                          <p className={`font-semibold text-sm ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}>Staff Admin</p>
+                          <p className={`text-[10px] ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}>
+                            Manage assigned users only
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <input
-                      type="radio"
-                      name="role"
-                      value="STAFF_ADMIN"
-                      checked={newRole === "STAFF_ADMIN"}
-                      onChange={(e) =>
-                        setNewRole(
-                          e.target.value as "USER" | "ADMIN" | "STAFF_ADMIN"
-                        )
-                      }
-                      className="sr-only"
-                    />
-                  </label>
+                      <input
+                        type="radio"
+                        name="role"
+                        value="STAFF_ADMIN"
+                        checked={newRole === "STAFF_ADMIN"}
+                        onChange={(e) =>
+                          setNewRole(
+                            e.target.value as "USER" | "ADMIN" | "STAFF_ADMIN"
+                          )
+                        }
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-2 pt-1">
+                  <button
+                    onClick={() => handleUpdateUserRole(editingUser.id, newRole)}
+                    disabled={loading}
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg disabled:shadow-none flex items-center justify-center gap-2 text-sm"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Update Role
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setEditingUser(null)}
+                    disabled={loading}
+                    className={`w-full font-semibold py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 text-sm disabled:cursor-not-allowed ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-900"}`}
+                  >
+                    <X className="w-4 h-4" />
+                    Cancel
+                  </button>
                 </div>
               </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col gap-2 pt-1">
-                <button
-                  onClick={() => handleUpdateUserRole(editingUser.id, newRole)}
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-lg disabled:shadow-none flex items-center justify-center gap-2 text-sm"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <Check className="w-4 h-4" />
-                      Update Role
-                    </>
-                  )}
-                </button>
-                <button
-                  onClick={() => setEditingUser(null)}
-                  disabled={loading}
-                  className="w-full bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:cursor-not-allowed text-white font-semibold py-2.5 px-4 rounded-lg transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 text-sm"
-                >
-                  <X className="w-4 h-4" />
-                  Cancel
-                </button>
-              </div>
             </div>
-          </motion.div>
-        </div>
+          </div>
+        </div>,
+        document.body
       )}
 
       {/* User Stats Modal */}
       {showUserStatsModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-gray-800 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
-          >
-            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setShowUserStatsModal(null)}
-                  className="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-gray-700 rounded-lg"
-                >
-                  <ArrowLeft size={20} />
-                </button>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  {showUserStatsModal === "total" && (
-                    <>
-                      <Users className="text-blue-400" size={20} />
-                      All Users ({totalUsers})
-                    </>
-                  )}
-                  {showUserStatsModal === "admin" && (
-                    <>
-                      <UserCheck className="text-green-400" size={20} />
-                      Admin Users ({adminUsers})
-                    </>
-                  )}
-                  {showUserStatsModal === "staff" && (
-                    <>
-                      <Shield className="text-green-400" size={20} />
-                      Staff Admin Users ({staffAdminUsers})
-                    </>
-                  )}
-                  {showUserStatsModal === "regular" && (
-                    <>
-                      <UserX className="text-blue-400" size={20} />
-                      Regular Users ({regularUsers})
-                    </>
-                  )}
-                </h2>
-              </div>
-              <button
-                onClick={() => setShowUserStatsModal(null)}
-                className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-gray-700 rounded-lg"
-              >
-                <X size={20} />
-              </button>
-            </div>
+        <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+          {/* Spacer for dashboard header */}
+          <div className="h-14 sm:h-[72px]" />
 
-            <div className="p-4 overflow-y-auto max-h-[calc(90vh-80px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              <div className="space-y-2">
-                {users
-                  .filter((user) => {
-                    if (showUserStatsModal === "total") return true;
-                    if (showUserStatsModal === "admin")
-                      return user.role === "ADMIN";
-                    if (showUserStatsModal === "staff")
-                      return user.role === "STAFF_ADMIN";
-                    if (showUserStatsModal === "regular")
-                      return user.role === "USER";
-                    return false;
-                  })
-                  .map((user) => (
-                    <div
-                      key={user.id}
-                      className={`bg-gradient-to-b from-gray-700/50 to-gray-800/70 border rounded-xl p-3 transition-all ${
-                        selectedUser?.id === user.id
-                          ? "bg-gradient-to-b from-orange-500/30 to-orange-600/20 border-orange-500/50 shadow-[0_3px_0_0_#c2410c,0_4px_8px_rgba(0,0,0,0.3)]"
-                          : "border-gray-600/40 hover:from-gray-700/70 hover:to-gray-800/90 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.3)] hover:translate-y-0.5"
-                      } ${user.role === "USER" ? "cursor-pointer active:shadow-none active:translate-y-1" : ""}`}
-                      onClick={() =>
-                        user.role === "USER" &&
-                        setSelectedUser(
-                          selectedUser?.id === user.id ? null : user
-                        )
-                      }
-                    >
-                      {/* Top row: Badge and action buttons */}
-                      <div className="flex items-center justify-between mb-2">
-                        <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                            user.role === "ADMIN"
-                              ? "bg-green-500/20 text-green-400"
-                              : user.role === "STAFF_ADMIN"
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-gray-500/20 text-gray-400"
-                          }`}
-                        >
-                          {user.role}
-                        </span>
-                        {/* Admin action buttons - hide for origin admin */}
-                        {!user.isOriginAdmin && (
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingUser(user);
-                                setNewRole(
-                                  user.role as
-                                    | "USER"
-                                    | "ADMIN"
-                                    | "STAFF_ADMIN"
-                                );
-                              }}
-                              className="flex items-center gap-1 text-gray-400 hover:text-orange-400 transition-colors text-[10px]"
-                              title="Edit Role"
-                            >
-                              <Settings size={12} />
-                              <span>Settings</span>
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteUser(
-                                  user.id,
-                                  user.email || "Unknown"
-                                );
-                              }}
-                              className="flex items-center gap-1 text-gray-400 hover:text-red-400 transition-colors text-[10px]"
-                              title="Delete User"
-                            >
-                              <Trash2 size={12} />
-                              <span>Delete</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                      {/* User details */}
-                      <div className="min-w-0">
-                        <p className="font-medium text-white text-sm truncate">
-                          {user.email}
-                        </p>
-                        <p className="text-xs text-gray-400">
-                          {user.name || "No name"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Account: {user.accountType}
-                        </p>
-                        {user.adminViewPassword && (
-                          <p className="text-xs text-orange-400/80 font-mono">
-                            Password: {user.adminViewPassword}
-                          </p>
-                        )}
-                        {user.assignedStaffId && (
-                          <p className="text-xs text-blue-400 mt-1">
-                            Assigned to staff admin
-                          </p>
-                        )}
-                      </div>
-                      {/* Show Assign to Staff Admin when user is selected */}
-                      {selectedUser?.id === user.id &&
-                        user.role === "USER" &&
-                        !user.isOriginAdmin && (
-                          <div className="mt-3 pt-3 border-t border-gray-600/50 space-y-2">
-                            <label className="text-xs text-gray-300 font-semibold">
-                              Assign to Staff Admin:
-                            </label>
-                            <select
-                              value={user.assignedStaffId || ""}
-                              onChange={(e) =>
-                                handleAssignStaff(
-                                  user.id,
-                                  e.target.value || null
-                                )
-                              }
-                              onClick={(e) => e.stopPropagation()}
-                              disabled={
-                                assigningStaff || staffAdmins.length === 0
-                              }
-                              className="w-full bg-gray-700 border border-gray-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <option value="">
-                                {staffAdmins.length === 0
-                                  ? "No staff admins available"
-                                  : "Unassigned"}
-                              </option>
-                              {staffAdmins.map((staff) => (
-                                <option key={staff.id} value={staff.id}>
-                                  {staff.name || staff.email}
-                                </option>
-                              ))}
-                            </select>
-                            {user.assignedStaffId && (
-                              <p className="text-xs text-green-400">
-                                ✓ Assigned to staff admin
-                              </p>
-                            )}
-                          </div>
-                        )}
-                    </div>
-                  ))}
-              </div>
+          {/* Back button */}
+          <div className="max-w-4xl mx-auto px-4 pt-4 pb-2">
+            <button
+              onClick={() => setShowUserStatsModal(null)}
+              className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm font-medium">Back to Dashboard</span>
+            </button>
+          </div>
 
-              {users.filter((user) => {
-                if (showUserStatsModal === "total") return true;
-                if (showUserStatsModal === "admin")
-                  return user.role === "ADMIN";
-                if (showUserStatsModal === "staff")
-                  return user.role === "STAFF_ADMIN";
-                if (showUserStatsModal === "regular")
-                  return user.role === "USER";
-                return false;
-              }).length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-400">
-                    No users found in this category
-                  </p>
-                </div>
+          {/* Users List */}
+          <div className="max-w-4xl mx-auto px-4 pb-8">
+            <h2 className={`text-lg font-bold flex items-center gap-2 mb-4 px-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+              {showUserStatsModal === "total" && (
+                <>
+                  <Users className="text-blue-400" size={20} />
+                  All Users ({totalUsers})
+                </>
               )}
-            </div>
-          </motion.div>
+              {showUserStatsModal === "admin" && (
+                <>
+                  <UserCheck className="text-green-400" size={20} />
+                  Admin Users ({adminUsers})
+                </>
+              )}
+              {showUserStatsModal === "staff" && (
+                <>
+                  <Shield className="text-green-400" size={20} />
+                  Staff Admin Users ({staffAdminUsers})
+                </>
+              )}
+              {showUserStatsModal === "regular" && (
+                <>
+                  <UserX className="text-blue-400" size={20} />
+                  Regular Users ({regularUsers})
+                </>
+              )}
+            </h2>
+            <div className="space-y-2">
+                  {users
+                    .filter((user) => {
+                      if (showUserStatsModal === "total") return true;
+                      if (showUserStatsModal === "admin")
+                        return user.role === "ADMIN";
+                      if (showUserStatsModal === "staff")
+                        return user.role === "STAFF_ADMIN";
+                      if (showUserStatsModal === "regular")
+                        return user.role === "USER";
+                      return false;
+                    })
+                    .map((user) => (
+                      <div
+                        key={user.id}
+                        className={`border rounded-xl p-3 transition-all ${
+                          selectedUser?.id === user.id
+                            ? isDark
+                              ? "bg-gradient-to-b from-orange-500/30 to-orange-600/20 border-orange-500/50 shadow-[0_3px_0_0_#c2410c,0_4px_8px_rgba(0,0,0,0.3)]"
+                              : "bg-orange-50 border-orange-400 shadow-sm"
+                            : isDark
+                            ? "bg-gradient-to-b from-gray-700/50 to-gray-800/70 border-gray-600/40 hover:from-gray-700/70 hover:to-gray-800/90 shadow-[0_3px_0_0_#1f2937,0_4px_8px_rgba(0,0,0,0.3)] hover:shadow-[0_1px_0_0_#1f2937,0_2px_4px_rgba(0,0,0,0.3)] hover:translate-y-0.5"
+                            : "bg-gray-50 border-gray-200 hover:bg-gray-100 shadow-sm"
+                        } ${user.role === "USER" ? "cursor-pointer active:shadow-none active:translate-y-1" : ""}`}
+                        onClick={() =>
+                          user.role === "USER" &&
+                          setSelectedUser(
+                            selectedUser?.id === user.id ? null : user
+                          )
+                        }
+                      >
+                        {/* Top row: Badge and action buttons */}
+                        <div className="flex items-center justify-between mb-2">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide ${
+                              user.role === "ADMIN"
+                                ? "bg-green-500 text-white"
+                                : user.role === "STAFF_ADMIN"
+                                ? "bg-blue-500 text-white"
+                                : isDark
+                                ? "bg-gray-600 text-gray-200"
+                                : "bg-gray-200 text-gray-700"
+                            }`}
+                          >
+                            {user.role}
+                          </span>
+                          {/* Admin action buttons - hide for origin admin */}
+                          {!user.isOriginAdmin && (
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingUser(user);
+                                  setNewRole(
+                                    user.role as
+                                      | "USER"
+                                      | "ADMIN"
+                                      | "STAFF_ADMIN"
+                                  );
+                                }}
+                                className={`flex items-center gap-1 transition-colors text-[10px] font-medium ${isDark ? "text-gray-300 hover:text-orange-400" : "text-gray-600 hover:text-orange-500"}`}
+                                title="Edit Role"
+                              >
+                                <Settings size={12} />
+                                <span>Settings</span>
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteUser(
+                                    user.id,
+                                    user.email || "Unknown"
+                                  );
+                                }}
+                                className={`flex items-center gap-1 transition-colors text-[10px] font-medium ${isDark ? "text-gray-300 hover:text-red-400" : "text-gray-600 hover:text-red-500"}`}
+                                title="Delete User"
+                              >
+                                <Trash2 size={12} />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {/* User details */}
+                        <div className="min-w-0">
+                          <p className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+                            {user.email}
+                          </p>
+                          <p className={`text-xs font-medium ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                            {user.name || "No name"}
+                          </p>
+                          <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                            Account: {user.accountType}
+                          </p>
+                          {user.adminViewPassword && (
+                            <p className={`text-xs font-mono font-medium ${isDark ? "text-orange-300" : "text-orange-600"}`}>
+                              Password: {user.adminViewPassword}
+                            </p>
+                          )}
+                          {user.assignedStaffId && (
+                            <p className={`text-xs font-medium mt-1 ${isDark ? "text-blue-400" : "text-blue-600"}`}>
+                              Assigned to staff admin
+                            </p>
+                          )}
+                        </div>
+                        {/* Show Assign to Staff Admin when user is selected */}
+                        {selectedUser?.id === user.id &&
+                          user.role === "USER" &&
+                          !user.isOriginAdmin && (
+                            <div className={`mt-3 pt-3 border-t space-y-2 ${isDark ? "border-gray-600/50" : "border-gray-200"}`}>
+                              <label className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                                Assign to Staff Admin:
+                              </label>
+                              <select
+                                value={user.assignedStaffId || ""}
+                                onChange={(e) =>
+                                  handleAssignStaff(
+                                    user.id,
+                                    e.target.value || null
+                                  )
+                                }
+                                onClick={(e) => e.stopPropagation()}
+                                disabled={
+                                  assigningStaff || staffAdmins.length === 0
+                                }
+                                className={`w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed ${isDark ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300 text-gray-900"}`}
+                              >
+                                <option value="">
+                                  {staffAdmins.length === 0
+                                    ? "No staff admins available"
+                                    : "Unassigned"}
+                                </option>
+                                {staffAdmins.map((staff) => (
+                                  <option key={staff.id} value={staff.id}>
+                                    {staff.name || staff.email}
+                                  </option>
+                                ))}
+                              </select>
+                              {user.assignedStaffId && (
+                                <p className="text-xs text-green-400">
+                                  ✓ Assigned to staff admin
+                                </p>
+                              )}
+                            </div>
+                          )}
+                      </div>
+                    ))}
+                </div>
+
+                {users.filter((user) => {
+                  if (showUserStatsModal === "total") return true;
+                  if (showUserStatsModal === "admin")
+                    return user.role === "ADMIN";
+                  if (showUserStatsModal === "staff")
+                    return user.role === "STAFF_ADMIN";
+                  if (showUserStatsModal === "regular")
+                    return user.role === "USER";
+                  return false;
+                }).length === 0 && (
+                  <div className="text-center py-12">
+                    <p className={isDark ? "text-gray-400" : "text-gray-500"}>
+                      No users found in this category
+                    </p>
+                  </div>
+                )}
+          </div>
         </div>
       )}
 
       {/* Signal Strength Control Modal */}
-      {showSignalModal && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-3 sm:p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-gray-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden shadow-2xl"
-          >
-            <div className="sticky top-0 bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
-              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
-                <Activity className="text-green-400" size={18} />
-                <span className="text-sm sm:text-base">Platform Signal</span>
-              </h2>
+      {showSignalModal && mounted && (
+        <div
+          className={`fixed top-0 left-0 right-0 bottom-0 z-[100] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+            isDark
+              ? "bg-gradient-to-br from-gray-900 via-gray-800 to-black"
+              : "bg-gradient-to-br from-gray-50 via-white to-gray-100"
+          }`}
+        >
+          {/* Top spacer to clear the dashboard header */}
+          <div className="h-14 sm:h-[72px]" />
+
+          {/* Admin Control Panel title */}
+          <div className="max-w-lg mx-auto px-4 pt-4 pb-2">
+            <div className="mb-1">
+              <h1 className="text-base xs:text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+                Admin Control Panel
+              </h1>
+              <p className={`text-[10px] xs:text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                Complete administrative dashboard
+              </p>
               <button
                 onClick={() => setShowSignalModal(false)}
-                className="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-gray-700 rounded-lg"
+                className={`flex items-center gap-2 transition-colors p-2 rounded-lg mt-1 ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
               >
-                <X size={20} />
+                <ArrowLeft size={20} />
+                <span className="text-sm font-medium">Back to Dashboard</span>
               </button>
             </div>
+          </div>
 
-            <div className="p-4 overflow-y-auto max-h-[calc(90vh-60px)] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {/* Current Signal Display */}
-              <div className="bg-gray-700/30 border border-gray-600/30 rounded-xl p-4 mb-4">
-                <h3 className="text-sm font-semibold text-white mb-3">
-                  Current Signal Strength
-                </h3>
-                
-                {/* Signal Visualization */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-gray-400">
-                      {globalSignalStrength >= 75 ? "Strong" : globalSignalStrength >= 50 ? "Moderate" : "Weak"}
-                    </span>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
-                      {globalSignalStrength}%
-                    </span>
-                  </div>
-                  
-                  <div className="relative h-3 bg-gray-700/50 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        globalSignalStrength >= 75
-                          ? "bg-gradient-to-r from-green-500 to-green-600"
-                          : globalSignalStrength >= 50
-                          ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
-                          : "bg-gradient-to-r from-red-500 to-red-600"
-                      }`}
-                      style={{ width: `${globalSignalStrength}%` }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
-                    </div>
-                  </div>
+          {/* Platform Signal heading */}
+          <div className="max-w-lg mx-auto px-4 pb-2">
+            <h2 className={`text-sm font-bold flex items-center gap-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+              <Activity className="text-green-400" size={16} />
+              Platform Signal
+            </h2>
+          </div>
+
+          {/* Content */}
+          <div className="max-w-lg mx-auto px-4 pb-6 space-y-4">
+            {/* Current Signal Display */}
+            <div className={`border rounded-xl p-4 ${
+              isDark ? "bg-gray-800/80 border-gray-700" : "bg-white border-gray-200"
+            }`}>
+              <h3 className={`text-sm font-semibold mb-3 ${
+                isDark ? "text-white" : "text-gray-900"
+              }`}>
+                Current Signal Strength
+              </h3>
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                    {globalSignalStrength >= 75 ? "Strong" : globalSignalStrength >= 50 ? "Moderate" : "Weak"}
+                  </span>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-green-600 bg-clip-text text-transparent">
+                    {globalSignalStrength}%
+                  </span>
                 </div>
+                <div className={`relative h-3 rounded-full overflow-hidden ${isDark ? "bg-gray-700" : "bg-gray-200"}`}>
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      globalSignalStrength >= 75
+                        ? "bg-gradient-to-r from-green-500 to-green-600"
+                        : globalSignalStrength >= 50
+                        ? "bg-gradient-to-r from-yellow-500 to-yellow-600"
+                        : "bg-gradient-to-r from-red-500 to-red-600"
+                    }`}
+                    style={{ width: `${globalSignalStrength}%` }}
+                  />
+                </div>
+              </div>
+              <div className={`rounded-lg p-3 ${isDark ? "bg-gray-700/50" : "bg-gray-100"}`}>
+                <p className={`text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                  {globalSignalStrength >= 75
+                    ? "🟢 Strong signal - Optimal trading conditions for all users"
+                    : globalSignalStrength >= 50
+                    ? "🟡 Moderate signal - Good trading conditions with some variations"
+                    : "🔴 Weak signal - Conservative trading conditions"}
+                </p>
+              </div>
+            </div>
 
-                {/* Signal Level Description */}
-                <div className="bg-gray-800/50 rounded-lg p-3">
-                  <p className="text-xs text-gray-300">
-                    {globalSignalStrength >= 75 
-                      ? "🟢 Strong signal - Optimal trading conditions for all users" 
-                      : globalSignalStrength >= 50 
-                      ? "🟡 Moderate signal - Good trading conditions with some variations" 
-                      : "🔴 Weak signal - Conservative trading conditions"}
+            {/* Signal Control Slider */}
+            <div className={`border rounded-xl p-4 ${
+              isDark ? "bg-gray-800/80 border-gray-700" : "bg-white border-gray-200"
+            }`}>
+              <h3 className={`text-sm font-semibold mb-3 ${isDark ? "text-white" : "text-gray-900"}`}>
+                Adjust Signal Strength
+              </h3>
+              <div className="space-y-3">
+                <input
+                  type="range"
+                  min="30"
+                  max="95"
+                  value={globalSignalStrength}
+                  onChange={(e) => {
+                    setGlobalSignalStrength(Number(e.target.value));
+                    setIsAutoMode(false);
+                    setIsStrongMode(false);
+                    setIsModerateMode(false);
+                    setIsWeakMode(false);
+                  }}
+                  className="w-full h-2.5 rounded-lg appearance-none cursor-pointer slider"
+                  style={{
+                    background: `linear-gradient(to right, 
+                      ${globalSignalStrength >= 75 ? "#22c55e" : globalSignalStrength >= 50 ? "#eab308" : "#ef4444"} 0%, 
+                      ${globalSignalStrength >= 75 ? "#22c55e" : globalSignalStrength >= 50 ? "#eab308" : "#ef4444"} ${globalSignalStrength}%, 
+                      ${isDark ? "#4b5563" : "#d1d5db"} ${globalSignalStrength}%, 
+                      ${isDark ? "#4b5563" : "#d1d5db"} 100%)`
+                  }}
+                />
+                {/* Quick Preset Buttons */}
+                <div className="grid grid-cols-4 gap-2">
+                  <button
+                    onClick={() => {
+                      const newWeakMode = !isWeakMode;
+                      setIsAutoMode(false); setIsStrongMode(false); setIsModerateMode(false);
+                      setIsWeakMode(newWeakMode);
+                      if (newWeakMode) setGlobalSignalStrength(56);
+                    }}
+                    className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
+                      isWeakMode
+                        ? isDark ? "bg-red-500/30 border-red-500/60 text-red-300" : "bg-red-200 border-red-500 text-red-700"
+                        : isDark ? "bg-red-500/20 border-red-500/40 hover:bg-red-500/30 text-red-400" : "bg-red-100 border-red-400 hover:bg-red-200 text-red-700"
+                    }`}
+                  >
+                    <div>{isWeakMode ? "Weak ✓" : "Weak"}</div>
+                    <div className="text-[9px]">(45-68%)</div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newModerateMode = !isModerateMode;
+                      setIsAutoMode(false); setIsStrongMode(false); setIsWeakMode(false);
+                      setIsModerateMode(newModerateMode);
+                      if (newModerateMode) setGlobalSignalStrength(71);
+                    }}
+                    className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
+                      isModerateMode
+                        ? isDark ? "bg-yellow-500/30 border-yellow-500/60 text-yellow-300" : "bg-yellow-200 border-yellow-500 text-yellow-800"
+                        : isDark ? "bg-yellow-500/20 border-yellow-500/40 hover:bg-yellow-500/30 text-yellow-400" : "bg-yellow-100 border-yellow-400 hover:bg-yellow-200 text-yellow-800"
+                    }`}
+                  >
+                    <div>{isModerateMode ? "Moderate ✓" : "Moderate"}</div>
+                    <div className="text-[9px]">(65-78%)</div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newStrongMode = !isStrongMode;
+                      setIsAutoMode(false); setIsModerateMode(false); setIsWeakMode(false);
+                      setIsStrongMode(newStrongMode);
+                      if (newStrongMode) setGlobalSignalStrength(91);
+                    }}
+                    className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
+                      isStrongMode
+                        ? isDark ? "bg-green-500/30 border-green-500/60 text-green-300" : "bg-green-200 border-green-500 text-green-800"
+                        : isDark ? "bg-green-500/20 border-green-500/40 hover:bg-green-500/30 text-green-400" : "bg-green-100 border-green-400 hover:bg-green-200 text-green-800"
+                    }`}
+                  >
+                    <div>{isStrongMode ? "Strong ✓" : "Strong"}</div>
+                    <div className="text-[9px]">(88-95%)</div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const newAutoMode = !isAutoMode;
+                      setIsStrongMode(false); setIsModerateMode(false); setIsWeakMode(false);
+                      setIsAutoMode(newAutoMode);
+                      if (newAutoMode) setGlobalSignalStrength(84);
+                    }}
+                    className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
+                      isAutoMode
+                        ? isDark ? "bg-purple-500/30 border-purple-500/60 text-purple-300" : "bg-purple-200 border-purple-500 text-purple-800"
+                        : isDark ? "bg-purple-500/20 border-purple-500/40 hover:bg-purple-500/30 text-purple-400" : "bg-purple-100 border-purple-400 hover:bg-purple-200 text-purple-800"
+                    }`}
+                  >
+                    <div>{isAutoMode ? "Auto ✓" : "Auto"}</div>
+                    <div className="text-[9px]">(78-90%)</div>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Impact Information */}
+            <div className={`border rounded-xl p-3 ${
+              isDark ? "bg-blue-500/10 border-blue-500/30" : "bg-blue-50 border-blue-300"
+            }`}>
+              <div className="flex items-start space-x-2">
+                <AlertCircle className={`flex-shrink-0 mt-0.5 ${isDark ? "text-blue-400" : "text-blue-600"}`} size={16} />
+                <div className={`text-xs ${isDark ? "text-blue-300" : "text-blue-800"}`}>
+                  <p className="font-semibold mb-1">Platform-wide Signal Control</p>
+                  <p className={isDark ? "text-blue-200/80" : "text-blue-700"}>
+                    Adjusting the signal strength affects all user dashboards and trading indicators.
+                    Changes are applied immediately and synchronized across all active sessions.
                   </p>
                 </div>
               </div>
-
-              {/* Signal Control Slider */}
-              <div className="bg-gray-700/30 border border-gray-600/30 rounded-xl p-4 mb-4">
-                <h3 className="text-sm font-semibold text-white mb-3">
-                  Adjust Signal Strength
-                </h3>
-                
-                <div className="space-y-3">
-                  <input
-                    type="range"
-                    min="30"
-                    max="95"
-                    value={globalSignalStrength}
-                    onChange={(e) => {
-                      setGlobalSignalStrength(Number(e.target.value));
-                      // Disable all auto modes when manually adjusted
-                      setIsAutoMode(false);
-                      setIsStrongMode(false);
-                      setIsModerateMode(false);
-                      setIsWeakMode(false);
-                    }}
-                    className="w-full h-2.5 bg-gray-600 rounded-lg appearance-none cursor-pointer slider"
-                    style={{
-                      background: `linear-gradient(to right, 
-                        ${globalSignalStrength >= 75 ? "#22c55e" : globalSignalStrength >= 50 ? "#eab308" : "#ef4444"} 0%, 
-                        ${globalSignalStrength >= 75 ? "#22c55e" : globalSignalStrength >= 50 ? "#eab308" : "#ef4444"} ${globalSignalStrength}%, 
-                        #4b5563 ${globalSignalStrength}%, 
-                        #4b5563 100%)`
-                    }}
-                  />
-                  
-                  {/* Quick Preset Buttons */}
-                  <div className="grid grid-cols-4 gap-2">
-                    <button
-                      onClick={() => {
-                        const newWeakMode = !isWeakMode;
-                        setIsAutoMode(false);
-                        setIsStrongMode(false);
-                        setIsModerateMode(false);
-                        setIsWeakMode(newWeakMode);
-                        if (newWeakMode) {
-                          // Set to middle of weak range
-                          setGlobalSignalStrength(56);
-                        }
-                      }}
-                      className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
-                        isWeakMode
-                          ? "bg-red-500/30 border-red-500/60 text-red-300"
-                          : "bg-red-500/20 border-red-500/40 hover:bg-red-500/30 text-red-400"
-                      }`}
-                    >
-                      <div>{isWeakMode ? "Weak ✓" : "Weak"}</div>
-                      <div className="text-[9px]">(45-68%)</div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        const newModerateMode = !isModerateMode;
-                        setIsAutoMode(false);
-                        setIsStrongMode(false);
-                        setIsWeakMode(false);
-                        setIsModerateMode(newModerateMode);
-                        if (newModerateMode) {
-                          // Set to middle of moderate range
-                          setGlobalSignalStrength(71);
-                        }
-                      }}
-                      className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
-                        isModerateMode
-                          ? "bg-yellow-500/30 border-yellow-500/60 text-yellow-300"
-                          : "bg-yellow-500/20 border-yellow-500/40 hover:bg-yellow-500/30 text-yellow-400"
-                      }`}
-                    >
-                      <div>{isModerateMode ? "Moderate ✓" : "Moderate"}</div>
-                      <div className="text-[9px]">(65-78%)</div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        const newStrongMode = !isStrongMode;
-                        setIsAutoMode(false);
-                        setIsModerateMode(false);
-                        setIsWeakMode(false);
-                        setIsStrongMode(newStrongMode);
-                        if (newStrongMode) {
-                          // Set to middle of strong range
-                          setGlobalSignalStrength(91);
-                        }
-                      }}
-                      className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
-                        isStrongMode
-                          ? "bg-green-500/30 border-green-500/60 text-green-300"
-                          : "bg-green-500/20 border-green-500/40 hover:bg-green-500/30 text-green-400"
-                      }`}
-                    >
-                      <div>{isStrongMode ? "Strong ✓" : "Strong"}</div>
-                      <div className="text-[9px]">(88-95%)</div>
-                    </button>
-                    <button
-                      onClick={() => {
-                        const newAutoMode = !isAutoMode;
-                        setIsStrongMode(false);
-                        setIsModerateMode(false);
-                        setIsWeakMode(false);
-                        setIsAutoMode(newAutoMode);
-                        if (newAutoMode) {
-                          // Set to middle of auto range
-                          setGlobalSignalStrength(84);
-                        }
-                      }}
-                      className={`border-2 py-2 px-1 rounded-lg transition-all font-semibold text-[10px] leading-tight ${
-                        isAutoMode
-                          ? "bg-purple-500/30 border-purple-500/60 text-purple-300"
-                          : "bg-purple-500/20 border-purple-500/40 hover:bg-purple-500/30 text-purple-400"
-                      }`}
-                    >
-                      <div>{isAutoMode ? "Auto ✓" : "Auto"}</div>
-                      <div className="text-[9px]">(78-90%)</div>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Impact Information */}
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3 mb-4">
-                <div className="flex items-start space-x-2">
-                  <AlertCircle className="text-blue-400 flex-shrink-0 mt-0.5" size={16} />
-                  <div className="text-xs text-blue-300">
-                    <p className="font-semibold mb-1">Platform-wide Signal Control</p>
-                    <p className="text-blue-200/80">
-                      Adjusting the signal strength affects all user dashboards and trading indicators. 
-                      Changes are applied immediately and synchronized across all active sessions.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Apply Button */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    const mode = isWeakMode ? "weak" : isModerateMode ? "moderate" : isStrongMode ? "strong" : isAutoMode ? "auto" : "none";
-                    updateSignalStrength(globalSignalStrength, mode);
-                  }}
-                  className="flex-1 bg-green-500/20 border-2 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400 py-2.5 px-3 rounded-xl transition-all font-semibold text-sm flex items-center justify-center gap-2"
-                >
-                  <Check size={16} />
-                  <span>Apply Changes</span>
-                </button>
-                
-                <button
-                  onClick={() => setShowSignalModal(false)}
-                  className="bg-gray-600 hover:bg-gray-500 text-white py-2.5 px-4 rounded-xl transition-all font-semibold text-sm"
-                >
-                  Cancel
-                </button>
-              </div>
             </div>
-          </motion.div>
+
+            {/* Apply / Cancel Buttons */}
+            <div className="flex gap-3 pt-2">
+              <button
+                onClick={() => {
+                  const mode = isWeakMode ? "weak" : isModerateMode ? "moderate" : isStrongMode ? "strong" : isAutoMode ? "auto" : "none";
+                  updateSignalStrength(globalSignalStrength, mode);
+                }}
+                className={`flex-1 border-2 py-3 px-4 rounded-xl transition-all font-semibold text-sm flex items-center justify-center gap-2 ${
+                  isDark
+                    ? "bg-green-500/20 border-green-500/40 hover:bg-green-500/30 hover:border-green-500/60 text-green-400"
+                    : "bg-green-100 border-green-400 hover:bg-green-200 text-green-700"
+                }`}
+              >
+                <Check size={16} />
+                Apply Changes
+              </button>
+              <button
+                onClick={() => setShowSignalModal(false)}
+                className={`py-3 px-6 rounded-xl transition-all font-semibold text-sm ${
+                  isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+                }`}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -3959,10 +4148,14 @@ const AdminDashboard = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="bg-gray-800 rounded-xl max-w-sm w-full shadow-2xl border border-green-500/30 max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+            className={`rounded-xl max-w-sm w-full shadow-2xl border border-green-500/30 max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] ${
+              isDark ? "bg-gray-800" : "bg-white"
+            }`}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-2.5 sm:p-3 border-b border-gray-700 sticky top-0">
+            <div className={`bg-gradient-to-r from-green-500/20 to-emerald-500/20 p-2.5 sm:p-3 border-b sticky top-0 ${
+              isDark ? "border-gray-700" : "border-gray-300"
+            }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-green-500/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -3992,37 +4185,65 @@ const AdminDashboard = () => {
             {/* Content */}
             <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
               {/* Deposit Type */}
-              <div className="bg-gray-900/50 rounded-lg p-2.5 sm:p-3 border border-gray-700">
-                <p className="text-xs text-gray-400 mb-0.5">Deposit Type</p>
-                <p className="text-sm sm:text-base font-semibold text-white">
+              <div className={`rounded-lg p-2.5 sm:p-3 border ${
+                isDark
+                  ? "bg-gray-900/50 border-gray-700"
+                  : "bg-gray-50 border-gray-300"
+              }`}>
+                <p className={`text-xs mb-0.5 ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}>Deposit Type</p>
+                <p className={`text-sm sm:text-base font-semibold ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>
                   {successDetails.type}
                 </p>
               </div>
 
               {/* Amount */}
-              <div className="bg-gray-900/50 rounded-lg p-2.5 sm:p-3 border border-gray-700">
-                <p className="text-xs text-gray-400 mb-0.5">Amount</p>
+              <div className={`rounded-lg p-2.5 sm:p-3 border ${
+                isDark
+                  ? "bg-gray-900/50 border-gray-700"
+                  : "bg-gray-50 border-gray-300"
+              }`}>
+                <p className={`text-xs mb-0.5 ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}>Amount</p>
                 <p className="text-lg sm:text-xl font-bold text-green-400">
                   {successDetails.amount}
                 </p>
                 {successDetails.fiatAmount && (
-                  <p className="text-sm text-gray-400 mt-0.5">
+                  <p className={`text-sm mt-0.5 ${
+                    isDark ? "text-gray-400" : "text-gray-600"
+                  }`}>
                     ≈ {successDetails.fiatAmount}
                   </p>
                 )}
               </div>
 
               {/* User */}
-              <div className="bg-gray-900/50 rounded-lg p-2.5 sm:p-3 border border-gray-700">
-                <p className="text-xs text-gray-400 mb-0.5">Credited To</p>
-                <p className="text-sm font-medium text-white truncate">
+              <div className={`rounded-lg p-2.5 sm:p-3 border ${
+                isDark
+                  ? "bg-gray-900/50 border-gray-700"
+                  : "bg-gray-50 border-gray-300"
+              }`}>
+                <p className={`text-xs mb-0.5 ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}>Credited To</p>
+                <p className={`text-sm font-medium truncate ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>
                   {successDetails.userEmail}
                 </p>
               </div>
 
               {/* Transaction Hash (if crypto) */}
               {successDetails.transactionHash && (
-                <div className="bg-gray-900/50 rounded-lg p-2.5 sm:p-3 border border-gray-700">
+                <div className={`rounded-lg p-2.5 sm:p-3 border ${
+                  isDark
+                    ? "bg-gray-900/50 border-gray-700"
+                    : "bg-gray-50 border-gray-300"
+                }`}>
                   <p className="text-xs text-gray-400 mb-0.5">
                     Transaction Hash
                   </p>

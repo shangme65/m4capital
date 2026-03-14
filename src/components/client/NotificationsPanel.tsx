@@ -19,6 +19,7 @@ import {
   CheckCircle,
   ArrowUpRight,
   ArrowDownRight,
+  ArrowRight,
   Trash2,
   MailOpen,
   Circle,
@@ -519,34 +520,39 @@ export default function NotificationsPanel({
                                           // For trade profits, don't show asset symbol since formatAmount includes currency symbol
                                           const showAssetSymbol = !isTradeProfit;
                                           
+                                          const isPositive = notification.amount >= 0;
+                                          const colorClass = isPositive
+                                            ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
+                                            : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/20";
+                                          const textGradient = isPositive
+                                            ? "bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
+                                            : "bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent";
+                                          const mutedTextClass = isPositive ? "text-green-500" : "text-red-500";
+
                                           return (
-                                            <div
-                                              className={`inline-flex items-center space-x-1.5 px-2 py-1 rounded-lg ${
-                                                notification.amount < 0
-                                                  ? "bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/20"
-                                                  : "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
-                                              } mb-2`}
-                                            >
-                                              <span
-                                                className={`text-base font-black ${
-                                                  notification.amount < 0
-                                                    ? "bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent"
-                                                    : "bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
-                                                }`}
-                                              >
-                                                {notification.amount < 0 ? "-" : "+"}
-                                                {displayAmount}
-                                              </span>
-                                              {showAssetSymbol && (
-                                                <span
-                                                  className={`text-xs font-bold ${
-                                                    notification.amount < 0
-                                                      ? "text-red-400"
-                                                      : "text-green-400"
-                                                  }`}
-                                                >
-                                                  {notification.asset}
-                                                </span>
+                                            <div className={`inline-flex flex-col px-2 py-1.5 rounded-lg ${colorClass} mb-2`}>
+                                              {isTradeProfit ? (
+                                                // Show USD → user currency conversion
+                                                <div className="flex items-center gap-1.5">
+                                                  <span className={`text-xs font-semibold ${mutedTextClass} opacity-70`}>
+                                                    {isPositive ? "+" : "-"}${Math.abs(notification.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                  </span>
+                                                  <ArrowRight size={11} className={mutedTextClass} />
+                                                  <span className={`text-base font-black ${textGradient}`}>
+                                                    {isPositive ? "+" : "-"}{displayAmount}
+                                                  </span>
+                                                </div>
+                                              ) : (
+                                                <div className="inline-flex items-center space-x-1.5">
+                                                  <span className={`text-base font-black ${textGradient}`}>
+                                                    {isPositive ? "+" : "-"}{displayAmount}
+                                                  </span>
+                                                  {showAssetSymbol && (
+                                                    <span className={`text-xs font-bold ${mutedTextClass}`}>
+                                                      {notification.asset}
+                                                    </span>
+                                                  )}
+                                                </div>
                                               )}
                                             </div>
                                           );

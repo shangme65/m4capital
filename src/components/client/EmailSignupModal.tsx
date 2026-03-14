@@ -4,8 +4,10 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import VerifyEmailModal from "./VerifyEmailModal";
 import CountrySelector from "./CountrySelector";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface EmailSignupModalProps {
   isOpen: boolean;
@@ -30,7 +32,14 @@ export default function EmailSignupModal({
   const [isLoading, setIsLoading] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const isDark = mounted ? resolvedTheme === "dark" : true;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -121,12 +130,20 @@ export default function EmailSignupModal({
               onClick={(e) => e.stopPropagation()}
               style={{ touchAction: "auto" }}
             >
-              <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
+              <div className={`rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden border max-h-[90vh] overflow-y-auto ${
+                isDark
+                  ? "bg-[#1f1f1f] border-gray-600/50"
+                  : "bg-white border-gray-300"
+              }`}>
                 {/* Header with back button and close button */}
                 <div className="flex items-center justify-between p-4">
                   <button
                     onClick={onGoBack}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 hover:border-orange-500/50 text-orange-500 hover:text-orange-400 transition-all duration-200 group text-sm"
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border transition-all duration-200 group text-sm ${
+                      isDark
+                        ? "bg-gray-800/50 hover:bg-gray-700/50 border-gray-700 hover:border-orange-500/50 text-orange-500 hover:text-orange-400"
+                        : "bg-gray-100 hover:bg-gray-200 border-gray-300 hover:border-orange-500 text-orange-600 hover:text-orange-500"
+                    }`}
                   >
                     <svg 
                       className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform duration-200" 
@@ -140,7 +157,11 @@ export default function EmailSignupModal({
                   </button>
                   <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 w-8 h-8 bg-gray-600/30 hover:bg-gray-500/50 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200"
+                    className={`absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                      isDark
+                        ? "bg-gray-600/30 hover:bg-gray-500/50 text-gray-300 hover:text-white"
+                        : "bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-900"
+                    }`}
                     title="Close"
                     aria-label="Close"
                   >
@@ -162,9 +183,21 @@ export default function EmailSignupModal({
                 </div>
 
                 <div className="px-4 pb-8">
+                  {/* Logo */}
+                  <div className="flex items-center justify-center mb-6">
+                    <Image
+                      src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
+                      alt="Capital Logo"
+                      width={120}
+                      height={40}
+                    />
+                  </div>
+
                   {/* Title */}
-                  <h2 className="text-xl font-bold text-white mb-8 whitespace-nowrap">
-                    Create an account with email
+                  <h2 className={`text-xl font-bold mb-8 whitespace-nowrap ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}>
+                    Register an account
                   </h2>
 
                   <form onSubmit={handleSubmit} className="space-y-6">
@@ -176,7 +209,9 @@ export default function EmailSignupModal({
 
                     {/* Full Name */}
                     <div>
-                      <label className="block text-gray-400 text-sm mb-2">
+                      <label className={`block text-sm mb-2 ${
+                        isDark ? "text-gray-400" : "text-gray-700"
+                      }`}>
                         Full Name
                       </label>
                       <input
@@ -184,18 +219,26 @@ export default function EmailSignupModal({
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Enter your full name"
-                        className="w-full px-4 py-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-400"
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-orange-400 ${
+                          isDark
+                            ? "bg-[#2a2a2a] border-gray-600 text-white placeholder-gray-500"
+                            : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                        }`}
                         required
                       />
                     </div>
 
                     {/* Account Type */}
                     <div>
-                      <label className="block text-gray-400 text-sm mb-2">
+                      <label className={`block text-sm mb-2 ${
+                        isDark ? "text-gray-400" : "text-gray-700"
+                      }`}>
                         Registering As
                       </label>
                       <div className="flex gap-4">
-                        <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
+                        <label className={`flex items-center gap-2 cursor-pointer ${
+                          isDark ? "text-gray-300" : "text-gray-700"
+                        }`}>
                           <input
                             type="radio"
                             name="accountType"
@@ -204,9 +247,13 @@ export default function EmailSignupModal({
                             onChange={(e) => setAccountType(e.target.value)}
                             className="text-orange-500 focus:ring-orange-500 focus:outline-none"
                           />
-                          <span className="text-white">Standard</span>
+                          <span className={isDark ? "text-white" : "text-gray-900"}>
+                            Standard
+                          </span>
                         </label>
-                        <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
+                        <label className={`flex items-center gap-2 cursor-pointer ${
+                          isDark ? "text-gray-300" : "text-gray-700"
+                        }`}>
                           <input
                             type="radio"
                             name="accountType"
@@ -215,9 +262,13 @@ export default function EmailSignupModal({
                             onChange={(e) => setAccountType(e.target.value)}
                             className="text-orange-500 focus:ring-orange-500 focus:outline-none"
                           />
-                          <span className="text-white">Investor</span>
+                          <span className={isDark ? "text-white" : "text-gray-900"}>
+                            Investor
+                          </span>
                         </label>
-                        <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
+                        <label className={`flex items-center gap-2 cursor-pointer ${
+                          isDark ? "text-gray-300" : "text-gray-700"
+                        }`}>
                           <input
                             type="radio"
                             name="accountType"
@@ -226,14 +277,18 @@ export default function EmailSignupModal({
                             onChange={(e) => setAccountType(e.target.value)}
                             className="text-orange-500 focus:ring-orange-500 focus:outline-none"
                           />
-                          <span className="text-white">Trader</span>
+                          <span className={isDark ? "text-white" : "text-gray-900"}>
+                            Trader
+                          </span>
                         </label>
                       </div>
                     </div>
 
                     {/* Country of residence */}
                     <div>
-                      <label className="block text-gray-400 text-sm mb-2">
+                      <label className={`block text-sm mb-2 ${
+                        isDark ? "text-gray-400" : "text-gray-700"
+                      }`}>
                         Country of residence
                       </label>
                       <CountrySelector value={country} onChange={setCountry} />
@@ -241,7 +296,9 @@ export default function EmailSignupModal({
 
                     {/* Email */}
                     <div>
-                      <label className="block text-gray-400 text-sm mb-2">
+                      <label className={`block text-sm mb-2 ${
+                        isDark ? "text-gray-400" : "text-gray-700"
+                      }`}>
                         Email
                       </label>
                       <input
@@ -249,14 +306,20 @@ export default function EmailSignupModal({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="Email"
-                        className="w-full px-4 py-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-400"
+                        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-orange-400 ${
+                          isDark
+                            ? "bg-[#2a2a2a] border-gray-600 text-white placeholder-gray-500"
+                            : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                        }`}
                         required
                       />
                     </div>
 
                     {/* Password */}
                     <div>
-                      <label className="block text-gray-400 text-sm mb-2">
+                      <label className={`block text-sm mb-2 ${
+                        isDark ? "text-gray-400" : "text-gray-700"
+                      }`}>
                         Password
                       </label>
                       <div className="relative">
@@ -265,13 +328,19 @@ export default function EmailSignupModal({
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="Password"
-                          className="w-full px-4 py-3 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-400 pr-10"
+                          className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-orange-400 pr-10 ${
+                            isDark
+                              ? "bg-[#2a2a2a] border-gray-600 text-white placeholder-gray-500"
+                              : "bg-gray-50 border-gray-300 text-gray-900 placeholder-gray-400"
+                          }`}
                           required
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-3 text-gray-400 hover:text-orange-500 transition-colors"
+                          className={`absolute right-3 top-3 transition-colors hover:text-orange-500 ${
+                            isDark ? "text-gray-400" : "text-gray-600"
+                          }`}
                           title={
                             showPassword ? "Hide password" : "Show password"
                           }
@@ -322,7 +391,7 @@ export default function EmailSignupModal({
 
                     {/* Already have account */}
                     <div className="text-center text-sm">
-                      <span className="text-gray-400">
+                      <span className={isDark ? "text-gray-400" : "text-gray-600"}>
                         Already have an account?{" "}
                       </span>
                       <button
@@ -336,13 +405,19 @@ export default function EmailSignupModal({
                   </form>
 
                   {/* Terms text */}
-                  <div className="mt-6 text-xs text-gray-500 text-center">
+                  <div className={`mt-6 text-xs text-center ${
+                    isDark ? "text-gray-500" : "text-gray-600"
+                  }`}>
                     By creating an account, you agree to and accept our{" "}
                     <a 
                       href="/terms" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-gray-400 underline cursor-pointer hover:text-white transition-colors"
+                      className={`underline cursor-pointer transition-colors ${
+                        isDark
+                          ? "text-gray-400 hover:text-white"
+                          : "text-gray-700 hover:text-gray-900"
+                      }`}
                     >
                       Terms & Conditions
                     </a>{" "}
@@ -351,7 +426,11 @@ export default function EmailSignupModal({
                       href="/privacy" 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-gray-400 underline cursor-pointer hover:text-white transition-colors"
+                      className={`underline cursor-pointer transition-colors ${
+                        isDark
+                          ? "text-gray-400 hover:text-white"
+                          : "text-gray-700 hover:text-gray-900"
+                      }`}
                     >
                       Privacy Policy
                     </a>

@@ -11,12 +11,12 @@ export const dynamic = "force-dynamic";
 // Client component for database error retry
 function DatabaseErrorPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-2xl p-8 text-center">
-        <h1 className="text-2xl font-bold text-amber-600 mb-4">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-slate-900 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 text-center">
+        <h1 className="text-2xl font-bold text-amber-600 dark:text-amber-400 mb-4">
           Database Connection Issue
         </h1>
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 dark:text-gray-300 mb-6">
           Unable to connect to the database. This may be a temporary issue with
           serverless cold starts.
         </p>
@@ -79,12 +79,12 @@ export default async function AdminSetupPage() {
     // Not logged in - deny access completely
     if (!session) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-2xl p-8 text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-slate-900 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 text-center">
+            <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">
               Access Denied
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Admin already exists. You must be logged in as an admin to access
               this page.
             </p>
@@ -97,7 +97,7 @@ export default async function AdminSetupPage() {
               </a>
               <a
                 href="/"
-                className="block bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-2 rounded-lg font-semibold"
+                className="block bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-6 py-2 rounded-lg font-semibold"
               >
                 Go to Home
               </a>
@@ -110,12 +110,12 @@ export default async function AdminSetupPage() {
     // Logged in but not an admin - deny access
     if (session.user.role !== "ADMIN") {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-2xl p-8 text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 via-purple-100 to-pink-50 dark:from-slate-900 dark:via-purple-900 dark:to-slate-900 flex items-center justify-center p-4">
+          <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-2xl p-8 text-center">
+            <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-4">
               Access Denied
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               You must be an admin to access this page.
             </p>
             <a

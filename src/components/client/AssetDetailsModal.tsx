@@ -969,6 +969,7 @@ export default function AssetDetailsModal({
                                       ? "bg-red-500/20"
                                       : "bg-blue-500/20"
                                   }`}
+                                  style={{ boxShadow: "0 2px 6px rgba(0,0,0,0.5)" }}
                                 >
                                   <span
                                     className={`text-sm ${
@@ -1020,7 +1021,7 @@ export default function AssetDetailsModal({
                               <div className="flex flex-col items-end">
                                 <div className="flex items-center gap-1.5">
                                   <div
-                                    className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase ${
+                                    className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
                                       tx.status?.toLowerCase() === "completed" ||
                                       tx.status?.toLowerCase() === "closed"
                                         ? isDark ? "bg-green-500/20 text-green-400" : "bg-green-50 text-green-600 border border-green-400"
@@ -1066,12 +1067,12 @@ export default function AssetDetailsModal({
                                 <span className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"} font-medium`}>
                                   {tx.type === "swap"
                                     ? tx.isFromAssetView
-                                      ? "Sent:"
+                                      ? "Swapped:"
                                       : "Received:"
                                     : "Amount:"}
                                 </span>
                                 <span
-                                  className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg ${isDark ? "bg-gray-800" : "bg-gray-200"} ${
+                                  className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "bg-gray-800" : "bg-gray-200"} ${
                                     tx.type === "buy" ||
                                     tx.type === "deposit" ||
                                     tx.type === "receive" ||
@@ -1129,7 +1130,7 @@ export default function AssetDetailsModal({
                                 <span className={`text-[11px] ${isDark ? "text-gray-400" : "text-gray-500"} font-medium`}>
                                   Value:
                                 </span>
-                                <span className={`font-semibold ${isDark ? "text-white bg-gray-800" : "text-gray-900 bg-gray-200"} text-[11px] px-1.5 py-0.5 rounded-lg`}>
+                                <span className={`font-semibold ${isDark ? "text-white bg-gray-800" : "text-gray-900 bg-gray-200"} text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)]`}>
                                   {/* For swaps, use fromValueUSD or toValueUSD depending on view */}
                                   {tx.type === "swap" ? (
                                     formatAmount(

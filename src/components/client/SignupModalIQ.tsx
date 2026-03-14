@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SignupModalIQProps {
   isOpen: boolean;
@@ -17,6 +18,14 @@ export default function SignupModalIQ({
   onProceedWithEmail,
   onSwitchToLogin,
 }: SignupModalIQProps) {
+  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = mounted ? resolvedTheme === "dark" : true;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -54,10 +63,18 @@ export default function SignupModalIQ({
             onClick={(e) => e.stopPropagation()}
             style={{ touchAction: "auto" }}
           >
-            <div className="bg-[#1f1f1f] rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden border border-gray-600/50 max-h-[90vh] overflow-y-auto">
+            <div className={`rounded-2xl shadow-2xl w-full max-w-md relative overflow-hidden border max-h-[90vh] overflow-y-auto ${
+              isDark
+                ? "bg-[#1f1f1f] border-gray-600/50"
+                : "bg-white border-gray-300"
+            }`}>
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 w-8 h-8 bg-gray-600/30 hover:bg-gray-500/50 rounded-full flex items-center justify-center text-gray-300 hover:text-white transition-all duration-200"
+                className={`absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  isDark
+                    ? "bg-gray-600/30 hover:bg-gray-500/50 text-gray-300 hover:text-white"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-600 hover:text-gray-900"
+                }`}
                 title="Close"
                 aria-label="Close"
               >
@@ -81,7 +98,7 @@ export default function SignupModalIQ({
                 {/* Logo */}
                 <div className="flex items-center justify-center mb-6">
                   <Image
-                    src="/m4capitallogo1.png"
+                    src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
                     alt="Capital Logo"
                     width={120}
                     height={40}
@@ -89,25 +106,35 @@ export default function SignupModalIQ({
                 </div>
 
                 {/* Subtitle */}
-                <div className="text-sm text-gray-400 mb-2">
+                <div className={`text-sm mb-2 ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}>
                   Get started now
                 </div>
 
                 {/* Title */}
-                <h2 className="text-3xl sm:text-4xl font-bold text-white mb-8 whitespace-nowrap">
+                <h2 className={`text-3xl sm:text-4xl font-bold mb-8 whitespace-nowrap ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>
                   Create an account
                 </h2>
 
                 {/* Continue with section */}
                 <div className="space-y-6">
                   <div>
-                    <div className="text-gray-400 text-sm mb-4">
+                    <div className={`text-sm mb-4 ${
+                      isDark ? "text-gray-400" : "text-gray-600"
+                    }`}>
                       Continue with
                     </div>
                     <div className="grid grid-cols-2 gap-4 mb-6">
                       <button
                         type="button"
-                        className="bg-[#2a2a2a] hover:bg-[#333] text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s"
+                        className={`py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s ${
+                          isDark
+                            ? "bg-[#2a2a2a] hover:bg-[#333] text-white"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                        }`}
                       >
                         <svg
                           width="18"
@@ -134,13 +161,19 @@ export default function SignupModalIQ({
                             fill="#EA4335"
                           />
                         </svg>
-                        <span className="transition-all duration-300 group-hover:text-gray-200 group-hover:font-semibold group-hover:translate-x-1">
+                        <span className={`transition-all duration-300 group-hover:font-semibold group-hover:translate-x-1 ${
+                          isDark ? "group-hover:text-gray-200" : "group-hover:text-black"
+                        }`}>
                           Google
                         </span>
                       </button>
                       <button
                         type="button"
-                        className="bg-[#2a2a2a] hover:bg-[#333] text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s"
+                        className={`py-3 px-4 rounded-lg flex items-center justify-center space-x-2 transition-all duration-300 group hover:scale-105 active:scale-95 transform bounce-5s ${
+                          isDark
+                            ? "bg-[#2a2a2a] hover:bg-[#333] text-white"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-900"
+                        }`}
                       >
                         <svg
                           width="18"
@@ -152,7 +185,9 @@ export default function SignupModalIQ({
                         >
                           <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                         </svg>
-                        <span className="transition-all duration-300 group-hover:text-gray-200 group-hover:font-semibold group-hover:translate-x-1">
+                        <span className={`transition-all duration-300 group-hover:font-semibold group-hover:translate-x-1 ${
+                          isDark ? "group-hover:text-gray-200" : "group-hover:text-black"
+                        }`}>
                           Facebook
                         </span>
                       </button>
@@ -162,10 +197,14 @@ export default function SignupModalIQ({
                   {/* Divider */}
                   <div className="relative my-6">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-gray-700"></div>
+                      <div className={`w-full border-t ${
+                        isDark ? "border-gray-700" : "border-gray-300"
+                      }`}></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-                      <span className="bg-[#1f1f1f] px-4 text-gray-400">
+                      <span className={`px-4 ${
+                        isDark ? "bg-[#1f1f1f] text-gray-400" : "bg-white text-gray-600"
+                      }`}>
                         or
                       </span>
                     </div>
@@ -181,7 +220,7 @@ export default function SignupModalIQ({
 
                   {/* Already have account */}
                   <div className="text-center text-sm">
-                    <span className="text-gray-400">
+                    <span className={isDark ? "text-gray-400" : "text-gray-600"}>
                       Already have an account?{" "}
                     </span>
                     <button

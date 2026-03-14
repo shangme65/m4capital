@@ -23,6 +23,7 @@ import {
   formatCurrency as formatCurrencyUtil,
 } from "@/lib/currencies";
 import { getCryptoMetadata } from "@/lib/crypto-constants";
+import { ArrowRight } from "lucide-react";
 import { useVerificationGate } from "@/hooks/useVerificationGate";
 import VerificationRequiredModal from "@/components/client/VerificationRequiredModal";
 import PendingDepositsWidget from "@/components/client/PendingDepositsWidget";
@@ -1428,7 +1429,7 @@ function DashboardContent() {
                           className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
                           style={{
                             background: "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
-                            boxShadow: "0 2px 8px rgba(34, 197, 94, 0.4)",
+                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.5)",
                           }}
                         >
                           <svg
@@ -1456,11 +1457,13 @@ function DashboardContent() {
                     ) {
                       return (
                         <div className="flex flex-col items-center gap-0.5 flex-shrink-0">
-                          <CryptoIcon
-                            symbol={activity.fromAsset}
-                            size="sm"
-                            showNetwork={false}
-                          />
+                          <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
+                            <CryptoIcon
+                              symbol={activity.fromAsset}
+                              size="sm"
+                              showNetwork={false}
+                            />
+                          </div>
                           <svg
                             className="w-3 h-3 text-cyan-400"
                             fill="none"
@@ -1474,11 +1477,13 @@ function DashboardContent() {
                               d="M19 14l-7 7m0 0l-7-7m7 7V3"
                             />
                           </svg>
-                          <CryptoIcon
-                            symbol={activity.toAsset}
-                            size="sm"
-                            showNetwork={false}
-                          />
+                          <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
+                            <CryptoIcon
+                              symbol={activity.toAsset}
+                              size="sm"
+                              showNetwork={false}
+                            />
+                          </div>
                         </div>
                       );
                     }
@@ -1491,12 +1496,13 @@ function DashboardContent() {
                     if (flag) {
                       return (
                         <div
-                          className="inline-flex items-center justify-center rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-600 to-gray-700 shadow-md"
+                          className="inline-flex items-center justify-center rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-600 to-gray-700"
                           style={{
                             width: "24px",
                             height: "24px",
                             fontSize: "16px",
                             lineHeight: "1",
+                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.5)",
                           }}
                         >
                           {flag}
@@ -1506,7 +1512,7 @@ function DashboardContent() {
 
                     // Otherwise show crypto icon
                     return (
-                      <div className="relative">
+                      <div className="relative" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
                         <CryptoIcon
                           symbol={assetSymbol}
                           size="sm"
@@ -1698,10 +1704,10 @@ function DashboardContent() {
                             </div>
                             <div className="flex flex-col items-end flex-shrink-0">
                               <div
-                                className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase tracking-wider ${
+                                className={`px-1 py-[2px] rounded-md text-[9px] font-bold uppercase tracking-wider shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
                                   activity.status === "completed"
                                     ? isDark
-                                      ? "bg-gradient-to-r from-gray-700 to-gray-800 text-green-400 border border-green-400 shadow-[0_0_8px_rgba(34,197,94,0.6),inset_0_1px_0_rgba(255,255,255,0.1)] animate-pulse-glow"
+                                      ? "bg-gradient-to-r from-gray-700 to-gray-800 text-green-400 border border-green-400 shadow-[0_2px_6px_rgba(0,0,0,0.5)] animate-pulse-glow"
                                       : "bg-green-50 text-green-600 border border-green-400"
                                     : activity.status === "pending"
                                     ? isDark
@@ -1724,14 +1730,14 @@ function DashboardContent() {
                           <div className="flex justify-between gap-3 mt-0.5">
                             <div className="flex flex-col">
                               <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Amount:</span>
-                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg ${isDark ? "bg-gray-700/50" : "bg-gray-200"} ${
+                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
                                 activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw"
-                                  ? "text-red-400"
-                                  : "text-green-500"
+                                  ? isDark ? "bg-red-500/20 text-red-400" : "bg-red-100 text-red-500"
+                                  : isDark ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-600"
                               }`}>
                                 {activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw" ? "-" : "+"}
                                 {activity.type === "trade_earned"
-                                  ? formatAmount(activity.amount || 0, 2)
+                                  ? `$${(activity.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                                   : `${formatCryptoAmount(
                                       activity.amount || 0,
                                       activity.asset?.split(" ")[0] || ""
@@ -1740,15 +1746,21 @@ function DashboardContent() {
                             </div>
                             <div className="flex flex-col items-end">
                               <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Value:</span>
-                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg ${isDark ? "text-white bg-gray-700/50" : "text-gray-900 bg-gray-200"}`}>
-                                {/* For fiat deposits/transfers:
-                                    - If asset currency matches user's preferred currency: show original amount
-                                    - If asset currency differs: convert USD value to user's preferred currency
-                                    For crypto transactions: convert USD value to user's preferred currency */}
-                                {isFiatTransaction && assetSymbol === preferredCurrency
+                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "text-gray-300 bg-gray-800" : "text-gray-800 bg-gray-200"}`}>
+                                {activity.type === "trade_earned"
+                                  ? formatAmount(activity.amount || 0, 2)
+                                  : isFiatTransaction && assetSymbol === preferredCurrency
                                   ? formatCurrencyUtil(activity.amount || 0, assetSymbol, 2)
                                   : isFiatTransaction
-                                  ? formatAmount(activity.value || 0, 2)
+                                  ? // Convert original fiat amount → USD (using live rates) → preferred currency.
+                                    // exchangeRates: { USD: 1, EUR: 0.92, PHP: 56.03, ... } means 1 USD = N units.
+                                    // So original / rate = USD equivalent, always correct regardless of preferred currency changes.
+                                    formatAmount(
+                                      assetSymbol === "USD"
+                                        ? (activity.amount || 0)
+                                        : (activity.amount || 0) / (exchangeRates[assetSymbol] || 1),
+                                      2
+                                    )
                                   : formatAmount(activity.value || 0, 2)}
                               </span>
                             </div>

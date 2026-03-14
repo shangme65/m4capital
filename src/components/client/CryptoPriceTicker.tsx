@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useBitcoinPrice, useCryptoPrices } from "./CryptoMarketProvider";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface CryptoPriceTickerProps {
   symbols?: string[];
@@ -35,6 +36,13 @@ function CryptoPriceCard({
   const [priceDirection, setPriceDirection] = useState<
     "up" | "down" | "neutral"
   >("neutral");
+  const [mounted, setMounted] = useState(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = mounted ? resolvedTheme === "dark" : true;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (price && previousPrice !== null) {
@@ -52,14 +60,21 @@ function CryptoPriceCard({
   if (!price) {
     return (
       <div
-        className={`${compact ? "p-2" : "p-4"} rounded-lg animate-pulse`}
-        style={{ backgroundColor: "#252320" }}
+        className={`${compact ? "p-2" : "p-4"} rounded-lg animate-pulse ${
+          isDark ? "bg-[#252320]" : "bg-gray-200"
+        }`}
       >
         <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gray-600 rounded-full"></div>
+          <div className={`w-8 h-8 rounded-full ${
+            isDark ? "bg-gray-600" : "bg-gray-300"
+          }`}></div>
           <div className="flex-1">
-            <div className="h-4 bg-gray-600 rounded w-16 mb-1"></div>
-            <div className="h-6 bg-gray-600 rounded w-24"></div>
+            <div className={`h-4 rounded w-16 mb-1 ${
+              isDark ? "bg-gray-600" : "bg-gray-300"
+            }`}></div>
+            <div className={`h-6 rounded w-24 ${
+              isDark ? "bg-gray-600" : "bg-gray-300"
+            }`}></div>
           </div>
         </div>
       </div>
@@ -92,8 +107,23 @@ function CryptoPriceCard({
     ? "rgba(34, 197, 94, 0.4)" // green glow
     : "rgba(239, 68, 68, 0.4)"; // red glow
   const borderColor = isPositive
-    ? "rgba(34, 197, 94, 0.6)"
-    : "rgba(239, 68, 68, 0.6)";
+    ? isDark ? "rgba(34, 197, 94, 0.6)" : "rgba(34, 197, 94, 0.8)"
+    : isDark ? "rgba(239, 68, 68, 0.6)" : "rgba(239, 68, 68, 0.8)";
+
+  // Theme-aware backgrounds
+  const cardBg = compact
+    ? isDark
+      ? "linear-gradient(145deg, #252320 0%, #1b1817 50%, #252320 100%)"
+      : "linear-gradient(145deg, #f3f4f6 0%, #e5e7eb 50%, #f3f4f6 100%)"
+    : "transparent";
+
+  const iconBg = isDark
+    ? "linear-gradient(145deg, #2a2724 0%, #1a1816 100%)"
+    : "linear-gradient(145deg, #e5e7eb 0%, #d1d5db 100%)";
+
+  const textColor = isDark ? "#ffffff" : "#111827";
+  const secondaryTextColor = isDark ? "#827e7d" : "#6b7280";
+  const borderTopColor = isDark ? "#38312e" : "#d1d5db";
 
   return (
     <motion.div
@@ -105,9 +135,7 @@ function CryptoPriceCard({
           : "p-4 min-w-[200px]"
       } transition-all duration-300 rounded-lg`}
       style={{
-        background: compact
-          ? "linear-gradient(145deg, #252320 0%, #1b1817 50%, #252320 100%)"
-          : "transparent",
+        background: cardBg,
         boxShadow: compact
           ? `0 0 12px ${glowColor}, 0 4px 12px -3px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 -1px 0 rgba(0, 0, 0, 0.3)`
           : "none",
@@ -121,7 +149,7 @@ function CryptoPriceCard({
             <div
               className="rounded-md flex items-center justify-center"
               style={{
-                background: "linear-gradient(145deg, #2a2724 0%, #1a1816 100%)",
+                background: iconBg,
                 boxShadow:
                   "0 2px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)",
                 padding: compact ? "4px" : "8px",
@@ -138,9 +166,10 @@ function CryptoPriceCard({
           <div>
             <div className="flex items-center gap-2">
               <h3
-                className={`font-semibold text-white ${
+                className={`font-semibold ${
                   compact ? "text-xs" : ""
                 }`}
+                style={{ color: textColor }}
               >
                 {symbol}
               </h3>
@@ -165,7 +194,7 @@ function CryptoPriceCard({
                     ? "#10b981"
                     : priceDirection === "down"
                     ? "#ef4444"
-                    : "#ffffff",
+                    : textColor,
               }}
               transition={{ duration: 0.3 }}
             >
@@ -200,17 +229,17 @@ function CryptoPriceCard({
 
       {/* Additional Details */}
       {showDetails && !compact && (
-        <div className="mt-3 pt-3 border-t" style={{ borderColor: "#38312e" }}>
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: borderTopColor }}>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span style={{ color: "#827e7d" }}>Market Cap</span>
-              <p className="font-medium text-white">
+              <span style={{ color: secondaryTextColor }}>Market Cap</span>
+              <p className="font-medium" style={{ color: textColor }}>
                 {formatMarketCap(price.marketCap)}
               </p>
             </div>
             <div>
-              <span style={{ color: "#827e7d" }}>24h Volume</span>
-              <p className="font-medium text-white">
+              <span style={{ color: secondaryTextColor }}>24h Volume</span>
+              <p className="font-medium" style={{ color: textColor }}>
                 {price.volume24h ? formatMarketCap(price.volume24h) : "N/A"}
               </p>
             </div>
@@ -218,7 +247,7 @@ function CryptoPriceCard({
 
           <div
             className="mt-2 flex items-center justify-between text-xs"
-            style={{ color: "#827e7d" }}
+            style={{ color: secondaryTextColor }}
           >
             <span>
               Last updated: {new Date(price.timestamp).toLocaleTimeString()}

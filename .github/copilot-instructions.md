@@ -735,6 +735,37 @@ If you discover:
 
 **NEVER hardcode colors without theme conditionals. ALWAYS use `isDark ? "dark-class" : "light-class"` pattern.**
 
+### 🎨 Brand Logo Assets
+
+**Logo paths for theme-aware display:**
+
+| Theme Mode | Logo Path             | Usage                       |
+| ---------- | --------------------- | --------------------------- |
+| Dark Mode  | `/m4capitallogo1.png` | White/light logo on dark bg |
+| Light Mode | `/M4LightLogo.png`    | Dark logo on light bg       |
+
+**REQUIRED pattern for dynamic logo display:**
+
+```typescript
+// ✅ CORRECT - Theme-aware logo
+<Image
+  src={isDark ? "/m4capitallogo1.png" : "/M4LightLogo.png"}
+  alt="M4 Capital Logo"
+  width={120}
+  height={40}
+/>
+
+// ❌ WRONG - Hardcoded logo path
+<Image
+  src="/m4capitallogo1.png"
+  alt="M4 Capital Logo"
+  width={120}
+  height={40}
+/>
+```
+
+**All components displaying the M4 Capital logo MUST use conditional rendering based on theme.**
+
 ---
 
 ## 9. PRODUCTION-ONLY CODE RULES

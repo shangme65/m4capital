@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { countriesSorted } from "@/lib/countries";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface Country {
   name: string;
@@ -39,7 +40,14 @@ export default function CountrySelector({
 }: CountrySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [mounted, setMounted] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { resolvedTheme } = useTheme();
+  const isDark = mounted ? resolvedTheme === "dark" : true;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const selectedCountry = COUNTRIES.find((c) => c.name === value);
 
@@ -79,9 +87,11 @@ export default function CountrySelector({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full px-4 py-3 bg-[#2a2a2a] border ${
-          error ? "border-red-500" : "border-gray-600"
-        } rounded-lg text-white focus:outline-none focus:border-orange-400 text-left flex items-center justify-between transition-colors`}
+        className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:border-orange-400 text-left flex items-center justify-between transition-colors ${
+          isDark
+            ? "bg-[#2a2a2a] border-gray-600 text-white"
+            : "bg-gray-50 border-gray-300 text-gray-900"
+        } ${error ? "border-red-500" : ""}`}
       >
         {selectedCountry ? (
           <span className="flex items-center gap-2">
@@ -89,7 +99,9 @@ export default function CountrySelector({
             <span>{selectedCountry.name}</span>
           </span>
         ) : (
-          <span className="text-gray-400">Select country</span>
+          <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+            Select country
+          </span>
         )}
         <svg
           className={`w-5 h-5 text-orange-500 transition-transform ${
@@ -116,16 +128,28 @@ export default function CountrySelector({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute z-50 w-full mt-2 bg-[#1f1f1f] border border-gray-700 rounded-lg shadow-2xl overflow-hidden"
+            className={`absolute z-50 w-full mt-2 border rounded-lg shadow-2xl overflow-hidden ${
+              isDark
+                ? "bg-[#1f1f1f] border-gray-700"
+                : "bg-white border-gray-300"
+            }`}
           >
             {/* Search Input */}
-            <div className="p-3 border-b border-gray-700 sticky top-0 bg-[#1f1f1f]">
+            <div className={`p-3 border-b sticky top-0 ${
+              isDark
+                ? "bg-[#1f1f1f] border-gray-700"
+                : "bg-white border-gray-300"
+            }`}>
               <input
                 type="text"
                 placeholder="Search countries..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-3 py-2 bg-[#2a2a2a] border border-gray-600 rounded-lg text-white text-sm focus:outline-none focus:border-orange-400"
+                className={`w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:border-orange-400 ${
+                  isDark
+                    ? "bg-[#2a2a2a] border-gray-600 text-white"
+                    : "bg-gray-50 border-gray-300 text-gray-900"
+                }`}
                 autoFocus
               />
             </div>
@@ -138,10 +162,12 @@ export default function CountrySelector({
                     key={country.code}
                     type="button"
                     onClick={() => handleSelect(country)}
-                    className={`w-full px-4 py-3 text-left flex items-center gap-3 hover:bg-[#2a2a2a] transition-colors ${
+                    className={`w-full px-4 py-3 text-left flex items-center gap-3 transition-colors ${
                       value === country.name
                         ? "bg-orange-500/10 text-orange-400"
-                        : "text-white"
+                        : isDark
+                        ? "text-white hover:bg-[#2a2a2a]"
+                        : "text-gray-900 hover:bg-gray-100"
                     }`}
                   >
                     <span className="text-2xl">{country.flag}</span>
@@ -162,7 +188,9 @@ export default function CountrySelector({
                   </button>
                 ))
               ) : (
-                <div className="px-4 py-8 text-center text-gray-400 text-sm">
+                <div className={`px-4 py-8 text-center text-sm ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}>
                   No countries found
                 </div>
               )}

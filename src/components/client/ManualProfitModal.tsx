@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import ReactDOM from "react-dom";
+import { ArrowLeft, ChevronRight, User, BarChart2, Check, Search, X } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface User {
   id: string;
@@ -129,6 +131,11 @@ export default function ManualProfitModal({
   onClose,
   onSuccess,
 }: ManualProfitModalProps) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const isDark = mounted ? resolvedTheme === "dark" : false;
+
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedAsset, setSelectedAsset] = useState("");
@@ -138,6 +145,9 @@ export default function ManualProfitModal({
   const [error, setError] = useState("");
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showUserPicker, setShowUserPicker] = useState(false);
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
 
   // Get unique categories
   const categories = ["all", ...Array.from(new Set(TRADING_ASSETS.map(a => a.category)))];
@@ -228,6 +238,14 @@ export default function ManualProfitModal({
 
   if (!isOpen) return null;
 
+  const selectedUser = users.find((u) => u.id === selectedUserId);
+  const selectedAssetData = TRADING_ASSETS.find((a) => a.symbol === selectedAsset);
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+      u.email?.toLowerCase().includes(userSearchTerm.toLowerCase())
+  );
+
   const getAssetIcon = (category: string) => {
     switch (category) {
       case "Crypto": return "₿";
@@ -250,183 +268,149 @@ export default function ManualProfitModal({
     }
   };
 
+  const getRoleBadgeClass = (role: string) => {
+    if (role === "ADMIN") return "bg-green-500 text-white";
+    if (role === "STAFF_ADMIN") return "bg-blue-500 text-white";
+    return isDark ? "bg-gray-600 text-gray-200" : "bg-gray-200 text-gray-700";
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
-      <div className="bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-gray-800 via-gray-900 to-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-white">Trade Profit</h2>
-            <p className="text-gray-400 text-xs">Record profits for user trading activities</p>
+    <>
+      {/* Main modal */}
+      <div className={`fixed top-0 left-0 right-0 bottom-0 z-[100] overflow-y-auto min-h-screen w-screen ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+        {/* Spacer for dashboard header */}
+        <div className="h-14 sm:h-[72px]" />
+
+        {/* Back button + Admin header */}
+        <div className="max-w-2xl mx-auto px-4 pt-4 pb-2">
+          <div className="mb-1">
+            <h1 className="text-base xs:text-lg sm:text-2xl font-bold bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
+              Admin Control Panel
+            </h1>
+            <p className={`text-[10px] xs:text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+              Complete administrative dashboard
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-1.5 hover:bg-gray-700 rounded-lg"
+            className={`flex items-center gap-2 transition-colors p-2 rounded-lg mt-1 ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
           >
-            <X size={20} />
+            <ArrowLeft size={20} />
+            <span className="text-sm font-medium">Back to Dashboard</span>
           </button>
         </div>
 
-        {/* Scrollable Content */}
-        <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* User selection */}
+        {/* Content */}
+        <div className="max-w-2xl mx-auto px-4 pb-8">
+          <div className="mb-5 px-1">
+            <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Trade Profit</h2>
+            <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Record profits for user trading activities</p>
+          </div>
+
+          <div className="space-y-4">
+            {/* Select User Card */}
             <div>
-              <label className="block text-sm font-semibold text-white mb-2">Select User</label>
-              {loadingUsers ? (
-                <div className="text-gray-400 text-center py-3 text-sm">Loading users...</div>
-              ) : (
-                <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto pr-1">
-                  {users.map((user) => (
-                    <button
-                      key={user.id}
-                      type="button"
-                      onClick={() => setSelectedUserId(user.id)}
-                      className={`relative px-3 py-2 rounded-lg transition-all duration-200 text-left ${
-                        selectedUserId === user.id
-                          ? "bg-gradient-to-r from-orange-500/20 to-red-600/20 border border-orange-500"
-                          : "bg-gray-700/50 border border-gray-600 hover:border-gray-500"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white text-sm truncate">{user.name || "Unknown"}</p>
-                          <p className="text-xs text-gray-400 truncate">{user.email}</p>
-                        </div>
-                        <div className="flex items-center gap-2 ml-2 flex-shrink-0">
-                          <span className="text-xs px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 uppercase text-[10px]">
-                            {user.role}
-                          </span>
-                          {selectedUserId === user.id && (
-                            <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center">
-                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+              <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Select User</label>
+              <button
+                type="button"
+                onClick={() => setShowUserPicker(true)}
+                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
+                  selectedUser
+                    ? isDark
+                      ? "bg-orange-500/10 border-orange-500/50"
+                      : "bg-orange-50 border-orange-300"
+                    : isDark
+                    ? "bg-gray-800 border-gray-700 hover:border-gray-500"
+                    : "bg-white border-gray-200 hover:border-gray-400"
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+                    selectedUser ? "bg-orange-500" : isDark ? "bg-gray-700" : "bg-gray-100"
+                  }`}>
+                    <User size={18} className={selectedUser ? "text-white" : isDark ? "text-gray-400" : "text-gray-500"} />
+                  </div>
+                  <div className="min-w-0 text-left">
+                    {selectedUser ? (
+                      <>
+                        <p className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>{selectedUser.name || "Unknown"}</p>
+                        <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>{selectedUser.email}</p>
+                      </>
+                    ) : (
+                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Tap to select a user</p>
+                    )}
+                  </div>
                 </div>
-              )}
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  {selectedUser && (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getRoleBadgeClass(selectedUser.role)}`}>
+                      {selectedUser.role}
+                    </span>
+                  )}
+                  <ChevronRight size={18} className={isDark ? "text-gray-500" : "text-gray-400"} />
+                </div>
+              </button>
             </div>
 
-            {/* Category filter */}
+            {/* Select Asset Card */}
             <div>
-              <label className="block text-sm font-semibold text-white mb-2">Asset Category</label>
-              <div className="flex flex-wrap gap-1.5">
-                {categories.map((category) => {
-                  const isActive = selectedCategory === category;
-                  return (
-                    <button
-                      key={category}
-                      type="button"
-                      onClick={() => {
-                        setSelectedCategory(category);
-                        setSelectedAsset("");
-                        setSearchTerm("");
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                        isActive
-                          ? "bg-gradient-to-r from-orange-500 to-red-600 text-white"
-                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                      }`}
-                    >
-                      {category === "all" ? "All Assets" : category}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Search bar */}
-            <div>
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search asset..."
-                className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
-              />
-            </div>
-
-            {/* Asset selection - Compact 3D Cards */}
-            <div>
-              <label className="block text-sm font-semibold text-white mb-2">
-                Select Asset
-                <span className="text-xs font-normal text-gray-400 ml-2">({filteredAssets.length})</span>
-              </label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1">
-                {filteredAssets.map((asset) => {
-                  const isSelected = selectedAsset === asset.symbol;
-                  const colors = getCategoryColor(asset.category);
-                  
-                  return (
-                    <button
-                      key={asset.symbol}
-                      type="button"
-                      onClick={() => setSelectedAsset(asset.symbol)}
-                      className={`relative p-2.5 rounded-lg transition-all duration-200 text-left ${
-                        isSelected ? "ring-2 ring-orange-500" : ""
-                      }`}
-                      style={{
-                        background: "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)",
-                        boxShadow: isSelected
-                          ? `0 4px 12px rgba(0,0,0,0.4), 0 0 12px ${colors.shadow}`
-                          : "0 2px 8px rgba(0, 0, 0, 0.3)",
-                        border: "1px solid rgba(255, 255, 255, 0.08)",
-                      }}
-                    >
-                      {/* Icon and checkmark */}
-                      <div className="flex items-start justify-between mb-1.5">
-                        <div
-                          className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-                          style={{
-                            background: `linear-gradient(to bottom right, ${colors.from}, ${colors.to})`,
-                            boxShadow: `0 2px 8px ${colors.shadow}`,
-                          }}
-                        >
-                          <span className="text-sm">{getAssetIcon(asset.category)}</span>
-                        </div>
-                        {isSelected && (
-                          <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center">
-                            <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Symbol */}
-                      <p className="font-bold text-white text-sm mb-0.5">{asset.symbol}</p>
-
-                      {/* Name */}
-                      <p className="text-[10px] text-gray-400 line-clamp-1 mb-1.5">{asset.name}</p>
-
-                      {/* Category badge */}
-                      <span
-                        className="text-[9px] px-1.5 py-0.5 rounded-full font-medium inline-block"
-                        style={{
-                          background: `${colors.from}20`,
-                          color: colors.from,
-                          border: `1px solid ${colors.from}40`,
-                        }}
+              <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Select Asset</label>
+              <button
+                type="button"
+                onClick={() => setShowAssetPicker(true)}
+                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all ${
+                  selectedAssetData
+                    ? isDark
+                      ? "bg-orange-500/10 border-orange-500/50"
+                      : "bg-orange-50 border-orange-300"
+                    : isDark
+                    ? "bg-gray-800 border-gray-700 hover:border-gray-500"
+                    : "bg-white border-gray-200 hover:border-gray-400"
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {selectedAssetData ? (
+                    <>
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
+                        style={{ background: `linear-gradient(to bottom right, ${getCategoryColor(selectedAssetData.category).from}, ${getCategoryColor(selectedAssetData.category).to})` }}
                       >
-                        {asset.category}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              {filteredAssets.length === 0 && (
-                <div className="text-center py-6 text-gray-400 text-sm">No assets found</div>
-              )}
+                        {getAssetIcon(selectedAssetData.category)}
+                      </div>
+                      <div className="min-w-0 text-left">
+                        <p className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>{selectedAssetData.symbol}</p>
+                        <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>{selectedAssetData.name}</p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? "bg-gray-700" : "bg-gray-100"}`}>
+                        <BarChart2 size={18} className={isDark ? "text-gray-400" : "text-gray-500"} />
+                      </div>
+                      <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Tap to select an asset</p>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                  {selectedAssetData && (
+                    <span
+                      className="text-[10px] px-2 py-0.5 rounded-full font-bold"
+                      style={{
+                        background: `${getCategoryColor(selectedAssetData.category).from}25`,
+                        color: getCategoryColor(selectedAssetData.category).from,
+                      }}
+                    >
+                      {selectedAssetData.category}
+                    </span>
+                  )}
+                  <ChevronRight size={18} className={isDark ? "text-gray-500" : "text-gray-400"} />
+                </div>
+              </button>
             </div>
 
             {/* Profit amount */}
             <div>
-              <label className="block text-sm font-semibold text-white mb-2">Profit Amount (USD)</label>
+              <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Profit Amount (USD)</label>
               <input
                 type="number"
                 step="0.01"
@@ -434,7 +418,7 @@ export default function ManualProfitModal({
                 value={profitAmount}
                 onChange={(e) => setProfitAmount(e.target.value)}
                 placeholder="Enter profit amount"
-                className="w-full bg-gray-700 border border-gray-600 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className={`w-full border rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm ${isDark ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500" : "bg-white border-gray-200 text-gray-900 placeholder-gray-400"}`}
               />
             </div>
 
@@ -444,20 +428,202 @@ export default function ManualProfitModal({
                 {error}
               </div>
             )}
-          </form>
-        </div>
 
-        {/* Footer with Submit */}
-        <div className="border-t border-gray-700 p-4">
-          <button
-            onClick={handleSubmit}
-            disabled={loading || !selectedUserId || !selectedAsset || !profitAmount}
-            className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-2.5 rounded-lg font-semibold text-sm hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Adding Profit..." : "Add Manual Profit"}
-          </button>
+            {/* Submit */}
+            <button
+              onClick={handleSubmit}
+              disabled={loading || !selectedUserId || !selectedAsset || !profitAmount}
+              className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+            >
+              {loading ? "Adding Profit..." : "Add Manual Profit"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* User Picker Sub-Modal */}
+      {showUserPicker && mounted && ReactDOM.createPortal(
+        <div className={`fixed top-0 left-0 right-0 bottom-0 z-[200] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+          <div className="h-14 sm:h-[72px]" />
+          <div className="max-w-2xl mx-auto px-4 pt-4 pb-2">
+            <button
+              onClick={() => { setShowUserPicker(false); setUserSearchTerm(""); }}
+              className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+          </div>
+          <div className="max-w-2xl mx-auto px-4 pb-8">
+            <div className="mb-4 px-1">
+              <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Select User</h2>
+              <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>{users.length} users on the platform</p>
+            </div>
+
+            {/* Search */}
+            <div className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 mb-4 ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+              <Search size={16} className={isDark ? "text-gray-400" : "text-gray-400"} />
+              <input
+                type="text"
+                value={userSearchTerm}
+                onChange={(e) => setUserSearchTerm(e.target.value)}
+                placeholder="Search by name or email..."
+                autoFocus
+                className={`flex-1 bg-transparent text-sm focus:outline-none ${isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"}`}
+              />
+              {userSearchTerm && (
+                <button onClick={() => setUserSearchTerm("")}>
+                  <X size={14} className={isDark ? "text-gray-400" : "text-gray-400"} />
+                </button>
+              )}
+            </div>
+
+            {loadingUsers ? (
+              <div className={`text-center py-12 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Loading users...</div>
+            ) : (
+              <div className="space-y-2">
+                {filteredUsers.map((user) => {
+                  const isSelected = selectedUserId === user.id;
+                  return (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() => { setSelectedUserId(user.id); setShowUserPicker(false); setUserSearchTerm(""); }}
+                      className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left ${
+                        isSelected
+                          ? isDark
+                            ? "bg-orange-500/15 border-orange-500/60"
+                            : "bg-orange-50 border-orange-400"
+                          : isDark
+                          ? "bg-gray-800 border-gray-700 hover:border-gray-500"
+                          : "bg-white border-gray-200 hover:border-gray-300 shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-bold text-sm ${isSelected ? "bg-orange-500 text-white" : isDark ? "bg-gray-700 text-gray-300" : "bg-gray-100 text-gray-600"}`}>
+                          {(user.name || user.email || "?")[0].toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>{user.name || "Unknown"}</p>
+                          <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>{user.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getRoleBadgeClass(user.role)}`}>{user.role}</span>
+                        {isSelected && <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center"><Check size={12} className="text-white" /></div>}
+                      </div>
+                    </button>
+                  );
+                })}
+                {filteredUsers.length === 0 && (
+                  <div className={`text-center py-12 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No users found</div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Asset Picker Sub-Modal */}
+      {showAssetPicker && mounted && ReactDOM.createPortal(
+        <div className={`fixed top-0 left-0 right-0 bottom-0 z-[200] min-h-screen w-screen overflow-y-auto ${isDark ? "bg-gray-900" : "bg-gray-50"}`}>
+          <div className="h-14 sm:h-[72px]" />
+          <div className="max-w-2xl mx-auto px-4 pt-4 pb-2">
+            <button
+              onClick={() => { setShowAssetPicker(false); setSearchTerm(""); setSelectedCategory("all"); }}
+              className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
+            >
+              <ArrowLeft size={20} />
+              <span className="text-sm font-medium">Back</span>
+            </button>
+          </div>
+          <div className="max-w-2xl mx-auto px-4 pb-8">
+            <div className="mb-4 px-1">
+              <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Select Asset</h2>
+              <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>{TRADING_ASSETS.length} available assets</p>
+            </div>
+
+            {/* Search */}
+            <div className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 mb-3 ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+              <Search size={16} className={isDark ? "text-gray-400" : "text-gray-400"} />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search assets..."
+                autoFocus
+                className={`flex-1 bg-transparent text-sm focus:outline-none ${isDark ? "text-white placeholder-gray-500" : "text-gray-900 placeholder-gray-400"}`}
+              />
+              {searchTerm && (
+                <button onClick={() => setSearchTerm("")}>
+                  <X size={14} className={isDark ? "text-gray-400" : "text-gray-400"} />
+                </button>
+              )}
+            </div>
+
+            {/* Category filter */}
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {categories.map((cat) => {
+                const isActive = selectedCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => { setSelectedCategory(cat); setSearchTerm(""); }}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                      isActive
+                        ? "bg-gradient-to-r from-orange-500 to-red-600 text-white"
+                        : isDark
+                        ? "bg-gray-800 text-gray-300 border border-gray-700 hover:border-gray-500"
+                        : "bg-white text-gray-700 border border-gray-200 hover:border-gray-400"
+                    }`}
+                  >
+                    {cat === "all" ? "All" : cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Asset grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {filteredAssets.map((asset) => {
+                const isSelected = selectedAsset === asset.symbol;
+                const colors = getCategoryColor(asset.category);
+                return (
+                  <button
+                    key={asset.symbol}
+                    type="button"
+                    onClick={() => { setSelectedAsset(asset.symbol); setShowAssetPicker(false); }}
+                    className={`relative p-3 rounded-xl text-left transition-all ${isSelected ? "ring-2 ring-orange-500" : ""}`}
+                    style={{
+                      background: isDark ? "linear-gradient(145deg, #1e293b, #0f172a)" : "linear-gradient(145deg, #ffffff, #f3f4f6)",
+                      border: isSelected ? `1px solid ${colors.from}` : isDark ? "1px solid rgba(255,255,255,0.08)" : "1px solid rgba(0,0,0,0.08)",
+                      boxShadow: isSelected ? `0 4px 12px rgba(0,0,0,0.2), 0 0 12px ${colors.shadow}` : isDark ? "0 2px 8px rgba(0,0,0,0.3)" : "0 2px 8px rgba(0,0,0,0.06)",
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base" style={{ background: `linear-gradient(to bottom right, ${colors.from}, ${colors.to})` }}>
+                        {getAssetIcon(asset.category)}
+                      </div>
+                      {isSelected && <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center"><Check size={10} className="text-white" /></div>}
+                    </div>
+                    <p className={`font-bold text-sm mb-0.5 ${isDark ? "text-white" : "text-gray-900"}`}>{asset.symbol}</p>
+                    <p className={`text-[10px] line-clamp-1 mb-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{asset.name}</p>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${colors.from}20`, color: colors.from, border: `1px solid ${colors.from}40` }}>
+                      {asset.category}
+                    </span>
+                  </button>
+                );
+              })}
+              {filteredAssets.length === 0 && (
+                <div className={`col-span-2 sm:col-span-3 text-center py-12 text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>No assets found</div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }

@@ -10,17 +10,14 @@ import { depositConfirmedTemplate } from "@/lib/email-templates";
 export const dynamic = "force-dynamic";
 
 // Promo constants
-const PROMO_DURATION_DAYS = 7;
 const PROMO_BONUS_PERCENT = 50;
 
 /**
  * Check if the deposit bonus promo is active for a user
- * Promo lasts 7 days from user signup
+ * Only applies to first deposit if user hasn't claimed it yet
  */
-function isPromoBonusActive(userCreatedAt: Date): boolean {
-  const promoEndDate = new Date(userCreatedAt);
-  promoEndDate.setDate(promoEndDate.getDate() + PROMO_DURATION_DAYS);
-  return promoEndDate.getTime() > Date.now();
+function isPromoBonusActive(hasClaimedFirstDepositBonus: boolean): boolean {
+  return !hasClaimedFirstDepositBonus;
 }
 
 /**
@@ -300,15 +297,21 @@ export async function POST(request: NextRequest) {
       if (deposit.targetAsset === "TRADEROOM") {
         console.log("🎮 Processing TRADEROOM deposit...");
         
-        // Check if promo bonus applies
+        // Check if promo bonus applies (first deposit only)
         let bonusAmount = 0;
         let totalCredit = depositAmount;
-        const promoActive = isPromoBonusActive(deposit.User.createdAt);
+        const promoActive = isPromoBonusActive(deposit.User.hasClaimedFirstDepositBonus);
         
         if (promoActive) {
           bonusAmount = calculateBonusAmount(depositAmount);
           totalCredit = depositAmount + bonusAmount;
-          console.log(`🎁 Promo bonus active! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+          console.log(`🎁 First deposit bonus! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+          // Mark user as having claimed the first deposit bonus
+          await prisma.user.update({
+            where: { id: deposit.User.id },
+            data: { hasClaimedFirstDepositBonus: true },
+          });
+          console.log(`✅ Marked user ${deposit.User.email} as having claimed first deposit bonus`);
         }
         
         // Credit to traderoom balance (including bonus if applicable)
@@ -412,15 +415,22 @@ export async function POST(request: NextRequest) {
       } else {
         console.log("💰 Processing REGULAR deposit...");
         
-        // Check if promo bonus applies
+        // Check if promo bonus applies (first deposit only)
         let bonusAmount = 0;
         let totalCredit = depositAmount;
-        const promoActive = isPromoBonusActive(deposit.User.createdAt);
+        const promoActive = isPromoBonusActive(deposit.User.hasClaimedFirstDepositBonus);
         
         if (promoActive) {
           bonusAmount = calculateBonusAmount(depositAmount);
           totalCredit = depositAmount + bonusAmount;
-          console.log(`🎁 Promo bonus active! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+          console.log(`🎁 First deposit bonus! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+          
+          // Mark user as having claimed the first deposit bonus
+          await prisma.user.update({
+            where: { id: deposit.User.id },
+            data: { hasClaimedFirstDepositBonus: true },
+          });
+          console.log(`✅ Marked user ${deposit.User.email} as having claimed first deposit bonus`);
         }
         
         // Credit to regular fiat balance (including bonus if applicable)

@@ -99,7 +99,7 @@ export default function TransactionDetailsModal({
 }: TransactionDetailsModalProps) {
   // State must be declared at the top before any conditional returns
   const [copied, setCopied] = useState(false);
-  const { formatAmount, preferredCurrency } = useCurrency();
+  const { formatAmount, preferredCurrency, exchangeRates } = useCurrency();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -809,10 +809,10 @@ export default function TransactionDetailsModal({
                         <div className={`text-lg font-bold ${
                           isDark ? "text-white" : "text-gray-900"
                         }`}>
-                          {/* For trade_earned, amount is profit in USD - format as currency */}
+                          {/* For trade_earned, amount is stored in USD — show raw USD */}
                           {/* For fiat currencies, show 2 decimals; for crypto, show up to 8 */}
                           {transaction.type === "trade_earned"
-                            ? formatAmount(transaction.amount, 2)
+                            ? `$${transaction.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                             : FIAT_CURRENCIES.has(
                                 transaction.asset?.toUpperCase() || ""
                               )
@@ -824,8 +824,14 @@ export default function TransactionDetailsModal({
                                   minimumFractionDigits: 2,
                                   maximumFractionDigits: 8,
                                 })}
-                          {/* Don't show asset symbol for trade_earned since formatAmount includes currency */}
-                          {transaction.type !== "trade_earned" && (
+                          {/* For trade_earned show the asset symbol; for other types show as before */}
+                          {transaction.type === "trade_earned" ? (
+                            <span className={`text-base ml-2 ${
+                              isDark ? "text-gray-400" : "text-gray-600"
+                            }`}>
+                              USD
+                            </span>
+                          ) : (
                             <span className={`text-base ml-2 ${
                               isDark ? "text-gray-400" : "text-gray-600"
                             }`}>
@@ -860,14 +866,16 @@ export default function TransactionDetailsModal({
                         <div className={`text-lg font-bold ${
                           isDark ? "text-white" : "text-gray-900"
                         }`}>
-                          {/* For fiat deposits/transfers:
-                              - If asset currency matches user's preferred currency: show original amount
-                              - If asset currency differs: convert USD value to user's preferred currency
-                              For crypto transactions: convert USD value to user's preferred currency */}
-                          {FIAT_CURRENCIES.has(
-                            transaction.asset?.toUpperCase() || ""
-                          ) &&
-                          transaction.asset?.toUpperCase() === preferredCurrency
+                          {/* trade_earned: amount is in USD, convert to preferred currency */}
+                          {/* Fiat same currency: show directly */}
+                          {/* Fiat different currency: convert original amount → USD via live rates → preferred currency */}
+                          {/* Crypto: value is already in USD, convert to preferred currency */}
+                          {transaction.type === "trade_earned"
+                            ? formatAmount(transaction.amount, 2)
+                            : FIAT_CURRENCIES.has(
+                                transaction.asset?.toUpperCase() || ""
+                              ) &&
+                              transaction.asset?.toUpperCase() === preferredCurrency
                             ? formatCurrencyUtil(
                                 transaction.amount,
                                 transaction.asset?.toUpperCase() || "USD",
@@ -876,7 +884,13 @@ export default function TransactionDetailsModal({
                             : FIAT_CURRENCIES.has(
                                 transaction.asset?.toUpperCase() || ""
                               )
-                            ? formatAmount(transaction.value, 2)
+                            ? // Convert original fiat amount → USD (via live rates) → preferred currency
+                              formatAmount(
+                                transaction.asset?.toUpperCase() === "USD"
+                                  ? transaction.amount
+                                  : transaction.amount / (exchangeRates[transaction.asset?.toUpperCase() || "USD"] || 1),
+                                2
+                              )
                             : transaction.valueCurrency &&
                               transaction.valueCurrency === preferredCurrency
                             ? formatCurrencyUtil(

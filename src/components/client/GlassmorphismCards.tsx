@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, Shield, Users, ArrowUp, ArrowDown } from "lucide-react";
 import { useState, useEffect, useMemo, useRef } from "react";
 import AnimatedCounter from "./AnimatedCounter";
+import { useTheme } from "@/contexts/ThemeContext";
 
 // Generate 500 unique activities
 const generateActivityPool = () => {
@@ -182,11 +183,19 @@ const quickStats = [
 ];
 
 export default function GlassmorphismCards() {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const activityPool = useMemo(() => generateActivityPool(), []);
   const [usedIndices, setUsedIndices] = useState(new Set<number>());
   const [recentActivities, setRecentActivities] = useState<Array<{user: string; action: string; amount: string; type: string; id: string}>>([]);
   const [onlineUsers, setOnlineUsers] = useState(2847);
   const activityCounter = useRef(0);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isDark = mounted ? resolvedTheme === "dark" : true;
 
   useEffect(() => {
     // Initialize with 8 random activities
@@ -257,14 +266,22 @@ export default function GlassmorphismCards() {
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3 min-w-[260px] max-h-[400px] overflow-hidden"
+          className={`backdrop-blur-md border rounded-lg p-3 min-w-[260px] max-h-[400px] overflow-hidden shadow-lg ${
+            isDark 
+              ? "bg-white/10 border-white/20 shadow-black/20" 
+              : "bg-white/70 border-gray-300/50 shadow-gray-400/40"
+          }`}
         >
-          <p className="text-white text-xs font-semibold mb-2">Recent Activity</p>
+          <p className={`text-xs font-semibold mb-2 ${
+            isDark ? "text-white" : "text-gray-900"
+          }`}>Recent Activity</p>
           <div className="space-y-1.5">
             {recentActivities.map((activity) => (
               <div
                 key={activity.id}
-                className="flex items-center justify-between text-xs bg-white/5 rounded px-2 py-1.5 transition-all duration-300"
+                className={`flex items-center justify-between text-xs rounded px-2 py-1.5 transition-all duration-300 ${
+                  isDark ? "bg-white/5" : "bg-gray-100/80"
+                }`}
               >
                 <div className="flex items-center gap-2">
                   {activity.type === "buy" || activity.type === "deposit" ? (
@@ -272,11 +289,15 @@ export default function GlassmorphismCards() {
                   ) : (
                     <ArrowDown className="w-3 h-3 text-red-400" />
                   )}
-                  <span className="text-white/80 truncate font-bold">{activity.user}</span>
+                  <span className={`truncate font-bold ${
+                    isDark ? "text-white/80" : "text-gray-800"
+                  }`}>{activity.user}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-white/60">{activity.action}</p>
-                  <p className="text-white font-semibold whitespace-nowrap">{activity.amount}</p>
+                  <p className={isDark ? "text-white/60" : "text-gray-600"}>{activity.action}</p>
+                  <p className={`font-semibold whitespace-nowrap ${
+                    isDark ? "text-white" : "text-gray-900"
+                  }`}>{activity.amount}</p>
                 </div>
               </div>
             ))}
@@ -296,11 +317,19 @@ export default function GlassmorphismCards() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.15 + 0.5, duration: 0.6 }}
                 whileHover={{ scale: 1.05, x: -10 }}
-                className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3 w-40 cursor-pointer"
+                className={`backdrop-blur-md border rounded-lg p-3 w-40 cursor-pointer shadow-lg ${
+                  isDark 
+                    ? "bg-white/10 border-white/20 shadow-black/20" 
+                    : "bg-white/70 border-gray-300/50 shadow-gray-400/40"
+                }`}
               >
                 <Icon className="w-6 h-6 text-orange-500 mb-1" />
-              <p className="text-white/60 text-xs mb-0.5 font-bold">{stat.label}</p>
-                <p className="text-white text-base font-bold">{stat.value}</p>
+              <p className={`text-xs mb-0.5 font-bold ${
+                isDark ? "text-white/60" : "text-gray-600"
+              }`}>{stat.label}</p>
+                <p className={`text-base font-bold ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}>{stat.value}</p>
               </motion.div>
             );
           })}
@@ -310,14 +339,22 @@ export default function GlassmorphismCards() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.8, duration: 0.6 }}
             whileHover={{ scale: 1.05, x: -10 }}
-            className="bg-white/10 backdrop-blur-md border border-white/20 rounded-lg p-3 w-40 cursor-pointer"
+            className={`backdrop-blur-md border rounded-lg p-3 w-40 cursor-pointer shadow-lg ${
+              isDark 
+                ? "bg-white/10 border-white/20 shadow-black/20" 
+                : "bg-white/70 border-gray-300/50 shadow-gray-400/40"
+            }`}
           >
             <div className="flex items-center gap-2 mb-1">
               <Users className="w-6 h-6 text-orange-500" />
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             </div>
-            <p className="text-white/60 text-xs mb-0.5 font-bold">Active Users</p>
-            <p className="text-white text-base font-bold">
+            <p className={`text-xs mb-0.5 font-bold ${
+              isDark ? "text-white/60" : "text-gray-600"
+            }`}>Active Users</p>
+            <p className={`text-base font-bold ${
+              isDark ? "text-white" : "text-gray-900"
+            }`}>
               <AnimatedCounter value={onlineUsers.toString()} />
             </p>
           </motion.div>

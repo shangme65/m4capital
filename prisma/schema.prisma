@@ -513,6 +513,7 @@ model User {
   phoneNumber            String?
   phoneVerified          Boolean            @default(false)
   phoneVerifiedAt        DateTime?
+  hasClaimedFirstDepositBonus Boolean       @default(false)
   Account                Account[]
   BitcoinDeposit         BitcoinDeposit[]
   CourseProgress         CourseProgress[]

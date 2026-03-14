@@ -12,17 +12,14 @@ import { depositConfirmedTemplate } from "@/lib/email-templates";
 export const dynamic = "force-dynamic";
 
 // Promo constants
-const PROMO_DURATION_DAYS = 7;
 const PROMO_BONUS_PERCENT = 50;
 
 /**
  * Check if the deposit bonus promo is active for a user
- * Promo lasts 7 days from user signup
+ * Only applies to the first deposit (hasClaimedFirstDepositBonus must be false)
  */
-function isPromoBonusActive(userCreatedAt: Date): boolean {
-  const promoEndDate = new Date(userCreatedAt);
-  promoEndDate.setDate(promoEndDate.getDate() + PROMO_DURATION_DAYS);
-  return promoEndDate.getTime() > Date.now();
+function isPromoBonusActive(hasClaimedFirstDepositBonus: boolean): boolean {
+  return !hasClaimedFirstDepositBonus;
 }
 
 /**
@@ -251,16 +248,22 @@ export async function POST(req: NextRequest) {
       const depositCurrency = userPreferredCurrency;
       const roundedFiatAmount = Math.round((fiatAmount || amount) * 100) / 100;
       
-      // Check if promo bonus applies
+      // Check if promo bonus applies (first deposit only)
       let bonusAmount = 0;
       let totalCredit = roundedFiatAmount;
-      const promoActive = isPromoBonusActive(user.createdAt);
+      const promoActive = isPromoBonusActive(user.hasClaimedFirstDepositBonus);
       
       if (promoActive) {
         bonusAmount = calculateBonusAmount(roundedFiatAmount);
         bonusAmount = Math.round(bonusAmount * 100) / 100; // Round to 2 decimal places
         totalCredit = roundedFiatAmount + bonusAmount;
-        console.log(`🎁 Promo bonus active! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+        console.log(`🎁 First deposit bonus! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+        // Mark user as having claimed the first deposit bonus
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { hasClaimedFirstDepositBonus: true },
+        });
+        console.log(`✅ Marked user ${user.email} as having claimed first deposit bonus`);
       }
 
       await prisma.portfolio.update({
@@ -282,8 +285,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Track bonus for notifications
-    const promoActive = isPromoBonusActive(user.createdAt);
+    // Track bonus for notifications (re-check since state may have changed above)
+    const promoActive = isPromoBonusActive(user.hasClaimedFirstDepositBonus);
     const fiatBonusAmount = depositType === "fiat" && promoActive 
       ? Math.round(calculateBonusAmount((fiatAmount || amount)) * 100) / 100 
       : 0;

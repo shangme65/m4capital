@@ -15,7 +15,7 @@ export default function ScrollDownIndicator() {
     <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
       <motion.button
         onClick={handleScrollDown}
-        className="flex flex-col items-center gap-2 text-white/60 hover:text-white transition-colors group"
+        className="flex flex-col items-center gap-2 text-gray-700/60 dark:text-white/60 hover:text-gray-900 dark:hover:text-white transition-colors group"
         animate={{
           y: [0, 10, 0],
         }}

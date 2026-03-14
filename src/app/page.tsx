@@ -180,7 +180,7 @@ function Hero() {
   }, []);
 
   return (
-    <div className="relative h-[calc(100vh-60px)] sm:h-screen w-full overflow-hidden bg-gradient-to-b from-[#2d1f1a] via-[#1a1410] to-[#0a0806]">
+    <div className="relative h-[calc(100vh-60px)] sm:h-screen w-full overflow-hidden bg-gradient-to-b from-purple-50 via-purple-100 to-pink-50 dark:from-[#2d1f1a] dark:via-[#1a1410] dark:to-[#0a0806]">
       {/* Animated Gradient Background */}
       <AnimatedGradientBackground />
 
@@ -191,7 +191,7 @@ function Hero() {
       <CursorSpotlight />
 
       {/* Optional subtle pattern overlay */}
-      <div className="absolute inset-0 opacity-10 z-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+      <div className="absolute inset-0 opacity-10 dark:opacity-10 z-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
 
       {/* Particle System */}
       <div className="absolute inset-0 z-[2]">
@@ -214,7 +214,7 @@ function Hero() {
       </div>
 
       {/* Hero Title - independent sliding */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center text-white px-4 sm:px-6 md:px-8 w-full max-w-7xl -mt-36">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center text-gray-900 dark:text-white px-4 sm:px-6 md:px-8 w-full max-w-7xl -mt-36">
         <HeroTitle
           title={title as string}
           contentIndex={contentIndex}
@@ -223,7 +223,7 @@ function Hero() {
       </div>
 
       {/* Hero Description - independent sliding */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center text-white px-4 sm:px-6 md:px-8 w-full max-w-7xl -mt-8 sm:-mt-4">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 text-center text-gray-800 dark:text-white px-4 sm:px-6 md:px-8 w-full max-w-7xl -mt-8 sm:-mt-4">
         <HeroDescription
           description={description}
           contentIndex={descriptionIndex}
@@ -248,17 +248,12 @@ function Hero() {
 
       {/* Trustpilot Badge - separate positioning */}
       <div className="absolute inset-0 z-20 pointer-events-none flex items-end justify-center pb-44">
-        <a
-          href="https://www.trustpilot.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 bg-white/5 backdrop-blur-sm px-4 py-1 rounded-full hover:bg-white/10 transition-all duration-200 cursor-pointer pointer-events-auto"
-        >
+        <div className="flex items-center gap-2 bg-gray-800/10 dark:bg-white/5 backdrop-blur-sm px-4 py-1 rounded-full">
           <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
             <span className="text-white text-sm">★</span>
           </div>
-          <span className="text-white text-sm font-medium">4.5 ★ on Trustpilot</span>
-        </a>
+          <span className="text-gray-900 dark:text-white text-sm font-medium">4.5 Trustpilot</span>
+        </div>
       </div>
 
       {/* Crypto Price Ticker at bottom - fixed position */}
@@ -341,14 +336,14 @@ function CallToAction() {
                 <div>
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 mb-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                    <span className="text-xs font-medium text-orange-600">
+                    <span className="text-xs font-medium text-orange-600 dark:text-orange-400">
                       {t("cta.badge")}
                     </span>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                     {t("cta.title")}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                     {t("cta.subtitle")}
                   </p>
                 </div>
@@ -469,14 +464,14 @@ function CallToAction() {
                 <div>
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 mb-3">
                     <div className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-pulse" />
-                    <span className="text-xs font-medium text-orange-400">
+                    <span className="text-xs font-medium text-orange-600 dark:text-orange-400">
                       {t("cta.badge")}
                     </span>
                   </div>
-                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
+                  <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
                     {t("cta.title")}
                   </h2>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
                     {t("cta.subtitle")}
                   </p>
                 </div>

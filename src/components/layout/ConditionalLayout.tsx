@@ -41,17 +41,20 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     pathname?.startsWith("/traderoom") ||
     pathname?.startsWith("/finance");
 
+  // Check if should hide footer only (keep header)
+  const hideFooterOnly = pathname?.startsWith("/setup-admin");
+
   if (isDashboardRoute) {
     // For dashboard routes, don't show header and footer
     return <>{children}</>;
   }
 
-  // For non-dashboard routes, show header and footer
+  // For non-dashboard routes, show header and optionally footer
   return (
     <>
       <Header onLoginClick={openLoginModal} onSignupClick={openSignupModal} />
       <main className="min-h-screen overflow-x-hidden">{children}</main>
-      <Footer />
+      {!hideFooterOnly && <Footer />}
 
       {/* Modals */}
       <LoginModal

@@ -22,7 +22,7 @@ export default function HeroTitle({ title, contentIndex, animation }: HeroTitleP
         animate="animate"
         exit="exit"
         transition={{ duration: 0.7, ease: "circOut" }}
-        className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 xs:mb-6 sm:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-white via-gray-500 to-white leading-tight"
+        className="text-2xl xs:text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-4 xs:mb-6 sm:mb-8 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 via-orange-600 to-gray-900 dark:from-white dark:via-gray-500 dark:to-white leading-tight"
         style={{ textShadow: "0 2px 10px rgba(0, 0, 0, 0.5)" }}
       >
         {title}
