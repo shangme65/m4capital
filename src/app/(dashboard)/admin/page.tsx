@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
+import Image from "next/image";
 import { User as PrismaUser } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -38,6 +39,7 @@ import {
 import { motion } from "framer-motion";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import {
   getCurrencySymbol,
   convertCurrency,
@@ -564,6 +566,11 @@ const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: 
                   <th className={`text-left p-3 text-xs font-semibold ${
                     isDark ? "text-gray-300" : "text-gray-700"
                   }`}>
+                    Asset
+                  </th>
+                  <th className={`text-left p-3 text-xs font-semibold ${
+                    isDark ? "text-gray-300" : "text-gray-700"
+                  }`}>
                     Type
                   </th>
                 </tr>
@@ -605,6 +612,47 @@ const TransactionHistoryView = ({ setActiveTab, isDark }: { setActiveTab: (tab: 
                         }`}>
                           {tx.userEmail}
                         </p>
+                      </div>
+                    </td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                          const assetSymbol = tx.asset || "";
+                          const FOREX_CODES = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+                          
+                          // Check if it's a forex pair (6 letters and BOTH halves are valid forex codes)
+                          if (assetSymbol.length === 6 && /^[A-Z]{6}$/.test(assetSymbol)) {
+                            const base = assetSymbol.substring(0, 3);
+                            const quote = assetSymbol.substring(3, 6);
+                            if (FOREX_CODES.has(base) && FOREX_CODES.has(quote)) {
+                              return (
+                                <div className="flex items-center -space-x-1.5">
+                                  <Image src={getCurrencyFlagUrl(base)} alt={base} width={20} height={20} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} unoptimized />
+                                  <Image src={getCurrencyFlagUrl(quote)} alt={quote} width={20} height={20} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} unoptimized />
+                                </div>
+                              );
+                            }
+                          }
+                          
+                          // Check if it's a pair (contains /)
+                          if (assetSymbol.includes("/")) {
+                            const [base, quote] = assetSymbol.split("/");
+                            return (
+                              <div className="flex items-center -space-x-1.5">
+                                <CryptoIcon symbol={base} size="xs" />
+                                <CryptoIcon symbol={quote} size="xs" />
+                              </div>
+                            );
+                          }
+                          
+                          // Single asset - CryptoIcon handles crypto (with CDN fallback) and fiat (with flag CDN)
+                          return <CryptoIcon symbol={assetSymbol} size="xs" />;
+                        })()}
+                        <span className={`text-xs font-medium ${
+                          isDark ? "text-gray-300" : "text-gray-700"
+                        }`}>
+                          {tx.asset}
+                        </span>
                       </div>
                     </td>
                     <td className="p-3">

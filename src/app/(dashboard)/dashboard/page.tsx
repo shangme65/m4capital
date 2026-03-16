@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import { useModal } from "@/contexts/ModalContext";
 import { useNotifications, Transaction } from "@/contexts/NotificationContext";
 import { useToast } from "@/contexts/ToastContext";
@@ -1384,29 +1385,53 @@ function DashboardContent() {
 
                   // Get transaction type icon and color
                   const getTransactionIcon = () => {
-                    // For trade_earned transactions, show a trophy/profit icon
+                    // For trade_earned transactions, show the actual asset icon with green badge
                     if (activity.type === "trade_earned") {
+                      const assetSymbol = activity.asset?.split(" ")[0] || "";
+                      const FOREX_CODES = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+                      
+                      // Check if it's a forex pair (6 letters and BOTH halves are valid forex codes)
+                      if (assetSymbol.length === 6 && /^[A-Z]{6}$/.test(assetSymbol)) {
+                        const base = assetSymbol.substring(0, 3);
+                        const quote = assetSymbol.substring(3, 6);
+                        if (FOREX_CODES.has(base) && FOREX_CODES.has(quote)) {
+                          return (
+                            <div className="relative flex-shrink-0">
+                              <div className="flex flex-col items-center">
+                                <Image src={getCurrencyFlagUrl(base)} alt={base} width={24} height={24} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
+                                <div className={`w-3 h-3 rounded-full bg-green-500 border ${isDark ? "border-gray-800" : "border-white"} mt-0.5 mb-0.5`} />
+                                <Image src={getCurrencyFlagUrl(quote)} alt={quote} width={24} height={24} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
+                              </div>
+                            </div>
+                          );
+                        }
+                      }
+                      
+                      // Check if it's a crypto/stock pair (contains /)
+                      if (assetSymbol.includes("/")) {
+                        const [base, quote] = assetSymbol.split("/");
+                        return (
+                          <div className="relative flex-shrink-0">
+                            <div className="flex flex-col items-center">
+                              <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+                                <CryptoIcon symbol={base} size="sm" />
+                              </div>
+                              <div className={`w-3 h-3 rounded-full bg-green-500 border ${isDark ? "border-gray-800" : "border-white"} mt-0.5 mb-0.5`} />
+                              <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+                                <CryptoIcon symbol={quote} size="sm" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }
+                      
+                      // Single asset - CryptoIcon handles everything (crypto with CDN fallback, fiat with flag CDN)
                       return (
-                        <div
-                          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{
-                            background: "linear-gradient(145deg, #22c55e 0%, #16a34a 100%)",
-                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.5)",
-                          }}
-                        >
-                          <svg
-                            className="w-3.5 h-3.5 text-white"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                          </svg>
+                        <div className="relative flex-shrink-0">
+                          <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+                            <CryptoIcon symbol={assetSymbol} size="sm" />
+                          </div>
+                          <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border ${isDark ? "border-gray-800" : "border-white"}`} />
                         </div>
                       );
                     }

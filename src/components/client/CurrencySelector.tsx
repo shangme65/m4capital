@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { CURRENCIES } from "@/lib/currencies";
 import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import { Search, X } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import Image from "next/image";
@@ -12,28 +13,33 @@ interface CurrencySelectorProps {
   disabled?: boolean;
 }
 
-// Currency icon component using SVG logos from /public/currencies/
-const CurrencyLogo = ({ code, size = 28 }: { code: string; size?: number }) => (
-  <Image
-    src={`/currencies/${code.toLowerCase()}.svg`}
-    alt={`${code} currency`}
-    width={size}
-    height={size}
-    className="rounded-sm object-contain flex-shrink-0"
-    onError={(e) => {
-      // Fallback to a colored circle with the first letter
-      const target = e.currentTarget;
-      target.style.display = "none";
-      const fallback = document.createElement("div");
-      fallback.className = "inline-flex items-center justify-center rounded-full bg-gray-500 text-white font-bold";
-      fallback.style.width = `${size}px`;
-      fallback.style.height = `${size}px`;
-      fallback.style.fontSize = `${size * 0.4}px`;
-      fallback.textContent = code.charAt(0);
-      target.parentNode?.appendChild(fallback);
-    }}
-  />
-);
+// Currency icon component using HatScripts circle-flags CDN
+const CurrencyLogo = ({ code, size = 28 }: { code: string; size?: number }) => {
+  const [hasError, setHasError] = useState(false);
+
+  if (hasError) {
+    // Fallback to a colored circle with the first letter
+    return (
+      <div 
+        className="inline-flex items-center justify-center rounded-full bg-gray-500 text-white font-bold flex-shrink-0"
+        style={{ width: `${size}px`, height: `${size}px`, fontSize: `${size * 0.4}px` }}
+      >
+        {code.charAt(0)}
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={getCurrencyFlagUrl(code)}
+      alt={`${code} currency`}
+      width={size}
+      height={size}
+      className="rounded-full object-cover flex-shrink-0"
+      onError={() => setHasError(true)}
+    />
+  );
+};
 
 export default function CurrencySelector({
   value,

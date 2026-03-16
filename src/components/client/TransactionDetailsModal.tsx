@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
-import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { CryptoIcon, CRYPTO_CURRENCIES } from "@/components/icons/CryptoIcon";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import { formatCurrency as formatCurrencyUtil } from "@/lib/currencies";
 
 // Fiat currencies that should NOT be converted (already in user's currency)
@@ -505,25 +506,55 @@ export default function TransactionDetailsModal({
                             <CryptoIcon
                               symbol={transaction.fromAsset}
                               size="md"
-                              showNetwork={false}
                             />
                           </div>
                           <div className="absolute left-5 top-0">
                             <CryptoIcon
                               symbol={transaction.toAsset}
                               size="md"
-                              showNetwork={false}
                             />
                           </div>
                         </div>
-                      ) : (
+                      ) : transaction.type === "trade_earned" ? (() => {
+                        const assetSymbol = transaction.asset?.split(" ")[0] || "";
+                        const FOREX_CODES = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+                        // Forex pair (e.g. EURGBP)
+                        if (assetSymbol.length === 6 && /^[A-Z]{6}$/.test(assetSymbol)) {
+                          const base = assetSymbol.substring(0, 3);
+                          const quote = assetSymbol.substring(3, 6);
+                          if (FOREX_CODES.has(base) && FOREX_CODES.has(quote)) {
+                            return (
+                              <div className="relative w-14 h-12">
+                                <div className="absolute left-0 top-0">
+                                  <Image src={getCurrencyFlagUrl(base)} alt={base} width={32} height={32} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} unoptimized />
+                                </div>
+                                <div className="absolute left-5 top-0">
+                                  <Image src={getCurrencyFlagUrl(quote)} alt={quote} width={32} height={32} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} unoptimized />
+                                </div>
+                              </div>
+                            );
+                          }
+                        }
+                        // Crypto pair (e.g. BTC/ETH)
+                        if (assetSymbol.includes("/")) {
+                          const [base, quote] = assetSymbol.split("/");
+                          return (
+                            <div className="relative w-14 h-12">
+                              <div className="absolute left-0 top-0">
+                                <CryptoIcon symbol={base} size="md" />
+                              </div>
+                              <div className="absolute left-5 top-0">
+                                <CryptoIcon symbol={quote} size="md" />
+                              </div>
+                            </div>
+                          );
+                        }
+                        // Single asset
+                        return <CryptoIcon symbol={assetSymbol} size="lg" />;
+                      })() : (
                         <CryptoIcon
                           symbol={transaction.asset}
                           size="lg"
-                          showNetwork={
-                            transaction.asset === "USDT" ||
-                            transaction.asset === "USDC"
-                          }
                         />
                       )}
                     </div>

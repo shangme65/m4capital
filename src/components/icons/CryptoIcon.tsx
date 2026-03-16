@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 
 interface CryptoIconProps {
   symbol: string;
   size?: "xs" | "sm" | "md" | "lg" | "xl";
   className?: string;
   alt?: string;
-  showNetwork?: boolean; // Show network badge (e.g., ETH badge on USDT)
+  showNetwork?: boolean;
 }
 
 const sizeMap = {
@@ -18,24 +19,91 @@ const sizeMap = {
   xl: 64,
 };
 
-// List of cryptocurrencies - everything else is treated as fiat currency
-const CRYPTO_CURRENCIES = [
-  "BTC", "ETH", "XRP", "TRX", "TON", "LTC", "BCH", "ETC", "USDC", "USDT"
+// Comprehensive list of cryptocurrencies
+export const CRYPTO_CURRENCIES = [
+  "BTC", "ETH", "XRP", "TRX", "TON", "LTC", "BCH", "ETC", "USDC", "USDT",
+  "SOL", "DOGE", "BNB", "ADA", "DOT", "MATIC", "SHIB", "AVAX", "LINK", "UNI",
+  "ATOM", "FIL", "APT", "ARB", "OP", "NEAR", "ICP", "HBAR", "VET", "ALGO",
+  "FTM", "MANA", "SAND", "AXS", "AAVE", "MKR", "CRV", "SNX", "COMP", "SUSHI",
+  "POL", "PEPE", "WIF", "BONK", "FLOKI", "RENDER", "INJ", "SEI", "SUI", "TIA",
 ];
 
 const colorMap: Record<string, string> = {
   BTC: "#f7931a",
   ETH: "#627eea",
   XRP: "#23292f",
-  TRX: "#1c1c1c", // Dark background for better red logo visibility
+  TRX: "#ff0013",
   TON: "#0098ea",
   LTC: "#345d9d",
-  BCH: "#f7931a",
-  ETC: "#328335",
+  BCH: "#8dc351",
+  ETC: "#3ab83a",
   USDC: "#2775ca",
   USDT: "#26a17b",
+  SOL: "#9945ff",
+  DOGE: "#c2a633",
+  BNB: "#f3ba2f",
+  ADA: "#0033ad",
+  DOT: "#e6007a",
+  MATIC: "#8247e5",
+  SHIB: "#ffa409",
+  AVAX: "#e84142",
+  LINK: "#2a5ada",
+  UNI: "#ff007a",
+  ATOM: "#2e3148",
+  FIL: "#0090ff",
+  APT: "#000000",
+  ARB: "#28a0f0",
+  OP: "#ff0420",
+  NEAR: "#000000",
+  ICP: "#29abe2",
+  HBAR: "#000000",
+  VET: "#15bdff",
+  ALGO: "#000000",
+  FTM: "#1969ff",
+  MANA: "#ff2d55",
+  SAND: "#04adef",
+  AXS: "#0055d5",
+  AAVE: "#b6509e",
+  MKR: "#1aab9b",
+  CRV: "#ff3a3a",
+  SNX: "#170659",
+  COMP: "#00d395",
+  SUSHI: "#fa52a0",
+  POL: "#8247e5",
+  PEPE: "#3d7b30",
+  WIF: "#c4893b",
+  BONK: "#f7a600",
+  FLOKI: "#f9a825",
+  RENDER: "#000000",
+  INJ: "#0082ff",
+  SEI: "#9b1c2e",
+  SUI: "#4da2ff",
+  TIA: "#7b2bf9",
   USD: "#ffd700",
+  // Commodities
+  XAUUSD: "#ffd700",
+  XAGUSD: "#c0c0c0",
+  XPTUSD: "#e5e4e2",
+  XPDUSD: "#ced0dd",
+  USOIL: "#2d2d2d",
+  UKOIL: "#1a1a2e",
+  NATGAS: "#4a90d9",
+  COPPER: "#b87333",
+  // Indices
+  US30: "#1e3a8a",
+  US100: "#7c3aed",
+  SPX500: "#dc2626",
+  UK100: "#1e40af",
+  GER40: "#facc15",
+  JPN225: "#dc2626",
+  FRA40: "#1e3a8a",
+  AUS200: "#15803d",
 };
+
+// CDN URL for crypto icons (cryptocurrency-icons repo)
+function getCryptoIconCdnUrl(symbol: string): string {
+  return `https://raw.githubusercontent.com/spothq/cryptocurrency-icons/master/svg/color/${symbol.toLowerCase()}.svg`;
+}
 
 export function CryptoIcon({
   symbol,
@@ -43,20 +111,37 @@ export function CryptoIcon({
   className = "",
   alt,
 }: CryptoIconProps) {
-  const [failed, setFailed] = useState(false);
+  // 0 = local, 1 = CDN, 2 = fallback circle
+  const [stage, setStage] = useState(0);
   const iconSize = sizeMap[size];
+  const upperSymbol = symbol.toUpperCase();
   const normalizedSymbol = symbol.toLowerCase();
 
-  // Determine if this is a crypto or fiat currency
-  const isCrypto = CRYPTO_CURRENCIES.includes(symbol.toUpperCase());
-  const iconPath = isCrypto
-    ? `/crypto/${normalizedSymbol}.svg`
-    : `/currencies/${normalizedSymbol}.svg`;
+  const isCrypto = CRYPTO_CURRENCIES.includes(upperSymbol);
 
-  const bgColor = colorMap[symbol] || "#6b7280";
+  const bgColor = colorMap[upperSymbol] || "#6b7280";
 
-  if (failed) {
-    // Fallback to colored circle with symbol
+  // Determine the icon source based on current stage
+  let iconSrc: string;
+  if (isCrypto) {
+    if (stage === 0) {
+      iconSrc = `/crypto/${normalizedSymbol}.svg`;
+    } else if (stage === 1) {
+      iconSrc = getCryptoIconCdnUrl(normalizedSymbol);
+    } else {
+      iconSrc = "";
+    }
+  } else {
+    // Fiat currency - use CDN flags directly
+    if (stage <= 1) {
+      iconSrc = getCurrencyFlagUrl(upperSymbol);
+    } else {
+      iconSrc = "";
+    }
+  }
+
+  if (stage >= 2 || (!isCrypto && stage >= 2)) {
+    // Fallback to colored circle with symbol letter
     return (
       <div className="relative inline-block">
         <div
@@ -86,11 +171,11 @@ export function CryptoIcon({
         }}
       >
         <img
-          src={iconPath}
+          src={iconSrc}
           alt={alt || `${symbol} icon`}
           className={`block ${className}`}
           onError={() => {
-            setFailed(true);
+            setStage((prev) => prev + 1);
           }}
           style={{
             width: "100%",

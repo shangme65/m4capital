@@ -1,8 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import ReactDOM from "react-dom";
+import Image from "next/image";
 import { ArrowLeft, ChevronRight, User, BarChart2, Check, Search, X } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 
 interface User {
   id: string;
@@ -246,15 +249,49 @@ export default function ManualProfitModal({
       u.email?.toLowerCase().includes(userSearchTerm.toLowerCase())
   );
 
-  const getAssetIcon = (category: string) => {
-    switch (category) {
-      case "Crypto": return "₿";
-      case "US Stocks": return "📈";
-      case "Commodities": return "🥇";
-      case "Forex": return "💱";
-      case "Indices": return "📊";
-      default: return "💰";
+  // Known forex currency codes for pair detection
+  const FOREX_CODES = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+
+  // Helper to render asset icon (handles single assets and pairs)
+  const renderAssetIcon = (symbol: string, size: "sm" | "md" | "lg" = "md") => {
+    const sizeMap = { sm: 20, md: 32, lg: 40 };
+    const iconSize = sizeMap[size];
+    
+    // Check if it's a crypto pair (contains /)
+    if (symbol.includes("/")) {
+      const [base, quote] = symbol.split("/");
+      return (
+        <div className="relative flex items-center justify-center" style={{ width: iconSize, height: iconSize }}>
+          <div className="absolute left-0 top-0">
+            <CryptoIcon symbol={base} size={size === "sm" ? "xs" : size === "md" ? "sm" : "md"} />
+          </div>
+          <div className="absolute right-0 top-0">
+            <CryptoIcon symbol={quote} size={size === "sm" ? "xs" : size === "md" ? "sm" : "md"} />
+          </div>
+        </div>
+      );
     }
+    
+    // Check if it's a forex pair (6 letters and BOTH halves are valid forex codes)
+    if (symbol.length === 6 && /^[A-Z]{6}$/.test(symbol)) {
+      const base = symbol.substring(0, 3);
+      const quote = symbol.substring(3, 6);
+      if (FOREX_CODES.has(base) && FOREX_CODES.has(quote)) {
+        return (
+          <div className="relative flex items-center justify-center" style={{ width: iconSize, height: iconSize }}>
+            <div className="absolute left-0 top-0">
+              <Image src={getCurrencyFlagUrl(base)} alt={base} width={size === "sm" ? 16 : size === "md" ? 20 : 24} height={size === "sm" ? 16 : size === "md" ? 20 : 24} className="rounded-full object-cover" unoptimized />
+            </div>
+            <div className="absolute right-0 top-0">
+              <Image src={getCurrencyFlagUrl(quote)} alt={quote} width={size === "sm" ? 16 : size === "md" ? 20 : 24} height={size === "sm" ? 16 : size === "md" ? 20 : 24} className="rounded-full object-cover" unoptimized />
+            </div>
+          </div>
+        );
+      }
+    }
+    
+    // Single asset - use CryptoIcon (handles crypto with CDN fallback, fiat with flag CDN)
+    return <CryptoIcon symbol={symbol} size={size === "sm" ? "sm" : size === "md" ? "md" : "lg"} />;
   };
 
   const getCategoryColor = (category: string) => {
@@ -371,11 +408,8 @@ export default function ManualProfitModal({
                 <div className="flex items-center gap-3 min-w-0">
                   {selectedAssetData ? (
                     <>
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 text-lg"
-                        style={{ background: `linear-gradient(to bottom right, ${getCategoryColor(selectedAssetData.category).from}, ${getCategoryColor(selectedAssetData.category).to})` }}
-                      >
-                        {getAssetIcon(selectedAssetData.category)}
+                      <div className="flex-shrink-0">
+                        {renderAssetIcon(selectedAssetData.symbol, "md")}
                       </div>
                       <div className="min-w-0 text-left">
                         <p className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>{selectedAssetData.symbol}</p>
@@ -603,8 +637,8 @@ export default function ManualProfitModal({
                     }}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-base" style={{ background: `linear-gradient(to bottom right, ${colors.from}, ${colors.to})` }}>
-                        {getAssetIcon(asset.category)}
+                      <div className="flex items-center justify-center">
+                        {renderAssetIcon(asset.symbol, "sm")}
                       </div>
                       {isSelected && <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center"><Check size={10} className="text-white" /></div>}
                     </div>

@@ -81,15 +81,17 @@ function CryptoPriceCard({
     );
   }
 
-  const isPositive = price.changePercent24h >= 0;
-  const formatPrice = (price: number) => {
-    return `$${price.toLocaleString("en-US", {
+  const isPositive = (price.changePercent24h ?? 0) >= 0;
+  const formatPrice = (p: number | null | undefined) => {
+    if (p == null) return "$0.00";
+    return `$${p.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
   };
 
-  const formatChange = (change: number) => {
+  const formatChange = (change: number | null | undefined) => {
+    if (change == null) return "+0.00%";
     const sign = change >= 0 ? "+" : "";
     return `${sign}${change.toFixed(2)}%`;
   };
@@ -177,9 +179,8 @@ function CryptoPriceCard({
               <span
                 className={`${
                   compact ? "text-[10px]" : "text-sm"
-                } font-medium ${
-                  isPositive ? "text-green-400" : "text-red-400"
-                }`}
+                } font-medium`}
+                style={{ color: isPositive ? (isDark ? "#4ade80" : "#15803d") : (isDark ? "#f87171" : "#b91c1c") }}
               >
                 {formatChange(price.changePercent24h)}
               </span>
@@ -211,13 +212,15 @@ function CryptoPriceCard({
                     <TrendingUp
                       className={`${
                         compact ? "w-3 h-3" : "w-4 h-4"
-                      } text-green-400`}
+                      }`}
+                      style={{ color: isDark ? "#4ade80" : "#15803d" }}
                     />
                   ) : (
                     <TrendingDown
                       className={`${
                         compact ? "w-3 h-3" : "w-4 h-4"
-                      } text-red-400`}
+                      }`}
+                      style={{ color: isDark ? "#f87171" : "#b91c1c" }}
                     />
                   )}
                 </motion.div>
@@ -268,10 +271,31 @@ export function CryptoPriceTicker({
   symbols = [
     "BTC",
     "ETH",
+    "SOL",
     "XRP",
+    "BNB",
+    "ADA",
+    "DOGE",
+    "AVAX",
     "TRX",
+    "DOT",
+    "LINK",
     "TON",
+    "SHIB",
     "LTC",
+    "UNI",
+    "MATIC",
+    "ATOM",
+    "NEAR",
+    "FIL",
+    "APT",
+    "ARB",
+    "OP",
+    "AAVE",
+    "MKR",
+    "INJ",
+    "SUI",
+    "SEI",
     "BCH",
     "ETC",
     "USDC",

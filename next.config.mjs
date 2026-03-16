@@ -95,6 +95,18 @@ const nextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "hatscripts.github.io",
+        port: "",
+        pathname: "/circle-flags/flags/**",
+      },
+      {
+        protocol: "https",
+        hostname: "raw.githubusercontent.com",
+        port: "",
+        pathname: "/spothq/cryptocurrency-icons/**",
+      },
     ],
   },
   // Turbopack config for Next.js 16 (replaces webpack)

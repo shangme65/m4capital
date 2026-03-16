@@ -7,7 +7,6 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
-import { getCryptoMetadata } from "@/lib/crypto-constants";
 
 interface Cryptocurrency {
   symbol: string;
@@ -18,10 +17,31 @@ interface Cryptocurrency {
 const POPULAR_CRYPTOCURRENCIES: Cryptocurrency[] = [
   { symbol: "BTC", name: "Bitcoin", icon: "₿" },
   { symbol: "ETH", name: "Ethereum", icon: "Ξ" },
+  { symbol: "SOL", name: "Solana", icon: "◎" },
   { symbol: "XRP", name: "Ripple", icon: "✕" },
+  { symbol: "BNB", name: "BNB", icon: "B" },
+  { symbol: "ADA", name: "Cardano", icon: "₳" },
+  { symbol: "DOGE", name: "Dogecoin", icon: "Ð" },
+  { symbol: "AVAX", name: "Avalanche", icon: "A" },
   { symbol: "TRX", name: "Tron", icon: "Ⓣ" },
-  { symbol: "TON", name: "Toncoin", icon: "◎" },
+  { symbol: "DOT", name: "Polkadot", icon: "●" },
+  { symbol: "LINK", name: "Chainlink", icon: "⬡" },
+  { symbol: "TON", name: "Toncoin", icon: "💎" },
+  { symbol: "SHIB", name: "Shiba Inu", icon: "S" },
   { symbol: "LTC", name: "Litecoin", icon: "Ł" },
+  { symbol: "UNI", name: "Uniswap", icon: "🦄" },
+  { symbol: "MATIC", name: "Polygon", icon: "M" },
+  { symbol: "ATOM", name: "Cosmos", icon: "⚛" },
+  { symbol: "NEAR", name: "NEAR Protocol", icon: "N" },
+  { symbol: "FIL", name: "Filecoin", icon: "⨎" },
+  { symbol: "APT", name: "Aptos", icon: "A" },
+  { symbol: "ARB", name: "Arbitrum", icon: "A" },
+  { symbol: "OP", name: "Optimism", icon: "O" },
+  { symbol: "AAVE", name: "Aave", icon: "A" },
+  { symbol: "MKR", name: "Maker", icon: "M" },
+  { symbol: "INJ", name: "Injective", icon: "I" },
+  { symbol: "SUI", name: "Sui", icon: "S" },
+  { symbol: "SEI", name: "Sei", icon: "S" },
   { symbol: "BCH", name: "Bitcoin Cash", icon: "Ƀ" },
   { symbol: "ETC", name: "Ethereum Classic", icon: "Ξ" },
   { symbol: "USDC", name: "USD Coin", icon: "$" },
@@ -168,7 +188,6 @@ export default function AddCryptoModal({
               const isInPortfolio = existingSymbols.includes(crypto.symbol);
               const asset = existingAssets.find((a) => a.symbol === crypto.symbol);
               const hasBalance = asset && asset.amount > 0;
-              const metadata = getCryptoMetadata(crypto.symbol);
               const priceData = cryptoPrices[crypto.symbol];
 
               return (
@@ -177,13 +196,8 @@ export default function AddCryptoModal({
                   className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-colors ${isDark ? "bg-gray-800 hover:bg-gray-750 border-gray-700" : "bg-gray-50 hover:bg-gray-100 border-gray-200"}`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <div
-                      className={`w-9 h-9 rounded-lg bg-gradient-to-br ${metadata.gradient} flex items-center justify-center`}
-                      style={{
-                        boxShadow: "0 4px 10px -2px rgba(0,0,0,0.45), inset 0 2px 0 rgba(255,255,255,0.18), inset 0 -2px 0 rgba(0,0,0,0.22)",
-                      }}
-                    >
-                      <CryptoIcon symbol={crypto.symbol} size="sm" showNetwork={true} />
+                    <div className="w-9 h-9 flex items-center justify-center flex-shrink-0">
+                      <CryptoIcon symbol={crypto.symbol} size="md" />
                     </div>
                     <div>
                       <div className="flex items-center gap-1.5">
