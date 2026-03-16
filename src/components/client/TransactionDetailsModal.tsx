@@ -537,19 +537,25 @@ export default function TransactionDetailsModal({
                         <div
                           className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-semibold text-[10px] uppercase tracking-wide ${
                             transaction.status === "completed"
-                              ? "bg-green-500/20 text-green-400 border-green-500/40 shadow-[0_0_12px_rgba(34,197,94,0.4)]"
+                              ? isDark 
+                                ? "bg-green-500/20 text-green-400 border-green-500/40 shadow-[0_0_12px_rgba(34,197,94,0.4)]"
+                                : "bg-green-100 text-green-700 border-green-300"
                               : transaction.status === "pending"
-                              ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
-                              : "bg-red-500/20 text-red-400 border-red-500/30"
+                              ? isDark
+                                ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                                : "bg-yellow-100 text-yellow-700 border-yellow-300"
+                              : isDark
+                                ? "bg-red-500/20 text-red-400 border-red-500/30"
+                                : "bg-red-100 text-red-700 border-red-300"
                           }`}
                         >
                           <div
                             className={`w-1.5 h-1.5 rounded-full ${
                               transaction.status === "completed"
-                                ? "bg-green-400"
+                                ? isDark ? "bg-green-400" : "bg-green-600"
                                 : transaction.status === "pending"
-                                ? "bg-yellow-400 animate-pulse"
-                                : "bg-red-400"
+                                ? isDark ? "bg-yellow-400 animate-pulse" : "bg-yellow-600 animate-pulse"
+                                : isDark ? "bg-red-400" : "bg-red-600"
                             }`}
                           ></div>
                           {transaction.status}
