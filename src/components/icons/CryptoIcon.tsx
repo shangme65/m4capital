@@ -18,6 +18,11 @@ const sizeMap = {
   xl: 64,
 };
 
+// List of cryptocurrencies - everything else is treated as fiat currency
+const CRYPTO_CURRENCIES = [
+  "BTC", "ETH", "XRP", "TRX", "TON", "LTC", "BCH", "ETC", "USDC", "USDT"
+];
+
 const colorMap: Record<string, string> = {
   BTC: "#f7931a",
   ETH: "#627eea",
@@ -41,7 +46,13 @@ export function CryptoIcon({
   const [failed, setFailed] = useState(false);
   const iconSize = sizeMap[size];
   const normalizedSymbol = symbol.toLowerCase();
-  const iconPath = `/crypto/${normalizedSymbol}.svg`;
+
+  // Determine if this is a crypto or fiat currency
+  const isCrypto = CRYPTO_CURRENCIES.includes(symbol.toUpperCase());
+  const iconPath = isCrypto
+    ? `/crypto/${normalizedSymbol}.svg`
+    : `/currencies/${normalizedSymbol}.svg`;
+
   const bgColor = colorMap[symbol] || "#6b7280";
 
   if (failed) {
