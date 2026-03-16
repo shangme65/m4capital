@@ -4,6 +4,7 @@ import { CURRENCIES } from "@/lib/currencies";
 import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
 import { Search, X } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import Image from "next/image";
 
 interface CurrencySelectorProps {
   value: string;
@@ -11,163 +12,28 @@ interface CurrencySelectorProps {
   disabled?: boolean;
 }
 
-// Map currency codes to their primary country codes for flag display
-const CURRENCY_TO_FLAG: Record<string, string> = {
-  AED: "AE",
-  AFN: "AF",
-  ALL: "AL",
-  AMD: "AM",
-  ANG: "CW",
-  AOA: "AO",
-  ARS: "AR",
-  AUD: "AU",
-  AWG: "AW",
-  AZN: "AZ",
-  BAM: "BA",
-  BBD: "BB",
-  BDT: "BD",
-  BGN: "BG",
-  BHD: "BH",
-  BIF: "BI",
-  BMD: "BM",
-  BND: "BN",
-  BOB: "BO",
-  BRL: "BR",
-  BSD: "BS",
-  BTN: "BT",
-  BWP: "BW",
-  BYN: "BY",
-  BZD: "BZ",
-  CAD: "CA",
-  CDF: "CD",
-  CHF: "CH",
-  CLP: "CL",
-  CNY: "CN",
-  COP: "CO",
-  CRC: "CR",
-  CUP: "CU",
-  CVE: "CV",
-  CZK: "CZ",
-  DJF: "DJ",
-  DKK: "DK",
-  DOP: "DO",
-  DZD: "DZ",
-  EGP: "EG",
-  ERN: "ER",
-  ETB: "ET",
-  EUR: "EU",
-  FJD: "FJ",
-  FKP: "FK",
-  GBP: "GB",
-  GEL: "GE",
-  GHS: "GH",
-  GIP: "GI",
-  GMD: "GM",
-  GNF: "GN",
-  GTQ: "GT",
-  GYD: "GY",
-  HKD: "HK",
-  HNL: "HN",
-  HTG: "HT",
-  HUF: "HU",
-  IDR: "ID",
-  ILS: "IL",
-  INR: "IN",
-  IQD: "IQ",
-  IRR: "IR",
-  ISK: "IS",
-  JMD: "JM",
-  JOD: "JO",
-  JPY: "JP",
-  KES: "KE",
-  KGS: "KG",
-  KHR: "KH",
-  KMF: "KM",
-  KPW: "KP",
-  KRW: "KR",
-  KWD: "KW",
-  KYD: "KY",
-  KZT: "KZ",
-  LAK: "LA",
-  LBP: "LB",
-  LKR: "LK",
-  LRD: "LR",
-  LSL: "LS",
-  LYD: "LY",
-  MAD: "MA",
-  MDL: "MD",
-  MGA: "MG",
-  MKD: "MK",
-  MMK: "MM",
-  MNT: "MN",
-  MOP: "MO",
-  MRU: "MR",
-  MUR: "MU",
-  MVR: "MV",
-  MWK: "MW",
-  MXN: "MX",
-  MYR: "MY",
-  MZN: "MZ",
-  NAD: "NA",
-  NGN: "NG",
-  NIO: "NI",
-  NOK: "NO",
-  NPR: "NP",
-  NZD: "NZ",
-  OMR: "OM",
-  PAB: "PA",
-  PEN: "PE",
-  PGK: "PG",
-  PHP: "PH",
-  PKR: "PK",
-  PLN: "PL",
-  PYG: "PY",
-  QAR: "QA",
-  RON: "RO",
-  RSD: "RS",
-  RUB: "RU",
-  RWF: "RW",
-  SAR: "SA",
-  SBD: "SB",
-  SCR: "SC",
-  SDG: "SD",
-  SEK: "SE",
-  SGD: "SG",
-  SHP: "SH",
-  SLL: "SL",
-  SOS: "SO",
-  SRD: "SR",
-  SSP: "SS",
-  STN: "ST",
-  SYP: "SY",
-  SZL: "SZ",
-  THB: "TH",
-  TJS: "TJ",
-  TMT: "TM",
-  TND: "TN",
-  TOP: "TO",
-  TRY: "TR",
-  TTD: "TT",
-  TWD: "TW",
-  TZS: "TZ",
-  UAH: "UA",
-  UGX: "UG",
-  USD: "US",
-  UYU: "UY",
-  UZS: "UZ",
-  VES: "VE",
-  VND: "VN",
-  VUV: "VU",
-  WST: "WS",
-  XAF: "CM",
-  XCD: "AG",
-  XOF: "SN",
-  XPF: "PF",
-  YER: "YE",
-  ZAR: "ZA",
-  ZMW: "ZM",
-  ZWL: "ZW",
-};
+// Currency icon component using SVG logos from /public/currencies/
+const CurrencyLogo = ({ code, size = 28 }: { code: string; size?: number }) => (
+  <Image
+    src={`/currencies/${code.toLowerCase()}.svg`}
+    alt={`${code} currency`}
+    width={size}
+    height={size}
+    className="rounded-sm object-contain flex-shrink-0"
+    onError={(e) => {
+      // Fallback to a colored circle with the first letter
+      const target = e.currentTarget;
+      target.style.display = "none";
+      const fallback = document.createElement("div");
+      fallback.className = "inline-flex items-center justify-center rounded-full bg-gray-500 text-white font-bold";
+      fallback.style.width = `${size}px`;
+      fallback.style.height = `${size}px`;
+      fallback.style.fontSize = `${size * 0.4}px`;
+      fallback.textContent = code.charAt(0);
+      target.parentNode?.appendChild(fallback);
+    }}
+  />
+);
 
 export default function CurrencySelector({
   value,
@@ -198,18 +64,6 @@ export default function CurrencySelector({
     setSearchQuery("");
   };
 
-  const getFlagEmoji = (currencyCode: string) => {
-    const countryCode = CURRENCY_TO_FLAG[currencyCode];
-    if (!countryCode) return "🌐";
-
-    // Convert country code to flag emoji
-    const codePoints = countryCode
-      .toUpperCase()
-      .split("")
-      .map((char) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  };
-
   return (
     <div className="relative">
       {/* Selected Currency Display */}
@@ -220,7 +74,7 @@ export default function CurrencySelector({
         className={`w-full rounded-lg px-4 py-2.5 border focus:outline-none focus:border-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-between ${isDark ? "bg-gray-800 text-white border-gray-700" : "bg-white text-gray-900 border-gray-300"}`}
       >
         <div className="flex items-center gap-3">
-          <span className="text-2xl">{getFlagEmoji(value)}</span>
+          <CurrencyLogo code={value} size={28} />
           <div className="text-left">
             <div className="font-medium">{value}</div>
             <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
@@ -299,9 +153,7 @@ export default function CurrencySelector({
                         onClick={() => handleSelect(currency.code)}
                         className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-left ${isDark ? "hover:bg-gray-800" : "hover:bg-gray-100"}`}
                       >
-                        <span className="text-2xl flex-shrink-0">
-                          {getFlagEmoji(currency.code)}
-                        </span>
+                        <CurrencyLogo code={currency.code} size={28} />
                         <div className="flex-1 min-w-0">
                           <div className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                             {currency.code}

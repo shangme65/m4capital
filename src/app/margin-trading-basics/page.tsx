@@ -3,6 +3,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronUp } from "lucide-react";
 
 export default function MarginTradingBasicsPage() {
@@ -81,7 +82,10 @@ export default function MarginTradingBasicsPage() {
                     <div className="bg-gray-700/50 rounded-lg p-3 mb-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">🇪🇺🇺🇸</span>
+                          <span className="flex items-center -space-x-1">
+                            <Image src="/currencies/eur.svg" alt="EUR" width={18} height={18} className="rounded-full" />
+                            <Image src="/currencies/usd.svg" alt="USD" width={18} height={18} className="rounded-full" />
+                          </span>
                           <div>
                             <div className="text-white font-medium">EURUSD</div>
                             <div className="text-green-400 text-xs">
@@ -511,7 +515,10 @@ export default function MarginTradingBasicsPage() {
                     <div className="flex items-center gap-2 mb-4 overflow-x-auto">
                       <span className="text-gray-400 text-lg">+</span>
                       <div className="flex items-center gap-1 px-2 py-1 bg-gray-700/50 rounded">
-                        <span className="text-sm">🇪🇺🇺🇸</span>
+                        <span className="flex items-center -space-x-1">
+                          <Image src="/currencies/eur.svg" alt="EUR" width={14} height={14} className="rounded-full" />
+                          <Image src="/currencies/usd.svg" alt="USD" width={14} height={14} className="rounded-full" />
+                        </span>
                         <span className="text-white text-xs">EUR/USD</span>
                         <span className="text-gray-400">×</span>
                       </div>

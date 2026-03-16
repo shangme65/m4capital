@@ -463,9 +463,9 @@ export default function LicensesAndSafeguardsPage() {
               <div className="p-8 md:p-12">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                   {[
-                    { location: "Antigua and Barbuda", icon: "🏝️", color: "orange" },
-                    { location: "European Union", icon: "🇪🇺", color: "blue" },
-                    { location: "Latin America (Brazil)", icon: "🇧🇷", color: "green" }
+                    { location: "Antigua and Barbuda", icon: "🏝️", currencyCode: "", color: "orange" },
+                    { location: "European Union", icon: "", currencyCode: "EUR", color: "blue" },
+                    { location: "Latin America (Brazil)", icon: "", currencyCode: "BRL", color: "green" }
                   ].map((region, idx) => (
                     <motion.div
                       key={idx}
@@ -475,7 +475,17 @@ export default function LicensesAndSafeguardsPage() {
                       className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="text-3xl">{region.icon}</div>
+                        {region.currencyCode ? (
+                          <Image
+                            src={`/currencies/${region.currencyCode.toLowerCase()}.svg`}
+                            alt={region.currencyCode}
+                            width={36}
+                            height={36}
+                            className="rounded-sm object-contain"
+                          />
+                        ) : (
+                          <div className="text-3xl">{region.icon}</div>
+                        )}
                         <div>
                           <h3 className="font-bold text-gray-900">{region.location}</h3>
                         </div>

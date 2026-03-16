@@ -1382,44 +1382,6 @@ function DashboardContent() {
                     )} ${fullName}`;
                   };
 
-                  // Currency to country flag emoji mapping
-                  const CURRENCY_FLAGS: Record<string, string> = {
-                    USD: "🇺🇸",
-                    EUR: "🇪🇺",
-                    GBP: "🇬🇧",
-                    BRL: "🇧🇷",
-                    JPY: "🇯🇵",
-                    CAD: "🇨🇦",
-                    AUD: "🇦🇺",
-                    CHF: "🇨🇭",
-                    INR: "🇮🇳",
-                    CNY: "🇨🇳",
-                    KRW: "🇰🇷",
-                    NGN: "🇳🇬",
-                    MXN: "🇲🇽",
-                    ZAR: "🇿🇦",
-                    RUB: "🇷🇺",
-                    SGD: "🇸🇬",
-                    HKD: "🇭🇰",
-                    NZD: "🇳🇿",
-                    SEK: "🇸🇪",
-                    NOK: "🇳🇴",
-                    DKK: "🇩🇰",
-                    PLN: "🇵🇱",
-                    THB: "🇹🇭",
-                    IDR: "🇮🇩",
-                    MYR: "🇲🇾",
-                    PHP: "🇵🇭",
-                    VND: "🇻🇳",
-                    AED: "🇦🇪",
-                    SAR: "🇸🇦",
-                    TRY: "🇹🇷",
-                    COP: "🇨🇴",
-                    ARS: "🇦🇷",
-                    CLP: "🇨🇱",
-                    PEN: "🇵🇪",
-                  };
-
                   // Get transaction type icon and color
                   const getTransactionIcon = () => {
                     // For trade_earned transactions, show a trophy/profit icon
@@ -1490,33 +1452,14 @@ function DashboardContent() {
 
                     const assetSymbol =
                       activity.asset?.split(" ")[0]?.toUpperCase() || "";
-                    const flag = CURRENCY_FLAGS[assetSymbol];
 
-                    // If it's a fiat currency, show the country flag
-                    if (flag) {
-                      return (
-                        <div
-                          className="inline-flex items-center justify-center rounded-full overflow-hidden flex-shrink-0 bg-gradient-to-br from-gray-600 to-gray-700"
-                          style={{
-                            width: "24px",
-                            height: "24px",
-                            fontSize: "16px",
-                            lineHeight: "1",
-                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.5)",
-                          }}
-                        >
-                          {flag}
-                        </div>
-                      );
-                    }
-
-                    // Otherwise show crypto icon
+                    // Show proper currency/crypto SVG icon for all assets
                     return (
-                      <div className="relative" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
+                      <div className="relative flex-shrink-0" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
                         <CryptoIcon
                           symbol={assetSymbol}
                           size="sm"
-                          showNetwork={true}
+                          showNetwork={false}
                         />
                       </div>
                     );

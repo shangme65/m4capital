@@ -16,22 +16,23 @@ export interface Language {
 }
 
 // Only include languages that have full translations available
+// flag field contains the currency code used for SVG icon path: /currencies/{flag}.svg
 export const SUPPORTED_LANGUAGES: Language[] = [
-  { code: "en", name: "English", nativeName: "English", flag: "🇺🇸" },
-  { code: "es", name: "Spanish", nativeName: "Español", flag: "🇪🇸" },
-  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "🇧🇷" },
-  { code: "fr", name: "French", nativeName: "Français", flag: "🇫🇷" },
-  { code: "de", name: "German", nativeName: "Deutsch", flag: "🇩🇪" },
-  { code: "fil", name: "Filipino", nativeName: "Filipino", flag: "🇵🇭" },
-  { code: "hi", name: "Hindi", nativeName: "हिन्दी", flag: "🇮🇳" },
-  { code: "ja", name: "Japanese", nativeName: "日本語", flag: "🇯🇵" },
-  { code: "pl", name: "Polish", nativeName: "Polski", flag: "🇵🇱" },
-  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "🇨🇿" },
-  { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "🇹🇷" },
-  { code: "ru", name: "Russian", nativeName: "Русский", flag: "🇷🇺" },
-  { code: "ko", name: "Korean", nativeName: "한국어", flag: "🇰🇷" },
-  { code: "it", name: "Italian", nativeName: "Italiano", flag: "🇮🇹" },
-  { code: "fj", name: "Fijian", nativeName: "Vosa Vakaviti", flag: "🇫🇯" },
+  { code: "en", name: "English", nativeName: "English", flag: "usd" },
+  { code: "es", name: "Spanish", nativeName: "Español", flag: "eur" },
+  { code: "pt", name: "Portuguese", nativeName: "Português", flag: "brl" },
+  { code: "fr", name: "French", nativeName: "Français", flag: "eur" },
+  { code: "de", name: "German", nativeName: "Deutsch", flag: "eur" },
+  { code: "fil", name: "Filipino", nativeName: "Filipino", flag: "php" },
+  { code: "hi", name: "Hindi", nativeName: "हिन्दी", flag: "inr" },
+  { code: "ja", name: "Japanese", nativeName: "日本語", flag: "jpy" },
+  { code: "pl", name: "Polish", nativeName: "Polski", flag: "pln" },
+  { code: "cs", name: "Czech", nativeName: "Čeština", flag: "czk" },
+  { code: "tr", name: "Turkish", nativeName: "Türkçe", flag: "try" },
+  { code: "ru", name: "Russian", nativeName: "Русский", flag: "rub" },
+  { code: "ko", name: "Korean", nativeName: "한국어", flag: "krw" },
+  { code: "it", name: "Italian", nativeName: "Italiano", flag: "eur" },
+  { code: "fj", name: "Fijian", nativeName: "Vosa Vakaviti", flag: "fjd" },
 ];
 
 // Map browser locale codes to our supported languages

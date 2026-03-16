@@ -4,6 +4,7 @@ import React, { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ChevronUp, Search, HelpCircle } from "lucide-react";
+import Image from "next/image";
 
 // Asset type definitions
 type AssetType = "stocks" | "forex" | "cryptocurrencies";
@@ -293,7 +294,7 @@ const forexData: ForexAsset[] = [
     id: "eurusd",
     pair: "EUR/USD",
     ticker: "EURUSD",
-    flags: ["🇪🇺", "🇺🇸"],
+    flags: ["EUR", "USD"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -308,7 +309,7 @@ const forexData: ForexAsset[] = [
     id: "eurgbp",
     pair: "EUR/GBP",
     ticker: "EURGBP",
-    flags: ["🇪🇺", "🇬🇧"],
+    flags: ["EUR", "GBP"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -323,7 +324,7 @@ const forexData: ForexAsset[] = [
     id: "gbpjpy",
     pair: "GBP/JPY",
     ticker: "GBPJPY",
-    flags: ["🇬🇧", "🇯🇵"],
+    flags: ["GBP", "JPY"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -338,7 +339,7 @@ const forexData: ForexAsset[] = [
     id: "eurjpy",
     pair: "EUR/JPY",
     ticker: "EURJPY",
-    flags: ["🇪🇺", "🇯🇵"],
+    flags: ["EUR", "JPY"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -353,7 +354,7 @@ const forexData: ForexAsset[] = [
     id: "gbpusd",
     pair: "GBP/USD",
     ticker: "GBPUSD",
-    flags: ["🇬🇧", "🇺🇸"],
+    flags: ["GBP", "USD"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -368,7 +369,7 @@ const forexData: ForexAsset[] = [
     id: "usdjpy",
     pair: "USD/JPY",
     ticker: "USDJPY",
-    flags: ["🇺🇸", "🇯🇵"],
+    flags: ["USD", "JPY"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -383,7 +384,7 @@ const forexData: ForexAsset[] = [
     id: "usdchf",
     pair: "USD/CHF",
     ticker: "USDCHF",
-    flags: ["🇺🇸", "🇨🇭"],
+    flags: ["USD", "CHF"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -398,7 +399,7 @@ const forexData: ForexAsset[] = [
     id: "audusd",
     pair: "AUD/USD",
     ticker: "AUDUSD",
-    flags: ["🇦🇺", "🇺🇸"],
+    flags: ["AUD", "USD"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -413,7 +414,7 @@ const forexData: ForexAsset[] = [
     id: "audcad",
     pair: "AUD/CAD",
     ticker: "AUDCAD",
-    flags: ["🇦🇺", "🇨🇦"],
+    flags: ["AUD", "CAD"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -428,7 +429,7 @@ const forexData: ForexAsset[] = [
     id: "nzdusd",
     pair: "NZD/USD",
     ticker: "NZDUSD",
-    flags: ["🇳🇿", "🇺🇸"],
+    flags: ["NZD", "USD"],
     tradingHours: [
       { days: "Mon - Thu", hours: ["00:00 - 21:00", "21:00 - 00:00"] },
       { days: "Fri", hours: ["00:00 - 19:00"] },
@@ -728,10 +729,15 @@ export default function TradingSpecificationsPage() {
       {/* Header */}
       <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
         <div className="flex items-center -space-x-1">
-          {forex.flags.map((flag, idx) => (
-            <span key={idx} className="text-2xl">
-              {flag}
-            </span>
+          {forex.flags.map((code, idx) => (
+            <Image
+              key={idx}
+              src={`/currencies/${code.toLowerCase()}.svg`}
+              alt={code}
+              width={28}
+              height={28}
+              className="rounded-sm object-contain"
+            />
           ))}
         </div>
         <div>

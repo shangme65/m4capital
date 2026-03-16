@@ -780,7 +780,13 @@ export default function CalendarsPage() {
                       {/* Event Details */}
                       <div className="col-span-6">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="text-2xl">{event.countryFlag}</span>
+                          <Image
+                            src={`/currencies/${(event.currency === "CNH" ? "cny" : event.currency.toLowerCase())}.svg`}
+                            alt={event.currency}
+                            width={28}
+                            height={28}
+                            className="rounded-sm object-contain"
+                          />
                           <span className="font-medium text-gray-900">
                             {event.currency}
                           </span>

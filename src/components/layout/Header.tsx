@@ -413,7 +413,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   className="w-full flex items-center justify-between bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white font-semibold"
                 >
                   <span className="flex items-center gap-2">
-                    <span>{currentLanguage.flag}</span>
+                    <Image src={`/currencies/${currentLanguage.flag}.svg`} alt={currentLanguage.name} width={20} height={20} className="rounded-sm" />
                     <span>{currentLanguage.name}</span>
                   </span>
                   <ChevronDown
@@ -439,7 +439,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                         }`}
                       >
                         <span className="flex items-center gap-3">
-                          <span className="text-lg">{lang.flag}</span>
+                          <Image src={`/currencies/${lang.flag}.svg`} alt={lang.name} width={24} height={24} className="rounded-sm" />
                           <span className="text-gray-900 dark:text-white">
                             {lang.name}
                           </span>

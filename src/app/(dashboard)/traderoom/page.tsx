@@ -75,6 +75,27 @@ import {
   withdrawFromTraderoomAction,
 } from "@/actions/traderoom-actions";
 import { getCurrencySymbol, formatCurrency } from "@/lib/currencies";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
+
+// Helper to render asset icon - SVG for forex currencies, fallback for others
+const AssetFlag = ({ flag, symbol, size = 20 }: { flag: string; symbol: string; size?: number }) => {
+  // For forex pairs like "EUR,USD" - render two currency SVG icons
+  if (flag.includes(",")) {
+    const [first, second] = flag.split(",");
+    return (
+      <span className="inline-flex items-center -space-x-1">
+        <CryptoIcon symbol={first} size="xs" />
+        <CryptoIcon symbol={second} size="xs" />
+      </span>
+    );
+  }
+  // For single currencies, use CryptoIcon
+  if (/^[A-Z]{3}$/.test(flag)) {
+    return <CryptoIcon symbol={flag} size="xs" />;
+  }
+  // For crypto/stocks/other, show text/emoji as-is
+  return <span>{flag}</span>;
+};
 
 // Active trade interface for binary options
 interface ActiveTrade {
@@ -182,7 +203,7 @@ function TradingInterface() {
       percentage: `${getForexRate("EUR")?.changePercent >= 0 ? "+" : ""}${
         getForexRate("EUR")?.changePercent || "-0.21"
       }%`,
-      flag: "🇪🇺🇺🇸",
+      flag: "EUR,USD",
       category: "Forex",
     },
     {
@@ -192,7 +213,7 @@ function TradingInterface() {
       percentage: `${getForexRate("GBP")?.changePercent >= 0 ? "+" : ""}${
         getForexRate("GBP")?.changePercent || "0.35"
       }%`,
-      flag: "🇬🇧🇺🇸",
+      flag: "GBP,USD",
       category: "Forex",
     },
     {
@@ -202,7 +223,7 @@ function TradingInterface() {
       percentage: `${getForexRate("JPY")?.changePercent >= 0 ? "+" : ""}${
         getForexRate("JPY")?.changePercent || "0.08"
       }%`,
-      flag: "🇺🇸🇯🇵",
+      flag: "USD,JPY",
       category: "Forex",
     },
     {
@@ -212,7 +233,7 @@ function TradingInterface() {
       percentage: `${getForexRate("CAD")?.changePercent >= 0 ? "+" : ""}${
         getForexRate("CAD")?.changePercent || "0.11"
       }%`,
-      flag: "🇺🇸🇨🇦",
+      flag: "USD,CAD",
       category: "Forex",
     },
     {
@@ -222,7 +243,7 @@ function TradingInterface() {
       percentage: `${getForexRate("AUD")?.changePercent >= 0 ? "+" : ""}${
         getForexRate("AUD")?.changePercent || "-0.18"
       }%`,
-      flag: "🇦🇺🇺🇸",
+      flag: "AUD,USD",
       category: "Forex",
     },
     
@@ -348,7 +369,7 @@ function TradingInterface() {
       result: "win",
       profit: 8600,
       percentage: "+86.00%",
-      flag: "🇺🇸🇨🇦",
+      flag: "USD,CAD",
       closePrice: "1.385575",
       openPrice: "1.383925",
     },
@@ -363,7 +384,7 @@ function TradingInterface() {
       result: "loss",
       profit: -10000,
       percentage: "-100%",
-      flag: "🇺🇸🇨🇦",
+      flag: "USD,CAD",
       closePrice: "1.383925",
       openPrice: "1.385575",
     },
@@ -378,7 +399,7 @@ function TradingInterface() {
       result: "loss",
       profit: -98140,
       percentage: "-98.14%",
-      flag: "🇺🇸🇨🇦",
+      flag: "USD,CAD",
       closePrice: "1.385575",
       openPrice: "1.390000",
     },
@@ -393,7 +414,7 @@ function TradingInterface() {
       result: "win",
       profit: 86000,
       percentage: "+86.00%",
-      flag: "🇺🇸🇨🇦",
+      flag: "USD,CAD",
       closePrice: "1.383925",
       openPrice: "1.385575",
     },
@@ -408,7 +429,7 @@ function TradingInterface() {
       result: "loss",
       profit: -65120,
       percentage: "-81.40%",
-      flag: "🇺🇸🇨🇦",
+      flag: "USD,CAD",
       closePrice: "1.385575",
       openPrice: "1.383925",
     },
@@ -971,8 +992,7 @@ function TradingInterface() {
                     }}
                   >
                     <span className="text-xs">
-                      {symbols.find((s) => s.symbol === tab.symbol)?.flag ||
-                        "💱"}
+                      <AssetFlag flag={symbols.find((s) => s.symbol === tab.symbol)?.flag || ""} symbol={tab.symbol} size={16} />
                     </span>
                     <span className="text-xs font-medium">{tab.symbol}</span>
                     <span
@@ -1101,10 +1121,10 @@ function TradingInterface() {
                           </div>
                         </div>
 
-                        {/* Country */}
+                        {/* Currency */}
                         <div className="flex items-center gap-2 mb-4">
-                          <span className="text-lg">🇧🇷</span>
-                          <span className="text-sm text-[#5ddf38]">Brazil</span>
+                          <CryptoIcon symbol={preferredCurrency} size="sm" />
+                          <span className="text-sm text-[#5ddf38]">{preferredCurrency}</span>
                         </div>
 
                         {/* Date and User ID */}
@@ -1869,8 +1889,7 @@ function TradingInterface() {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <span className="text-2xl">
-                  {symbols.find((s) => s.symbol === selectedSymbol)?.flag ||
-                    "💱"}
+                  <AssetFlag flag={symbols.find((s) => s.symbol === selectedSymbol)?.flag || ""} symbol={selectedSymbol} size={24} />
                 </span>
                 <h2 className="text-2xl font-bold" style={{ color: "#eceae9" }}>
                   {selectedSymbol}
@@ -3212,21 +3231,10 @@ function TradingInterface() {
                 {/* Symbol Badge with Flag */}
                 <div className="flex items-center gap-2">
                   <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border border-[#38312e]">
-                    <span className="text-sm">
-                      {selectedSymbol.includes("CAD")
-                        ? "🇨🇦"
-                        : selectedSymbol.includes("EUR")
-                        ? "🇪🇺"
-                        : selectedSymbol.includes("GBP")
-                        ? "🇬🇧"
-                        : selectedSymbol.includes("JPY")
-                        ? "🇯🇵"
-                        : selectedSymbol.includes("AUD")
-                        ? "🇦🇺"
-                        : selectedSymbol.includes("BTC")
-                        ? "₿"
-                        : "🌐"}
-                    </span>
+                    <CryptoIcon
+                      symbol={selectedSymbol.split("/")[0]}
+                      size="sm"
+                    />
                   </div>
                   <div>
                     <div className="flex items-center gap-1">
@@ -3599,7 +3607,7 @@ function TradingInterface() {
                 style={{ borderColor: "#38312e" }}
               >
                 <div className="flex items-center space-x-2">
-                  <span className="text-lg">{selectedTrade.flag}</span>
+                  <span className="text-lg"><AssetFlag flag={selectedTrade.flag} symbol={selectedTrade.symbol} size={20} /></span>
                   <h3
                     className="font-semibold text-lg"
                     style={{ color: "#eceae9" }}
@@ -4542,7 +4550,7 @@ function TradingInterface() {
                                       background: "linear-gradient(135deg, #38312e 0%, #2d2724 100%)"
                                     }}
                                   >
-                                    <span className="relative z-10">{symbol.flag}</span>
+                                    <span className="relative z-10"><AssetFlag flag={symbol.flag} symbol={symbol.symbol} size={24} /></span>
                                     <div className="absolute inset-0 bg-gradient-to-br from-[#ff8516]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                   </div>
                                   

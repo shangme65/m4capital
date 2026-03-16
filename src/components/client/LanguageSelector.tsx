@@ -3,14 +3,15 @@
 import { motion } from "framer-motion";
 import { Globe } from "lucide-react";
 import { useState } from "react";
+import Image from "next/image";
 
 const languages = [
-  { code: "en", name: "English", flag: "🇺🇸" },
-  { code: "es", name: "Español", flag: "🇪🇸" },
-  { code: "fr", name: "Français", flag: "🇫🇷" },
-  { code: "de", name: "Deutsch", flag: "🇩🇪" },
-  { code: "pt", name: "Português", flag: "🇧🇷" },
-  { code: "zh", name: "中文", flag: "🇨🇳" },
+  { code: "en", name: "English", currency: "usd" },
+  { code: "es", name: "Español", currency: "eur" },
+  { code: "fr", name: "Français", currency: "eur" },
+  { code: "de", name: "Deutsch", currency: "eur" },
+  { code: "pt", name: "Português", currency: "brl" },
+  { code: "zh", name: "中文", currency: "cny" },
 ];
 
 export default function LanguageSelector() {
@@ -31,7 +32,7 @@ export default function LanguageSelector() {
         whileHover={{ scale: 1.05 }}
       >
         <Globe className="w-4 h-4 text-white" />
-        <span className="text-white text-sm">{selected.flag}</span>
+        <span className="text-white text-sm"><Image src={`/currencies/${selected.currency}.svg`} alt={selected.code} width={20} height={20} className="inline rounded-sm" /></span>
         <span className="text-white text-sm font-medium">{selected.code.toUpperCase()}</span>
       </motion.button>
 
@@ -50,7 +51,7 @@ export default function LanguageSelector() {
                 selected.code === lang.code ? "bg-white/10" : ""
               }`}
             >
-              <span className="text-lg">{lang.flag}</span>
+              <Image src={`/currencies/${lang.currency}.svg`} alt={lang.code} width={24} height={24} className="rounded-sm" />
               <span className="text-white text-sm">{lang.name}</span>
             </button>
           ))}
