@@ -213,6 +213,18 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     AVAX: "Avalanche",
     LINK: "Chainlink",
     SHIB: "Shiba Inu",
+    UNI: "Uniswap",
+    ATOM: "Cosmos",
+    NEAR: "NEAR Protocol",
+    FIL: "Filecoin",
+    APT: "Aptos",
+    ARB: "Arbitrum",
+    OP: "Optimism",
+    AAVE: "Aave",
+    MKR: "Maker",
+    INJ: "Injective",
+    SUI: "Sui",
+    SEI: "Sei",
   };
 
   // Crypto gradient colors
@@ -236,6 +248,18 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     AVAX: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
     LINK: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
     SHIB: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    UNI: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    ATOM: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    NEAR: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    FIL: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    APT: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    ARB: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    OP: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    AAVE: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    MKR: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    INJ: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    SUI: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+    SEI: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
   };
 
   // Available cryptos for withdrawal (only those with balance from user's portfolio)

@@ -111,7 +111,7 @@ export function CryptoIcon({
   className = "",
   alt,
 }: CryptoIconProps) {
-  // 0 = local, 1 = CDN, 2 = fallback circle
+  // 0 = local, 1 = CDN, 2 = local fiat (for fiat only), 3 = fallback circle
   const [stage, setStage] = useState(0);
   const iconSize = sizeMap[size];
   const upperSymbol = symbol.toUpperCase();
@@ -132,15 +132,17 @@ export function CryptoIcon({
       iconSrc = "";
     }
   } else {
-    // Fiat currency - use CDN flags directly
-    if (stage <= 1) {
+    // Fiat currency - try CDN first, then local, then fallback
+    if (stage === 0) {
       iconSrc = getCurrencyFlagUrl(upperSymbol);
+    } else if (stage === 1) {
+      iconSrc = `/currencies/${normalizedSymbol}.svg`;
     } else {
       iconSrc = "";
     }
   }
 
-  if (stage >= 2 || (!isCrypto && stage >= 2)) {
+  if ((isCrypto && stage >= 2) || (!isCrypto && stage >= 2)) {
     // Fallback to colored circle with symbol letter
     return (
       <div className="relative inline-block">

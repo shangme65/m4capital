@@ -936,6 +936,27 @@ const AdminDashboard = () => {
     { symbol: "ETC", name: "Ethereum Classic" },
     { symbol: "USDC", name: "USD Coin" },
     { symbol: "USDT", name: "Tether" },
+    { symbol: "SOL", name: "Solana" },
+    { symbol: "BNB", name: "BNB" },
+    { symbol: "ADA", name: "Cardano" },
+    { symbol: "DOGE", name: "Dogecoin" },
+    { symbol: "DOT", name: "Polkadot" },
+    { symbol: "MATIC", name: "Polygon" },
+    { symbol: "AVAX", name: "Avalanche" },
+    { symbol: "LINK", name: "Chainlink" },
+    { symbol: "SHIB", name: "Shiba Inu" },
+    { symbol: "UNI", name: "Uniswap" },
+    { symbol: "ATOM", name: "Cosmos" },
+    { symbol: "NEAR", name: "NEAR Protocol" },
+    { symbol: "FIL", name: "Filecoin" },
+    { symbol: "APT", name: "Aptos" },
+    { symbol: "ARB", name: "Arbitrum" },
+    { symbol: "OP", name: "Optimism" },
+    { symbol: "AAVE", name: "Aave" },
+    { symbol: "MKR", name: "Maker" },
+    { symbol: "INJ", name: "Injective" },
+    { symbol: "SUI", name: "Sui" },
+    { symbol: "SEI", name: "Sei" },
   ];
 
   const cryptoPaymentMethods = cryptoAssets.map((asset) => ({
@@ -3121,11 +3142,7 @@ const AdminDashboard = () => {
                                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
 
                                       <div
-                                        className={`relative z-10 w-8 h-8 rounded-lg flex items-center justify-center ${
-                                          isSelected
-                                            ? "bg-orange-500/20 shadow-lg shadow-orange-500/20"
-                                            : isDark ? "bg-gray-700/50 group-hover:bg-gray-600/50" : "bg-gray-200/80 group-hover:bg-gray-300/80"
-                                        }`}
+                                        className="relative z-10 w-8 h-8 flex items-center justify-center"
                                         style={{
                                           transform: "translateZ(15px)",
                                         }}

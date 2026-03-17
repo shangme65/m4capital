@@ -43,6 +43,17 @@ const TRADING_ASSETS: Asset[] = [
   { symbol: "LINK", name: "Chainlink", category: "Crypto" },
   { symbol: "UNI", name: "Uniswap", category: "Crypto" },
   { symbol: "TON", name: "Toncoin", category: "Crypto" },
+  { symbol: "ATOM", name: "Cosmos", category: "Crypto" },
+  { symbol: "NEAR", name: "NEAR Protocol", category: "Crypto" },
+  { symbol: "FIL", name: "Filecoin", category: "Crypto" },
+  { symbol: "APT", name: "Aptos", category: "Crypto" },
+  { symbol: "ARB", name: "Arbitrum", category: "Crypto" },
+  { symbol: "OP", name: "Optimism", category: "Crypto" },
+  { symbol: "AAVE", name: "Aave", category: "Crypto" },
+  { symbol: "MKR", name: "Maker", category: "Crypto" },
+  { symbol: "INJ", name: "Injective", category: "Crypto" },
+  { symbol: "SUI", name: "Sui", category: "Crypto" },
+  { symbol: "SEI", name: "Sei", category: "Crypto" },
   
   // Crypto Pairs (Crypto vs Crypto)
   { symbol: "BTC/ETH", name: "Bitcoin / Ethereum", category: "Crypto Pairs" },

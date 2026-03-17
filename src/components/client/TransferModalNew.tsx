@@ -3,6 +3,7 @@
 import { useState, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VscVerifiedFilled } from "react-icons/vsc";
+import Image from "next/image";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -586,30 +587,37 @@ export default function TransferModalNew({
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <div
-                                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                  className="w-10 h-10 rounded-full flex items-center justify-center"
                                   style={{
-                                    background: isDark
-                                      ? isFiat
-                                        ? cryptoGradients["USD"] || "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
-                                        : cryptoGradients[asset.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
-                                      : isFiat
-                                        ? "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
+                                    background: isFiat
+                                      ? "transparent"
+                                      : isDark
+                                        ? cryptoGradients[asset.symbol] || "#334155"
                                         : "#ffffff",
                                     boxShadow: isDark
-                                      ? "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)"
-                                      : isFiat
-                                        ? "0 4px 12px rgba(168,85,247,0.3), inset 0 2px 0 rgba(255,255,255,0.2)"
-                                        : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                                      ? "0 8px 16px rgba(0,0,0,0.9), 0 4px 8px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.7)"
+                                      : "0 8px 16px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.5)",
                                   }}
                                 >
                                   {isFiat ? (
-                                    <span className="text-white font-bold text-sm">
-                                      {currencySymbol}
-                                    </span>
+                                    <Image
+                                      src={`/currencies/${preferredCurrency.toLowerCase()}.svg`}
+                                      alt={preferredCurrency}
+                                      width={40}
+                                      height={40}
+                                      className="w-full h-full"
+                                    />
                                   ) : (
-                                    <CryptoIcon
-                                      symbol={asset.symbol}
-                                      className="w-6 h-6 text-white"
+                                    <Image
+                                      src={`/crypto/${asset.symbol.toLowerCase()}.svg`}
+                                      alt={asset.symbol}
+                                      width={40}
+                                      height={40}
+                                      className="w-full h-full"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                                      }}
                                     />
                                   )}
                                 </div>

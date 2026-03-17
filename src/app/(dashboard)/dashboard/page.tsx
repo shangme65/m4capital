@@ -1261,19 +1261,13 @@ function DashboardContent() {
                   >
                     {/* Left side: Icon and Info */}
                     <div className="flex items-center gap-3">
-                      {/* 3D Crypto Icon Container */}
+                      {/* 3D Crypto Icon Container - shadows only, no colored background */}
                       <div
-                        className={`w-10 h-10 rounded-xl bg-gradient-to-br ${asset.color} flex items-center justify-center flex-shrink-0 transition-all duration-300 relative overflow-visible`}
+                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 relative overflow-visible"
                         style={{
-                          boxShadow: `0 4px 16px ${
-                            asset.metadata?.iconBg || "#6b7280"
-                          }40, 0 2px 8px ${
-                            asset.metadata?.iconBg || "#6b7280"
-                          }60, inset 0 1px 2px rgba(255,255,255,0.2)`,
+                          boxShadow: `0 4px 16px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.15)`,
                         }}
                       >
-                        {/* Inner glow */}
-                        <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                         <CryptoIcon
                           symbol={asset.symbol}
                           size="md"
@@ -1398,9 +1392,9 @@ function DashboardContent() {
                           return (
                             <div className="relative flex-shrink-0">
                               <div className="flex flex-col items-center">
-                                <Image src={getCurrencyFlagUrl(base)} alt={base} width={24} height={24} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
+                                <Image src={getCurrencyFlagUrl(base)} alt={base} width={32} height={32} className="rounded-full object-cover" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
                                 <div className={`w-3 h-3 rounded-full bg-green-500 border ${isDark ? "border-gray-800" : "border-white"} mt-0.5 mb-0.5`} />
-                                <Image src={getCurrencyFlagUrl(quote)} alt={quote} width={24} height={24} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
+                                <Image src={getCurrencyFlagUrl(quote)} alt={quote} width={32} height={32} className="rounded-full object-cover" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
                               </div>
                             </div>
                           );
@@ -1414,11 +1408,11 @@ function DashboardContent() {
                           <div className="relative flex-shrink-0">
                             <div className="flex flex-col items-center">
                               <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
-                                <CryptoIcon symbol={base} size="sm" />
+                                <CryptoIcon symbol={base} size="md" />
                               </div>
                               <div className={`w-3 h-3 rounded-full bg-green-500 border ${isDark ? "border-gray-800" : "border-white"} mt-0.5 mb-0.5`} />
                               <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
-                                <CryptoIcon symbol={quote} size="sm" />
+                                <CryptoIcon symbol={quote} size="md" />
                               </div>
                             </div>
                           </div>
@@ -1429,7 +1423,7 @@ function DashboardContent() {
                       return (
                         <div className="relative flex-shrink-0">
                           <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
-                            <CryptoIcon symbol={assetSymbol} size="sm" />
+                            <CryptoIcon symbol={assetSymbol} size="md" />
                           </div>
                           <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border ${isDark ? "border-gray-800" : "border-white"}`} />
                         </div>
@@ -1447,7 +1441,7 @@ function DashboardContent() {
                           <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
                             <CryptoIcon
                               symbol={activity.fromAsset}
-                              size="sm"
+                              size="md"
                               showNetwork={false}
                             />
                           </div>
@@ -1467,7 +1461,7 @@ function DashboardContent() {
                           <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
                             <CryptoIcon
                               symbol={activity.toAsset}
-                              size="sm"
+                              size="md"
                               showNetwork={false}
                             />
                           </div>
@@ -1483,7 +1477,7 @@ function DashboardContent() {
                       <div className="relative flex-shrink-0" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
                         <CryptoIcon
                           symbol={assetSymbol}
-                          size="sm"
+                          size="md"
                           showNetwork={false}
                         />
                       </div>

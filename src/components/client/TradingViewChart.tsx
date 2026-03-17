@@ -41,6 +41,16 @@ function TradingViewChart({
       UNI: "Uniswap",
       SHIB: "Shiba Inu",
       ATOM: "Cosmos",
+      NEAR: "NEAR Protocol",
+      FIL: "Filecoin",
+      APT: "Aptos",
+      ARB: "Arbitrum",
+      OP: "Optimism",
+      AAVE: "Aave",
+      MKR: "Maker",
+      INJ: "Injective",
+      SUI: "Sui",
+      SEI: "Sei",
     };
     return nameMap[sym.toUpperCase()] || sym.toUpperCase();
   };
@@ -68,6 +78,16 @@ function TradingViewChart({
       UNI: "BINANCE:UNIUSDT",
       SHIB: "BINANCE:SHIBUSDT",
       ATOM: "BINANCE:ATOMUSDT",
+      NEAR: "BINANCE:NEARUSDT",
+      FIL: "BINANCE:FILUSDT",
+      APT: "BINANCE:APTUSDT",
+      ARB: "BINANCE:ARBUSDT",
+      OP: "BINANCE:OPUSDT",
+      AAVE: "BINANCE:AAVEUSDT",
+      MKR: "BINANCE:MKRUSDT",
+      INJ: "BINANCE:INJUSDT",
+      SUI: "BINANCE:SUIUSDT",
+      SEI: "BINANCE:SEIUSDT",
     };
     return symbolMap[sym.toUpperCase()] || `BINANCE:${sym.toUpperCase()}USDT`;
   };

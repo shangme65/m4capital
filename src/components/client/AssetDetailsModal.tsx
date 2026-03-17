@@ -251,6 +251,149 @@ const assetInfo: AssetInfo = {
       website: "https://chain.link",
     },
   },
+  SHIB: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Shiba Inu (SHIB) is a decentralized meme token that grew into a vibrant ecosystem including ShibaSwap DEX, NFTs, and the layer-2 Shibarium blockchain. With an enthusiastic community called the 'Shib Army', SHIB has expanded beyond memes to offer DeFi functionality and real-world utility.",
+    links: {
+      website: "https://shibatoken.com",
+    },
+  },
+  UNI: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Uniswap (UNI) is the governance token of Uniswap, the largest decentralized exchange (DEX) on Ethereum. Uniswap pioneered automated market maker (AMM) technology, enabling permissionless token swaps. UNI holders can vote on protocol upgrades and treasury allocation.",
+    links: {
+      website: "https://uniswap.org",
+    },
+  },
+  ATOM: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Cosmos (ATOM) is the 'Internet of Blockchains', enabling different blockchains to communicate through the Inter-Blockchain Communication (IBC) protocol. ATOM is used for staking, governance, and securing the Cosmos Hub. The Cosmos SDK powers some of the largest blockchain projects.",
+    links: {
+      website: "https://cosmos.network",
+    },
+  },
+  NEAR: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "NEAR Protocol is a user-friendly, carbon-neutral blockchain featuring sharding technology for unlimited scalability. With its account-based model (similar to email addresses), NEAR makes blockchain accessible to mainstream users while offering lightning-fast transactions and low fees.",
+    links: {
+      website: "https://near.org",
+    },
+  },
+  FIL: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Filecoin (FIL) is a decentralized storage network that turns cloud storage into an algorithmic market. Storage providers earn FIL by offering hard drive space, while users pay FIL to store and retrieve data. Filecoin aims to store humanity's most important information.",
+    links: {
+      website: "https://filecoin.io",
+    },
+  },
+  APT: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Aptos (APT) is a Layer 1 blockchain developed by former Meta engineers, featuring the Move programming language originally created for Facebook's Diem project. With parallel transaction execution and sub-second finality, Aptos delivers exceptional performance and security for Web3 applications.",
+    links: {
+      website: "https://aptoslabs.com",
+    },
+  },
+  ARB: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Arbitrum (ARB) is a leading Ethereum Layer 2 solution using Optimistic Rollup technology to provide faster and cheaper transactions while maintaining Ethereum's security. ARB is the governance token allowing holders to vote on protocol upgrades and treasury decisions.",
+    links: {
+      website: "https://arbitrum.io",
+    },
+  },
+  OP: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Optimism (OP) is an Ethereum Layer 2 scaling solution built with Optimistic Rollup technology. OP token holders govern the Optimism Collective, a digital democratic system funding public goods. Optimism's vision is to scale Ethereum while maintaining its values of decentralization and security.",
+    links: {
+      website: "https://optimism.io",
+    },
+  },
+  AAVE: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Aave (AAVE) is a leading decentralized lending protocol where users can lend, borrow, and earn interest on crypto assets. Innovations include flash loans, credit delegation, and rate switching. AAVE holders receive governance rights and protocol fee discounts.",
+    links: {
+      website: "https://aave.com",
+    },
+  },
+  MKR: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Maker (MKR) is the governance token of MakerDAO, the decentralized organization behind DAI stablecoin. MKR holders vote on critical parameters like collateral types, stability fees, and risk management. MKR is burned when system fees are paid, creating deflationary pressure.",
+    links: {
+      website: "https://makerdao.com",
+    },
+  },
+  INJ: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Injective (INJ) is a lightning-fast blockchain built specifically for finance. It offers decentralized spot and derivatives trading with zero gas fees, front-running resistance, and cross-chain compatibility. INJ is used for governance, staking, and protocol fee burning.",
+    links: {
+      website: "https://injective.com",
+    },
+  },
+  SUI: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Sui (SUI) is a Layer 1 blockchain leveraging the Move programming language for enhanced security and parallel transaction execution. Designed by former Meta engineers, Sui delivers instant transaction finality and horizontal scaling, making it ideal for high-throughput applications and gaming.",
+    links: {
+      website: "https://sui.io",
+    },
+  },
+  SEI: {
+    price: 0,
+    marketCap: "",
+    circulatingSupply: "",
+    totalSupply: "",
+    description:
+      "Sei (SEI) is the fastest Layer 1 blockchain, purpose-built for trading. With sub-second finality and 20,000+ TPS, Sei uses a novel consensus mechanism optimized for DeFi applications. SEI token is used for staking, governance, and transaction fees.",
+    links: {
+      website: "https://www.sei.io",
+    },
+  },
 };
 
 export default function AssetDetailsModal({
@@ -465,6 +608,16 @@ export default function AssetDetailsModal({
       SHIB: { marketCap: "$15B", circulatingSupply: "589T SHIB", totalSupply: "∞" },
       ATOM: { marketCap: "$4B", circulatingSupply: "390M ATOM", totalSupply: "∞" },
       BNB: { marketCap: "$100B", circulatingSupply: "145M BNB", totalSupply: "200M BNB" },
+      NEAR: { marketCap: "$6B", circulatingSupply: "1.2B NEAR", totalSupply: "∞" },
+      FIL: { marketCap: "$3B", circulatingSupply: "620M FIL", totalSupply: "2B FIL" },
+      APT: { marketCap: "$4.5B", circulatingSupply: "540M APT", totalSupply: "1B APT" },
+      ARB: { marketCap: "$7B", circulatingSupply: "4.3B ARB", totalSupply: "10B ARB" },
+      OP: { marketCap: "$3.5B", circulatingSupply: "1.2B OP", totalSupply: "4.3B OP" },
+      AAVE: { marketCap: "$2.5B", circulatingSupply: "15M AAVE", totalSupply: "16M AAVE" },
+      MKR: { marketCap: "$2B", circulatingSupply: "1M MKR", totalSupply: "1M MKR" },
+      INJ: { marketCap: "$3B", circulatingSupply: "110M INJ", totalSupply: "150M INJ" },
+      SUI: { marketCap: "$5B", circulatingSupply: "2.9B SUI", totalSupply: "10B SUI" },
+      SEI: { marketCap: "$2.5B", circulatingSupply: "3.8B SEI", totalSupply: "10B SEI" },
     };
 
     const data = staticMarketData[asset.symbol.toUpperCase()];
