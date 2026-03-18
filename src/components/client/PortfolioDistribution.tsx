@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { MoreVertical } from "lucide-react";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 
 interface Asset {
   symbol: string;
@@ -37,7 +38,7 @@ const PortfolioDistribution = () => {
             <div className="flex-grow">
               <p className="font-semibold text-white">{asset.name}</p>
               <p className="text-sm text-gray-400">
-                {asset.amount} {asset.symbol}
+                {formatCryptoAmount(asset.amount, 14)} {asset.symbol}
               </p>
             </div>
             <div className="text-right">

@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatTimeAgo } from "@/lib/crypto-constants";
+import { getCryptoMetadata, CRYPTO_METADATA } from "@/lib/crypto-constants";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import {
   formatCurrency as formatCurrencyUtil,
   getCurrencySymbol,
@@ -13,9 +16,7 @@ import {
   Bell,
   DollarSign,
   TrendingUp,
-  TrendingDown,
   Info,
-  AlertTriangle,
   CheckCircle,
   ArrowUpRight,
   ArrowDownRight,
@@ -100,119 +101,93 @@ export default function NotificationsPanel({
   });
 
   const getNotificationIcon = (notification: Notification) => {
-    // New gradient style for all notifications
+    const asset = notification.asset?.toUpperCase() || "";
+    const isCrypto = asset in CRYPTO_METADATA;
+    const isFiat = FIAT_CURRENCIES.has(asset);
 
-    // Crypto Purchase (buy)
-    if (
-      notification.title?.includes("You've bought") ||
-      notification.title?.includes("Crypto Purchase")
-    ) {
+    // Show real crypto logo
+    if (isCrypto) {
+      const meta = getCryptoMetadata(asset);
       return (
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-lg blur-sm opacity-50"></div>
-          <div className="relative w-8 h-8 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
-            <TrendingUp className="w-4 h-4 text-white" strokeWidth={2.5} />
+        <div className="relative flex-shrink-0">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg overflow-hidden"
+            style={{ backgroundColor: `${meta.bgColor}`, border: `1.5px solid ${meta.color}40` }}
+          >
+            <Image
+              src={meta.imagePath}
+              alt={asset}
+              width={28}
+              height={28}
+              className="object-contain"
+              unoptimized
+            />
+          </div>
+          {/* Direction badge */}
+          <div
+            className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${
+              notification.title?.toLowerCase().includes("sold") || notification.title?.toLowerCase().includes("withdraw")
+                ? "bg-red-500"
+                : "bg-green-500"
+            }`}
+          >
+            {notification.title?.toLowerCase().includes("sold") || notification.title?.toLowerCase().includes("withdraw") ? (
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            ) : (
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+            )}
           </div>
         </div>
       );
     }
 
-    // Crypto Sell
-    if (notification.title?.includes("You've sold")) {
+    // Show real currency flag
+    if (isFiat) {
       return (
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-400 to-rose-600 rounded-lg blur-sm opacity-50"></div>
-          <div className="relative w-8 h-8 bg-gradient-to-br from-red-400 to-rose-600 rounded-lg flex items-center justify-center shadow-md">
-            <TrendingDown className="w-4 h-4 text-white" strokeWidth={2.5} />
+        <div className="relative flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg border border-gray-200/20">
+            <Image
+              src={getCurrencyFlagUrl(asset)}
+              alt={asset}
+              width={36}
+              height={36}
+              className="w-full h-full object-cover"
+              unoptimized
+            />
+          </div>
+          {/* Direction badge */}
+          <div
+            className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${
+              notification.title?.toLowerCase().includes("withdraw")
+                ? "bg-red-500"
+                : "bg-green-500"
+            }`}
+          >
+            {notification.title?.toLowerCase().includes("withdraw") ? (
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            ) : (
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+            )}
           </div>
         </div>
       );
     }
 
-    // Deposits (BRL, USD, EUR, crypto, etc.)
-    if (
-      notification.title?.includes("Deposit Completed") ||
-      notification.title?.includes("Deposit") ||
-      notification.type?.toUpperCase() === "SUCCESS"
-    ) {
-      return (
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-lg blur-sm opacity-50"></div>
-          <div className="relative w-8 h-8 bg-gradient-to-br from-blue-400 to-cyan-600 rounded-lg flex items-center justify-center shadow-md">
-            <TrendingUp className="w-4 h-4 text-white" strokeWidth={2.5} />
-          </div>
-        </div>
-      );
-    }
-
-    // Withdrawals
-    if (
-      notification.title?.includes("Withdraw") ||
-      notification.title?.includes("Withdrawal")
-    ) {
-      return (
-        <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-br from-orange-400 to-red-600 rounded-lg blur-sm opacity-50"></div>
-          <div className="relative w-8 h-8 bg-gradient-to-br from-orange-400 to-red-600 rounded-lg flex items-center justify-center shadow-md">
-            <TrendingDown className="w-4 h-4 text-white" strokeWidth={2.5} />
-          </div>
-        </div>
-      );
-    }
-
-    // Default icons with new gradient style
-    const iconConfig: Record<
-      string,
-      { icon: any; gradient: string; color: string }
-    > = {
-      DEPOSIT: {
-        icon: TrendingUp,
-        gradient: "from-blue-400 to-cyan-600",
-        color: "text-white",
-      },
-      WITHDRAW: {
-        icon: TrendingDown,
-        gradient: "from-orange-400 to-red-600",
-        color: "text-white",
-      },
-      TRADE: {
-        icon: TrendingUp,
-        gradient: "from-purple-400 to-indigo-600",
-        color: "text-white",
-      },
-      TRANSACTION: {
-        icon: TrendingUp,
-        gradient: "from-purple-400 to-indigo-600",
-        color: "text-white",
-      },
-      SUCCESS: {
-        icon: TrendingUp,
-        gradient: "from-green-400 to-emerald-600",
-        color: "text-white",
-      },
-      WARNING: {
-        icon: AlertTriangle,
-        gradient: "from-yellow-400 to-orange-600",
-        color: "text-white",
-      },
+    // Fallback: gradient icon based on type
+    const typeGradients: Record<string, string> = {
+      DEPOSIT: "from-blue-400 to-cyan-600",
+      WITHDRAW: "from-orange-400 to-red-600",
+      TRADE: "from-purple-400 to-indigo-600",
+      TRANSACTION: "from-purple-400 to-indigo-600",
+      SUCCESS: "from-green-400 to-emerald-600",
+      WARNING: "from-yellow-400 to-orange-600",
     };
-
-    const config =
-      iconConfig[notification.type?.toUpperCase()] || iconConfig.TRANSACTION;
-    const IconComponent = config.icon;
-
+    const gradient = typeGradients[notification.type?.toUpperCase() || ""] || "from-purple-400 to-indigo-600";
     return (
-      <div className="relative">
-        <div
-          className={`absolute inset-0 bg-gradient-to-br ${config.gradient} rounded-lg blur-sm opacity-50`}
-        ></div>
-        <div
-          className={`relative w-8 h-8 bg-gradient-to-br ${config.gradient} rounded-lg flex items-center justify-center shadow-md`}
-        >
-          <IconComponent
-            className={`w-4 h-4 ${config.color}`}
-            strokeWidth={2.5}
-          />
+      <div className="relative flex-shrink-0">
+        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} rounded-lg blur-sm opacity-50`}></div>
+        <div className={`relative w-9 h-9 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center shadow-md`}>
+          <TrendingUp className="w-4 h-4 text-white" strokeWidth={2.5} />
         </div>
       </div>
     );

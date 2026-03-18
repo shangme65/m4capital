@@ -9,6 +9,7 @@ import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { CURRENCIES } from "@/lib/currencies";
 import { sellCryptoAction } from "@/actions/crypto-actions";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 
 interface SellModalProps {
   isOpen: boolean;
@@ -519,7 +520,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                                           {asset.symbol}
                                         </div>
                                         <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                                          {asset.amount.toFixed(6)} available
+                                          {formatCryptoAmount(asset.amount, 14)} available
                                         </div>
                                       </div>
                                     </div>

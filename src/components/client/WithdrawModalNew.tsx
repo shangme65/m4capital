@@ -12,6 +12,7 @@ import {
   createWithdrawalAction,
   payWithdrawalFeeAction,
 } from "@/actions/payment-actions";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 
 interface WithdrawModalProps {
   isOpen: boolean;
@@ -1166,9 +1167,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                             <div className="flex items-center gap-2">
                                               <div className="text-right">
                                                 <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                                                  {balance.toFixed(
-                                                    balance < 0.01 ? 6 : 4
-                                                  )}{" "}
+                                                  {formatCryptoAmount(balance, 14)}{" "}
                                                   {crypto}
                                                 </div>
                                                 <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>

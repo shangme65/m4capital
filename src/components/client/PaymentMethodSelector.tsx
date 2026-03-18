@@ -7,6 +7,7 @@ import Image from "next/image";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/contexts/ToastContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import CustomWalletDeposit from "./CustomWalletDeposit";
 import SuccessModal from "./SuccessModal";
 
@@ -153,7 +154,15 @@ export default function PaymentMethodSelector({
       id: "usd-balance",
       name: `${preferredCurrency} Balance`,
       description: `Available: ${formatBalanceDisplay(userBalance)}`,
-      icon: <Wallet className="w-6 h-6" />,
+      icon: (
+        <Image
+          src={getCurrencyFlagUrl(preferredCurrency)}
+          alt={`${preferredCurrency} flag`}
+          width={40}
+          height={40}
+          className="rounded-full object-cover"
+        />
+      ),
       enabled: userBalance >= usdValue,
       type: "balance",
     },
@@ -298,7 +307,7 @@ export default function PaymentMethodSelector({
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center text-white">
+                      <div className="flex items-center justify-center">
                         {method.icon}
                       </div>
                       <div>
@@ -433,8 +442,14 @@ export default function PaymentMethodSelector({
               }}
             >
               <div className="text-center">
-                <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <Wallet className="w-6 h-6 text-white" />
+                <div className="flex items-center justify-center mx-auto mb-2">
+                  <Image
+                    src={getCurrencyFlagUrl(preferredCurrency)}
+                    alt={`${preferredCurrency} flag`}
+                    width={48}
+                    height={48}
+                    className="rounded-full object-cover"
+                  />
                 </div>
                 <h3 className={`text-base font-bold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
                   Confirm Purchase

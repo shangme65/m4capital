@@ -11,6 +11,7 @@ import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
 import { buyCryptoAction } from "@/actions/crypto-actions";
 import SuccessModal from "./SuccessModal";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 
 interface BuyModalProps {
   isOpen: boolean;
@@ -654,7 +655,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             You will receive:
                           </span>
                           <span className={`font-bold ${isDark ? "text-green-400" : "text-green-600"}`}>
-                            {getEstimatedCrypto().toFixed(8)} {buyData.asset}
+                            {formatCryptoAmount(getEstimatedCrypto(), 14)} {buyData.asset}
                           </span>
                         </div>
                       </div>
@@ -732,7 +733,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         You&apos;re buying
                       </p>
                       <p className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-                        {getEstimatedCrypto().toFixed(8)}
+                        {formatCryptoAmount(getEstimatedCrypto(), 18)}
                       </p>
                       <p className={`font-semibold text-sm ${isDark ? "text-green-400" : "text-green-600"}`}>
                         {buyData.asset}

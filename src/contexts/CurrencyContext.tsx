@@ -27,15 +27,32 @@ const CurrencyContext = createContext<CurrencyContextType | undefined>(
   undefined
 );
 
+const CURRENCY_STORAGE_KEY = "m4_preferred_currency";
+
+function getStoredCurrency(): string {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem(CURRENCY_STORAGE_KEY) || "USD";
+  }
+  return "USD";
+}
+
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
-  const [preferredCurrency, setPreferredCurrency] = useState(
-    session?.user?.preferredCurrency || "USD"
+  // Initialize from localStorage immediately — no flash on reload
+  const [preferredCurrency, setPreferredCurrencyState] = useState<string>(
+    getStoredCurrency
   );
   const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({
     USD: 1,
   });
   const [isLoading, setIsLoading] = useState(false);
+
+  const setPreferredCurrency = (currency: string) => {
+    setPreferredCurrencyState(currency);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(CURRENCY_STORAGE_KEY, currency);
+    }
+  };
 
   // Update preferred currency immediately when session loads
   useEffect(() => {

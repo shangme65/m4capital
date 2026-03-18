@@ -56,18 +56,31 @@ export const usePortfolio = (period: string = "all") => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const hasFetchedRef = useRef<string | null>(null); // Track last fetched period to prevent duplicate calls
+  const periodRef = useRef(period); // Track period in ref to avoid recreating fetchPortfolio
+
+  // Update period ref when it changes
+  useEffect(() => {
+    periodRef.current = period;
+  }, [period]);
 
   const fetchPortfolio = useCallback(
-    async (fetchPeriod?: string) => {
+    async (fetchPeriod?: string, skipLoadingState = false) => {
       try {
-        const queryPeriod = fetchPeriod || period;
-        setIsLoading(true);
+        const queryPeriod = fetchPeriod || periodRef.current;
+        
+        // Only show loading state on initial fetch
+        if (!skipLoadingState) {
+          setIsLoading(true);
+        }
+        
         const response = await fetch(`/api/portfolio?period=${queryPeriod}`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
           },
           credentials: "include", // Important for NextAuth session cookies
+          // Use cache: 'force-cache' with revalidation for faster loads
+          cache: 'no-store',
         });
 
         if (!response.ok) {
@@ -95,19 +108,48 @@ export const usePortfolio = (period: string = "all") => {
         const data = await response.json();
         setPortfolio(data);
         setError(null);
+        
+        // Cache in localStorage for instant loading next time
+        try {
+          localStorage.setItem(`portfolio_${queryPeriod}`, JSON.stringify(data));
+          localStorage.setItem(`portfolio_${queryPeriod}_timestamp`, Date.now().toString());
+        } catch (e) {
+          // Ignore localStorage errors (quota exceeded, etc.)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setIsLoading(false);
       }
     },
-    [] // Empty dependencies - period is captured in closure
+    [] // No dependencies - use periodRef.current instead
   );
 
   useEffect(() => {
     // Only fetch if period actually changed or we haven't fetched yet
     if (hasFetchedRef.current !== period) {
       hasFetchedRef.current = period;
+      
+      // Try to load from localStorage cache first for instant display
+      try {
+        const cached = localStorage.getItem(`portfolio_${period}`);
+        const timestamp = localStorage.getItem(`portfolio_${period}_timestamp`);
+        
+        if (cached && timestamp) {
+          const age = Date.now() - parseInt(timestamp);
+          // Use cached data if less than 10 seconds old
+          if (age < 10000) {
+            setPortfolio(JSON.parse(cached));
+            setIsLoading(false);
+            // Still fetch fresh data in background
+            fetchPortfolio(period, true);
+            return;
+          }
+        }
+      } catch (e) {
+        // Ignore cache errors, proceed with normal fetch
+      }
+      
       fetchPortfolio(period);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -118,23 +160,23 @@ export const usePortfolio = (period: string = "all") => {
     const pollInterval = setInterval(() => {
       // Only poll if document is visible
       if (document.visibilityState === "visible") {
-        fetchPortfolio(period);
+        fetchPortfolio(periodRef.current, true); // Skip loading state for background updates
       }
     }, 30000); // 30 seconds
 
     return () => clearInterval(pollInterval);
-  }, [period, fetchPortfolio]);
+  }, [fetchPortfolio]); // fetchPortfolio is now stable
 
   // Refetch on window focus
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        fetchPortfolio(period);
+        fetchPortfolio(periodRef.current, true); // Skip loading state for background updates
       }
     };
 
     const handleFocus = () => {
-      fetchPortfolio(period);
+      fetchPortfolio(periodRef.current, true); // Skip loading state for background updates
     };
 
     document.addEventListener("visibilitychange", handleVisibilityChange);

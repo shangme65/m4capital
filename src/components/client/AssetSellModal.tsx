@@ -6,6 +6,7 @@ import { ArrowLeft, TrendingDown, AlertCircle, ArrowUpDown } from "lucide-react"
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import SuccessModal from "@/components/client/SuccessModal";
 
@@ -288,7 +289,7 @@ export default function AssetSellModal({
                       <div>
                         <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>Available</p>
                         <p className={`text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-                          {asset.amount.toFixed(8)} <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>{asset.symbol}</span>
+                          {formatCryptoAmount(asset.amount, 14)} <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>{asset.symbol}</span>
                         </p>
                       </div>
                     </div>

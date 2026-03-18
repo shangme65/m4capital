@@ -104,6 +104,56 @@ export default function TransactionDetailsModal({
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
+  const getCurrencyAccentColor = (currency: string): { primary: string; glow: string } => {
+    const colors: Record<string, { primary: string; glow: string }> = {
+      BRL: { primary: "#009C3B", glow: "rgba(0,156,59,0.4)" },
+      USD: { primary: "#3C3B6E", glow: "rgba(178,34,52,0.4)" },
+      EUR: { primary: "#003399", glow: "rgba(0,51,153,0.4)" },
+      GBP: { primary: "#CF142B", glow: "rgba(207,20,43,0.4)" },
+      NGN: { primary: "#008751", glow: "rgba(0,135,81,0.4)" },
+      ZAR: { primary: "#007A4D", glow: "rgba(0,122,77,0.4)" },
+      KES: { primary: "#BB0000", glow: "rgba(187,0,0,0.4)" },
+      GHS: { primary: "#006B3F", glow: "rgba(0,107,63,0.4)" },
+      JPY: { primary: "#BC002D", glow: "rgba(188,0,45,0.4)" },
+      CAD: { primary: "#FF0000", glow: "rgba(255,0,0,0.4)" },
+      AUD: { primary: "#00008B", glow: "rgba(0,0,139,0.4)" },
+      CHF: { primary: "#FF0000", glow: "rgba(255,0,0,0.4)" },
+      CNY: { primary: "#DE2910", glow: "rgba(222,41,16,0.4)" },
+      INR: { primary: "#FF9933", glow: "rgba(255,153,51,0.4)" },
+      MXN: { primary: "#006847", glow: "rgba(0,104,71,0.4)" },
+      TRY: { primary: "#E30A17", glow: "rgba(227,10,23,0.4)" },
+      SAR: { primary: "#006C35", glow: "rgba(0,108,53,0.4)" },
+      AED: { primary: "#00732F", glow: "rgba(0,115,47,0.4)" },
+      SGD: { primary: "#EF3340", glow: "rgba(239,51,64,0.4)" },
+      KGS: { primary: "#E8112D", glow: "rgba(232,17,45,0.4)" },
+      KZT: { primary: "#00AFCA", glow: "rgba(0,175,202,0.4)" },
+      UZS: { primary: "#1EB53A", glow: "rgba(30,181,58,0.4)" },
+      PKR: { primary: "#01411C", glow: "rgba(1,65,28,0.4)" },
+      BDT: { primary: "#006A4E", glow: "rgba(0,106,78,0.4)" },
+      EGP: { primary: "#CE1126", glow: "rgba(206,17,38,0.4)" },
+      MAD: { primary: "#C1272D", glow: "rgba(193,39,45,0.4)" },
+      DZD: { primary: "#006233", glow: "rgba(0,98,51,0.4)" },
+      KWD: { primary: "#007A3D", glow: "rgba(0,122,61,0.4)" },
+      QAR: { primary: "#8D1B3D", glow: "rgba(141,27,61,0.4)" },
+      THB: { primary: "#A51931", glow: "rgba(165,25,49,0.4)" },
+      IDR: { primary: "#CE1126", glow: "rgba(206,17,38,0.4)" },
+      MYR: { primary: "#CC0001", glow: "rgba(204,0,1,0.4)" },
+      VND: { primary: "#DA251D", glow: "rgba(218,37,29,0.4)" },
+      TWD: { primary: "#FE0000", glow: "rgba(254,0,0,0.4)" },
+      HKD: { primary: "#DE2910", glow: "rgba(222,41,16,0.4)" },
+      KRW: { primary: "#CD2E3A", glow: "rgba(205,46,58,0.4)" },
+      CZK: { primary: "#D7141A", glow: "rgba(215,20,26,0.4)" },
+      PLN: { primary: "#DC143C", glow: "rgba(220,20,60,0.4)" },
+      HUF: { primary: "#CE2939", glow: "rgba(206,41,57,0.4)" },
+      RON: { primary: "#002B7F", glow: "rgba(0,43,127,0.4)" },
+      CLP: { primary: "#D52B1E", glow: "rgba(213,43,30,0.4)" },
+      COP: { primary: "#FCD116", glow: "rgba(252,209,22,0.4)" },
+      ARS: { primary: "#74ACDF", glow: "rgba(116,172,223,0.4)" },
+      PEN: { primary: "#D91023", glow: "rgba(217,16,35,0.4)" },
+    };
+    return colors[currency] || { primary: "#6366f1", glow: "rgba(99,102,241,0.4)" };
+  };
+
   // Prevent body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -900,9 +950,10 @@ export default function TransactionDetailsModal({
                         }`}>
                           Value
                         </label>
-                        <div className={`text-lg font-bold ${
-                          isDark ? "text-white" : "text-gray-900"
-                        }`}>
+                        <div
+                          className="text-lg font-bold"
+                          style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 12px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
+                        >
                           {/* trade_earned: amount is in USD, convert to preferred currency */}
                           {/* Fiat same currency: show directly */}
                           {/* Fiat different currency: convert original amount → USD via live rates → preferred currency */}

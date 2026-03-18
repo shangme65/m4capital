@@ -3,6 +3,20 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+// In-memory cache for transactions (5 seconds TTL)
+const transactionsCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 5000; // 5 seconds
+
+// Cleanup old cache entries every 30 seconds
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of transactionsCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL * 2) {
+      transactionsCache.delete(key);
+    }
+  }
+}, 30000);
+
 /**
  * GET /api/transactions
  * Fetch all user transactions (deposits, withdrawals, trades)
@@ -16,7 +30,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user's portfolio ID
+    // Check cache first
+    const cacheKey = session.user.id;
+    const cached = transactionsCache.get(cacheKey);
+    const now = Date.now();
+    
+    if (cached && (now - cached.timestamp) < CACHE_TTL) {
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': 'private, max-age=5',
+        },
+      });
+    }
+
+    // Get user's portfolio ID and fetch all transactions in parallel
     const portfolio = await prisma.portfolio.findUnique({
       where: { userId: session.user.id },
     });
@@ -28,41 +55,36 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Fetch deposits (including pending ones with confirmation tracking)
-    const deposits = await prisma.deposit.findMany({
-      where: { portfolioId: portfolio.id },
-      orderBy: { createdAt: "desc" },
-      take: 50, // Last 50 transactions
-    });
-
-    // Fetch withdrawals
-    const withdrawals = await prisma.withdrawal.findMany({
-      where: { portfolioId: portfolio.id },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
-
-    // Fetch trades
-    const trades = await prisma.trade.findMany({
-      where: { userId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
-
-    // Fetch P2P transfers (both sent and received)
-    const sentTransfers = await prisma.p2PTransfer.findMany({
-      where: { senderId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      include: { Receiver: { select: { name: true, email: true } } },
-    });
-
-    const receivedTransfers = await prisma.p2PTransfer.findMany({
-      where: { receiverId: session.user.id },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      include: { Sender: { select: { name: true, email: true } } },
-    });
+    // Fetch all transaction types in parallel for better performance
+    const [deposits, withdrawals, trades, sentTransfers, receivedTransfers] = await Promise.all([
+      prisma.deposit.findMany({
+        where: { portfolioId: portfolio.id },
+        orderBy: { createdAt: "desc" },
+        take: 50, // Last 50 transactions
+      }),
+      prisma.withdrawal.findMany({
+        where: { portfolioId: portfolio.id },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      }),
+      prisma.trade.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      }),
+      prisma.p2PTransfer.findMany({
+        where: { senderId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        include: { Receiver: { select: { name: true, email: true } } },
+      }),
+      prisma.p2PTransfer.findMany({
+        where: { receiverId: session.user.id },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        include: { Sender: { select: { name: true, email: true } } },
+      })
+    ]);
 
     // Transform deposits into transaction format
     const depositTransactions = deposits.map((d) => {
@@ -467,9 +489,18 @@ export async function GET(req: NextRequest) {
       ...receivedTransferTransactions,
     ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-    return NextResponse.json({
+    const responseData = {
       transactions: allTransactions.slice(0, 50), // Return last 50
       count: allTransactions.length,
+    };
+
+    // Store in cache
+    transactionsCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': 'private, max-age=5',
+      },
     });
   } catch (error) {
     console.error("❌ Failed to fetch transactions:", error);

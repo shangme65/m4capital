@@ -10,6 +10,7 @@ import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
 import { convertCryptoAction } from "@/actions/convert-actions";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 
 interface ConvertModalNewProps {
   isOpen: boolean;
@@ -684,7 +685,7 @@ export default function ConvertModalNew({
                                       {symbol}
                                     </div>
                                     <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                                      {balance.toFixed(8)}
+                                      {formatCryptoAmount(balance, 14)}
                                     </div>
                                   </div>
                                 </div>

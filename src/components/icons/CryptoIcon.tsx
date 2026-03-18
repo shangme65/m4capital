@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 
 interface CryptoIconProps {
@@ -31,7 +32,7 @@ export const CRYPTO_CURRENCIES = [
 const colorMap: Record<string, string> = {
   BTC: "#f7931a",
   ETH: "#627eea",
-  XRP: "#23292f",
+  XRP: "#00AAE4",
   TRX: "#ff0013",
   TON: "#0098ea",
   LTC: "#345d9d",
@@ -42,19 +43,19 @@ const colorMap: Record<string, string> = {
   SOL: "#9945ff",
   DOGE: "#c2a633",
   BNB: "#f3ba2f",
-  ADA: "#0033ad",
+  ADA: "#3B82F6",
   DOT: "#e6007a",
   MATIC: "#8247e5",
   SHIB: "#ffa409",
   AVAX: "#e84142",
   LINK: "#2a5ada",
   UNI: "#ff007a",
-  ATOM: "#2e3148",
+  ATOM: "#818CF8",
   FIL: "#0090ff",
-  APT: "#000000",
+  APT: "#2DD8A3",
   ARB: "#28a0f0",
   OP: "#ff0420",
-  NEAR: "#000000",
+  NEAR: "#00C1DE",
   ICP: "#29abe2",
   HBAR: "#000000",
   VET: "#15bdff",
@@ -76,7 +77,7 @@ const colorMap: Record<string, string> = {
   FLOKI: "#f9a825",
   RENDER: "#000000",
   INJ: "#0082ff",
-  SEI: "#9b1c2e",
+  SEI: "#FF2D55",
   SUI: "#4da2ff",
   TIA: "#7b2bf9",
   USD: "#ffd700",
@@ -172,9 +173,11 @@ export function CryptoIcon({
           justifyContent: "center",
         }}
       >
-        <img
+        <Image
           src={iconSrc}
           alt={alt || `${symbol} icon`}
+          width={iconSize}
+          height={iconSize}
           className={`block ${className}`}
           onError={() => {
             setStage((prev) => prev + 1);
@@ -187,6 +190,9 @@ export function CryptoIcon({
             objectFit: "contain",
             objectPosition: "center",
           }}
+          unoptimized={stage === 0 || stage === 1} // Don't optimize external CDN images
+          loading="eager" // Load logos immediately for better UX
+          quality={100}
         />
       </div>
     </div>

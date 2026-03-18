@@ -18,6 +18,7 @@ import {
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CRYPTO_METADATA } from "@/lib/crypto-constants";
@@ -620,7 +621,7 @@ export default function AssetSwapModal({
                             {asset.name} <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>({asset.symbol})</span>
                           </div>
                           <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                            Balance: {asset.amount.toFixed(8)}
+                            Balance: {formatCryptoAmount(asset.amount, 14)}
                           </div>
                         </div>
                       </div>
@@ -880,7 +881,7 @@ export default function AssetSwapModal({
                     )}
                     <div className="flex items-center justify-between mt-1.5">
                       <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-600"}`}>
-                        Available: {asset.amount.toFixed(8)} {asset.symbol}
+                        Available: {formatCryptoAmount(asset.amount, 14)} {asset.symbol}
                       </p>
                       {fromAmount && parseFloat(fromAmount) > 0 && (
                         <p className={`text-xs ${isDark ? "text-cyan-400" : "text-cyan-600"}`}>

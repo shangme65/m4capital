@@ -15,6 +15,7 @@ import NotificationPermissionPrompt from "@/components/client/NotificationPermis
 import TutorialOverlay from "@/components/client/TutorialOverlay";
 import PushNotificationProvider from "@/components/client/PushNotificationProvider";
 import EmergencyUiReset from "@/components/client/EmergencyUiReset";
+import LogoPreloader from "@/components/client/LogoPreloader";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -47,6 +48,7 @@ export default async function DashboardLayout({
                         <NotificationPermissionPrompt />
                         <TutorialOverlay />
                         <EmergencyUiReset />
+                        <LogoPreloader />
                         <div className="flex h-screen relative bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
                           <Sidebar />
                           <div className="flex-1 flex flex-col overflow-hidden">

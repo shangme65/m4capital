@@ -200,7 +200,7 @@ html::-webkit-scrollbar {
 }
 
 .animate-scroll {
-  animation: scroll 60s linear infinite;
+  animation: scroll 180s linear infinite;
   will-change: transform;
 }
 

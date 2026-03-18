@@ -11,6 +11,7 @@ import {
   ArrowUp,
   Wallet,
 } from "lucide-react";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 
 interface BitcoinDeposit {
   id: string;
@@ -107,7 +108,7 @@ export default function BitcoinWallet() {
           <div>
             <p className="text-xs text-gray-400 mb-1">Current Balance</p>
             <p className="text-2xl font-bold text-white">
-              {balance.toFixed(8)} BTC
+              {formatCryptoAmount(balance, 16)} BTC
             </p>
             <p className="text-sm text-orange-300">
               ≈ ${(balance * 65000).toLocaleString()}

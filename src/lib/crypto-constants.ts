@@ -53,6 +53,8 @@ export interface CryptoMetadata {
   bgColor: string;
   imagePath: string;
   network?: string;
+  /** True when the SVG file is black/very dark and needs inversion in dark mode */
+  darkLogo?: boolean;
 }
 
 export const CRYPTO_METADATA: Record<string, CryptoMetadata> = {
@@ -96,19 +98,19 @@ export const CRYPTO_METADATA: Record<string, CryptoMetadata> = {
   SOL: {
     name: "Solana",
     icon: "◎",
-    color: "#9945FF",
+    color: "#14F195",
     gradient: "from-slate-800 to-slate-900",
     iconBg: "#1e293b",
-    bgColor: "rgba(153, 69, 255, 0.1)",
+    bgColor: "rgba(20, 241, 149, 0.1)",
     imagePath: "/crypto/sol.svg",
   },
   XRP: {
     name: "Ripple",
     icon: "✕",
-    color: "#23292F",
+    color: "#00AAE4",
     gradient: "from-slate-800 to-slate-900",
     iconBg: "#1e293b",
-    bgColor: "rgba(35, 41, 47, 0.1)",
+    bgColor: "rgba(0, 170, 228, 0.1)",
     imagePath: "/crypto/xrp.svg",
   },
   DOGE: {
@@ -123,10 +125,10 @@ export const CRYPTO_METADATA: Record<string, CryptoMetadata> = {
   ADA: {
     name: "Cardano",
     icon: "₳",
-    color: "#0033AD",
+    color: "#3B82F6",
     gradient: "from-slate-800 to-slate-900",
     iconBg: "#1e293b",
-    bgColor: "rgba(0, 51, 173, 0.1)",
+    bgColor: "rgba(59, 130, 246, 0.1)",
     imagePath: "/crypto/ada.svg",
   },
   TRX: {
@@ -240,10 +242,10 @@ export const CRYPTO_METADATA: Record<string, CryptoMetadata> = {
   ATOM: {
     name: "Cosmos",
     icon: "⚛",
-    color: "#2E3148",
+    color: "#818CF8",
     gradient: "from-slate-800 to-slate-900",
     iconBg: "#1e293b",
-    bgColor: "rgba(46, 49, 72, 0.1)",
+    bgColor: "rgba(129, 140, 248, 0.1)",
     imagePath: "/crypto/atom.svg",
   },
   FIL: {
@@ -258,11 +260,12 @@ export const CRYPTO_METADATA: Record<string, CryptoMetadata> = {
   APT: {
     name: "Aptos",
     icon: "A",
-    color: "#000000",
+    color: "#2DD8A3",
     gradient: "from-slate-800 to-slate-900",
     iconBg: "#1e293b",
-    bgColor: "rgba(0, 0, 0, 0.1)",
+    bgColor: "rgba(45, 216, 163, 0.1)",
     imagePath: "/crypto/apt.svg",
+    darkLogo: true,
   },
   ARB: {
     name: "Arbitrum",
@@ -285,11 +288,12 @@ export const CRYPTO_METADATA: Record<string, CryptoMetadata> = {
   NEAR: {
     name: "NEAR Protocol",
     icon: "N",
-    color: "#000000",
+    color: "#00C1DE",
     gradient: "from-slate-800 to-slate-900",
     iconBg: "#1e293b",
-    bgColor: "rgba(0, 0, 0, 0.1)",
+    bgColor: "rgba(0, 193, 222, 0.1)",
     imagePath: "/crypto/near.svg",
+    darkLogo: true,
   },
   AAVE: {
     name: "Aave",
@@ -330,11 +334,12 @@ export const CRYPTO_METADATA: Record<string, CryptoMetadata> = {
   SEI: {
     name: "Sei",
     icon: "S",
-    color: "#9B1C2E",
+    color: "#FF2D55",
     gradient: "from-slate-800 to-slate-900",
     iconBg: "#1e293b",
-    bgColor: "rgba(155, 28, 46, 0.1)",
+    bgColor: "rgba(255, 45, 85, 0.1)",
     imagePath: "/crypto/sei.svg",
+    darkLogo: true,
   },
 };
 

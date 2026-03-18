@@ -81,6 +81,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Preconnect to external CDNs for faster logo loading */}
+        <link rel="preconnect" href="https://hatscripts.github.io" />
+        <link rel="preconnect" href="https://raw.githubusercontent.com" />
+        <link rel="preconnect" href="https://flagcdn.com" />
+        <link rel="dns-prefetch" href="https://hatscripts.github.io" />
+        <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
+        <link rel="dns-prefetch" href="https://flagcdn.com" />
+        
         {/* Viewport with safe area support for native apps */}
         <meta
           name="viewport"

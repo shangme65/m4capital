@@ -233,7 +233,7 @@ export default function AddCryptoModal({
                         handleAdd(crypto);
                       }
                     }}
-                    disabled={isAdding || isRemoving === crypto.symbol || (isInPortfolio && hasBalance)}
+                    disabled={(isInPortfolio && hasBalance)}
                     className="flex-shrink-0"
                   >
                     <div

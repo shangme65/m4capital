@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Download, Copy, CheckCircle, AlertCircle, ArrowUpDown } from "lucide-react";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 interface AssetReceiveModalProps {
@@ -300,7 +301,7 @@ export default function AssetReceiveModal({
                               <p className={`text-lg font-bold ${
                                 isDark ? "text-white" : "text-gray-900"
                               }`}>
-                                {asset.amount.toFixed(8)} {asset.symbol}
+                                {formatCryptoAmount(asset.amount, 14)} {asset.symbol}
                               </p>
                             </div>
                           </div>

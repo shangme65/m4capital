@@ -29,6 +29,7 @@ import { useVerificationGate } from "@/hooks/useVerificationGate";
 import VerificationRequiredModal from "@/components/client/VerificationRequiredModal";
 import PendingDepositsWidget from "@/components/client/PendingDepositsWidget";
 import SignalStrength from "@/components/client/SignalStrength";
+import { formatCryptoAmount, truncateCurrencyString } from "@/lib/format-crypto-amount";
 import {
   BalanceCardSkeleton,
   PortfolioGridSkeleton,
@@ -57,11 +58,20 @@ function DashboardContent() {
     refetch,
   } = usePortfolio("all");
 
+  // Optimistic updates state - tracks local changes before server confirmation
+  const [optimisticAssets, setOptimisticAssets] = useState<{added: string[], removed: string[]}>({
+    added: [],
+    removed: []
+  });
+
   // Memoize portfolio symbols to prevent unnecessary re-subscriptions
-  const portfolioSymbols = useMemo(
-    () => portfolio?.portfolio?.assets?.map((a: any) => a.symbol) || [],
-    [portfolio?.portfolio?.assets]
-  );
+  // Include optimistically added assets in price subscriptions
+  const portfolioSymbols = useMemo(() => {
+    const baseSymbols = portfolio?.portfolio?.assets?.map((a: any) => a.symbol) || [];
+    const allSymbols = [...baseSymbols, ...optimisticAssets.added];
+    // Remove duplicates
+    return [...new Set(allSymbols)];
+  }, [portfolio?.portfolio?.assets, optimisticAssets.added]);
 
   // Re-enabled: Fetch real-time crypto prices for portfolio assets
   const cryptoPrices = useCryptoPrices(portfolioSymbols);
@@ -398,18 +408,70 @@ function DashboardContent() {
   const formatBalanceDisplay = (balance: number): string => {
     if (balanceCurrency === preferredCurrency) {
       // Same currency - show directly without conversion
-      return `${getCurrencySymbol(preferredCurrency)}${balance.toLocaleString(
+      const formatted = `${getCurrencySymbol(preferredCurrency)}${balance.toLocaleString(
         undefined,
         {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         }
       )}`;
+      return truncateCurrencyString(formatted, 18);
     }
     // Different currency - need to convert from balanceCurrency to preferredCurrency
     // First convert from balanceCurrency to USD, then formatAmount converts USD to preferredCurrency
     const balanceInUSD = getAvailableBalanceInUSD();
-    return formatAmount(balanceInUSD, 2);
+    return truncateCurrencyString(formatAmount(balanceInUSD, 2), 18);
+  };
+
+  // Currency accent colors based on dominant flag color
+  const getCurrencyAccentColor = (currency: string): { primary: string; secondary: string; glow: string } => {
+    const colors: Record<string, { primary: string; secondary: string; glow: string }> = {
+      BRL: { primary: "#009C3B", secondary: "#FFDF00", glow: "rgba(0,156,59,0.4)" },
+      USD: { primary: "#3C3B6E", secondary: "#B22234", glow: "rgba(178,34,52,0.4)" },
+      EUR: { primary: "#003399", secondary: "#FFCC00", glow: "rgba(0,51,153,0.4)" },
+      GBP: { primary: "#CF142B", secondary: "#00247D", glow: "rgba(207,20,43,0.4)" },
+      NGN: { primary: "#008751", secondary: "#FFFFFF", glow: "rgba(0,135,81,0.4)" },
+      ZAR: { primary: "#007A4D", secondary: "#FFB612", glow: "rgba(0,122,77,0.4)" },
+      KES: { primary: "#BB0000", secondary: "#006600", glow: "rgba(187,0,0,0.4)" },
+      GHS: { primary: "#006B3F", secondary: "#FCD116", glow: "rgba(0,107,63,0.4)" },
+      JPY: { primary: "#BC002D", secondary: "#FFFFFF", glow: "rgba(188,0,45,0.4)" },
+      CAD: { primary: "#FF0000", secondary: "#FFFFFF", glow: "rgba(255,0,0,0.4)" },
+      AUD: { primary: "#00008B", secondary: "#FF0000", glow: "rgba(0,0,139,0.4)" },
+      CHF: { primary: "#FF0000", secondary: "#FFFFFF", glow: "rgba(255,0,0,0.4)" },
+      CNY: { primary: "#DE2910", secondary: "#FFDE00", glow: "rgba(222,41,16,0.4)" },
+      INR: { primary: "#FF9933", secondary: "#138808", glow: "rgba(255,153,51,0.4)" },
+      MXN: { primary: "#006847", secondary: "#CE1126", glow: "rgba(0,104,71,0.4)" },
+      TRY: { primary: "#E30A17", secondary: "#FFFFFF", glow: "rgba(227,10,23,0.4)" },
+      SAR: { primary: "#006C35", secondary: "#FFFFFF", glow: "rgba(0,108,53,0.4)" },
+      AED: { primary: "#00732F", secondary: "#FF0000", glow: "rgba(0,115,47,0.4)" },
+      SGD: { primary: "#EF3340", secondary: "#FFFFFF", glow: "rgba(239,51,64,0.4)" },
+      KGS: { primary: "#E8112D", secondary: "#FFCC00", glow: "rgba(232,17,45,0.4)" },
+      KZT: { primary: "#00AFCA", secondary: "#FFE800", glow: "rgba(0,175,202,0.4)" },
+      UZS: { primary: "#1EB53A", secondary: "#0099B5", glow: "rgba(30,181,58,0.4)" },
+      PKR: { primary: "#01411C", secondary: "#FFFFFF", glow: "rgba(1,65,28,0.4)" },
+      BDT: { primary: "#006A4E", secondary: "#F42A41", glow: "rgba(0,106,78,0.4)" },
+      EGP: { primary: "#CE1126", secondary: "#000000", glow: "rgba(206,17,38,0.4)" },
+      MAD: { primary: "#C1272D", secondary: "#006233", glow: "rgba(193,39,45,0.4)" },
+      DZD: { primary: "#006233", secondary: "#D21034", glow: "rgba(0,98,51,0.4)" },
+      KWD: { primary: "#007A3D", secondary: "#CE1126", glow: "rgba(0,122,61,0.4)" },
+      QAR: { primary: "#8D1B3D", secondary: "#FFFFFF", glow: "rgba(141,27,61,0.4)" },
+      THB: { primary: "#A51931", secondary: "#2D2A4A", glow: "rgba(165,25,49,0.4)" },
+      IDR: { primary: "#CE1126", secondary: "#FFFFFF", glow: "rgba(206,17,38,0.4)" },
+      MYR: { primary: "#CC0001", secondary: "#010066", glow: "rgba(204,0,1,0.4)" },
+      VND: { primary: "#DA251D", secondary: "#FFFF00", glow: "rgba(218,37,29,0.4)" },
+      TWD: { primary: "#FE0000", secondary: "#000095", glow: "rgba(254,0,0,0.4)" },
+      HKD: { primary: "#DE2910", secondary: "#FFDE00", glow: "rgba(222,41,16,0.4)" },
+      KRW: { primary: "#CD2E3A", secondary: "#003478", glow: "rgba(205,46,58,0.4)" },
+      CZK: { primary: "#D7141A", secondary: "#11457E", glow: "rgba(215,20,26,0.4)" },
+      PLN: { primary: "#DC143C", secondary: "#FFFFFF", glow: "rgba(220,20,60,0.4)" },
+      HUF: { primary: "#CE2939", secondary: "#477050", glow: "rgba(206,41,57,0.4)" },
+      RON: { primary: "#002B7F", secondary: "#FCD116", glow: "rgba(0,43,127,0.4)" },
+      CLP: { primary: "#D52B1E", secondary: "#003087", glow: "rgba(213,43,30,0.4)" },
+      COP: { primary: "#FCD116", secondary: "#003087", glow: "rgba(252,209,22,0.4)" },
+      ARS: { primary: "#74ACDF", secondary: "#FFFFFF", glow: "rgba(116,172,223,0.4)" },
+      PEN: { primary: "#D91023", secondary: "#FFFFFF", glow: "rgba(217,16,35,0.4)" },
+    };
+    return colors[currency] || { primary: "#6366f1", secondary: "#818cf8", glow: "rgba(99,102,241,0.4)" };
   };
 
   // Income percent: measure change of user's money (deposits + received + earnings)
@@ -506,11 +568,9 @@ function DashboardContent() {
         return;
       }
 
-      // Refresh portfolio data
+      // Refresh portfolio data to show new asset
       await refetch();
-
-      // Keep modal open - don't close
-      // setShowAddCryptoModal(false);
+      await refetchTransactions();
 
       // Show success message
       showSuccess(`${name} (${symbol}) added successfully!`);
@@ -537,8 +597,9 @@ function DashboardContent() {
         return;
       }
 
-      // Refresh portfolio data
+      // Refresh portfolio data to reflect removal
       await refetch();
+      await refetchTransactions();
 
       // Show success message
       showSuccess(`${symbol} removed successfully!`);
@@ -730,16 +791,16 @@ function DashboardContent() {
 
         {/* Portfolio Value Header */}
         <div className="relative z-10">
-          <div className="flex items-center justify-between mb-4 sm:mb-6">
-            <h1 className={`text-xl sm:text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <h1 className={`text-lg sm:text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
               Portfolio Value
             </h1>
           </div>
 
-          <div className="mb-6 sm:mb-8">
+          <div className="mb-3 sm:mb-4">
             <div className="flex items-center gap-2">
               <div
-                className={`text-3xl sm:text-5xl font-bold mb-2 bg-clip-text text-transparent ${
+                className={`text-xl sm:text-3xl font-bold mb-1 bg-clip-text text-transparent ${
                   isDark 
                     ? "bg-gradient-to-r from-blue-400 via-white to-blue-400 drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
                     : "bg-gradient-to-r from-blue-600 via-gray-900 to-blue-600 drop-shadow-[0_2px_10px_rgba(59,130,246,0.15)]"
@@ -749,14 +810,14 @@ function DashboardContent() {
                 {portfolioLoading ? (
                   <div className={`animate-pulse h-12 w-48 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
                 ) : showBalances ? (
-                  formatAmount(portfolioValueInUSD || 0, 2)
+                  truncateCurrencyString(formatAmount(portfolioValueInUSD || 0, 2), 18)
                 ) : (
                   "••••••"
                 )}
               </div>
               <button
                 onClick={() => setShowBalances(!showBalances)}
-                className={`hover:opacity-70 transition-opacity p-2 mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                className={`hover:opacity-70 transition-opacity p-2 mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                 aria-label={showBalances ? "Hide balances" : "Show balances"}
               >
                 {showBalances ? (
@@ -803,7 +864,7 @@ function DashboardContent() {
               ) : (
                 <>
                   <span
-                    className={`text-base sm:text-lg font-medium ${
+                    className={`text-sm sm:text-base font-medium ${
                       incomePercent >= 0 
                         ? isDark ? "text-green-400" : "text-green-600" 
                         : isDark ? "text-red-400" : "text-red-600"
@@ -812,7 +873,7 @@ function DashboardContent() {
                     {incomePercent >= 0 ? "+" : ""}
                     {incomePercent.toFixed(2)}%
                   </span>
-                  <span className={`text-sm sm:text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  <span className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     24hrs
                   </span>
                   {/* Info icon for tooltip */}
@@ -859,11 +920,11 @@ function DashboardContent() {
           </div>
 
           {/* Deposit & Withdraw Buttons */}
-          <div className="flex gap-2 sm:gap-3 mb-6">
+          <div className="flex gap-2 sm:gap-3 mb-4">
             <button
               data-tutorial="deposit-button"
               onClick={handleDeposit}
-              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-4 sm:px-6 py-2.5 rounded-xl font-semibold transition-all text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/30"
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white px-4 sm:px-6 py-2.5 rounded-xl font-semibold transition-all text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg hover:shadow-blue-500/30"
               style={{
                 boxShadow:
                   "0 4px 15px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)",
@@ -887,7 +948,7 @@ function DashboardContent() {
             <button
               data-tutorial="withdraw-button"
               onClick={handleWithdraw}
-              className="flex-1 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white px-4 sm:px-6 py-2.5 rounded-xl font-semibold border border-gray-600/50 transition-all text-sm sm:text-base flex items-center justify-center gap-2 shadow-lg"
+              className="flex-1 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 text-white px-4 sm:px-6 py-2.5 rounded-xl font-semibold border border-gray-600/50 transition-all text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg"
               style={{
                 boxShadow:
                   "0 4px 15px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.1)",
@@ -911,11 +972,11 @@ function DashboardContent() {
           </div>
 
           {/* Balance Cards - Full Width */}
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {/* USD Balance Card */}
             <div
               data-tutorial="available-balance"
-              className="relative w-full p-3 rounded-xl transition-all duration-300 overflow-hidden"
+              className="relative w-full p-2.5 rounded-xl transition-all duration-300 overflow-hidden"
               style={{
                 background: isDark
                   ? "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)"
@@ -929,13 +990,21 @@ function DashboardContent() {
               <div className="relative z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
+                    <Image
+                      src={getCurrencyFlagUrl(preferredCurrency)}
+                      alt={`${preferredCurrency} flag`}
+                      width={28}
+                      height={28}
+                      className="rounded-full object-cover"
+                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(0,0,0,0.3))" }}
+                    />
                     <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                      {preferredCurrency} Balance
+                      {preferredCurrency}
                     </span>
                   </div>
                   <span
-                    className={`text-sm sm:text-base font-bold bg-clip-text text-transparent ${isDark ? "bg-gradient-to-r from-blue-400 via-white to-blue-400 drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]" : "bg-gradient-to-r from-blue-600 via-gray-900 to-blue-600 drop-shadow-[0_2px_10px_rgba(59,130,246,0.15)]"}`}
-                    style={{ WebkitTextStroke: isDark ? "0.5px rgba(255,255,255,0.1)" : "0.5px rgba(0,0,0,0.05)" }}
+                    className="text-sm sm:text-base font-bold"
+                    style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 12px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
                   >
                     {portfolioLoading ? (
                       <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
@@ -946,12 +1015,13 @@ function DashboardContent() {
                     )}
                   </span>
                 </div>
-                {/* Balance Progress bar - Blue */}
-                <div className="mt-2">
+                {/* Balance Progress bar */}
+                <div className="mt-1.5">
                   <div className={`h-1 rounded-full overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-300/50"}`}>
                     <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 ease-out"
+                      className="h-full rounded-full transition-all duration-500 ease-out"
                       style={{
+                        background: getCurrencyAccentColor(preferredCurrency).primary,
                         width: `${Math.min(
                           Math.max((availableBalance / 10000) * 100, 0),
                           100
@@ -965,7 +1035,7 @@ function DashboardContent() {
 
             {/* Traderoom Balance Card */}
             <div
-              className="relative w-full p-3 rounded-xl transition-all duration-300 overflow-hidden"
+              className="relative w-full p-2.5 rounded-xl transition-all duration-300 overflow-hidden"
               style={{
                 background: isDark
                   ? "linear-gradient(145deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)"
@@ -979,29 +1049,38 @@ function DashboardContent() {
               <div className="relative z-10">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
+                    <Image
+                      src={getCurrencyFlagUrl(preferredCurrency)}
+                      alt={`${preferredCurrency} flag`}
+                      width={28}
+                      height={28}
+                      className="rounded-full object-cover"
+                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(0,0,0,0.3))" }}
+                    />
                     <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                      Traderoom Balance
+                      Traderoom
                     </span>
                   </div>
                   <span
-                    className={`text-sm sm:text-base font-bold bg-clip-text text-transparent ${isDark ? "bg-gradient-to-r from-green-400 via-white to-green-400 drop-shadow-[0_2px_10px_rgba(34,197,94,0.2)] [text-shadow:_0_0_20px_rgba(34,197,94,0.1),_0_2px_4px_rgba(0,0,0,0.8)]" : "bg-gradient-to-r from-green-600 via-gray-900 to-green-600 drop-shadow-[0_2px_10px_rgba(34,197,94,0.15)]"}`}
-                    style={{ WebkitTextStroke: isDark ? "0.5px rgba(255,255,255,0.1)" : "0.5px rgba(0,0,0,0.05)" }}
+                    className="text-sm sm:text-base font-bold"
+                    style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 12px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
                   >
                     {portfolioLoading ? (
                       <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
                     ) : showBalances ? (
-                      formatAmount(traderoomBalance || 0, 2)
+                      truncateCurrencyString(formatAmount(traderoomBalance || 0, 2), 18)
                     ) : (
                       "••••••"
                     )}
                   </span>
                 </div>
-                {/* Traderoom Progress bar - Green */}
-                <div className="mt-2">
+                {/* Traderoom Progress bar */}
+                <div className="mt-1.5">
                   <div className={`h-1 rounded-full overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-300/50"}`}>
                     <div
-                      className="h-full bg-gradient-to-r from-green-500 to-green-600 rounded-full transition-all duration-500 ease-out"
+                      className="h-full rounded-full transition-all duration-500 ease-out"
                       style={{
+                        background: getCurrencyAccentColor(preferredCurrency).primary,
                         width: `${Math.min(
                           Math.max((traderoomBalance / 1000000) * 100, 0),
                           100
@@ -1017,16 +1096,16 @@ function DashboardContent() {
       </div>
 
       {/* Signal Strength Bar */}
-      <SignalStrength className="mb-6" />
+      <SignalStrength className="mb-4" />
 
       {/* Pending Deposits Widget */}
       <PendingDepositsWidget />
 
       {/* Trading Actions */}
-      <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-6">
+      <div className="grid grid-cols-4 gap-2 sm:gap-4 mb-4">
         <button
           onClick={handleBuy}
-          className="bg-gradient-to-b from-green-500 via-green-600 via-40% to-green-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(20,83,45),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(34,197,94,0.8),0_10px_8px_-2px_rgba(34,197,94,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(34,197,94,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
+          className="bg-gradient-to-b from-green-500 via-green-600 via-40% to-green-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(20,83,45),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(34,197,94,0.8),0_10px_8px_-2px_rgba(34,197,94,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(34,197,94,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[9px] sm:text-[10px] transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
         >
           <div className="bg-white/20 p-1 sm:p-1.5 rounded-full shadow-inner">
             <svg
@@ -1048,7 +1127,7 @@ function DashboardContent() {
 
         <button
           onClick={handleSell}
-          className="bg-gradient-to-b from-red-500 via-red-600 via-40% to-red-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(127,29,29),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(239,68,68,0.8),0_10px_8px_-2px_rgba(239,68,68,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(239,68,68,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
+          className="bg-gradient-to-b from-red-500 via-red-600 via-40% to-red-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(127,29,29),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(239,68,68,0.8),0_10px_8px_-2px_rgba(239,68,68,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(239,68,68,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[9px] sm:text-[10px] transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
         >
           <div className="bg-white/20 p-1 sm:p-1.5 rounded-full shadow-inner">
             <svg
@@ -1071,7 +1150,7 @@ function DashboardContent() {
         <button
           data-tutorial="transfer-button"
           onClick={handleTransfer}
-          className="bg-gradient-to-b from-purple-500 via-purple-600 via-40% to-purple-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(88,28,135),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(168,85,247,0.8),0_10px_8px_-2px_rgba(168,85,247,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(168,85,247,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
+          className="bg-gradient-to-b from-purple-500 via-purple-600 via-40% to-purple-700 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(88,28,135),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(168,85,247,0.8),0_10px_8px_-2px_rgba(168,85,247,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(168,85,247,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[9px] sm:text-[10px] transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
         >
           <div className="bg-white/20 p-1 sm:p-1.5 rounded-full shadow-inner">
             <svg
@@ -1093,7 +1172,7 @@ function DashboardContent() {
 
         <button
           onClick={handleConvert}
-          className="bg-gradient-to-b from-orange-600 to-orange-800 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(124,45,18),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(251,146,60,0.8),0_10px_8px_-2px_rgba(251,146,60,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(251,146,60,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[10px] sm:text-xs transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
+          className="bg-gradient-to-b from-orange-600 to-orange-800 shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgb(124,45,18),0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_10px_0_0_rgba(251,146,60,0.8),0_10px_8px_-2px_rgba(251,146,60,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(251,146,60,0.5)] hover:translate-y-[2px] text-white px-1 py-0.5 sm:px-2 sm:py-1 rounded-2xl font-semibold text-[9px] sm:text-[10px] transition-all flex flex-col items-center gap-0.5 sm:gap-1 hover:scale-105 active:scale-95"
         >
           <div className="bg-white/20 p-1 sm:p-1.5 rounded-full shadow-inner">
             <svg
@@ -1217,7 +1296,7 @@ function DashboardContent() {
 
           {/* Crypto View */}
           {activeView === "crypto" && (
-            <div className="space-y-4 pb-4">
+            <div className="space-y-2 pb-4">
               {userAssets.length === 0 ? (
                 <div className="text-center py-12">
                   <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDark ? "bg-gray-700" : "bg-gray-200"}`}>
@@ -1248,7 +1327,7 @@ function DashboardContent() {
                   <div
                     key={asset.symbol}
                     onClick={() => handleAssetClick(asset)}
-                    className={`relative flex items-center justify-between p-3.5 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group ${isDark ? "hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]" : "hover:shadow-[0_12px_40px_rgba(0,0,0,0.15),0_0_20px_rgba(59,130,246,0.15),0_0_30px_rgba(59,130,246,0.2)]"}`}
+                    className={`relative flex items-center justify-between py-2 px-2 cursor-pointer rounded-xl transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] group ${isDark ? "hover:shadow-[0_12px_40px_rgba(0,0,0,0.5),0_0_20px_rgba(59,130,246,0.25),0_0_30px_rgba(59,130,246,0.4)]" : "hover:shadow-[0_12px_40px_rgba(0,0,0,0.15),0_0_20px_rgba(59,130,246,0.15),0_0_30px_rgba(59,130,246,0.2)]"}`}
                     style={{
                       background: isDark
                         ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
@@ -1260,36 +1339,41 @@ function DashboardContent() {
                     }}
                   >
                     {/* Left side: Icon and Info */}
-                    <div className="flex items-center gap-3">
-                      {/* 3D Crypto Icon Container - shadows only, no colored background */}
+                    <div className="flex items-center gap-2">
+                      {/* Crypto Icon Container */}
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 relative overflow-visible"
                         style={{
                           boxShadow: `0 4px 16px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.15)`,
+                          backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "transparent",
                         }}
                       >
                         <CryptoIcon
                           symbol={asset.symbol}
                           size="md"
                           showNetwork={true}
-                          className="relative z-10 drop-shadow-lg"
+                          className={`relative z-10 drop-shadow-lg${
+                            isDark && getCryptoMetadata(asset.symbol).darkLogo
+                              ? " brightness-0 invert"
+                              : ""
+                          }`}
                         />
                       </div>
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-1.5">
-                          <span className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1 leading-none">
+                          <span className={`font-bold text-sm leading-none ${isDark ? "text-white" : "text-gray-900"}`}>
                             {asset.symbol}
                           </span>
                           <span className={`text-[10px] px-1 py-[1px] rounded-md leading-tight border border-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)] ${isDark ? "text-gray-300 bg-gray-700/50" : "text-gray-600 bg-gray-200/50"}`}>
                             {asset.name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className={`font-medium text-xs ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <div className="flex items-center gap-1 leading-none">
+                          <span className={`font-medium text-xs leading-none ${isDark ? "text-white" : "text-gray-900"}`}>
                             {formatAmount(asset.currentPrice || 0, 2)}
                           </span>
                           <span
-                            className={`text-xs font-medium ${
+                            className={`text-xs font-medium leading-none ${
                               asset.change >= 0
                                 ? isDark ? "text-green-400" : "text-green-600"
                                 : isDark ? "text-red-400" : "text-red-600"
@@ -1303,15 +1387,18 @@ function DashboardContent() {
                     </div>
 
                     {/* Right side: Holdings */}
-                    <div className="text-right">
-                      <div className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
-                        {(asset.amount || 0).toLocaleString("en-US", {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 8,
-                        })}
+                    <div className="text-right flex flex-col gap-1">
+                      <div
+                        className="font-bold text-sm leading-none"
+                        style={{ color: getCryptoMetadata(asset.symbol).color }}
+                      >
+                        {formatCryptoAmount(asset.amount || 0, 16)}
                       </div>
-                      <div className={`text-xs mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                        {formatAmount(asset.value || 0, 2)}
+                      <div
+                        className="font-bold text-xs leading-none"
+                        style={{ color: getCurrencyAccentColor(preferredCurrency).primary }}
+                      >
+                        {truncateCurrencyString(formatAmount(asset.value || 0, 2), 15)}
                       </div>
                     </div>
                   </div>
@@ -1708,22 +1795,28 @@ function DashboardContent() {
                             </div>
                             <div className="flex flex-col items-end">
                               <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Value:</span>
-                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "text-gray-300 bg-gray-800" : "text-gray-800 bg-gray-200"}`}>
-                                {activity.type === "trade_earned"
-                                  ? formatAmount(activity.amount || 0, 2)
-                                  : isFiatTransaction && assetSymbol === preferredCurrency
-                                  ? formatCurrencyUtil(activity.amount || 0, assetSymbol, 2)
-                                  : isFiatTransaction
-                                  ? // Convert original fiat amount → USD (using live rates) → preferred currency.
-                                    // exchangeRates: { USD: 1, EUR: 0.92, PHP: 56.03, ... } means 1 USD = N units.
-                                    // So original / rate = USD equivalent, always correct regardless of preferred currency changes.
-                                    formatAmount(
-                                      assetSymbol === "USD"
-                                        ? (activity.amount || 0)
-                                        : (activity.amount || 0) / (exchangeRates[assetSymbol] || 1),
-                                      2
-                                    )
-                                  : formatAmount(activity.value || 0, 2)}
+                              <span
+                                className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "bg-gray-800" : "bg-gray-200"}`}
+                                style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 10px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
+                              >
+                                {truncateCurrencyString(
+                                  activity.type === "trade_earned"
+                                    ? formatAmount(activity.amount || 0, 2)
+                                    : isFiatTransaction && assetSymbol === preferredCurrency
+                                    ? formatCurrencyUtil(activity.amount || 0, assetSymbol, 2)
+                                    : isFiatTransaction
+                                    ? // Convert original fiat amount → USD (using live rates) → preferred currency.
+                                      // exchangeRates: { USD: 1, EUR: 0.92, PHP: 56.03, ... } means 1 USD = N units.
+                                      // So original / rate = USD equivalent, always correct regardless of preferred currency changes.
+                                      formatAmount(
+                                        assetSymbol === "USD"
+                                          ? (activity.amount || 0)
+                                          : (activity.amount || 0) / (exchangeRates[assetSymbol] || 1),
+                                        2
+                                      )
+                                    : formatAmount(activity.value || 0, 2),
+                                  12
+                                )}
                               </span>
                             </div>
                           </div>
@@ -1880,12 +1973,10 @@ function DashboardContent() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-white">
-                        {formatAmount(asset.value || 0, 2)}
+                        {truncateCurrencyString(formatAmount(asset.value || 0, 2), 18)}
                       </p>
                       <p className="text-gray-400 text-sm">
-                        {(asset.amount || 0).toLocaleString("en-US", {
-                          minimumFractionDigits: 4,
-                        })}{" "}
+                        {formatCryptoAmount(asset.amount || 0, 16)}{" "}
                         {asset.symbol}
                       </p>
                     </div>

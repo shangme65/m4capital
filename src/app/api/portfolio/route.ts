@@ -7,6 +7,20 @@ import { prisma } from "@/lib/prisma";
 // Mark this route as dynamic to prevent static generation attempts
 export const dynamic = "force-dynamic";
 
+// In-memory cache for portfolio data (5 seconds TTL)
+const portfolioCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 5000; // 5 seconds
+
+// Cleanup old cache entries every 30 seconds
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, value] of portfolioCache.entries()) {
+    if (now - value.timestamp > CACHE_TTL * 2) {
+      portfolioCache.delete(key);
+    }
+  }
+}, 30000);
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -23,6 +37,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const timeframe = searchParams.get("timeframe") || "1Y"; // 1D, 1W, 1M, 3M, 6M, 1Y, ALL
     const period = searchParams.get("period") || "all"; // Legacy support
+
+    // Check cache first
+    const cacheKey = `${session.user.email}:${timeframe}:${period}`;
+    const cached = portfolioCache.get(cacheKey);
+    const currentTime = Date.now();
+    
+    if (cached && (currentTime - cached.timestamp) < CACHE_TTL) {
+      console.log("⚡ Returning cached portfolio for:", session.user.email);
+      return NextResponse.json(cached.data, {
+        headers: {
+          'Cache-Control': 'private, max-age=5',
+        },
+      });
+    }
 
     console.log(
       "🔍 Looking up user:",
@@ -115,69 +143,71 @@ export async function GET(request: NextRequest) {
 
     // Fetch deposits and withdrawals separately to avoid schema relation issues
     // Query by portfolioId (not userId) to match current schema
-    const deposits = await prisma.deposit.findMany({
-      where: {
-        portfolioId: portfolio.id,
-        status: "COMPLETED",
-      },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    });
-
-    const withdrawals = await prisma.withdrawal.findMany({
-      where: {
-        portfolioId: portfolio.id,
-        status: "COMPLETED",
-      },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-    });
-
-    // Aggregate sums for full history to compute income percent
-    const depositSum = await prisma.deposit.aggregate({
-      _sum: { amount: true },
-      where: { portfolioId: portfolio.id, status: "COMPLETED" },
-    });
-
-    const withdrawalSum = await prisma.withdrawal.aggregate({
-      _sum: { amount: true },
-      where: { portfolioId: portfolio.id, status: "COMPLETED" },
-    });
-
-    // Aggregate sums for the specific period
-    const periodDepositSum = await prisma.deposit.aggregate({
-      _sum: { amount: true },
-      where: {
-        portfolioId: portfolio.id,
-        status: "COMPLETED",
-        ...(periodStart && { createdAt: { gte: periodStart } }),
-      },
-    });
-
-    const periodWithdrawalSum = await prisma.withdrawal.aggregate({
-      _sum: { amount: true },
-      where: {
-        portfolioId: portfolio.id,
-        status: "COMPLETED",
-        ...(periodStart && { createdAt: { gte: periodStart } }),
-      },
-    });
-
-    // Trade earnings tracking
-    const periodTradeEarnings = await prisma.trade.aggregate({
-      where: {
-        userId: user.id,
-        ...(periodStart && {
-          createdAt: {
-            gte: periodStart,
-            lte: periodEnd,
-          },
-        }),
-      },
-      _sum: {
-        profit: true,
-      },
-    });
+    // Run ALL database queries in parallel for better performance
+    const [
+      deposits,
+      withdrawals,
+      depositSum,
+      withdrawalSum,
+      periodDepositSum,
+      periodWithdrawalSum,
+      periodTradeEarnings
+    ] = await Promise.all([
+      prisma.deposit.findMany({
+        where: {
+          portfolioId: portfolio.id,
+          status: "COMPLETED",
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }),
+      prisma.withdrawal.findMany({
+        where: {
+          portfolioId: portfolio.id,
+          status: "COMPLETED",
+        },
+        orderBy: { createdAt: "desc" },
+        take: 10,
+      }),
+      prisma.deposit.aggregate({
+        _sum: { amount: true },
+        where: { portfolioId: portfolio.id, status: "COMPLETED" },
+      }),
+      prisma.withdrawal.aggregate({
+        _sum: { amount: true },
+        where: { portfolioId: portfolio.id, status: "COMPLETED" },
+      }),
+      prisma.deposit.aggregate({
+        _sum: { amount: true },
+        where: {
+          portfolioId: portfolio.id,
+          status: "COMPLETED",
+          ...(periodStart && { createdAt: { gte: periodStart } }),
+        },
+      }),
+      prisma.withdrawal.aggregate({
+        _sum: { amount: true },
+        where: {
+          portfolioId: portfolio.id,
+          status: "COMPLETED",
+          ...(periodStart && { createdAt: { gte: periodStart } }),
+        },
+      }),
+      prisma.trade.aggregate({
+        where: {
+          userId: user.id,
+          ...(periodStart && {
+            createdAt: {
+              gte: periodStart,
+              lte: periodEnd,
+            },
+          }),
+        },
+        _sum: {
+          profit: true,
+        },
+      })
+    ]);
 
     const totalDeposited = parseFloat((depositSum._sum.amount ?? 0).toString());
     const totalWithdrawn = parseFloat(
@@ -224,7 +254,7 @@ export async function GET(request: NextRequest) {
         : 0; // If starting from 0, show 100% if positive gain
 
     // Return portfolio data
-    return NextResponse.json({
+    const responseData = {
       user: {
         id: user.id,
         name: user.name,
@@ -260,6 +290,15 @@ export async function GET(request: NextRequest) {
           status: w.status,
           createdAt: w.createdAt,
         })),
+      },
+    };
+
+    // Store in cache
+    portfolioCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': 'private, max-age=5',
       },
     });
   } catch (error) {

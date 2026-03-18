@@ -12,6 +12,7 @@ import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
 import { transferCryptoAction } from "@/actions/transfer-actions";
+import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 
 interface TransferModalNewProps {
   isOpen: boolean;
@@ -630,7 +631,7 @@ export default function TransferModalNew({
                                   <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                     {isFiat
                                       ? formatBalanceDisplay(asset.amount)
-                                      : formatAmount(cryptoValue, 2)}
+                                      : `${formatCryptoAmount(asset.amount, 14)} ${asset.symbol}`}
                                   </div>
                                 </div>
                               </div>
