@@ -988,7 +988,7 @@ export default function AssetDetailsModal({
                       <div className="flex items-center gap-2 relative z-10">
                         {/* Logo */}
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
                           style={isDark ? {
                             background: "linear-gradient(135deg, #334155 0%, #1e293b 100%)",
                             boxShadow: `0 6px 20px rgba(0, 0, 0, 0.7), 0 0 16px ${cryptoColor}50, inset 0 1px 2px rgba(255,255,255,0.15)`,
@@ -997,7 +997,7 @@ export default function AssetDetailsModal({
                             boxShadow: `0 6px 18px rgba(0,0,0,0.18), 0 0 14px ${cryptoColor}40, inset 0 1px 0 rgba(255,255,255,1)`,
                           }}
                         >
-                          <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/20 to-transparent opacity-50" />
+                          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                           <CryptoIcon
                             symbol={asset.symbol}
                             size="sm"
@@ -1014,7 +1014,7 @@ export default function AssetDetailsModal({
                               {asset.symbol}
                             </div>
                             <div
-                              className={`inline-flex items-center gap-px px-1 py-px rounded-full text-[8px] font-semibold ${
+                              className={`inline-flex items-center gap-px px-1 py-px rounded-full text-[10px] font-semibold ${
                                 priceChange >= 0
                                   ? isDark ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-700"
                                   : isDark ? "bg-red-500/20 text-red-400" : "bg-red-100 text-red-700"
@@ -1028,8 +1028,7 @@ export default function AssetDetailsModal({
                       </div>
                       <div className="text-right relative z-10">
                         <div
-                          className="font-bold text-sm"
-                          style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 10px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
+                          className={`font-bold text-sm ${isDark ? "text-white" : "text-gray-900"}`}
                         >
                           {formatAmount(asset.value, 2)}
                         </div>
@@ -1323,8 +1322,7 @@ export default function AssetDetailsModal({
                                   Value:
                                 </span>
                                 <span
-                                  className={`font-semibold ${isDark ? "bg-gray-800" : "bg-gray-200"} text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)]`}
-                                  style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 10px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
+                                  className={`font-semibold ${isDark ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-800"} text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)]`}
                                 >
                                   {/* For swaps, use fromValueUSD or toValueUSD depending on view */}
                                   {tx.type === "swap" ? (

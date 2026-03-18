@@ -967,7 +967,7 @@ function DepositModal({ isOpen, onClose }: DepositModalProps) {
                                 <div className="flex items-center gap-2">
                                   {/* 3D Crypto Logo */}
                                   <div
-                                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                    className="w-8 h-8 rounded-full flex items-center justify-center"
                                     style={{
                                       background: isDark
                                         ? cryptoGradients[crypto.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"

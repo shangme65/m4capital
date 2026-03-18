@@ -996,15 +996,13 @@ function DashboardContent() {
                       width={28}
                       height={28}
                       className="rounded-full object-cover"
-                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(0,0,0,0.3))" }}
                     />
                     <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       {preferredCurrency}
                     </span>
                   </div>
                   <span
-                    className="text-sm sm:text-base font-bold"
-                    style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 12px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
+                    className={`text-sm sm:text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}
                   >
                     {portfolioLoading ? (
                       <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
@@ -1055,15 +1053,13 @@ function DashboardContent() {
                       width={28}
                       height={28}
                       className="rounded-full object-cover"
-                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5)) drop-shadow(0 0 8px rgba(0,0,0,0.3))" }}
                     />
                     <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       Traderoom
                     </span>
                   </div>
                   <span
-                    className="text-sm sm:text-base font-bold"
-                    style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 12px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
+                    className={`text-sm sm:text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}
                   >
                     {portfolioLoading ? (
                       <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
@@ -1342,21 +1338,19 @@ function DashboardContent() {
                     <div className="flex items-center gap-2">
                       {/* Crypto Icon Container */}
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-all duration-300 relative overflow-visible"
+                        className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 relative overflow-hidden"
                         style={{
-                          boxShadow: `0 4px 16px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.15)`,
-                          backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "transparent",
+                          backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.06)",
+                          boxShadow: isDark
+                            ? "0 4px 12px rgba(0,0,0,0.5)"
+                            : "0 2px 8px rgba(0,0,0,0.15)",
                         }}
                       >
                         <CryptoIcon
                           symbol={asset.symbol}
                           size="md"
                           showNetwork={true}
-                          className={`relative z-10 drop-shadow-lg${
-                            isDark && getCryptoMetadata(asset.symbol).darkLogo
-                              ? " brightness-0 invert"
-                              : ""
-                          }`}
+                          className="relative z-10 scale-[1.125]"
                         />
                       </div>
                       <div className="flex flex-col gap-1">
@@ -1364,16 +1358,16 @@ function DashboardContent() {
                           <span className={`font-bold text-sm leading-none ${isDark ? "text-white" : "text-gray-900"}`}>
                             {asset.symbol}
                           </span>
-                          <span className={`text-[10px] px-1 py-[1px] rounded-md leading-tight border border-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)] ${isDark ? "text-gray-300 bg-gray-700/50" : "text-gray-600 bg-gray-200/50"}`}>
+                          <span className={`font-medium text-[10px] px-1 py-[1px] rounded-md leading-tight border border-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)] ${isDark ? "text-gray-300 bg-gray-700/50" : "text-gray-600 bg-gray-200/50"}`}>
                             {asset.name}
                           </span>
                         </div>
-                        <div className="flex items-center gap-1 leading-none">
-                          <span className={`font-medium text-xs leading-none ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <div className="flex items-center gap-1 leading-none mt-1">
+                          <span className={`font-semibold text-xs leading-none ${isDark ? "text-white" : "text-gray-900"}`}>
                             {formatAmount(asset.currentPrice || 0, 2)}
                           </span>
                           <span
-                            className={`text-xs font-medium leading-none ${
+                            className={`text-xs font-semibold leading-none ${
                               asset.change >= 0
                                 ? isDark ? "text-green-400" : "text-green-600"
                                 : isDark ? "text-red-400" : "text-red-600"
@@ -1389,14 +1383,12 @@ function DashboardContent() {
                     {/* Right side: Holdings */}
                     <div className="text-right flex flex-col gap-1">
                       <div
-                        className="font-bold text-sm leading-none"
-                        style={{ color: getCryptoMetadata(asset.symbol).color }}
+                        className={`font-bold text-sm leading-none ${isDark ? "text-white" : "text-gray-900"}`}
                       >
                         {formatCryptoAmount(asset.amount || 0, 16)}
                       </div>
                       <div
-                        className="font-bold text-xs leading-none"
-                        style={{ color: getCurrencyAccentColor(preferredCurrency).primary }}
+                        className={`font-bold text-xs leading-none mt-1 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                       >
                         {truncateCurrencyString(formatAmount(asset.value || 0, 2), 15)}
                       </div>
@@ -1796,8 +1788,7 @@ function DashboardContent() {
                             <div className="flex flex-col items-end">
                               <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Value:</span>
                               <span
-                                className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "bg-gray-800" : "bg-gray-200"}`}
-                                style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 10px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
+                                className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-800"}`}
                               >
                                 {truncateCurrencyString(
                                   activity.type === "trade_earned"

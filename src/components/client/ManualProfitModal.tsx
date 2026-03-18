@@ -429,7 +429,7 @@ export default function ManualProfitModal({
                     </>
                   ) : (
                     <>
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isDark ? "bg-gray-700" : "bg-gray-100"}`}>
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isDark ? "bg-gray-700" : "bg-gray-100"}`}>
                         <BarChart2 size={18} className={isDark ? "text-gray-400" : "text-gray-500"} />
                       </div>
                       <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Tap to select an asset</p>

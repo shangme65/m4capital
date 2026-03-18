@@ -330,6 +330,7 @@ export const CRYPTO_METADATA: Record<string, CryptoMetadata> = {
     iconBg: "#1e293b",
     bgColor: "rgba(77, 162, 255, 0.1)",
     imagePath: "/crypto/sui.svg",
+    darkLogo: true,
   },
   SEI: {
     name: "Sei",

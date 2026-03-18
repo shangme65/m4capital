@@ -7,6 +7,7 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { getCryptoMetadata } from "@/lib/crypto-constants";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
 import { buyCryptoAction } from "@/actions/crypto-actions";
@@ -110,19 +111,11 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     return formatAmount(balanceInUSD, 2);
   };
 
-  // Fetch real-time crypto prices
-  const cryptoSymbols = [
-    "BTC",
-    "ETH",
-    "XRP",
-    "TRX",
-    "TON",
-    "LTC",
-    "BCH",
-    "ETC",
-    "USDC",
-    "USDT",
-  ];
+  // Get crypto symbols from user's dashboard portfolio
+  const portfolioAssets = portfolio?.portfolio?.assets || [];
+  const cryptoSymbols: string[] = portfolioAssets
+    .map((a: any) => a.symbol as string)
+    .filter((s: string) => s);
   const cryptoPrices = useCryptoPrices(cryptoSymbols);
 
   const getCurrentPrice = () => cryptoPrices[buyData.asset]?.price || 0;
@@ -448,6 +441,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
                       {cryptoSymbols.map((symbol) => {
                         const price = cryptoPrices[symbol]?.price || 0;
+                        const name = getCryptoMetadata(symbol).name || symbol;
                         return (
                           <button
                             key={symbol}
@@ -477,7 +471,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <div
-                                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                  className="w-10 h-10 rounded-full flex items-center justify-center"
                                   style={{
                                     background: isDark
                                       ? cryptoGradients[symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -497,7 +491,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                                     {symbol}
                                   </div>
                                   <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                                    {formatAmount(price, 2)}
+                                    {name} • {formatAmount(price, 2)}
                                   </div>
                                 </div>
                               </div>
@@ -563,7 +557,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       }}
                     >
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
                         style={{
                           background: isDark
                             ? cryptoGradients[buyData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -714,7 +708,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                   <div className="space-y-3">
                     <div className="text-center py-2">
                       <div
-                        className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2"
+                        className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2"
                         style={{
                           background: isDark
                             ? cryptoGradients[buyData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"

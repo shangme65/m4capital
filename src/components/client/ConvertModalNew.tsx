@@ -665,7 +665,7 @@ export default function ConvertModalNew({
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div
-                                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                    className="w-10 h-10 rounded-full flex items-center justify-center"
                                     style={{
                                       background: isDark
                                         ? cryptoGradients[symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -773,7 +773,7 @@ export default function ConvertModalNew({
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div
-                                    className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                    className="w-10 h-10 rounded-full flex items-center justify-center"
                                     style={{
                                       background: isDark
                                         ? cryptoGradients[symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -888,7 +888,7 @@ export default function ConvertModalNew({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          className="w-8 h-8 rounded-full flex items-center justify-center"
                           style={{
                             background: isDark
                               ? cryptoGradients[convertData.fromAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -922,7 +922,7 @@ export default function ConvertModalNew({
                       </svg>
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          className="w-8 h-8 rounded-full flex items-center justify-center"
                           style={{
                             background: isDark
                               ? cryptoGradients[convertData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1089,7 +1089,7 @@ export default function ConvertModalNew({
                     </div>
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
                         style={{
                           background: isDark
                             ? cryptoGradients[convertData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1155,7 +1155,7 @@ export default function ConvertModalNew({
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-center">
                         <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-1"
+                          className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1"
                           style={{
                             background: isDark
                               ? cryptoGradients[convertData.fromAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1202,7 +1202,7 @@ export default function ConvertModalNew({
                       </div>
                       <div className="text-center">
                         <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center mx-auto mb-1"
+                          className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1"
                           style={{
                             background: isDark
                               ? cryptoGradients[convertData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1333,7 +1333,7 @@ export default function ConvertModalNew({
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          className="w-8 h-8 rounded-full flex items-center justify-center"
                           style={{
                             background: isDark
                               ? cryptoGradients[successData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1362,7 +1362,7 @@ export default function ConvertModalNew({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          className="w-8 h-8 rounded-full flex items-center justify-center"
                           style={{
                             background: isDark
                               ? cryptoGradients[successData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"

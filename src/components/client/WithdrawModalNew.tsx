@@ -1027,7 +1027,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               <span className="flex items-center gap-3">
                                 {/* 3D Crypto Logo */}
                                 <div
-                                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                                  className="w-8 h-8 rounded-full flex items-center justify-center"
                                   style={{
                                     background: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
                                     boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
@@ -1136,7 +1136,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                             <div className="flex items-center gap-3">
                                               {/* 3D Crypto Logo */}
                                               <div
-                                                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                                className="w-10 h-10 rounded-full flex items-center justify-center"
                                                 style={{
                                                   background: isDark
                                                     ? cryptoGradients[crypto] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"

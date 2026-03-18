@@ -12,7 +12,7 @@ import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
 import { transferCryptoAction } from "@/actions/transfer-actions";
-import { formatCryptoAmount } from "@/lib/format-crypto-amount";
+import { formatCryptoAmount, truncateCurrencyString } from "@/lib/format-crypto-amount";
 
 interface TransferModalNewProps {
   isOpen: boolean;
@@ -639,7 +639,7 @@ export default function TransferModalNew({
                                 <div className="text-right">
                                   <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                                     {isFiat
-                                      ? formatBalanceDisplay(asset.amount)
+                                      ? truncateCurrencyString(formatBalanceDisplay(asset.amount), 10)
                                       : formatAmount(cryptoValue, 2)}
                                   </div>
                                 </div>
@@ -705,7 +705,7 @@ export default function TransferModalNew({
                       }}
                     >
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
                         style={{
                           background: isDark
                             ? cryptoGradients[transferData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1006,7 +1006,7 @@ export default function TransferModalNew({
                   <div className="space-y-4">
                     <div className="text-center py-4">
                       <div
-                        className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-3"
+                        className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
                         style={{
                           background: isDark
                             ? cryptoGradients[transferData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"

@@ -500,7 +500,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                       <div
-                                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                                        className="w-10 h-10 rounded-full flex items-center justify-center"
                                         style={{
                                         background: isDark
                                           ? cryptoGradients[asset.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -595,7 +595,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       }}
                     >
                       <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center"
+                        className="w-10 h-10 rounded-full flex items-center justify-center"
                         style={{
                           background: isDark
                             ? cryptoGradients[sellData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -746,7 +746,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                   <div className="space-y-4">
                     <div className="text-center py-4">
                       <div
-                        className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto mb-3"
+                        className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
                         style={{
                           background: isDark
                             ? cryptoGradients[sellData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"

@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import { getCurrencyFlagUrl } from "@/lib/currency-flags";
+import { useTheme } from "@/contexts/ThemeContext";
+import { getCryptoMetadata } from "@/lib/crypto-constants";
 
 interface CryptoIconProps {
   symbol: string;
@@ -114,13 +115,15 @@ export function CryptoIcon({
 }: CryptoIconProps) {
   // 0 = local, 1 = CDN, 2 = local fiat (for fiat only), 3 = fallback circle
   const [stage, setStage] = useState(0);
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme === "dark";
   const iconSize = sizeMap[size];
   const upperSymbol = symbol.toUpperCase();
   const normalizedSymbol = symbol.toLowerCase();
 
   const isCrypto = CRYPTO_CURRENCIES.includes(upperSymbol);
-
   const bgColor = colorMap[upperSymbol] || "#6b7280";
+  const needsInvert = isCrypto && isDark && getCryptoMetadata(upperSymbol).darkLogo;
 
   // Determine the icon source based on current stage
   let iconSrc: string;
@@ -162,8 +165,13 @@ export function CryptoIcon({
     );
   }
 
+  // Invert dark logos in dark mode
+  const invertFilter = needsInvert ? "brightness(0) invert(1)" : undefined;
+
   return (
-    <div className="relative inline-block flex-shrink-0">
+    <div
+      className="relative inline-block flex-shrink-0"
+    >
       <div
         style={{
           width: `${iconSize}px`,
@@ -171,9 +179,11 @@ export function CryptoIcon({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          ...(invertFilter ? { filter: invertFilter } : {}),
         }}
       >
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src={iconSrc}
           alt={alt || `${symbol} icon`}
           width={iconSize}
@@ -190,9 +200,6 @@ export function CryptoIcon({
             objectFit: "contain",
             objectPosition: "center",
           }}
-          unoptimized={stage === 0 || stage === 1} // Don't optimize external CDN images
-          loading="eager" // Load logos immediately for better UX
-          quality={100}
         />
       </div>
     </div>
