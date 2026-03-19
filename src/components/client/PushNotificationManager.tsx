@@ -267,7 +267,8 @@ export function usePushNotifications() {
         state.isSupported &&
         state.permission === "granted" &&
         !state.isSubscribed &&
-        !state.isLoading
+        !state.isLoading &&
+        !state.error
       ) {
         // Register service worker and check if we need to resubscribe
         const registration = await navigator.serviceWorker.getRegistration();
@@ -289,15 +290,8 @@ export function usePushNotifications() {
     };
 
     autoSubscribe();
-  }, [
-    status,
-    state.isSupported,
-    state.permission,
-    state.isSubscribed,
-    state.isLoading,
-    registerServiceWorker,
-    subscribe,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, state.isSupported, state.permission, state.isSubscribed, state.isLoading, state.error]);
 
   return {
     ...state,
