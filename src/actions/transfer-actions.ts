@@ -98,6 +98,28 @@ export async function transferCryptoAction(
         return { success: false, error: "Insufficient balance" };
       }
 
+      // Pre-compute currency conversion BEFORE the transaction (avoids network call inside tx)
+      const displayAmount = originalInputAmount ?? amount;
+      const senderSymbol = getCurrencySymbol(senderCurrency);
+      const recipientSymbol = getCurrencySymbol(recipientCurrency);
+      let receiverMessage = `You have successfully received a transfer of ${senderSymbol}${displayAmount.toFixed(2)} from ${
+        sender.name || sender.email
+      }`;
+      if (senderCurrency !== recipientCurrency) {
+        try {
+          const convertedAmount = await convertCurrency(
+            displayAmount,
+            senderCurrency,
+            recipientCurrency
+          );
+          receiverMessage = `You have successfully received a transfer of ${senderSymbol}${displayAmount.toFixed(2)} → ${recipientSymbol}${convertedAmount.toFixed(2)} from ${
+            sender.name || sender.email
+          }`;
+        } catch (error) {
+          console.error("Failed to convert currency for notification:", error);
+        }
+      }
+
       await prisma.$transaction(async (tx) => {
         // Deduct from sender
         await tx.portfolio.update({
@@ -130,9 +152,9 @@ export async function transferCryptoAction(
               memo: memo || "P2P Transfer",
               senderAmount: displaySenderAmount,
               senderCurrency: senderCurrency,
-              receiverAmount: displaySenderAmount, // Same amount in same currency
-              receiverCurrency: senderCurrency, // Both see sender's currency (what was actually sent)
-              usdAmount: amount, // The actual USD amount transferred
+              receiverAmount: displaySenderAmount,
+              receiverCurrency: senderCurrency,
+              usdAmount: amount,
             }),
             senderAccountNumber: sender.accountNumber || "",
             receiverAccountNumber: recipient.accountNumber || "",
@@ -143,10 +165,6 @@ export async function transferCryptoAction(
             updatedAt: new Date(),
           },
         });
-
-        // Create notifications for both parties with proper currency formatting
-        const senderSymbol = getCurrencySymbol(senderCurrency);
-        const displayAmount = originalInputAmount ?? amount;
 
         await tx.notification.create({
           data: {
@@ -161,29 +179,6 @@ export async function transferCryptoAction(
             asset: senderCurrency,
           },
         });
-
-        // For receiver notification, show both original amount and converted amount
-        const recipientSymbol = getCurrencySymbol(recipientCurrency);
-        let receiverMessage = `You have successfully received a transfer of ${senderSymbol}${displayAmount.toFixed(2)} from ${
-          sender.name || sender.email
-        }`;
-
-        // If currencies are different, show conversion
-        if (senderCurrency !== recipientCurrency) {
-          try {
-            const convertedAmount = await convertCurrency(
-              displayAmount,
-              senderCurrency,
-              recipientCurrency
-            );
-            receiverMessage = `You have successfully received a transfer of ${senderSymbol}${displayAmount.toFixed(2)} → ${recipientSymbol}${convertedAmount.toFixed(2)} from ${
-              sender.name || sender.email
-            }`;
-          } catch (error) {
-            console.error("Failed to convert currency for notification:", error);
-            // Keep original message if conversion fails
-          }
-        }
 
         await tx.notification.create({
           data: {
@@ -212,6 +207,24 @@ export async function transferCryptoAction(
 
       if (senderAssetBalance < amount) {
         return { success: false, error: `Insufficient ${asset} balance` };
+      }
+
+      // Pre-compute fiat value for notification BEFORE the transaction (avoids network call inside tx)
+      const cryptoPrice = senderAssetData.averagePrice || 0;
+      const usdValue = amount * cryptoPrice;
+      const recipientSymbol = getCurrencySymbol(recipientCurrency);
+      let receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} from ${
+        sender.name || sender.email
+      }`;
+      if (usdValue > 0) {
+        try {
+          const fiatValue = await convertCurrency(usdValue, "USD", recipientCurrency);
+          receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} → ${recipientSymbol}${fiatValue.toFixed(2)} from ${
+            sender.name || sender.email
+          }`;
+        } catch (error) {
+          console.error("Failed to convert crypto value for notification:", error);
+        }
       }
 
       await prisma.$transaction(async (tx) => {
@@ -293,31 +306,6 @@ export async function transferCryptoAction(
             asset: asset,
           },
         });
-
-        // For receiver notification, show crypto amount and fiat value in their currency
-        const cryptoPrice = senderAssetData.averagePrice || 0;
-        const usdValue = amount * cryptoPrice;
-        const recipientSymbol = getCurrencySymbol(recipientCurrency);
-        let receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} from ${
-          sender.name || sender.email
-        }`;
-
-        // Add fiat value in receiver's currency
-        if (usdValue > 0) {
-          try {
-            const fiatValue = await convertCurrency(
-              usdValue,
-              "USD",
-              recipientCurrency
-            );
-            receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} → ${recipientSymbol}${fiatValue.toFixed(2)} from ${
-              sender.name || sender.email
-            }`;
-          } catch (error) {
-            console.error("Failed to convert crypto value for notification:", error);
-            // Keep original message if conversion fails
-          }
-        }
 
         await tx.notification.create({
           data: {

@@ -78,6 +78,16 @@ export default function TransferModalNew({
   const [receiverName, setReceiverName] = useState<string | null>(null);
   const [receiverVerified, setReceiverVerified] = useState<boolean>(false);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [userSuggestions, setUserSuggestions] = useState<Array<{
+    id: string;
+    name: string | null;
+    email: string | null;
+    accountNumber: string | null;
+    isVerified: boolean;
+    image: string | null;
+  }>>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   const { portfolio, refetch } = usePortfolio();
   const { preferredCurrency, convertAmount, formatAmount, exchangeRates } = useCurrency();
@@ -203,6 +213,8 @@ export default function TransferModalNew({
       setErrors({});
       setReceiverName(null);
       setReceiverVerified(false);
+      setUserSuggestions([]);
+      setShowSuggestions(false);
     }
 
     // Add mobile back button handler
@@ -228,6 +240,42 @@ export default function TransferModalNew({
       window.removeEventListener("popstate", handleBackButton);
     };
   }, [isOpen, onClose, step]);
+
+  // Fetch user suggestions when step 2 becomes active
+  useEffect(() => {
+    if (step === 2 && showSuggestions) {
+      fetchUserSuggestions(transferData.destination);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  // Fetch user suggestions from search API
+  const fetchUserSuggestions = async (query: string) => {
+    setSuggestionsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/p2p-transfer/search-users?q=${encodeURIComponent(query)}`
+      );
+      const data = await res.json();
+      if (res.ok && data.users) {
+        setUserSuggestions(data.users);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  // Select a user from the suggestions list
+  const selectUser = (user: { name: string | null; email: string | null; accountNumber: string | null; isVerified: boolean }) => {
+    const identifier = user.email || user.accountNumber || "";
+    setTransferData((prev) => ({ ...prev, destination: identifier }));
+    setReceiverName(user.name || identifier);
+    setReceiverVerified(user.isVerified);
+    setShowSuggestions(false);
+    setErrors((prev) => ({ ...prev, destination: "" }));
+  };
 
   // Lookup receiver by email or account number
   const lookupReceiver = async (identifier: string) => {
@@ -811,22 +859,124 @@ export default function TransferModalNew({
                     {/* Recipient Input */}
                     <div>
                       <label className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
-                        Recipient (Email or Account Number)
+                        Recipient
                       </label>
                       <input
                         type="text"
                         value={transferData.destination}
                         onChange={(e) => {
+                          const val = e.target.value;
                           setTransferData((prev) => ({
                             ...prev,
-                            destination: e.target.value,
+                            destination: val,
                           }));
-                          lookupReceiver(e.target.value);
+                          if (!val.trim()) {
+                            setReceiverName(null);
+                            setReceiverVerified(false);
+                          } else {
+                            lookupReceiver(val);
+                          }
+                          fetchUserSuggestions(val);
+                          setShowSuggestions(true);
+                        }}
+                        onFocus={() => {
+                          setShowSuggestions(true);
+                          fetchUserSuggestions(transferData.destination);
+                        }}
+                        onBlur={() => {
+                          // Delay so onMouseDown in suggestion list fires first
+                          setTimeout(() => setShowSuggestions(false), 150);
                         }}
                         className={`w-full rounded-xl px-4 py-3 ${isDark ? "text-white" : "text-gray-900"} text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
                         style={inputStyle}
-                        placeholder="user@example.com or 12345678"
+                        placeholder="Search by name, email or account number"
                       />
+                      {/* User suggestions dropdown */}
+                      {showSuggestions && !receiverName && (
+                        <div
+                          className="mt-1 rounded-xl overflow-hidden"
+                          style={{
+                            background: isDark
+                              ? "linear-gradient(145deg, #1e293b 0%, #0f172a 100%)"
+                              : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                            boxShadow: isDark
+                              ? "0 8px 24px -4px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)"
+                              : "0 4px 16px -4px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,1)",
+                            border: isDark
+                              ? "1px solid rgba(255,255,255,0.08)"
+                              : "1px solid rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          <div className={`px-3 py-2 text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                            {transferData.destination.length > 0 ? "Search Results" : "Recent Recipients"}
+                          </div>
+                          {suggestionsLoading ? (
+                            <div className={`px-3 py-3 text-xs flex items-center gap-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                              <span className="animate-spin">⏳</span> Searching...
+                            </div>
+                          ) : userSuggestions.length === 0 ? (
+                            <div className={`px-3 py-3 text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                              {transferData.destination.length > 0 ? "No users found" : "No recent transfers yet"}
+                            </div>
+                          ) : (
+                            <div className="max-h-48 overflow-y-auto">
+                              {userSuggestions.map((user) => (
+                                <button
+                                  key={user.id}
+                                  type="button"
+                                  onMouseDown={(e) => {
+                                    e.preventDefault(); // prevent input blur before click
+                                    selectUser(user);
+                                  }}
+                                  className={`w-full text-left px-3 py-2.5 flex items-center gap-3 transition-colors ${
+                                    isDark
+                                      ? "hover:bg-purple-500/10"
+                                      : "hover:bg-purple-50"
+                                  }`}
+                                >
+                                  {/* Avatar */}
+                                  <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold overflow-hidden ${
+                                    user.isVerified
+                                      ? "bg-gradient-to-br from-green-500 to-green-600"
+                                      : "bg-gradient-to-br from-gray-500 to-gray-600"
+                                  }`}>
+                                    {user.image ? (
+                                      // eslint-disable-next-line @next/next/no-img-element
+                                      <img src={user.image} alt={user.name || ""} className="w-8 h-8 object-cover" />
+                                    ) : (
+                                      (user.name || user.email || "?").charAt(0).toUpperCase()
+                                    )}
+                                  </div>
+                                  {/* Info */}
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1">
+                                      <span className={`text-sm font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+                                        {user.name || "Unknown"}
+                                      </span>
+                                      {user.isVerified && (
+                                        <VscVerifiedFilled className="text-green-500 flex-shrink-0" size={13} />
+                                      )}
+                                    </div>
+                                    <div className={`text-xs truncate ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                      {user.email}
+                                    </div>
+                                  </div>
+                                  {/* Account number badge */}
+                                  {user.accountNumber && (
+                                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex-shrink-0 ${
+                                      isDark
+                                        ? "bg-gray-700 text-gray-400"
+                                        : "bg-gray-100 text-gray-500"
+                                    }`}>
+                                      #{user.accountNumber}
+                                    </span>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       {lookupLoading && (
                         <div
                           className="mt-2 rounded-xl p-3 flex items-center gap-2"
@@ -1068,24 +1218,28 @@ export default function TransferModalNew({
                   <div className="space-y-4">
                     <div className="text-center py-4">
                       <div
-                        className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+                        className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden"
                         style={{
                           background: isDark
                             ? cryptoGradients[transferData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : transferData.asset === "FIAT"
-                              ? "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
+                              ? "transparent"
                               : "#ffffff",
                           boxShadow: isDark
                             ? "0 10px 30px -5px rgba(0, 0, 0, 0.5)"
                             : transferData.asset === "FIAT"
-                              ? "0 6px 18px rgba(168,85,247,0.3), inset 0 2px 0 rgba(255,255,255,0.25)"
+                              ? "0 6px 18px rgba(0,0,0,0.15)"
                               : "0 6px 18px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                         }}
                       >
                         {transferData.asset === "FIAT" ? (
-                          <span className="text-white font-bold text-xl">
-                            {currencySymbol}
-                          </span>
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={getCurrencyFlagUrl(preferredCurrency)}
+                            alt={preferredCurrency}
+                            className="w-14 h-14 object-cover"
+                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                          />
                         ) : (
                           <CryptoIcon
                             symbol={transferData.asset}

@@ -59,7 +59,7 @@ const cryptoGradients: Record<string, string> = {
 export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   const [step, setStep] = useState(1); // 1 = select asset, 2 = enter amount, 3 = confirm, 4 = success
   const [buyData, setBuyData] = useState({
-    asset: "BTC",
+    asset: "",
     amount: "",
   });
   const [successData, setSuccessData] = useState<{
@@ -113,12 +113,20 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     return formatAmount(balanceInUSD, 2);
   };
 
-  // Get crypto symbols from user's dashboard portfolio
+  // Get crypto symbols from user's dashboard portfolio (respect toggle order)
   const portfolioAssets = portfolio?.portfolio?.assets || [];
   const cryptoSymbols: string[] = portfolioAssets
     .map((a: any) => a.symbol as string)
     .filter((s: string) => s);
   const cryptoPrices = useCryptoPrices(cryptoSymbols);
+
+  // Auto-select first toggled asset when portfolio loads
+  useEffect(() => {
+    if (cryptoSymbols.length > 0 && !buyData.asset) {
+      setBuyData((prev) => ({ ...prev, asset: cryptoSymbols[0] }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cryptoSymbols.length]);
 
   const getCurrentPrice = () => cryptoPrices[buyData.asset]?.price || 0;
 
@@ -154,9 +162,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
       document.body.style.overflow = "unset";
       // Reset on close
       setStep(1);
-      setBuyData({ asset: "BTC", amount: "" });
-      setSuccessData(null);
-      setErrors({});
+      setBuyData({ asset: "", amount: "" });
     }
 
     // Add mobile back button handler
@@ -258,10 +264,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   };
 
   const handleDone = () => {
-    setBuyData({ asset: "BTC", amount: "" });
-    setErrors({});
-    setStep(1);
-    onClose();
+    setBuyData({ asset: "", amount: "" });
     refetch();
     window.location.href = "/dashboard";
   };
@@ -456,9 +459,31 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         You are buying with your fiat balance. Choose a cryptocurrency to purchase.
                       </p>
                     </div>
+                    {cryptoSymbols.length === 0 && portfolio !== null && (
+                      <div
+                        className={`rounded-xl p-5 text-center`}
+                        style={{
+                          background: isDark
+                            ? "linear-gradient(145deg, rgba(34,197,94,0.06) 0%, rgba(22,163,74,0.06) 100%)"
+                            : "linear-gradient(145deg, rgba(34,197,94,0.05) 0%, rgba(22,163,74,0.05) 100%)",
+                          border: isDark ? "1px solid rgba(34,197,94,0.15)" : "1px solid rgba(34,197,94,0.2)",
+                        }}
+                      >
+                        <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
+                          <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                          </svg>
+                        </div>
+                        <p className={`text-sm font-semibold mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                          No assets added yet
+                        </p>
+                        <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                          Go to the Dashboard and tap <strong>+</strong> to toggle on crypto assets you want to track and buy.
+                        </p>
+                      </div>
+                    )}
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                      {[...cryptoSymbols]
-                        .sort((a, b) => (cryptoPrices[b]?.price || 0) - (cryptoPrices[a]?.price || 0))
+                      {cryptoSymbols
                         .map((symbol) => {
                         const price = cryptoPrices[symbol]?.price || 0;
                         const changePercent = cryptoPrices[symbol]?.changePercent24h;
@@ -539,12 +564,14 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             </div>
                           </button>
                         );
-                      })}
+                      })
+                      }
                     </div>
 
                     <button
                       onClick={handleContinue}
-                      className="w-full py-2 text-white rounded-xl font-bold transition-all text-xs"
+                      disabled={!buyData.asset}
+                      className="w-full py-2 text-white rounded-xl font-bold transition-all text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                       style={{
                         background:
                           "linear-gradient(135deg, #22c55e 0%, #16a34a 50%, #22c55e 100%)",
