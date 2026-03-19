@@ -912,10 +912,7 @@ export default function AssetDetailsModal({
                   <p className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     Buying {(convertAmount(selectedBuyAmount, true) / currentPrice).toFixed(5)}{" "}
                     {asset.symbol} from available balance:{" "}
-                    <span
-                      className="font-bold"
-                      style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 12px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
-                    >
+                    <span className={`font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                       {formatUserBalance(userBalance)}
                     </span>
                   </p>
@@ -992,9 +989,11 @@ export default function AssetDetailsModal({
                           style={isDark ? {
                             background: "linear-gradient(135deg, #334155 0%, #1e293b 100%)",
                             boxShadow: `0 6px 20px rgba(0, 0, 0, 0.7), 0 0 16px ${cryptoColor}50, inset 0 1px 2px rgba(255,255,255,0.15)`,
+                            filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                           } : {
                             background: "#ffffff",
                             boxShadow: `0 6px 18px rgba(0,0,0,0.18), 0 0 14px ${cryptoColor}40, inset 0 1px 0 rgba(255,255,255,1)`,
+                            filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                           }}
                         >
                           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent opacity-50" />

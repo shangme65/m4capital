@@ -8,6 +8,7 @@ import {
   Shield,
   LogOut,
   Home,
+  AlertCircle,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -168,6 +169,20 @@ const Sidebar = () => {
                   <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                     {session.user.email}
                   </p>
+                  {!isVerified && (
+                    <Link
+                      href="/settings?tab=verification"
+                      onClick={closeSidebar}
+                      className={`mt-2 inline-flex items-center gap-1.5 px-2 py-1 rounded-md border text-[11px] font-medium transition-colors ${
+                        isDark
+                          ? "bg-yellow-900/20 text-yellow-300 border-yellow-700/50 hover:bg-yellow-900/30"
+                          : "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100"
+                      }`}
+                    >
+                      <AlertCircle className="w-3.5 h-3.5" />
+                      <span>Verify account now</span>
+                    </Link>
+                  )}
                 </div>
               )}
               <nav className="flex-1 overflow-y-auto">

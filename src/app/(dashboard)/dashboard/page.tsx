@@ -996,6 +996,7 @@ function DashboardContent() {
                       width={28}
                       height={28}
                       className="rounded-full object-cover"
+                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
                     />
                     <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       {preferredCurrency}
@@ -1019,7 +1020,7 @@ function DashboardContent() {
                     <div
                       className="h-full rounded-full transition-all duration-500 ease-out"
                       style={{
-                        background: getCurrencyAccentColor(preferredCurrency).primary,
+                        background: "#22c55e",
                         width: `${Math.min(
                           Math.max((availableBalance / 10000) * 100, 0),
                           100
@@ -1053,6 +1054,7 @@ function DashboardContent() {
                       width={28}
                       height={28}
                       className="rounded-full object-cover"
+                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
                     />
                     <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                       Traderoom
@@ -1076,7 +1078,7 @@ function DashboardContent() {
                     <div
                       className="h-full rounded-full transition-all duration-500 ease-out"
                       style={{
-                        background: getCurrencyAccentColor(preferredCurrency).primary,
+                        background: "#22c55e",
                         width: `${Math.min(
                           Math.max((traderoomBalance / 1000000) * 100, 0),
                           100
@@ -1344,6 +1346,7 @@ function DashboardContent() {
                           boxShadow: isDark
                             ? "0 4px 12px rgba(0,0,0,0.5)"
                             : "0 2px 8px rgba(0,0,0,0.15)",
+                          filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                         }}
                       >
                         <CryptoIcon

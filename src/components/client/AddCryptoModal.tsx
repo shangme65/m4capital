@@ -108,7 +108,8 @@ export default function AddCryptoModal({
       const bEnabled = existingSymbols.includes(b.symbol);
       if (aEnabled && !bEnabled) return -1;
       if (!aEnabled && bEnabled) return 1;
-      return 0;
+      // Within same group, sort by market price descending
+      return (cryptoPrices[b.symbol]?.price || 0) - (cryptoPrices[a.symbol]?.price || 0);
     });
   }, [searchTerm, existingSymbols]);
 

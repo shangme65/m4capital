@@ -7,9 +7,9 @@ import { prisma } from "@/lib/prisma";
 // Mark this route as dynamic to prevent static generation attempts
 export const dynamic = "force-dynamic";
 
-// In-memory cache for portfolio data (5 seconds TTL)
+// In-memory cache for portfolio data (30 seconds TTL)
 const portfolioCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 5000; // 5 seconds
+const CACHE_TTL = 30000; // 30 seconds
 
 // Cleanup old cache entries every 30 seconds
 setInterval(() => {
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       console.log("⚡ Returning cached portfolio for:", session.user.email);
       return NextResponse.json(cached.data, {
         headers: {
-          'Cache-Control': 'private, max-age=5',
+          'Cache-Control': 'private, max-age=30',
         },
       });
     }

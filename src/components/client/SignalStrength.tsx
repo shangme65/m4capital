@@ -135,29 +135,6 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
         />
 
         <div className="relative z-10">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-1.5">
-            <div className="flex items-center gap-1.5">
-              <div 
-                className="w-1.5 h-1.5 rounded-full animate-pulse"
-                style={{ 
-                  background: colors.primary,
-                  boxShadow: `0 0 6px ${colors.glow}`,
-                }}
-              />
-              <span className={`text-[10px] font-bold tracking-wider uppercase ${
-                isDark ? "text-gray-400" : "text-gray-500"
-              }`}>
-                Signal Strength
-              </span>
-            </div>
-            <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${
-              isDark ? "bg-gray-800/80" : "bg-gray-200/80"
-            }`} style={{ color: colors.primary }}>
-              {colors.text}
-            </div>
-          </div>
-
           {/* 3D Gauge Container */}
           <div className="flex items-center gap-2">
             {/* Circular 3D Gauge */}
@@ -266,6 +243,28 @@ export default function SignalStrength({ className = "" }: SignalStrengthProps) 
 
             {/* Stats Panel */}
             <div className="flex-1 space-y-1">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div
+                    className="w-1.5 h-1.5 rounded-full animate-pulse"
+                    style={{
+                      background: colors.primary,
+                      boxShadow: `0 0 6px ${colors.glow}`,
+                    }}
+                  />
+                  <span className={`text-[10px] font-bold tracking-wider uppercase ${
+                    isDark ? "text-gray-400" : "text-gray-500"
+                  }`}>
+                    Signal Strength
+                  </span>
+                </div>
+                <div className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${
+                  isDark ? "bg-gray-800/80" : "bg-gray-200/80"
+                }`} style={{ color: colors.primary }}>
+                  {colors.text}
+                </div>
+              </div>
               {/* Signal bars visualization */}
               <div className="flex items-end gap-0.5 h-5">
                 {[10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((threshold, i) => (

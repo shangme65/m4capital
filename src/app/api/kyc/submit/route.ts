@@ -7,6 +7,7 @@ import {
   sendKycSubmissionEmail,
   sendKycAdminNotification,
 } from "@/lib/kyc-emails";
+import { sendWebPushToUser } from "@/lib/push-notifications";
 
 // Maximum function duration (60 seconds for file uploads)
 export const maxDuration = 60;
@@ -196,6 +197,9 @@ export async function POST(req: NextRequest) {
       selfieUrl,
       status: "PENDING" as const,
       submittedAt: new Date(),
+      reviewedAt: null,
+      reviewedBy: null,
+      rejectionReason: null,
       updatedAt: new Date(),
     };
 
@@ -223,6 +227,31 @@ export async function POST(req: NextRequest) {
     } catch (emailError) {
       console.error("Failed to send KYC submission email:", emailError);
       // Don't fail the submission if email fails
+    }
+
+    // Create in-app notification for user (submission receipt)
+    try {
+      await prisma.notification.create({
+        data: {
+          id: generateId(),
+          userId: user.id,
+          type: "INFO",
+          title: "KYC Documents Submitted",
+          message: "Your verification documents have been received. Our team will review them within 24-48 hours.",
+        },
+      });
+
+      // Web push to user confirming submission
+      await sendWebPushToUser(user.id, {
+        title: "📋 KYC Submitted",
+        body: "Your verification documents have been received. We'll notify you once reviewed.",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-96.png",
+        tag: "kyc-submitted",
+        data: { url: "/settings" },
+      }).catch((err: unknown) => console.error("KYC submit user push failed:", err));
+    } catch (userNotifError) {
+      console.error("Failed to create user KYC notification:", userNotifError);
     }
 
     // Notify admins via email
@@ -269,6 +298,21 @@ export async function POST(req: NextRequest) {
       );
 
       console.log(`✅ Push notifications created for ${admins.length} admins`);
+
+      // Web push to each admin
+      await Promise.all(
+        admins.map((admin) =>
+          sendWebPushToUser(admin.id, {
+            title: "🔔 New KYC Submission",
+            body: `${user.name || user.email} has submitted KYC documents for review.`,
+            icon: "/icons/icon-192.png",
+            badge: "/icons/icon-96.png",
+            tag: `kyc-admin-${kycVerification.id}`,
+            data: { url: "/admin/kyc" },
+            requireInteraction: true,
+          }).catch((err: unknown) => console.error(`Admin push failed for ${admin.id}:`, err))
+        )
+      );
     } catch (pushError) {
       console.error("Failed to create admin push notifications:", pushError);
       // Don't fail the submission if push notification fails

@@ -3,6 +3,17 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendKycApprovedEmail, sendKycRejectedEmail } from "@/lib/kyc-emails";
+import { sendWebPushToUser } from "@/lib/push-notifications";
+import { generateId } from "@/lib/generate-id";
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => {
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+    }),
+  ]);
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,18 +46,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (
-      action !== "APPROVE" &&
-      action !== "REJECT" &&
-      action !== "UNDER_REVIEW"
-    ) {
+    const normalizedActionMap: Record<string, "APPROVE" | "REJECT" | "UNDER_REVIEW"> = {
+      APPROVE: "APPROVE",
+      APPROVED: "APPROVE",
+      REJECT: "REJECT",
+      REJECTED: "REJECT",
+      UNDER_REVIEW: "UNDER_REVIEW",
+    };
+
+    const normalizedAction = normalizedActionMap[String(action).toUpperCase()];
+
+    if (!normalizedAction) {
       return NextResponse.json(
-        { error: "Invalid action. Must be APPROVE, REJECT, or UNDER_REVIEW" },
+        {
+          error:
+            "Invalid action. Must be APPROVE/APPROVED, REJECT/REJECTED, or UNDER_REVIEW",
+        },
         { status: 400 }
       );
     }
 
-    if (action === "REJECT" && !rejectionReason) {
+    if (normalizedAction === "REJECT" && !String(rejectionReason || "").trim()) {
       return NextResponse.json(
         { error: "Rejection reason is required when rejecting" },
         { status: 400 }
@@ -73,53 +93,157 @@ export async function POST(req: NextRequest) {
       UNDER_REVIEW: "UNDER_REVIEW",
     };
 
-    // Update KYC status and user verification status in a transaction
-    const updatedKyc = await prisma.$transaction(async (tx) => {
-      // Update KYC record
-      const kyc = await tx.kycVerification.update({
-        where: { id: kycId },
+    const reviewTimestamp = new Date();
+    const safeReason: string =
+      normalizedAction === "REJECT" ? String(rejectionReason).trim() : "";
+
+    // Update KYC status first (single query to avoid interactive transaction timeout)
+    const updatedKyc = await prisma.kycVerification.update({
+      where: { id: kycId },
+      data: {
+        status: statusMap[normalizedAction] as any,
+        reviewedBy: admin.id,
+        reviewedAt: reviewTimestamp,
+        rejectionReason: safeReason,
+      },
+    });
+
+    // Update user verification status when approved
+    if (normalizedAction === "APPROVE") {
+      await prisma.user.update({
+        where: { id: kycVerification.userId },
         data: {
-          status: statusMap[action] as any,
-          reviewedBy: admin.id,
-          reviewedAt: new Date(),
-          rejectionReason: action === "REJECT" ? rejectionReason : null,
+          isVerified: true,
+          verifiedAt: reviewTimestamp,
         },
       });
+    }
 
-      // Update user verification status when approved
-      if (action === "APPROVE") {
-        await tx.user.update({
-          where: { id: kycVerification.userId },
-          data: {
-            isVerified: true,
-            verifiedAt: new Date(),
-          },
+    // Send email notification to user (only for approve/reject)
+    if (normalizedAction === "APPROVE") {
+      if (kycVerification.User.email) {
+        void withTimeout(
+          sendKycApprovedEmail(
+            kycVerification.User.email,
+            kycVerification.User.name || "User"
+          ),
+          4000,
+          "KYC approved email"
+        ).catch((error) => {
+          console.error("KYC approved email failed:", error);
         });
       }
 
-      return kyc;
-    });
+      try {
+        await prisma.notification.create({
+          data: {
+            id: generateId(),
+            userId: kycVerification.userId,
+            type: "SUCCESS",
+            title: "KYC Verification Approved",
+            message:
+              "Congratulations! Your identity verification has been approved. You now have full access to all platform features.",
+          },
+        });
+      } catch (error) {
+        console.error("KYC approved in-app notification failed:", error);
+      }
 
-    // Send email notification to user (only for approve/reject)
-    if (action === "APPROVE") {
-      await sendKycApprovedEmail(
-        kycVerification.User.email!,
-        kycVerification.User.name || "User"
-      );
-    } else if (action === "REJECT") {
-      await sendKycRejectedEmail(
-        kycVerification.User.email!,
-        kycVerification.User.name || "User",
-        rejectionReason
-      );
+      void withTimeout(
+        sendWebPushToUser(kycVerification.userId, {
+          title: "✅ KYC Approved",
+          body: "Your identity verification has been approved. Full platform access is now unlocked!",
+          icon: "/icons/icon-192.png",
+          badge: "/icons/icon-96.png",
+          tag: "kyc-approved",
+          data: { url: "/settings" },
+        }),
+        4000,
+        "KYC approved push"
+      ).catch((err) => {
+        console.error("KYC approve push failed:", err);
+      });
+    } else if (normalizedAction === "REJECT") {
+      if (kycVerification.User.email) {
+        void withTimeout(
+          sendKycRejectedEmail(
+            kycVerification.User.email,
+            kycVerification.User.name || "User",
+            safeReason
+          ),
+          4000,
+          "KYC rejected email"
+        ).catch((error) => {
+          console.error("KYC rejected email failed:", error);
+        });
+      }
+
+      try {
+        await prisma.notification.create({
+          data: {
+            id: generateId(),
+            userId: kycVerification.userId,
+            type: "WARNING",
+            title: "KYC Verification Requires Attention",
+            message: `Your verification was not approved: ${safeReason}. Please resubmit updated documents.`,
+          },
+        });
+      } catch (error) {
+        console.error("KYC rejected in-app notification failed:", error);
+      }
+
+      void withTimeout(
+        sendWebPushToUser(kycVerification.userId, {
+          title: "⚠️ KYC Action Required",
+          body: "Your verification requires attention. Please review the feedback and resubmit your documents.",
+          icon: "/icons/icon-192.png",
+          badge: "/icons/icon-96.png",
+          tag: "kyc-rejected",
+          data: { url: "/settings?tab=verification" },
+        }),
+        4000,
+        "KYC rejected push"
+      ).catch((err) => {
+        console.error("KYC reject push failed:", err);
+      });
+    } else if (normalizedAction === "UNDER_REVIEW") {
+      try {
+        await prisma.notification.create({
+          data: {
+            id: generateId(),
+            userId: kycVerification.userId,
+            type: "INFO",
+            title: "KYC Under Review",
+            message:
+              "Your identity verification documents are currently being reviewed by our compliance team. You will be notified once the review is complete.",
+          },
+        });
+      } catch (error) {
+        console.error("KYC under-review in-app notification failed:", error);
+      }
+
+      void withTimeout(
+        sendWebPushToUser(kycVerification.userId, {
+          title: "🔍 KYC Under Review",
+          body: "Your verification documents are being reviewed. We'll notify you once it's complete.",
+          icon: "/icons/icon-192.png",
+          badge: "/icons/icon-96.png",
+          tag: "kyc-under-review",
+          data: { url: "/settings?tab=verification" },
+        }),
+        4000,
+        "KYC under-review push"
+      ).catch((err) => {
+        console.error("KYC under-review push failed:", err);
+      });
     }
 
     return NextResponse.json({
       success: true,
       message: `KYC verification ${
-        action === "APPROVE"
+        normalizedAction === "APPROVE"
           ? "approved"
-          : action === "REJECT"
+          : normalizedAction === "REJECT"
           ? "rejected"
           : "marked as under review"
       } successfully`,
@@ -133,8 +257,15 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("KYC review error:", error);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown server error";
     return NextResponse.json(
-      { error: "Failed to review KYC verification" },
+      {
+        error:
+          process.env.NODE_ENV === "production"
+            ? "Failed to review KYC verification"
+            : `Failed to review KYC verification: ${errorMessage}`,
+      },
       { status: 500 }
     );
   }

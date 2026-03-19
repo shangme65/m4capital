@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { CURRENCIES } from "@/lib/currencies";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import Image from "next/image";
 import {
   createWithdrawalAction,
   payWithdrawalFeeAction,
 } from "@/actions/payment-actions";
+import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { formatCryptoAmount } from "@/lib/format-crypto-amount";
 
 interface WithdrawModalProps {
@@ -263,11 +265,26 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
     SEI: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
   };
 
-  // Available cryptos for withdrawal (only those with balance from user's portfolio)
-  // Get all cryptos from portfolio that have balance > 0
-  const availableCryptos = cryptoAssets
-    .filter((asset: { symbol: string; amount: number }) => asset.amount > 0)
-    .map((asset: { symbol: string; amount: number }) => asset.symbol);
+  // Fetch prices for all portfolio cryptos to enable fiat-value sorting
+  const withdrawCryptoSymbols = useMemo(
+    () =>
+      (cryptoAssets as { symbol: string; amount: number }[])
+        .filter((a) => a.amount > 0)
+        .map((a) => a.symbol)
+        .filter(Boolean),
+    [cryptoAssets]
+  );
+  const withdrawCryptoPrices = useCryptoPrices(withdrawCryptoSymbols);
+
+  // Available cryptos for withdrawal, sorted by fiat value (highest first)
+  const availableCryptos = (cryptoAssets as { symbol: string; amount: number }[])
+    .filter((asset) => asset.amount > 0)
+    .sort((a, b) => {
+      const aFiat = a.amount * (withdrawCryptoPrices[a.symbol]?.price || 0);
+      const bFiat = b.amount * (withdrawCryptoPrices[b.symbol]?.price || 0);
+      return bFiat - aFiat;
+    })
+    .map((asset) => asset.symbol);
 
   // Auto-select first crypto with balance
   useEffect(() => {
@@ -685,7 +702,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                   {/* Step 1: Withdrawal Details */}
                   {step === 1 && (
                     <div className="space-y-4">
-                      {/* Available Balance - 3D Card */}
+                      {/* Balance Card */}
                       <div
                         className="rounded-xl p-3"
                         style={isDark ? {
@@ -701,10 +718,21 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                         }}
                       >
                         <div className="flex justify-between items-center">
-                          <span className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                            Available Balance:
-                          </span>
-                          <span className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <div className="flex items-center gap-2">
+                            <Image
+                              src={getCurrencyFlagUrl(preferredCurrency)}
+                              alt={preferredCurrency}
+                              width={28}
+                              height={28}
+                              className="rounded-full object-cover"
+                              style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                              unoptimized
+                            />
+                            <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                              {preferredCurrency}
+                            </span>
+                          </div>
+                          <span className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                             {formatBalanceDisplay(availableBalance)}
                           </span>
                         </div>
@@ -1027,7 +1055,7 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                               <span className="flex items-center gap-3">
                                 {/* 3D Crypto Logo */}
                                 <div
-                                  className="w-8 h-8 rounded-full flex items-center justify-center"
+                                  className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                                   style={{
                                     background: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
                                     boxShadow: `0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)`,
@@ -1036,9 +1064,9 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                   <Image
                                     src={`/crypto/${selectedCrypto.toLowerCase()}.svg`}
                                     alt={selectedCrypto}
-                                    width={20}
-                                    height={20}
-                                    className="w-5 h-5"
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8"
                                   />
                                 </div>
                                 <div className="text-left">
@@ -1092,10 +1120,23 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                   }}
                                 >
                                   <div className="py-2 px-2 space-y-1">
+                                    {availableCryptos.length === 0 && (
+                                      <div className={`px-4 py-5 text-center rounded-xl ${isDark ? "bg-yellow-500/10 border border-yellow-500/20" : "bg-yellow-50 border border-yellow-200"}`}>
+                                        <div className="text-2xl mb-2">📭</div>
+                                        <p className={`text-sm font-semibold mb-1 ${isDark ? "text-yellow-400" : "text-yellow-700"}`}>
+                                          No crypto assets found
+                                        </p>
+                                        <p className={`text-xs ${isDark ? "text-yellow-500/80" : "text-yellow-600"}`}>
+                                          You don&apos;t have any cryptocurrency in your portfolio. Deposit or purchase crypto first to withdraw.
+                                        </p>
+                                      </div>
+                                    )}
                                     {availableCryptos.map((crypto) => {
                                       const balance = getCryptoBalance(crypto);
-                                      const valueInUSD =
-                                        balance * (cryptoPrices[crypto] || 0);
+                                      const price = withdrawCryptoPrices[crypto]?.price || 0;
+                                      const valueInUSD = balance * price;
+                                      const changePercent = withdrawCryptoPrices[crypto]?.changePercent24h;
+                                      const isSelected = selectedCrypto === crypto;
                                       return (
                                         <button
                                           key={crypto}
@@ -1108,85 +1149,70 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
                                             }));
                                             setShowCryptoDropdown(false);
                                           }}
-                                          className="w-full text-left transition-all duration-300 rounded-xl p-3"
-                                          style={isDark ? {
-                                            background:
-                                              selectedCrypto === crypto
-                                                ? "linear-gradient(145deg, rgba(239, 68, 68, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%)"
-                                                : "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)",
-                                            boxShadow:
-                                              "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
-                                            border:
-                                              selectedCrypto === crypto
-                                                ? "1px solid rgba(239, 68, 68, 0.3)"
-                                                : "1px solid rgba(255, 255, 255, 0.05)",
-                                          } : {
-                                            background:
-                                              selectedCrypto === crypto
-                                                ? "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%)"
-                                                : "linear-gradient(145deg, #f8fafc 0%, #f1f5f9 100%)",
-                                            boxShadow: "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)",
-                                            border:
-                                              selectedCrypto === crypto
-                                                ? "1px solid rgba(239, 68, 68, 0.3)"
-                                                : "1px solid rgba(0, 0, 0, 0.06)",
+                                          className="w-full text-left transition-all duration-300 rounded-xl px-3 py-1"
+                                          style={{
+                                            background: isSelected
+                                              ? isDark
+                                                ? "linear-gradient(145deg, rgba(168, 85, 247, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)"
+                                                : "linear-gradient(145deg, rgba(168, 85, 247, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%)"
+                                              : isDark
+                                                ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
+                                                : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                                            boxShadow: isDark
+                                              ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
+                                              : "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
+                                            border: isSelected
+                                              ? "1px solid rgba(168, 85, 247, 0.3)"
+                                              : isDark ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.08)",
                                           }}
                                         >
-                                          <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                              {/* 3D Crypto Logo */}
-                                              <div
-                                                className="w-10 h-10 rounded-full flex items-center justify-center"
-                                                style={{
-                                                  background: isDark
-                                                    ? cryptoGradients[crypto] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
-                                                    : "#ffffff",
-                                                  boxShadow: isDark
-                                                    ? "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)"
-                                                    : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
-                                                }}
-                                              >
-                                                <Image
-                                                  src={`/crypto/${crypto.toLowerCase()}.svg`}
-                                                  alt={crypto}
-                                                  width={24}
-                                                  height={24}
-                                                  className="w-6 h-6"
-                                                />
+                                          <div className="flex items-center gap-3">
+                                            {/* Logo */}
+                                            <div
+                                              className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                                              style={{
+                                                background: isDark
+                                                  ? cryptoGradients[crypto] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                                  : "#ffffff",
+                                                filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                                              }}
+                                            >
+                                              <Image
+                                                src={`/crypto/${crypto.toLowerCase()}.svg`}
+                                                alt={crypto}
+                                                width={32}
+                                                height={32}
+                                                className="w-8 h-8"
+                                              />
+                                            </div>
+                                            {/* Left: amount top, symbol+% bottom */}
+                                            <div className="flex-1 min-w-0 flex flex-col">
+                                              <div className={`text-base font-bold leading-none ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                                {balance.toFixed(8)}
                                               </div>
-                                              <div>
-                                                <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                                                  {cryptoNames[crypto] ||
-                                                    crypto}
-                                                </div>
-                                                <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                                              <div className="flex items-baseline gap-1 leading-none mt-0.5">
+                                                <span className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}>
                                                   {crypto}
-                                                </div>
+                                                </span>
+                                                {changePercent !== undefined && (
+                                                  <span className={`text-xs font-semibold ${changePercent >= 0 ? "text-green-400" : "text-red-400"}`}>
+                                                    {changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%
+                                                  </span>
+                                                )}
                                               </div>
                                             </div>
-                                            <div className="flex items-center gap-2">
-                                              <div className="text-right">
-                                                <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                                                  {formatCryptoAmount(balance, 14)}{" "}
-                                                  {crypto}
-                                                </div>
-                                                <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                                                  {formatAmount(valueInUSD, 2)}
-                                                </div>
+                                            {/* Right: tick top, fiat value bottom */}
+                                            <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ minHeight: '2.5rem' }}>
+                                              <div className="h-4 flex items-center">
+                                                {isSelected && (
+                                                  <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                  </svg>
+                                                )}
                                               </div>
-                                              {selectedCrypto === crypto && (
-                                                <svg
-                                                  className="w-5 h-5 text-green-400"
-                                                  fill="currentColor"
-                                                  viewBox="0 0 20 20"
-                                                >
-                                                  <path
-                                                    fillRule="evenodd"
-                                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                                    clipRule="evenodd"
-                                                  />
-                                                </svg>
-                                              )}
+                                              <div className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                                {formatAmount(valueInUSD, 2)}
+                                              </div>
                                             </div>
                                           </div>
                                         </button>

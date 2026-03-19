@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useOptimistic, useTransition } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -10,6 +11,7 @@ import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { getCryptoMetadata } from "@/lib/crypto-constants";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import { buyCryptoAction } from "@/actions/crypto-actions";
 import SuccessModal from "./SuccessModal";
 import { formatCryptoAmount } from "@/lib/format-crypto-amount";
@@ -418,29 +420,48 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       style={{
                         background: isDark
                           ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
-                          : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                          : "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%)",
                         boxShadow: isDark
-                          ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
-                          : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
-                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+                          ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                          : "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
                       }}
                     >
                       <div className="flex justify-between items-center">
-                        <span className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                          Available Balance:
-                        </span>
-                        <span className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <div className="flex items-center gap-2">
+                          <Image
+                            src={getCurrencyFlagUrl(preferredCurrency)}
+                            alt={preferredCurrency}
+                            width={28}
+                            height={28}
+                            className="rounded-full object-cover"
+                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            unoptimized
+                          />
+                          <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                            {preferredCurrency}
+                          </span>
+                        </div>
+                        <span className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                           {formatBalanceDisplay(availableBalance)}
                         </span>
                       </div>
                     </div>
 
-                    <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-                      Select Cryptocurrency
-                    </label>
+                    <div className="mb-3">
+                      <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        Select Cryptocurrency
+                      </label>
+                      <p className={`text-xs mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                        You are buying with your fiat balance. Choose a cryptocurrency to purchase.
+                      </p>
+                    </div>
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                      {cryptoSymbols.map((symbol) => {
+                      {[...cryptoSymbols]
+                        .sort((a, b) => (cryptoPrices[b]?.price || 0) - (cryptoPrices[a]?.price || 0))
+                        .map((symbol) => {
                         const price = cryptoPrices[symbol]?.price || 0;
+                        const changePercent = cryptoPrices[symbol]?.changePercent24h;
                         const name = getCryptoMetadata(symbol).name || symbol;
                         return (
                           <button
@@ -449,7 +470,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             onClick={() =>
                               setBuyData((prev) => ({ ...prev, asset: symbol }))
                             }
-                            className="w-full text-left transition-all duration-300 rounded-xl p-3"
+                            className="w-full text-left transition-all duration-300 rounded-xl px-3 py-1.5"
                             style={{
                               background:
                                 buyData.asset === symbol
@@ -471,27 +492,34 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
                                 <div
-                                  className="w-10 h-10 rounded-full flex items-center justify-center"
+                                  className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                                   style={{
                                     background: isDark
                                       ? cryptoGradients[symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                                       : "#ffffff",
-                                    boxShadow: isDark
-                                      ? "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)"
-                                      : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                                    filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                                   }}
                                 >
-                                  <CryptoIcon
-                                    symbol={symbol}
-                                    className="w-6 h-6 text-white"
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={`/crypto/${symbol.toLowerCase()}.svg`}
+                                    alt={symbol}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8"
                                   />
                                 </div>
                                 <div>
-                                  <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                                  <div className={`text-base font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
                                     {symbol}
                                   </div>
-                                  <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                                    {name} • {formatAmount(price, 2)}
+                                  <div className={`text-xs font-semibold flex items-center gap-1 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                    {formatAmount(price, 2)}
+                                    {changePercent !== undefined && (
+                                      <span className={changePercent >= 0 ? "text-green-400" : "text-red-400"}>
+                                        {changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%
+                                      </span>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -557,19 +585,25 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       }}
                     >
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden relative"
                         style={{
                           background: isDark
                             ? cryptoGradients[buyData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : "#ffffff",
                           boxShadow: isDark
-                            ? "0 4px 12px rgba(0,0,0,0.4)"
-                            : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                            ? "0 6px 20px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.15), inset 0 -2px 0 rgba(0,0,0,0.3)"
+                            : "0 4px 14px rgba(0,0,0,0.15), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                          filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                         }}
                       >
-                        <CryptoIcon
-                          symbol={buyData.asset}
-                          className="w-6 h-6 text-white"
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent opacity-60 z-10" />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`/crypto/${buyData.asset.toLowerCase()}.svg`}
+                          alt={buyData.asset}
+                          width={40}
+                          height={40}
+                          className="w-10 h-10 scale-[1.15] relative z-0"
                         />
                       </div>
                       <div>
@@ -661,7 +695,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       style={{
                         background: isDark
                           ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
-                          : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
+                          : "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%)",
                         boxShadow: isDark
                           ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
                           : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
@@ -669,9 +703,20 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                       }}
                     >
                       <div className="flex justify-between items-center">
-                        <span className={`text-xs font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                          Available Balance:
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <Image
+                            src={getCurrencyFlagUrl(preferredCurrency)}
+                            alt={preferredCurrency}
+                            width={28}
+                            height={28}
+                            className="rounded-full object-cover"
+                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            unoptimized
+                          />
+                          <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                            {preferredCurrency}
+                          </span>
+                        </div>
                         <span className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
                           {formatBalanceDisplay(availableBalance)}
                         </span>
@@ -708,19 +753,22 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                   <div className="space-y-3">
                     <div className="text-center py-2">
                       <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2"
+                        className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-2 relative overflow-hidden"
                         style={{
                           background: isDark
                             ? cryptoGradients[buyData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : "#ffffff",
                           boxShadow: isDark
-                            ? "0 10px 30px -5px rgba(0, 0, 0, 0.5)"
-                            : "0 6px 18px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                            ? "0 10px 30px -5px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.3)"
+                            : "0 8px 24px rgba(0,0,0,0.15), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                          filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                         }}
                       >
+                        <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent opacity-60 z-10" />
                         <CryptoIcon
                           symbol={buyData.asset}
-                          className="w-6 h-6 text-white"
+                          size="lg"
+                          className="relative z-0 scale-[1.2]"
                         />
                       </div>
                       <p className={`text-xs mb-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>

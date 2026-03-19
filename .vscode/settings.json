@@ -165,5 +165,8 @@
     // Minimap
     "minimap.background": "#1e293b",
     "minimap.selectionHighlight": "#22c55e55"
-  }
+  },
+  "workbench.browser.enableChatTools": true,
+  "workbench.browser.openLocalhostLinks": false,
+  "workbench.browser.dataStorage": "ephemeral"
 }

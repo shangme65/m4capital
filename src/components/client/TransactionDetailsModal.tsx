@@ -951,8 +951,7 @@ export default function TransactionDetailsModal({
                           Value
                         </label>
                         <div
-                          className="text-lg font-bold"
-                          style={{ color: getCurrencyAccentColor(preferredCurrency).primary, textShadow: `0 0 12px ${getCurrencyAccentColor(preferredCurrency).glow}` }}
+                          className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
                         >
                           {/* trade_earned: amount is in USD, convert to preferred currency */}
                           {/* Fiat same currency: show directly */}

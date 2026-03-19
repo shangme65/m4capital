@@ -26,10 +26,15 @@ import {
   Circle,
   ChevronDown,
   Archive,
+  ShieldCheck,
+  ShieldAlert,
+  ShieldX,
+  ScanFace,
 } from "lucide-react";
 import { useNotifications, Notification } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 // Common fiat currency codes
 const FIAT_CURRENCIES = new Set([
@@ -62,6 +67,33 @@ const FIAT_CURRENCIES = new Set([
   "VND",
 ]);
 
+const FOREX_CODES = new Set([
+  "EUR",
+  "USD",
+  "GBP",
+  "JPY",
+  "CHF",
+  "CAD",
+  "AUD",
+  "NZD",
+  "SEK",
+  "NOK",
+  "DKK",
+  "PLN",
+  "CZK",
+  "HUF",
+  "SGD",
+  "HKD",
+  "MXN",
+  "ZAR",
+  "TRY",
+  "BRL",
+  "INR",
+  "KRW",
+  "THB",
+  "CNY",
+]);
+
 interface NotificationsPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -88,6 +120,44 @@ export default function NotificationsPanel({
   const [mounted, setMounted] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
+  const findCryptoSymbolInText = (text?: string): string | null => {
+    if (!text) return null;
+
+    const matches = text.toUpperCase().match(/[A-Z0-9]{2,10}/g) || [];
+    for (const token of matches) {
+      if (token in CRYPTO_METADATA) {
+        return token;
+      }
+    }
+
+    return null;
+  };
+
+  const parsePairFromText = (
+    text?: string
+  ): { base: string; quote: string } | null => {
+    if (!text) return null;
+
+    // Try slash pairs first, e.g. BTC/USD or EUR/USD
+    const slashPair = text.toUpperCase().match(/([A-Z0-9]{2,10})\s*\/\s*([A-Z0-9]{2,10})/);
+    if (slashPair) {
+      return { base: slashPair[1], quote: slashPair[2] };
+    }
+
+    // Try compact forex pair, e.g. EURUSD
+    const compactForex = text.toUpperCase().match(/\b([A-Z]{6})\b/);
+    if (compactForex) {
+      const value = compactForex[1];
+      const base = value.substring(0, 3);
+      const quote = value.substring(3, 6);
+      if (FOREX_CODES.has(base) && FOREX_CODES.has(quote)) {
+        return { base, quote };
+      }
+    }
+
+    return null;
+  };
+
   // Ensure we only render portal on client
   useEffect(() => {
     setMounted(true);
@@ -102,12 +172,62 @@ export default function NotificationsPanel({
 
   const getNotificationIcon = (notification: Notification) => {
     const asset = notification.asset?.toUpperCase() || "";
-    const isCrypto = asset in CRYPTO_METADATA;
+    const isTradeEarned =
+      notification.type?.toLowerCase() === "trade_earned" ||
+      notification.title?.toLowerCase().includes("trade earned") ||
+      notification.message?.toLowerCase().includes("trade earned");
+    const pair =
+      parsePairFromText(asset) ||
+      parsePairFromText(notification.title) ||
+      parsePairFromText(notification.message);
+
+    if (isTradeEarned && pair) {
+      const baseIsForex = FOREX_CODES.has(pair.base);
+      const quoteIsForex = FOREX_CODES.has(pair.quote);
+
+      return (
+        <div className="relative flex-shrink-0">
+          <div className="flex flex-col items-center">
+            {baseIsForex ? (
+              <Image
+                src={getCurrencyFlagUrl(pair.base)}
+                alt={pair.base}
+                width={28}
+                height={28}
+                className="rounded-full object-cover"
+                unoptimized
+              />
+            ) : (
+              <CryptoIcon symbol={pair.base} size="sm" />
+            )}
+            <div className="w-3 h-3 rounded-full bg-green-500 border border-white/60 mt-0.5 mb-0.5" />
+            {quoteIsForex ? (
+              <Image
+                src={getCurrencyFlagUrl(pair.quote)}
+                alt={pair.quote}
+                width={28}
+                height={28}
+                className="rounded-full object-cover"
+                unoptimized
+              />
+            ) : (
+              <CryptoIcon symbol={pair.quote} size="sm" />
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    const detectedCryptoSymbol =
+      findCryptoSymbolInText(notification.title) ||
+      findCryptoSymbolInText(notification.message);
+    const iconAsset = asset in CRYPTO_METADATA ? asset : detectedCryptoSymbol || asset;
+    const isCrypto = iconAsset in CRYPTO_METADATA;
     const isFiat = FIAT_CURRENCIES.has(asset);
 
     // Show real crypto logo
     if (isCrypto) {
-      const meta = getCryptoMetadata(asset);
+      const meta = getCryptoMetadata(iconAsset);
       return (
         <div className="relative flex-shrink-0">
           <div
@@ -116,7 +236,7 @@ export default function NotificationsPanel({
           >
             <Image
               src={meta.imagePath}
-              alt={asset}
+              alt={iconAsset}
               width={28}
               height={28}
               className="object-contain"
@@ -168,6 +288,50 @@ export default function NotificationsPanel({
             ) : (
               <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
             )}
+          </div>
+        </div>
+      );
+    }
+
+    // KYC / identity verification notifications
+    const isKycNotification =
+      notification.title?.toLowerCase().includes("kyc") ||
+      notification.title?.toLowerCase().includes("verification") ||
+      notification.message?.toLowerCase().includes("kyc") ||
+      notification.message?.toLowerCase().includes("identity verification");
+
+    if (isKycNotification) {
+      const titleLower = notification.title?.toLowerCase() || "";
+      const isApproved = titleLower.includes("approved");
+      const isRejected =
+        titleLower.includes("rejected") ||
+        titleLower.includes("requires attention") ||
+        titleLower.includes("action required");
+      const isUnderReview =
+        titleLower.includes("under review") ||
+        titleLower.includes("reviewing");
+
+      const kycGradient = isApproved
+        ? "from-green-400 to-emerald-600"
+        : isRejected
+        ? "from-red-400 to-rose-600"
+        : isUnderReview
+        ? "from-blue-400 to-cyan-600"
+        : "from-indigo-400 to-purple-600";
+
+      const KycIcon = isApproved
+        ? ShieldCheck
+        : isRejected
+        ? ShieldX
+        : isUnderReview
+        ? ShieldAlert
+        : ScanFace;
+
+      return (
+        <div className="relative flex-shrink-0">
+          <div className={`absolute inset-0 bg-gradient-to-br ${kycGradient} rounded-lg blur-sm opacity-50`} />
+          <div className={`relative w-9 h-9 bg-gradient-to-br ${kycGradient} rounded-lg flex items-center justify-center shadow-md`}>
+            <KycIcon className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
         </div>
       );

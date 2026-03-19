@@ -6,6 +6,7 @@ import { ArrowLeft, ChevronRight, User, BarChart2, Check, Search, X } from "luci
 import { useTheme } from "@/contexts/ThemeContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { getCurrencyFlagUrl } from "@/lib/currency-flags";
+import { useSession } from "next-auth/react";
 
 interface User {
   id: string;
@@ -146,6 +147,7 @@ export default function ManualProfitModal({
   onSuccess,
 }: ManualProfitModalProps) {
   const { resolvedTheme } = useTheme();
+  const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
   const isDark = mounted ? resolvedTheme === "dark" : false;
@@ -174,17 +176,19 @@ export default function ManualProfitModal({
     return matchesCategory && matchesSearch;
   });
 
-  // Fetch users when modal opens
+  // Fetch users when modal opens (re-run when session role becomes available)
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && session?.user?.role) {
       fetchUsers();
     }
-  }, [isOpen]);
+  }, [isOpen, session?.user?.role]);
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      const response = await fetch("/api/admin/users");
+      const isStaffAdmin = session?.user?.role === "STAFF_ADMIN";
+      const endpoint = isStaffAdmin ? "/api/admin/staff-users" : "/api/admin/users";
+      const response = await fetch(endpoint);
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
       setUsers(data || []); // API returns array directly, not { users: [] }

@@ -28,6 +28,9 @@ export function usePushNotifications() {
   const checkSupport = () => {
     if (typeof window === "undefined") return false;
 
+    // Service workers require a secure context (HTTPS or localhost)
+    if (!window.isSecureContext) return false;
+
     const isSupported =
       "serviceWorker" in navigator &&
       "PushManager" in window &&

@@ -45,6 +45,9 @@ const colors = {
   textMuted: "#94a3b8",
 };
 
+// Anti-threading token: injected into every email to prevent Gmail from collapsing as "quoted text"
+const antiThreadToken = () => `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;" aria-hidden="true">m4c-${Date.now().toString(36)}</div>`;
+
 // Base email template wrapper - Modern Dark Theme
 export const emailTemplate = (content: string) => `
 <!DOCTYPE html>
@@ -87,6 +90,7 @@ export const emailTemplate = (content: string) => `
           <!-- Content -->
           <tr>
             <td style="padding: 20px 4px 16px; color: ${colors.light};">
+              ${antiThreadToken()}
               ${content}
             </td>
           </tr>
@@ -97,18 +101,20 @@ export const emailTemplate = (content: string) => `
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
                   <td align="center">
-                    <!-- Social Links -->
+                    <!-- Social Links (inline CSS — no external image URLs) -->
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
                       <tr>
-                        <td style="padding: 0 4px;">
-                          <a href="https://t.me/m4capital_bot" style="display: inline-block; width: 28px; height: 28px; border-radius: 50%; text-align: center; text-decoration: none; box-shadow: 0 2px 6px rgba(0, 136, 204, 0.4); overflow: hidden;">
-                            <img src="${baseUrl}/socials/Telegram.png" alt="Telegram" width="28" height="28" style="display: block; width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
-                          </a>
+                        <td style="padding: 0 5px;">
+                          <a href="https://t.me/m4capital_bot" title="Telegram" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background-color: #0088CC; text-align: center; line-height: 32px; text-decoration: none; font-size: 17px; color: #ffffff; box-shadow: 0 2px 6px rgba(0, 136, 204, 0.4);">✈</a>
                         </td>
-                        <td style="padding: 0 4px;">
-                          <a href="${baseUrl}" style="display: inline-block; width: 28px; height: 28px; border-radius: 50%; text-align: center; text-decoration: none; box-shadow: 0 2px 6px rgba(249, 115, 22, 0.4); overflow: hidden;">
-                            <img src="${baseUrl}/m4capitallogo2.png" alt="M4 Capital" width="28" height="28" style="display: block; width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
-                          </a>
+                        <td style="padding: 0 5px;">
+                          <a href="https://www.instagram.com/m4capital" title="Instagram" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); text-align: center; line-height: 32px; text-decoration: none; font-size: 17px; color: #ffffff; box-shadow: 0 2px 6px rgba(220, 39, 67, 0.4);">&#128247;</a>
+                        </td>
+                        <td style="padding: 0 5px;">
+                          <a href="https://x.com/m4capital" title="X / Twitter" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background-color: #000000; text-align: center; line-height: 32px; text-decoration: none; font-size: 15px; font-weight: 900; color: #ffffff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);">&#120143;</a>
+                        </td>
+                        <td style="padding: 0 5px;">
+                          <a href="https://www.m4capital.online" title="M4 Capital" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); text-align: center; line-height: 32px; text-decoration: none; font-size: 10px; font-weight: 800; color: #ffffff; letter-spacing: -0.5px; box-shadow: 0 2px 6px rgba(249, 115, 22, 0.4);">M4</a>
                         </td>
                       </tr>
                     </table>
@@ -154,7 +160,7 @@ export const emailTemplate = (content: string) => `
 
 // Hero Section
 export const emailHero = (
-  _icon: string, // kept for backwards compatibility, not displayed
+  icon: string,
   title: string,
   subtitle?: string,
   gradient: "primary" | "success" | "warning" | "danger" | "info" = "primary"
@@ -167,11 +173,13 @@ export const emailHero = (
     info: `linear-gradient(135deg, ${colors.info} 0%, ${colors.infoDark} 100%)`,
   };
 
+  const glowColor = gradient === "primary" ? colors.primary : gradient === "success" ? colors.success : gradient === "warning" ? colors.warning : gradient === "danger" ? colors.danger : colors.info;
+
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
       <tr>
         <td align="center">
-          <div style="display: inline-block; width: 50px; height: 50px; background: ${gradients[gradient]}; border-radius: 50%; margin-bottom: 10px; box-shadow: 0 10px 40px -10px ${gradient === "primary" ? colors.primary : gradient === "success" ? colors.success : gradient === "warning" ? colors.warning : gradient === "danger" ? colors.danger : colors.info};"></div>
+          <div style="display: inline-block; width: 60px; height: 60px; background: ${gradients[gradient]}; border-radius: 50%; margin-bottom: 12px; box-shadow: 0 10px 40px -10px ${glowColor}; text-align: center; line-height: 60px; font-size: 28px;">${icon}</div>
           <h1 style="margin: 0 0 4px; color: ${colors.white}; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">
             ${title}
           </h1>
@@ -420,7 +428,7 @@ export const kycApprovedTemplate = (userName: string) =>
 // KYC Rejected (to user)
 export const kycRejectedTemplate = (userName: string, reason: string) =>
   emailTemplate(`
-    ${emailHero("📋", "KYC Verification Update", "Action required on your submission", "warning")}
+    ${emailHero("❌", "KYC Verification Update", "Action required on your submission", "danger")}
     
     ${emailGreeting(userName)}
     

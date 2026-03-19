@@ -2,7 +2,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useToast } from "@/contexts/ToastContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -462,6 +462,7 @@ export default function SettingsPage() {
   const { data: session, update: updateSession } = useSession();
   const [saving, setSaving] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showSuccess, showError, showWarning, showInfo } = useToast();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage, languages, currentLanguage } = useLanguage();
@@ -485,6 +486,30 @@ export default function SettingsPage() {
 
   // Modal state
   const [activeModal, setActiveModal] = useState<string | null>(null);
+
+  // Open a settings modal directly from query params, e.g. /settings?tab=verification
+  useEffect(() => {
+    const tab = searchParams.get("tab")?.toLowerCase();
+    if (!tab) return;
+
+    const tabToModal: Record<string, string> = {
+      profile: "profile",
+      security: "security",
+      verification: "kyc",
+      kyc: "kyc",
+      notifications: "notifications",
+      telegram: "telegram",
+      preferences: "preferences",
+      "data-privacy": "data-privacy",
+    };
+
+    const targetModal = tabToModal[tab];
+    if (!targetModal) return;
+
+    setActiveModal(targetModal);
+    // Clean URL after opening so closing modal doesn't immediately reopen it.
+    router.replace("/settings", { scroll: false });
+  }, [searchParams, router]);
 
   // Confirm modal state
   const [showConfirmModal, setShowConfirmModal] = useState(false);

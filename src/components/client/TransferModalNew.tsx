@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VscVerifiedFilled } from "react-icons/vsc";
 import Image from "next/image";
@@ -9,10 +9,10 @@ import { useCurrency } from "@/contexts/CurrencyContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
+import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CURRENCIES } from "@/lib/currencies";
 import { transferCryptoAction } from "@/actions/transfer-actions";
-import { formatCryptoAmount, truncateCurrencyString } from "@/lib/format-crypto-amount";
 
 interface TransferModalNewProps {
   isOpen: boolean;
@@ -120,19 +120,14 @@ export default function TransferModalNew({
     return formatAmount(balanceInUSD, 2);
   };
 
-  // Fetch real-time crypto prices
-  const cryptoSymbols = [
-    "BTC",
-    "ETH",
-    "XRP",
-    "TRX",
-    "TON",
-    "LTC",
-    "BCH",
-    "ETC",
-    "USDC",
-    "USDT",
-  ];
+  // Fetch real-time crypto prices for all assets in the user's portfolio
+  const cryptoSymbols = useMemo(
+    () =>
+      (portfolio?.portfolio?.assets || [])
+        .map((a: any) => a.symbol)
+        .filter(Boolean) as string[],
+    [portfolio]
+  );
   const cryptoPrices = useCryptoPrices(cryptoSymbols);
 
   // Get supported assets - Fiat balance first, then crypto assets sorted by amount
@@ -148,7 +143,11 @@ export default function TransferModalNew({
 
     const cryptoAssets = (portfolio?.portfolio?.assets || [])
       .filter((a: any) => (a.amount || 0) > 0)
-      .sort((a: any, b: any) => (b.amount || 0) - (a.amount || 0))
+      .sort((a: any, b: any) => {
+        const aFiat = (a.amount || 0) * (cryptoPrices[a.symbol]?.price || 0);
+        const bFiat = (b.amount || 0) * (cryptoPrices[b.symbol]?.price || 0);
+        return bFiat - aFiat;
+      })
       .map((asset: any) => ({
         symbol: asset.symbol,
         name: asset.symbol,
@@ -543,17 +542,55 @@ export default function TransferModalNew({
                 {/* Step 1: Select Asset */}
                 {step === 1 && (
                   <div className="space-y-4">
-                    <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
-                      Select Asset to Send
-                    </label>
+                    {/* Balance Card */}
+                    <div
+                      className="rounded-xl p-3"
+                      style={{
+                        background: isDark
+                          ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                          : "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%)",
+                        boxShadow: isDark
+                          ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
+                          : "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
+                      }}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Image
+                            src={getCurrencyFlagUrl(preferredCurrency)}
+                            alt={preferredCurrency}
+                            width={28}
+                            height={28}
+                            className="rounded-full object-cover"
+                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            unoptimized
+                          />
+                          <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                            {preferredCurrency}
+                          </span>
+                        </div>
+                        <span className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                          {formatBalanceDisplay(availableBalance)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        Select Asset to Send
+                      </label>
+                      <p className={`text-xs mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                        Choose from your available fiat or crypto balance. Only assets with a positive balance are shown.
+                      </p>
+                    </div>
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                      {supportedAssets.map((asset: any) => {
-                        // For fiat, use formatBalanceDisplay; for crypto, calculate USD value
+                      {supportedAssets.filter((asset: any) => asset.amount > 0).map((asset: any) => {
                         const isFiat = asset.isFiat || asset.symbol === "FIAT";
-                        const price = isFiat
-                          ? 1
-                          : cryptoPrices[asset.symbol]?.price || 0;
+                        const price = isFiat ? 1 : cryptoPrices[asset.symbol]?.price || 0;
                         const cryptoValue = isFiat ? 0 : asset.amount * price;
+                        const changePercent = isFiat ? undefined : cryptoPrices[asset.symbol]?.changePercent24h;
+                        const isSelected = transferData.asset === asset.symbol;
 
                         return (
                           <button
@@ -565,96 +602,90 @@ export default function TransferModalNew({
                                 asset: asset.symbol,
                               }))
                             }
-                            className="w-full text-left transition-all duration-300 rounded-xl p-3"
+                            className="w-full text-left transition-all duration-300 rounded-xl px-3 py-1"
                             style={{
-                              background:
-                                transferData.asset === asset.symbol
+                              background: isSelected
+                                ? isDark
                                   ? "linear-gradient(145deg, rgba(168, 85, 247, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)"
-                                  : isDark
+                                  : "linear-gradient(145deg, rgba(168, 85, 247, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%)"
+                                : isDark
                                   ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
-                                  : "linear-gradient(145deg, rgba(248, 250, 252, 1) 0%, rgba(241, 245, 249, 1) 100%)",
-                              boxShadow:
-                                isDark
-                                  ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
-                                  : "0 2px 8px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,1)",
-                              border:
-                                transferData.asset === asset.symbol
-                                  ? "1px solid rgba(168, 85, 247, 0.3)"
-                                  : isDark
-                                  ? "1px solid rgba(255, 255, 255, 0.05)"
-                                  : "1px solid rgba(0, 0, 0, 0.08)",
+                                  : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                              boxShadow: isDark
+                                ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
+                                : "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
+                              border: isSelected
+                                ? "1px solid rgba(168, 85, 247, 0.3)"
+                                : isDark ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.08)",
                             }}
                           >
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className="w-10 h-10 rounded-full flex items-center justify-center"
-                                  style={{
-                                    background: isFiat
-                                      ? "transparent"
-                                      : isDark
-                                        ? cryptoGradients[asset.symbol] || "#334155"
-                                        : "#ffffff",
-                                    boxShadow: isDark
-                                      ? "0 8px 16px rgba(0,0,0,0.9), 0 4px 8px rgba(0,0,0,0.8), 0 2px 4px rgba(0,0,0,0.7)"
-                                      : "0 8px 16px rgba(0,0,0,0.7), 0 4px 8px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.5)",
-                                  }}
-                                >
-                                  {isFiat ? (
-                                    <Image
-                                      src={`/currencies/${preferredCurrency.toLowerCase()}.svg`}
-                                      alt={preferredCurrency}
-                                      width={40}
-                                      height={40}
-                                      className="w-full h-full"
-                                    />
-                                  ) : (
-                                    <Image
-                                      src={`/crypto/${asset.symbol.toLowerCase()}.svg`}
-                                      alt={asset.symbol}
-                                      width={40}
-                                      height={40}
-                                      className="w-full h-full"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                        e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                                      }}
-                                    />
+                            <div className="flex items-center gap-3">
+                              {/* Logo */}
+                              <div
+                                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                                style={{
+                                  background: isFiat
+                                    ? "transparent"
+                                    : isDark
+                                      ? cryptoGradients[asset.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                      : "#ffffff",
+                                  filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                                }}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                {isFiat ? (
+                                  <img
+                                    src={getCurrencyFlagUrl(preferredCurrency)}
+                                    alt={preferredCurrency}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8 object-cover"
+                                  />
+                                ) : (
+                                  <img
+                                    src={`/crypto/${asset.symbol.toLowerCase()}.svg`}
+                                    alt={asset.symbol}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8"
+                                  />
+                                )}
+                              </div>
+
+                              {/* Left text: amount on top, symbol + % on bottom */}
+                              <div className="flex-1 min-w-0 flex flex-col">
+                                {/* Top: crypto amount (or fiat balance) */}
+                                <div className={`text-base font-bold leading-none ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                  {isFiat
+                                    ? formatBalanceDisplay(asset.amount)
+                                    : asset.amount.toFixed(8)}
+                                </div>
+                                {/* Bottom: symbol + % change */}
+                                <div className="flex items-baseline gap-1 leading-none mt-0.5">
+                                  <span className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                    {isFiat ? preferredCurrency : asset.symbol}
+                                  </span>
+                                  {changePercent !== undefined && (
+                                    <span className={`text-xs font-semibold ${changePercent >= 0 ? "text-green-400" : "text-red-400"}`}>
+                                      {changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%
+                                    </span>
                                   )}
                                 </div>
-                                <div>
-                                  <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                                    {isFiat
-                                      ? `${preferredCurrency} Balance`
-                                      : asset.symbol}
-                                  </div>
-                                  <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                                    {isFiat
-                                      ? formatBalanceDisplay(asset.amount)
-                                      : `${formatCryptoAmount(asset.amount, 14)} ${asset.symbol}`}
-                                  </div>
-                                </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                <div className="text-right">
-                                  <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                                    {isFiat
-                                      ? truncateCurrencyString(formatBalanceDisplay(asset.amount), 10)
-                                      : formatAmount(cryptoValue, 2)}
-                                  </div>
+
+                              {/* Right: tick on top (when selected), fiat value on bottom */}
+                              <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ minHeight: '2.5rem' }}>
+                                <div className="h-4 flex items-center">
+                                  {isSelected && (
+                                    <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                    </svg>
+                                  )}
                                 </div>
-                                {transferData.asset === asset.symbol && (
-                                  <svg
-                                    className="w-5 h-5 text-purple-400"
-                                    fill="currentColor"
-                                    viewBox="0 0 20 20"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
+                                {!isFiat && (
+                                  <div className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                    {formatAmount(cryptoValue, 2)}
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -695,6 +726,40 @@ export default function TransferModalNew({
                       </div>
                     )}
 
+                    {/* Balance Card */}
+                    <div
+                      className="rounded-xl p-3"
+                      style={{
+                        background: isDark
+                          ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
+                          : "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%)",
+                        boxShadow: isDark
+                          ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
+                          : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
+                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+                      }}
+                    >
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <Image
+                            src={getCurrencyFlagUrl(preferredCurrency)}
+                            alt={preferredCurrency}
+                            width={28}
+                            height={28}
+                            className="rounded-full object-cover"
+                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            unoptimized
+                          />
+                          <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                            {preferredCurrency}
+                          </span>
+                        </div>
+                        <span className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                          {formatBalanceDisplay(availableBalance)}
+                        </span>
+                      </div>
+                    </div>
+
                     {/* Selected Asset Display */}
                     <div
                       className="rounded-xl p-3 flex items-center gap-3"
@@ -705,28 +770,30 @@ export default function TransferModalNew({
                       }}
                     >
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
                         style={{
                           background: isDark
                             ? cryptoGradients[transferData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : transferData.asset === "FIAT"
-                              ? "linear-gradient(145deg, #a855f7 0%, #7c3aed 100%)"
+                              ? "transparent"
                               : "#ffffff",
                           boxShadow: isDark
                             ? "0 4px 12px rgba(0,0,0,0.4)"
-                            : transferData.asset === "FIAT"
-                              ? "0 4px 12px rgba(168,85,247,0.3), inset 0 2px 0 rgba(255,255,255,0.2)"
-                              : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                            : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
                         }}
                       >
                         {transferData.asset === "FIAT" ? (
-                          <span className="text-white font-bold text-sm">
-                            {currencySymbol}
-                          </span>
+                          <img
+                            src={getCurrencyFlagUrl(preferredCurrency)}
+                            alt={preferredCurrency}
+                            className="w-10 h-10 object-cover"
+                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                          />
                         ) : (
-                          <CryptoIcon
-                            symbol={transferData.asset}
-                            className="w-6 h-6 text-white"
+                          <img
+                            src={`/crypto/${transferData.asset.toLowerCase()}.svg`}
+                            alt={transferData.asset}
+                            className="w-10 h-10 object-cover"
                           />
                         )}
                       </div>
@@ -737,12 +804,7 @@ export default function TransferModalNew({
                             ? preferredCurrency
                             : transferData.asset}
                         </div>
-                        <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-                          Balance:{" "}
-                          {transferData.asset === "FIAT"
-                            ? formatBalanceDisplay(currentBalance)
-                            : formatAmount(currentBalance * currentPrice, 2)}
-                        </div>
+
                       </div>
                     </div>
 
