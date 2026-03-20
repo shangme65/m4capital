@@ -40,7 +40,7 @@ export async function PUT(req: NextRequest) {
     // Get user
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true, password: true, name: true },
+      select: { id: true, password: true, name: true, email: true },
     });
 
     if (!user || !user.password) {

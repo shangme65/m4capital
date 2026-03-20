@@ -3233,11 +3233,21 @@ function TradingInterface() {
               <div className="absolute top-3 left-3 z-40 flex flex-col gap-2">
                 {/* Symbol Badge with Flag */}
                 <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border border-[#38312e]">
-                    <CryptoIcon
-                      symbol={selectedSymbol.split("/")[0]}
-                      size="lg"
-                    />
+                  <div className="flex items-center -space-x-2">
+                    <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e] z-10">
+                      <CryptoIcon
+                        symbol={selectedSymbol.split("/")[0]}
+                        size="md"
+                      />
+                    </div>
+                    {selectedSymbol.includes("/") && (
+                      <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e]">
+                        <CryptoIcon
+                          symbol={selectedSymbol.split("/")[1]}
+                          size="md"
+                        />
+                      </div>
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center gap-1">
@@ -4355,21 +4365,21 @@ function TradingInterface() {
                 >
                   {/* ── Left Sidebar ── */}
                   <div className="flex flex-col flex-shrink-0 overflow-y-auto"
-                    style={{ width: "172px", backgroundColor: "#131c2e", borderRight: "1px solid #1d2d45" }}>
+                    style={{ width: "156px", backgroundColor: "#131c2e", borderRight: "1px solid #1d2d45" }}>
 
                     {/* Trending */}
                     <button
                       onClick={() => setAddAssetSideTab("trending")}
-                      className="flex items-center gap-2 px-3 py-3 transition-colors"
+                      className="flex items-center gap-2 px-2 py-2.5 transition-colors"
                       style={{
                         backgroundColor: addAssetSideTab === "trending" ? "#1a2840" : "transparent",
                         color: addAssetSideTab === "trending" ? "#fff" : "#6b82a0",
                         borderLeft: addAssetSideTab === "trending" ? "3px solid #4c8dff" : "3px solid transparent",
                       }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
                           <path d="M12 20V10M18 20V4M6 20v-4"/>
                         </svg>
                       </div>
@@ -4380,16 +4390,16 @@ function TradingInterface() {
                     <div>
                       <button
                         onClick={() => { setAddAssetSideTab("options"); }}
-                        className="w-full flex items-center gap-2 px-3 py-3 transition-colors"
+                        className="w-full flex items-center gap-2 px-2 py-2.5 transition-colors"
                         style={{
                           backgroundColor: addAssetSideTab === "options" ? "#1a2840" : "transparent",
                           color: addAssetSideTab === "options" ? "#fff" : "#6b82a0",
                           borderLeft: addAssetSideTab === "options" ? "3px solid #4c8dff" : "3px solid transparent",
                         }}
                       >
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                           style={{ backgroundColor: "#162032" }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
                             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                           </svg>
                         </div>
@@ -4406,9 +4416,9 @@ function TradingInterface() {
                           <button
                             key={sub.id}
                             onClick={() => { setAddAssetSideTab("options"); setAddAssetOptionsSubTab(sub.id); }}
-                            className="w-full flex items-center justify-between py-2 pr-3 transition-colors"
+                            className="w-full flex items-center justify-between py-1.5 pr-2 transition-colors"
                             style={{
-                              paddingLeft: "44px",
+                              paddingLeft: "38px",
                               backgroundColor: addAssetSideTab === "options" && addAssetOptionsSubTab === sub.id ? "#162234" : "transparent",
                               color: addAssetSideTab === "options" && addAssetOptionsSubTab === sub.id ? "#fff" : "#6b82a0",
                             }}
@@ -4426,7 +4436,7 @@ function TradingInterface() {
                     {/* Margin */}
                     <button
                       onClick={() => setAddAssetSideTab("margin")}
-                      className="flex items-center gap-2 px-3 py-3 transition-colors"
+                      className="flex items-center gap-2 px-2 py-2.5 transition-colors"
                       style={{
                         backgroundColor: addAssetSideTab === "margin" ? "#1a2840" : "transparent",
                         color: addAssetSideTab === "margin" ? "#fff" : "#6b82a0",
@@ -4449,16 +4459,16 @@ function TradingInterface() {
                     {/* Watchlist */}
                     <button
                       onClick={() => setAddAssetSideTab("watchlist")}
-                      className="flex items-center gap-2 px-3 py-3 transition-colors"
+                      className="flex items-center gap-2 px-2 py-2.5 transition-colors"
                       style={{
                         backgroundColor: addAssetSideTab === "watchlist" ? "#1a2840" : "transparent",
                         color: addAssetSideTab === "watchlist" ? "#fff" : "#6b82a0",
                         borderLeft: addAssetSideTab === "watchlist" ? "3px solid #4c8dff" : "3px solid transparent",
                       }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                         </svg>
                       </div>
