@@ -3798,16 +3798,16 @@ function TradingInterface() {
               backgroundColor: "#0a1020",
               borderLeft: "1px solid #1a2d45",
               overflow: "hidden",
-              width: "164px",
-              minWidth: "164px",
+              width: "130px",
+              minWidth: "130px",
             }}
           >
             <div className="p-2 h-full overflow-y-auto flex flex-col gap-1.5">
               {/* Invest Section */}
               <div className="rounded overflow-hidden" style={{ backgroundColor: "#0f1a2a", border: "1px solid #1a2d45" }}>
                 <div className="flex items-center justify-between px-2 py-1" style={{ borderBottom: "1px solid #1a2d45" }}>
-                  <span className="text-[10px] font-medium" style={{ color: "#8b9ab8" }}>Invest</span>
-                  <button className="w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: "#1a2d45", color: "#4a6080" }}>?</button>
+                  <span className="text-[11px] font-medium" style={{ color: "#8b9ab8" }}>Invest</span>
+                  <button className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: "#1a2d45", color: "#4a6080" }}>?</button>
                 </div>
                 <div className="flex items-stretch">
                   <div className="flex-1 px-2 py-1.5 flex items-center gap-0.5">
@@ -3820,10 +3820,10 @@ function TradingInterface() {
                         if (!isNaN(val)) setAmount(Math.min(Math.max(val, 1), 1000000));
                       }}
                       className="bg-transparent border-none outline-none font-bold w-full"
-                      style={{ color: "#eef2f7", fontSize: "15px" }}
+                      style={{ color: "#eef2f7", fontSize: "14px" }}
                     />
                   </div>
-                  <div className="flex flex-col" style={{ borderLeft: "1px solid #1a2d45", width: "24px" }}>
+                  <div className="flex flex-col" style={{ borderLeft: "1px solid #1a2d45", width: "22px" }}>
                     <button onClick={() => setAmount(Math.min(amount + 1000, 1000000))} className="flex-1 flex items-center justify-center transition-colors text-sm font-bold" style={{ color: "#4a6080", borderBottom: "1px solid #1a2d45" }} onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")} onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}>+</button>
                     <button onClick={() => setAmount(Math.max(amount - 1000, 1))} className="flex-1 flex items-center justify-center transition-colors text-sm font-bold" style={{ color: "#4a6080" }} onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")} onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}>-</button>
                   </div>
@@ -3846,12 +3846,12 @@ function TradingInterface() {
                   <div className="flex items-stretch flex-1">
                     <div className="flex-1">
                       <div className="flex items-center justify-between px-2 py-1" style={{ borderBottom: "1px solid #1a2d45" }}>
-                        <span className="text-[10px] font-medium" style={{ color: "#8b9ab8" }}>Expiration</span>
-                        <button className="w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: "#1a2d45", color: "#4a6080" }} onClick={e => e.stopPropagation()}>?</button>
+                        <span className="text-[11px] font-medium" style={{ color: "#8b9ab8" }}>Expiration</span>
+                        <button className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: "#1a2d45", color: "#4a6080" }} onClick={e => e.stopPropagation()}>?</button>
                       </div>
-                      <div className="px-2 py-1.5 flex items-center gap-1.5">
+                      <div className="px-2 py-1.5 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" style={{ color: "#8b9ab8" }} />
-                        <span className="font-bold" style={{ color: "#eef2f7", fontSize: "15px" }}>
+                        <span className="font-bold" style={{ color: "#eef2f7", fontSize: "14px" }}>
                           {(() => {
                             const now = new Date();
                             const expTime = new Date(now.getTime() + expirationSeconds * 1000);
@@ -3860,7 +3860,7 @@ function TradingInterface() {
                         </span>
                       </div>
                     </div>
-                    <div className="flex flex-col" style={{ borderLeft: "1px solid #1a2d45", width: "24px" }}>
+                    <div className="flex flex-col" style={{ borderLeft: "1px solid #1a2d45", width: "22px" }}>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -3970,13 +3970,13 @@ function TradingInterface() {
               </div>
 
               {/* Profit Display */}
-              <div className="py-1 text-center">
-                <div className="flex items-center justify-center gap-1 mb-0.5">
+              <div className="py-2.5 text-center">
+                <div className="flex items-center justify-center gap-1 mb-1.5">
                   <span className="text-[10px] font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
                   <div className="w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold cursor-pointer" style={{ backgroundColor: "#1a2d45", color: "#4a6080" }}>?</div>
                 </div>
-                <div className="font-black" style={{ color: "#00c087", fontSize: "28px", lineHeight: 1.1 }}>+85%</div>
-                <div className="font-bold" style={{ color: "#00c087", fontSize: "13px" }}>
+                <div className="font-normal" style={{ color: "#00c087", fontSize: "40px", lineHeight: 1.6, fontWeight: 400 }}>+85%</div>
+                <div className="font-normal mt-1.5" style={{ color: "#00c087", fontSize: "20px", lineHeight: 1.6, fontWeight: 400 }}>
                   +$ {(amount * 0.85).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 </div>
               </div>
@@ -3991,7 +3991,7 @@ function TradingInterface() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.96 }}
               >
-                <img src="/traderoom/icons/higher-button.png" alt="Higher" className="w-full h-auto object-contain" />
+                <img src="/traderoom/icons/higher-button.png" alt="Higher" className="w-full object-contain" style={{ maxHeight: "96px" }} />
               </motion.button>
 
               {/* LOWER Button */}
@@ -4004,7 +4004,7 @@ function TradingInterface() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.96 }}
               >
-                <img src="/traderoom/icons/lower-button.png" alt="Lower" className="w-full h-auto object-contain" />
+                <img src="/traderoom/icons/lower-button.png" alt="Lower" className="w-full object-contain" style={{ maxHeight: "96px" }} />
               </motion.button>
             </div>
           </div>
