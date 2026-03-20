@@ -10,7 +10,40 @@ interface LightweightChartProps {
 }
 
 function getTradingViewSymbol(symbol: string): string {
-  return `BINANCE:${symbol.toUpperCase()}USDT`;
+  const symbolMap: Record<string, string> = {
+    BTC: "BINANCE:BTCUSDT",
+    ETH: "BINANCE:ETHUSDT",
+    XRP: "BINANCE:XRPUSDT",
+    TRX: "BINANCE:TRXUSDT",
+    TON: "OKX:TONUSDT",
+    LTC: "BINANCE:LTCUSDT",
+    BCH: "BINANCE:BCHUSDT",
+    ETC: "BINANCE:ETCUSDT",
+    USDC: "BINANCE:USDCUSDT",
+    USDT: "BITSTAMP:USDTUSD",
+    SOL: "BINANCE:SOLUSDT",
+    ADA: "BINANCE:ADAUSDT",
+    DOGE: "BINANCE:DOGEUSDT",
+    DOT: "BINANCE:DOTUSDT",
+    MATIC: "BINANCE:POLUSDT",
+    AVAX: "BINANCE:AVAXUSDT",
+    LINK: "BINANCE:LINKUSDT",
+    BNB: "BINANCE:BNBUSDT",
+    UNI: "BINANCE:UNIUSDT",
+    SHIB: "BINANCE:SHIBUSDT",
+    ATOM: "BINANCE:ATOMUSDT",
+    NEAR: "BINANCE:NEARUSDT",
+    FIL: "BINANCE:FILUSDT",
+    APT: "BINANCE:APTUSDT",
+    ARB: "BINANCE:ARBUSDT",
+    OP: "BINANCE:OPUSDT",
+    AAVE: "BINANCE:AAVEUSDT",
+    MKR: "BINANCE:MKRUSDT",
+    INJ: "BINANCE:INJUSDT",
+    SUI: "BINANCE:SUIUSDT",
+    SEI: "BINANCE:SEIUSDT",
+  };
+  return symbolMap[symbol.toUpperCase()] || `BINANCE:${symbol.toUpperCase()}USDT`;
 }
 
 function getTradingViewInterval(interval: string): string {
@@ -59,7 +92,8 @@ function LightweightChart({
     `&timezone=Etc%2FUTC` +
     `&withdateranges=1` +
     `&locale=en` +
-    `&allow_symbol_change=0`;
+    `&allow_symbol_change=0` +
+    `&hide_legend=1`;
 
   return (
     <div

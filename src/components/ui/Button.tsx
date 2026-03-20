@@ -69,7 +69,7 @@ const Button = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
     };
 
     const sizes = {
-      xs: "px-2 py-1 text-[11px] rounded-md",
+      xs: "px-2.5 py-1 text-xs rounded-lg",
       sm: "px-3 py-1.5 text-xs rounded-lg",
       md: "px-7 py-2.5 text-base rounded-xl",
       lg: "px-9 py-3.5 text-lg rounded-2xl",

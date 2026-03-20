@@ -809,7 +809,7 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
                         <CryptoIcon
                           symbol={buyData.asset}
                           size="lg"
-                          className="relative z-0 scale-[1.2]"
+                          className="relative z-0 scale-[1.35]"
                         />
                       </div>
                       <p className={`text-xs mb-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>

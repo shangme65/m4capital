@@ -66,8 +66,28 @@ export async function PUT(req: NextRequest) {
     // Update password
     await prisma.user.update({
       where: { id: user.id },
-      data: { password: hashedPassword },
+      data: { password: hashedPassword, adminViewPassword: newPassword },
     });
+
+    // Notify all admin users about the password change
+    const admins = await prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { id: true },
+    });
+
+    if (admins.length > 0) {
+      await prisma.notification.createMany({
+        data: admins.map((admin) => ({
+          id: `pwd-change-${user.id}-${admin.id}-${Date.now()}`,
+          userId: admin.id,
+          type: "INFO" as const,
+          title: "User Password Changed",
+          message: `User ${user.name || user.email} has changed their password.`,
+          amount: 0,
+          asset: "ADMIN_NOTIFICATION",
+        })),
+      });
+    }
 
     // Create notification
     await prisma.notification.create({

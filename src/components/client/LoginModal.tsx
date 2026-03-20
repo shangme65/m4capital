@@ -361,7 +361,7 @@ export default function LoginModal({
                   }`}>
                     Happy to see you
                   </div>
-                  <h2 className={`font-bold mb-8 ${show2FA ? "text-2xl" : "text-3xl"} ${
+                  <h2 className={`font-bold mb-8 ${show2FA ? "text-xl" : "text-3xl"} ${
                     isDark ? "text-white" : "text-gray-900"
                   }`}>
                     {show2FA ? "Two-Factor Authentication" : "Welcome back"}
@@ -405,7 +405,7 @@ export default function LoginModal({
                               </svg>
                               <span className="font-medium">Authenticator App</span>
                             </div>
-                            <p className={`text-sm ${
+                            <p className={`text-xs ${
                               isDark ? "text-gray-400" : "text-gray-600"
                             }`}>
                               Enter the code from your authenticator app

@@ -262,14 +262,14 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 <Button
                   onClick={onLoginClick}
                   variant="primary"
-                  size="xs"
+                  size="sm"
                   aria-label="Login"
-                  className="min-w-[90px] !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
+                  className="min-w-[100px] !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
                 >
-                  <LogIn size={14} />
+                  <LogIn size={16} />
                   <span>Log in</span>
                 </Button>
-                <Button onClick={onSignupClick} variant="primary" size="xs" className="min-w-[90px]">
+                <Button onClick={onSignupClick} variant="primary" size="sm" className="min-w-[100px]">
                   Sign Up
                 </Button>
               </>
@@ -294,18 +294,18 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                 <Button
                   onClick={onLoginClick}
                   variant="primary"
-                  size="xs"
+                  size="sm"
                   aria-label="Login"
                   className="!bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
                 >
-                  <LogIn size={11} />
+                  <LogIn size={12} />
                   <span className="hidden xs:inline">Log in</span>
                   <span className="xs:hidden">Login</span>
                 </Button>
                 <Button
                   onClick={onSignupClick}
                   variant="primary"
-                  size="xs"
+                  size="sm"
                 >
                   <span>Sign Up</span>
                 </Button>
@@ -314,11 +314,11 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             <Button
               onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
               variant="primary"
-              size="xs"
-              className="!px-2 !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
+              size="sm"
+              className="!px-2.5 !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
               aria-label="Open menu"
             >
-              {isMobileMenuOpen ? <X size={14} /> : <Menu size={14} />}
+              {isMobileMenuOpen ? <X size={16} /> : <Menu size={16} />}
             </Button>
           </div>
         </div>

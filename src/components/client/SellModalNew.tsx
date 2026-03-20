@@ -9,7 +9,7 @@ import { usePortfolio } from "@/lib/usePortfolio";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { CURRENCIES } from "@/lib/currencies";
 import { sellCryptoAction } from "@/actions/crypto-actions";
-import { formatCryptoAmount } from "@/lib/format-crypto-amount";
+import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 
 interface SellModalProps {
   isOpen: boolean;
@@ -64,7 +64,6 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   } | null>(null);
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [assetPrices, setAssetPrices] = useState<Record<string, number>>({});
 
   const { portfolio, refetch } = usePortfolio();
   const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
@@ -88,6 +87,9 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     (a: { symbol: string; amount: number }) => (a.amount || 0) > 0
   );
 
+  const cryptoSymbols = availableAssets.map((a: { symbol: string }) => a.symbol);
+  const cryptoPrices = useCryptoPrices(cryptoSymbols);
+
   // Initialize first asset on load
   useEffect(() => {
     if (availableAssets.length > 0 && !sellData.asset) {
@@ -95,40 +97,10 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     }
   }, [availableAssets, sellData.asset]);
 
-  // Fetch real-time prices
-  useEffect(() => {
-    if (!isOpen || availableAssets.length === 0) return;
-
-    const fetchPrices = async () => {
-      try {
-        const symbols = availableAssets
-          .map((a: { symbol: string }) => a.symbol)
-          .join(",");
-        const response = await fetch(`/api/crypto/prices?symbols=${symbols}`);
-        const data = await response.json();
-        const priceMap: Record<string, number> = {};
-        if (data.prices && Array.isArray(data.prices)) {
-          data.prices.forEach(
-            (priceData: { symbol: string; price: number }) => {
-              priceMap[priceData.symbol] = priceData.price;
-            }
-          );
-        }
-        setAssetPrices(priceMap);
-      } catch (error) {
-        console.error("Error fetching crypto prices:", error);
-      }
-    };
-
-    fetchPrices();
-    const interval = setInterval(fetchPrices, 5000);
-    return () => clearInterval(interval);
-  }, [availableAssets, isOpen]);
-
   const currentAsset = availableAssets.find(
     (a: { symbol: string }) => a.symbol === sellData.asset
   );
-  const currentPrice = assetPrices[sellData.asset] || 0;
+  const currentPrice = cryptoPrices[sellData.asset]?.price || 0;
   const currentBalance = currentAsset?.amount || 0;
 
   // Amount input is now in user's preferred currency
@@ -466,14 +438,16 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       </div>
                     ) : (
                       <>
-                        <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                        <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                           Select Asset to Sell
                         </label>
                         <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
                           {availableAssets.map(
                             (asset: { symbol: string; amount: number }) => {
-                              const price = assetPrices[asset.symbol] || 0;
+                              const price = cryptoPrices[asset.symbol]?.price || 0;
                               const value = asset.amount * price;
+                              const changePercent = cryptoPrices[asset.symbol]?.changePercent24h;
+                              const isSelected = sellData.asset === asset.symbol;
                               return (
                                 <button
                                   key={asset.symbol}
@@ -484,66 +458,76 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                                       asset: asset.symbol,
                                     }))
                                   }
-                                  className="w-full text-left transition-all duration-300 rounded-xl p-3"
+                                  className="w-full text-left transition-all duration-300 rounded-xl px-3 py-1"
                                   style={{
-                                    background:
-                                      sellData.asset === asset.symbol
+                                    background: isSelected
+                                      ? isDark
                                         ? "linear-gradient(145deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)"
-                                        : isDark
-                                          ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
-                                          : "linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)",
+                                        : "linear-gradient(145deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%)"
+                                      : isDark
+                                        ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
+                                        : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
                                     boxShadow: isDark
                                       ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
                                       : "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
-                                    border:
-                                      sellData.asset === asset.symbol
-                                        ? "1px solid rgba(239, 68, 68, 0.3)"
-                                        : isDark
-                                          ? "1px solid rgba(255, 255, 255, 0.05)"
-                                          : "1px solid rgba(0, 0, 0, 0.06)",
+                                    border: isSelected
+                                      ? "1px solid rgba(239, 68, 68, 0.3)"
+                                      : isDark
+                                        ? "1px solid rgba(255, 255, 255, 0.05)"
+                                        : "1px solid rgba(0, 0, 0, 0.08)",
                                   }}
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                      <div
-                                        className="w-12 h-12 rounded-full flex items-center justify-center"
-                                        style={{
+                                  <div className="flex items-center gap-3">
+                                    {/* Logo */}
+                                    <div
+                                      className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                                      style={{
                                         background: isDark
                                           ? cryptoGradients[asset.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                                           : "#ffffff",
-                                        boxShadow: isDark
-                                          ? "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.2), inset 0 -2px 0 rgba(0,0,0,0.2)"
-                                          : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
-                                        }}
-                                      >
-                                        <CryptoIcon
-                                          symbol={asset.symbol}
-                                          size="lg"
-                                        />
+                                        filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                                      }}
+                                    >
+                                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                                      <img
+                                        src={`/crypto/${asset.symbol.toLowerCase()}.svg`}
+                                        alt={asset.symbol}
+                                        width={32}
+                                        height={32}
+                                        className="w-8 h-8"
+                                      />
+                                    </div>
+
+                                    {/* Left text: amount on top, symbol + % on bottom */}
+                                    <div className="flex-1 min-w-0 flex flex-col">
+                                      <div className={`text-base font-bold leading-none ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                        {asset.amount.toFixed(8)}
                                       </div>
-                                      <div className="flex-1">
-                                        <div className={`flex items-center gap-2 text-base font-semibold mb-0.5 ${isDark ? "text-white" : "text-gray-900"}`}>
-                                          <span>{asset.symbol}</span>
-                                          <span>{formatAmount(value, 2)}</span>
-                                        </div>
-                                        <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                                          {formatCryptoAmount(asset.amount, 14)} available
-                                        </div>
+                                      <div className="flex items-baseline gap-1 leading-none mt-0.5">
+                                        <span className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                          {asset.symbol}
+                                        </span>
+                                        {changePercent !== undefined && (
+                                          <span className={`text-xs font-semibold ${changePercent >= 0 ? "text-green-400" : "text-red-400"}`}>
+                                            {changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
-                                    {sellData.asset === asset.symbol && (
-                                      <svg
-                                        className="w-5 h-5 text-red-400 flex-shrink-0"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                      >
-                                        <path
-                                          fillRule="evenodd"
-                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                          clipRule="evenodd"
-                                        />
-                                      </svg>
-                                    )}
+
+                                    {/* Right: tick on top, fiat value on bottom */}
+                                    <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ minHeight: '2.5rem' }}>
+                                      <div className="h-4 flex items-center">
+                                        {isSelected && (
+                                          <svg className="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                          </svg>
+                                        )}
+                                      </div>
+                                      <div className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                                        {formatAmount(value, 2)}
+                                      </div>
+                                    </div>
                                   </div>
                                 </button>
                               );
@@ -595,7 +579,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       }}
                     >
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
                         style={{
                           background: isDark
                             ? cryptoGradients[sellData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -607,14 +591,14 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       >
                         <CryptoIcon
                           symbol={sellData.asset}
-                          className="w-6 h-6 text-white"
+                          size="lg"
                         />
                       </div>
                       <div>
                         <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
                           Selling {sellData.asset}
                         </div>
-                        <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                        <div className={`text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                           Price: {formatAmount(currentPrice, 2)}
                         </div>
                       </div>
@@ -746,7 +730,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                   <div className="space-y-4">
                     <div className="text-center py-4">
                       <div
-                        className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3"
+                        className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden"
                         style={{
                           background: isDark
                             ? cryptoGradients[sellData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -758,7 +742,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                       >
                         <CryptoIcon
                           symbol={sellData.asset}
-                          className="w-8 h-8 text-white"
+                          size="xl"
                         />
                       </div>
                       <p className={`text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>

@@ -31,7 +31,7 @@ export default function HeroButtons() {
           onClick={session ? handleGoToTraderoom : openSignupModal}
           variant="primary"
           size="sm"
-          className="!px-5 !py-2 !text-sm !rounded-xl"
+          className="!px-6 !py-2.5 !text-sm !rounded-xl"
         >
           {session ? "Go to Traderoom" : "Get Started"}
         </Button>
@@ -40,7 +40,7 @@ export default function HeroButtons() {
             onClick={handleTryDemo}
             variant="primary"
             size="sm"
-            className="!px-5 !py-2 !text-sm !rounded-xl !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
+            className="!px-6 !py-2.5 !text-sm !rounded-xl !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
           >
             Try Free Demo
           </Button>

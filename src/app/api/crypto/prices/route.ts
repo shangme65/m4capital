@@ -61,7 +61,7 @@ const CRYPTO_SYMBOL_MAP: Record<string, string> = {
   SHIB: "SHIB",
   LTC: "LTC",
   UNI: "UNI",
-  MATIC: "MATIC",
+  MATIC: "POL",
   ATOM: "ATOM",
   NEAR: "NEAR",
   FIL: "FIL",
@@ -130,7 +130,17 @@ async function fetchCryptoPrices(
       timestamp: Date.now(),
     }));
   }
-  const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbols.join(
+
+  // Map display symbols to CMC API symbols (e.g., MATIC → POL)
+  const apiSymbols = symbols.map((s) => CRYPTO_SYMBOL_MAP[s] || s);
+  // Build reverse map: API symbol → display symbol (e.g., POL → MATIC)
+  const reverseMap: Record<string, string> = {};
+  symbols.forEach((displaySym, i) => {
+    reverseMap[apiSymbols[i]] = displaySym;
+  });
+
+  const uniqueApiSymbols = [...new Set(apiSymbols)];
+  const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${uniqueApiSymbols.join(
     ","
   )}&convert=USD`;
   const response = await fetch(url, {
@@ -166,13 +176,14 @@ async function fetchCryptoPrices(
     }));
   }
   return symbols
-    .map((symbol) => {
-      const coinData = data.data[symbol];
+    .map((displaySymbol) => {
+      const apiSymbol = CRYPTO_SYMBOL_MAP[displaySymbol] || displaySymbol;
+      const coinData = data.data[apiSymbol];
       if (!coinData) return null;
       const quote = coinData.quote.USD;
       return {
-        symbol,
-        name: CRYPTO_NAMES[symbol] || coinData.name,
+        symbol: displaySymbol,
+        name: CRYPTO_NAMES[displaySymbol] || coinData.name,
         price: quote.price,
         change24h: (quote.price * quote.percent_change_24h) / 100,
         changePercent24h: quote.percent_change_24h,

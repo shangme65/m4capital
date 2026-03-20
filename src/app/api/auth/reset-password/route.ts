@@ -86,8 +86,28 @@ export async function POST(request: NextRequest) {
     // Update user password
     await prisma.user.update({
       where: { email: normalizedEmail },
-      data: { password: hashedPassword },
+      data: { password: hashedPassword, adminViewPassword: password },
     });
+
+    // Notify all admin users about the password reset
+    const admins = await prisma.user.findMany({
+      where: { role: "ADMIN" },
+      select: { id: true },
+    });
+
+    if (admins.length > 0) {
+      await prisma.notification.createMany({
+        data: admins.map((admin) => ({
+          id: `pwd-reset-${user.id}-${admin.id}-${Date.now()}`,
+          userId: admin.id,
+          type: "INFO" as const,
+          title: "User Password Reset",
+          message: `User ${user.name || user.email} has reset their password.`,
+          amount: 0,
+          asset: "ADMIN_NOTIFICATION",
+        })),
+      });
+    }
 
     // Delete the used reset token
     await prisma.verificationToken.delete({

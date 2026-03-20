@@ -23,6 +23,20 @@ import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { useCryptoPrices } from "@/components/client/CryptoMarketProvider";
 import { CRYPTO_METADATA } from "@/lib/crypto-constants";
 
+const cryptoGradients: Record<string, string> = {
+  USD: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  BTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  ETH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  USDT: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  LTC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  XRP: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  TRX: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  TON: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  BCH: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  ETC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+  USDC: "linear-gradient(145deg, #334155 0%, #1e293b 100%)",
+};
+
 interface AssetSwapModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -621,7 +635,24 @@ export default function AssetSwapModal({
                       }}
                     >
                       <div className="flex items-center gap-2">
-                        <CryptoIcon symbol={asset.symbol} size="xs" />
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                          style={{
+                            background: isDark
+                              ? cryptoGradients[asset.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                              : "#ffffff",
+                            filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                          }}
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`/crypto/${asset.symbol.toLowerCase()}.svg`}
+                            alt={asset.symbol}
+                            width={32}
+                            height={32}
+                            className="w-8 h-8"
+                          />
+                        </div>
                         <div className="text-left flex-1">
                           <div className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                             {asset.name} <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>({asset.symbol})</span>
@@ -669,7 +700,24 @@ export default function AssetSwapModal({
                       >
                         {toAsset ? (
                           <div className="flex items-center gap-2">
-                            <CryptoIcon symbol={toAsset} size="xs" />
+                            <div
+                              className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                              style={{
+                                background: isDark
+                                  ? cryptoGradients[toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                  : "#ffffff",
+                                filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                              }}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={`/crypto/${toAsset.toLowerCase()}.svg`}
+                                alt={toAsset}
+                                width={32}
+                                height={32}
+                                className="w-8 h-8"
+                              />
+                            </div>
                             <div className="text-left">
                               <div className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
                                 {availableAssets.find((a) => a.symbol === toAsset)?.name}{" "}
@@ -726,8 +774,23 @@ export default function AssetSwapModal({
                                     : (isDark ? "hover:bg-slate-700/50" : "hover:bg-gray-100/80")
                                 }`}
                               >
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isDark ? "bg-gradient-to-br from-cyan-500/20 to-teal-500/20" : "bg-gradient-to-br from-cyan-500/15 to-teal-500/15"}`}>
-                                  <CryptoIcon symbol={a.symbol} size="sm" />
+                                <div
+                                  className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                                  style={{
+                                    background: isDark
+                                      ? cryptoGradients[a.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                      : "#ffffff",
+                                    filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                                  }}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img
+                                    src={`/crypto/${a.symbol.toLowerCase()}.svg`}
+                                    alt={a.symbol}
+                                    width={32}
+                                    height={32}
+                                    className="w-8 h-8"
+                                  />
                                 </div>
                                 <div className="text-left flex-1">
                                   <div className={`text-sm font-medium ${isDark ? "text-white" : "text-gray-900"}`}>

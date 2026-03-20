@@ -70,7 +70,7 @@ export default function AddCryptoModal({
   const [isRemoving, setIsRemoving] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const { showWarning } = useToast();
-  const { preferredCurrency, convertAmount } = useCurrency();
+  const { preferredCurrency, convertAmount, formatAmount } = useCurrency();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -210,11 +210,7 @@ export default function AddCryptoModal({
                       {priceData && (
                         <div className="flex items-center gap-1.5">
                           <span className={`text-xs ${isDark ? "text-white" : "text-gray-900"}`}>
-                            {preferredCurrency === "USD" ? "$" : preferredCurrency === "EUR" ? "€" : preferredCurrency === "GBP" ? "£" : "R$"}
-                            {convertAmount(priceData.price).toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: priceData.price < 1 ? 6 : 2,
-                            })}
+                            {formatAmount(priceData.price, 2)}
                           </span>
                           <span className={`text-[10px] ${priceData.changePercent24h >= 0 ? (isDark ? "text-green-400" : "text-green-600") : (isDark ? "text-red-400" : "text-red-600")}`}>
                             {priceData.changePercent24h >= 0 ? "+" : ""}

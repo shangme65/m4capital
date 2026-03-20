@@ -26,7 +26,10 @@ export async function fetchKlineData(
 ): Promise<KlineData[]> {
   try {
     // Normalize symbol format (BTCUSDT, ETHUSDT, etc.)
-    const normalizedSymbol = symbol.toUpperCase().replace(/[^A-Z]/g, "");
+    // Handle rebranded symbols (e.g., MATIC → POL on Binance)
+    const BINANCE_ALIASES: Record<string, string> = { MATICUSDT: "POLUSDT" };
+    let normalizedSymbol = symbol.toUpperCase().replace(/[^A-Z]/g, "");
+    normalizedSymbol = BINANCE_ALIASES[normalizedSymbol] || normalizedSymbol;
 
     // Binance API max is 1000 per request, so we need multiple requests for more
     const maxPerRequest = 1000;

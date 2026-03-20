@@ -113,7 +113,7 @@ export function CryptoMarketProvider({
     SHIB: "shibusdt",
     LTC: "ltcusdt",
     UNI: "uniusdt",
-    MATIC: "maticusdt",
+    MATIC: "polusdt",
     ATOM: "atomusdt",
     NEAR: "nearusdt",
     FIL: "filusdt",

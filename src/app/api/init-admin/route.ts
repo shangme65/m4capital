@@ -13,6 +13,41 @@ import { COUNTRY_CURRENCY_MAP } from "@/lib/country-currencies";
 import { countries } from "@/lib/countries";
 import { generateAccountNumber } from "@/lib/p2p-transfer-utils";
 
+// All platform-supported cryptocurrencies (zero balance on init)
+const ALL_PLATFORM_CRYPTOS = [
+  { symbol: "BTC", name: "Bitcoin", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "ETH", name: "Ethereum", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "SOL", name: "Solana", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "XRP", name: "Ripple", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "BNB", name: "BNB", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "ADA", name: "Cardano", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "DOGE", name: "Dogecoin", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "AVAX", name: "Avalanche", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "TRX", name: "Tron", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "DOT", name: "Polkadot", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "LINK", name: "Chainlink", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "TON", name: "Toncoin", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "SHIB", name: "Shiba Inu", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "LTC", name: "Litecoin", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "UNI", name: "Uniswap", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "MATIC", name: "Polygon", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "ATOM", name: "Cosmos", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "NEAR", name: "NEAR Protocol", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "FIL", name: "Filecoin", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "APT", name: "Aptos", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "ARB", name: "Arbitrum", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "OP", name: "Optimism", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "AAVE", name: "Aave", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "MKR", name: "Maker", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "INJ", name: "Injective", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "SUI", name: "Sui", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "SEI", name: "Sei", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "BCH", name: "Bitcoin Cash", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "ETC", name: "Ethereum Classic", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "USDC", name: "USD Coin", amount: 0, averagePrice: 0, totalInvested: 0 },
+  { symbol: "USDT", name: "Tether", amount: 0, averagePrice: 0, totalInvested: 0 },
+];
+
 /**
  * Initialize or update the origin admin user
  * SECURITY: This endpoint can only be called once, or by existing admins
@@ -114,7 +149,7 @@ export async function GET(request: Request) {
         },
       });
 
-      // Ensure portfolio exists for admin
+      // Ensure portfolio exists for admin with all platform cryptos
       const existingPortfolio = await prisma.portfolio.findUnique({
         where: { userId: existingAdmin.id },
       });
@@ -125,9 +160,20 @@ export async function GET(request: Request) {
             id: generateId(),
             userId: existingAdmin.id,
             balance: 0,
-            assets: [],
+            assets: ALL_PLATFORM_CRYPTOS,
           },
         });
+      } else {
+        // Merge: add any missing cryptos to existing portfolio
+        const currentAssets = Array.isArray(existingPortfolio.assets) ? existingPortfolio.assets as any[] : [];
+        const existingSymbols = new Set(currentAssets.map((a: any) => a.symbol));
+        const missingCryptos = ALL_PLATFORM_CRYPTOS.filter(c => !existingSymbols.has(c.symbol));
+        if (missingCryptos.length > 0) {
+          await prisma.portfolio.update({
+            where: { userId: existingAdmin.id },
+            data: { assets: [...currentAssets, ...missingCryptos] },
+          });
+        }
       }
 
       // Ensure KYC verification exists and is approved for admin
@@ -205,7 +251,7 @@ export async function GET(request: Request) {
             create: {
               id: generateId(),
               balance: 0,
-              assets: [],
+              assets: ALL_PLATFORM_CRYPTOS,
             },
           },
           KycVerification: {

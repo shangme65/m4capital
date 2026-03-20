@@ -665,19 +665,21 @@ export default function ConvertModalNew({
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div
-                                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                                    className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                                     style={{
                                       background: isDark
                                         ? cryptoGradients[symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                                         : "#ffffff",
-                                      boxShadow: isDark
-                                        ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
-                                        : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                                      filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                                     }}
                                   >
-                                    <CryptoIcon
-                                      symbol={symbol}
-                                      className="w-5 h-5 text-white"
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={`/crypto/${symbol.toLowerCase()}.svg`}
+                                      alt={symbol}
+                                      width={32}
+                                      height={32}
+                                      className="w-8 h-8"
                                     />
                                   </div>
                                   <div>
@@ -773,19 +775,21 @@ export default function ConvertModalNew({
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                   <div
-                                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                                    className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                                     style={{
                                       background: isDark
                                         ? cryptoGradients[symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                                         : "#ffffff",
-                                      boxShadow: isDark
-                                        ? "0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)"
-                                        : "0 3px 10px rgba(0,0,0,0.12), inset 0 2px 0 rgba(255,255,255,1), inset 0 -2px 0 rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06)",
+                                      filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
                                     }}
                                   >
-                                    <CryptoIcon
-                                      symbol={symbol}
-                                      className="w-5 h-5 text-white"
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={`/crypto/${symbol.toLowerCase()}.svg`}
+                                      alt={symbol}
+                                      width={32}
+                                      height={32}
+                                      className="w-8 h-8"
                                     />
                                   </div>
                                   <div>
@@ -888,7 +892,7 @@ export default function ConvertModalNew({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center"
+                          className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                           style={{
                             background: isDark
                               ? cryptoGradients[convertData.fromAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -900,7 +904,7 @@ export default function ConvertModalNew({
                         >
                           <CryptoIcon
                             symbol={convertData.fromAsset}
-                            className="w-5 h-5 text-white"
+                            size="md"
                           />
                         </div>
                         <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
@@ -922,7 +926,7 @@ export default function ConvertModalNew({
                       </svg>
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center"
+                          className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                           style={{
                             background: isDark
                               ? cryptoGradients[convertData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -934,7 +938,7 @@ export default function ConvertModalNew({
                         >
                           <CryptoIcon
                             symbol={convertData.toAsset}
-                            className="w-5 h-5 text-white"
+                            size="md"
                           />
                         </div>
                         <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
@@ -1089,7 +1093,7 @@ export default function ConvertModalNew({
                     </div>
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                        className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
                         style={{
                           background: isDark
                             ? cryptoGradients[convertData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1101,7 +1105,7 @@ export default function ConvertModalNew({
                       >
                         <CryptoIcon
                           symbol={convertData.toAsset}
-                          className="w-6 h-6 text-white"
+                          size="lg"
                         />
                       </div>
                       <div>
@@ -1155,7 +1159,7 @@ export default function ConvertModalNew({
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-center">
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1"
+                          className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1 overflow-hidden"
                           style={{
                             background: isDark
                               ? cryptoGradients[convertData.fromAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1167,7 +1171,7 @@ export default function ConvertModalNew({
                         >
                           <CryptoIcon
                             symbol={convertData.fromAsset}
-                            className="w-6 h-6 text-white"
+                            size="lg"
                           />
                         </div>
                         <div className={`font-bold text-xs ${isDark ? "text-white" : "text-gray-900"}`}>
@@ -1202,7 +1206,7 @@ export default function ConvertModalNew({
                       </div>
                       <div className="text-center">
                         <div
-                          className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1"
+                          className="w-10 h-10 rounded-full flex items-center justify-center mx-auto mb-1 overflow-hidden"
                           style={{
                             background: isDark
                               ? cryptoGradients[convertData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1214,7 +1218,7 @@ export default function ConvertModalNew({
                         >
                           <CryptoIcon
                             symbol={convertData.toAsset}
-                            className="w-6 h-6 text-white"
+                            size="lg"
                           />
                         </div>
                         <div className="text-cyan-400 font-bold text-xs">
@@ -1333,7 +1337,7 @@ export default function ConvertModalNew({
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center"
+                          className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                           style={{
                             background: isDark
                               ? cryptoGradients[successData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1345,7 +1349,7 @@ export default function ConvertModalNew({
                         >
                           <CryptoIcon
                             symbol={successData.asset}
-                            className="w-5 h-5 text-white"
+                            size="md"
                           />
                         </div>
                         <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Sold</span>
@@ -1362,7 +1366,7 @@ export default function ConvertModalNew({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center"
+                          className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
                           style={{
                             background: isDark
                               ? cryptoGradients[successData.toAsset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -1374,7 +1378,7 @@ export default function ConvertModalNew({
                         >
                           <CryptoIcon
                             symbol={successData.toAsset}
-                            className="w-5 h-5 text-white"
+                            size="md"
                           />
                         </div>
                         <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>Received</span>

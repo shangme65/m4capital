@@ -985,7 +985,7 @@ export default function AssetDetailsModal({
                       <div className="flex items-center gap-2 relative z-10">
                         {/* Logo */}
                         <div
-                          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 relative"
+                          className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 relative overflow-hidden"
                           style={isDark ? {
                             background: "linear-gradient(135deg, #334155 0%, #1e293b 100%)",
                             boxShadow: `0 6px 20px rgba(0, 0, 0, 0.7), 0 0 16px ${cryptoColor}50, inset 0 1px 2px rgba(255,255,255,0.15)`,
@@ -999,7 +999,7 @@ export default function AssetDetailsModal({
                           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-white/20 to-transparent opacity-50" />
                           <CryptoIcon
                             symbol={asset.symbol}
-                            size="sm"
+                            size="md"
                             showNetwork={true}
                             className="relative z-10 drop-shadow-lg"
                           />
