@@ -228,6 +228,31 @@ export default function NotificationsPanel({
     // Show real crypto logo
     if (isCrypto) {
       const meta = getCryptoMetadata(iconAsset);
+      const titleLower = notification.title?.toLowerCase() || "";
+      
+      // Determine transfer direction
+      const isTransferSent = titleLower.includes("transfer sent") || (titleLower.includes("transfer") && (notification.amount || 0) < 0);
+      const isTransferReceived = titleLower.includes("transfer received") || titleLower.includes("received");
+      const isSold = titleLower.includes("sold");
+      const isWithdraw = titleLower.includes("withdraw");
+      const isPurchase = titleLower.includes("purchase");
+      const isTradeEarned2 = titleLower.includes("trade earned");
+      
+      // Determine badge color and arrow direction
+      let badgeColor = "bg-green-500";
+      let showUpArrow = true;
+      
+      if (isTransferSent) {
+        badgeColor = "bg-red-500";
+        showUpArrow = true; // Sent = red arrow UP
+      } else if (isPurchase || isTransferReceived || isTradeEarned2) {
+        badgeColor = "bg-green-500";
+        showUpArrow = false; // Purchase/Received/Trade Earned = green arrow DOWN
+      } else if (isSold || isWithdraw) {
+        badgeColor = "bg-red-500";
+        showUpArrow = true; // Sold/Withdraw = red arrow UP
+      }
+      
       return (
         <div className="relative flex-shrink-0">
           <div
@@ -244,17 +269,11 @@ export default function NotificationsPanel({
             />
           </div>
           {/* Direction badge */}
-          <div
-            className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${
-              notification.title?.toLowerCase().includes("sold") || notification.title?.toLowerCase().includes("withdraw")
-                ? "bg-red-500"
-                : "bg-green-500"
-            }`}
-          >
-            {notification.title?.toLowerCase().includes("sold") || notification.title?.toLowerCase().includes("withdraw") ? (
-              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-            ) : (
+          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${badgeColor}`}>
+            {showUpArrow ? (
               <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+            ) : (
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             )}
           </div>
         </div>
@@ -263,6 +282,28 @@ export default function NotificationsPanel({
 
     // Show real currency flag
     if (isFiat) {
+      const titleLower = notification.title?.toLowerCase() || "";
+      
+      // Determine transfer direction: sent = red up, received = green down
+      const isTransferSent = titleLower.includes("transfer sent") || (titleLower.includes("transfer") && (notification.amount || 0) < 0);
+      const isTransferReceived = titleLower.includes("transfer received") || titleLower.includes("received");
+      const isWithdraw = titleLower.includes("withdraw");
+      
+      // Determine badge color and arrow direction
+      let badgeColor = "bg-green-500";
+      let showUpArrow = true;
+      
+      if (isTransferSent) {
+        badgeColor = "bg-red-500";
+        showUpArrow = true; // Sent = red arrow UP
+      } else if (isTransferReceived) {
+        badgeColor = "bg-green-500";
+        showUpArrow = false; // Received = green arrow DOWN
+      } else if (isWithdraw) {
+        badgeColor = "bg-red-500";
+        showUpArrow = false; // Withdraw = red arrow down
+      }
+      
       return (
         <div className="relative flex-shrink-0">
           <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg border border-gray-200/20">
@@ -276,17 +317,11 @@ export default function NotificationsPanel({
             />
           </div>
           {/* Direction badge */}
-          <div
-            className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${
-              notification.title?.toLowerCase().includes("withdraw")
-                ? "bg-red-500"
-                : "bg-green-500"
-            }`}
-          >
-            {notification.title?.toLowerCase().includes("withdraw") ? (
-              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-            ) : (
+          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${badgeColor}`}>
+            {showUpArrow ? (
               <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+            ) : (
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             )}
           </div>
         </div>

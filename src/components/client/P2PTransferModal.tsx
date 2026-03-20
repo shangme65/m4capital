@@ -120,6 +120,10 @@ export default function P2PTransferModal({
       showError("Please enter a valid amount");
       return false;
     }
+    if (amt > availableBalance) {
+      showError("Insufficient balance");
+      return false;
+    }
     return true;
   };
 

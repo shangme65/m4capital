@@ -196,9 +196,17 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
     const usdCost = convertAmount(inputAmount, true);
     const totalCost = usdCost * 1.015;
 
+    // Convert availableBalance to USD for proper comparison
+    let availableBalanceUSD = availableBalance;
+    if (balanceCurrency !== "USD") {
+      // Convert from balanceCurrency to USD
+      const rate = exchangeRates?.[balanceCurrency] ?? 1;
+      availableBalanceUSD = rate > 0 ? availableBalance / rate : availableBalance;
+    }
+
     if (!buyData.amount || inputAmount <= 0) {
       newErrors.amount = "Please enter a valid amount";
-    } else if (totalCost > availableBalance) {
+    } else if (totalCost > availableBalanceUSD) {
       newErrors.amount = "Insufficient balance";
     }
 
@@ -218,6 +226,12 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
 
   const confirmBuy = async () => {
     try {
+      // Validate one more time before purchase
+      if (!validateAmount()) {
+        setStep(2);
+        return;
+      }
+
       const price = getCurrentPrice();
       const inputAmount = parseFloat(buyData.amount);
       const usdValue = convertAmount(inputAmount, true);

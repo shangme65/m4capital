@@ -208,7 +208,7 @@ export async function POST(req: NextRequest) {
             message: `You sent ${amount.toFixed(2)} ${
               user.preferredCurrency || "USD"
             } to ${receiver!.name || receiver!.email} via Telegram`,
-            amount: amount,
+            amount: -amount,
             asset: user.preferredCurrency || "USD",
             read: false,
           },

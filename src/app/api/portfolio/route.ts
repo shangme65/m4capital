@@ -7,20 +7,6 @@ import { prisma } from "@/lib/prisma";
 // Mark this route as dynamic to prevent static generation attempts
 export const dynamic = "force-dynamic";
 
-// In-memory cache for portfolio data (30 seconds TTL)
-const portfolioCache = new Map<string, { data: any; timestamp: number }>();
-const CACHE_TTL = 30000; // 30 seconds
-
-// Cleanup old cache entries every 30 seconds
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of portfolioCache.entries()) {
-    if (now - value.timestamp > CACHE_TTL * 2) {
-      portfolioCache.delete(key);
-    }
-  }
-}, 30000);
-
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -37,20 +23,6 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const timeframe = searchParams.get("timeframe") || "1Y"; // 1D, 1W, 1M, 3M, 6M, 1Y, ALL
     const period = searchParams.get("period") || "all"; // Legacy support
-
-    // Check cache first
-    const cacheKey = `${session.user.email}:${timeframe}:${period}`;
-    const cached = portfolioCache.get(cacheKey);
-    const currentTime = Date.now();
-    
-    if (cached && (currentTime - cached.timestamp) < CACHE_TTL) {
-      console.log("⚡ Returning cached portfolio for:", session.user.email);
-      return NextResponse.json(cached.data, {
-        headers: {
-          'Cache-Control': 'private, max-age=30',
-        },
-      });
-    }
 
     console.log(
       "🔍 Looking up user:",
@@ -293,12 +265,9 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    // Store in cache
-    portfolioCache.set(cacheKey, { data: responseData, timestamp: Date.now() });
-
     return NextResponse.json(responseData, {
       headers: {
-        'Cache-Control': 'private, max-age=5',
+        'Cache-Control': 'no-store',
       },
     });
   } catch (error) {

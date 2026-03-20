@@ -6,6 +6,7 @@ import { ArrowLeft, TrendingUp } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { useToast } from "@/contexts/ToastContext";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import PaymentMethodSelector from "./PaymentMethodSelector";
@@ -37,7 +38,8 @@ export default function BuyCryptoModal({
   const [showPaymentSelector, setShowPaymentSelector] = useState(false);
   const [inputMode, setInputMode] = useState<"crypto" | "fiat">("fiat");
   const { addTransaction, addNotification } = useNotifications();
-  const { formatAmount, preferredCurrency, convertAmount } = useCurrency();
+  const { formatAmount, preferredCurrency, convertAmount, exchangeRates } = useCurrency();
+  const { showError } = useToast();
   const currencySymbol = getCurrencySymbol(preferredCurrency);
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
@@ -81,9 +83,25 @@ export default function BuyCryptoModal({
       : cryptoAmount * asset.price; // Crypto mode: amount × USD price
 
   const handleProceedToPayment = () => {
-    if (cryptoAmount > 0) {
-      setShowPaymentSelector(true);
+    if (cryptoAmount <= 0) {
+      showError("Please enter a valid amount");
+      return;
     }
+
+    // Convert balance to USD for comparison
+    let balanceUSD = userBalance;
+    if (balanceCurrency !== "USD") {
+      const rate = exchangeRates?.[balanceCurrency] ?? 1;
+      balanceUSD = rate > 0 ? userBalance / rate : userBalance;
+    }
+
+    // Check if user has sufficient balance
+    if (usdValue > balanceUSD) {
+      showError("Insufficient balance");
+      return;
+    }
+
+    setShowPaymentSelector(true);
   };
 
   const handlePaymentSuccess = async () => {

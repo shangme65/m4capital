@@ -363,6 +363,12 @@ export default function AssetSwapModal({
   };
 
   const confirmSwap = async () => {
+    // Validate one more time before swap to prevent bypass
+    if (!validateStep2()) {
+      setStep(2);
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const fromAmt = parseFloat(getCryptoAmount());

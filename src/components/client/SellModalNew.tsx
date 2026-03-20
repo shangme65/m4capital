@@ -236,6 +236,12 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
   };
 
   const confirmSell = async () => {
+    // Validate one more time before sell to prevent bypass
+    if (!validateAmount()) {
+      setStep(2);
+      return;
+    }
+
     const cryptoAmount = getCryptoAmountFromCurrency();
     const currencyValue = parseFloat(sellData.amount);
     const fee = currencyValue * 0.015;
@@ -500,7 +506,7 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                                   <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                       <div
-                                        className="w-10 h-10 rounded-full flex items-center justify-center"
+                                        className="w-12 h-12 rounded-full flex items-center justify-center"
                                         style={{
                                         background: isDark
                                           ? cryptoGradients[asset.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
@@ -512,38 +518,32 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
                                       >
                                         <CryptoIcon
                                           symbol={asset.symbol}
-                                          className={`w-6 h-6 ${isDark ? "text-white" : "text-gray-700"}`}
+                                          size="lg"
                                         />
                                       </div>
-                                      <div>
-                                        <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                                          {asset.symbol}
+                                      <div className="flex-1">
+                                        <div className={`flex items-center gap-2 text-base font-semibold mb-0.5 ${isDark ? "text-white" : "text-gray-900"}`}>
+                                          <span>{asset.symbol}</span>
+                                          <span>{formatAmount(value, 2)}</span>
                                         </div>
-                                        <div className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                                        <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                           {formatCryptoAmount(asset.amount, 14)} available
                                         </div>
                                       </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
-                                      <div className="text-right">
-                                        <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                                          {formatAmount(value, 2)}
-                                        </div>
-                                      </div>
-                                      {sellData.asset === asset.symbol && (
-                                        <svg
-                                          className="w-5 h-5 text-red-400"
-                                          fill="currentColor"
-                                          viewBox="0 0 20 20"
-                                        >
-                                          <path
-                                            fillRule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                            clipRule="evenodd"
-                                          />
-                                        </svg>
-                                      )}
-                                    </div>
+                                    {sellData.asset === asset.symbol && (
+                                      <svg
+                                        className="w-5 h-5 text-red-400 flex-shrink-0"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path
+                                          fillRule="evenodd"
+                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                          clipRule="evenodd"
+                                        />
+                                      </svg>
+                                    )}
                                   </div>
                                 </button>
                               );

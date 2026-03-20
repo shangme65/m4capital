@@ -15,7 +15,7 @@ interface AnimatedButtonProps
     | "onAnimationIteration"
   > {
   variant?: "primary" | "secondary" | "outline" | "ghost";
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   isLoading?: boolean;
 }
 
@@ -69,6 +69,7 @@ const Button = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
     };
 
     const sizes = {
+      xs: "px-2 py-1 text-[11px] rounded-md",
       sm: "px-3 py-1.5 text-xs rounded-lg",
       md: "px-7 py-2.5 text-base rounded-xl",
       lg: "px-9 py-3.5 text-lg rounded-2xl",

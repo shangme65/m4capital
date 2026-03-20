@@ -108,14 +108,6 @@ export const usePortfolio = (period: string = "all") => {
         const data = await response.json();
         setPortfolio(data);
         setError(null);
-        
-        // Cache in localStorage for instant loading next time
-        try {
-          localStorage.setItem(`portfolio_${queryPeriod}`, JSON.stringify(data));
-          localStorage.setItem(`portfolio_${queryPeriod}_timestamp`, Date.now().toString());
-        } catch (e) {
-          // Ignore localStorage errors (quota exceeded, etc.)
-        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
@@ -129,27 +121,6 @@ export const usePortfolio = (period: string = "all") => {
     // Only fetch if period actually changed or we haven't fetched yet
     if (hasFetchedRef.current !== period) {
       hasFetchedRef.current = period;
-      
-      // Try to load from localStorage cache first for instant display
-      try {
-        const cached = localStorage.getItem(`portfolio_${period}`);
-        const timestamp = localStorage.getItem(`portfolio_${period}_timestamp`);
-        
-        if (cached && timestamp) {
-          const age = Date.now() - parseInt(timestamp);
-          // Use cached data if less than 10 seconds old
-          if (age < 10000) {
-            setPortfolio(JSON.parse(cached));
-            setIsLoading(false);
-            // Still fetch fresh data in background
-            fetchPortfolio(period, true);
-            return;
-          }
-        }
-      } catch (e) {
-        // Ignore cache errors, proceed with normal fetch
-      }
-      
       fetchPortfolio(period);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

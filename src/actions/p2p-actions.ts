@@ -273,6 +273,8 @@ export async function sendP2PTransferAction(
             message: `Your transfer of ${senderSymbol}${amount.toFixed(2)} to ${
               receiver.name || receiver.email
             } has been sent successfully`,
+            amount: -amount,
+            asset: senderPreferredCurrency,
             read: false,
           },
           {
@@ -281,6 +283,8 @@ export async function sendP2PTransferAction(
             type: "TRANSACTION",
             title: "Transfer Received",
             message: `You have successfully received a transfer of ${senderSymbol}${amount.toFixed(2)} → ${receiverSymbol}${roundedReceiverDisplay.toFixed(2)} from ${sender.name || sender.email}`,
+            amount: roundedReceiverDisplay,
+            asset: receiverPreferredCurrency,
             read: false,
           },
         ],

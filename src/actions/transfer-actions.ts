@@ -26,7 +26,8 @@ export async function transferCryptoAction(
   amount: number,
   destination: string,
   memo?: string,
-  originalInputAmount?: number // Original amount user entered in their preferred currency
+  originalInputAmount?: number, // Original amount user entered in their preferred currency
+  currentPrice?: number // Current market price for accurate USD conversion
 ): Promise<TransferActionResult> {
   try {
     const session = await getServerSession(authOptions);
@@ -175,7 +176,7 @@ export async function transferCryptoAction(
             message: `Your transfer of ${senderSymbol}${displayAmount.toFixed(2)} to ${
               recipient.name || recipient.email
             } has been sent successfully`,
-            amount: displayAmount,
+            amount: -displayAmount,
             asset: senderCurrency,
           },
         });
@@ -210,7 +211,8 @@ export async function transferCryptoAction(
       }
 
       // Pre-compute fiat value for notification BEFORE the transaction (avoids network call inside tx)
-      const cryptoPrice = senderAssetData.averagePrice || 0;
+      // Use currentPrice if provided (current market price), fallback to averagePrice for backwards compatibility
+      const cryptoPrice = (currentPrice ?? senderAssetData.averagePrice) || 0;
       const usdValue = amount * cryptoPrice;
       const recipientSymbol = getCurrencySymbol(recipientCurrency);
       let receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} from ${
@@ -279,8 +281,8 @@ export async function transferCryptoAction(
               type: "crypto",
               cryptoAmount: amount,
               cryptoAsset: asset.toUpperCase(),
-              cryptoPrice: senderAssetData.averagePrice || 0,
-              usdValue: amount * (senderAssetData.averagePrice || 0),
+              cryptoPrice: cryptoPrice, // Use current market price
+              usdValue: usdValue, // Use calculated USD value with current price
             }),
             senderAccountNumber: sender.accountNumber || "",
             receiverAccountNumber: recipient.accountNumber || "",
@@ -302,7 +304,7 @@ export async function transferCryptoAction(
             message: `Your transfer of ${amount.toFixed(8)} ${asset} to ${
               recipient.name || recipient.email
             } has been sent successfully`,
-            amount: amount,
+            amount: -amount,
             asset: asset,
           },
         });

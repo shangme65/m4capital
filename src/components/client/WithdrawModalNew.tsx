@@ -417,6 +417,13 @@ export default function WithdrawModal({ isOpen, onClose }: WithdrawModalProps) {
   };
 
   const createWithdrawal = async () => {
+    // Re-validate to prevent bypass
+    if (!validateStep(2)) {
+      setStep(2);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setApiError(null);
     try {

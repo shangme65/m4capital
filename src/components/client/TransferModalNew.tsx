@@ -334,7 +334,18 @@ export default function TransferModalNew({
 
     if (!transferData.amount || inputAmount <= 0) {
       newErrors.amount = "Please enter a valid amount";
+    } else if (transferData.asset === "FIAT") {
+      // For FIAT transfers, convert balance to USD for comparison
+      let balanceUSD = availableBalance;
+      if (balanceCurrency !== "USD") {
+        const rate = exchangeRates?.[balanceCurrency] ?? 1;
+        balanceUSD = rate > 0 ? availableBalance / rate : availableBalance;
+      }
+      if (assetAmount > balanceUSD) {
+        newErrors.amount = "Insufficient balance";
+      }
     } else if (assetAmount > currentBalance) {
+      // For CRYPTO transfers, compare crypto amounts directly
       newErrors.amount = "Insufficient balance";
     }
 
@@ -369,11 +380,19 @@ export default function TransferModalNew({
   };
 
   const confirmTransfer = () => {
+    // Validate one more time before transfer to prevent bypass
+    if (!validateDetails()) {
+      setStep(2);
+      return;
+    }
+
     const inputAmount = parseFloat(transferData.amount);
     // Convert from preferred currency to asset amount
     const assetAmount = getAssetAmount(inputAmount);
-    // Get USD value for records
-    const usdValue = convertAmount(inputAmount, true);
+    // Get USD value for records - crypto amount * USD price
+    const usdValue = transferData.asset === "FIAT" 
+      ? convertAmount(inputAmount, true)  // For fiat, convert amount to USD
+      : assetAmount * currentPrice;        // For crypto, amount * USD price
 
     startTransition(async () => {
       const result = await transferCryptoAction(
@@ -381,7 +400,8 @@ export default function TransferModalNew({
         assetAmount,
         transferData.destination,
         transferData.memo,
-        inputAmount // Pass original input amount for history display
+        inputAmount, // Pass original input amount for history display
+        currentPrice // Pass current market price for accurate USD conversion
       );
 
       if (!result.success) {
@@ -1243,7 +1263,7 @@ export default function TransferModalNew({
                         ) : (
                           <CryptoIcon
                             symbol={transferData.asset}
-                            className="w-8 h-8 text-white"
+                            size="xl"
                           />
                         )}
                       </div>

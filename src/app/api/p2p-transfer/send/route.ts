@@ -271,6 +271,8 @@ export async function POST(request: Request) {
             message: `You sent ${senderSymbol}${transferAmount.toFixed(2)} to ${
               receiver.name || receiver.email
             }`,
+            amount: -transferAmount,
+            asset: senderPreferredCurrency,
             read: false,
           },
           {
@@ -281,6 +283,8 @@ export async function POST(request: Request) {
             message: `You received ${receiverSymbol}${roundedReceiverDisplay.toFixed(
               2
             )} from ${sender.name || sender.email}`,
+            amount: roundedReceiverDisplay,
+            asset: receiverPreferredCurrency,
             read: false,
           },
         ],

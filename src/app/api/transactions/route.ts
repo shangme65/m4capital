@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { CURRENCIES } from "@/lib/currencies";
 
 // In-memory cache for transactions (5 seconds TTL)
 const transactionsCache = new Map<string, { data: any; timestamp: number }>();
@@ -285,7 +286,8 @@ export async function GET(req: NextRequest) {
           isCryptoTransfer = true;
           cryptoAmount = metadata.cryptoAmount;
           cryptoPrice = metadata.cryptoPrice || 0;
-          usdValue = metadata.usdValue || Number(t.amount);
+          // Calculate USD value from crypto amount * price, fallback to stored usdValue, never use raw amount
+          usdValue = metadata.usdValue || (cryptoAmount * cryptoPrice);
         }
       } catch {
         // Old format: "P2P Transfer of X BTC" or plain memo
@@ -300,36 +302,7 @@ export async function GET(req: NextRequest) {
       }
 
       // Check if this is a crypto transfer (currency is a crypto symbol, not fiat)
-      const FIAT_CURRENCIES = [
-        "USD",
-        "EUR",
-        "GBP",
-        "BRL",
-        "JPY",
-        "CAD",
-        "AUD",
-        "CHF",
-        "INR",
-        "CNY",
-        "KRW",
-        "NGN",
-        "MXN",
-        "SGD",
-        "HKD",
-        "NOK",
-        "SEK",
-        "DKK",
-        "NZD",
-        "ZAR",
-        "RUB",
-        "TRY",
-        "PLN",
-        "THB",
-        "IDR",
-        "MYR",
-        "PHP",
-        "VND",
-      ];
+      const FIAT_CURRENCIES = CURRENCIES.map(c => c.code);
       const isFiatCurrency = FIAT_CURRENCIES.includes(senderCurrency);
 
       if (!isFiatCurrency && !isCryptoTransfer) {
@@ -392,7 +365,8 @@ export async function GET(req: NextRequest) {
           isCryptoTransfer = true;
           cryptoAmount = metadata.cryptoAmount;
           cryptoPrice = metadata.cryptoPrice || 0;
-          usdValue = metadata.usdValue || Number(t.amount);
+          // Calculate USD value from crypto amount * price, fallback to stored usdValue, never use raw amount
+          usdValue = metadata.usdValue || (cryptoAmount * cryptoPrice);
           receiverAmount = cryptoAmount;
         } else if (metadata.receiverAmount && metadata.receiverCurrency) {
           // Fiat cross-currency transfer
@@ -418,36 +392,7 @@ export async function GET(req: NextRequest) {
       }
 
       // Check if currency is crypto (not fiat)
-      const FIAT_CURRENCIES = [
-        "USD",
-        "EUR",
-        "GBP",
-        "BRL",
-        "JPY",
-        "CAD",
-        "AUD",
-        "CHF",
-        "INR",
-        "CNY",
-        "KRW",
-        "NGN",
-        "MXN",
-        "SGD",
-        "HKD",
-        "NOK",
-        "SEK",
-        "DKK",
-        "NZD",
-        "ZAR",
-        "RUB",
-        "TRY",
-        "PLN",
-        "THB",
-        "IDR",
-        "MYR",
-        "PHP",
-        "VND",
-      ];
+      const FIAT_CURRENCIES = CURRENCIES.map(c => c.code);
       const isFiatCurrency = FIAT_CURRENCIES.includes(receiverCurrency);
 
       return {
