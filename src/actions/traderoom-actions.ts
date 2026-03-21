@@ -597,3 +597,170 @@ export async function closeTradeAction(params: {
     };
   }
 }
+
+/**
+ * Settle binary trade action - Update traderoom balance after binary trade expires
+ * @param payout - The payout amount (0 for loss, amount * 1.85 for win)
+ * @param tradeAmount - Original trade amount
+ * @param won - Whether the trade was won
+ * @param symbol - Trading pair symbol
+ * @param direction - Trade direction (higher/lower)
+ */
+export async function settleBinaryTradeAction(params: {
+  payout: number;
+  tradeAmount: number;
+  won: boolean;
+  symbol: string;
+  direction: "higher" | "lower";
+  entryPrice: number;
+  exitPrice: number;
+}): Promise<ActionResult> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return { success: false, error: "Authentication required" };
+    }
+
+    const { payout, tradeAmount, won, symbol, direction, entryPrice, exitPrice } = params;
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { Portfolio: true },
+    });
+
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
+    if (!user.Portfolio) {
+      return { success: false, error: "Portfolio not found" };
+    }
+
+    const currentTraderoomBalance = Number(user.Portfolio.traderoomBalance || 0);
+    const profit = won ? payout - tradeAmount : -tradeAmount;
+    
+    // New balance calculation:
+    // - Trade amount was already deducted when trade was placed
+    // - If won: add payout (which includes original amount + profit)
+    // - If lost: nothing to add (amount already deducted)
+    const newTraderoomBalance = currentTraderoomBalance + payout;
+
+    // Update traderoom balance in database
+    const updatedPortfolio = await prisma.portfolio.update({
+      where: { id: user.Portfolio.id },
+      data: {
+        traderoomBalance: newTraderoomBalance,
+      },
+    });
+
+    // Record the binary trade in database
+    await prisma.trade.create({
+      data: {
+        id: generateId(),
+        userId: user.id,
+        symbol: symbol.toUpperCase(),
+        side: direction === "higher" ? "BUY" : "SELL",
+        entryPrice: new Decimal(entryPrice),
+        exitPrice: new Decimal(exitPrice),
+        quantity: new Decimal(tradeAmount),
+        leverage: 1,
+        commission: new Decimal(0),
+        profit: new Decimal(profit),
+        status: "CLOSED",
+        closedAt: new Date(),
+        updatedAt: new Date(),
+        metadata: {
+          direction: direction.toUpperCase(),
+          tradeType: "binary",
+          payout: payout,
+        },
+      },
+    });
+
+    // Create notification
+    await prisma.notification.create({
+      data: {
+        id: generateId(),
+        userId: user.id,
+        type: "TRADE",
+        title: won ? "Trade Won!" : "Trade Lost",
+        message: `${symbol} ${direction.toUpperCase()} trade ${won ? "won" : "lost"}. ${won ? "Profit" : "Loss"}: $${Math.abs(profit).toFixed(2)}`,
+        amount: profit,
+        asset: symbol,
+      },
+    });
+
+    revalidatePath("/traderoom");
+    revalidatePath("/dashboard");
+
+    return {
+      success: true,
+      data: {
+        newTraderoomBalance: Number(updatedPortfolio.traderoomBalance),
+        profit,
+        won,
+      },
+    };
+  } catch (error) {
+    console.error("Settle binary trade action error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to settle trade",
+    };
+  }
+}
+
+/**
+ * Deduct trade amount action - Deduct amount from traderoom balance when placing a trade
+ * @param amount - Amount to deduct
+ */
+export async function deductTradeAmountAction(amount: number): Promise<ActionResult> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return { success: false, error: "Authentication required" };
+    }
+
+    if (!amount || amount <= 0) {
+      return { success: false, error: "Amount must be greater than 0" };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { Portfolio: true },
+    });
+
+    if (!user || !user.Portfolio) {
+      return { success: false, error: "Portfolio not found" };
+    }
+
+    const currentTraderoomBalance = Number(user.Portfolio.traderoomBalance || 0);
+
+    if (currentTraderoomBalance < amount) {
+      return { success: false, error: "Insufficient traderoom balance" };
+    }
+
+    const updatedPortfolio = await prisma.portfolio.update({
+      where: { id: user.Portfolio.id },
+      data: {
+        traderoomBalance: currentTraderoomBalance - amount,
+      },
+    });
+
+    return {
+      success: true,
+      data: {
+        newTraderoomBalance: Number(updatedPortfolio.traderoomBalance),
+        deductedAmount: amount,
+      },
+    };
+  } catch (error) {
+    console.error("Deduct trade amount action error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to deduct amount",
+    };
+  }
+}

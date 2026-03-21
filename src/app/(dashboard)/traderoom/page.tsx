@@ -20,6 +20,7 @@ import {
   Search,
   Star,
   ChevronDown,
+  ChevronUp,
   Activity,
   Zap,
   Briefcase,
@@ -49,6 +50,7 @@ import {
   HelpCircle,
   FileText,
   LogOut,
+  X,
 } from "lucide-react";
 import {
   TradingProvider,
@@ -73,6 +75,8 @@ import {
   fundTraderoomAction,
   fundTraderoomCryptoAction,
   withdrawFromTraderoomAction,
+  settleBinaryTradeAction,
+  deductTradeAmountAction,
 } from "@/actions/traderoom-actions";
 import { getCurrencySymbol, formatCurrency } from "@/lib/currencies";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
@@ -172,7 +176,9 @@ function TradingInterface() {
   const [fundingError, setFundingError] = useState("");
   const [cryptoPaymentInfo, setCryptoPaymentInfo] = useState<any>(null);
   const [fundingSuccessMessage, setFundingSuccessMessage] = useState<string | null>(null);
-  const practiceAccountBalance = 10000.0; // Practice account default balance
+  const [practiceAccountBalance, setPracticeAccountBalance] = useState(10000.0); // Practice account default balance
+  const [showPracticeTopUpModal, setShowPracticeTopUpModal] = useState(false);
+  const [practiceTopUpAmount, setPracticeTopUpAmount] = useState("");
   const [forexRates, setForexRates] = useState<any>({});
   const [showPortfolioPanel, setShowPortfolioPanel] = useState(false);
   const isLoggedIn = status === "authenticated" && session?.user;
@@ -187,7 +193,7 @@ function TradingInterface() {
   const [currentPrice, setCurrentPrice] = useState<number>(0);
 
   // Get trading context for history data
-  const { tradeHistory, openPositions } = useTradingContext();
+  const { tradeHistory, openPositions, reloadTradeHistory } = useTradingContext();
 
   // Get crypto market data
   const {
@@ -690,9 +696,13 @@ function TradingInterface() {
 
     setActiveTrades((prev) => [...prev, newTrade]);
 
-    // Deduct from balance (for real account)
+    // Deduct from balance
     if (selectedAccountType === "real") {
       setTraderoomBalance((prev) => prev - amount);
+      // Persist to database for real account
+      deductTradeAmountAction(amount).catch(console.error);
+    } else {
+      setPracticeAccountBalance((prev) => prev - amount);
     }
 
     // Reset execution state after brief animation
@@ -721,9 +731,28 @@ function TradingInterface() {
 
             const payout = won ? trade.amount * 1.85 : 0; // 85% profit + original amount
 
-            // Update balance
-            if (selectedAccountType === "real" && won) {
-              setTraderoomBalance((prev) => prev + payout);
+            // Update balance and persist to database for real account
+            if (selectedAccountType === "real") {
+              if (won) {
+                setTraderoomBalance((prev) => prev + payout);
+              }
+              // Settle trade in database (records trade history and updates balance)
+              settleBinaryTradeAction({
+                payout,
+                tradeAmount: trade.amount,
+                won,
+                symbol: trade.symbol,
+                direction: trade.direction,
+                entryPrice: trade.entryPrice,
+                exitPrice: currentPrice,
+              })
+                .then(() => reloadTradeHistory())
+                .catch(console.error);
+            } else {
+              // Practice account - only update local state
+              if (won) {
+                setPracticeAccountBalance((prev) => prev + payout);
+              }
             }
 
             return {
@@ -894,9 +923,9 @@ function TradingInterface() {
             borderBottom: "1px solid #1a2d45",
           }}
         >
-          <div className="flex items-center justify-between h-32 md:h-14 px-4">
+          <div className="flex items-center justify-between h-40 md:h-20 px-4">
             {/* Left: Logo and Navigation */}
-            <div className="flex items-center space-x-8">
+            <div className="flex items-center space-x-3">
               <div className="flex items-center space-x-3">
                 {/* Desktop: logo1, Mobile: logo2 */}
                 <div className="hidden md:block">
@@ -924,8 +953,12 @@ function TradingInterface() {
                 className="rounded transition-all duration-200 hover:opacity-80"
                 style={{
                   backgroundColor: "transparent",
-                  padding: "6px",
-                  border: "1px solid rgba(139, 133, 131, 0.3)",
+                  border: "1px solid #6b6b6b",
+                  height: "52px",
+                  width: "52px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
                 <svg
@@ -977,36 +1010,22 @@ function TradingInterface() {
               {/* Trading Pair Tabs */}
               <div className="flex items-center space-x-1">
                 {openTabs.map((tab, index) => (
-                  <button
+                  <div
                     key={`header-tab-${index}-${tab.symbol}`}
                     onClick={() => {
                       setActiveTab(index);
                       setSelectedSymbol(tab.symbol);
                     }}
-                    className="flex items-center space-x-1 px-1.5 rounded-md transition-all duration-200 relative"
+                    className="relative group cursor-pointer rounded transition-all duration-200"
                     style={{
-                      backgroundColor:
-                        activeTab === index ? "#ff8516" : "#2c2826",
-                      color: activeTab === index ? "#ffffff" : "#999999",
-                      borderBottom:
-                        activeTab === index
-                          ? "2px solid #ff8516"
-                          : "2px solid transparent",
-                      height: "44px",
+                      backgroundColor: activeTab === index ? "rgba(255, 133, 22, 0.08)" : "transparent",
+                      border: "1px solid #6b6b6b",
+                      height: "52px",
+                      paddingLeft: openTabs.length > 1 ? "16px" : "10px",
+                      paddingRight: "14px",
                     }}
                   >
-                    <span className="text-xs">
-                      <AssetFlag flag={symbols.find((s) => s.symbol === tab.symbol)?.flag || ""} symbol={tab.symbol} size={16} />
-                    </span>
-                    <span className="text-xs font-medium">{tab.symbol}</span>
-                    <span
-                      className="text-[10px]"
-                      style={{
-                        color: activeTab === index ? "#ffffff" : "#666666",
-                      }}
-                    >
-                      ({tab.symbol.includes("USD") ? "OTC" : "Binary"})
-                    </span>
+                    {/* Close button at top-left corner */}
                     {openTabs.length > 1 && (
                       <span
                         onClick={(e) => {
@@ -1020,25 +1039,48 @@ function TradingInterface() {
                             setSelectedSymbol(newTabs[0].symbol);
                           }
                         }}
-                        className="ml-2 hover:bg-black/20 rounded transition-all w-4 h-4 flex items-center justify-center cursor-pointer"
+                        className="absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 bg-gray-700 hover:bg-gray-600 rounded-full transition-all w-4 h-4 flex items-center justify-center cursor-pointer z-10"
                         style={{
-                          color: activeTab === index ? "#ffffff" : "#666666",
-                          fontSize: "14px",
+                          color: "#ffffff",
+                          fontSize: "10px",
+                          lineHeight: 1,
                         }}
                       >
                         ×
                       </span>
                     )}
-                  </button>
+                    <div className="flex items-center space-x-2 h-full">
+                      <span className="text-base">
+                        <AssetFlag flag={symbols.find((s) => s.symbol === tab.symbol)?.flag || ""} symbol={tab.symbol} size={32} />
+                      </span>
+                      <div className="flex flex-col items-start">
+                        <span 
+                          className="text-sm font-medium"
+                          style={{ color: activeTab === index ? "#ffffff" : "#8b8b8b" }}
+                        >
+                          {tab.symbol}
+                        </span>
+                        <span
+                          className="text-[11px]"
+                          style={{
+                            color: activeTab === index ? "#ff8516" : "#666666",
+                          }}
+                        >
+                          {tab.symbol.includes("USD") ? "OTC" : "Blitz"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 ))}
                 <button
                   onClick={() => { setAddAssetSideTab("trending"); setAddAssetSearch(""); setShowAddAssetModal(true); }}
-                  className="rounded-md hover:opacity-75 transition-all duration-200"
+                  className="rounded hover:bg-white/5 transition-all duration-200"
                   style={{
-                    backgroundColor: "#2c2826",
-                    color: "#999999",
-                    height: "44px",
-                    width: "44px",
+                    backgroundColor: "transparent",
+                    border: "1px solid #6b6b6b",
+                    color: "#8b8b8b",
+                    height: "52px",
+                    width: "52px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -1258,137 +1300,156 @@ function TradingInterface() {
                   />
                 </button>
 
-                {/* Balance Dropdown */}
+                {/* Balance Dropdown - Compact IQ Option Style */}
                 {isBalanceDropdownOpen && (
-                  <div
-                    className="absolute top-full right-0 mt-1 rounded-md shadow-2xl z-50 flex overflow-hidden"
-                    style={{
-                      backgroundColor: "#0a1020",
-                      border: "1px solid #1a2d45",
-                    }}
-                  >
-                    {/* Left Panel - Available/Investment Info (IQ Option style with dotted leaders) */}
+                  <>
+                    {/* Backdrop for click outside */}
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIsBalanceDropdownOpen(false)}
+                    />
                     <div
-                      className="px-5 py-5 w-[220px]"
+                      className="fixed z-50 flex overflow-hidden rounded-l-md shadow-2xl"
                       style={{
-                        backgroundColor: "#070c15",
-                        borderRight: "1px solid #1a2d45",
+                        backgroundColor: "#0a1020",
+                        border: "1px solid #1a2d45",
+                        borderRight: "none",
+                        right: "168px",
+                        top: "58px",
                       }}
                     >
-                      <div className="space-y-4">
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-sm whitespace-nowrap" style={{ color: "#8b9ab8" }}>Available</span>
-                          <span className="flex-1 border-b border-dotted" style={{ borderColor: "#2a3a50", marginBottom: "3px" }}></span>
-                          <span className="text-sm font-semibold text-white whitespace-nowrap">
-                            $ {(selectedAccountType === "real" ? traderoomBalance : practiceAccountBalance).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
+                      {/* Left Panel - Available/Investment Info */}
+                      <div
+                        className="px-4 py-3 w-[180px]"
+                        style={{
+                          backgroundColor: "#070c15",
+                          borderRight: "1px solid #1a2d45",
+                        }}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xs whitespace-nowrap" style={{ color: "#8b9ab8" }}>Available</span>
+                            <span className="flex-1 border-b border-dotted" style={{ borderColor: "#2a3a50", marginBottom: "2px" }}></span>
+                            <span className="text-xs font-semibold text-white whitespace-nowrap">
+                              $ {(selectedAccountType === "real" ? traderoomBalance : practiceAccountBalance).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xs whitespace-nowrap" style={{ color: "#8b9ab8" }}>Investment</span>
+                            <span className="flex-1 border-b border-dotted" style={{ borderColor: "#2a3a50", marginBottom: "2px" }}></span>
+                            <span className="text-xs font-semibold text-white whitespace-nowrap">
+                              $ 0.00
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-sm whitespace-nowrap" style={{ color: "#8b9ab8" }}>Investment</span>
-                          <span className="flex-1 border-b border-dotted" style={{ borderColor: "#2a3a50", marginBottom: "3px" }}></span>
-                          <span className="text-sm font-semibold text-white whitespace-nowrap">
-                            $ 0.00
-                          </span>
+
+                        <div className="mt-4 pt-2">
+                          <button className="flex items-center gap-1 text-xs" style={{ color: "#8b9ab8" }}>
+                            <CircleHelp className="w-3.5 h-3.5" />
+                            <span>What is this?</span>
+                          </button>
                         </div>
                       </div>
 
-                      <div className="mt-8 pt-3">
-                        <button className="flex items-center gap-1.5 text-sm" style={{ color: "#8b9ab8" }}>
-                          <CircleHelp className="w-4 h-4" />
-                          <span>What is this?</span>
+                      {/* Right Panel - Account Selection */}
+                      <div className="flex flex-col">
+                        {/* Real Account Row */}
+                        <button
+                          onClick={() => {
+                            if (!isLoggedIn) {
+                              alert("Please log in to access your real account");
+                              return;
+                            }
+                            setSelectedAccountType("real");
+                            setIsBalanceDropdownOpen(false);
+                            localStorage.setItem("selectedAccountType", "real");
+                          }}
+                          disabled={!isLoggedIn}
+                          className={`flex items-center justify-between px-4 py-3 w-[280px] transition-all ${
+                            selectedAccountType === "real" ? "bg-white/5" : "hover:bg-white/5"
+                          } ${!isLoggedIn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                          style={{ borderBottom: "1px solid #1a2d45" }}
+                        >
+                          <div className="text-left">
+                            <div className="text-xs uppercase tracking-wider font-bold mb-0.5 text-white whitespace-nowrap">
+                              REAL ACCOUNT
+                            </div>
+                            <div className="text-base font-semibold" style={{ color: "#5ddf38" }}>
+                              $ {traderoomBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: "#1a2d45" }}>
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b9ab8" strokeWidth="2">
+                                <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsBalanceDropdownOpen(false);
+                                setShowFundModal(true);
+                              }}
+                              className="px-4 py-1.5 rounded text-xs font-medium transition-all hover:opacity-80"
+                              style={{ backgroundColor: "#1a2d45", color: "#ffffff" }}
+                            >
+                              Deposit
+                            </button>
+                          </div>
+                        </button>
+
+                        {/* Practice Account Row */}
+                        <button
+                          onClick={() => {
+                            setSelectedAccountType("practice");
+                            setIsBalanceDropdownOpen(false);
+                            localStorage.setItem("selectedAccountType", "practice");
+                          }}
+                          className={`flex items-center justify-between px-4 py-3 w-[280px] transition-all ${
+                            selectedAccountType === "practice" ? "bg-white/5" : "hover:bg-white/5"
+                          } cursor-pointer`}
+                        >
+                          <div className="text-left">
+                            <div className="text-xs uppercase tracking-wider font-bold mb-0.5 text-white whitespace-nowrap">
+                              PRACTICE ACCOUNT
+                            </div>
+                            <div className="text-base font-semibold" style={{ color: "#ff8516" }}>
+                              $ {practiceAccountBalance.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowPracticeTopUpModal(true);
+                                setIsBalanceDropdownOpen(false);
+                              }}
+                              className="w-6 h-6 rounded flex items-center justify-center transition-all hover:opacity-80"
+                              style={{ backgroundColor: "#1a2d45" }}
+                            >
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b9ab8" strokeWidth="2">
+                                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                              </svg>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowPracticeTopUpModal(true);
+                                setIsBalanceDropdownOpen(false);
+                              }}
+                              className="px-4 py-1.5 rounded text-xs font-medium transition-all hover:opacity-80"
+                              style={{ backgroundColor: "#1a2d45", color: "#ffffff" }}
+                            >
+                              Top Up
+                            </button>
+                          </div>
                         </button>
                       </div>
                     </div>
-
-                    {/* Right Panel - Account Selection */}
-                    <div className="flex flex-col">
-                      {/* Real Account Row */}
-                      <button
-                        onClick={() => {
-                          if (!isLoggedIn) {
-                            alert("Please log in to access your real account");
-                            return;
-                          }
-                          setSelectedAccountType("real");
-                          setIsBalanceDropdownOpen(false);
-                          localStorage.setItem("selectedAccountType", "real");
-                        }}
-                        disabled={!isLoggedIn}
-                        className={`flex items-center justify-between px-5 py-4 w-[360px] transition-all ${
-                          selectedAccountType === "real" ? "bg-white/5" : "hover:bg-white/5"
-                        } ${!isLoggedIn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                        style={{ borderBottom: "1px solid #1a2d45" }}
-                      >
-                        <div className="text-left">
-                          <div className="text-sm uppercase tracking-wider font-bold mb-1 text-white whitespace-nowrap">
-                            REAL ACCOUNT
-                          </div>
-                          <div className="text-lg font-semibold" style={{ color: "#5ddf38" }}>
-                            $ {traderoomBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-7 h-7 rounded flex items-center justify-center" style={{ backgroundColor: "#1a2d45" }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b9ab8" strokeWidth="2">
-                              <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsBalanceDropdownOpen(false);
-                              setShowFundModal(true);
-                            }}
-                            className="px-5 py-2 rounded text-sm font-medium transition-all hover:opacity-80"
-                            style={{ backgroundColor: "#1a2d45", color: "#ffffff" }}
-                          >
-                            Deposit
-                          </button>
-                        </div>
-                      </button>
-
-                      {/* Practice Account Row */}
-                      <button
-                        onClick={() => {
-                          setSelectedAccountType("practice");
-                          setIsBalanceDropdownOpen(false);
-                          localStorage.setItem("selectedAccountType", "practice");
-                        }}
-                        className={`flex items-center justify-between px-5 py-4 w-[360px] transition-all ${
-                          selectedAccountType === "practice" ? "bg-white/5" : "hover:bg-white/5"
-                        } cursor-pointer`}
-                      >
-                        <div className="text-left">
-                          <div className="text-sm uppercase tracking-wider font-bold mb-1 text-white whitespace-nowrap">
-                            PRACTICE ACCOUNT
-                          </div>
-                          <div className="text-lg font-semibold" style={{ color: "#ff8516" }}>
-                            $ {practiceAccountBalance.toLocaleString("en-US", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <div className="w-7 h-7 rounded flex items-center justify-center" style={{ backgroundColor: "#1a2d45" }}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b9ab8" strokeWidth="2">
-                              <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              // Handle practice account top up
-                            }}
-                            className="px-5 py-2 rounded text-sm font-medium transition-all hover:opacity-80"
-                            style={{ backgroundColor: "#1a2d45", color: "#ffffff" }}
-                          >
-                            Top Up
-                          </button>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
+                  </>
                 )}
               </div>
               
@@ -1413,35 +1474,36 @@ function TradingInterface() {
         </header>
 
         {/* Main Trading Interface */}
-        <div className="flex h-[calc(100vh-120px)]">
-          {/* IQ Option Style Sidebar */}
+        <div className="flex h-[calc(100vh-160px)]">
+          {/* IQ Option Style Sidebar - Fixed to extend over positions panel */}
           <div
-            className="flex-col border-r flex"
+            className="flex-col border-r flex fixed left-0 z-50 top-20"
             style={{
               backgroundColor: "#070c15",
               borderColor: "#1a2d45",
               width: "76px",
+              bottom: "40px",
             }}
           >
             {/* Sidebar Icons */}
-            <div className="flex flex-col items-center py-4 space-y-6">
+            <div className="flex flex-col items-center py-2 space-y-3">
               {/* Total Portfolio */}
               <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
                   <Briefcase
-                    className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
+                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   />
                 </div>
                 <div className="mt-1 text-center">
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   >
                     TOTAL
                   </div>
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   >
                     PORTFOLIO
@@ -1455,7 +1517,7 @@ function TradingInterface() {
                 onClick={() => setShowTradingHistory(!showTradingHistory)}
               >
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
                   style={{
                     backgroundColor: showTradingHistory
                       ? "#1a2d45"
@@ -1463,7 +1525,7 @@ function TradingInterface() {
                   }}
                 >
                   <History
-                    className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
+                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                     style={{
                       color: showTradingHistory ? "#ffffff" : "#4a6080",
                     }}
@@ -1471,7 +1533,7 @@ function TradingInterface() {
                 </div>
                 <div className="mt-1 text-center">
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{
                       color: showTradingHistory ? "#1a2d45" : "#4a6080",
                     }}
@@ -1479,7 +1541,7 @@ function TradingInterface() {
                     TRADING
                   </div>
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{
                       color: showTradingHistory ? "#1a2d45" : "#4a6080",
                     }}
@@ -1491,21 +1553,21 @@ function TradingInterface() {
 
               {/* Chats & Support */}
               <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
                   <MessageCircle
-                    className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
+                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   />
                 </div>
                 <div className="mt-1 text-center">
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   >
                     CHATS &
                   </div>
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   >
                     SUPPORT
@@ -1515,15 +1577,15 @@ function TradingInterface() {
 
               {/* Promo */}
               <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
                   <Gift
-                    className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
+                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   />
                 </div>
                 <div className="mt-1 text-center">
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   >
                     PROMO
@@ -1533,21 +1595,21 @@ function TradingInterface() {
 
               {/* Market Analysis */}
               <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
                   <BarChart3
-                    className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
+                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   />
                 </div>
                 <div className="mt-1 text-center">
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   >
                     MARKET
                   </div>
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   >
                     ANALYSIS
@@ -1561,7 +1623,7 @@ function TradingInterface() {
                 onClick={() => setShowCalculators(!showCalculators)}
               >
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
                   style={{
                     backgroundColor: showCalculators
                       ? "#1a2d45"
@@ -1569,7 +1631,7 @@ function TradingInterface() {
                   }}
                 >
                   <Calculator
-                    className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
+                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                     style={{
                       color: showCalculators ? "#ffffff" : "#4a6080",
                     }}
@@ -1577,7 +1639,7 @@ function TradingInterface() {
                 </div>
                 <div className="mt-1 text-center">
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{
                       color: showCalculators ? "#1a2d45" : "#4a6080",
                     }}
@@ -1589,15 +1651,15 @@ function TradingInterface() {
 
               {/* Tutorials */}
               <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
                   <BookOpen
-                    className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
+                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   />
                 </div>
                 <div className="mt-1 text-center">
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{ color: "#4a6080" }}
                   >
                     TUTORIALS
@@ -1611,13 +1673,13 @@ function TradingInterface() {
                 onClick={() => setShowMoreItems(!showMoreItems)}
               >
                 <div
-                  className="w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
                   style={{
                     backgroundColor: showMoreItems ? "#1a2d45" : "transparent",
                   }}
                 >
                   <MoreHorizontal
-                    className="w-7 h-7 transition-all duration-200 group-hover:text-orange-500"
+                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
                     style={{
                       color: showMoreItems ? "#ffffff" : "#4a6080",
                     }}
@@ -1625,7 +1687,7 @@ function TradingInterface() {
                 </div>
                 <div className="mt-1 text-center">
                   <div
-                    className="text-[10px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
                     style={{
                       color: showMoreItems ? "#1a2d45" : "#4a6080",
                     }}
@@ -1881,6 +1943,9 @@ function TradingInterface() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Spacer for fixed sidebar */}
+          <div style={{ width: "76px", flexShrink: 0 }} />
 
           {/* Center: Chart and Controls */}
           <div className="flex-1 flex flex-col">
@@ -3230,18 +3295,18 @@ function TradingInterface() {
               }}
             >
               {/* IQ Option Style - Top Left Symbol Header */}
-              <div className="absolute top-3 left-3 z-40 flex flex-col gap-2">
+              <div className="absolute top-3 left-5 z-40 flex flex-col gap-2">
                 {/* Symbol Badge with Flag */}
                 <div className="flex items-center gap-2">
                   <div className="flex items-center -space-x-2">
-                    <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e] z-10">
+                    <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e]">
                       <CryptoIcon
                         symbol={selectedSymbol.split("/")[0]}
                         size="md"
                       />
                     </div>
                     {selectedSymbol.includes("/") && (
-                      <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e]">
+                      <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e] z-10">
                         <CryptoIcon
                           symbol={selectedSymbol.split("/")[1]}
                           size="md"
@@ -3414,6 +3479,7 @@ function TradingInterface() {
               </div>
 
               <ChartGrid
+                key={selectedSymbol}
                 gridType={selectedChartGrid}
                 defaultSymbol={selectedSymbol}
                 availableSymbols={[
@@ -3429,6 +3495,141 @@ function TradingInterface() {
                   "LINK",
                 ]}
               />
+
+              {/* IQ Option Style Strike Line Overlay - Shows when hovering HIGHER/LOWER */}
+              <AnimatePresence>
+                {hoveredButton && (
+                  <motion.div
+                    key={hoveredButton}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute inset-0 z-25 pointer-events-none"
+                  >
+                    {/* Strike Line with Glow */}
+                    <div
+                      className="absolute left-0 right-0"
+                      style={{
+                        top: "55%",
+                        height: "2px",
+                        background: hoveredButton === "higher" 
+                          ? "linear-gradient(90deg, transparent 0%, #22c55e 10%, #22c55e 90%, transparent 100%)"
+                          : "linear-gradient(90deg, transparent 0%, #ef4444 10%, #ef4444 90%, transparent 100%)",
+                        boxShadow: hoveredButton === "higher"
+                          ? "0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.3)"
+                          : "0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)",
+                      }}
+                    />
+                    
+                    {/* Dashed projection line */}
+                    <div
+                      className="absolute"
+                      style={{
+                        top: "55%",
+                        left: "60%",
+                        right: "80px",
+                        height: "1px",
+                        backgroundImage: hoveredButton === "higher"
+                          ? "linear-gradient(90deg, #22c55e 50%, transparent 50%)"
+                          : "linear-gradient(90deg, #ef4444 50%, transparent 50%)",
+                        backgroundSize: "10px 1px",
+                      }}
+                    />
+
+                    {/* Countdown Timer on Line */}
+                    <div
+                      className="absolute flex items-center justify-center"
+                      style={{
+                        top: "calc(55% - 12px)",
+                        left: "55%",
+                        transform: "translateX(-50%)",
+                      }}
+                    >
+                      <span className="text-white text-xs font-mono bg-black/50 px-1.5 py-0.5 rounded">
+                        {String(Math.floor(countdown / 60)).padStart(2, "0")}:
+                        {String(countdown % 60).padStart(2, "0")}
+                      </span>
+                    </div>
+
+                    {/* Direction Arrow Indicator */}
+                    <motion.div
+                      className="absolute"
+                      style={{
+                        top: hoveredButton === "higher" ? "calc(55% - 20px)" : "calc(55% + 5px)",
+                        left: "58%",
+                      }}
+                      animate={{
+                        y: hoveredButton === "higher" ? [-3, 0, -3] : [3, 0, 3],
+                      }}
+                      transition={{
+                        duration: 0.8,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      {hoveredButton === "higher" ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#22c55e">
+                          <path d="M12 4l-8 8h6v8h4v-8h6z" />
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444">
+                          <path d="M12 20l8-8h-6V4h-4v8H4z" />
+                        </svg>
+                      )}
+                    </motion.div>
+
+                    {/* Price Badge on Right */}
+                    <motion.div
+                      className="absolute flex items-center"
+                      style={{
+                        top: "calc(55% - 13px)",
+                        right: "80px",
+                        backgroundColor: hoveredButton === "higher" ? "#22c55e" : "#ef4444",
+                        padding: "4px 12px",
+                        borderRadius: "4px",
+                        boxShadow: hoveredButton === "higher"
+                          ? "0 0 15px rgba(34, 197, 94, 0.5)"
+                          : "0 0 15px rgba(239, 68, 68, 0.5)",
+                      }}
+                      animate={{
+                        scale: [1, 1.02, 1],
+                      }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                      }}
+                    >
+                      <span className="text-white font-bold text-sm font-mono">
+                        {(() => {
+                          const sym = symbols.find(s => s.symbol === selectedSymbol);
+                          const price = sym?.price || "0.00000";
+                          const [intPart, decPart] = price.toString().split(".");
+                          return (
+                            <>
+                              <span>{intPart}</span>
+                              <span className="font-normal">.{decPart?.slice(0, 3) || "000"}</span>
+                              <span className="text-xs">{decPart?.slice(3) || "00"}</span>
+                            </>
+                          );
+                        })()}
+                      </span>
+                    </motion.div>
+
+                    {/* Semi-transparent fill area below/above line */}
+                    <div
+                      className="absolute left-[15%] right-[80px]"
+                      style={{
+                        top: hoveredButton === "higher" ? "0" : "55%",
+                        bottom: hoveredButton === "higher" ? "45%" : "0",
+                        background: hoveredButton === "higher"
+                          ? "linear-gradient(to bottom, transparent 0%, rgba(34, 197, 94, 0.1) 100%)"
+                          : "linear-gradient(to top, transparent 0%, rgba(239, 68, 68, 0.1) 100%)",
+                      }}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Active Trades Overlay - IQ Option Style */}
               <AnimatePresence>
@@ -3846,10 +4047,6 @@ function TradingInterface() {
                   className="rounded overflow-hidden cursor-pointer transition-opacity hover:opacity-90"
                   style={{ backgroundColor: "#0f1a2a", border: "1px solid #1a2d45" }}
                   onClick={() => {
-                    if (!showExpirationModal && expirationButtonRef.current) {
-                      const rect = expirationButtonRef.current.getBoundingClientRect();
-                      setExpirationDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
-                    }
                     setShowExpirationModal(!showExpirationModal);
                   }}
                 >
@@ -3899,78 +4096,128 @@ function TradingInterface() {
                   </div>
                 </div>
 
-                {/* Expiration Time Dropdown */}
-                {showExpirationModal && expirationDropdownPos && (
+                {/* Expiration Time Panel - IQ Option Style (beside right sidebar) */}
+                {showExpirationModal && (
                   <>
                     <div className="fixed inset-0 z-[200]" onClick={() => setShowExpirationModal(false)} />
                     <div
-                      className="fixed z-[201] rounded-lg shadow-2xl overflow-hidden"
-                      style={{ backgroundColor: "#0f1a2a", border: "1px solid #1a2d45", width: "280px", top: expirationDropdownPos.top, right: expirationDropdownPos.right }}
+                      className="fixed z-[201] rounded-l-xl shadow-2xl overflow-hidden"
+                      style={{ 
+                        backgroundColor: "#1c2127", 
+                        border: "1px solid #2a2e35", 
+                        borderRight: "none",
+                        width: "420px",
+                        right: "170px",
+                        top: "60px",
+                        maxHeight: "calc(100vh - 120px)"
+                      }}
                     >
-                      <div className="p-2">
-                        <div className="flex gap-3">
+                      {/* Header */}
+                      <div className="px-4 py-3 border-b" style={{ borderColor: "#2a2e35" }}>
+                        <h3 className="text-sm font-semibold tracking-wide" style={{ color: "#eef2f7" }}>EXPIRATION TIME</h3>
+                      </div>
+                      
+                      <div className="p-4">
+                        <div className="flex gap-4">
+                          {/* Left Column - Short Expirations */}
                           <div className="flex-1">
-                            <div className="flex items-center gap-1 mb-1 px-1">
-                              <span className="text-[10px] font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
-                              <span className="px-1 py-0.5 rounded text-[9px] font-bold" style={{ backgroundColor: "#00c087", color: "white" }}>85%</span>
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="text-sm font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
+                              <span className="px-2 py-0.5 rounded text-xs font-bold" style={{ backgroundColor: "#00c087", color: "white" }}>85%</span>
                             </div>
-                            {[
-                              { seconds: 30, label: "30s" },
-                              { seconds: 60, label: "1 min" },
-                              { seconds: 120, label: "2 min" },
-                              { seconds: 180, label: "3 min" },
-                              { seconds: 300, label: "5 min" },
-                            ].map((option) => {
-                              const now = new Date();
-                              const expTime = new Date(now.getTime() + option.seconds * 1000);
-                              const timeStr = `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
-                              const isSelected = expirationSeconds === option.seconds;
-                              return (
-                                <button
-                                  key={option.seconds}
-                                  onClick={() => { setExpirationSeconds(option.seconds); setShowExpirationModal(false); }}
-                                  className={`w-full flex items-center justify-between py-1 px-1.5 rounded text-[10px] transition-all ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}`}
-                                >
-                                  <span style={{ color: isSelected ? '#ffffff' : '#8b9ab8' }}>{timeStr}</span>
-                                  <span className="flex items-center gap-0.5" style={{ color: "#4a6080" }}>
-                                    <Clock className="w-2 h-2" />
-                                    {option.label}
-                                  </span>
-                                </button>
-                              );
-                            })}
+                            
+                            {/* Column Headers */}
+                            <div className="flex items-center justify-between mb-2 px-2">
+                              <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Time</span>
+                              <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Remaining</span>
+                            </div>
+                            
+                            {/* Options */}
+                            <div className="space-y-1">
+                              {[
+                                { seconds: 30, label: "00:30" },
+                                { seconds: 60, label: "01:00" },
+                                { seconds: 120, label: "02:00" },
+                                { seconds: 180, label: "03:00" },
+                                { seconds: 300, label: "05:00" },
+                              ].map((option) => {
+                                const now = new Date();
+                                const expTime = new Date(now.getTime() + option.seconds * 1000);
+                                const timeStr = `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
+                                const isSelected = expirationSeconds === option.seconds;
+                                return (
+                                  <button
+                                    key={option.seconds}
+                                    onClick={() => { setExpirationSeconds(option.seconds); setShowExpirationModal(false); }}
+                                    className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? '' : 'hover:bg-white/5'}`}
+                                    style={{ 
+                                      backgroundColor: isSelected ? '#00c087' : 'transparent',
+                                    }}
+                                  >
+                                    <span className="text-sm font-medium" style={{ color: isSelected ? '#ffffff' : '#eef2f7' }}>{timeStr}</span>
+                                    <span className="flex items-center gap-1.5 text-sm" style={{ color: isSelected ? '#ffffff' : '#8b9ab8' }}>
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12 6 12 12 16 14"/>
+                                      </svg>
+                                      {option.label}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                          <div className="w-px" style={{ backgroundColor: "#1a2d45" }} />
+                          
+                          {/* Divider */}
+                          <div className="w-px" style={{ backgroundColor: "#2a2e35" }} />
+                          
+                          {/* Right Column - Long Expirations */}
                           <div className="flex-1">
-                            <div className="flex items-center gap-1 mb-1 px-1">
-                              <span className="text-[10px] font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
-                              <span className="px-1 py-0.5 rounded text-[9px] font-bold" style={{ backgroundColor: "#00c087", color: "white" }}>84%</span>
+                            <div className="flex items-center gap-2 mb-3">
+                              <span className="text-sm font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
+                              <span className="px-2 py-0.5 rounded text-xs font-bold" style={{ backgroundColor: "#00c087", color: "white" }}>84%</span>
                             </div>
-                            {[
-                              { seconds: 600, label: "10 min" },
-                              { seconds: 900, label: "15 min" },
-                              { seconds: 1800, label: "30 min" },
-                              { seconds: 2700, label: "45 min" },
-                              { seconds: 3600, label: "1 hour" },
-                            ].map((option) => {
-                              const now = new Date();
-                              const expTime = new Date(now.getTime() + option.seconds * 1000);
-                              const timeStr = `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
-                              const isSelected = expirationSeconds === option.seconds;
-                              return (
-                                <button
-                                  key={option.seconds}
-                                  onClick={() => { setExpirationSeconds(option.seconds); setShowExpirationModal(false); }}
-                                  className={`w-full flex items-center justify-between py-1 px-1.5 rounded text-[10px] transition-all ${isSelected ? 'bg-white/10' : 'hover:bg-white/5'}`}
-                                >
-                                  <span style={{ color: isSelected ? '#ffffff' : '#8b9ab8' }}>{timeStr}</span>
-                                  <span className="flex items-center gap-0.5" style={{ color: "#4a6080" }}>
-                                    <Clock className="w-2 h-2" />
-                                    {option.label}
-                                  </span>
-                                </button>
-                              );
-                            })}
+                            
+                            {/* Column Headers */}
+                            <div className="flex items-center justify-between mb-2 px-2">
+                              <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Time</span>
+                              <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Remaining</span>
+                            </div>
+                            
+                            {/* Options */}
+                            <div className="space-y-1">
+                              {[
+                                { seconds: 600, label: "10:00" },
+                                { seconds: 900, label: "15:00" },
+                                { seconds: 1800, label: "30:00" },
+                                { seconds: 2700, label: "45:00" },
+                                { seconds: 3600, label: "60:00" },
+                              ].map((option) => {
+                                const now = new Date();
+                                const expTime = new Date(now.getTime() + option.seconds * 1000);
+                                const timeStr = `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
+                                const isSelected = expirationSeconds === option.seconds;
+                                return (
+                                  <button
+                                    key={option.seconds}
+                                    onClick={() => { setExpirationSeconds(option.seconds); setShowExpirationModal(false); }}
+                                    className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? '' : 'hover:bg-white/5'}`}
+                                    style={{ 
+                                      backgroundColor: isSelected ? '#00c087' : 'transparent',
+                                    }}
+                                  >
+                                    <span className="text-sm font-medium" style={{ color: isSelected ? '#ffffff' : '#eef2f7' }}>{timeStr}</span>
+                                    <span className="flex items-center gap-1.5 text-sm" style={{ color: isSelected ? '#ffffff' : '#8b9ab8' }}>
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12 6 12 12 16 14"/>
+                                      </svg>
+                                      {option.label}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -4020,239 +4267,244 @@ function TradingInterface() {
           </div>
         </div>
 
-        {/* Total Portfolio Section - IQ Option Style */}
+        {/* Open Positions Section - IQ Option Style */}
+        <AnimatePresence>
+          {showPortfolioPanel && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="border-t overflow-hidden transition-all duration-300"
+              style={{ 
+                backgroundColor: "#131722", 
+                borderColor: "#1e2a3a",
+                marginLeft: showTradingHistory ? "350px" : "76px"
+              }}
+            >
+              {/* Header Row */}
+              <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: "#1e2a3a" }}>
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-medium" style={{ color: "#eef2f7" }}>
+                    Options ({activeTrades.filter((t) => t.status === "active").length})
+                  </span>
+                  {(() => {
+                    const activePositions = activeTrades.filter((t) => t.status === "active");
+                    const totalPL = activePositions.reduce((sum, trade) => {
+                      const priceChange = currentPrice - trade.entryPrice;
+                      const isWinning = trade.direction === "higher" ? priceChange > 0 : priceChange < 0;
+                      return sum + (isWinning ? trade.amount * 0.88 : -trade.amount);
+                    }, 0);
+                    return totalPL !== 0 && (
+                      <span className={`text-sm font-medium ${totalPL >= 0 ? "text-green-400" : "text-red-400"}`}>
+                        {totalPL >= 0 ? "+" : ""}{formatAmount(totalPL, 2)}
+                      </span>
+                    );
+                  })()}
+                </div>
+                <button
+                  onClick={() => setShowPortfolioPanel(false)}
+                  className="p-1 rounded hover:bg-[#1e2a3a] transition-colors"
+                >
+                  <X className="w-4 h-4" style={{ color: "#8b9ab8" }} />
+                </button>
+              </div>
+
+              {/* Content */}
+              {activeTrades.filter((t) => t.status === "active").length === 0 ? (
+                <div className="p-8 flex flex-col items-center justify-center" style={{ minHeight: "120px" }}>
+                  <p className="text-sm mb-3" style={{ color: "#8b9ab8" }}>
+                    You have no open positions yet
+                  </p>
+                  <button
+                    onClick={() => { setAddAssetSideTab("trending"); setAddAssetSearch(""); setShowAddAssetModal(true); }}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:bg-[#1e2a3a]"
+                    style={{ borderColor: "#1e2a3a", color: "#8b9ab8" }}
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span className="text-sm">Select asset</span>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Table Header */}
+                  <div className="grid grid-cols-8 gap-2 px-4 py-2 text-xs border-b" style={{ borderColor: "#1e2a3a", color: "#626d7d" }}>
+                    <div className="flex items-center gap-1">
+                      <Settings className="w-3 h-3" />
+                      <span>Name</span>
+                    </div>
+                    <div>Type</div>
+                    <div>Expiration</div>
+                    <div>Investment</div>
+                    <div>Open</div>
+                    <div>Current Price</div>
+                    <div>Expected P/L</div>
+                    <div>P/L after sell</div>
+                  </div>
+
+                  {/* Trade Rows */}
+                  <div className="max-h-[200px] overflow-y-auto">
+                    {activeTrades
+                      .filter((t) => t.status === "active")
+                      .map((trade) => {
+                        const remaining = Math.max(0, trade.expirationTime - Date.now());
+                        const remainingSeconds = Math.ceil(remaining / 1000);
+                        const minutes = Math.floor(remainingSeconds / 60);
+                        const seconds = remainingSeconds % 60;
+                        const timeStr = minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, "0")}` : `00:${seconds.toString().padStart(2, "0")}`;
+                        
+                        const priceChange = currentPrice - trade.entryPrice;
+                        const isWinning = trade.direction === "higher" ? priceChange > 0 : priceChange < 0;
+                        const expectedPL = isWinning ? trade.amount * 0.88 : -trade.amount;
+                        
+                        const symbolData = symbols.find((s) => s.symbol === trade.symbol);
+                        const flagStr = symbolData?.flag || "";
+                        const flags = flagStr.includes(",") ? flagStr.split(",") : [flagStr];
+
+                        return (
+                          <div
+                            key={trade.id}
+                            className="grid grid-cols-8 gap-2 px-4 py-3 items-center border-b hover:bg-[#1a2332] transition-colors"
+                            style={{ borderColor: "#1e2a3a" }}
+                          >
+                            {/* Name with stacked flags */}
+                            <div className="flex items-center gap-2">
+                              <div className="relative flex items-center">
+                                {flags.length === 2 ? (
+                                  <>
+                                    <img 
+                                      src={`/currencies/${flags[0].toLowerCase()}.svg`} 
+                                      alt={flags[0]} 
+                                      className="w-5 h-5 rounded-full object-cover border border-gray-600"
+                                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                                    />
+                                    <img 
+                                      src={`/currencies/${flags[1].toLowerCase()}.svg`} 
+                                      alt={flags[1]} 
+                                      className="w-5 h-5 rounded-full object-cover border border-gray-600 -ml-2"
+                                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                                    />
+                                  </>
+                                ) : (
+                                  <AssetFlag flag={flagStr} symbol={trade.symbol} size={20} />
+                                )}
+                                <span className="absolute -bottom-1 -right-1 px-1 text-[8px] font-bold rounded text-white" style={{ backgroundColor: "#ff8516" }}>OTC</span>
+                              </div>
+                              <span className="text-sm font-medium" style={{ color: "#eef2f7" }}>
+                                {trade.symbol} (OTC)
+                              </span>
+                            </div>
+
+                            {/* Type */}
+                            <div className="text-sm" style={{ color: "#eef2f7" }}>Blitz</div>
+
+                            {/* Expiration countdown */}
+                            <div className="flex items-center gap-1">
+                              <div className="w-3 h-3 rounded-full border-2 border-green-400 flex items-center justify-center">
+                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                              </div>
+                              <span className="text-sm font-mono" style={{ color: "#00c853" }}>{timeStr}</span>
+                            </div>
+
+                            {/* Investment */}
+                            <div className="flex items-center gap-1">
+                              <span className="text-sm font-medium" style={{ color: "#eef2f7" }}>
+                                {formatAmount(trade.amount, 2)}
+                              </span>
+                              {trade.direction === "higher" ? (
+                                <ChevronUp className="w-4 h-4 text-green-400" />
+                              ) : (
+                                <ChevronDown className="w-4 h-4 text-red-400" />
+                              )}
+                            </div>
+
+                            {/* Open price */}
+                            <div className="text-sm" style={{ color: "#eef2f7" }}>{trade.entryPrice.toFixed(5)}</div>
+
+                            {/* Current price */}
+                            <div className="text-sm" style={{ color: "#eef2f7" }}>{currentPrice.toFixed(5)}</div>
+
+                            {/* Expected P/L */}
+                            <div className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}>
+                              {expectedPL >= 0 ? "+" : ""}{formatAmount(expectedPL, 2)}
+                            </div>
+
+                            {/* P/L after sell / Rollover */}
+                            <div>
+                              <button className="px-3 py-1 text-xs font-medium rounded border transition-colors hover:bg-[#1e2a3a]" style={{ borderColor: "#3a4553", color: "#8b9ab8" }}>
+                                Rollover
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  {/* Footer Summary */}
+                  <div className="flex items-center justify-between px-4 py-2 border-t" style={{ borderColor: "#1e2a3a" }}>
+                    <div className="flex items-center gap-6">
+                      {(() => {
+                        const activePositions = activeTrades.filter((t) => t.status === "active");
+                        const totalInvestment = activePositions.reduce((sum, t) => sum + t.amount, 0);
+                        const totalExpectedPL = activePositions.reduce((sum, trade) => {
+                          const priceChange = currentPrice - trade.entryPrice;
+                          const isWinning = trade.direction === "higher" ? priceChange > 0 : priceChange < 0;
+                          return sum + (isWinning ? trade.amount * 0.88 : -trade.amount);
+                        }, 0);
+                        return (
+                          <>
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4" style={{ color: "#626d7d" }} />
+                              <Settings className="w-4 h-4" style={{ color: "#626d7d" }} />
+                              <span className="text-sm" style={{ color: "#8b9ab8" }}>
+                                Investment <span style={{ color: "#eef2f7" }}>{formatAmount(totalInvestment, 2)}</span>
+                              </span>
+                            </div>
+                            <div className="text-sm" style={{ color: "#8b9ab8" }}>
+                              Expected P/L{" "}
+                              <span className={totalExpectedPL >= 0 ? "text-green-400" : "text-red-400"}>
+                                {totalExpectedPL >= 0 ? "+" : ""}{formatAmount(totalExpectedPL, 2)}
+                              </span>
+                            </div>
+                            <div className="text-sm" style={{ color: "#8b9ab8" }}>
+                              P/L after sell <span style={{ color: "#626d7d" }}>—</span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <button className="px-4 py-1.5 text-sm font-medium rounded border transition-colors hover:bg-[#1e2a3a]" style={{ borderColor: "#3a4553", color: "#8b9ab8" }}>
+                      Sell All
+                    </button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Show/Hide Positions Toggle - Total Portfolio Bar */}
         <div
-          className="border-t"
-          style={{ backgroundColor: "#070c15", borderColor: "#1a2d45" }}
+          className="border-t flex items-center justify-between px-4 py-2.5 transition-all duration-300 fixed right-0 z-40"
+          style={{ 
+            backgroundColor: "#131722", 
+            borderColor: "#1e2a3a",
+            left: showTradingHistory ? "350px" : "76px",
+            bottom: "40px"
+          }}
         >
-          {/* Portfolio Header Bar - Always Visible */}
+          <span className="text-sm font-medium" style={{ color: "#eef2f7" }}>Total portfolio</span>
           <button
             onClick={() => setShowPortfolioPanel(!showPortfolioPanel)}
-            className="w-full flex items-center justify-between px-4 py-2 hover:bg-[#111d30] transition-colors"
+            className="text-sm flex items-center gap-1 hover:opacity-80 transition-opacity"
+            style={{ color: "#ff8516" }}
           >
-            <span className="text-sm font-medium" style={{ color: "#eef2f7" }}>
-              Total portfolio
-            </span>
-            <span
-              className="text-sm flex items-center gap-1"
-              style={{ color: "#ff8516" }}
-            >
-              {showPortfolioPanel ? "Hide positions" : "Show positions"}
-              <ChevronDown
-                className={`w-4 h-4 transition-transform ${
-                  showPortfolioPanel ? "rotate-180" : ""
-                }`}
-              />
-            </span>
-          </button>
-
-          {/* Expanded Portfolio Panel */}
-          <AnimatePresence>
-            {showPortfolioPanel && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden border-t"
-                style={{ borderColor: "#1a2d45" }}
-              >
-                <div
-                  className="p-8 flex flex-col items-center justify-center"
-                  style={{ backgroundColor: "#070c15", minHeight: "150px" }}
-                >
-                  {activeTrades.filter((t) => t.status === "active").length ===
-                  0 ? (
-                    <>
-                      <p className="text-sm mb-3" style={{ color: "#8b9ab8" }}>
-                        You have no open positions yet
-                      </p>
-                      <button
-                        onClick={() => { setAddAssetSideTab("trending"); setAddAssetSearch(""); setShowAddAssetModal(true); }}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:bg-[#111d30]"
-                        style={{ borderColor: "#1a2d45", color: "#8b9ab8" }}
-                      >
-                        <Plus className="w-4 h-4" />
-                        <span className="text-sm">Select asset</span>
-                      </button>
-                    </>
-                  ) : (
-                    <div className="w-full">
-                      {/* Active Positions List */}
-                      <div className="space-y-2">
-                        {activeTrades
-                          .filter((t) => t.status === "active")
-                          .map((trade) => {
-                            const remaining = Math.max(
-                              0,
-                              trade.expirationTime - Date.now()
-                            );
-                            const remainingSeconds = Math.ceil(
-                              remaining / 1000
-                            );
-                            return (
-                              <div
-                                key={trade.id}
-                                className="flex items-center justify-between p-3 rounded-lg"
-                                style={{ backgroundColor: "#0d1626" }}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <div
-                                    className={`w-2 h-2 rounded-full ${
-                                      trade.direction === "higher"
-                                        ? "bg-green-500"
-                                        : "bg-red-500"
-                                    }`}
-                                  />
-                                  <div>
-                                    <div
-                                      className="font-medium text-sm"
-                                      style={{ color: "#eef2f7" }}
-                                    >
-                                      {trade.symbol}
-                                    </div>
-                                    <div
-                                      className="text-xs"
-                                      style={{ color: "#8b9ab8" }}
-                                    >
-                                      {trade.direction.toUpperCase()} •{" "}
-                                      {remainingSeconds}s
-                                    </div>
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div
-                                    className="font-bold text-sm"
-                                    style={{ color: "#eef2f7" }}
-                                  >
-                                    ${trade.amount.toLocaleString()}
-                                  </div>
-                                  <div
-                                    className="text-xs"
-                                    style={{ color: "#8b9ab8" }}
-                                  >
-                                    Entry: {trade.entryPrice.toFixed(5)}
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* Footer - IQ Option Style */}
-        <footer
-          className="flex items-center justify-between px-4 py-2 border-t"
-          style={{ backgroundColor: "#131211", borderColor: "#1a2d45" }}
-        >
-          {/* Left: Support */}
-          <div className="flex items-center gap-4">
-            <button
-              className="px-3 py-1.5 rounded text-xs font-medium flex items-center gap-1.5"
-              style={{ backgroundColor: "#ef4444", color: "#ffffff" }}
-            >
-              <Headphones className="w-3.5 h-3.5" />
-              SUPPORT
-            </button>
-            <div className="flex items-center gap-2">
-              <span className="text-xs" style={{ color: "#8b9ab8" }}>
-                @
-              </span>
-              <span className="text-xs" style={{ color: "#8b9ab8" }}>
-                support@m4capital.online
-              </span>
-            </div>
-            <span className="text-xs" style={{ color: "#8b9ab8" }}>
-              EVERY DAY, AROUND THE CLOCK
-            </span>
-          </div>
-
-          {/* Center: Powered By */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs" style={{ color: "#8b9ab8" }}>
-              Powered by
-            </span>
-            <Image
-              src="/m4capitallogo2.png"
-              alt="M4Capital"
-              width={20}
-              height={20}
-              className="object-contain"
+            {showPortfolioPanel ? "Hide positions" : "Show positions"}
+            <ChevronDown
+              className={`w-4 h-4 transition-transform ${showPortfolioPanel ? "rotate-180" : ""}`}
             />
-          </div>
-
-          {/* Right: Time and Controls */}
-          <div className="flex items-center gap-4">
-            {/* Sound Toggle */}
-            <button className="p-1.5 rounded hover:bg-[#111d30] transition-colors">
-              <svg
-                className="w-4 h-4"
-                style={{ color: "#8b9ab8" }}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-              </svg>
-            </button>
-
-            {/* Settings */}
-            <button className="p-1.5 rounded hover:bg-[#111d30] transition-colors">
-              <Settings className="w-4 h-4" style={{ color: "#8b9ab8" }} />
-            </button>
-
-            {/* Notifications */}
-            <button className="p-1.5 rounded hover:bg-[#111d30] transition-colors">
-              <Bell className="w-4 h-4" style={{ color: "#8b9ab8" }} />
-            </button>
-
-            {/* Current Time */}
-            <div className="text-xs" style={{ color: "#8b9ab8" }}>
-              CURRENT TIME:{" "}
-              <span style={{ color: "#eef2f7" }}>
-                {currentTime
-                  ? currentTime.toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "2-digit",
-                      year: "numeric",
-                    })
-                  : ""}{" "}
-                AT{" "}
-                {currentTime
-                  ? currentTime.toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      hour12: false,
-                    })
-                  : ""}{" "}
-                (UTC+1)
-              </span>
-            </div>
-
-            {/* Fullscreen */}
-            <button className="p-1.5 rounded hover:bg-[#111d30] transition-colors">
-              <svg
-                className="w-4 h-4"
-                style={{ color: "#8b9ab8" }}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-              </svg>
-            </button>
-          </div>
-        </footer>
+          </button>
+        </div>
 
         {/* Add Asset Modal - IQ Option Style */}
         <AnimatePresence>
@@ -4365,45 +4617,45 @@ function TradingInterface() {
                 >
                   {/* ── Left Sidebar ── */}
                   <div className="flex flex-col flex-shrink-0 overflow-y-auto"
-                    style={{ width: "156px", backgroundColor: "#131c2e", borderRight: "1px solid #1d2d45" }}>
+                    style={{ width: "110px", backgroundColor: "#131c2e", borderRight: "1px solid #1d2d45" }}>
 
                     {/* Trending */}
                     <button
                       onClick={() => setAddAssetSideTab("trending")}
-                      className="flex items-center gap-2 px-2 py-2.5 transition-colors"
+                      className="flex items-center gap-1 px-1 py-1.5 transition-colors"
                       style={{
                         backgroundColor: addAssetSideTab === "trending" ? "#1a2840" : "transparent",
                         color: addAssetSideTab === "trending" ? "#fff" : "#6b82a0",
-                        borderLeft: addAssetSideTab === "trending" ? "3px solid #4c8dff" : "3px solid transparent",
+                        borderLeft: addAssetSideTab === "trending" ? "2px solid #4c8dff" : "2px solid transparent",
                       }}
                     >
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                      <div className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2">
                           <path d="M12 20V10M18 20V4M6 20v-4"/>
                         </svg>
                       </div>
-                      <span className="text-xs font-medium">Trending</span>
+                      <span className="text-[10px] font-medium">Trending</span>
                     </button>
 
                     {/* Options parent + sub-items */}
                     <div>
                       <button
                         onClick={() => { setAddAssetSideTab("options"); }}
-                        className="w-full flex items-center gap-2 px-2 py-2.5 transition-colors"
+                        className="w-full flex items-center gap-1 px-1 py-1.5 transition-colors"
                         style={{
                           backgroundColor: addAssetSideTab === "options" ? "#1a2840" : "transparent",
                           color: addAssetSideTab === "options" ? "#fff" : "#6b82a0",
-                          borderLeft: addAssetSideTab === "options" ? "3px solid #4c8dff" : "3px solid transparent",
+                          borderLeft: addAssetSideTab === "options" ? "2px solid #4c8dff" : "2px solid transparent",
                         }}
                       >
-                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        <div className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0"
                           style={{ backgroundColor: "#162032" }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2">
                             <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
                           </svg>
                         </div>
-                        <span className="text-xs font-medium flex-1 text-left">Options</span>
+                        <span className="text-[10px] font-medium flex-1 text-left">Options</span>
                       </button>
 
                       {/* Blitz / Binary / Digital sub-items */}
@@ -4416,16 +4668,16 @@ function TradingInterface() {
                           <button
                             key={sub.id}
                             onClick={() => { setAddAssetSideTab("options"); setAddAssetOptionsSubTab(sub.id); }}
-                            className="w-full flex items-center justify-between py-1.5 pr-2 transition-colors"
+                            className="w-full flex items-center justify-between py-1 pr-1 transition-colors"
                             style={{
-                              paddingLeft: "38px",
+                              paddingLeft: "22px",
                               backgroundColor: addAssetSideTab === "options" && addAssetOptionsSubTab === sub.id ? "#162234" : "transparent",
                               color: addAssetSideTab === "options" && addAssetOptionsSubTab === sub.id ? "#fff" : "#6b82a0",
                             }}
                           >
-                            <span className="text-xs">{sub.label}</span>
-                            <span className="text-xs font-bold rounded-full px-2 py-0.5"
-                              style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "30px", textAlign: "center" }}>
+                            <span className="text-[9px]">{sub.label}</span>
+                            <span className="text-[8px] font-bold rounded-full px-1 py-0.5"
+                              style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "22px", textAlign: "center" }}>
                               {sub.count}
                             </span>
                           </button>
@@ -4436,22 +4688,22 @@ function TradingInterface() {
                     {/* Margin */}
                     <button
                       onClick={() => setAddAssetSideTab("margin")}
-                      className="flex items-center gap-2 px-2 py-2.5 transition-colors"
+                      className="flex items-center gap-1 px-1 py-1.5 transition-colors"
                       style={{
                         backgroundColor: addAssetSideTab === "margin" ? "#1a2840" : "transparent",
                         color: addAssetSideTab === "margin" ? "#fff" : "#6b82a0",
-                        borderLeft: addAssetSideTab === "margin" ? "3px solid #4c8dff" : "3px solid transparent",
+                        borderLeft: addAssetSideTab === "margin" ? "2px solid #4c8dff" : "2px solid transparent",
                       }}
                     >
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                      <div className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2">
                           <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
                         </svg>
                       </div>
-                      <span className="text-xs font-medium flex-1 text-left">Margin</span>
-                      <span className="text-xs font-bold rounded-full px-2 py-0.5"
-                        style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "30px", textAlign: "center" }}>
+                      <span className="text-[10px] font-medium flex-1 text-left">Margin</span>
+                      <span className="text-[8px] font-bold rounded-full px-1 py-0.5"
+                        style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "22px", textAlign: "center" }}>
                         {marginCount}
                       </span>
                     </button>
@@ -4459,22 +4711,22 @@ function TradingInterface() {
                     {/* Watchlist */}
                     <button
                       onClick={() => setAddAssetSideTab("watchlist")}
-                      className="flex items-center gap-2 px-2 py-2.5 transition-colors"
+                      className="flex items-center gap-1 px-1 py-1.5 transition-colors"
                       style={{
                         backgroundColor: addAssetSideTab === "watchlist" ? "#1a2840" : "transparent",
                         color: addAssetSideTab === "watchlist" ? "#fff" : "#6b82a0",
-                        borderLeft: addAssetSideTab === "watchlist" ? "3px solid #4c8dff" : "3px solid transparent",
+                        borderLeft: addAssetSideTab === "watchlist" ? "2px solid #4c8dff" : "2px solid transparent",
                       }}
                     >
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                      <div className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                         </svg>
                       </div>
-                      <span className="text-xs font-medium flex-1 text-left">Watchlist</span>
-                      <span className="text-xs font-bold rounded-full px-2 py-0.5"
-                        style={{ backgroundColor: "#162032", color: "#6b82a0", minWidth: "30px", textAlign: "center" }}>
+                      <span className="text-[10px] font-medium flex-1 text-left">Watchlist</span>
+                      <span className="text-[8px] font-bold rounded-full px-1 py-0.5"
+                        style={{ backgroundColor: "#162032", color: "#6b82a0", minWidth: "22px", textAlign: "center" }}>
                         {watchlistedSymbols.length}
                       </span>
                     </button>
@@ -4643,258 +4895,199 @@ function TradingInterface() {
           })()}
         </AnimatePresence>
 
-        {/* Trading History Modal */}
+        {/* Trading History Panel - IQ Option Style */}
         <AnimatePresence>
           {showTradingHistory && (
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowTradingHistory(false)}
-              className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              initial={{ x: -280, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: -280, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed top-20 z-40 flex flex-col"
+              style={{ 
+                left: "70px",
+                width: "280px",
+                bottom: "40px",
+                backgroundColor: "#131722",
+                borderRight: "1px solid #2a2e39"
+              }}
             >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-4xl max-h-[80vh] rounded-lg overflow-hidden"
-                style={{ backgroundColor: "#070c15" }}
+              {/* Header */}
+              <div
+                className="px-4 py-3 flex items-center justify-between"
+                style={{ borderBottom: "1px solid #2a2e39" }}
               >
-                {/* Header */}
-                <div
-                  className="p-4 border-b flex items-center justify-between"
-                  style={{ borderColor: "#1a2d45" }}
+                <span className="text-white font-medium text-sm">Trading History</span>
+                <button
+                  onClick={() => setShowTradingHistory(false)}
+                  className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
                 >
-                  <div className="flex items-center space-x-3">
-                    <History className="w-6 h-6" style={{ color: "#ff8516" }} />
-                    <h2
-                      className="text-xl font-semibold"
-                      style={{ color: "#ffffff" }}
-                    >
-                      Trading History
-                    </h2>
-                  </div>
-                  <button
-                    onClick={() => setShowTradingHistory(false)}
-                    className="p-2 hover:opacity-75 transition-opacity"
-                    style={{ color: "#8b9ab8" }}
-                  >
-                    <span className="text-xl">×</span>
-                  </button>
-                </div>
+                  <X className="w-4 h-4 text-gray-400" />
+                </button>
+              </div>
 
-                {/* Filter Bar */}
-                <div
-                  className="p-4 border-b flex items-center justify-between"
-                  style={{ borderColor: "#1a2d45" }}
+              {/* Filter Dropdown */}
+              <div className="px-4 py-2" style={{ borderBottom: "1px solid #2a2e39" }}>
+                <select
+                  value={historyFilter}
+                  onChange={(e) => setHistoryFilter(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded text-sm bg-[#1e222d] border border-[#2a2e39] text-white focus:outline-none focus:border-[#ff8516] appearance-none cursor-pointer"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                    backgroundRepeat: "no-repeat",
+                    backgroundPosition: "right 10px center",
+                    backgroundSize: "16px",
+                    paddingRight: "36px"
+                  }}
                 >
-                  <div className="flex items-center space-x-4">
-                    <select
-                      value={historyFilter}
-                      onChange={(e) => setHistoryFilter(e.target.value)}
-                      className="px-3 py-2 rounded-lg text-sm border"
-                      style={{
-                        backgroundColor: "#1a2d45",
-                        borderColor: "#4a4540",
-                        color: "#8b9ab8",
-                      }}
-                    >
-                      <option value="All Positions">All Positions</option>
-                      <option value="Win">Wins Only</option>
-                      <option value="Loss">Losses Only</option>
-                      <option value="Open">Open Positions</option>
-                    </select>
-                  </div>
-                  <div className="text-sm" style={{ color: "#8b9ab8" }}>
-                    Total Trades: {tradeHistory.length + openPositions.length}
-                  </div>
-                </div>
+                  <option value="All Positions">All Positions</option>
+                  <option value="Blitz Options">Blitz Options</option>
+                  <option value="Binary Options">Binary Options</option>
+                  <option value="Digital Options">Digital Options</option>
+                  <option value="Stocks, ETFs, Commodities">Stocks, ETFs, Commodities</option>
+                  <option value="Forex">Forex</option>
+                  <option value="Crypto">Crypto</option>
+                </select>
+              </div>
 
-                {/* Content */}
-                <div className="p-4 overflow-y-auto max-h-96">
-                  {/* Open Positions */}
-                  {openPositions.length > 0 && (
-                    <div className="mb-6">
-                      <h3
-                        className="text-lg font-medium mb-3"
-                        style={{ color: "#ff8516" }}
+              {/* Trades List */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Open Positions */}
+                {openPositions.length > 0 && openPositions.map((position) => {
+                  const now = Date.now();
+                  const expTime = position.expirationTime instanceof Date ? position.expirationTime.getTime() : position.expirationTime;
+                  const remaining = Math.max(0, expTime - now);
+                  const remainingSeconds = Math.ceil(remaining / 1000);
+                  const isWinning = position.direction === "HIGHER" 
+                    ? currentPrice > position.entryPrice 
+                    : currentPrice < position.entryPrice;
+                  const currentPL = isWinning ? position.amount * 0.85 : -position.amount;
+                  const plPercent = isWinning ? 85 : -100;
+                  
+                  return (
+                    <div
+                      key={position.id}
+                      className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
+                      style={{ borderBottom: "1px solid #2a2e39" }}
+                    >
+                      {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
+                      <div className="flex items-center gap-1.5">
+                        <div className="text-sm text-white font-bold w-10">
+                          {new Date(position.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                        </div>
+                        <div className="flex items-center gap-1.5 ml-2 flex-1">
+                          <AssetFlag flag={symbols.find((s) => s.symbol === position.symbol)?.flag || ""} symbol={position.symbol} size={18} />
+                          <div className="text-white text-xs truncate">
+                            {position.symbol}
+                          </div>
+                        </div>
+                        <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 12 12" fill={position.direction === "HIGHER" ? "#22c55e" : "#ef4444"}>
+                          {position.direction === "HIGHER" ? (
+                            <path d="M6 2L11 10H1L6 2Z" />
+                          ) : (
+                            <path d="M6 10L1 2H11L6 10Z" />
+                          )}
+                        </svg>
+                        <div className="text-white text-xs font-medium whitespace-nowrap text-right">
+                          ${position.amount.toLocaleString()}
+                        </div>
+                      </div>
+                      {/* Row 2: Date under time, Binary under logo, P/L right */}
+                      <div className="flex items-center justify-between mt-0.5">
+                        <div className="flex items-center">
+                          <span className="text-[10px] text-gray-500 w-10">
+                            {new Date(position.entryTime).getDate()} {new Date(position.entryTime).toLocaleDateString([], { month: 'short' })}
+                          </span>
+                          <span className="text-[10px] text-gray-500 ml-4">Blitz</span>
+                        </div>
+                        <span className={`text-xs ${isWinning ? "text-green-400" : "text-red-400"}`}>
+                          {isWinning ? "+" : "-"}${Math.abs(currentPL).toLocaleString()} ({isWinning ? "+" : ""}{plPercent}%)
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Completed Trades */}
+                {tradeHistory
+                  .filter((trade) => {
+                    // Filter by category
+                    if (historyFilter === "All Positions") return true;
+                    if (historyFilter === "Blitz Options") return true; // All short-term trades
+                    if (historyFilter === "Binary Options") return true; // All binary trades
+                    if (historyFilter === "Digital Options") return true;
+                    if (historyFilter === "Forex") {
+                      // Check if symbol contains forex pairs
+                      const forexPairs = ["EUR", "USD", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"];
+                      return forexPairs.some(pair => trade.symbol.toUpperCase().includes(pair));
+                    }
+                    if (historyFilter === "Crypto") {
+                      const cryptoSymbols = ["BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "DOT", "MATIC", "LINK", "AVAX", "UNI", "ATOM", "LTC", "SHIB"];
+                      return cryptoSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
+                    }
+                    if (historyFilter === "Stocks, ETFs, Commodities") {
+                      const stockSymbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "META", "NVDA", "GOLD", "OIL", "SILVER"];
+                      return stockSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
+                    }
+                    return true;
+                  })
+                  .map((trade) => {
+                    const isWin = trade.status === "WIN";
+                    const plPercent = isWin ? Math.round((trade.profit / trade.amount) * 100) : -100;
+                    
+                    return (
+                      <div
+                        key={trade.id}
+                        className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
+                        style={{ borderBottom: "1px solid #2a2e39" }}
                       >
-                        Open Positions ({openPositions.length})
-                      </h3>
-                      <div className="space-y-2">
-                        {openPositions.map((position) => (
-                          <div
-                            key={position.id}
-                            className="p-3 rounded-lg border flex items-center justify-between"
-                            style={{
-                              backgroundColor: "#252320",
-                              borderColor: "#1a2d45",
-                            }}
-                          >
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <span
-                                  className="font-medium"
-                                  style={{ color: "#ffffff" }}
-                                >
-                                  {position.symbol}
-                                </span>
-                                <span
-                                  className="px-2 py-1 rounded text-xs"
-                                  style={{
-                                    backgroundColor:
-                                      position.direction === "HIGHER"
-                                        ? "#5ddf38"
-                                        : "#ff4747",
-                                    color: "#ffffff",
-                                  }}
-                                >
-                                  {position.direction}
-                                </span>
-                              </div>
-                              <div
-                                className="text-sm"
-                                style={{ color: "#8b9ab8" }}
-                              >
-                                Amount: ${position.amount} • Entry: $
-                                {position.entryPrice}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <div
-                                className="text-sm"
-                                style={{ color: "#8b9ab8" }}
-                              >
-                                {new Date(
-                                  position.entryTime
-                                ).toLocaleTimeString()}
-                              </div>
-                              <div
-                                className="text-xs px-2 py-1 rounded"
-                                style={{
-                                  backgroundColor: "#ffa500",
-                                  color: "#ffffff",
-                                }}
-                              >
-                                ACTIVE
-                              </div>
+                        {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
+                        <div className="flex items-center gap-1.5">
+                          <div className="text-sm text-white font-bold w-10">
+                            {new Date(trade.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                          </div>
+                          <div className="flex items-center gap-1.5 ml-2 flex-1">
+                            <AssetFlag flag={symbols.find((s) => s.symbol === trade.symbol)?.flag || ""} symbol={trade.symbol} size={18} />
+                            <div className="text-white text-xs truncate">
+                              {trade.symbol}
                             </div>
                           </div>
-                        ))}
+                          <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 12 12" fill={trade.direction === "HIGHER" ? "#22c55e" : "#ef4444"}>
+                            {trade.direction === "HIGHER" ? (
+                              <path d="M6 2L11 10H1L6 2Z" />
+                            ) : (
+                              <path d="M6 10L1 2H11L6 10Z" />
+                            )}
+                          </svg>
+                          <div className="text-white text-xs font-medium whitespace-nowrap text-right">
+                            ${trade.amount.toLocaleString()}
+                          </div>
+                        </div>
+                        {/* Row 2: Date under time, Binary under logo, P/L right */}
+                        <div className="flex items-center justify-between mt-0.5">
+                          <div className="flex items-center">
+                            <span className="text-[10px] text-gray-500 w-10">
+                              {new Date(trade.entryTime).getDate()} {new Date(trade.entryTime).toLocaleDateString([], { month: 'short' })}
+                            </span>
+                            <span className="text-[10px] text-gray-500 ml-4">Binary</span>
+                          </div>
+                          <span className={`text-xs ${isWin ? "text-green-400" : "text-red-400"}`}>
+                            {isWin ? "+" : "-"}${Math.abs(trade.profit).toLocaleString()} ({isWin ? "+" : ""}{plPercent}%)
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })}
 
-                  {/* Trade History */}
-                  {tradeHistory.length > 0 ? (
-                    <div>
-                      <h3
-                        className="text-lg font-medium mb-3"
-                        style={{ color: "#ff8516" }}
-                      >
-                        Completed Trades ({tradeHistory.length})
-                      </h3>
-                      <div className="space-y-2">
-                        {tradeHistory
-                          .filter((trade) => {
-                            if (historyFilter === "All Positions") return true;
-                            if (historyFilter === "Win")
-                              return trade.status === "WIN";
-                            if (historyFilter === "Loss")
-                              return trade.status === "LOSS";
-                            return false;
-                          })
-                          .map((trade) => (
-                            <div
-                              key={trade.id}
-                              className="p-3 rounded-lg border flex items-center justify-between"
-                              style={{
-                                backgroundColor: "#252320",
-                                borderColor: "#1a2d45",
-                              }}
-                            >
-                              <div>
-                                <div className="flex items-center space-x-2">
-                                  <span
-                                    className="font-medium"
-                                    style={{ color: "#ffffff" }}
-                                  >
-                                    {trade.symbol}
-                                  </span>
-                                  <span
-                                    className="px-2 py-1 rounded text-xs"
-                                    style={{
-                                      backgroundColor:
-                                        trade.direction === "HIGHER"
-                                          ? "#5ddf38"
-                                          : "#ff4747",
-                                      color: "#ffffff",
-                                    }}
-                                  >
-                                    {trade.direction}
-                                  </span>
-                                </div>
-                                <div
-                                  className="text-sm"
-                                  style={{ color: "#8b9ab8" }}
-                                >
-                                  Amount: {formatAmount(trade.amount, 2)} •
-                                  Entry: ${trade.entryPrice}
-                                  {trade.exitPrice &&
-                                    ` • Exit: $${trade.exitPrice}`}
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <div
-                                  className={`font-medium ${
-                                    trade.profit >= 0
-                                      ? "text-green-400"
-                                      : "text-red-400"
-                                  }`}
-                                >
-                                  {trade.profit >= 0 ? "+" : ""}
-                                  {formatAmount(trade.profit, 2)}
-                                </div>
-                                <div
-                                  className="text-sm"
-                                  style={{ color: "#8b9ab8" }}
-                                >
-                                  {new Date(trade.entryTime).toLocaleString()}
-                                </div>
-                                <div
-                                  className={`text-xs px-2 py-1 rounded ${
-                                    trade.status === "WIN"
-                                      ? "bg-green-500/20 text-green-400"
-                                      : "bg-red-500/20 text-red-400"
-                                  }`}
-                                >
-                                  {trade.status}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <History
-                        className="w-16 h-16 mx-auto mb-4 opacity-50"
-                        style={{ color: "#4a6080" }}
-                      />
-                      <p
-                        className="text-lg font-medium mb-2"
-                        style={{ color: "#8b9ab8" }}
-                      >
-                        No Trading History
-                      </p>
-                      <p className="text-sm" style={{ color: "#4a6080" }}>
-                        Execute some trades to see your history here
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+                {/* Empty State */}
+                {tradeHistory.length === 0 && openPositions.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-16 px-4">
+                    <History className="w-12 h-12 text-gray-600 mb-3" />
+                    <p className="text-gray-400 text-sm text-center">No trading history yet</p>
+                    <p className="text-gray-500 text-xs text-center mt-1">Execute some trades to see your history here</p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -5011,6 +5204,138 @@ function TradingInterface() {
           </div>
         </footer>
       </div>
+
+      {/* Practice Account Top-Up Modal */}
+      <AnimatePresence>
+        {showPracticeTopUpModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
+            onClick={() => {
+              setShowPracticeTopUpModal(false);
+              setPracticeTopUpAmount("");
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md rounded-xl p-6"
+              style={{ backgroundColor: "#0a1020", border: "1px solid #1a2d45" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold text-white">Top Up Practice Account</h2>
+                <button
+                  onClick={() => {
+                    setShowPracticeTopUpModal(false);
+                    setPracticeTopUpAmount("");
+                  }}
+                  className="text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Current Balance Display */}
+              <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "#1a2d45" }}>
+                <div className="text-sm text-gray-400 mb-1">Current Practice Balance</div>
+                <div className="text-2xl font-bold" style={{ color: "#ff8516" }}>
+                  $ {practiceAccountBalance.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </div>
+              </div>
+
+              {/* Amount Input */}
+              <div className="mb-6">
+                <label className="text-sm text-gray-400 mb-2 block">Enter Amount to Add (Max $10,000)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">$</span>
+                  <input
+                    type="number"
+                    value={practiceTopUpAmount}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow empty or valid numbers up to 10000
+                      if (value === "" || (parseFloat(value) >= 0 && parseFloat(value) <= 10000)) {
+                        setPracticeTopUpAmount(value);
+                      }
+                    }}
+                    placeholder="0.00"
+                    min="0"
+                    max="10000"
+                    step="0.01"
+                    className="w-full pl-10 pr-4 py-3 rounded-lg text-white text-lg font-medium focus:outline-none focus:ring-2"
+                    style={{
+                      backgroundColor: "#0d1829",
+                      border: "1px solid #1a2d45",
+                      "--tw-ring-color": "#ff8516",
+                    } as React.CSSProperties}
+                  />
+                </div>
+                {parseFloat(practiceTopUpAmount) > 10000 && (
+                  <p className="text-red-400 text-sm mt-2">Maximum amount is $10,000</p>
+                )}
+              </div>
+
+              {/* Quick Amount Buttons */}
+              <div className="grid grid-cols-4 gap-2 mb-6">
+                {[100, 500, 1000, 5000].map((quickAmount) => (
+                  <button
+                    key={quickAmount}
+                    onClick={() => setPracticeTopUpAmount(quickAmount.toString())}
+                    className="py-2 rounded text-sm font-medium transition-all hover:opacity-80"
+                    style={{
+                      backgroundColor: practiceTopUpAmount === quickAmount.toString() ? "#ff8516" : "#1a2d45",
+                      color: practiceTopUpAmount === quickAmount.toString() ? "#000" : "#fff",
+                    }}
+                  >
+                    ${quickAmount.toLocaleString()}
+                  </button>
+                ))}
+              </div>
+
+              {/* Reset to Default Button */}
+              <button
+                onClick={() => {
+                  setPracticeAccountBalance(10000);
+                  setShowPracticeTopUpModal(false);
+                  setPracticeTopUpAmount("");
+                }}
+                className="w-full py-3 rounded-lg text-sm font-medium mb-3 transition-all hover:opacity-80"
+                style={{ backgroundColor: "#1a2d45", color: "#8b9ab8" }}
+              >
+                Reset to Default ($10,000)
+              </button>
+
+              {/* Add Balance Button */}
+              <button
+                onClick={() => {
+                  const amountToAdd = parseFloat(practiceTopUpAmount);
+                  if (!isNaN(amountToAdd) && amountToAdd > 0 && amountToAdd <= 10000) {
+                    setPracticeAccountBalance((prev) => prev + amountToAdd);
+                    setShowPracticeTopUpModal(false);
+                    setPracticeTopUpAmount("");
+                  }
+                }}
+                disabled={!practiceTopUpAmount || parseFloat(practiceTopUpAmount) <= 0 || parseFloat(practiceTopUpAmount) > 10000}
+                className="w-full py-3 rounded-lg text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
+                style={{
+                  backgroundColor: "#ff8516",
+                  color: "#000",
+                }}
+              >
+                Add ${practiceTopUpAmount ? parseFloat(practiceTopUpAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"} to Practice Account
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Funding Modal */}
       <AnimatePresence>

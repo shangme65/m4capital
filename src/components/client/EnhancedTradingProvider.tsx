@@ -72,6 +72,7 @@ export interface TradingContextType {
   ) => Promise<boolean>;
   openPositions: Position[];
   tradeHistory: Trade[];
+  reloadTradeHistory: () => Promise<void>;
 }
 
 const TradingContext = createContext<TradingContextType | null>(null);
@@ -139,6 +140,40 @@ function InternalTradingProvider({ children }: TradingProviderProps) {
     ];
     defaultSymbols.forEach((symbol) => subscribeToSymbol(symbol));
   }, []);
+
+  // Load trade history from database on mount
+  useEffect(() => {
+    const loadTradeHistory = async () => {
+      try {
+        const response = await fetch("/api/trades");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.trades) {
+            setTradeHistory(data.trades);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load trade history:", error);
+      }
+    };
+
+    loadTradeHistory();
+  }, []);
+
+  // Function to reload trade history (can be called after trades complete)
+  const reloadTradeHistory = async () => {
+    try {
+      const response = await fetch("/api/trades");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.trades) {
+          setTradeHistory(data.trades);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to reload trade history:", error);
+    }
+  };
 
   // Convert MarketTick to MarketData format
   const convertTickToMarketData = (tick: MarketTick): MarketData => ({
@@ -339,6 +374,7 @@ function InternalTradingProvider({ children }: TradingProviderProps) {
     executeTrade,
     openPositions,
     tradeHistory,
+    reloadTradeHistory,
   };
 
   return (

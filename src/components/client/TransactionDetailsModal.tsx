@@ -217,6 +217,31 @@ export default function TransactionDetailsModal({
     }
 
     const crypto = getCryptoFullName(transaction.asset);
+    const assetSymbol = transaction.asset?.split(" ")[0] || "";
+    
+    // Check if it's a forex pair
+    const FOREX_CODES = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+    const checkIsForexPair = (sym: string) => {
+      if (sym.includes("/")) {
+        const [base, quote] = sym.split("/");
+        return FOREX_CODES.has(base) && FOREX_CODES.has(quote);
+      }
+      if (sym.length === 6 && /^[A-Z]{6}$/.test(sym)) {
+        const base = sym.substring(0, 3);
+        const quote = sym.substring(3, 6);
+        return FOREX_CODES.has(base) && FOREX_CODES.has(quote);
+      }
+      return false;
+    };
+    
+    // For trade_earned, or buy/sell forex pairs - show "Closed Trade (PAIR)"
+    const isClosedTrade = transaction.type === "trade_earned" ||
+      ((transaction.type === "buy" || transaction.type === "sell") && checkIsForexPair(assetSymbol));
+    
+    if (isClosedTrade) {
+      return `Closed Trade (${assetSymbol})`;
+    }
+    
     const typeMap: Record<string, string> = {
       buy: "Bought",
       sell: "Sold",
@@ -565,48 +590,51 @@ export default function TransactionDetailsModal({
                             />
                           </div>
                         </div>
-                      ) : transaction.type === "trade_earned" ? (() => {
+                      ) : (() => {
                         const assetSymbol = transaction.asset?.split(" ")[0] || "";
                         const FOREX_CODES = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
-                        // Forex pair (e.g. EURGBP)
-                        if (assetSymbol.length === 6 && /^[A-Z]{6}$/.test(assetSymbol)) {
-                          const base = assetSymbol.substring(0, 3);
-                          const quote = assetSymbol.substring(3, 6);
-                          if (FOREX_CODES.has(base) && FOREX_CODES.has(quote)) {
-                            return (
-                              <div className="relative w-14 h-12">
-                                <div className="absolute left-0 top-0">
-                                  <Image src={getCurrencyFlagUrl(base)} alt={base} width={32} height={32} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} unoptimized />
-                                </div>
-                                <div className="absolute left-5 top-0">
-                                  <Image src={getCurrencyFlagUrl(quote)} alt={quote} width={32} height={32} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} unoptimized />
-                                </div>
-                              </div>
-                            );
-                          }
-                        }
-                        // Crypto pair (e.g. BTC/ETH)
+                        
+                        // Check if it's a forex pair (both EURGBP and EUR/GBP formats)
+                        let base = "", quote = "";
                         if (assetSymbol.includes("/")) {
-                          const [base, quote] = assetSymbol.split("/");
+                          [base, quote] = assetSymbol.split("/");
+                        } else if (assetSymbol.length === 6 && /^[A-Z]{6}$/.test(assetSymbol)) {
+                          base = assetSymbol.substring(0, 3);
+                          quote = assetSymbol.substring(3, 6);
+                        }
+                        
+                        // Show overlapping logos for forex pairs (for all types: trade_earned, buy, sell, TRADE)
+                        if (base && quote && FOREX_CODES.has(base) && FOREX_CODES.has(quote)) {
                           return (
                             <div className="relative w-14 h-12">
                               <div className="absolute left-0 top-0">
-                                <CryptoIcon symbol={base} size="md" />
+                                <Image src={getCurrencyFlagUrl(base)} alt={base} width={32} height={32} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} unoptimized />
                               </div>
                               <div className="absolute left-5 top-0">
-                                <CryptoIcon symbol={quote} size="md" />
+                                <Image src={getCurrencyFlagUrl(quote)} alt={quote} width={32} height={32} className={`rounded-full object-cover border-2 ${isDark ? "border-gray-800" : "border-white"}`} unoptimized />
                               </div>
                             </div>
                           );
                         }
+                        
+                        // Crypto pair (e.g. BTC/ETH)
+                        if (assetSymbol.includes("/")) {
+                          const [cryptoBase, cryptoQuote] = assetSymbol.split("/");
+                          return (
+                            <div className="relative w-14 h-12">
+                              <div className="absolute left-0 top-0">
+                                <CryptoIcon symbol={cryptoBase} size="md" />
+                              </div>
+                              <div className="absolute left-5 top-0">
+                                <CryptoIcon symbol={cryptoQuote} size="md" />
+                              </div>
+                            </div>
+                          );
+                        }
+                        
                         // Single asset
                         return <CryptoIcon symbol={assetSymbol} size="lg" />;
-                      })() : (
-                        <CryptoIcon
-                          symbol={transaction.asset}
-                          size="lg"
-                        />
-                      )}
+                      })()}
                     </div>
                     <div className="flex-1">
                       <h2 className={`text-lg font-bold mb-1.5 ${

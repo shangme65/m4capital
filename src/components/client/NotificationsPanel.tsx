@@ -172,41 +172,52 @@ export default function NotificationsPanel({
 
   const getNotificationIcon = (notification: Notification) => {
     const asset = notification.asset?.toUpperCase() || "";
+    const titleLower = notification.title?.toLowerCase() || "";
     const isTradeEarned =
       notification.type?.toLowerCase() === "trade_earned" ||
-      notification.title?.toLowerCase().includes("trade earned") ||
+      titleLower.includes("trade earned") ||
       notification.message?.toLowerCase().includes("trade earned");
+    const isTradeWon = titleLower.includes("trade won");
+    const isTradeLost = titleLower.includes("trade lost");
+    const isTradeResult = isTradeEarned || isTradeWon || isTradeLost;
     const pair =
       parsePairFromText(asset) ||
       parsePairFromText(notification.title) ||
       parsePairFromText(notification.message);
 
-    if (isTradeEarned && pair) {
+    // Show trade pair icons for trade earned/won/lost notifications
+    if (isTradeResult && pair) {
       const baseIsForex = FOREX_CODES.has(pair.base);
       const quoteIsForex = FOREX_CODES.has(pair.quote);
+      // Green for won/earned, red for lost
+      const indicatorColor = isTradeLost ? "bg-red-500" : "bg-green-500";
 
       return (
-        <div className="relative flex-shrink-0">
-          <div className="flex flex-col items-center">
+        <div className="relative flex-shrink-0" style={{ width: "38px", height: "28px" }}>
+          {/* Base currency - left side */}
+          <div className="absolute left-0 top-0">
             {baseIsForex ? (
               <Image
                 src={getCurrencyFlagUrl(pair.base)}
                 alt={pair.base}
-                width={28}
-                height={28}
+                width={24}
+                height={24}
                 className="rounded-full object-cover"
                 unoptimized
               />
             ) : (
               <CryptoIcon symbol={pair.base} size="sm" />
             )}
-            <div className="w-3 h-3 rounded-full bg-green-500 border border-white/60 mt-0.5 mb-0.5" />
+          </div>
+          
+          {/* Quote currency - right side, overlapping */}
+          <div className="absolute right-0 top-0">
             {quoteIsForex ? (
               <Image
                 src={getCurrencyFlagUrl(pair.quote)}
                 alt={pair.quote}
-                width={28}
-                height={28}
+                width={24}
+                height={24}
                 className="rounded-full object-cover"
                 unoptimized
               />
@@ -214,6 +225,12 @@ export default function NotificationsPanel({
               <CryptoIcon symbol={pair.quote} size="sm" />
             )}
           </div>
+          
+          {/* Status indicator - centered between the two flags */}
+          <div 
+            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full ${indicatorColor} border-2 border-white/60`}
+            style={{ zIndex: 10 }}
+          />
         </div>
       );
     }
@@ -228,7 +245,6 @@ export default function NotificationsPanel({
     // Show real crypto logo
     if (isCrypto) {
       const meta = getCryptoMetadata(iconAsset);
-      const titleLower = notification.title?.toLowerCase() || "";
       
       // Determine transfer direction
       const isTransferSent = titleLower.includes("transfer sent") || (titleLower.includes("transfer") && (notification.amount || 0) < 0);
@@ -634,9 +650,9 @@ export default function NotificationsPanel({
 
                               {/* Content */}
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between mb-0.5">
+                                <div className="flex items-start justify-between mb-1">
                                   <h3
-                                    className={`text-xs font-bold ${
+                                    className={`text-sm font-bold ${
                                       !notification.read
                                         ? isDark ? "text-white" : "text-gray-900"
                                         : isDark ? "text-gray-300" : "text-gray-600"
@@ -668,7 +684,7 @@ export default function NotificationsPanel({
                                     >
                                       {/* Message */}
                                       {notification.message && (
-                                        <p className={`text-xs leading-relaxed mb-2 mt-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                                        <p className={`text-xs leading-relaxed mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                                           {notification.message}
                                         </p>
                                       )}
