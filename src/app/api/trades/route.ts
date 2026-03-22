@@ -32,8 +32,14 @@ export async function GET(request: NextRequest) {
       take: 100, // Limit to last 100 trades
     });
 
+    // Filter out swap transactions (they belong in dashboard portfolio, not traderoom)
+    const tradingHistoryOnly = trades.filter((trade) => {
+      const metadata = trade.metadata as { type?: string } | null;
+      return metadata?.type !== "SWAP";
+    });
+
     // Transform trades to match expected format
-    const formattedTrades = trades.map((trade) => {
+    const formattedTrades = tradingHistoryOnly.map((trade) => {
       const entryPrice = Number(trade.entryPrice);
       const exitPrice = trade.exitPrice ? Number(trade.exitPrice) : entryPrice;
       const profit = Number(trade.profit);

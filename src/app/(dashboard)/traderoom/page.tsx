@@ -93,11 +93,49 @@ const AssetFlag = ({ flag, symbol, size = 20 }: { flag: string; symbol: string; 
       </span>
     );
   }
+  
   // For single currency/crypto codes (2-8 uppercase letters), use CryptoIcon
   if (/^[A-Z]{2,8}$/.test(flag)) {
     return <CryptoIcon symbol={flag} size="xs" />;
   }
-  // For crypto/stocks/other, show text/emoji as-is
+  
+  // For symbols with "/" - extract parts and render pair icons
+  if (symbol.includes("/")) {
+    const [base, quote] = symbol.split("/");
+    // Clean the symbol (remove numbers, spaces)
+    const cleanBase = base.replace(/[0-9\s]/g, "").toUpperCase();
+    const cleanQuote = quote.replace(/[0-9\s]/g, "").toUpperCase();
+    
+    // If quote is USD, just show the base crypto icon
+    if (cleanQuote === "USD" && /^[A-Z]{2,10}$/.test(cleanBase)) {
+      return <CryptoIcon symbol={cleanBase} size="xs" />;
+    }
+    
+    // Show both icons for pairs
+    if (/^[A-Z]{2,10}$/.test(cleanBase) && /^[A-Z]{2,10}$/.test(cleanQuote)) {
+      return (
+        <span className="inline-flex items-center -space-x-1">
+          <CryptoIcon symbol={cleanBase} size="xs" />
+          <CryptoIcon symbol={cleanQuote} size="xs" />
+        </span>
+      );
+    }
+  }
+  
+  // For single asset symbols (no "/"), try to use the symbol as icon
+  const cleanSymbol = symbol.replace(/[0-9\s]/g, "").replace(/Index$/i, "").toUpperCase().trim();
+  if (/^[A-Z]{2,10}$/.test(cleanSymbol)) {
+    return <CryptoIcon symbol={cleanSymbol} size="xs" />;
+  }
+  
+  // For crypto/stocks with emoji flags, try using the symbol directly
+  // Extract first word of symbol to use as icon code
+  const symbolCode = symbol.split(/[\s\/]/)[0].toUpperCase();
+  if (/^[A-Z]{2,10}$/.test(symbolCode)) {
+    return <CryptoIcon symbol={symbolCode} size="xs" />;
+  }
+  
+  // Fallback to emoji/text flag
   return <span>{flag}</span>;
 };
 
@@ -108,6 +146,7 @@ interface ActiveTrade {
   direction: "higher" | "lower";
   amount: number;
   entryPrice: number;
+  entryYPosition: number; // Y position percentage on chart where trade was placed
   entryTime: number;
   expirationTime: number;
   expirationSeconds: number;
@@ -132,15 +171,17 @@ function TradingInterface() {
   const [tradingMode, setTradingMode] = useState<"binary" | "forex" | "crypto">(
     "binary"
   );
+  const [selectedMarket, setSelectedMarket] = useState("Blitz");
+  const marketCategories = ["Blitz", "Binary", "Digital", "Forex", "Stocks", "Crypto", "Commodities", "Indices"];
   const [showAddAssetModal, setShowAddAssetModal] = useState(false);
   const [addAssetSideTab, setAddAssetSideTab] = useState<"trending" | "options" | "margin" | "watchlist">("trending");
-  const [addAssetOptionsSubTab, setAddAssetOptionsSubTab] = useState<"blitz" | "binary" | "digital">("blitz");
+  const [showMarketDropdown, setShowMarketDropdown] = useState(false);
   const [addAssetSearch, setAddAssetSearch] = useState("");
   const [addAssetGeoTab, setAddAssetGeoTab] = useState<"worldwide" | "local">("worldwide");
   const [watchlistedSymbols, setWatchlistedSymbols] = useState<string[]>([]);
-  const [openTabs, setOpenTabs] = useState([
-    { symbol: "USD/CAD", type: "Binary" },
-    { symbol: "EUR/USD", type: "Binary" },
+  const [openTabs, setOpenTabs] = useState<Array<{ symbol: string; type: string; lastResult?: { amount: number; status: "won" | "lost" } }>>([
+    { symbol: "USD/CAD", type: "Blitz" },
+    { symbol: "EUR/USD", type: "Digital" },
   ]);
   const [activeTab, setActiveTab] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -187,10 +228,16 @@ function TradingInterface() {
   const [hoveredButton, setHoveredButton] = useState<"higher" | "lower" | null>(
     null
   );
+  
+  // Current price Y position on chart (percentage from top)
+  const [priceYPosition, setPriceYPosition] = useState<number>(50);
 
   // Active trades state for chart markers
   const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
   const [currentPrice, setCurrentPrice] = useState<number>(0);
+  
+  // Last finished trade - stays visible until new trade is placed
+  const [lastFinishedTrade, setLastFinishedTrade] = useState<ActiveTrade | null>(null);
 
   // Get trading context for history data
   const { tradeHistory, openPositions, reloadTradeHistory } = useTradingContext();
@@ -563,6 +610,17 @@ function TradingInterface() {
     }
   }, [isBalanceDropdownOpen]);
 
+  // Update current price when symbol changes or price data updates
+  useEffect(() => {
+    const selectedSymbolData = symbols.find((s) => s.symbol === selectedSymbol);
+    if (selectedSymbolData?.price) {
+      const priceNum = parseFloat(selectedSymbolData.price.replace(/,/g, ''));
+      if (!isNaN(priceNum)) {
+        setCurrentPrice(priceNum);
+      }
+    }
+  }, [selectedSymbol, cryptoPrices, forexRates]);
+
   // Handle funding from fiat balance
   const handleFundFromFiat = async () => {
     const amountUSD = parseFloat(fundAmount);
@@ -688,6 +746,7 @@ function TradingInterface() {
       direction,
       amount,
       entryPrice,
+      entryYPosition: priceYPosition, // Store the Y position where trade was placed
       entryTime,
       expirationTime,
       expirationSeconds,
@@ -695,6 +754,14 @@ function TradingInterface() {
     };
 
     setActiveTrades((prev) => [...prev, newTrade]);
+    
+    // Clear last finished trade when new trade is placed
+    setLastFinishedTrade(null);
+    
+    // Clear lastResult from the current tab
+    setOpenTabs(prev => prev.map(tab => 
+      tab.symbol === selectedSymbol ? { ...tab, lastResult: undefined } : tab
+    ));
 
     // Deduct from balance
     if (selectedAccountType === "real") {
@@ -717,8 +784,8 @@ function TradingInterface() {
     const interval = setInterval(() => {
       const now = Date.now();
 
-      setActiveTrades((prev) =>
-        prev.map((trade) => {
+      setActiveTrades((prev) => {
+        const updatedTrades = prev.map((trade) => {
           if (trade.status !== "active") return trade;
 
           // Check if trade has expired
@@ -755,23 +822,37 @@ function TradingInterface() {
               }
             }
 
-            return {
+            const finishedTrade = {
               ...trade,
-              status: won ? "won" : "lost",
+              status: won ? "won" as const : "lost" as const,
               result: won ? payout - trade.amount : -trade.amount,
             };
+            
+            // Save as last finished trade (for display after removal)
+            setLastFinishedTrade(finishedTrade);
+            
+            // Save result to the corresponding tab
+            setOpenTabs(prev => prev.map(tab => 
+              tab.symbol === trade.symbol
+                ? { ...tab, lastResult: { amount: finishedTrade.result || 0, status: won ? "won" : "lost" } }
+                : tab
+            ));
+            
+            return finishedTrade;
           }
 
           return trade;
-        })
-      );
+        });
+        
+        return updatedTrades;
+      });
 
-      // Remove completed trades after 5 seconds
+      // Remove completed trades after 3 seconds (lastFinishedTrade persists separately)
       setActiveTrades((prev) =>
         prev.filter((trade) => {
           if (trade.status === "won" || trade.status === "lost") {
             const completedTime = trade.expirationTime;
-            return now - completedTime < 5000; // Keep for 5 seconds after completion
+            return now - completedTime < 3000; // Keep for 3 seconds after completion
           }
           return true;
         })
@@ -1011,7 +1092,7 @@ function TradingInterface() {
               <div className="flex items-center space-x-1">
                 {openTabs.map((tab, index) => (
                   <div
-                    key={`header-tab-${index}-${tab.symbol}`}
+                    key={`header-tab-${index}-${tab.symbol}-${tab.type}`}
                     onClick={() => {
                       setActiveTab(index);
                       setSelectedSymbol(tab.symbol);
@@ -1066,9 +1147,58 @@ function TradingInterface() {
                             color: activeTab === index ? "#ff8516" : "#666666",
                           }}
                         >
-                          {tab.symbol.includes("USD") ? "OTC" : "Blitz"}
+                          {tab.type}
                         </span>
                       </div>
+                      
+                      {/* Show active trades P/L or last finished trade result */}
+                      {(() => {
+                        const tabTrades = activeTrades.filter(t => t.symbol === tab.symbol && t.status === "active");
+                        
+                        // If there are active trades
+                        if (tabTrades.length > 0) {
+                          // Only calculate real-time P/L for the active tab
+                          if (activeTab === index) {
+                            const totalPL = tabTrades.reduce((sum, trade) => {
+                              const priceChange = currentPrice - trade.entryPrice;
+                              const isWinning = 
+                                (trade.direction === "higher" && priceChange > 0) ||
+                                (trade.direction === "lower" && priceChange < 0);
+                              return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
+                            }, 0);
+                            
+                            return (
+                              <span 
+                                className="text-xs font-medium ml-1"
+                                style={{ color: totalPL >= 0 ? "#00c087" : "#ef4444" }}
+                              >
+                                {totalPL >= 0 ? "+" : ""}$ {totalPL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            );
+                          }
+                          
+                          // For inactive tabs, just show indicator that there are active trades
+                          return (
+                            <span className="text-xs font-medium ml-1 text-[#00c087]">
+                              {tabTrades.length} active
+                            </span>
+                          );
+                        }
+                        
+                        // No active trades - show last finished trade result if exists
+                        if (tab.lastResult) {
+                          return (
+                            <span 
+                              className="text-xs font-medium ml-1"
+                              style={{ color: tab.lastResult.status === "won" ? "#00c087" : "#ef4444" }}
+                            >
+                              {tab.lastResult.amount >= 0 ? "+" : ""}$ {tab.lastResult.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          );
+                        }
+                        
+                        return null;
+                      })()}
                     </div>
                   </div>
                 ))}
@@ -1474,7 +1604,7 @@ function TradingInterface() {
         </header>
 
         {/* Main Trading Interface */}
-        <div className="flex h-[calc(100vh-160px)]">
+        <div className="flex h-[calc(100vh-200px)] md:h-[calc(100vh-120px)]">
           {/* IQ Option Style Sidebar - Fixed to extend over positions panel */}
           <div
             className="flex-col border-r flex fixed left-0 z-50 top-20"
@@ -1946,6 +2076,202 @@ function TradingInterface() {
 
           {/* Spacer for fixed sidebar */}
           <div style={{ width: "76px", flexShrink: 0 }} />
+
+          {/* Trading History Panel - IQ Option Style */}
+          <AnimatePresence>
+            {showTradingHistory && (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 280, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="flex flex-col overflow-hidden"
+                style={{ 
+                  flexShrink: 0,
+                  backgroundColor: "#131722",
+                  borderRight: "1px solid #2a2e39",
+                  height: "100%"
+                }}
+              >
+                {/* Header */}
+                <div
+                  className="px-4 py-3 flex items-center justify-between"
+                  style={{ borderBottom: "1px solid #2a2e39" }}
+                >
+                  <span className="text-white font-medium text-sm">Trading History</span>
+                  <button
+                    onClick={() => setShowTradingHistory(false)}
+                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
+                  >
+                    <X className="w-4 h-4 text-gray-400" />
+                  </button>
+                </div>
+
+                {/* Filter Dropdown */}
+                <div className="px-4 py-2" style={{ borderBottom: "1px solid #2a2e39" }}>
+                  <select
+                    value={historyFilter}
+                    onChange={(e) => setHistoryFilter(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded text-sm bg-[#1e222d] border border-[#2a2e39] text-white focus:outline-none focus:border-[#ff8516] appearance-none cursor-pointer"
+                    style={{
+                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 10px center",
+                      backgroundSize: "16px",
+                      paddingRight: "36px"
+                    }}
+                  >
+                    <option value="All Positions">All Positions</option>
+                    <option value="Blitz Options">Blitz Options</option>
+                    <option value="Binary Options">Binary Options</option>
+                    <option value="Digital Options">Digital Options</option>
+                    <option value="Stocks, ETFs, Commodities">Stocks, ETFs, Commodities</option>
+                    <option value="Forex">Forex</option>
+                    <option value="Crypto">Crypto</option>
+                  </select>
+                </div>
+
+                {/* Trades List */}
+                <div className="flex-1 overflow-y-auto">
+                  {/* Open Positions */}
+                  {openPositions.length > 0 && openPositions.map((position) => {
+                    const now = Date.now();
+                    const expTime = position.expirationTime instanceof Date ? position.expirationTime.getTime() : position.expirationTime;
+                    const remaining = Math.max(0, expTime - now);
+                    const remainingSeconds = Math.ceil(remaining / 1000);
+                    const isWinning = position.direction === "HIGHER" 
+                      ? currentPrice > position.entryPrice 
+                      : currentPrice < position.entryPrice;
+                    const currentPL = isWinning ? position.amount * 0.85 : -position.amount;
+                    const plPercent = isWinning ? 85 : -100;
+                    
+                    return (
+                      <div
+                        key={position.id}
+                        className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
+                        style={{ borderBottom: "1px solid #2a2e39" }}
+                      >
+                        {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
+                        <div className="flex items-center gap-1.5">
+                          <div className="text-sm text-white font-bold w-10">
+                            {new Date(position.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                          </div>
+                          <div className="flex items-center gap-1.5 ml-2 flex-1">
+                            <AssetFlag flag={symbols.find((s) => s.symbol === position.symbol)?.flag || ""} symbol={position.symbol} size={18} />
+                            <div className="text-white text-xs truncate">
+                              {position.symbol}
+                            </div>
+                          </div>
+                          <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 12 12" fill={position.direction === "HIGHER" ? "#22c55e" : "#ef4444"}>
+                            {position.direction === "HIGHER" ? (
+                              <path d="M6 2L11 10H1L6 2Z" />
+                            ) : (
+                              <path d="M6 10L1 2H11L6 10Z" />
+                            )}
+                          </svg>
+                          <div className="text-white text-xs font-medium whitespace-nowrap text-right">
+                            ${position.amount.toLocaleString()}
+                          </div>
+                        </div>
+                        {/* Row 2: Date under time, Binary under logo, P/L right */}
+                        <div className="flex items-center justify-between mt-0.5">
+                          <div className="flex items-center">
+                            <span className="text-[10px] text-gray-500 w-10">
+                              {new Date(position.entryTime).getDate()} {new Date(position.entryTime).toLocaleDateString([], { month: 'short' })}
+                            </span>
+                            <span className="text-[10px] text-gray-500 ml-4">Blitz</span>
+                          </div>
+                          <span className={`text-xs ${isWinning ? "text-green-400" : "text-red-400"}`}>
+                            {isWinning ? "+" : "-"}${Math.abs(currentPL).toLocaleString()} ({isWinning ? "+" : ""}{plPercent}%)
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Completed Trades */}
+                  {tradeHistory
+                    .filter((trade) => {
+                      // Filter by category
+                      if (historyFilter === "All Positions") return true;
+                      if (historyFilter === "Blitz Options") return true; // All short-term trades
+                      if (historyFilter === "Binary Options") return true; // All binary trades
+                      if (historyFilter === "Digital Options") return true;
+                      if (historyFilter === "Forex") {
+                        // Check if symbol contains forex pairs
+                        const forexPairs = ["EUR", "USD", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"];
+                        return forexPairs.some(pair => trade.symbol.toUpperCase().includes(pair));
+                      }
+                      if (historyFilter === "Crypto") {
+                        const cryptoSymbols = ["BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "DOT", "MATIC", "LINK", "AVAX", "UNI", "ATOM", "LTC", "SHIB"];
+                        return cryptoSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
+                      }
+                      if (historyFilter === "Stocks, ETFs, Commodities") {
+                        const stockSymbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "META", "NVDA", "GOLD", "OIL", "SILVER"];
+                        return stockSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
+                      }
+                      return true;
+                    })
+                    .map((trade) => {
+                      const isWin = trade.status === "WIN";
+                      const plPercent = isWin ? Math.round((trade.profit / trade.amount) * 100) : -100;
+                      
+                      return (
+                        <div
+                          key={trade.id}
+                          className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
+                          style={{ borderBottom: "1px solid #2a2e39" }}
+                        >
+                          {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
+                          <div className="flex items-center gap-1.5">
+                            <div className="text-sm text-white font-bold w-10">
+                              {new Date(trade.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                            </div>
+                            <div className="flex items-center gap-1.5 ml-2 flex-1">
+                              <AssetFlag flag={symbols.find((s) => s.symbol === trade.symbol)?.flag || ""} symbol={trade.symbol} size={18} />
+                              <div className="text-white text-xs truncate">
+                                {trade.symbol}
+                              </div>
+                            </div>
+                            <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 12 12" fill={trade.direction === "HIGHER" ? "#22c55e" : "#ef4444"}>
+                              {trade.direction === "HIGHER" ? (
+                                <path d="M6 2L11 10H1L6 2Z" />
+                              ) : (
+                                <path d="M6 10L1 2H11L6 10Z" />
+                              )}
+                            </svg>
+                            <div className={`text-xs font-medium whitespace-nowrap text-right ${isWin ? "text-green-400" : "text-red-400"}`}>
+                              ${trade.amount.toLocaleString()}
+                            </div>
+                          </div>
+                          {/* Row 2: Date under time, Binary under logo, P/L right */}
+                          <div className="flex items-center justify-between mt-0.5">
+                            <div className="flex items-center">
+                              <span className="text-[10px] text-gray-500 w-10">
+                                {new Date(trade.entryTime).getDate()} {new Date(trade.entryTime).toLocaleDateString([], { month: 'short' })}
+                              </span>
+                              <span className="text-[10px] text-gray-500 ml-4">{selectedMarket}</span>
+                            </div>
+                            <span className={`text-xs ${isWin ? "text-green-400" : "text-red-400"}`}>
+                              {isWin ? "+" : "-"}${Math.abs(trade.profit).toLocaleString()} ({isWin ? "+" : ""}{plPercent}%)
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                  {/* Empty State */}
+                  {tradeHistory.length === 0 && openPositions.length === 0 && (
+                    <div className="flex flex-col items-center justify-center py-16 px-4">
+                      <History className="w-12 h-12 text-gray-600 mb-3" />
+                      <p className="text-gray-400 text-sm text-center">No trading history yet</p>
+                      <p className="text-gray-500 text-xs text-center mt-1">Execute some trades to see your history here</p>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Center: Chart and Controls */}
           <div className="flex-1 flex flex-col">
@@ -3295,21 +3621,21 @@ function TradingInterface() {
               }}
             >
               {/* IQ Option Style - Top Left Symbol Header */}
-              <div className="absolute top-3 left-5 z-40 flex flex-col gap-2">
+              <div className="absolute top-3 left-12 z-40 flex flex-col gap-2">
                 {/* Symbol Badge with Flag */}
                 <div className="flex items-center gap-2">
                   <div className="flex items-center -space-x-2">
-                    <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e]">
+                    <div className="w-7 h-7 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e]">
                       <CryptoIcon
                         symbol={selectedSymbol.split("/")[0]}
-                        size="md"
+                        size="sm"
                       />
                     </div>
                     {selectedSymbol.includes("/") && (
-                      <div className="w-9 h-9 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e] z-10">
+                      <div className="w-7 h-7 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e] z-10">
                         <CryptoIcon
                           symbol={selectedSymbol.split("/")[1]}
-                          size="md"
+                          size="sm"
                         />
                       </div>
                     )}
@@ -3317,11 +3643,11 @@ function TradingInterface() {
                   <div>
                     <div className="flex items-center gap-1">
                       <span className="text-white font-semibold text-sm">
-                        {selectedSymbol.replace("/", "/")} (OTC)
+                        {selectedSymbol.replace("/", "/")}
                       </span>
                       <ChevronDown className="w-3 h-3 text-gray-400" />
                     </div>
-                    <span className="text-gray-400 text-xs">Binary</span>
+                    <span className="text-gray-400 text-xs">{openTabs[activeTab]?.type || selectedMarket}</span>
                   </div>
                 </div>
 
@@ -3452,31 +3778,114 @@ function TradingInterface() {
                 </div>
               </div>
 
-              {/* Purchase Time Countdown - IQ Option Style */}
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
-                <div className="flex flex-col items-center gap-1">
-                  <div className="text-[10px] text-[#9e9aa7] font-medium tracking-wider">
-                    PURCHASE TIME
-                  </div>
-                  <div className="text-2xl font-bold text-white font-mono">
-                    {String(Math.floor(countdown / 60)).padStart(2, "0")}:
-                    {String(countdown % 60).padStart(2, "0")}
-                  </div>
-                </div>
-              </div>
+              {/* IQ Option Style Stats Bar - Shows when trades are active */}
+              {(() => {
+                const activeTradesList = activeTrades.filter(t => t.status === "active");
+                const hasActiveTrades = activeTradesList.length > 0;
+                
+                // Calculate totals
+                const totalInvestment = activeTradesList.reduce((sum, t) => sum + t.amount, 0);
+                
+                // Calculate expected profit based on current price movement
+                const calculateExpectedProfit = () => {
+                  return activeTradesList.reduce((sum, trade) => {
+                    const priceChange = currentPrice - trade.entryPrice;
+                    const isWinning = 
+                      (trade.direction === "higher" && priceChange > 0) ||
+                      (trade.direction === "lower" && priceChange < 0);
+                    // 85% profit if winning, -100% if losing
+                    return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
+                  }, 0);
+                };
+                
+                const expectedProfit = calculateExpectedProfit();
+                
+                // Calculate profit after sell (what you'd get if you close now)
+                const profitAfterSell = activeTradesList.reduce((sum, trade) => {
+                  const priceChange = currentPrice - trade.entryPrice;
+                  const isWinning = 
+                    (trade.direction === "higher" && priceChange > 0) ||
+                    (trade.direction === "lower" && priceChange < 0);
+                  // If winning, you get back investment + 85% profit
+                  // If losing, you lose everything (0 return - investment = negative)
+                  const payout = isWinning ? trade.amount * 1.85 : 0;
+                  return sum + (payout - trade.amount);
+                }, 0);
+                
+                // Find earliest active trade for countdown
+                const earliestTrade = activeTradesList.reduce((earliest, trade) => {
+                  if (!earliest) return trade;
+                  const remainingTime = trade.expirationTime - Date.now();
+                  const earliestRemaining = earliest.expirationTime - Date.now();
+                  return remainingTime < earliestRemaining ? trade : earliest;
+                }, null as ActiveTrade | null);
+                
+                const tradeCountdown = earliestTrade 
+                  ? Math.max(0, Math.ceil((earliestTrade.expirationTime - Date.now()) / 1000))
+                  : countdown;
 
-              {/* Purchase Time Countdown - IQ Option Style */}
-              <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
-                <div className="flex flex-col items-center gap-1">
-                  <div className="text-[10px] text-[#9e9aa7] font-medium tracking-wider">
-                    PURCHASE TIME
+                return (
+                  <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
+                    {hasActiveTrades ? (
+                      // Compact stats bar - labels on top, values below
+                      <div className="flex items-start gap-6">
+                        {/* Purchase Time */}
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-1 text-[10px] text-white/70 uppercase tracking-wider">
+                            <Clock className="w-3 h-3" />
+                            PURCHASE TIME
+                          </div>
+                          <span className="text-lg text-white">
+                            {String(Math.floor(tradeCountdown / 60)).padStart(2, "0")}:{String(tradeCountdown % 60).padStart(2, "0")}
+                          </span>
+                        </div>
+
+                        {/* Total Investment */}
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] text-white/70 uppercase tracking-wider">TOTAL INVESTMENT</span>
+                          <span className="text-lg text-white">
+                            $ {totalInvestment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+
+                        {/* Expected Profit */}
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] text-white/70 uppercase tracking-wider">EXPECTED PROFIT</span>
+                          <span className={`text-lg ${expectedProfit >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            {expectedProfit >= 0 ? "+" : "−"}$ {Math.abs(expectedProfit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+
+                        {/* Profit After Sell */}
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] text-white/70 uppercase tracking-wider">PROFIT AFTER SELL (P/L)</span>
+                          <span className={`text-lg ${profitAfterSell >= 0 ? "text-green-400" : "text-red-400"}`}>
+                            {profitAfterSell >= 0 ? "+" : "−"}$ {Math.abs(profitAfterSell).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+
+                        {/* Sell Button */}
+                        {activeTradesList.length > 0 && (
+                          <button className="px-3 py-1.5 bg-[#1e2a3e]/80 hover:bg-[#2a3a50] text-white text-xs font-medium rounded transition-colors self-center">
+                            Sell All ({activeTradesList.length})
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      // Simple purchase time countdown when no active trades
+                      <div className="flex flex-col items-center gap-1">
+                        <div className="text-[10px] text-[#9e9aa7] font-medium tracking-wider">
+                          PURCHASE TIME
+                        </div>
+                        <div className="text-2xl font-bold text-white font-mono">
+                          {String(Math.floor(countdown / 60)).padStart(2, "0")}:
+                          {String(countdown % 60).padStart(2, "0")}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div className="text-2xl font-bold text-white font-mono">
-                    {String(Math.floor(countdown / 60)).padStart(2, "0")}:
-                    {String(countdown % 60).padStart(2, "0")}
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
 
               <ChartGrid
                 key={selectedSymbol}
@@ -3494,6 +3903,7 @@ function TradingInterface() {
                   "MATIC",
                   "LINK",
                 ]}
+                onPriceYPosition={setPriceYPosition}
               />
 
               {/* IQ Option Style Strike Line Overlay - Shows when hovering HIGHER/LOWER */}
@@ -3509,13 +3919,13 @@ function TradingInterface() {
                   >
                     {/* Strike Line with Glow */}
                     <div
-                      className="absolute left-0 right-0"
+                      className="absolute left-[15%] right-[140px]"
                       style={{
-                        top: "55%",
+                        top: `${priceYPosition}%`,
                         height: "2px",
                         background: hoveredButton === "higher" 
-                          ? "linear-gradient(90deg, transparent 0%, #22c55e 10%, #22c55e 90%, transparent 100%)"
-                          : "linear-gradient(90deg, transparent 0%, #ef4444 10%, #ef4444 90%, transparent 100%)",
+                          ? "linear-gradient(90deg, transparent 0%, #22c55e 5%, #22c55e 95%, transparent 100%)"
+                          : "linear-gradient(90deg, transparent 0%, #ef4444 5%, #ef4444 95%, transparent 100%)",
                         boxShadow: hoveredButton === "higher"
                           ? "0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.3)"
                           : "0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)",
@@ -3526,9 +3936,9 @@ function TradingInterface() {
                     <div
                       className="absolute"
                       style={{
-                        top: "55%",
+                        top: `${priceYPosition}%`,
                         left: "60%",
-                        right: "80px",
+                        right: "140px",
                         height: "1px",
                         backgroundImage: hoveredButton === "higher"
                           ? "linear-gradient(90deg, #22c55e 50%, transparent 50%)"
@@ -3541,7 +3951,7 @@ function TradingInterface() {
                     <div
                       className="absolute flex items-center justify-center"
                       style={{
-                        top: "calc(55% - 12px)",
+                        top: `calc(${priceYPosition}% - 12px)`,
                         left: "55%",
                         transform: "translateX(-50%)",
                       }}
@@ -3556,7 +3966,7 @@ function TradingInterface() {
                     <motion.div
                       className="absolute"
                       style={{
-                        top: hoveredButton === "higher" ? "calc(55% - 20px)" : "calc(55% + 5px)",
+                        top: hoveredButton === "higher" ? `calc(${priceYPosition}% - 20px)` : `calc(${priceYPosition}% + 5px)`,
                         left: "58%",
                       }}
                       animate={{
@@ -3583,8 +3993,8 @@ function TradingInterface() {
                     <motion.div
                       className="absolute flex items-center"
                       style={{
-                        top: "calc(55% - 13px)",
-                        right: "80px",
+                        top: `calc(${priceYPosition}% - 13px)`,
+                        right: "140px",
                         backgroundColor: hoveredButton === "higher" ? "#22c55e" : "#ef4444",
                         padding: "4px 12px",
                         borderRadius: "4px",
@@ -3618,10 +4028,10 @@ function TradingInterface() {
 
                     {/* Semi-transparent fill area below/above line */}
                     <div
-                      className="absolute left-[15%] right-[80px]"
+                      className="absolute left-[15%] right-[140px]"
                       style={{
-                        top: hoveredButton === "higher" ? "0" : "55%",
-                        bottom: hoveredButton === "higher" ? "45%" : "0",
+                        top: hoveredButton === "higher" ? "0" : `${priceYPosition}%`,
+                        bottom: hoveredButton === "higher" ? `${100 - priceYPosition}%` : "0",
                         background: hoveredButton === "higher"
                           ? "linear-gradient(to bottom, transparent 0%, rgba(34, 197, 94, 0.1) 100%)"
                           : "linear-gradient(to top, transparent 0%, rgba(239, 68, 68, 0.1) 100%)",
@@ -3630,6 +4040,23 @@ function TradingInterface() {
                   </motion.div>
                 )}
               </AnimatePresence>
+
+              {/* Active Trades Entry Lines - Full Width Horizontal Lines */}
+              {activeTrades
+                .filter((t) => t.symbol === selectedSymbol && t.status === "active")
+                .map((trade) => (
+                  <div
+                    key={`entry-line-${trade.id}`}
+                    className="absolute left-[15%] right-[140px] h-[2px] z-10 pointer-events-none"
+                    style={{
+                      top: `${trade.entryYPosition}%`,
+                      backgroundColor: trade.direction === "higher" ? "#22c55e" : "#ef4444",
+                      boxShadow: trade.direction === "higher"
+                        ? "0 0 8px rgba(34, 197, 94, 0.6)"
+                        : "0 0 8px rgba(239, 68, 68, 0.6)",
+                    }}
+                  />
+                ))}
 
               {/* Active Trades Overlay - IQ Option Style */}
               <AnimatePresence>
@@ -3653,7 +4080,8 @@ function TradingInterface() {
                         exit={{ opacity: 0, scale: 0.8, y: -20 }}
                         className="absolute right-24 z-20"
                         style={{
-                          top: trade.direction === "higher" ? "30%" : "50%",
+                          top: `${trade.entryYPosition}%`,
+                          transform: "translateY(-50%)",
                         }}
                       >
                         {/* Trade Marker Line */}
@@ -3669,9 +4097,9 @@ function TradingInterface() {
                           }}
                         />
 
-                        {/* Trade Info Box */}
+                        {/* Trade Amount Badge */}
                         <motion.div
-                          className="relative flex items-center gap-2 px-3 py-2 rounded-lg shadow-lg"
+                          className="relative flex items-center gap-1 px-2 py-1 rounded shadow-lg"
                           style={{
                             backgroundColor:
                               trade.direction === "higher"
@@ -3679,96 +4107,135 @@ function TradingInterface() {
                                 : "#ef4444",
                             boxShadow:
                               trade.direction === "higher"
-                                ? "0 0 20px rgba(34, 197, 94, 0.4)"
-                                : "0 0 20px rgba(239, 68, 68, 0.4)",
-                          }}
-                          animate={{
-                            scale: trade.status === "active" ? [1, 1.02, 1] : 1,
-                          }}
-                          transition={{
-                            duration: 1,
-                            repeat: trade.status === "active" ? Infinity : 0,
+                                ? "0 0 15px rgba(34, 197, 94, 0.4)"
+                                : "0 0 15px rgba(239, 68, 68, 0.4)",
                           }}
                         >
-                          {/* Amount */}
                           <span className="text-white font-bold text-sm">
                             $ {trade.amount.toLocaleString()}
                           </span>
-
-                          {/* Countdown or Result */}
-                          {trade.status === "active" ? (
-                            <div className="flex items-center gap-1">
-                              <div
-                                className="w-6 h-6 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white"
+                          {/* Countdown Circle */}
+                          {trade.status === "active" && (
+                            <div
+                              className="w-5 h-5 rounded-full border-2 border-white/50 flex items-center justify-center text-[10px] font-bold text-white"
+                              style={{
+                                background: `conic-gradient(white ${progress * 360}deg, transparent ${progress * 360}deg)`,
+                              }}
+                            >
+                              <span
+                                className="rounded-full w-3.5 h-3.5 flex items-center justify-center"
                                 style={{
-                                  background: `conic-gradient(white ${
-                                    progress * 360
-                                  }deg, transparent ${progress * 360}deg)`,
+                                  backgroundColor: trade.direction === "higher" ? "#22c55e" : "#ef4444",
                                 }}
                               >
-                                <span
-                                  className="bg-current rounded-full w-4 h-4 flex items-center justify-center"
-                                  style={{
-                                    backgroundColor:
-                                      trade.direction === "higher"
-                                        ? "#22c55e"
-                                        : "#ef4444",
-                                  }}
-                                >
-                                  {remainingSeconds}
-                                </span>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1">
-                              <span
-                                className={`text-xs font-bold ${
-                                  trade.status === "won"
-                                    ? "text-white"
-                                    : "text-white"
-                                }`}
-                              >
-                                {trade.status === "won" ? "✓ WON" : "✗ LOST"}
-                              </span>
-                              <span className="text-white text-xs">
-                                {trade.result && trade.result > 0
-                                  ? `+$${trade.result.toFixed(2)}`
-                                  : `$${trade.result?.toFixed(2)}`}
+                                {remainingSeconds}
                               </span>
                             </div>
                           )}
-
-                          {/* Direction Arrow */}
-                          <div className="ml-1">
-                            {trade.direction === "higher" ? (
-                              <TrendingUp className="w-4 h-4 text-white" />
-                            ) : (
-                              <TrendingDown className="w-4 h-4 text-white" />
-                            )}
-                          </div>
                         </motion.div>
 
-                        {/* Entry Price Line Indicator */}
-                        <div
-                          className="absolute left-full ml-2 flex items-center"
-                          style={{ top: "50%", transform: "translateY(-50%)" }}
-                        >
-                          <div
-                            className="text-xs font-mono px-2 py-0.5 rounded"
-                            style={{
-                              backgroundColor:
-                                trade.direction === "higher"
-                                  ? "#22c55e"
-                                  : "#ef4444",
-                              color: "white",
-                            }}
+                        {/* Real-time P/L Badge - IQ Option Style */}
+                        {trade.status === "active" && (
+                          <motion.div
+                            className="absolute left-full ml-2 flex items-center"
+                            style={{ top: "50%", transform: "translateY(-50%)" }}
+                            animate={{ opacity: [0.8, 1, 0.8] }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
                           >
-                            {trade.entryPrice.toFixed(5)}
-                          </div>
-                        </div>
+                            {(() => {
+                              const priceChange = currentPrice - trade.entryPrice;
+                              const isWinning = 
+                                (trade.direction === "higher" && priceChange > 0) ||
+                                (trade.direction === "lower" && priceChange < 0);
+                              const realTimePL = isWinning ? trade.amount * 0.85 : -trade.amount;
+                              
+                              return (
+                                <div 
+                                  className="flex flex-col items-start px-3 py-1.5 rounded shadow-lg"
+                                  style={{
+                                    backgroundColor: isWinning ? "#22c55e" : "#ef4444",
+                                    boxShadow: isWinning 
+                                      ? "0 0 20px rgba(34, 197, 94, 0.5)"
+                                      : "0 0 20px rgba(239, 68, 68, 0.5)",
+                                  }}
+                                >
+                                  <span className="text-[9px] text-white/80 font-medium tracking-wider">
+                                    RESULT (P/L)
+                                  </span>
+                                  <span className="text-white font-bold text-sm">
+                                    {isWinning ? "+" : ""}$ {realTimePL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </span>
+                                </div>
+                              );
+                            })()}
+                          </motion.div>
+                        )}
+
+                        {/* Final Result Badge - Shows when trade ends */}
+                        {(trade.status === "won" || trade.status === "lost") && (
+                          <motion.div
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            className="absolute left-full ml-2 flex items-center"
+                            style={{ top: "50%", transform: "translateY(-50%)" }}
+                          >
+                            <div 
+                              className="flex flex-col items-start px-3 py-1.5 rounded shadow-lg relative"
+                              style={{
+                                backgroundColor: trade.status === "won" ? "#22c55e" : "#ef4444",
+                                boxShadow: trade.status === "won"
+                                  ? "0 0 25px rgba(34, 197, 94, 0.6)"
+                                  : "0 0 25px rgba(239, 68, 68, 0.6)",
+                              }}
+                            >
+                              <span className="text-[9px] text-white/80 font-medium tracking-wider">
+                                RESULT (P/L)
+                              </span>
+                              <span className="text-white font-bold text-base">
+                                {trade.status === "won" ? "+" : ""}$ {(trade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          </motion.div>
+                        )}
                       </motion.div>
                     );
                   })}
+              </AnimatePresence>
+
+              {/* Last Finished Trade Result - Shows when no active trades but we have a finished result */}
+              <AnimatePresence>
+                {lastFinishedTrade && 
+                 lastFinishedTrade.symbol === selectedSymbol && 
+                 activeTrades.filter(t => t.symbol === selectedSymbol && t.status === "active").length === 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.8 }}
+                    className="absolute z-30"
+                    style={{
+                      right: "160px",
+                      top: `${lastFinishedTrade.entryYPosition}%`,
+                      transform: "translateY(-50%)",
+                    }}
+                  >
+                    <div 
+                      className="flex flex-col items-start px-4 py-2 rounded-lg shadow-lg relative"
+                      style={{
+                        backgroundColor: lastFinishedTrade.status === "won" ? "#22c55e" : "#ef4444",
+                        boxShadow: lastFinishedTrade.status === "won"
+                          ? "0 0 30px rgba(34, 197, 94, 0.6)"
+                          : "0 0 30px rgba(239, 68, 68, 0.6)",
+                      }}
+                    >
+                      <span className="text-[10px] text-white/80 font-medium tracking-wider">
+                        RESULT (P/L)
+                      </span>
+                      <span className="text-white font-bold text-lg">
+                        {lastFinishedTrade.status === "won" ? "+" : "−"}$ {Math.abs(lastFinishedTrade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
               </AnimatePresence>
 
               {/* Hover Effect Overlay for HIGHER */}
@@ -3778,10 +4245,10 @@ function TradingInterface() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-0 pointer-events-none z-10"
+                    className="absolute inset-0 pointer-events-none z-50"
                     style={{
                       background:
-                        "linear-gradient(to bottom, rgba(34, 197, 94, 0.15) 0%, transparent 50%)",
+                        "linear-gradient(to bottom, transparent 0%, rgba(34, 197, 94, 0.15) 15%, transparent 60%)",
                     }}
                   />
                 )}
@@ -3794,10 +4261,10 @@ function TradingInterface() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-0 pointer-events-none z-10"
+                    className="absolute inset-0 pointer-events-none z-50"
                     style={{
                       background:
-                        "linear-gradient(to top, rgba(239, 68, 68, 0.15) 0%, transparent 50%)",
+                        "linear-gradient(to top, transparent 0%, rgba(239, 68, 68, 0.15) 15%, transparent 60%)",
                     }}
                   />
                 )}
@@ -4238,31 +4705,73 @@ function TradingInterface() {
                 </div>
               </div>
 
-              {/* HIGHER Button */}
-              <motion.button
-                onClick={() => executeTrade("higher")}
-                onMouseEnter={() => setHoveredButton("higher")}
-                onMouseLeave={() => setHoveredButton(null)}
-                disabled={isExecutingTrade}
-                className="w-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.96 }}
-              >
-                <img src="/traderoom/icons/higher-button.png" alt="Higher" className="w-full object-contain" style={{ maxHeight: "96px" }} />
-              </motion.button>
+              {/* Conditional: NEW OPTION or HIGHER/LOWER buttons */}
+              {lastFinishedTrade && lastFinishedTrade.symbol === selectedSymbol && activeTrades.filter(t => t.symbol === selectedSymbol && t.status === "active").length === 0 ? (
+                // NEW OPTION Button - Shows when there's a finished trade result displayed
+                <motion.button
+                  onClick={() => {
+                    // Get current tab type
+                    const currentTab = openTabs[activeTab];
+                    const currentType = currentTab?.type || "Blitz";
+                    
+                    // Add new tab with same symbol and type
+                    const newTab = { symbol: selectedSymbol, type: currentType };
+                    setOpenTabs([...openTabs, newTab]);
+                    
+                    // Switch to the new tab
+                    setActiveTab(openTabs.length);
+                    
+                    // Clear finished trade result for fresh state
+                    setLastFinishedTrade(null);
+                    
+                    // Focus on amount input
+                    setTimeout(() => {
+                      const amountInput = document.querySelector('input[type="text"]');
+                      if (amountInput) (amountInput as HTMLInputElement).focus();
+                    }, 100);
+                  }}
+                  className="w-full flex flex-col items-center justify-center py-6 rounded-lg transition-all duration-200 cursor-pointer"
+                  style={{
+                    backgroundColor: "#ff6b00",
+                    boxShadow: "0 0 30px rgba(255, 107, 0, 0.4)",
+                  }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.96 }}
+                >
+                  <Plus className="w-10 h-10 text-white mb-1" strokeWidth={2.5} />
+                  <span className="text-white text-sm font-bold tracking-wide">NEW</span>
+                  <span className="text-white text-sm font-bold tracking-wide">OPTION</span>
+                </motion.button>
+              ) : (
+                // HIGHER/LOWER Buttons - Shows when there are active trades
+                <>
+                  {/* HIGHER Button */}
+                  <motion.button
+                    onClick={() => executeTrade("higher")}
+                    onMouseEnter={() => setHoveredButton("higher")}
+                    onMouseLeave={() => setHoveredButton(null)}
+                    disabled={isExecutingTrade}
+                    className="w-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.96 }}
+                  >
+                    <img src="/traderoom/icons/higher-button.png" alt="Higher" className="w-full object-contain" style={{ maxHeight: "96px" }} />
+                  </motion.button>
 
-              {/* LOWER Button */}
-              <motion.button
-                onClick={() => executeTrade("lower")}
-                onMouseEnter={() => setHoveredButton("lower")}
-                onMouseLeave={() => setHoveredButton(null)}
-                disabled={isExecutingTrade}
-                className="w-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.96 }}
-              >
-                <img src="/traderoom/icons/lower-button.png" alt="Lower" className="w-full object-contain" style={{ maxHeight: "96px" }} />
-              </motion.button>
+                  {/* LOWER Button */}
+                  <motion.button
+                    onClick={() => executeTrade("lower")}
+                    onMouseEnter={() => setHoveredButton("lower")}
+                    onMouseLeave={() => setHoveredButton(null)}
+                    disabled={isExecutingTrade}
+                    className="w-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0"
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.96 }}
+                  >
+                    <img src="/traderoom/icons/lower-button.png" alt="Lower" className="w-full object-contain" style={{ maxHeight: "96px" }} />
+                  </motion.button>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -4293,7 +4802,7 @@ function TradingInterface() {
                     const totalPL = activePositions.reduce((sum, trade) => {
                       const priceChange = currentPrice - trade.entryPrice;
                       const isWinning = trade.direction === "higher" ? priceChange > 0 : priceChange < 0;
-                      return sum + (isWinning ? trade.amount * 0.88 : -trade.amount);
+                      return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
                     }, 0);
                     return totalPL !== 0 && (
                       <span className={`text-sm font-medium ${totalPL >= 0 ? "text-green-400" : "text-red-400"}`}>
@@ -4355,7 +4864,7 @@ function TradingInterface() {
                         
                         const priceChange = currentPrice - trade.entryPrice;
                         const isWinning = trade.direction === "higher" ? priceChange > 0 : priceChange < 0;
-                        const expectedPL = isWinning ? trade.amount * 0.88 : -trade.amount;
+                        const expectedPL = isWinning ? trade.amount * 0.85 : -trade.amount;
                         
                         const symbolData = symbols.find((s) => s.symbol === trade.symbol);
                         const flagStr = symbolData?.flag || "";
@@ -4388,10 +4897,9 @@ function TradingInterface() {
                                 ) : (
                                   <AssetFlag flag={flagStr} symbol={trade.symbol} size={20} />
                                 )}
-                                <span className="absolute -bottom-1 -right-1 px-1 text-[8px] font-bold rounded text-white" style={{ backgroundColor: "#ff8516" }}>OTC</span>
                               </div>
                               <span className="text-sm font-medium" style={{ color: "#eef2f7" }}>
-                                {trade.symbol} (OTC)
+                                {trade.symbol}
                               </span>
                             </div>
 
@@ -4429,11 +4937,9 @@ function TradingInterface() {
                               {expectedPL >= 0 ? "+" : ""}{formatAmount(expectedPL, 2)}
                             </div>
 
-                            {/* P/L after sell / Rollover */}
-                            <div>
-                              <button className="px-3 py-1 text-xs font-medium rounded border transition-colors hover:bg-[#1e2a3a]" style={{ borderColor: "#3a4553", color: "#8b9ab8" }}>
-                                Rollover
-                              </button>
+                            {/* P/L after sell - Same as Expected P/L in binary options */}
+                            <div className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}>
+                              {expectedPL >= 0 ? "+" : ""}{formatAmount(expectedPL, 2)}
                             </div>
                           </div>
                         );
@@ -4449,7 +4955,7 @@ function TradingInterface() {
                         const totalExpectedPL = activePositions.reduce((sum, trade) => {
                           const priceChange = currentPrice - trade.entryPrice;
                           const isWinning = trade.direction === "higher" ? priceChange > 0 : priceChange < 0;
-                          return sum + (isWinning ? trade.amount * 0.88 : -trade.amount);
+                          return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
                         }, 0);
                         return (
                           <>
@@ -4530,21 +5036,39 @@ function TradingInterface() {
             };
             const newBadgeSymbols = new Set(["AUD Index", "GBP Index", "CAD Index", "EUR Index"]);
 
-            const blitzCount = symbols.length;
-            const binaryCount = symbols.filter(s => s.category === "Forex").length;
-            const digitalCount = symbols.filter(s => s.category === "Stocks" || s.category === "Index").length;
+            // Count for Options (total assets)
+            const optionsCount = symbols.length;
             const marginCount = symbols.filter(s => s.category === "Crypto").length;
+
+            // Filter based on selected market in dropdown
+            const getFilteredByMarket = () => {
+              const market = selectedMarket.toLowerCase();
+              if (market === "blitz" || market === "binary" || market === "digital") {
+                return [...symbols]; // All assets available
+              } else if (market === "forex") {
+                return symbols.filter(s => s.category === "Forex");
+              } else if (market === "crypto") {
+                return symbols.filter(s => s.category === "Crypto");
+              } else if (market === "stocks") {
+                return symbols.filter(s => s.category === "Stocks");
+              } else if (market === "commodities") {
+                return symbols.filter(s => s.category === "Commodities");
+              } else if (market === "indices") {
+                return symbols.filter(s => s.category === "Index");
+              }
+              return symbols;
+            };
 
             const getDisplaySymbols = () => {
               let filtered = [...symbols];
               if (addAssetSideTab === "options") {
-                if (addAssetOptionsSubTab === "blitz") filtered = [...symbols]; // all assets
-                else if (addAssetOptionsSubTab === "binary") filtered = symbols.filter(s => s.category === "Forex");
-                else if (addAssetOptionsSubTab === "digital") filtered = symbols.filter(s => s.category === "Stocks" || s.category === "Index");
+                filtered = getFilteredByMarket();
               } else if (addAssetSideTab === "margin") {
                 filtered = symbols.filter(s => s.category === "Crypto");
               } else if (addAssetSideTab === "watchlist") {
                 filtered = symbols.filter(s => watchlistedSymbols.includes(s.symbol));
+              } else if (addAssetSideTab === "trending") {
+                filtered = getFilteredByMarket();
               }
               if (addAssetSearch.trim()) {
                 const q = addAssetSearch.toLowerCase();
@@ -4555,12 +5079,27 @@ function TradingInterface() {
 
             const displaySymbols = getDisplaySymbols();
 
+            // Get top gainers and losers for trending view
+            const trendingGainers = [...displaySymbols]
+              .filter(s => s.change.startsWith("+"))
+              .sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage))
+              .slice(0, 3);
+            const trendingLosers = [...displaySymbols]
+              .filter(s => s.change.startsWith("-"))
+              .sort((a, b) => parseFloat(a.percentage) - parseFloat(b.percentage))
+              .slice(0, 3);
+            const tradersChoice = displaySymbols.slice(0, 3);
+
             const handleSelectSymbol = (sym: typeof symbols[0]) => {
-              if (!openTabs.some(t => t.symbol === sym.symbol)) {
-                setOpenTabs([...openTabs, { symbol: sym.symbol, type: "Binary" }]);
+              // Check if this symbol+type combination already exists
+              const existingTabIndex = openTabs.findIndex(t => t.symbol === sym.symbol && t.type === selectedMarket);
+              if (existingTabIndex === -1) {
+                // Add new tab with symbol and selected market type
+                setOpenTabs([...openTabs, { symbol: sym.symbol, type: selectedMarket }]);
                 setActiveTab(openTabs.length);
               } else {
-                setActiveTab(openTabs.findIndex(t => t.symbol === sym.symbol));
+                // Switch to existing tab
+                setActiveTab(existingTabIndex);
               }
               setSelectedSymbol(sym.symbol);
               setShowAddAssetModal(false);
@@ -4599,111 +5138,89 @@ function TradingInterface() {
 
             return (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[100]"
-                style={{ backgroundColor: "rgba(0,0,0,0.55)" }}
-                onClick={() => setShowAddAssetModal(false)}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ type: "spring", damping: 30, stiffness: 340 }}
+                className="absolute top-12 left-[700px] z-[60] flex rounded-xl overflow-hidden shadow-2xl"
+                style={{ width: "720px", maxWidth: "calc(100vw - 20px)", height: "520px", maxHeight: "calc(100vh - 150px)" }}
               >
-                <motion.div
-                  initial={{ x: -30, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  exit={{ x: -30, opacity: 0 }}
-                  transition={{ type: "spring", damping: 30, stiffness: 340 }}
-                  className="flex h-full shadow-2xl"
-                  style={{ width: "680px", maxWidth: "100vw" }}
-                  onClick={e => e.stopPropagation()}
+                {/* Close button */}
+                <button
+                  onClick={() => setShowAddAssetModal(false)}
+                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                  style={{ color: "#6b82a0" }}
                 >
-                  {/* ── Left Sidebar ── */}
-                  <div className="flex flex-col flex-shrink-0 overflow-y-auto"
-                    style={{ width: "110px", backgroundColor: "#131c2e", borderRight: "1px solid #1d2d45" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
+                    <path d="M18 6L6 18M6 6l12 12"/>
+                  </svg>
+                </button>
 
-                    {/* Trending */}
-                    <button
-                      onClick={() => setAddAssetSideTab("trending")}
-                      className="flex items-center gap-1 px-1 py-1.5 transition-colors"
-                      style={{
+                {/* ── Left Sidebar ── */}
+                <div className="flex flex-col flex-shrink-0 overflow-y-auto rounded-l-xl"
+                  style={{ width: "176px", backgroundColor: "#131c2e", borderRight: "1px solid #1d2d45" }}>
+
+                  {/* Trending */}
+                  <button
+                    onClick={() => setAddAssetSideTab("trending")}
+                    className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                    style={{
                         backgroundColor: addAssetSideTab === "trending" ? "#1a2840" : "transparent",
                         color: addAssetSideTab === "trending" ? "#fff" : "#6b82a0",
                         borderLeft: addAssetSideTab === "trending" ? "2px solid #4c8dff" : "2px solid transparent",
                       }}
                     >
-                      <div className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0"
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
                           <path d="M12 20V10M18 20V4M6 20v-4"/>
                         </svg>
                       </div>
-                      <span className="text-[10px] font-medium">Trending</span>
+                      <span className="text-sm font-medium">Trending</span>
                     </button>
 
-                    {/* Options parent + sub-items */}
-                    <div>
-                      <button
-                        onClick={() => { setAddAssetSideTab("options"); }}
-                        className="w-full flex items-center gap-1 px-1 py-1.5 transition-colors"
-                        style={{
-                          backgroundColor: addAssetSideTab === "options" ? "#1a2840" : "transparent",
-                          color: addAssetSideTab === "options" ? "#fff" : "#6b82a0",
-                          borderLeft: addAssetSideTab === "options" ? "2px solid #4c8dff" : "2px solid transparent",
-                        }}
-                      >
-                        <div className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ backgroundColor: "#162032" }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2">
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                          </svg>
-                        </div>
-                        <span className="text-[10px] font-medium flex-1 text-left">Options</span>
-                      </button>
-
-                      {/* Blitz / Binary / Digital sub-items */}
-                      <div style={{ backgroundColor: "#0c1622" }}>
-                        {([
-                          { id: "blitz" as const, label: "Blitz", count: blitzCount },
-                          { id: "binary" as const, label: "Binary", count: binaryCount },
-                          { id: "digital" as const, label: "Digital", count: digitalCount },
-                        ]).map(sub => (
-                          <button
-                            key={sub.id}
-                            onClick={() => { setAddAssetSideTab("options"); setAddAssetOptionsSubTab(sub.id); }}
-                            className="w-full flex items-center justify-between py-1 pr-1 transition-colors"
-                            style={{
-                              paddingLeft: "22px",
-                              backgroundColor: addAssetSideTab === "options" && addAssetOptionsSubTab === sub.id ? "#162234" : "transparent",
-                              color: addAssetSideTab === "options" && addAssetOptionsSubTab === sub.id ? "#fff" : "#6b82a0",
-                            }}
-                          >
-                            <span className="text-[9px]">{sub.label}</span>
-                            <span className="text-[8px] font-bold rounded-full px-1 py-0.5"
-                              style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "22px", textAlign: "center" }}>
-                              {sub.count}
-                            </span>
-                          </button>
-                        ))}
+                    {/* Options */}
+                    <button
+                      onClick={() => setAddAssetSideTab("options")}
+                      className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                      style={{
+                        backgroundColor: addAssetSideTab === "options" ? "#1a2840" : "transparent",
+                        color: addAssetSideTab === "options" ? "#fff" : "#6b82a0",
+                        borderLeft: addAssetSideTab === "options" ? "2px solid #4c8dff" : "2px solid transparent",
+                      }}
+                    >
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: "#162032" }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
+                          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                        </svg>
                       </div>
-                    </div>
+                      <span className="text-sm font-medium flex-1 text-left">Options</span>
+                      <span className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                        style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "26px", textAlign: "center" }}>
+                        {optionsCount}
+                      </span>
+                    </button>
 
                     {/* Margin */}
                     <button
                       onClick={() => setAddAssetSideTab("margin")}
-                      className="flex items-center gap-1 px-1 py-1.5 transition-colors"
+                      className="flex items-center gap-1.5 px-2 py-2 transition-colors"
                       style={{
                         backgroundColor: addAssetSideTab === "margin" ? "#1a2840" : "transparent",
                         color: addAssetSideTab === "margin" ? "#fff" : "#6b82a0",
                         borderLeft: addAssetSideTab === "margin" ? "2px solid #4c8dff" : "2px solid transparent",
                       }}
                     >
-                      <div className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0"
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
                           <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
                         </svg>
                       </div>
-                      <span className="text-[10px] font-medium flex-1 text-left">Margin</span>
-                      <span className="text-[8px] font-bold rounded-full px-1 py-0.5"
-                        style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "22px", textAlign: "center" }}>
+                      <span className="text-sm font-medium flex-1 text-left">Margin</span>
+                      <span className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                        style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "26px", textAlign: "center" }}>
                         {marginCount}
                       </span>
                     </button>
@@ -4711,32 +5228,33 @@ function TradingInterface() {
                     {/* Watchlist */}
                     <button
                       onClick={() => setAddAssetSideTab("watchlist")}
-                      className="flex items-center gap-1 px-1 py-1.5 transition-colors"
+                      className="flex items-center gap-1.5 px-2 py-2 transition-colors"
                       style={{
                         backgroundColor: addAssetSideTab === "watchlist" ? "#1a2840" : "transparent",
                         color: addAssetSideTab === "watchlist" ? "#fff" : "#6b82a0",
                         borderLeft: addAssetSideTab === "watchlist" ? "2px solid #4c8dff" : "2px solid transparent",
                       }}
                     >
-                      <div className="w-3 h-3 rounded-full flex items-center justify-center flex-shrink-0"
+                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-2 h-2">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                         </svg>
                       </div>
-                      <span className="text-[10px] font-medium flex-1 text-left">Watchlist</span>
-                      <span className="text-[8px] font-bold rounded-full px-1 py-0.5"
-                        style={{ backgroundColor: "#162032", color: "#6b82a0", minWidth: "22px", textAlign: "center" }}>
+                      <span className="text-sm font-medium flex-1 text-left">Watchlist</span>
+                      <span className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                        style={{ backgroundColor: "#162032", color: "#6b82a0", minWidth: "26px", textAlign: "center" }}>
                         {watchlistedSymbols.length}
                       </span>
                     </button>
                   </div>
 
                   {/* ── Main Content Panel ── */}
-                  <div className="flex flex-col flex-1 overflow-hidden" style={{ backgroundColor: "#0f1a2a" }}>
+                  <div className="flex flex-col flex-1 overflow-hidden rounded-r-xl" style={{ backgroundColor: "#0f1a2a" }}>
 
-                    {/* Search bar */}
-                    <div className="px-4 py-3 flex-shrink-0" style={{ borderBottom: "1px solid #1a2d45" }}>
+                    {/* Search bar + Market Dropdown + Geo Toggle */}
+                    <div className="px-4 py-3 flex-shrink-0 space-y-3" style={{ borderBottom: "1px solid #1a2d45" }}>
+                      {/* Search */}
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#3d5470" }} />
                         <input
@@ -4753,10 +5271,194 @@ function TradingInterface() {
                           }}
                         />
                       </div>
+
+                      {/* Market Dropdown + Geo Toggle Row */}
+                      <div className="flex items-center justify-between gap-3">
+                        {/* Market Dropdown */}
+                        <div className="relative flex-1" style={{ maxWidth: "200px" }}>
+                          <button
+                            onClick={() => setShowMarketDropdown(!showMarketDropdown)}
+                            className="w-full flex items-center justify-between gap-2 px-4 py-2 rounded text-sm font-medium transition-colors"
+                            style={{ backgroundColor: "#1e3a5f", color: "#fff" }}
+                          >
+                            <span>{selectedMarket}</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0" style={{ color: "#6b82a0" }}>
+                              <path d={showMarketDropdown ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6"}/>
+                            </svg>
+                          </button>
+                          {showMarketDropdown && (
+                            <div className="absolute top-full left-0 mt-1 z-50 rounded overflow-hidden shadow-xl w-full"
+                              style={{ backgroundColor: "#1e3a5f" }}>
+                              {marketCategories.map(cat => (
+                                <button
+                                  key={cat}
+                                  onClick={() => { setSelectedMarket(cat); setShowMarketDropdown(false); }}
+                                  className="w-full text-left px-4 py-2 text-sm transition-colors hover:bg-[#2a4a70]"
+                                  style={{
+                                    backgroundColor: selectedMarket === cat ? "#2a4a70" : "transparent",
+                                    color: "#fff",
+                                  }}
+                                >
+                                  {cat}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Worldwide / Local Toggle */}
+                        <div className="flex rounded overflow-hidden">
+                          <button
+                            onClick={() => setAddAssetGeoTab("worldwide")}
+                            className="px-4 py-2 text-sm font-medium transition-colors"
+                            style={{
+                              backgroundColor: addAssetGeoTab === "worldwide" ? "#1e3a5f" : "transparent",
+                              color: "#fff",
+                            }}
+                          >
+                            Worldwide
+                          </button>
+                          <button
+                            onClick={() => setAddAssetGeoTab("local")}
+                            className="px-4 py-2 text-sm font-medium transition-colors"
+                            style={{
+                              backgroundColor: addAssetGeoTab === "local" ? "#1e3a5f" : "transparent",
+                              color: addAssetGeoTab === "local" ? "#fff" : "#6b82a0",
+                            }}
+                          >
+                            Brazil
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Table header */}
-                    {addAssetSideTab !== "watchlist" && (
+                    {/* Trending View with Cards */}
+                    {addAssetSideTab === "trending" && !addAssetSearch.trim() && (
+                      <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-6">
+                        {/* Trader's Choice Section */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-lg font-medium text-white">Trader&apos;s choice</span>
+                            <span className="text-xs" style={{ color: "#6b82a0" }}>Last week</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            {tradersChoice.map(sym => {
+                              const profit = profitPctMap[sym.symbol] ?? 87;
+                              return (
+                                <button
+                                  key={sym.symbol}
+                                  onClick={() => handleSelectSymbol(sym)}
+                                  className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                  style={{ backgroundColor: "#131c2e" }}
+                                >
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <AssetFlag flag={sym.flag} symbol={sym.symbol} size={24} />
+                                    <span className="text-sm font-medium text-white truncate">{sym.symbol}</span>
+                                  </div>
+                                  <div className="text-xs mb-1" style={{ color: "#6b82a0" }}>Profit</div>
+                                  <div className="text-lg font-bold text-green-400 mb-2">{profit}%</div>
+                                  <div className="flex justify-between text-xs">
+                                    <div>
+                                      <span style={{ color: "#6b82a0" }}>Price</span>
+                                      <div className="text-white">{sym.price}</div>
+                                    </div>
+                                    <div className="text-right">
+                                      <span style={{ color: "#6b82a0" }}>5 min change</span>
+                                      <div style={{ color: sym.change.startsWith("+") ? "#4ade80" : "#f87171" }}>
+                                        {sym.change.startsWith("+") ? "+" : ""}{sym.percentage}%
+                                      </div>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Gainers Section */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-lg font-medium text-white">Gainers</span>
+                            <span className="text-xs" style={{ color: "#6b82a0" }}>Last week</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            {trendingGainers.map(sym => {
+                              const profit = profitPctMap[sym.symbol] ?? 86;
+                              return (
+                                <button
+                                  key={sym.symbol}
+                                  onClick={() => handleSelectSymbol(sym)}
+                                  className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                  style={{ backgroundColor: "#131c2e" }}
+                                >
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <AssetFlag flag={sym.flag} symbol={sym.symbol} size={24} />
+                                    <span className="text-sm font-medium text-white truncate">{sym.symbol}</span>
+                                  </div>
+                                  <div className="text-xs mb-1" style={{ color: "#6b82a0" }}>Profit</div>
+                                  <div className="text-lg font-bold text-green-400 mb-2">{profit}%</div>
+                                  <div className="flex justify-between text-xs">
+                                    <div>
+                                      <span style={{ color: "#6b82a0" }}>Price</span>
+                                      <div className="text-white">{sym.price}</div>
+                                    </div>
+                                    <div className="text-right">
+                                      <span style={{ color: "#6b82a0" }}>5 min change</span>
+                                      <div style={{ color: sym.change.startsWith("+") ? "#4ade80" : "#f87171" }}>
+                                        {sym.change.startsWith("+") ? "+" : ""}{sym.percentage}%
+                                      </div>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Losers Section */}
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-lg font-medium text-white">Losers</span>
+                            <span className="text-xs" style={{ color: "#6b82a0" }}>Last week</span>
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            {trendingLosers.map(sym => {
+                              const profit = profitPctMap[sym.symbol] ?? 86;
+                              return (
+                                <button
+                                  key={sym.symbol}
+                                  onClick={() => handleSelectSymbol(sym)}
+                                  className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                  style={{ backgroundColor: "#131c2e" }}
+                                >
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <AssetFlag flag={sym.flag} symbol={sym.symbol} size={24} />
+                                    <span className="text-sm font-medium text-white truncate">{sym.symbol}</span>
+                                  </div>
+                                  <div className="text-xs mb-1" style={{ color: "#6b82a0" }}>Profit</div>
+                                  <div className="text-lg font-bold text-green-400 mb-2">{profit}%</div>
+                                  <div className="flex justify-between text-xs">
+                                    <div>
+                                      <span style={{ color: "#6b82a0" }}>Price</span>
+                                      <div className="text-white">{sym.price}</div>
+                                    </div>
+                                    <div className="text-right">
+                                      <span style={{ color: "#6b82a0" }}>5 min change</span>
+                                      <div style={{ color: sym.change.startsWith("+") ? "#4ade80" : "#f87171" }}>
+                                        {sym.change.startsWith("+") ? "+" : ""}{sym.percentage}%
+                                      </div>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Table header - for Options/Margin/Watchlist or when searching in Trending */}
+                    {(addAssetSideTab !== "trending" || addAssetSearch.trim()) && addAssetSideTab !== "watchlist" && (
                       <div className="flex items-center px-4 py-2 flex-shrink-0 text-xs select-none"
                         style={{ borderBottom: "1px solid #1a2d45", color: "#3d5470" }}>
                         <div className="flex-1 font-medium">Asset</div>
@@ -4776,7 +5478,8 @@ function TradingInterface() {
                       </div>
                     )}
 
-                    {/* Asset rows */}
+                    {/* Asset rows - for Options/Margin/Watchlist or when searching */}
+                    {(addAssetSideTab !== "trending" || addAssetSearch.trim()) && (
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
                       {addAssetSideTab === "watchlist" && displaySymbols.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-52 gap-3 pt-8">
@@ -4796,7 +5499,7 @@ function TradingInterface() {
                           const popularity = popularityMap[sym.symbol] ?? 2;
                           const volatility = volatilityMap[sym.symbol] ?? 2;
                           const isWatchlisted = watchlistedSymbols.includes(sym.symbol);
-                          const isActive = openTabs.some(t => t.symbol === sym.symbol);
+                          const isActive = openTabs.some(t => t.symbol === sym.symbol && t.type === selectedMarket);
                           const isNew = newBadgeSymbols.has(sym.symbol);
 
                           return (
@@ -4818,15 +5521,11 @@ function TradingInterface() {
                                     style={{ backgroundColor: "#172840", border: "2px solid #1e3654" }}>
                                     <AssetFlag flag={sym.flag} symbol={sym.symbol} size={18} />
                                   </div>
-                                  <div className="absolute -bottom-0.5 -right-0.5 rounded-full flex items-center justify-center"
-                                    style={{ backgroundColor: "#e8690a", width: "14px", height: "14px", fontSize: "4.5px", color: "#fff", fontWeight: 900, lineHeight: 1 }}>
-                                    OTC
-                                  </div>
                                 </div>
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className="text-sm font-semibold text-white truncate">
-                                      {(sym as any).displayName ?? sym.symbol} (OTC)
+                                      {(sym as any).displayName ?? sym.symbol}
                                     </span>
                                     {isNew && (
                                       <span className="text-white px-1 rounded flex-shrink-0 font-bold"
@@ -4888,208 +5587,11 @@ function TradingInterface() {
                         })
                       )}
                     </div>
+                    )}
                   </div>
                 </motion.div>
-              </motion.div>
             );
           })()}
-        </AnimatePresence>
-
-        {/* Trading History Panel - IQ Option Style */}
-        <AnimatePresence>
-          {showTradingHistory && (
-            <motion.div
-              initial={{ x: -280, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -280, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-20 z-40 flex flex-col"
-              style={{ 
-                left: "70px",
-                width: "280px",
-                bottom: "40px",
-                backgroundColor: "#131722",
-                borderRight: "1px solid #2a2e39"
-              }}
-            >
-              {/* Header */}
-              <div
-                className="px-4 py-3 flex items-center justify-between"
-                style={{ borderBottom: "1px solid #2a2e39" }}
-              >
-                <span className="text-white font-medium text-sm">Trading History</span>
-                <button
-                  onClick={() => setShowTradingHistory(false)}
-                  className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
-                >
-                  <X className="w-4 h-4 text-gray-400" />
-                </button>
-              </div>
-
-              {/* Filter Dropdown */}
-              <div className="px-4 py-2" style={{ borderBottom: "1px solid #2a2e39" }}>
-                <select
-                  value={historyFilter}
-                  onChange={(e) => setHistoryFilter(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded text-sm bg-[#1e222d] border border-[#2a2e39] text-white focus:outline-none focus:border-[#ff8516] appearance-none cursor-pointer"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                    backgroundRepeat: "no-repeat",
-                    backgroundPosition: "right 10px center",
-                    backgroundSize: "16px",
-                    paddingRight: "36px"
-                  }}
-                >
-                  <option value="All Positions">All Positions</option>
-                  <option value="Blitz Options">Blitz Options</option>
-                  <option value="Binary Options">Binary Options</option>
-                  <option value="Digital Options">Digital Options</option>
-                  <option value="Stocks, ETFs, Commodities">Stocks, ETFs, Commodities</option>
-                  <option value="Forex">Forex</option>
-                  <option value="Crypto">Crypto</option>
-                </select>
-              </div>
-
-              {/* Trades List */}
-              <div className="flex-1 overflow-y-auto">
-                {/* Open Positions */}
-                {openPositions.length > 0 && openPositions.map((position) => {
-                  const now = Date.now();
-                  const expTime = position.expirationTime instanceof Date ? position.expirationTime.getTime() : position.expirationTime;
-                  const remaining = Math.max(0, expTime - now);
-                  const remainingSeconds = Math.ceil(remaining / 1000);
-                  const isWinning = position.direction === "HIGHER" 
-                    ? currentPrice > position.entryPrice 
-                    : currentPrice < position.entryPrice;
-                  const currentPL = isWinning ? position.amount * 0.85 : -position.amount;
-                  const plPercent = isWinning ? 85 : -100;
-                  
-                  return (
-                    <div
-                      key={position.id}
-                      className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
-                      style={{ borderBottom: "1px solid #2a2e39" }}
-                    >
-                      {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
-                      <div className="flex items-center gap-1.5">
-                        <div className="text-sm text-white font-bold w-10">
-                          {new Date(position.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                        </div>
-                        <div className="flex items-center gap-1.5 ml-2 flex-1">
-                          <AssetFlag flag={symbols.find((s) => s.symbol === position.symbol)?.flag || ""} symbol={position.symbol} size={18} />
-                          <div className="text-white text-xs truncate">
-                            {position.symbol}
-                          </div>
-                        </div>
-                        <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 12 12" fill={position.direction === "HIGHER" ? "#22c55e" : "#ef4444"}>
-                          {position.direction === "HIGHER" ? (
-                            <path d="M6 2L11 10H1L6 2Z" />
-                          ) : (
-                            <path d="M6 10L1 2H11L6 10Z" />
-                          )}
-                        </svg>
-                        <div className="text-white text-xs font-medium whitespace-nowrap text-right">
-                          ${position.amount.toLocaleString()}
-                        </div>
-                      </div>
-                      {/* Row 2: Date under time, Binary under logo, P/L right */}
-                      <div className="flex items-center justify-between mt-0.5">
-                        <div className="flex items-center">
-                          <span className="text-[10px] text-gray-500 w-10">
-                            {new Date(position.entryTime).getDate()} {new Date(position.entryTime).toLocaleDateString([], { month: 'short' })}
-                          </span>
-                          <span className="text-[10px] text-gray-500 ml-4">Blitz</span>
-                        </div>
-                        <span className={`text-xs ${isWinning ? "text-green-400" : "text-red-400"}`}>
-                          {isWinning ? "+" : "-"}${Math.abs(currentPL).toLocaleString()} ({isWinning ? "+" : ""}{plPercent}%)
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                {/* Completed Trades */}
-                {tradeHistory
-                  .filter((trade) => {
-                    // Filter by category
-                    if (historyFilter === "All Positions") return true;
-                    if (historyFilter === "Blitz Options") return true; // All short-term trades
-                    if (historyFilter === "Binary Options") return true; // All binary trades
-                    if (historyFilter === "Digital Options") return true;
-                    if (historyFilter === "Forex") {
-                      // Check if symbol contains forex pairs
-                      const forexPairs = ["EUR", "USD", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"];
-                      return forexPairs.some(pair => trade.symbol.toUpperCase().includes(pair));
-                    }
-                    if (historyFilter === "Crypto") {
-                      const cryptoSymbols = ["BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "DOT", "MATIC", "LINK", "AVAX", "UNI", "ATOM", "LTC", "SHIB"];
-                      return cryptoSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
-                    }
-                    if (historyFilter === "Stocks, ETFs, Commodities") {
-                      const stockSymbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "META", "NVDA", "GOLD", "OIL", "SILVER"];
-                      return stockSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
-                    }
-                    return true;
-                  })
-                  .map((trade) => {
-                    const isWin = trade.status === "WIN";
-                    const plPercent = isWin ? Math.round((trade.profit / trade.amount) * 100) : -100;
-                    
-                    return (
-                      <div
-                        key={trade.id}
-                        className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
-                        style={{ borderBottom: "1px solid #2a2e39" }}
-                      >
-                        {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
-                        <div className="flex items-center gap-1.5">
-                          <div className="text-sm text-white font-bold w-10">
-                            {new Date(trade.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                          </div>
-                          <div className="flex items-center gap-1.5 ml-2 flex-1">
-                            <AssetFlag flag={symbols.find((s) => s.symbol === trade.symbol)?.flag || ""} symbol={trade.symbol} size={18} />
-                            <div className="text-white text-xs truncate">
-                              {trade.symbol}
-                            </div>
-                          </div>
-                          <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 12 12" fill={trade.direction === "HIGHER" ? "#22c55e" : "#ef4444"}>
-                            {trade.direction === "HIGHER" ? (
-                              <path d="M6 2L11 10H1L6 2Z" />
-                            ) : (
-                              <path d="M6 10L1 2H11L6 10Z" />
-                            )}
-                          </svg>
-                          <div className="text-white text-xs font-medium whitespace-nowrap text-right">
-                            ${trade.amount.toLocaleString()}
-                          </div>
-                        </div>
-                        {/* Row 2: Date under time, Binary under logo, P/L right */}
-                        <div className="flex items-center justify-between mt-0.5">
-                          <div className="flex items-center">
-                            <span className="text-[10px] text-gray-500 w-10">
-                              {new Date(trade.entryTime).getDate()} {new Date(trade.entryTime).toLocaleDateString([], { month: 'short' })}
-                            </span>
-                            <span className="text-[10px] text-gray-500 ml-4">Binary</span>
-                          </div>
-                          <span className={`text-xs ${isWin ? "text-green-400" : "text-red-400"}`}>
-                            {isWin ? "+" : "-"}${Math.abs(trade.profit).toLocaleString()} ({isWin ? "+" : ""}{plPercent}%)
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-
-                {/* Empty State */}
-                {tradeHistory.length === 0 && openPositions.length === 0 && (
-                  <div className="flex flex-col items-center justify-center py-16 px-4">
-                    <History className="w-12 h-12 text-gray-600 mb-3" />
-                    <p className="text-gray-400 text-sm text-center">No trading history yet</p>
-                    <p className="text-gray-500 text-xs text-center mt-1">Execute some trades to see your history here</p>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
         </AnimatePresence>
 
         {/* Trade Execution Indicator */}

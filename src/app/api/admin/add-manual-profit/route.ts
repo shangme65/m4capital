@@ -24,23 +24,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { userId, asset, profitAmount } = await req.json();
+    const { userId, asset, investmentAmount, profitPercentage, direction } = await req.json();
 
     // Validate inputs
-    if (!userId || !asset || !profitAmount) {
+    if (!userId || !asset || !investmentAmount || !profitPercentage || !direction) {
       return NextResponse.json(
-        { error: "Missing required fields: userId, asset, profitAmount" },
+        { error: "Missing required fields: userId, asset, investmentAmount, profitPercentage, direction" },
         { status: 400 }
       );
     }
 
-    const profit = parseFloat(profitAmount);
-    if (isNaN(profit) || profit <= 0) {
+    if (![
+      "HIGHER", "LOWER"].includes(direction)) {
       return NextResponse.json(
-        { error: "Profit amount must be a positive number" },
+        { error: "Direction must be either HIGHER or LOWER" },
         { status: 400 }
       );
     }
+
+    const investment = parseFloat(investmentAmount);
+    if (isNaN(investment) || investment <= 0) {
+      return NextResponse.json(
+        { error: "Investment amount must be a positive number" },
+        { status: 400 }
+      );
+    }
+
+    const percentage = parseFloat(profitPercentage);
+    if (isNaN(percentage) || percentage <= 0) {
+      return NextResponse.json(
+        { error: "Profit percentage must be a positive number" },
+        { status: 400 }
+      );
+    }
+
+    // Calculate profit from investment and percentage
+    const profit = investment * (percentage / 100);
 
     // Check if user exists
     const user = await prisma.user.findUnique({
@@ -67,22 +86,40 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create trade record (profit is stored in USD)
+    // Create trade record that looks like a real traderoom trade
+    // Calculate realistic entry and exit prices based on profit and direction
+    const entryPrice = 1.0; // Normalized entry price
+    
+    // Calculate exit price based on direction and profit
+    let exitPrice: number;
+    if (direction === "HIGHER") {
+      // Win on HIGHER means price went up
+      exitPrice = entryPrice * (1 + percentage / 100);
+    } else {
+      // Win on LOWER means price went down
+      exitPrice = entryPrice * (1 - percentage / 100);
+    }
+
     const trade = await prisma.trade.create({
       data: {
         id: `trade_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         symbol: asset,
-        side: "BUY", // Manual profit is treated as a buy trade
-        entryPrice: new Decimal(0), // No entry price for manual profits
-        quantity: new Decimal(1), // Arbitrary quantity
-        profit: new Decimal(profit), // Profit in USD
-        status: "CLOSED", // Manual profits are already closed
+        side: direction === "HIGHER" ? "BUY" : "SELL",
+        entryPrice: new Decimal(entryPrice),
+        exitPrice: new Decimal(exitPrice),
+        quantity: new Decimal(investment), // Investment amount
+        profit: new Decimal(profit), // Profit in USD (calculated from investment × percentage)
+        status: "CLOSED",
         closedAt: new Date(),
         updatedAt: new Date(),
         metadata: {
-          type: "MANUAL_PROFIT",
+          direction: direction, // Store direction for traderoom display
+          tradeType: "binary",
+          payout: percentage, // Store the percentage as payout
+          addedByAdmin: true,
           addedBy: session.user.id,
           addedAt: new Date().toISOString(),
+          manualProfit: true,
         },
         User: {
           connect: { id: userId },
@@ -100,25 +137,23 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Create notification for user
-    // Store amount in USD, asset as the trading symbol
-    // The frontend will convert USD to user's preferred currency using formatAmount
+    // Create notification for user (matching traderoom exact format)
     await prisma.notification.create({
       data: {
         id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         userId: userId,
         type: "TRADE",
-        title: "Trade Profit Earned",
-        message: `Congratulations! You earned a profit of $${profit.toFixed(
-          2
-        )} from ${asset} trade.`,
+        title: "Trade Won!",
+        message: `${asset} ${direction} trade won. Profit: $${profit.toFixed(2)}`,
         amount: new Decimal(profit), // Store USD amount - frontend will convert
-        asset: asset, // Store the trading asset (BTC, BTC/ETH, EURUSD, etc.)
+        asset: asset, // Store the trading asset
         metadata: {
           tradeId: trade.id,
           tradingAsset: asset,
           profitUSD: profit,
-          type: "MANUAL_PROFIT",
+          direction: direction,
+          percentage: percentage,
+          addedByAdmin: true,
           userCurrency: user.preferredCurrency || "USD",
         },
       },
@@ -153,25 +188,29 @@ export async function POST(req: NextRequest) {
           emailSignature,
         } = await import("@/lib/email-templates");
 
+        const directionEmoji = direction === "HIGHER" ? "📈" : "📉";
+
         await sendEmail({
           to: user.email,
-          subject: `🏆 Trade Profit Earned - ${currencySymbol}${displayAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - M4 Capital`,
+          subject: `${directionEmoji} Trade Won - ${asset} ${direction} - Profit: ${currencySymbol}${displayAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} - M4 Capital`,
           html: emailTemplate(`
-            ${emailHero("🏆", "Trade Profit Earned!", `Your ${asset} trade has generated a profit`, "success")}
+            ${emailHero("✅", "Trade Won!", `Your ${asset} ${direction} trade was successful`, "success")}
             ${emailGreeting(user.name || "Valued Client")}
-            ${emailParagraph(`Congratulations! A trade profit has been credited to your Traderoom balance.`)}
+            ${emailParagraph(`Congratulations! Your ${asset} ${direction} trade has closed successfully with a profit.`)}
             ${emailTransactionTable([
               { label: "Asset", value: asset },
+              { label: "Direction", value: emailBadge(direction, direction === "HIGHER" ? "success" : "danger") },
+              { label: "Result", value: emailBadge("Won", "success") },
               { label: "Profit (USD)", value: `$${profit.toFixed(2)}` },
               ...(userCurrency !== "USD" ? [{ label: `Profit (${userCurrency})`, value: `${currencySymbol}${displayAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` }] : []),
-              { label: "Status", value: emailBadge("Completed", "success") },
+              { label: "Return", value: `+${percentage.toFixed(2)}%` },
               { label: "Date", value: new Date().toLocaleString() },
             ])}
-            ${emailAlert("Your profit has been credited to your Traderoom balance. Keep trading to earn more!", "success", "🚀")}
-            ${emailButton("Go to Traderoom", `${process.env.NEXTAUTH_URL || "https://m4capital.online"}/dashboard`)}
+            ${emailAlert("Your profit has been credited to your Traderoom balance. Keep trading to multiply your earnings!", "success", "🚀")}
+            ${emailButton("View Traderoom History", `${process.env.NEXTAUTH_URL || "https://m4capital.online"}/traderoom`)}
             ${emailSignature()}
           `),
-          text: `Congratulations ${user.name || "Valued Client"}! You earned a trade profit of $${profit.toFixed(2)} from ${asset} trading. It has been credited to your Traderoom balance.`,
+          text: `Trade Won! Your ${asset} ${direction} trade won with a profit of $${profit.toFixed(2)} (+${percentage.toFixed(2)}%). It has been credited to your Traderoom balance.`,
         });
         console.log(`📧 Trade profit email sent to ${user.email}`);
       } catch (emailError) {
@@ -180,19 +219,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Send browser push notification
+    // Send browser push notification (matching real trade format)
     try {
-      const userCurrency = user.preferredCurrency || "USD";
-      const currencySymbol = getCurrencySymbol(userCurrency);
       await sendWebPushToUser(user.id, {
-        title: "🏆 Trade Profit Earned!",
-        body: `You earned a profit of $${profit.toFixed(2)} from ${asset} trading. Check your Traderoom balance.`,
+        title: "Trade Won!",
+        body: `${asset} ${direction} trade won. Profit: $${profit.toFixed(2)}`,
         icon: "/icons/icon-192.png",
         badge: "/icons/icon-96.png",
-        tag: `m4capital-profit-${Date.now()}`,
+        tag: `m4capital-trade-${Date.now()}`,
         data: {
-          url: "/dashboard",
-          type: "trade_profit",
+          url: "/traderoom",
+          type: "trade_won",
+          tradeId: trade.id,
         },
         renotify: false,
         silent: false,

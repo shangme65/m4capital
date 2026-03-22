@@ -140,6 +140,7 @@ export async function GET(req: NextRequest) {
         confirmations: d.confirmations,
         maxConfirmations: 6,
         hash: d.transactionHash || undefined,
+        address: d.paymentAddress || undefined,
         network:
           d.cryptoCurrency || d.targetAsset
             ? `${d.cryptoCurrency || d.targetAsset} Network`

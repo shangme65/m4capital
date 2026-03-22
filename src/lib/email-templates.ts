@@ -105,10 +105,13 @@ export const emailTemplate = (content: string) => `
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;">
                       <tr>
                         <td style="padding: 0 5px;">
-                          <a href="https://t.me/m4capital_bot" title="Telegram" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background-color: #0088CC; text-align: center; line-height: 32px; text-decoration: none; font-size: 17px; color: #ffffff; box-shadow: 0 2px 6px rgba(0, 136, 204, 0.4);">✈</a>
+                          <a href="https://t.me/m4capitaI" title="Telegram" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background-color: #0088CC; text-align: center; line-height: 32px; text-decoration: none; font-size: 17px; color: #ffffff; box-shadow: 0 2px 6px rgba(0, 136, 204, 0.4);">✈</a>
                         </td>
                         <td style="padding: 0 5px;">
-                          <a href="https://www.instagram.com/m4capital" title="Instagram" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); text-align: center; line-height: 32px; text-decoration: none; font-size: 17px; color: #ffffff; box-shadow: 0 2px 6px rgba(220, 39, 67, 0.4);">&#128247;</a>
+                          <a href="https://www.instagram.com/m4capital?igsh=NTc4MTIwNjQ2YQ==" title="Instagram" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); text-align: center; line-height: 32px; text-decoration: none; font-size: 17px; color: #ffffff; box-shadow: 0 2px 6px rgba(220, 39, 67, 0.4);">&#128247;</a>
+                        </td>
+                        <td style="padding: 0 5px;">
+                          <a href="http://www.youtube.com/@m4capital" title="YouTube" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background-color: #FF0000; text-align: center; line-height: 32px; text-decoration: none; font-size: 14px; font-weight: 900; color: #ffffff; box-shadow: 0 2px 6px rgba(255, 0, 0, 0.4);">▶</a>
                         </td>
                         <td style="padding: 0 5px;">
                           <a href="https://x.com/m4capital" title="X / Twitter" style="display: inline-block; width: 32px; height: 32px; border-radius: 50%; background-color: #000000; text-align: center; line-height: 32px; text-decoration: none; font-size: 15px; font-weight: 900; color: #ffffff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);">&#120143;</a>
@@ -179,7 +182,6 @@ export const emailHero = (
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 16px;">
       <tr>
         <td align="center">
-          <div style="display: inline-block; width: 60px; height: 60px; background: ${gradients[gradient]}; border-radius: 50%; margin-bottom: 12px; box-shadow: 0 10px 40px -10px ${glowColor}; text-align: center; line-height: 60px; font-size: 28px;">${icon}</div>
           <h1 style="margin: 0 0 4px; color: ${colors.white}; font-size: 20px; font-weight: 700; letter-spacing: -0.5px;">
             ${title}
           </h1>

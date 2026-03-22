@@ -35,12 +35,15 @@ interface RealTimeTradingChartProps {
   interval?: string;
   // number of candles to fetch for the selected interval
   limit?: number;
+  // Callback with the Y position percentage (0-100) of the current price on the chart
+  onPriceYPosition?: (yPercent: number) => void;
 }
 
 export default function RealTimeTradingChart({
   symbol,
   interval = "1m",
   limit = 3000, // Maximum candles for full chart coverage
+  onPriceYPosition,
 }: RealTimeTradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -427,6 +430,31 @@ export default function RealTimeTradingChart({
       }
     };
   }, [symbol, currentInterval]);
+
+  // Report Y position of current price to parent
+  useEffect(() => {
+    if (!onPriceYPosition || !livePrice || !chartRef.current || !chartContainerRef.current) return;
+
+    try {
+      const chart = chartRef.current;
+      const container = chartContainerRef.current;
+      const containerHeight = container.clientHeight;
+
+      // Use klinecharts convertToPixel to get Y position of current price
+      if (typeof chart.convertToPixel === 'function') {
+        const point = chart.convertToPixel({ value: livePrice.price }, { paneId: 'candle_pane' });
+        if (point && typeof point.y === 'number' && containerHeight > 0) {
+          const yPercent = (point.y / containerHeight) * 100;
+          // Clamp between 10% and 90% for reasonable display
+          const clampedPercent = Math.max(10, Math.min(90, yPercent));
+          onPriceYPosition(clampedPercent);
+        }
+      }
+    } catch (e) {
+      // Fallback to center if conversion fails
+      onPriceYPosition(50);
+    }
+  }, [livePrice, onPriceYPosition]);
 
   const addIndicator = (type: string) => {
     if (!chartRef.current) return;

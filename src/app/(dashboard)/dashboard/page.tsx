@@ -319,7 +319,7 @@ function DashboardContent() {
     // Enhance transaction with additional details for the modal
     const enhancedTransaction = {
       ...activity,
-      date: new Date(),
+      date: activity.date || new Date(activity.timestamp),
       fee: activity.type === "deposit" ? activity.value * 0.02 : undefined,
       method:
         activity.type === "deposit"
@@ -331,13 +331,10 @@ function DashboardContent() {
       maxConfirmations: 6,
       hash:
         activity.status !== "failed"
-          ? generateCryptoHash(assetSymbol, activity.id)
+          ? activity.hash || generateCryptoHash(assetSymbol, activity.id)
           : undefined,
       network: getNetworkName(assetSymbol),
-      address:
-        activity.type === "deposit"
-          ? `1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa`
-          : undefined,
+      address: activity.address || undefined,
     };
 
     setSelectedTransaction(enhancedTransaction);
@@ -1878,7 +1875,10 @@ function DashboardContent() {
                           }`}>
                             {activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw" ? "-" : "+"}
                             {activity.type === "trade_earned"
-                              ? `$${(activity.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                              ? formatCryptoAmount(
+                                  activity.amount || 0,
+                                  "USD"
+                                )
                               : (activity.type === "convert" || activity.type === "swap") && activity.toAsset
                               ? `${formatCryptoAmount(
                                   activity.amount || 0,
@@ -1892,28 +1892,64 @@ function DashboardContent() {
                         </div>
                         <div className="flex flex-col items-end">
                               <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Value:</span>
-                              <span
-                                className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-800"}`}
-                              >
-                                {truncateCurrencyString(
-                                  activity.type === "trade_earned"
-                                    ? formatAmount(activity.amount || 0, 2)
-                                    : isFiatTransaction && assetSymbol === preferredCurrency
-                                    ? formatCurrencyUtil(activity.amount || 0, assetSymbol, 2)
-                                    : isFiatTransaction
-                                    ? // Convert original fiat amount → USD (using live rates) → preferred currency.
-                                      // exchangeRates: { USD: 1, EUR: 0.92, PHP: 56.03, ... } means 1 USD = N units.
-                                      // So original / rate = USD equivalent, always correct regardless of preferred currency changes.
-                                      formatAmount(
-                                        assetSymbol === "USD"
-                                          ? (activity.amount || 0)
-                                          : (activity.amount || 0) / (exchangeRates[assetSymbol] || 1),
-                                        2
-                                      )
-                                    : formatAmount(activity.value || 0, 2),
-                                  12
-                                )}
-                              </span>
+                              {(() => {
+                                // Check if this is a closed trade (trade_earned or forex pair buy/sell)
+                                const assetSym = activity.asset?.split(" ")[0] || "";
+                                const FOREX_CODES_VAL = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+                                const isForexPairTrade = (sym: string) => {
+                                  if (sym.includes("/")) {
+                                    const [base, quote] = sym.split("/");
+                                    return FOREX_CODES_VAL.has(base) && FOREX_CODES_VAL.has(quote);
+                                  }
+                                  if (sym.length === 6 && /^[A-Z]{6}$/.test(sym)) {
+                                    const base = sym.substring(0, 3);
+                                    const quote = sym.substring(3, 6);
+                                    return FOREX_CODES_VAL.has(base) && FOREX_CODES_VAL.has(quote);
+                                  }
+                                  return false;
+                                };
+                                const isClosedTrade = activity.type === "trade_earned" || 
+                                  ((activity.type === "buy" || activity.type === "sell") && isForexPairTrade(assetSym));
+                                
+                                if (isClosedTrade) {
+                                  const tradeValue = activity.value || activity.amount || 0;
+                                  const isProfit = tradeValue > 0;
+                                  return (
+                                    <span
+                                      className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
+                                        isProfit
+                                          ? isDark ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-600"
+                                          : isDark ? "bg-red-500/20 text-red-400" : "bg-red-100 text-red-500"
+                                      }`}
+                                    >
+                                      {isProfit ? "+" : "-"}{truncateCurrencyString(formatAmount(Math.abs(tradeValue), 2), 12)}
+                                    </span>
+                                  );
+                                }
+                                
+                                // Default styling for non-trade transactions
+                                return (
+                                  <span
+                                    className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-800"}`}
+                                  >
+                                    {truncateCurrencyString(
+                                      activity.type === "trade_earned"
+                                        ? formatAmount(activity.amount || 0, 2)
+                                        : isFiatTransaction && assetSymbol === preferredCurrency
+                                        ? formatCurrencyUtil(activity.amount || 0, assetSymbol, 2)
+                                        : isFiatTransaction
+                                        ? formatAmount(
+                                            assetSymbol === "USD"
+                                              ? (activity.amount || 0)
+                                              : (activity.amount || 0) / (exchangeRates[assetSymbol] || 1),
+                                            2
+                                          )
+                                        : formatAmount(activity.value || 0, 2),
+                                      12
+                                    )}
+                                  </span>
+                                );
+                              })()}
                             </div>
                           </div>
 

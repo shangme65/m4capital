@@ -7,6 +7,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import { getCurrencyFlagUrl } from "@/lib/currency-flags";
 import { useSession } from "next-auth/react";
+import { TRADING_ASSETS, formatAssetForAdmin, type TradingAsset as Asset } from "@/lib/trading-assets";
 
 interface User {
   id: string;
@@ -20,126 +21,6 @@ interface ManualProfitModalProps {
   onClose: () => void;
   onSuccess: () => void;
 }
-
-interface Asset {
-  symbol: string;
-  name: string;
-  category: string;
-}
-
-const TRADING_ASSETS: Asset[] = [
-  // Cryptocurrencies
-  { symbol: "BTC", name: "Bitcoin", category: "Crypto" },
-  { symbol: "ETH", name: "Ethereum", category: "Crypto" },
-  { symbol: "XRP", name: "Ripple", category: "Crypto" },
-  { symbol: "SOL", name: "Solana", category: "Crypto" },
-  { symbol: "ADA", name: "Cardano", category: "Crypto" },
-  { symbol: "DOGE", name: "Dogecoin", category: "Crypto" },
-  { symbol: "DOT", name: "Polkadot", category: "Crypto" },
-  { symbol: "MATIC", name: "Polygon", category: "Crypto" },
-  { symbol: "SHIB", name: "Shiba Inu", category: "Crypto" },
-  { symbol: "AVAX", name: "Avalanche", category: "Crypto" },
-  { symbol: "LTC", name: "Litecoin", category: "Crypto" },
-  { symbol: "TRX", name: "Tron", category: "Crypto" },
-  { symbol: "LINK", name: "Chainlink", category: "Crypto" },
-  { symbol: "UNI", name: "Uniswap", category: "Crypto" },
-  { symbol: "TON", name: "Toncoin", category: "Crypto" },
-  { symbol: "ATOM", name: "Cosmos", category: "Crypto" },
-  { symbol: "NEAR", name: "NEAR Protocol", category: "Crypto" },
-  { symbol: "FIL", name: "Filecoin", category: "Crypto" },
-  { symbol: "APT", name: "Aptos", category: "Crypto" },
-  { symbol: "ARB", name: "Arbitrum", category: "Crypto" },
-  { symbol: "OP", name: "Optimism", category: "Crypto" },
-  { symbol: "AAVE", name: "Aave", category: "Crypto" },
-  { symbol: "MKR", name: "Maker", category: "Crypto" },
-  { symbol: "INJ", name: "Injective", category: "Crypto" },
-  { symbol: "SUI", name: "Sui", category: "Crypto" },
-  { symbol: "SEI", name: "Sei", category: "Crypto" },
-  
-  // Crypto Pairs (Crypto vs Crypto)
-  { symbol: "BTC/ETH", name: "Bitcoin / Ethereum", category: "Crypto Pairs" },
-  { symbol: "BTC/SOL", name: "Bitcoin / Solana", category: "Crypto Pairs" },
-  { symbol: "BTC/XRP", name: "Bitcoin / Ripple", category: "Crypto Pairs" },
-  { symbol: "BTC/ADA", name: "Bitcoin / Cardano", category: "Crypto Pairs" },
-  { symbol: "BTC/DOGE", name: "Bitcoin / Dogecoin", category: "Crypto Pairs" },
-  { symbol: "BTC/DOT", name: "Bitcoin / Polkadot", category: "Crypto Pairs" },
-  { symbol: "BTC/LTC", name: "Bitcoin / Litecoin", category: "Crypto Pairs" },
-  { symbol: "BTC/LINK", name: "Bitcoin / Chainlink", category: "Crypto Pairs" },
-  { symbol: "BTC/AVAX", name: "Bitcoin / Avalanche", category: "Crypto Pairs" },
-  { symbol: "ETH/SOL", name: "Ethereum / Solana", category: "Crypto Pairs" },
-  { symbol: "ETH/XRP", name: "Ethereum / Ripple", category: "Crypto Pairs" },
-  { symbol: "ETH/ADA", name: "Ethereum / Cardano", category: "Crypto Pairs" },
-  { symbol: "ETH/DOGE", name: "Ethereum / Dogecoin", category: "Crypto Pairs" },
-  { symbol: "ETH/DOT", name: "Ethereum / Polkadot", category: "Crypto Pairs" },
-  { symbol: "ETH/LTC", name: "Ethereum / Litecoin", category: "Crypto Pairs" },
-  { symbol: "ETH/LINK", name: "Ethereum / Chainlink", category: "Crypto Pairs" },
-  { symbol: "ETH/AVAX", name: "Ethereum / Avalanche", category: "Crypto Pairs" },
-  { symbol: "SOL/XRP", name: "Solana / Ripple", category: "Crypto Pairs" },
-  { symbol: "SOL/ADA", name: "Solana / Cardano", category: "Crypto Pairs" },
-  { symbol: "SOL/DOGE", name: "Solana / Dogecoin", category: "Crypto Pairs" },
-  { symbol: "SOL/AVAX", name: "Solana / Avalanche", category: "Crypto Pairs" },
-  { symbol: "XRP/ADA", name: "Ripple / Cardano", category: "Crypto Pairs" },
-  { symbol: "XRP/DOGE", name: "Ripple / Dogecoin", category: "Crypto Pairs" },
-  { symbol: "DOT/LINK", name: "Polkadot / Chainlink", category: "Crypto Pairs" },
-  { symbol: "LTC/BCH", name: "Litecoin / Bitcoin Cash", category: "Crypto Pairs" },
-  { symbol: "MATIC/AVAX", name: "Polygon / Avalanche", category: "Crypto Pairs" },
-  
-  // US Stocks
-  { symbol: "NVDA", name: "NVIDIA Corporation", category: "US Stocks" },
-  { symbol: "TSLA", name: "Tesla Inc.", category: "US Stocks" },
-  { symbol: "AAPL", name: "Apple Inc.", category: "US Stocks" },
-  { symbol: "MSFT", name: "Microsoft Corporation", category: "US Stocks" },
-  { symbol: "GOOGL", name: "Alphabet Inc. (Google)", category: "US Stocks" },
-  { symbol: "AMZN", name: "Amazon.com Inc.", category: "US Stocks" },
-  { symbol: "META", name: "Meta Platforms Inc.", category: "US Stocks" },
-  { symbol: "NFLX", name: "Netflix Inc.", category: "US Stocks" },
-  { symbol: "AMD", name: "Advanced Micro Devices", category: "US Stocks" },
-  { symbol: "INTC", name: "Intel Corporation", category: "US Stocks" },
-  { symbol: "BABA", name: "Alibaba Group", category: "US Stocks" },
-  { symbol: "DIS", name: "Walt Disney Company", category: "US Stocks" },
-  { symbol: "BA", name: "Boeing Company", category: "US Stocks" },
-  { symbol: "JPM", name: "JPMorgan Chase & Co.", category: "US Stocks" },
-  { symbol: "V", name: "Visa Inc.", category: "US Stocks" },
-  { symbol: "PYPL", name: "PayPal Holdings", category: "US Stocks" },
-  { symbol: "NKE", name: "Nike Inc.", category: "US Stocks" },
-  { symbol: "KO", name: "Coca-Cola Company", category: "US Stocks" },
-  { symbol: "PFE", name: "Pfizer Inc.", category: "US Stocks" },
-  { symbol: "UBER", name: "Uber Technologies", category: "US Stocks" },
-  
-  // Commodities
-  { symbol: "XAUUSD", name: "Gold", category: "Commodities" },
-  { symbol: "XAGUSD", name: "Silver", category: "Commodities" },
-  { symbol: "XPTUSD", name: "Platinum", category: "Commodities" },
-  { symbol: "XPDUSD", name: "Palladium", category: "Commodities" },
-  { symbol: "USOIL", name: "Crude Oil (WTI)", category: "Commodities" },
-  { symbol: "UKOIL", name: "Brent Crude Oil", category: "Commodities" },
-  { symbol: "NATGAS", name: "Natural Gas", category: "Commodities" },
-  { symbol: "COPPER", name: "Copper", category: "Commodities" },
-  
-  // Forex Pairs
-  { symbol: "EURUSD", name: "EUR/USD", category: "Forex" },
-  { symbol: "GBPUSD", name: "GBP/USD", category: "Forex" },
-  { symbol: "USDJPY", name: "USD/JPY", category: "Forex" },
-  { symbol: "AUDUSD", name: "AUD/USD", category: "Forex" },
-  { symbol: "USDCAD", name: "USD/CAD", category: "Forex" },
-  { symbol: "USDCHF", name: "USD/CHF", category: "Forex" },
-  { symbol: "NZDUSD", name: "NZD/USD", category: "Forex" },
-  { symbol: "EURGBP", name: "EUR/GBP", category: "Forex" },
-  { symbol: "EURJPY", name: "EUR/JPY", category: "Forex" },
-  { symbol: "GBPJPY", name: "GBP/JPY", category: "Forex" },
-  { symbol: "EURCHF", name: "EUR/CHF", category: "Forex" },
-  { symbol: "AUDJPY", name: "AUD/JPY", category: "Forex" },
-  
-  // Indices
-  { symbol: "US30", name: "Dow Jones Industrial Average", category: "Indices" },
-  { symbol: "US100", name: "NASDAQ 100", category: "Indices" },
-  { symbol: "SPX500", name: "S&P 500", category: "Indices" },
-  { symbol: "UK100", name: "FTSE 100", category: "Indices" },
-  { symbol: "GER40", name: "DAX 40", category: "Indices" },
-  { symbol: "JPN225", name: "Nikkei 225", category: "Indices" },
-  { symbol: "FRA40", name: "CAC 40", category: "Indices" },
-  { symbol: "AUS200", name: "ASX 200", category: "Indices" },
-];
 
 export default function ManualProfitModal({
   isOpen,
@@ -155,8 +36,10 @@ export default function ManualProfitModal({
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedAsset, setSelectedAsset] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [profitAmount, setProfitAmount] = useState("");
+  const [selectedMarket, setSelectedMarket] = useState("Binary");
+  const [investmentAmount, setInvestmentAmount] = useState("");
+  const [profitPercentage, setProfitPercentage] = useState("");
+  const [direction, setDirection] = useState<"HIGHER" | "LOWER">("HIGHER");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -165,15 +48,14 @@ export default function ManualProfitModal({
   const [showAssetPicker, setShowAssetPicker] = useState(false);
   const [userSearchTerm, setUserSearchTerm] = useState("");
 
-  // Get unique categories
-  const categories = ["all", ...Array.from(new Set(TRADING_ASSETS.map(a => a.category)))];
+  // Market type options
+  const marketCategories = ["Binary", "Digital", "Forex", "Crypto", "Stocks", "Commodities"];
 
-  // Filter assets based on category and search
+  // Filter assets based on search only
   const filteredAssets = TRADING_ASSETS.filter(asset => {
-    const matchesCategory = selectedCategory === "all" || asset.category === selectedCategory;
-    const matchesSearch = asset.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = asset.displayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          asset.symbol.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+    return matchesSearch;
   });
 
   // Fetch users when modal opens (re-run when session role becomes available)
@@ -204,14 +86,20 @@ export default function ManualProfitModal({
     e.preventDefault();
     setError("");
 
-    if (!selectedUserId || !selectedAsset || !profitAmount) {
+    if (!selectedUserId || !selectedAsset || !investmentAmount || !profitPercentage) {
       setError("Please fill in all fields");
       return;
     }
 
-    const profit = parseFloat(profitAmount);
-    if (isNaN(profit) || profit <= 0) {
-      setError("Profit amount must be a positive number");
+    const investment = parseFloat(investmentAmount);
+    if (isNaN(investment) || investment <= 0) {
+      setError("Investment amount must be a positive number");
+      return;
+    }
+
+    const percentage = parseFloat(profitPercentage);
+    if (isNaN(percentage) || percentage <= 0) {
+      setError("Profit percentage must be a positive number");
       return;
     }
 
@@ -226,7 +114,10 @@ export default function ManualProfitModal({
         body: JSON.stringify({
           userId: selectedUserId,
           asset: selectedAsset,
-          profitAmount: profit,
+          market: selectedMarket,
+          investmentAmount: investment,
+          profitPercentage: percentage,
+          direction: direction,
         }),
       });
 
@@ -240,7 +131,9 @@ export default function ManualProfitModal({
       // Reset form
       setSelectedUserId("");
       setSelectedAsset("");
-      setProfitAmount("");
+      setSelectedMarket("Binary");
+      setInvestmentAmount("");
+      setProfitPercentage("");
 
       // Call success callback
       onSuccess();
@@ -272,15 +165,36 @@ export default function ManualProfitModal({
     const sizeMap = { sm: 20, md: 32, lg: 40 };
     const iconSize = sizeMap[size];
     
-    // Check if it's a crypto pair (contains /)
+    // Check if it's a pair (e.g., EUR/USD, BTC/USD, BTC/ETH)
     if (symbol.includes("/")) {
       const [base, quote] = symbol.split("/");
+      
+      // For FOREX pairs (both base and quote are fiat), show both flags
+      if (FOREX_CODES.has(base) && FOREX_CODES.has(quote)) {
+        return (
+          <div className="relative flex items-center justify-center" style={{ width: iconSize, height: iconSize }}>
+            <div className="absolute left-0 top-0">
+              <Image src={getCurrencyFlagUrl(base)} alt={base} width={size === "sm" ? 16 : size === "md" ? 20 : 24} height={size === "sm" ? 16 : size === "md" ? 20 : 24} className="rounded-full object-cover" unoptimized />
+            </div>
+            <div className="absolute right-0 bottom-0">
+              <Image src={getCurrencyFlagUrl(quote)} alt={quote} width={size === "sm" ? 16 : size === "md" ? 20 : 24} height={size === "sm" ? 16 : size === "md" ? 20 : 24} className="rounded-full object-cover" unoptimized />
+            </div>
+          </div>
+        );
+      }
+      
+      // For crypto/USD pairs, only show the crypto icon
+      if (quote === "USD" && !FOREX_CODES.has(base)) {
+        return <CryptoIcon symbol={base} size={size === "sm" ? "sm" : size === "md" ? "md" : "lg"} />;
+      }
+      
+      // For other pairs (e.g., BTC/ETH), show both icons
       return (
         <div className="relative flex items-center justify-center" style={{ width: iconSize, height: iconSize }}>
           <div className="absolute left-0 top-0">
             <CryptoIcon symbol={base} size={size === "sm" ? "xs" : size === "md" ? "sm" : "md"} />
           </div>
-          <div className="absolute right-0 top-0">
+          <div className="absolute right-0 bottom-0">
             <CryptoIcon symbol={quote} size={size === "sm" ? "xs" : size === "md" ? "sm" : "md"} />
           </div>
         </div>
@@ -312,10 +226,10 @@ export default function ManualProfitModal({
   const getCategoryColor = (category: string) => {
     switch (category) {
       case "Crypto": return { from: "#f97316", to: "#ea580c", shadow: "#f9731640" };
-      case "US Stocks": return { from: "#3b82f6", to: "#2563eb", shadow: "#3b82f640" };
+      case "Stocks": return { from: "#3b82f6", to: "#2563eb", shadow: "#3b82f640" };
       case "Commodities": return { from: "#eab308", to: "#ca8a04", shadow: "#eab30840" };
       case "Forex": return { from: "#10b981", to: "#059669", shadow: "#10b98140" };
-      case "Indices": return { from: "#8b5cf6", to: "#7c3aed", shadow: "#8b5cf640" };
+      case "Index": return { from: "#8b5cf6", to: "#7c3aed", shadow: "#8b5cf640" };
       default: return { from: "#6b7280", to: "#4b5563", shadow: "#6b728040" };
     }
   };
@@ -424,11 +338,11 @@ export default function ManualProfitModal({
                   {selectedAssetData ? (
                     <>
                       <div className="flex-shrink-0">
-                        {renderAssetIcon(selectedAssetData.symbol, "md")}
+                        {renderAssetIcon(selectedAssetData.symbol, "lg")}
                       </div>
                       <div className="min-w-0 text-left">
-                        <p className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>{selectedAssetData.symbol}</p>
-                        <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>{selectedAssetData.name}</p>
+                        <p className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>{formatAssetForAdmin(selectedAssetData.symbol)}</p>
+                        <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>{selectedAssetData.displayName}</p>
                       </div>
                     </>
                   ) : (
@@ -457,16 +371,100 @@ export default function ManualProfitModal({
               </button>
             </div>
 
-            {/* Profit amount */}
+            {/* Market Category */}
             <div>
-              <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Profit Amount (USD)</label>
+              <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Market</label>
+              <div className="flex flex-wrap gap-2">
+                {marketCategories.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedMarket(cat)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      selectedMarket === cat
+                        ? "bg-gradient-to-r from-orange-500 to-red-600 text-white"
+                        : isDark
+                        ? "bg-gray-800 text-gray-300 border border-gray-700 hover:border-gray-500"
+                        : "bg-white text-gray-700 border border-gray-200 hover:border-gray-400"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Trade Direction */}
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Trade Direction</label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setDirection("HIGHER")}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    direction === "HIGHER"
+                      ? "border-green-500 bg-green-500/10"
+                      : isDark
+                      ? "border-gray-700 bg-gray-800 hover:border-gray-600"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <div className={`text-2xl font-bold ${direction === "HIGHER" ? "text-green-500" : isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      ↑
+                    </div>
+                    <span className={`font-semibold text-sm ${direction === "HIGHER" ? "text-green-500" : isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      HIGHER
+                    </span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDirection("LOWER")}
+                  className={`p-4 rounded-xl border-2 transition-all ${
+                    direction === "LOWER"
+                      ? "border-red-500 bg-red-500/10"
+                      : isDark
+                      ? "border-gray-700 bg-gray-800 hover:border-gray-600"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <div className={`text-2xl font-bold ${direction === "LOWER" ? "text-red-500" : isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      ↓
+                    </div>
+                    <span className={`font-semibold text-sm ${direction === "LOWER" ? "text-red-500" : isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      LOWER
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {/* Investment amount */}
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Investment Amount (USD)</label>
               <input
                 type="number"
                 step="0.01"
                 min="0.01"
-                value={profitAmount}
-                onChange={(e) => setProfitAmount(e.target.value)}
-                placeholder="Enter profit amount"
+                value={investmentAmount}
+                onChange={(e) => setInvestmentAmount(e.target.value)}
+                placeholder="Enter investment amount"
+                className={`w-full border rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm ${isDark ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500" : "bg-white border-gray-200 text-gray-900 placeholder-gray-400"}`}
+              />
+            </div>
+
+            {/* Profit percentage */}
+            <div>
+              <label className={`block text-sm font-semibold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Profit Percentage (%)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={profitPercentage}
+                onChange={(e) => setProfitPercentage(e.target.value)}
+                placeholder="Enter profit percentage (e.g., 85 for +85%)"
                 className={`w-full border rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm ${isDark ? "bg-gray-800 border-gray-700 text-white placeholder-gray-500" : "bg-white border-gray-200 text-gray-900 placeholder-gray-400"}`}
               />
             </div>
@@ -481,7 +479,7 @@ export default function ManualProfitModal({
             {/* Submit */}
             <button
               onClick={handleSubmit}
-              disabled={loading || !selectedUserId || !selectedAsset || !profitAmount}
+              disabled={loading || !selectedUserId || !selectedAsset || !investmentAmount || !profitPercentage}
               className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white py-3 rounded-xl font-semibold text-sm hover:shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading ? "Adding Profit..." : "Add Manual Profit"}
@@ -580,7 +578,7 @@ export default function ManualProfitModal({
           <div className="h-14 sm:h-[72px]" />
           <div className="max-w-2xl mx-auto px-4 pt-4 pb-2">
             <button
-              onClick={() => { setShowAssetPicker(false); setSearchTerm(""); setSelectedCategory("all"); }}
+              onClick={() => { setShowAssetPicker(false); setSearchTerm(""); }}
               className={`flex items-center gap-2 transition-colors p-2 rounded-lg ${isDark ? "text-gray-400 hover:text-white hover:bg-gray-800/50" : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"}`}
             >
               <ArrowLeft size={20} />
@@ -594,7 +592,7 @@ export default function ManualProfitModal({
             </div>
 
             {/* Search */}
-            <div className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 mb-3 ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
+            <div className={`flex items-center gap-2 border rounded-xl px-3 py-2.5 mb-4 ${isDark ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"}`}>
               <Search size={16} className={isDark ? "text-gray-400" : "text-gray-400"} />
               <input
                 type="text"
@@ -609,29 +607,6 @@ export default function ManualProfitModal({
                   <X size={14} className={isDark ? "text-gray-400" : "text-gray-400"} />
                 </button>
               )}
-            </div>
-
-            {/* Category filter */}
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {categories.map((cat) => {
-                const isActive = selectedCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => { setSelectedCategory(cat); setSearchTerm(""); }}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
-                      isActive
-                        ? "bg-gradient-to-r from-orange-500 to-red-600 text-white"
-                        : isDark
-                        ? "bg-gray-800 text-gray-300 border border-gray-700 hover:border-gray-500"
-                        : "bg-white text-gray-700 border border-gray-200 hover:border-gray-400"
-                    }`}
-                  >
-                    {cat === "all" ? "All" : cat}
-                  </button>
-                );
-              })}
             </div>
 
             {/* Asset grid */}
@@ -657,8 +632,8 @@ export default function ManualProfitModal({
                       </div>
                       {isSelected && <div className="w-4 h-4 rounded-full bg-orange-500 flex items-center justify-center"><Check size={10} className="text-white" /></div>}
                     </div>
-                    <p className={`font-bold text-sm mb-0.5 ${isDark ? "text-white" : "text-gray-900"}`}>{asset.symbol}</p>
-                    <p className={`text-[10px] line-clamp-1 mb-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{asset.name}</p>
+                    <p className={`font-bold text-sm mb-0.5 ${isDark ? "text-white" : "text-gray-900"}`}>{formatAssetForAdmin(asset.symbol)}</p>
+                    <p className={`text-[10px] line-clamp-1 mb-1.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>{asset.displayName}</p>
                     <span className="text-[9px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${colors.from}20`, color: colors.from, border: `1px solid ${colors.from}40` }}>
                       {asset.category}
                     </span>

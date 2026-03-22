@@ -503,6 +503,44 @@ export default function TransactionDetailsModal({
     <AnimatePresence>
       {isOpen && (
         <>
+          <style dangerouslySetInnerHTML={{__html: `
+            @media print {
+              body * {
+                visibility: hidden;
+              }
+              .transaction-details-modal,
+              .transaction-details-modal * {
+                visibility: visible;
+              }
+              .transaction-details-modal {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: auto;
+                background: white !important;
+                border: none !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                max-height: none !important;
+              }
+              .transaction-details-modal button {
+                display: none !important;
+              }
+              .transaction-details-modal,
+              .transaction-details-modal div,
+              .transaction-details-modal span,
+              .transaction-details-modal p,
+              .transaction-details-modal label {
+                color: black !important;
+                background: white !important;
+                border-color: #e5e7eb !important;
+              }
+              .transaction-details-modal {
+                page-break-inside: avoid;
+              }
+            }
+          `}} />
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -518,9 +556,10 @@ export default function TransactionDetailsModal({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", duration: 0.3, bounce: 0.1 }}
-            className="fixed top-0 left-0 right-0 bottom-0 z-[9998] flex flex-col"
+            className="transaction-details-modal fixed top-0 left-0 right-0 bottom-0 z-[9998] flex flex-col"
             onClick={(e) => e.stopPropagation()}
             style={{ touchAction: "auto", margin: 0, padding: 0 }}
+            data-print-date={new Date().toLocaleString()}
           >
             <div
               className={`w-full flex-1 overflow-y-auto ${
@@ -924,10 +963,10 @@ export default function TransactionDetailsModal({
                         <div className={`text-lg font-bold ${
                           isDark ? "text-white" : "text-gray-900"
                         }`}>
-                          {/* For trade_earned, amount is stored in USD — show raw USD */}
+                          {/* For trade_earned, amount is investment in USD — show formatted amount */}
                           {/* For fiat currencies, show 2 decimals; for crypto, show up to 8 */}
                           {transaction.type === "trade_earned"
-                            ? `$${transaction.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            ? transaction.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                             : FIAT_CURRENCIES.has(
                                 transaction.asset?.toUpperCase() || ""
                               )
@@ -939,12 +978,16 @@ export default function TransactionDetailsModal({
                                   minimumFractionDigits: 2,
                                   maximumFractionDigits: 8,
                                 })}
-                          {/* For trade_earned show the asset symbol; for other types show as before */}
+                          {/* For trade_earned show the trading pair with slash formatting; for other types show asset */}
                           {transaction.type === "trade_earned" ? (
                             <span className={`text-base ml-2 ${
                               isDark ? "text-gray-400" : "text-gray-600"
                             }`}>
-                              USD
+                              {transaction.asset?.includes("/") 
+                                ? transaction.asset 
+                                : transaction.asset?.length === 6 
+                                  ? `${transaction.asset.substring(0, 3)}/${transaction.asset.substring(3, 6)}`
+                                  : transaction.asset}
                             </span>
                           ) : (
                             <span className={`text-base ml-2 ${
@@ -1683,6 +1726,25 @@ export default function TransactionDetailsModal({
                   }}
                 >
                   Close
+                </button>
+                <button
+                  onClick={() => window.print()}
+                  className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white py-2 px-3 rounded-lg font-medium text-xs transition-all active:scale-95 shadow-sm hover:shadow-orange-500/40 flex items-center justify-center gap-1"
+                >
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  Download Receipt
                 </button>
                 {transaction.hash && (
                   <button

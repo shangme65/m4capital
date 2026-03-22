@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import UniversalTradingChart from "./UniversalTradingChart";
+import RealTimeTradingChart from "./RealTimeTradingChart";
 
 interface ChartGridProps {
   gridType: number;
   defaultSymbol: string;
   availableSymbols?: string[];
+  onPriceYPosition?: (yPercent: number) => void;
 }
 
 export default function ChartGrid({
@@ -24,6 +25,7 @@ export default function ChartGrid({
     "USDC",
     "USDT",
   ],
+  onPriceYPosition,
 }: ChartGridProps) {
   // Initialize chart symbols based on grid type
   const getInitialSymbols = () => {
@@ -84,7 +86,7 @@ export default function ChartGrid({
         // Single chart
         return (
           <div className="w-full h-full">
-            <UniversalTradingChart symbol={chartSymbols[0]} />
+            <RealTimeTradingChart symbol={chartSymbols[0]} onPriceYPosition={onPriceYPosition} />
           </div>
         );
 
@@ -198,7 +200,7 @@ export default function ChartGrid({
       default:
         return (
           <div className="w-full h-full">
-            <UniversalTradingChart symbol={chartSymbols[0]} />
+            <RealTimeTradingChart symbol={chartSymbols[0]} onPriceYPosition={onPriceYPosition} />
           </div>
         );
     }
@@ -223,7 +225,7 @@ function ChartWithSelector({
 
   return (
     <div className="w-full h-full relative group">
-      <UniversalTradingChart symbol={symbol} />
+      <RealTimeTradingChart symbol={symbol} />
 
       {/* Symbol selector - shows on hover */}
       <div className="absolute top-2 left-2 z-10">
