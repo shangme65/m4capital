@@ -8,6 +8,10 @@ interface ChartGridProps {
   defaultSymbol: string;
   availableSymbols?: string[];
   onPriceYPosition?: (yPercent: number) => void;
+  // Expiration time props for IQ Option style
+  expirationSeconds?: number;
+  expirationCountdown?: number;
+  hasActiveTrades?: boolean;
 }
 
 export default function ChartGrid({
@@ -26,6 +30,9 @@ export default function ChartGrid({
     "USDT",
   ],
   onPriceYPosition,
+  expirationSeconds,
+  expirationCountdown,
+  hasActiveTrades,
 }: ChartGridProps) {
   // Initialize chart symbols based on grid type
   const getInitialSymbols = () => {
@@ -86,7 +93,13 @@ export default function ChartGrid({
         // Single chart
         return (
           <div className="w-full h-full">
-            <RealTimeTradingChart symbol={chartSymbols[0]} onPriceYPosition={onPriceYPosition} />
+            <RealTimeTradingChart 
+              symbol={chartSymbols[0]} 
+              onPriceYPosition={onPriceYPosition}
+              expirationSeconds={expirationSeconds}
+              expirationCountdown={expirationCountdown}
+              hasActiveTrades={hasActiveTrades}
+            />
           </div>
         );
 

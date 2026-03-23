@@ -37,6 +37,12 @@ interface RealTimeTradingChartProps {
   limit?: number;
   // Callback with the Y position percentage (0-100) of the current price on the chart
   onPriceYPosition?: (yPercent: number) => void;
+  // Expiration time in seconds (for binary options - IQ Option style)
+  expirationSeconds?: number;
+  // Countdown to next expiration (seconds remaining)
+  expirationCountdown?: number;
+  // Whether there are active trades
+  hasActiveTrades?: boolean;
 }
 
 export default function RealTimeTradingChart({
@@ -44,6 +50,9 @@ export default function RealTimeTradingChart({
   interval = "1m",
   limit = 3000, // Maximum candles for full chart coverage
   onPriceYPosition,
+  expirationSeconds = 60,
+  expirationCountdown,
+  hasActiveTrades = false,
 }: RealTimeTradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -248,7 +257,7 @@ export default function RealTimeTradingChart({
     // Zoom out the chart to create more space
     if (chart) {
       chart.setBarSpace(8); // Reduce bar spacing to zoom out (default is ~12)
-      chart.setOffsetRightDistance(80); // Add more space on the right
+      chart.setOffsetRightDistance(200); // Add more space on the right for price indicator
       
       // Hide candle tooltip after chart initialization
       chart.setStyles({
@@ -314,7 +323,7 @@ export default function RealTimeTradingChart({
           // Set scroll limit to data range - position current price in middle like IQ Option
           if (forexData.length > 0) {
             // Large right offset to position current price in the middle of the screen
-            chartRef.current.setOffsetRightDistance(300); // Increased to center current price
+            chartRef.current.setOffsetRightDistance(400); // Increased to center current price, clear sidebar
             chartRef.current.setLeftMinVisibleBarCount(10); // Minimum visible bars when scrolled left
             chartRef.current.setRightMinVisibleBarCount(5); // Fewer bars needed on right with larger offset
             chartRef.current.setBarSpace(12); // Default zoom level - more zoomed in
@@ -375,7 +384,7 @@ export default function RealTimeTradingChart({
           // Set scroll limit to data range - position current price in middle like IQ Option
           if (klineData.length > 0) {
             // Large right offset to position current price in the middle of the screen
-            chartRef.current.setOffsetRightDistance(300); // Increased to center current price
+            chartRef.current.setOffsetRightDistance(400); // Increased to center current price, clear sidebar
             chartRef.current.setLeftMinVisibleBarCount(10); // Minimum visible bars when scrolled left
             chartRef.current.setRightMinVisibleBarCount(5); // Fewer bars needed on right with larger offset
             chartRef.current.setBarSpace(12); // Default zoom level - more zoomed in
@@ -602,7 +611,7 @@ export default function RealTimeTradingChart({
   return (
     <div
       className="relative w-full h-full overflow-hidden"
-      style={{ maxHeight: "100%" }}
+      style={{ maxHeight: "100%", paddingRight: "25px" }}
     >
       {/* Chart container - klinecharts will render here */}
       <div className="h-full w-full flex flex-col">
@@ -743,6 +752,67 @@ export default function RealTimeTradingChart({
           </svg>
         </button>
       </div>
+
+      {/* IQ Option Style Expiration Line - Dashed white line with countdown */}
+      {expirationCountdown !== undefined && (
+        <>
+          
+          {/* The expiration line */}
+          <div 
+            className="absolute top-0 bottom-8 pointer-events-none"
+            style={{ 
+              left: '60%',
+              transform: 'translateX(-50%)',
+              zIndex: 1000,
+            }}
+          >
+            {/* Vertical dashed white line (IQ Option style) */}
+            <div 
+              className="h-full"
+              style={{
+                width: '2px',
+                backgroundImage: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 50%, transparent 50%)',
+                backgroundSize: '2px 8px',
+              }}
+            />
+            
+            {/* PURCHASE TIME label at top */}
+            <div 
+              className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
+              style={{ 
+                color: 'rgba(255, 255, 255, 0.7)',
+              }}
+            >
+              <span className="text-[10px] tracking-wide whitespace-nowrap">PURCHASE TIME</span>
+              <span className="text-white text-2xl font-bold font-mono tracking-wide">
+                {String(Math.floor((expirationCountdown || 0) / 60)).padStart(2, "0")}:
+                {String((expirationCountdown || 0) % 60).padStart(2, "0")}
+              </span>
+            </div>
+            
+            {/* Countdown badge in the middle of the line */}
+            <div 
+              className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+              style={{ 
+                top: '45%',
+                backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+              }}
+            >
+              {/* Clock icon */}
+              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              {/* Countdown text */}
+              <span className="text-white text-sm font-bold font-mono tracking-wide">
+                {String(Math.floor((expirationCountdown || 0) / 60)).padStart(2, "0")}:
+                {String((expirationCountdown || 0) % 60).padStart(2, "0")}
+              </span>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Live Price Display - Hidden */}
     </div>

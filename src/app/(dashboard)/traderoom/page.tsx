@@ -3871,18 +3871,7 @@ function TradingInterface() {
                           </button>
                         )}
                       </div>
-                    ) : (
-                      // Simple purchase time countdown when no active trades
-                      <div className="flex flex-col items-center gap-1">
-                        <div className="text-[10px] text-[#9e9aa7] font-medium tracking-wider">
-                          PURCHASE TIME
-                        </div>
-                        <div className="text-2xl font-bold text-white font-mono">
-                          {String(Math.floor(countdown / 60)).padStart(2, "0")}:
-                          {String(countdown % 60).padStart(2, "0")}
-                        </div>
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 );
               })()}
@@ -3904,6 +3893,9 @@ function TradingInterface() {
                   "LINK",
                 ]}
                 onPriceYPosition={setPriceYPosition}
+                expirationSeconds={expirationSeconds}
+                expirationCountdown={countdown}
+                hasActiveTrades={activeTrades.filter(t => t.status === "active").length > 0}
               />
 
               {/* IQ Option Style Strike Line Overlay - Shows when hovering HIGHER/LOWER */}
@@ -4525,12 +4517,8 @@ function TradingInterface() {
                       </div>
                       <div className="px-2 py-1.5 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" style={{ color: "#8b9ab8" }} />
-                        <span className="font-bold" style={{ color: "#eef2f7", fontSize: "14px" }}>
-                          {(() => {
-                            const now = new Date();
-                            const expTime = new Date(now.getTime() + expirationSeconds * 1000);
-                            return `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
-                          })()}
+                        <span className="font-bold font-mono" style={{ color: "#eef2f7", fontSize: "14px" }}>
+                          {String(Math.floor(countdown / 60)).padStart(2, '0')}:{String(countdown % 60).padStart(2, '0')}
                         </span>
                       </div>
                     </div>
