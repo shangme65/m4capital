@@ -2125,9 +2125,10 @@ function TradingInterface() {
                     <option value="Blitz Options">Blitz Options</option>
                     <option value="Binary Options">Binary Options</option>
                     <option value="Digital Options">Digital Options</option>
-                    <option value="Stocks, ETFs, Commodities">Stocks, ETFs, Commodities</option>
                     <option value="Forex">Forex</option>
+                    <option value="Stocks, ETFs, Commodities">Stocks, ETFs, Commodities</option>
                     <option value="Crypto">Crypto</option>
+                    <option value="Indices">Indices</option>
                   </select>
                 </div>
 
@@ -2209,6 +2210,10 @@ function TradingInterface() {
                       if (historyFilter === "Stocks, ETFs, Commodities") {
                         const stockSymbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "META", "NVDA", "GOLD", "OIL", "SILVER"];
                         return stockSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
+                      }
+                      if (historyFilter === "Indices") {
+                        const indexSymbols = ["INDEX", "AUS 200", "EU 50", "FR 40", "GER 30", "US 500", "NASDAQ", "DOW", "MAGNIFICENT", "AIRLINES", "CANNABIS", "CASINO"];
+                        return indexSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
                       }
                       return true;
                     })
@@ -3610,9 +3615,10 @@ function TradingInterface() {
 
             {/* Chart Area with World Map Background */}
             <div
-              className="flex-1 relative overflow-hidden"
+              className="flex-1 relative overflow-visible"
               style={{
                 backgroundColor: "#070c15",
+                zIndex: 20,
                 backgroundImage:
                   'url("/traderoom/backgrounds/worldmapbackground.svg")',
                 backgroundSize: "cover",
@@ -3898,6 +3904,27 @@ function TradingInterface() {
                 hasActiveTrades={activeTrades.filter(t => t.status === "active").length > 0}
               />
 
+              {/* IQ Option Style Date/Time Display at Bottom of Chart */}
+              {currentTime && (
+                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
+                  <div 
+                    className="px-3 py-1 rounded text-xs font-mono"
+                    style={{ 
+                      backgroundColor: "rgba(26, 45, 69, 0.9)",
+                      border: "1px solid #2a3d55",
+                      color: "#8b9ab8"
+                    }}
+                  >
+                    {currentTime.getFullYear()}.
+                    {String(currentTime.getMonth() + 1).padStart(2, '0')}.
+                    {String(currentTime.getDate()).padStart(2, '0')}{' '}
+                    {String(currentTime.getHours()).padStart(2, '0')}:
+                    {String(currentTime.getMinutes()).padStart(2, '0')}:
+                    {String(currentTime.getSeconds()).padStart(2, '0')}
+                  </div>
+                </div>
+              )}
+
               {/* IQ Option Style Strike Line Overlay - Shows when hovering HIGHER/LOWER */}
               <AnimatePresence>
                 {hoveredButton && (
@@ -3909,33 +3936,18 @@ function TradingInterface() {
                     transition={{ duration: 0.15 }}
                     className="absolute inset-0 z-25 pointer-events-none"
                   >
-                    {/* Strike Line with Glow */}
+                    {/* Strike Line with Glow - Full width like IQ Option */}
                     <div
-                      className="absolute left-[15%] right-[140px]"
+                      className="absolute left-0 right-0"
                       style={{
                         top: `${priceYPosition}%`,
                         height: "2px",
                         background: hoveredButton === "higher" 
-                          ? "linear-gradient(90deg, transparent 0%, #22c55e 5%, #22c55e 95%, transparent 100%)"
-                          : "linear-gradient(90deg, transparent 0%, #ef4444 5%, #ef4444 95%, transparent 100%)",
+                          ? "#22c55e"
+                          : "#ef4444",
                         boxShadow: hoveredButton === "higher"
                           ? "0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.3)"
                           : "0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)",
-                      }}
-                    />
-                    
-                    {/* Dashed projection line */}
-                    <div
-                      className="absolute"
-                      style={{
-                        top: `${priceYPosition}%`,
-                        left: "60%",
-                        right: "140px",
-                        height: "1px",
-                        backgroundImage: hoveredButton === "higher"
-                          ? "linear-gradient(90deg, #22c55e 50%, transparent 50%)"
-                          : "linear-gradient(90deg, #ef4444 50%, transparent 50%)",
-                        backgroundSize: "10px 1px",
                       }}
                     />
 
@@ -3981,46 +3993,9 @@ function TradingInterface() {
                       )}
                     </motion.div>
 
-                    {/* Price Badge on Right */}
-                    <motion.div
-                      className="absolute flex items-center"
-                      style={{
-                        top: `calc(${priceYPosition}% - 13px)`,
-                        right: "140px",
-                        backgroundColor: hoveredButton === "higher" ? "#22c55e" : "#ef4444",
-                        padding: "4px 12px",
-                        borderRadius: "4px",
-                        boxShadow: hoveredButton === "higher"
-                          ? "0 0 15px rgba(34, 197, 94, 0.5)"
-                          : "0 0 15px rgba(239, 68, 68, 0.5)",
-                      }}
-                      animate={{
-                        scale: [1, 1.02, 1],
-                      }}
-                      transition={{
-                        duration: 1,
-                        repeat: Infinity,
-                      }}
-                    >
-                      <span className="text-white font-bold text-sm font-mono">
-                        {(() => {
-                          const sym = symbols.find(s => s.symbol === selectedSymbol);
-                          const price = sym?.price || "0.00000";
-                          const [intPart, decPart] = price.toString().split(".");
-                          return (
-                            <>
-                              <span>{intPart}</span>
-                              <span className="font-normal">.{decPart?.slice(0, 3) || "000"}</span>
-                              <span className="text-xs">{decPart?.slice(3) || "00"}</span>
-                            </>
-                          );
-                        })()}
-                      </span>
-                    </motion.div>
-
                     {/* Semi-transparent fill area below/above line */}
                     <div
-                      className="absolute left-[15%] right-[140px]"
+                      className="absolute left-0 right-0"
                       style={{
                         top: hoveredButton === "higher" ? "0" : `${priceYPosition}%`,
                         bottom: hoveredButton === "higher" ? `${100 - priceYPosition}%` : "0",
@@ -4574,7 +4549,7 @@ function TradingInterface() {
                       
                       <div className="p-4">
                         <div className="flex gap-4">
-                          {/* Left Column - Short Expirations */}
+                          {/* Left Column - Short Expirations (1-5 minutes) */}
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-3">
                               <span className="text-sm font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
@@ -4587,23 +4562,34 @@ function TradingInterface() {
                               <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Remaining</span>
                             </div>
                             
-                            {/* Options */}
+                            {/* Options - Minute aligned like IQ Option */}
                             <div className="space-y-1">
-                              {[
-                                { seconds: 30, label: "00:30" },
-                                { seconds: 60, label: "01:00" },
-                                { seconds: 120, label: "02:00" },
-                                { seconds: 180, label: "03:00" },
-                                { seconds: 300, label: "05:00" },
-                              ].map((option) => {
-                                const now = new Date();
-                                const expTime = new Date(now.getTime() + option.seconds * 1000);
-                                const timeStr = `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
-                                const isSelected = expirationSeconds === option.seconds;
+                              {[1, 2, 3, 4, 5].map((minuteOffset) => {
+                                // Use currentTime state for real-time updates
+                                const now = currentTime || new Date();
+                                // Calculate next minute boundary
+                                const nextMinute = new Date(now);
+                                nextMinute.setSeconds(0, 0);
+                                nextMinute.setMinutes(nextMinute.getMinutes() + minuteOffset);
+                                
+                                // Time string (HH:MM)
+                                const timeStr = `${String(nextMinute.getHours()).padStart(2, '0')}:${String(nextMinute.getMinutes()).padStart(2, '0')}`;
+                                
+                                // Calculate remaining seconds until that target time
+                                const remainingMs = nextMinute.getTime() - now.getTime();
+                                const remainingTotalSecs = Math.max(0, Math.ceil(remainingMs / 1000));
+                                const remainingMins = Math.floor(remainingTotalSecs / 60);
+                                const remainingSecs = remainingTotalSecs % 60;
+                                const remainingLabel = `${String(remainingMins).padStart(2, '0')}:${String(remainingSecs).padStart(2, '0')}`;
+                                
+                                // Map to seconds for selection
+                                const optionSeconds = minuteOffset * 60;
+                                const isSelected = expirationSeconds === optionSeconds;
+                                
                                 return (
                                   <button
-                                    key={option.seconds}
-                                    onClick={() => { setExpirationSeconds(option.seconds); setShowExpirationModal(false); }}
+                                    key={minuteOffset}
+                                    onClick={() => { setExpirationSeconds(optionSeconds); setShowExpirationModal(false); }}
                                     className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? '' : 'hover:bg-white/5'}`}
                                     style={{ 
                                       backgroundColor: isSelected ? '#00c087' : 'transparent',
@@ -4615,7 +4601,7 @@ function TradingInterface() {
                                         <circle cx="12" cy="12" r="10"/>
                                         <polyline points="12 6 12 12 16 14"/>
                                       </svg>
-                                      {option.label}
+                                      {remainingLabel}
                                     </span>
                                   </button>
                                 );
@@ -4626,7 +4612,7 @@ function TradingInterface() {
                           {/* Divider */}
                           <div className="w-px" style={{ backgroundColor: "#2a2e35" }} />
                           
-                          {/* Right Column - Long Expirations */}
+                          {/* Right Column - Long Expirations (15-60 minutes) */}
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-3">
                               <span className="text-sm font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
@@ -4639,23 +4625,34 @@ function TradingInterface() {
                               <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Remaining</span>
                             </div>
                             
-                            {/* Options */}
+                            {/* Options - Minute aligned like IQ Option */}
                             <div className="space-y-1">
-                              {[
-                                { seconds: 600, label: "10:00" },
-                                { seconds: 900, label: "15:00" },
-                                { seconds: 1800, label: "30:00" },
-                                { seconds: 2700, label: "45:00" },
-                                { seconds: 3600, label: "60:00" },
-                              ].map((option) => {
-                                const now = new Date();
-                                const expTime = new Date(now.getTime() + option.seconds * 1000);
-                                const timeStr = `${String(expTime.getHours()).padStart(2, '0')}:${String(expTime.getMinutes()).padStart(2, '0')}`;
-                                const isSelected = expirationSeconds === option.seconds;
+                              {[15, 30, 45, 60, 120].map((minuteOffset) => {
+                                // Use currentTime state for real-time updates
+                                const now = currentTime || new Date();
+                                // Calculate target minute boundary
+                                const targetTime = new Date(now);
+                                targetTime.setSeconds(0, 0);
+                                targetTime.setMinutes(targetTime.getMinutes() + minuteOffset);
+                                
+                                // Time string (HH:MM)
+                                const timeStr = `${String(targetTime.getHours()).padStart(2, '0')}:${String(targetTime.getMinutes()).padStart(2, '0')}`;
+                                
+                                // Calculate remaining seconds until that target time
+                                const remainingMs = targetTime.getTime() - now.getTime();
+                                const remainingTotalSecs = Math.max(0, Math.ceil(remainingMs / 1000));
+                                const remainingMins = Math.floor(remainingTotalSecs / 60);
+                                const remainingSecs = remainingTotalSecs % 60;
+                                const remainingLabel = `${String(remainingMins).padStart(2, '0')}:${String(remainingSecs).padStart(2, '0')}`;
+                                
+                                // Map to seconds for selection
+                                const optionSeconds = minuteOffset * 60;
+                                const isSelected = expirationSeconds === optionSeconds;
+                                
                                 return (
                                   <button
-                                    key={option.seconds}
-                                    onClick={() => { setExpirationSeconds(option.seconds); setShowExpirationModal(false); }}
+                                    key={minuteOffset}
+                                    onClick={() => { setExpirationSeconds(optionSeconds); setShowExpirationModal(false); }}
                                     className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? '' : 'hover:bg-white/5'}`}
                                     style={{ 
                                       backgroundColor: isSelected ? '#00c087' : 'transparent',
@@ -4667,7 +4664,7 @@ function TradingInterface() {
                                         <circle cx="12" cy="12" r="10"/>
                                         <polyline points="12 6 12 12 16 14"/>
                                       </svg>
-                                      {option.label}
+                                      {remainingLabel}
                                     </span>
                                   </button>
                                 );

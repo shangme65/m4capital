@@ -610,8 +610,8 @@ export default function RealTimeTradingChart({
 
   return (
     <div
-      className="relative w-full h-full overflow-hidden"
-      style={{ maxHeight: "100%", paddingRight: "25px" }}
+      className="relative w-full h-full overflow-visible"
+      style={{ maxHeight: "100%", paddingRight: "25px", zIndex: 30 }}
     >
       {/* Chart container - klinecharts will render here */}
       <div className="h-full w-full flex flex-col">
