@@ -77,19 +77,8 @@ export const fetchExchangeRates = cache(
 export const fetchCryptoPrices = cache(
   async (): Promise<Record<string, number>> => {
     try {
-      const response = await fetch(
-        "https://api.binance.com/api/v3/ticker/price"
-      );
-      if (!response.ok) throw new Error("Failed to fetch");
-      const data = await response.json();
-      const prices: Record<string, number> = {};
-      data.forEach((item: { symbol: string; price: string }) => {
-        if (item.symbol.endsWith("USDT")) {
-          const symbol = item.symbol.replace("USDT", "");
-          prices[symbol] = parseFloat(item.price);
-        }
-      });
-      return prices;
+      // Binance API removed. No crypto price fetch here.
+      return {};
     } catch {
       return {};
     }

@@ -54,6 +54,7 @@ export interface Trade {
   exitPrice?: number;
   entryTime: Date;
   exitTime?: Date;
+  expirationTime: Date;
   status: "WIN" | "LOSS";
   profit: number;
 }
@@ -340,6 +341,7 @@ function InternalTradingProvider({ children }: TradingProviderProps) {
         exitPrice,
         entryTime: position.entryTime,
         exitTime: new Date(),
+        expirationTime: position.expirationTime,
         status: isWin ? "WIN" : "LOSS",
         profit,
       };

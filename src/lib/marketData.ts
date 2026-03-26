@@ -1,6 +1,6 @@
 /**
- * Market Data Service - Real-time WebSocket market data
- * Uses Binance WebSocket for crypto, Frankfurter API for forex
+ * Market Data Service - Real-time market data (NO Binance integration)
+ * Uses Frankfurter API for forex only
  */
 
 export interface MarketTick {
@@ -43,21 +43,7 @@ export interface MarketDataSubscriber {
   onError?: (error: Error) => void;
 }
 
-// Binance WebSocket stream data
-interface BinanceTickerData {
-  e: string; // Event type
-  E: number; // Event time
-  s: string; // Symbol
-  c: string; // Close price
-  o: string; // Open price
-  h: string; // High price
-  l: string; // Low price
-  v: string; // Volume
-  p: string; // Price change
-  P: string; // Price change percent
-  b: string; // Best bid
-  a: string; // Best ask
-}
+
 
 export class MarketDataService {
   private static instance: MarketDataService;
@@ -69,19 +55,7 @@ export class MarketDataService {
     new Map();
   private forexInterval: NodeJS.Timeout | null = null;
 
-  // Binance crypto pairs (using USDT as base)
-  private readonly CRYPTO_PAIRS = [
-    "btcusdt",
-    "ethusdt",
-    "xrpusdt",
-    "trxusdt",
-    "tonusdt",
-    "ltcusdt",
-    "bchusdt",
-    "etcusdt",
-    "usdcusdt",
-    "usdtusdt",
-  ];
+
 
   // Forex pairs supported by Frankfurter API
   private readonly FOREX_PAIRS = [
@@ -111,89 +85,13 @@ export class MarketDataService {
   }
 
   private initializeDataFeeds() {
-    // Double-check we're in browser
+    // Only initialize Frankfurter API polling for forex (no WebSocket available)
     if (typeof window === "undefined") {
       console.warn("⚠️ Market data feeds can only be initialized in browser");
       return;
     }
-
-    // Initialize Binance WebSocket for crypto
-    this.initializeBinanceWebSocket();
-
-    // Initialize Frankfurter API polling for forex (no WebSocket available)
     this.initializeForexPolling();
-  }
-
-  private initializeBinanceWebSocket() {
-    // Only run in browser
-    if (typeof window === "undefined") {
-      console.warn("⚠️ Cannot initialize WebSocket on server-side");
-      return;
-    }
-
-    // Create combined stream for all crypto pairs
-    const streams = this.CRYPTO_PAIRS.map((pair) => `${pair}@ticker`).join("/");
-    const wsUrl = `wss://stream.binance.com:9443/stream?streams=${streams}`;
-
-    console.log("🚀 Connecting to Binance WebSocket...");
-
-    try {
-      const ws = new WebSocket(wsUrl);
-
-      ws.onopen = () => {
-        console.log("✅ Binance WebSocket connected - Real-time crypto data");
-        this.websockets.set("binance", ws);
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.data) {
-            this.handleBinanceTickerUpdate(message.data);
-          }
-        } catch (error) {
-          console.error("❌ Error parsing Binance message:", error);
-        }
-      };
-
-      ws.onerror = (error) => {
-        console.error("❌ Binance WebSocket error:", error);
-      };
-
-      ws.onclose = () => {
-        console.log("🔌 Binance WebSocket closed, reconnecting in 5s...");
-        this.websockets.delete("binance");
-
-        const timeout = setTimeout(() => {
-          this.initializeBinanceWebSocket();
-        }, 5000);
-
-        this.reconnectTimeouts.set("binance", timeout);
-      };
-    } catch (error) {
-      console.error("❌ Failed to create Binance WebSocket:", error);
-    }
-  }
-
-  private handleBinanceTickerUpdate(data: BinanceTickerData) {
-    // Convert Binance symbol (BTCUSDT) to our format (BTCUSD)
-    const symbol = data.s.replace("USDT", "USD");
-
-    const tick: MarketTick = {
-      symbol,
-      price: parseFloat(data.c),
-      bid: parseFloat(data.b),
-      ask: parseFloat(data.a),
-      volume: parseFloat(data.v),
-      timestamp: data.E,
-      change: parseFloat(data.p),
-      changePercent: parseFloat(data.P),
-      high: parseFloat(data.h),
-      low: parseFloat(data.l),
-      open: parseFloat(data.o),
-    };
-
-    this.updatePrice(tick);
+  // ...existing code...
   }
 
   private async initializeForexPolling() {

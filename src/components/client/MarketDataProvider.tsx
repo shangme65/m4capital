@@ -102,103 +102,13 @@ export function MarketDataProvider({
   }, []);
 
   const connect = () => {
-    // Using CoinGecko API instead of Binance WebSocket
-    console.log("🚀 Connecting to CoinGecko market data service...");
-    setIsConnected(true);
-    setConnectionQuality("excellent");
-
-    // Fallback prices if API fails
-    const fallbackPrices: Record<string, MarketTick> = {
-      BTCUSD: { symbol: "BTCUSD", price: 67500, timestamp: Date.now(), changePercent: 2.5 },
-      ETHUSD: { symbol: "ETHUSD", price: 3450, timestamp: Date.now(), changePercent: 1.8 },
-      BNBUSD: { symbol: "BNBUSD", price: 580, timestamp: Date.now(), changePercent: 0.9 },
-      SOLUSD: { symbol: "SOLUSD", price: 145, timestamp: Date.now(), changePercent: 3.2 },
-      ADAUSD: { symbol: "ADAUSD", price: 0.65, timestamp: Date.now(), changePercent: -1.2 },
-      XRPUSD: { symbol: "XRPUSD", price: 0.52, timestamp: Date.now(), changePercent: 0.5 },
-      DOGEUSD: { symbol: "DOGEUSD", price: 0.12, timestamp: Date.now(), changePercent: 4.1 },
-      DOTUSD: { symbol: "DOTUSD", price: 7.2, timestamp: Date.now(), changePercent: -0.8 },
-      MATICUSD: { symbol: "MATICUSD", price: 0.78, timestamp: Date.now(), changePercent: 1.5 },
-      LINKUSD: { symbol: "LINKUSD", price: 14.5, timestamp: Date.now(), changePercent: 2.1 },
-      AVAXUSD: { symbol: "AVAXUSD", price: 35, timestamp: Date.now(), changePercent: 1.9 },
-      UNIUSD: { symbol: "UNIUSD", price: 9.8, timestamp: Date.now(), changePercent: 0.3 },
-      ATOMUSD: { symbol: "ATOMUSD", price: 8.5, timestamp: Date.now(), changePercent: -0.5 },
-      LTCUSD: { symbol: "LTCUSD", price: 85, timestamp: Date.now(), changePercent: 1.2 },
-      ETCUSD: { symbol: "ETCUSD", price: 28, timestamp: Date.now(), changePercent: 0.7 },
-    };
-
-    // Fetch initial prices from CoinGecko
-    const fetchCoinGeckoPrices = async () => {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-        
-        const response = await fetch(
-          "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,binancecoin,solana,cardano,ripple,dogecoin,polkadot,polygon,chainlink,avalanche-2,uniswap,cosmos,litecoin,ethereum-classic&vs_currencies=usd&include_24hr_change=true",
-          { signal: controller.signal }
-        );
-        
-        clearTimeout(timeoutId);
-        
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-        
-        const data = await response.json();
-
-        const pricesMap: Record<string, MarketTick> = {};
-        const symbolMap: Record<string, string> = {
-          bitcoin: "BTCUSD",
-          ethereum: "ETHUSD",
-          binancecoin: "BNBUSD",
-          solana: "SOLUSD",
-          cardano: "ADAUSD",
-          ripple: "XRPUSD",
-          dogecoin: "DOGEUSD",
-          polkadot: "DOTUSD",
-          polygon: "MATICUSD",
-          chainlink: "LINKUSD",
-          "avalanche-2": "AVAXUSD",
-          uniswap: "UNIUSD",
-          cosmos: "ATOMUSD",
-          litecoin: "LTCUSD",
-          "ethereum-classic": "ETCUSD",
-        };
-
-        Object.entries(data).forEach(([coinId, priceData]: [string, any]) => {
-          const symbol = symbolMap[coinId];
-          if (symbol) {
-            pricesMap[symbol] = {
-              symbol,
-              price: priceData.usd,
-              timestamp: Date.now(),
-              changePercent: priceData.usd_24h_change || 0,
-            };
-          }
-        });
-
-        setPrices(pricesMap);
-        setTotalSymbols(Object.keys(pricesMap).length);
-        console.log(
-          `✅ Loaded ${
-            Object.keys(pricesMap).length
-          } crypto prices from CoinGecko`
-        );
-      } catch (error) {
-        console.warn("⚠️ CoinGecko API unavailable, using fallback prices:", error);
-        // Use fallback prices when API fails
-        setPrices((prev) => Object.keys(prev).length > 0 ? prev : fallbackPrices);
-        setTotalSymbols(Object.keys(fallbackPrices).length);
-        setConnectionQuality("good");
-      }
-    };
-
-    fetchCoinGeckoPrices();
-
-    // Poll CoinGecko API every 30 seconds (free tier limit)
-    const intervalId = setInterval(fetchCoinGeckoPrices, 30000);
-
-    // Store interval ID for cleanup
-    (window as any).__coinGeckoInterval = intervalId;
+    // Initialize MarketDataService singleton for real-time data
+    if (!marketDataService.current) {
+      marketDataService.current = MarketDataService.getInstance();
+      setIsConnected(true);
+      setConnectionQuality("excellent");
+      // Optionally, you can set up listeners here to update prices from the service
+    }
   };
 
   const disconnect = () => {

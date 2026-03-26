@@ -27,7 +27,7 @@ const FOREX_BASE_PRICES: Record<string, number> = {
   AUDCAD: 0.875,
   EURCAD: 1.428,
   GBPCAD: 1.722,
-  // Crypto pairs (fallback if Binance fails)
+  // Crypto pairs (no Binance fallback)
   BTCUSD: 97500,
   ETHUSD: 3850,
   XRPUSD: 2.35,

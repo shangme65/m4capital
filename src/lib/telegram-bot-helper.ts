@@ -1,3 +1,39 @@
+
+/**
+ * Send an inline keyboard to a Telegram user
+ */
+export async function sendInlineKeyboard(
+  chatId: number,
+  text: string,
+  buttons: Array<Array<{ text: string; callback_data?: string; url?: string }>>
+) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (!botToken) return;
+
+  const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: buttons,
+        },
+      }),
+    });
+
+    const data = await response.json();
+    if (!data.ok) {
+      console.error("Telegram inline keyboard error:", data);
+    }
+  } catch (error) {
+    console.error("Error sending inline keyboard:", error);
+  }
+}
 /**
  * Telegram Bot Helper Functions
  * Utilities for Telegram bot operations
@@ -33,50 +69,13 @@ export async function sendTelegramMessage(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         chat_id: chatId,
-        text: text,
+        text,
         parse_mode: parseMode,
       }),
     });
-
-    const data = await response.json();
-    return data.ok;
+    // ...existing code...
   } catch (error) {
-    console.error("Error sending message:", error);
-    return false;
-  }
-}
-
-/**
- * Send inline keyboard to Telegram user
- */
-export async function sendInlineKeyboard(
-  chatId: number,
-  text: string,
-  buttons: Array<Array<{ text: string; callback_data?: string; url?: string }>>
-) {
-  if (!BOT_TOKEN) return false;
-
-  const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-
-  try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: text,
-        parse_mode: "Markdown",
-        reply_markup: {
-          inline_keyboard: buttons,
-        },
-      }),
-    });
-
-    const data = await response.json();
-    return data.ok;
-  } catch (error) {
-    console.error("Error sending inline keyboard:", error);
-    return false;
+    // ...existing code...
   }
 }
 

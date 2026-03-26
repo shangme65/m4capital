@@ -144,6 +144,11 @@ export default function RealTimeTradingChart({
             hour12: false,
           });
         },
+        formatBigNumber: (value: string | number) => {
+          const num = typeof value === 'string' ? parseFloat(value) : value;
+          // IQ Option shows 5 decimal places for forex pairs
+          return num.toFixed(5);
+        },
       },
       styles: {
         // IQ Option style candles - THICK, solid, clear GREEN/RED colors
@@ -253,6 +258,11 @@ export default function RealTimeTradingChart({
     });
 
     chartRef.current = chart;
+    
+    // Set price precision to show more decimal places (IQ Option style)
+    if (chart) {
+      chart.setPriceVolumePrecision(5, 0); // 5 decimal places for price, 0 for volume
+    }
     
     // Zoom out the chart to create more space
     if (chart) {
@@ -520,7 +530,8 @@ export default function RealTimeTradingChart({
   };
 
   // Y-axis zoom state for vertical price scaling (IQ Option style)
-  const [priceScaleZoom, setPriceScaleZoom] = useState(1);
+  // Start with higher zoom (2.5) to show more price labels like IQ Option
+  const [priceScaleZoom, setPriceScaleZoom] = useState(2.5);
   const [isDraggingYAxis, setIsDraggingYAxis] = useState(false);
   const yAxisDragStartRef = useRef<{ y: number; zoom: number } | null>(null);
 
