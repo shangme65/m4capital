@@ -17,7 +17,7 @@ const signupSchema = z.object({
   email: z.string().email("Invalid email format").toLowerCase().trim(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   accountType: z.enum(["STANDARD", "INVESTOR", "TRADER"]).default("STANDARD"),
-  country: z.string().optional(),
+  country: z.string().min(1, "Country is required"),
 });
 
 // Force dynamic to ensure fresh data on each request

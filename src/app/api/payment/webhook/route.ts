@@ -236,16 +236,29 @@ export async function POST(request: NextRequest) {
 
     console.log("💾 Updating deposit in database...");
     
+    // Determine confirmations based on payment status
+    let confirmations = deposit.confirmations;
+    if (payment_status === "confirmed" || payment_status === "finished") {
+      confirmations = 6; // Set to final confirmation count when payment is complete
+      console.log("  - Setting confirmations to 6 (payment finished)");
+    } else if (payment_status === "confirming") {
+      confirmations = Math.min(deposit.confirmations + 1, 5); // Increment but don't exceed 5
+      console.log("  - Incrementing confirmations to", confirmations);
+    }
+    
     // Update deposit
     await prisma.deposit.update({
       where: { id: deposit.id },
       data: {
         status: newStatus,
         paymentStatus: payment_status,
+        confirmations: confirmations,
       },
     });
     
     console.log("✅ Deposit updated successfully");
+    console.log("  - Status:", newStatus);
+    console.log("  - Confirmations:", confirmations);
 
     // If payment is completed, credit user's portfolio
     console.log("🔍 Checking if should credit user...");
@@ -286,12 +299,44 @@ export async function POST(request: NextRequest) {
       }
 
       const depositCurrency = deposit.currency || "USD";
-      const depositAmount = parseFloat(deposit.amount.toString());
+      let depositAmount = parseFloat(deposit.amount.toString());
+      const userPreferredCurrency = deposit.User.preferredCurrency || "USD";
       
       console.log("💵 Deposit details:");
       console.log("  - Amount:", depositAmount);
       console.log("  - Currency:", depositCurrency);
+      console.log("  - User's preferred currency:", userPreferredCurrency);
       console.log("  - Target:", deposit.targetAsset || "REGULAR");
+
+      // Convert deposit amount to user's preferred currency if different
+      if (depositCurrency !== userPreferredCurrency) {
+        console.log(`💱 Converting from ${depositCurrency} to ${userPreferredCurrency}...`);
+        try {
+          const ratesResponse = await fetch(
+            `https://api.frankfurter.app/latest?from=${depositCurrency}&to=${userPreferredCurrency}`
+          );
+          if (ratesResponse.ok) {
+            const ratesData = await ratesResponse.json();
+            const rate = ratesData.rates[userPreferredCurrency];
+            if (rate) {
+              const originalAmount = depositAmount;
+              depositAmount = depositAmount * rate;
+              console.log(`  - Exchange rate: 1 ${depositCurrency} = ${rate} ${userPreferredCurrency}`);
+              console.log(`  - Original amount: ${originalAmount} ${depositCurrency}`);
+              console.log(`  - Converted amount: ${depositAmount} ${userPreferredCurrency}`);
+            } else {
+              console.error(`❌ Exchange rate not found for ${userPreferredCurrency}`);
+            }
+          } else {
+            console.error(`❌ Failed to fetch exchange rates: ${ratesResponse.status}`);
+          }
+        } catch (conversionError) {
+          console.error("❌ Error converting currency:", conversionError);
+          console.log("⚠️ Proceeding with original amount (no conversion)");
+        }
+      } else {
+        console.log(`✓ Deposit currency matches user's preferred currency - no conversion needed`);
+      }
 
       // Check if this is a traderoom deposit
       if (deposit.targetAsset === "TRADEROOM") {
@@ -336,13 +381,13 @@ export async function POST(request: NextRequest) {
         });
 
         console.log(
-          `✅ Credited ${totalCredit} ${depositCurrency} to TRADEROOM balance for user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ''}`
+          `✅ Credited ${totalCredit} ${userPreferredCurrency} to TRADEROOM balance for user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ''}`
         );
         console.log(
-          `New traderoom balance: ${newTraderoomBalance} ${depositCurrency}`
+          `New traderoom balance: ${newTraderoomBalance} ${userPreferredCurrency}`
         );
 
-        const userCurrency = deposit.User.preferredCurrency || depositCurrency;
+        const userCurrency = userPreferredCurrency;
         const bonusMessage = bonusAmount > 0 
           ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userCurrency)}${bonusAmount.toFixed(2)}!`
           : '';
@@ -356,7 +401,7 @@ export async function POST(request: NextRequest) {
             type: "DEPOSIT",
             title: bonusAmount > 0 ? `${userCurrency} Traderoom Deposit + Bonus!` : `${userCurrency} Traderoom Deposit Completed`,
             message: `Your deposit of ${getCurrencySymbol(userCurrency)}${
-              deposit.amount
+              depositAmount.toFixed(2)
             } has been successfully credited to your Traderoom balance.${bonusMessage}`,
             amount: totalCredit, // Include bonus in the displayed amount
             asset: userCurrency,
@@ -378,12 +423,12 @@ export async function POST(request: NextRequest) {
             const displayAmount = (Math.round(depositAmount * 100) / 100).toFixed(2);
             await sendEmail({
               to: deposit.User.email,
-              subject: `✅ ${depositCurrency} Traderoom Deposit Completed - M4 Capital`,
+              subject: `✅ ${userPreferredCurrency} Traderoom Deposit Completed - M4 Capital`,
               html: depositConfirmedTemplate(
                 deposit.User.name || "User",
                 displayAmount,
-                depositCurrency,
-                getCurrencySymbol(depositCurrency),
+                userPreferredCurrency,
+                getCurrencySymbol(userPreferredCurrency),
                 payment_id,
                 false
               ),
@@ -404,7 +449,7 @@ export async function POST(request: NextRequest) {
             {
               type: "deposit",
               amount: totalCredit,
-              asset: depositCurrency,
+              asset: userPreferredCurrency,
               url: "/dashboard",
             }
           );
@@ -423,7 +468,7 @@ export async function POST(request: NextRequest) {
         if (promoActive) {
           bonusAmount = calculateBonusAmount(depositAmount);
           totalCredit = depositAmount + bonusAmount;
-          console.log(`🎁 First deposit bonus! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${depositCurrency}`);
+          console.log(`🎁 First deposit bonus! Adding ${PROMO_BONUS_PERCENT}% bonus: ${bonusAmount} ${userPreferredCurrency}`);
           
           // Mark user as having claimed the first deposit bonus
           await prisma.user.update({
@@ -449,18 +494,18 @@ export async function POST(request: NextRequest) {
           where: { id: portfolio.id },
           data: {
             balance: newBalance,
-            balanceCurrency: depositCurrency,
+            balanceCurrency: userPreferredCurrency,
           },
         });
 
         console.log(
-          `✅ Credited ${totalCredit} ${depositCurrency} to user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ''}`
+          `✅ Credited ${totalCredit} ${userPreferredCurrency} to user ${deposit.User.email}${bonusAmount > 0 ? ` (includes ${bonusAmount} bonus)` : ''}`
         );
-        console.log(`New balance: ${newBalance} ${depositCurrency}`);
+        console.log(`New balance: ${newBalance} ${userPreferredCurrency}`);
 
         console.log("📧 Creating deposit notification...");
         // Create notification for successful deposit
-        const userCurrency2 = deposit.User.preferredCurrency || depositCurrency;
+        const userCurrency2 = userPreferredCurrency;
         const bonusMessage = bonusAmount > 0 
           ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userCurrency2)}${bonusAmount.toFixed(2)}!`
           : '';
@@ -471,7 +516,7 @@ export async function POST(request: NextRequest) {
             type: "DEPOSIT",
             title: bonusAmount > 0 ? `${userCurrency2} Deposit + Bonus!` : `${userCurrency2} Deposit Completed`,
             message: `Your deposit of ${getCurrencySymbol(userCurrency2)}${
-              deposit.amount
+              depositAmount.toFixed(2)
             } has been successfully credited to your account.${bonusMessage}`,
             amount: totalCredit, // Include bonus in the displayed amount
             asset: userCurrency2,
@@ -492,12 +537,12 @@ export async function POST(request: NextRequest) {
             const displayAmount = (Math.round(depositAmount * 100) / 100).toFixed(2);
             await sendEmail({
               to: deposit.User.email,
-              subject: `✅ ${depositCurrency} Deposit Completed - M4 Capital`,
+              subject: `✅ ${userPreferredCurrency} Deposit Completed - M4 Capital`,
               html: depositConfirmedTemplate(
                 deposit.User.name || "User",
                 displayAmount,
-                depositCurrency,
-                getCurrencySymbol(depositCurrency),
+                userPreferredCurrency,
+                getCurrencySymbol(userPreferredCurrency),
                 payment_id,
                 false
               ),
@@ -518,7 +563,7 @@ export async function POST(request: NextRequest) {
             {
               type: "deposit",
               amount: totalCredit,
-              asset: depositCurrency,
+              asset: userPreferredCurrency,
               url: "/dashboard",
             }
           );

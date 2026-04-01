@@ -60,6 +60,48 @@ export default function EmailSignupModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Comprehensive validation for all required fields
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+
+    // Validate full name
+    if (!trimmedName) {
+      setError("Please enter your full name");
+      return;
+    }
+    if (trimmedName.length < 2) {
+      setError("Name must be at least 2 characters long");
+      return;
+    }
+
+    // Validate email
+    if (!trimmedEmail) {
+      setError("Please enter your email address");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    // Validate password
+    if (!password) {
+      setError("Please enter a password");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      return;
+    }
+
+    // Validate country
+    if (!country) {
+      setError("Please select your country of residence");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -69,8 +111,8 @@ export default function EmailSignupModal({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: name.trim(),
-          email: email.toLowerCase().trim(),
+          name: trimmedName,
+          email: trimmedEmail,
           password,
           accountType,
           country,
@@ -212,7 +254,7 @@ export default function EmailSignupModal({
                       <label className={`block text-sm mb-2 ${
                         isDark ? "text-gray-400" : "text-gray-700"
                       }`}>
-                        Full Name
+                        Full Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
@@ -289,7 +331,7 @@ export default function EmailSignupModal({
                       <label className={`block text-sm mb-2 ${
                         isDark ? "text-gray-400" : "text-gray-700"
                       }`}>
-                        Country of residence
+                        Country of residence <span className="text-red-500">*</span>
                       </label>
                       <CountrySelector value={country} onChange={setCountry} />
                     </div>
@@ -299,7 +341,7 @@ export default function EmailSignupModal({
                       <label className={`block text-sm mb-2 ${
                         isDark ? "text-gray-400" : "text-gray-700"
                       }`}>
-                        Email
+                        Email <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="email"
@@ -320,7 +362,7 @@ export default function EmailSignupModal({
                       <label className={`block text-sm mb-2 ${
                         isDark ? "text-gray-400" : "text-gray-700"
                       }`}>
-                        Password
+                        Password <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
                         <input
