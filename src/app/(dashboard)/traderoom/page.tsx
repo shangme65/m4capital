@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense, useTransition, useRef } from "react";
+import { useEffect, useState, Suspense, useTransition, useRef, useCallback } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -158,7 +158,26 @@ function TradingInterface() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { formatAmount, preferredCurrency, exchangeRates, convertAmount } = useCurrency();
-  const [amount, setAmount] = useState(10000);
+  const [amount, setAmount] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("m4_trade_amount");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 1000000) return parsed;
+      }
+    }
+    return 1;
+  });
+  const [amountInput, setAmountInput] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("m4_trade_amount");
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 1000000) return parsed.toLocaleString();
+      }
+    }
+    return "1";
+  });
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [selectedSymbol, setSelectedSymbol] = useState("USD/CAD");
   const [expirationSeconds, setExpirationSeconds] = useState(30);
@@ -232,12 +251,77 @@ function TradingInterface() {
   // Current price Y position on chart (percentage from top)
   const [priceYPosition, setPriceYPosition] = useState<number>(50);
 
+  // Dynamic price-to-Y converter from chart (converts any price to Y% position)
+  const priceToYRef = useRef<((price: number) => number) | null>(null);
+  const handlePriceToYConverter = useCallback((converter: (price: number) => number) => {
+    priceToYRef.current = converter;
+  }, []);
+
+  // Dynamic timestamp-to-X converter from chart (converts timestamp to X% position)
+  const timeToXRef = useRef<((timestamp: number) => number) | null>(null);
+  const handleTimeToXConverter = useCallback((converter: (timestamp: number) => number) => {
+    timeToXRef.current = converter;
+  }, []);
+
   // Active trades state for chart markers
   const [activeTrades, setActiveTrades] = useState<ActiveTrade[]>([]);
+  const activeTradesRef = useRef<ActiveTrade[]>([]);
+  activeTradesRef.current = activeTrades;
   const [currentPrice, setCurrentPrice] = useState<number>(0);
   
   // Last finished trade - stays visible until new trade is placed
   const [lastFinishedTrade, setLastFinishedTrade] = useState<ActiveTrade | null>(null);
+
+  // Candle time period & chart timeframe state
+  const [candleInterval, setCandleInterval] = useState("30s");
+  const [chartTimeframe, setChartTimeframe] = useState("15m");
+  const [showCandleDropdown, setShowCandleDropdown] = useState(false);
+  const [showTimeframeDropdown, setShowTimeframeDropdown] = useState(false);
+  const [isSoundOn, setIsSoundOn] = useState(true);
+
+  const candleTimePeriods = [
+    { label: "5 seconds", value: "5s" },
+    { label: "10 seconds", value: "10s" },
+    { label: "15 seconds", value: "15s" },
+    { label: "30 seconds", value: "30s" },
+    { label: "1 minute", value: "1m" },
+    { label: "2 minutes", value: "2m" },
+    { label: "5 minutes", value: "5m" },
+    { label: "10 minutes", value: "10m" },
+    { label: "15 minutes", value: "15m" },
+    { label: "30 minutes", value: "30m" },
+    { label: "1 hour", value: "1h" },
+    { label: "2 hours", value: "2h" },
+    { label: "4 hours", value: "4h" },
+    { label: "8 hours", value: "8h" },
+    { label: "12 hours", value: "12h" },
+    { label: "1 day", value: "1D" },
+    { label: "1 week", value: "1W" },
+    { label: "1 month", value: "1M" },
+  ];
+
+  const timeframeOptions = [
+    { label: "30 days", value: "30d" },
+    { label: "1 day", value: "1d" },
+    { label: "3 hours", value: "3h" },
+    { label: "30 min", value: "30m" },
+    { label: "15 min", value: "15m" },
+    { label: "5 min", value: "5m" },
+    { label: "2 min", value: "2m" },
+  ];
+
+  const getCandleDisplayLabel = () => {
+    const p = candleTimePeriods.find((t) => t.value === candleInterval);
+    if (!p) return candleInterval;
+    // Short label for button
+    if (p.value.endsWith("s")) return p.value;
+    if (p.value.endsWith("m")) return p.value;
+    if (p.value.endsWith("h")) return p.value;
+    if (p.value === "1D") return "1D";
+    if (p.value === "1W") return "1W";
+    if (p.value === "1M") return "1M";
+    return p.value;
+  };
 
   // Get trading context for history data
   const { tradeHistory, openPositions, reloadTradeHistory } = useTradingContext();
@@ -412,7 +496,7 @@ function TradingInterface() {
     { symbol: "USOUSD", displayName: "US Crude Oil", price: "92.78519", change: "+0.789", percentage: "+0.86%", flag: "🛢️", category: "Stocks" },
   ];
 
-  const quickAmounts = [1000, 5000, 10000, 25000, 50000, 100000];
+  const quickAmounts = [1, 5, 10, 25, 50, 100];
 
   const tradingHistory = [
     {
@@ -493,6 +577,23 @@ function TradingInterface() {
   ];
 
   useEffect(() => {
+    localStorage.setItem("m4_trade_amount", amount.toString());
+  }, [amount]);
+
+  // Close dropdowns on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-dropdown]")) {
+        setShowCandleDropdown(false);
+        setShowTimeframeDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     setMounted(true);
     setCurrentTime(new Date());
     const timer = setInterval(() => {
@@ -502,12 +603,22 @@ function TradingInterface() {
     // Countdown timer for expiration
     setCountdown(expirationSeconds);
     const countdownInterval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          return expirationSeconds; // Reset when reaches 0
-        }
-        return prev - 1;
-      });
+      // If there are active trades, use the actual trade's remaining time
+      const activeTradesList = activeTradesRef.current.filter(t => t.status === "active");
+      if (activeTradesList.length > 0) {
+        const earliestTrade = activeTradesList.reduce((earliest, trade) => {
+          return trade.expirationTime < earliest.expirationTime ? trade : earliest;
+        });
+        const remaining = Math.max(0, Math.ceil((earliestTrade.expirationTime - Date.now()) / 1000));
+        setCountdown(remaining);
+      } else {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            return expirationSeconds; // Reset when reaches 0
+          }
+          return prev - 1;
+        });
+      }
     }, 1000);
 
     // Fetch user balance
@@ -610,8 +721,11 @@ function TradingInterface() {
     }
   }, [isBalanceDropdownOpen]);
 
-  // Update current price when symbol changes or price data updates
+  // Update current price from live chart data (via onLivePriceUpdate callback)
+  // Fallback: if no live price yet, use symbols array initial price
   useEffect(() => {
+    // Reset price on symbol change so fallback kicks in until live data arrives
+    setCurrentPrice(0);
     const selectedSymbolData = symbols.find((s) => s.symbol === selectedSymbol);
     if (selectedSymbolData?.price) {
       const priceNum = parseFloat(selectedSymbolData.price.replace(/,/g, ''));
@@ -619,7 +733,7 @@ function TradingInterface() {
         setCurrentPrice(priceNum);
       }
     }
-  }, [selectedSymbol, cryptoPrices, forexRates]);
+  }, [selectedSymbol]);
 
   // Handle funding from fiat balance
   const handleFundFromFiat = async () => {
@@ -734,10 +848,22 @@ function TradingInterface() {
       .toString(36)
       .substr(2, 9)}`;
     const entryTime = Date.now();
-    const expirationTime = entryTime + expirationSeconds * 1000;
+    
+    // If there are already active trades on this symbol/tab, inherit the earliest expiration time
+    const existingActiveOnTab = activeTradesRef.current.filter(
+      t => t.symbol === selectedSymbol && t.status === "active" && t.expirationTime > entryTime
+    );
+    const expirationTime = existingActiveOnTab.length > 0
+      ? existingActiveOnTab.reduce((earliest, t) => 
+          t.expirationTime < earliest.expirationTime ? t : earliest
+        ).expirationTime
+      : entryTime + expirationSeconds * 1000;
 
     // Get current entry price (you'd get this from the chart in production)
     const entryPrice = currentPrice || 1.35742; // Default to USDCAD base price if not set
+
+    // Calculate effective expiration seconds for this trade
+    const effectiveExpirationSeconds = Math.ceil((expirationTime - entryTime) / 1000);
 
     // Create new active trade
     const newTrade: ActiveTrade = {
@@ -749,7 +875,7 @@ function TradingInterface() {
       entryYPosition: priceYPosition, // Store the Y position where trade was placed
       entryTime,
       expirationTime,
-      expirationSeconds,
+      expirationSeconds: effectiveExpirationSeconds,
       status: "active",
     };
 
@@ -1128,76 +1254,112 @@ function TradingInterface() {
                         ×
                       </span>
                     )}
-                    <div className="flex items-center space-x-1 md:space-x-1.5 lg:space-x-2 h-full">
-                      <span className="text-xs md:text-sm">
-                        <AssetFlag flag={symbols.find((s) => s.symbol === tab.symbol)?.flag || ""} symbol={tab.symbol} size={20} className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8" />
-                      </span>
-                      <div className="flex flex-col items-start">
-                        <span 
-                          className="text-xs md:text-sm font-medium"
-                          style={{ color: activeTab === index ? "#ffffff" : "#8b8b8b" }}
-                        >
-                          {tab.symbol}
-                        </span>
-                        <span
-                          className="text-[9px] md:text-[10px] lg:text-[11px]"
-                          style={{
-                            color: activeTab === index ? "#ff8516" : "#666666",
-                          }}
-                        >
-                          {tab.type}
-                        </span>
-                      </div>
-                      
-                      {/* Show active trades P/L or last finished trade result */}
-                      {(() => {
-                        const tabTrades = activeTrades.filter(t => t.symbol === tab.symbol && t.status === "active");
-                        
-                        // If there are active trades
-                        if (tabTrades.length > 0) {
-                          // Only calculate real-time P/L for the active tab
-                          if (activeTab === index) {
-                            const totalPL = tabTrades.reduce((sum, trade) => {
-                              const priceChange = currentPrice - trade.entryPrice;
-                              const isWinning = 
-                                (trade.direction === "higher" && priceChange > 0) ||
-                                (trade.direction === "lower" && priceChange < 0);
-                              return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
-                            }, 0);
-                            
-                            return (
-                              <span 
-                                className="text-xs font-medium ml-1"
+                    {(() => {
+                      const tabActiveTrades = activeTrades.filter(t => t.symbol === tab.symbol && t.status === "active");
+                      const hasActiveTrades = tabActiveTrades.length > 0;
+                      const hasFinishedResult = !hasActiveTrades && !!tab.lastResult;
+
+                      // Calculate countdown for earliest active trade on this tab
+                      let tradeCountdownSec = 0;
+                      if (hasActiveTrades) {
+                        const earliest = tabActiveTrades.reduce((a, b) => a.expirationTime < b.expirationTime ? a : b);
+                        tradeCountdownSec = Math.max(0, Math.ceil((earliest.expirationTime - Date.now()) / 1000));
+                      }
+
+                      // Calculate P/L for active trades
+                      let totalPL = 0;
+                      if (hasActiveTrades) {
+                        totalPL = tabActiveTrades.reduce((sum, trade) => {
+                          const priceChange = currentPrice - trade.entryPrice;
+                          const isWinning = 
+                            (trade.direction === "higher" && priceChange > 0) ||
+                            (trade.direction === "lower" && priceChange < 0);
+                          return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
+                        }, 0);
+                      }
+
+                      const countdownMin = Math.floor(tradeCountdownSec / 60);
+                      const countdownSecDisplay = tradeCountdownSec % 60;
+                      const countdownText = countdownMin > 0 
+                        ? `${countdownMin}:${countdownSecDisplay.toString().padStart(2, "0")}`
+                        : `:${countdownSecDisplay.toString().padStart(2, "0")}`;
+
+                      // Calculate progress for the circular timer (0 to 1)
+                      const totalDuration = hasActiveTrades 
+                        ? tabActiveTrades.reduce((a, b) => a.expirationTime < b.expirationTime ? a : b).expirationSeconds
+                        : 0;
+                      const progress = totalDuration > 0 ? 1 - (tradeCountdownSec / totalDuration) : 0;
+                      const radius = 12;
+                      const circumference = 2 * Math.PI * radius;
+                      const strokeDashoffset = circumference * (1 - progress);
+
+                      return (
+                        <div className="flex items-center space-x-1 md:space-x-1.5 lg:space-x-2 h-full">
+                          {/* Left icon: countdown circle for active trades, flag for others */}
+                          {hasActiveTrades ? (
+                            <div className="relative flex items-center justify-center" style={{ width: 28, height: 28 }}>
+                              <svg width="28" height="28" viewBox="0 0 28 28" className="absolute">
+                                {/* Background circle */}
+                                <circle cx="14" cy="14" r={radius} fill="none" stroke="#3a3a3a" strokeWidth="2" />
+                                {/* Progress arc */}
+                                <circle 
+                                  cx="14" cy="14" r={radius} fill="none" 
+                                  stroke="#ff8516" strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeDasharray={circumference}
+                                  strokeDashoffset={strokeDashoffset}
+                                  style={{ transform: "rotate(-90deg)", transformOrigin: "center", transition: "stroke-dashoffset 1s linear" }}
+                                />
+                              </svg>
+                              <span className="text-[9px] font-bold text-white z-10">{countdownText}</span>
+                            </div>
+                          ) : (
+                            <span className="text-xs md:text-sm">
+                              <AssetFlag flag={symbols.find((s) => s.symbol === tab.symbol)?.flag || ""} symbol={tab.symbol} size={20} className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8" />
+                            </span>
+                          )}
+
+                          <div className="flex flex-col items-start">
+                            <span 
+                              className="text-xs md:text-sm font-medium"
+                              style={{ color: activeTab === index ? "#ffffff" : "#8b8b8b" }}
+                            >
+                              {tab.symbol}
+                            </span>
+
+                            {/* State 1: Ongoing trade - show P/L */}
+                            {hasActiveTrades && (
+                              <span
+                                className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
                                 style={{ color: totalPL >= 0 ? "#00c087" : "#ef4444" }}
                               >
-                                {totalPL >= 0 ? "+" : ""}$ {totalPL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {totalPL >= 0 ? "+" : ""}$ {Math.abs(totalPL).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                               </span>
-                            );
-                          }
-                          
-                          // For inactive tabs, just show indicator that there are active trades
-                          return (
-                            <span className="text-xs font-medium ml-1 text-[#00c087]">
-                              {tabTrades.length} active
-                            </span>
-                          );
-                        }
-                        
-                        // No active trades - show last finished trade result if exists
-                        if (tab.lastResult) {
-                          return (
-                            <span 
-                              className="text-xs font-medium ml-1"
-                              style={{ color: tab.lastResult.status === "won" ? "#00c087" : "#ef4444" }}
-                            >
-                              {tab.lastResult.amount >= 0 ? "+" : ""}$ {tab.lastResult.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                          );
-                        }
-                        
-                        return null;
-                      })()}
-                    </div>
+                            )}
+
+                            {/* State 2: Finished trade - show result */}
+                            {hasFinishedResult && tab.lastResult && (
+                              <span
+                                className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
+                                style={{ color: tab.lastResult.status === "won" ? "#00c087" : "#ef4444" }}
+                              >
+                                {tab.lastResult.amount >= 0 ? "+" : ""}$ {Math.abs(tab.lastResult.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            )}
+
+                            {/* State 3: Normal tab - show trade type */}
+                            {!hasActiveTrades && !hasFinishedResult && (
+                              <span
+                                className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
+                                style={{ color: "#8b8b8b" }}
+                              >
+                                {tab.type}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
                 <button
@@ -3829,7 +3991,7 @@ function TradingInterface() {
                 zIndex: 20,
                 backgroundImage:
                   'url("/traderoom/backgrounds/worldmapbackground.svg")',
-                backgroundSize: "cover",
+                backgroundSize: "80%",
                 backgroundPosition: "center center",
                 backgroundRepeat: "no-repeat",
               }}
@@ -3881,7 +4043,7 @@ function TradingInterface() {
               </div>
 
               {/* IQ Option Style HIGHER/LOWER Indicators + Tools on Left Side */}
-              <div className="absolute left-0 top-16 bottom-0 z-30 flex flex-col justify-between py-4 w-16">
+              <div className="absolute left-0 top-16 bottom-0 z-50 flex flex-col justify-between py-4 w-16">
                 {/* HIGHER Indicator - Top */}
                 <div className="flex flex-col items-start">
                   <div className="text-[#22c55e] text-xs font-bold tracking-wider mb-0.5 ml-2">
@@ -3946,17 +4108,38 @@ function TradingInterface() {
                   </button>
 
                   {/* Sound Toggle */}
-                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
-                    <svg
-                      className="w-4 h-4 text-gray-400"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-                    </svg>
+                  <button
+                    onClick={() => setIsSoundOn(!isSoundOn)}
+                    className={`w-9 h-9 rounded flex items-center justify-center transition-colors border ${
+                      isSoundOn
+                        ? "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
+                        : "bg-[#1a1512] border-[#2a2220] hover:bg-[#2a2220]"
+                    }`}
+                  >
+                    {isSoundOn ? (
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="w-4 h-4 text-red-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                        <line x1="23" y1="9" x2="17" y2="15" />
+                        <line x1="17" y1="9" x2="23" y2="15" />
+                      </svg>
+                    )}
                   </button>
 
                   {/* Pencil/Draw */}
@@ -3985,16 +4168,105 @@ function TradingInterface() {
                     </svg>
                   </button>
 
-                  {/* Candle Timeframe */}
-                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e] text-white text-xs font-bold">
-                    15m
-                  </button>
+                  {/* Candle Timeframe - with dropdown */}
+                  <div className="relative" data-dropdown>
+                    <button
+                      onClick={() => {
+                        setShowCandleDropdown(!showCandleDropdown);
+                        setShowTimeframeDropdown(false);
+                      }}
+                      className={`w-9 h-9 rounded flex items-center justify-center transition-colors border text-white text-xs font-bold ${
+                        showCandleDropdown
+                          ? "bg-[#38312e] border-[#4a3f3a]"
+                          : "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
+                      }`}
+                    >
+                      {getCandleDisplayLabel()}
+                    </button>
+
+                    {/* Candle Time Period Dropdown */}
+                    {showCandleDropdown && (
+                      <div className="absolute bottom-full left-10 mb-0 ml-1 bg-[#1e1e2d] border border-[#2a2a3d] rounded-lg shadow-2xl z-50 py-1 min-w-[160px] max-h-[320px] overflow-y-auto">
+                        <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider border-b border-[#2a2a3d]">
+                          Candle Time Period
+                        </div>
+                        {candleTimePeriods.map((period) => (
+                          <button
+                            key={period.value}
+                            onClick={() => {
+                              setCandleInterval(period.value);
+                              setShowCandleDropdown(false);
+                            }}
+                            className={`w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center justify-between ${
+                              candleInterval === period.value
+                                ? "bg-[#f0b90b]/10 text-[#f0b90b]"
+                                : "text-gray-300 hover:bg-[#2a2a3d]"
+                            }`}
+                          >
+                            <span>{period.label}</span>
+                            {candleInterval === period.value && (
+                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                              </svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Chart Timeframe - with dropdown */}
+                  <div className="relative" data-dropdown>
+                    <button
+                      onClick={() => {
+                        setShowTimeframeDropdown(!showTimeframeDropdown);
+                        setShowCandleDropdown(false);
+                      }}
+                      className={`w-9 h-9 rounded flex items-center justify-center transition-colors border text-white text-xs font-bold ${
+                        showTimeframeDropdown
+                          ? "bg-[#38312e] border-[#4a3f3a]"
+                          : "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
+                      }`}
+                    >
+                      {chartTimeframe}
+                    </button>
+
+                    {/* Timeframe Dropdown */}
+                    {showTimeframeDropdown && (
+                      <div className="absolute bottom-full left-10 mb-0 ml-1 bg-[#1e1e2d] border border-[#2a2a3d] rounded-lg shadow-2xl z-50 py-1 min-w-[140px]">
+                        <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider border-b border-[#2a2a3d]">
+                          Chart Timeframe
+                        </div>
+                        {timeframeOptions.map((tf) => (
+                          <button
+                            key={tf.value}
+                            onClick={() => {
+                              setChartTimeframe(tf.value);
+                              setShowTimeframeDropdown(false);
+                            }}
+                            className={`w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center justify-between ${
+                              chartTimeframe === tf.value
+                                ? "bg-[#f0b90b]/10 text-[#f0b90b]"
+                                : "text-gray-300 hover:bg-[#2a2a3d]"
+                            }`}
+                          >
+                            <span>{tf.label}</span>
+                            {chartTimeframe === tf.value && (
+                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                              </svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
               {/* IQ Option Style Stats Bar - Shows when trades are active */}
               {(() => {
-                const activeTradesList = activeTrades.filter(t => t.status === "active");
+                const activeTradesList = activeTrades.filter(t => t.status === "active" && t.symbol === selectedSymbol);
                 const hasActiveTrades = activeTradesList.length > 0;
                 
                 // Calculate totals
@@ -4038,54 +4310,54 @@ function TradingInterface() {
                   ? Math.max(0, Math.ceil((earliestTrade.expirationTime - Date.now()) / 1000))
                   : countdown;
 
+                if (!hasActiveTrades) return null;
+
                 return (
-                  <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20">
-                    {hasActiveTrades ? (
-                      // Compact stats bar - labels on top, values below
-                      <div className="flex items-start gap-6">
-                        {/* Purchase Time */}
-                        <div className="flex flex-col items-center">
-                          <div className="flex items-center gap-1 text-[10px] text-white/70 uppercase tracking-wider">
-                            <Clock className="w-3 h-3" />
-                            PURCHASE TIME
-                          </div>
-                          <span className="text-lg text-white">
-                            {String(Math.floor(tradeCountdown / 60)).padStart(2, "0")}:{String(tradeCountdown % 60).padStart(2, "0")}
-                          </span>
+                  <div className="absolute top-2 right-2 z-20">
+                    {/* Compact stats bar - labels on top, values below */}
+                    <div className="flex items-start gap-6">
+                      {/* Purchase Time */}
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-center gap-1 text-[10px] text-white/70 uppercase tracking-wider">
+                          <Clock className="w-3 h-3" />
+                          PURCHASE TIME
                         </div>
-
-                        {/* Total Investment */}
-                        <div className="flex flex-col items-center">
-                          <span className="text-[10px] text-white/70 uppercase tracking-wider">TOTAL INVESTMENT</span>
-                          <span className="text-lg text-white">
-                            $ {totalInvestment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-
-                        {/* Expected Profit */}
-                        <div className="flex flex-col items-center">
-                          <span className="text-[10px] text-white/70 uppercase tracking-wider">EXPECTED PROFIT</span>
-                          <span className={`text-lg ${expectedProfit >= 0 ? "text-green-400" : "text-red-400"}`}>
-                            {expectedProfit >= 0 ? "+" : "−"}$ {Math.abs(expectedProfit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-
-                        {/* Profit After Sell */}
-                        <div className="flex flex-col items-center">
-                          <span className="text-[10px] text-white/70 uppercase tracking-wider">PROFIT AFTER SELL (P/L)</span>
-                          <span className={`text-lg ${profitAfterSell >= 0 ? "text-green-400" : "text-red-400"}`}>
-                            {profitAfterSell >= 0 ? "+" : "−"}$ {Math.abs(profitAfterSell).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </span>
-                        </div>
-
-                        {/* Sell Button */}
-                        {activeTradesList.length > 0 && (
-                          <button className="px-3 py-1.5 bg-[#1e2a3e]/80 hover:bg-[#2a3a50] text-white text-xs font-medium rounded transition-colors self-center">
-                            Sell All ({activeTradesList.length})
-                          </button>
-                        )}
+                        <span className="text-lg text-white">
+                          {String(Math.floor(tradeCountdown / 60)).padStart(2, "0")}:{String(tradeCountdown % 60).padStart(2, "0")}
+                        </span>
                       </div>
-                    ) : null}
+
+                      {/* Total Investment */}
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-white/70 uppercase tracking-wider">TOTAL INVESTMENT</span>
+                        <span className="text-lg text-white">
+                          $ {totalInvestment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+
+                      {/* Expected Profit */}
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-white/70 uppercase tracking-wider">EXPECTED PROFIT</span>
+                        <span className={`text-lg ${expectedProfit >= 0 ? "text-green-400" : "text-red-400"}`}>
+                          {expectedProfit >= 0 ? "+" : "−"}$ {Math.abs(expectedProfit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+
+                      {/* Profit After Sell */}
+                      <div className="flex flex-col items-center">
+                        <span className="text-[10px] text-white/70 uppercase tracking-wider">PROFIT AFTER SELL (P/L)</span>
+                        <span className={`text-lg ${profitAfterSell >= 0 ? "text-green-400" : "text-red-400"}`}>
+                          {profitAfterSell >= 0 ? "+" : "−"}$ {Math.abs(profitAfterSell).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
+                      </div>
+
+                      {/* Sell Button */}
+                      {activeTradesList.length > 0 && (
+                        <button className="px-3 py-1.5 bg-[#1e2a3e]/80 hover:bg-[#2a3a50] text-white text-xs font-medium rounded transition-colors self-center">
+                          Sell All ({activeTradesList.length})
+                        </button>
+                      )}
+                    </div>
                   </div>
                 );
               })()}
@@ -4107,31 +4379,34 @@ function TradingInterface() {
                   "LINK",
                 ]}
                 onPriceYPosition={setPriceYPosition}
+                onLivePriceUpdate={(price) => setCurrentPrice(price)}
+                onPriceToYConverter={handlePriceToYConverter}
+                onTimeToXConverter={handleTimeToXConverter}
                 expirationSeconds={expirationSeconds}
                 expirationCountdown={countdown}
                 hasActiveTrades={activeTrades.filter(t => t.status === "active").length > 0}
+                candleInterval={candleInterval}
+                activeTradeExpirationTime={
+                  (() => {
+                    const active = activeTrades.filter(t => t.status === "active");
+                    if (active.length === 0) return undefined;
+                    return active.reduce((earliest, t) => 
+                      t.expirationTime < earliest.expirationTime ? t : earliest
+                    ).expirationTime;
+                  })()
+                }
+                activeTradeEntryTime={
+                  (() => {
+                    const active = activeTrades.filter(t => t.status === "active");
+                    if (active.length === 0) return undefined;
+                    return active.reduce((earliest, t) => 
+                      t.expirationTime < earliest.expirationTime ? t : earliest
+                    ).entryTime;
+                  })()
+                }
               />
 
-              {/* IQ Option Style Date/Time Display at Bottom of Chart */}
-              {currentTime && (
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 pointer-events-none">
-                  <div 
-                    className="px-3 py-1 rounded text-xs font-mono"
-                    style={{ 
-                      backgroundColor: "rgba(26, 45, 69, 0.9)",
-                      border: "1px solid #2a3d55",
-                      color: "#8b9ab8"
-                    }}
-                  >
-                    {currentTime.getFullYear()}.
-                    {String(currentTime.getMonth() + 1).padStart(2, '0')}.
-                    {String(currentTime.getDate()).padStart(2, '0')}{' '}
-                    {String(currentTime.getHours()).padStart(2, '0')}:
-                    {String(currentTime.getMinutes()).padStart(2, '0')}:
-                    {String(currentTime.getSeconds()).padStart(2, '0')}
-                  </div>
-                </div>
-              )}
+
 
               {/* IQ Option Style Strike Line Overlay - Shows when hovering HIGHER/LOWER */}
               <AnimatePresence>
@@ -4216,27 +4491,37 @@ function TradingInterface() {
                 )}
               </AnimatePresence>
 
-              {/* Active Trades Entry Lines - Full Width Horizontal Lines */}
+              {/* Active Trades Entry Lines - Full Width Dashed Lines */}
               {activeTrades
                 .filter((t) => t.symbol === selectedSymbol && t.status === "active")
-                .map((trade) => (
-                  <div
-                    key={`entry-line-${trade.id}`}
-                    className="absolute left-[15%] right-[140px] h-[2px] z-10 pointer-events-none"
-                    style={{
-                      top: `${trade.entryYPosition}%`,
-                      backgroundColor: trade.direction === "higher" ? "#22c55e" : "#ef4444",
-                      boxShadow: trade.direction === "higher"
-                        ? "0 0 8px rgba(34, 197, 94, 0.6)"
-                        : "0 0 8px rgba(239, 68, 68, 0.6)",
-                    }}
-                  />
-                ))}
+                .map((trade) => {
+                  const dynamicY = priceToYRef.current ? priceToYRef.current(trade.entryPrice) : trade.entryYPosition;
+                  return (
+                  <div key={`entry-line-${trade.id}`} className="absolute left-0 right-0 z-30 pointer-events-none" style={{ top: `${dynamicY}%` }}>
+                    <div
+                      style={{
+                        height: '1px',
+                        backgroundImage: `repeating-linear-gradient(to right, ${trade.direction === "higher" ? "#22c55e" : "#ef4444"} 0, ${trade.direction === "higher" ? "#22c55e" : "#ef4444"} 6px, transparent 6px, transparent 12px)`,
+                      }}
+                    />
+                    <span
+                      className="absolute left-1 text-[10px] font-bold"
+                      style={{
+                        top: '-14px',
+                        color: trade.direction === "higher" ? "#22c55e" : "#ef4444",
+                        textShadow: '0 0 4px rgba(0,0,0,0.8)',
+                      }}
+                    >
+                      {trade.direction === "higher" ? "▲ HIGHER" : "▼ LOWER"}
+                    </span>
+                  </div>
+                  );
+                })}
 
               {/* Active Trades Overlay - IQ Option Style */}
               <AnimatePresence>
                 {activeTrades
-                  .filter((t) => t.symbol === selectedSymbol)
+                  .filter((t) => t.symbol === selectedSymbol && t.status === "active")
                   .map((trade) => {
                     const now = Date.now();
                     const elapsed = now - trade.entryTime;
@@ -4246,171 +4531,152 @@ function TradingInterface() {
                       1,
                       elapsed / (trade.expirationSeconds * 1000)
                     );
+                    const dynamicY = priceToYRef.current ? priceToYRef.current(trade.entryPrice) : trade.entryYPosition;
+                    const dynamicX = timeToXRef.current ? timeToXRef.current(trade.entryTime) : null;
+                    const isOffScreen = dynamicX !== null && (dynamicX < -5 || dynamicX > 100);
+
+                    if (isOffScreen) return null;
 
                     return (
                       <motion.div
                         key={trade.id}
-                        initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.8, y: -20 }}
-                        className="absolute right-24 z-20"
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="absolute z-40 pointer-events-none"
                         style={{
-                          top: `${trade.entryYPosition}%`,
-                          transform: "translateY(-50%)",
+                          top: `${dynamicY}%`,
+                          left: dynamicX !== null ? `${dynamicX}%` : undefined,
+                          right: dynamicX === null ? "142px" : undefined,
+                          transform: "translate(-50%, -50%)",
                         }}
                       >
-                        {/* Trade Marker Line */}
-                        <div
-                          className="absolute right-0 w-40 h-[2px]"
-                          style={{
-                            backgroundColor:
-                              trade.direction === "higher"
-                                ? "#22c55e"
-                                : "#ef4444",
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                          }}
-                        />
-
-                        {/* Trade Amount Badge */}
+                        {/* Trade Direction Arrow Badge - small, at current price */}
                         <motion.div
-                          className="relative flex items-center gap-1 px-2 py-1 rounded shadow-lg"
+                          className="flex items-center justify-center rounded-full"
                           style={{
+                            width: "18px",
+                            height: "18px",
                             backgroundColor:
                               trade.direction === "higher"
                                 ? "#22c55e"
                                 : "#ef4444",
                             boxShadow:
                               trade.direction === "higher"
-                                ? "0 0 15px rgba(34, 197, 94, 0.4)"
-                                : "0 0 15px rgba(239, 68, 68, 0.4)",
+                                ? "0 0 10px rgba(34, 197, 94, 0.5)"
+                                : "0 0 10px rgba(239, 68, 68, 0.5)",
                           }}
                         >
-                          <span className="text-white font-bold text-sm">
-                            $ {trade.amount.toLocaleString()}
-                          </span>
-                          {/* Countdown Circle */}
-                          {trade.status === "active" && (
-                            <div
-                              className="w-5 h-5 rounded-full border-2 border-white/50 flex items-center justify-center text-[10px] font-bold text-white"
-                              style={{
-                                background: `conic-gradient(white ${progress * 360}deg, transparent ${progress * 360}deg)`,
-                              }}
-                            >
-                              <span
-                                className="rounded-full w-3.5 h-3.5 flex items-center justify-center"
-                                style={{
-                                  backgroundColor: trade.direction === "higher" ? "#22c55e" : "#ef4444",
-                                }}
-                              >
-                                {remainingSeconds}
-                              </span>
-                            </div>
-                          )}
+                          <svg
+                            className="w-3 h-3 text-white"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            stroke="none"
+                          >
+                            {trade.direction === "higher" ? (
+                              <path d="M12 4l-8 8h5v8h6v-8h5z" />
+                            ) : (
+                              <path d="M12 20l8-8h-5V4h-6v8H4z" />
+                            )}
+                          </svg>
                         </motion.div>
-
-                        {/* Real-time P/L Badge - IQ Option Style */}
-                        {trade.status === "active" && (
-                          <motion.div
-                            className="absolute left-full ml-2 flex items-center"
-                            style={{ top: "50%", transform: "translateY(-50%)" }}
-                            animate={{ opacity: [0.8, 1, 0.8] }}
-                            transition={{ duration: 1.5, repeat: Infinity }}
-                          >
-                            {(() => {
-                              const priceChange = currentPrice - trade.entryPrice;
-                              const isWinning = 
-                                (trade.direction === "higher" && priceChange > 0) ||
-                                (trade.direction === "lower" && priceChange < 0);
-                              const realTimePL = isWinning ? trade.amount * 0.85 : -trade.amount;
-                              
-                              return (
-                                <div 
-                                  className="flex flex-col items-start px-3 py-1.5 rounded shadow-lg"
-                                  style={{
-                                    backgroundColor: isWinning ? "#22c55e" : "#ef4444",
-                                    boxShadow: isWinning 
-                                      ? "0 0 20px rgba(34, 197, 94, 0.5)"
-                                      : "0 0 20px rgba(239, 68, 68, 0.5)",
-                                  }}
-                                >
-                                  <span className="text-[9px] text-white/80 font-medium tracking-wider">
-                                    RESULT (P/L)
-                                  </span>
-                                  <span className="text-white font-bold text-sm">
-                                    {isWinning ? "+" : ""}$ {realTimePL.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                  </span>
-                                </div>
-                              );
-                            })()}
-                          </motion.div>
-                        )}
-
-                        {/* Final Result Badge - Shows when trade ends */}
-                        {(trade.status === "won" || trade.status === "lost") && (
-                          <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="absolute left-full ml-2 flex items-center"
-                            style={{ top: "50%", transform: "translateY(-50%)" }}
-                          >
-                            <div 
-                              className="flex flex-col items-start px-3 py-1.5 rounded shadow-lg relative"
-                              style={{
-                                backgroundColor: trade.status === "won" ? "#22c55e" : "#ef4444",
-                                boxShadow: trade.status === "won"
-                                  ? "0 0 25px rgba(34, 197, 94, 0.6)"
-                                  : "0 0 25px rgba(239, 68, 68, 0.6)",
-                              }}
-                            >
-                              <span className="text-[9px] text-white/80 font-medium tracking-wider">
-                                RESULT (P/L)
-                              </span>
-                              <span className="text-white font-bold text-base">
-                                {trade.status === "won" ? "+" : ""}$ {(trade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                              </span>
-                            </div>
-                          </motion.div>
-                        )}
                       </motion.div>
                     );
                   })}
               </AnimatePresence>
 
-              {/* Last Finished Trade Result - Shows when no active trades but we have a finished result */}
+              {/* Last Finished Trade Result - IQ Option Style */}
               <AnimatePresence>
                 {lastFinishedTrade && 
                  lastFinishedTrade.symbol === selectedSymbol && 
-                 activeTrades.filter(t => t.symbol === selectedSymbol && t.status === "active").length === 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
-                    className="absolute z-30"
-                    style={{
-                      right: "160px",
-                      top: `${lastFinishedTrade.entryYPosition}%`,
-                      transform: "translateY(-50%)",
-                    }}
-                  >
-                    <div 
-                      className="flex flex-col items-start px-4 py-2 rounded-lg shadow-lg relative"
+                 activeTrades.filter(t => t.symbol === selectedSymbol && t.status === "active").length === 0 && (() => {
+                  const finishedY = priceToYRef.current ? priceToYRef.current(lastFinishedTrade.entryPrice) : lastFinishedTrade.entryYPosition;
+                  const finishedEntryX = timeToXRef.current ? timeToXRef.current(lastFinishedTrade.entryTime) : null;
+                  const finishedEndX = timeToXRef.current ? timeToXRef.current(lastFinishedTrade.expirationTime) : null;
+                  // Hide if result popup is completely off screen
+                  const endOffScreen = finishedEndX !== null && (finishedEndX < -10 || finishedEndX > 110);
+                  if (endOffScreen) return null;
+                  return (
+                  <>
+                    {/* Entry price horizontal dashed line for finished trade */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute left-0 right-[140px] h-[1px] z-30 pointer-events-none"
                       style={{
-                        backgroundColor: lastFinishedTrade.status === "won" ? "#22c55e" : "#ef4444",
-                        boxShadow: lastFinishedTrade.status === "won"
-                          ? "0 0 30px rgba(34, 197, 94, 0.6)"
-                          : "0 0 30px rgba(239, 68, 68, 0.6)",
+                        top: `${finishedY}%`,
+                        backgroundImage: `linear-gradient(to right, ${lastFinishedTrade.status === "won" ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)"} 50%, transparent 50%)`,
+                        backgroundSize: "8px 1px",
+                      }}
+                    />
+
+                    {/* Direction & payout label at left edge */}
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="absolute left-1 z-40 pointer-events-none"
+                      style={{
+                        top: `${finishedY}%`,
+                        transform: "translateY(-100%)",
                       }}
                     >
-                      <span className="text-[10px] text-white/80 font-medium tracking-wider">
-                        RESULT (P/L)
+                      <span className="text-xs font-bold" style={{ color: lastFinishedTrade.direction === "higher" ? "#22c55e" : "#ef4444", textShadow: '0 0 4px rgba(0,0,0,0.8)' }}>
+                        {lastFinishedTrade.direction === "higher" ? "▲ HIGHER" : "▼ LOWER"}
                       </span>
-                      <span className="text-white font-bold text-lg">
-                        {lastFinishedTrade.status === "won" ? "+" : "−"}$ {Math.abs(lastFinishedTrade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="absolute top-3 right-3 z-40"
+                    >
+                      <span 
+                        className="font-extrabold text-2xl"
+                        style={{ 
+                          color: lastFinishedTrade.status === "won" ? "#00c087" : "#ef4444",
+                          textShadow: lastFinishedTrade.status === "won"
+                            ? "0 0 20px rgba(0, 192, 135, 0.6)"
+                            : "0 0 20px rgba(239, 68, 68, 0.6)",
+                        }}
+                      >
+                        {lastFinishedTrade.status === "won" ? "+" : "−"}$ {Math.abs(lastFinishedTrade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                       </span>
-                    </div>
-                  </motion.div>
-                )}
+                    </motion.div>
+
+                    {/* RESULT (P/L) popup - pinned to expiration candle */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.8 }}
+                      className="absolute z-40"
+                      style={{
+                        left: finishedEndX !== null ? `${finishedEndX}%` : "55%",
+                        top: `${finishedY}%`,
+                        transform: "translate(-50%, -50%)",
+                      }}
+                    >
+                      <div 
+                        className="flex flex-col items-start px-3 py-2 rounded-lg"
+                        style={{
+                          backgroundColor: lastFinishedTrade.status === "won" ? "#22c55e" : "#ef4444",
+                          boxShadow: lastFinishedTrade.status === "won"
+                            ? "0 0 40px rgba(34, 197, 94, 0.7), 0 0 15px rgba(34, 197, 94, 0.4)"
+                            : "0 0 40px rgba(239, 68, 68, 0.7), 0 0 15px rgba(239, 68, 68, 0.4)",
+                        }}
+                      >
+                        <span className="text-[11px] text-white/90 font-bold tracking-wider leading-tight">
+                          RESULT (P/L)
+                        </span>
+                        <span className="text-white font-extrabold text-base leading-tight">
+                          {lastFinishedTrade.status === "won" ? "+" : "−"}$ {Math.abs(lastFinishedTrade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                    </motion.div>
+                  </>
+                  );
+                })()}
               </AnimatePresence>
 
               {/* Hover Effect Overlay for HIGHER */}
@@ -4470,18 +4736,33 @@ function TradingInterface() {
                     <span className="font-semibold" style={{ color: "#4a6080", fontSize: "12px" }}>$</span>
                     <input
                       type="text"
-                      value={amount.toLocaleString()}
+                      value={amountInput}
                       onChange={(e) => {
-                        const val = parseInt(e.target.value.replace(/[^0-9]/g, ''), 10);
-                        if (!isNaN(val)) setAmount(Math.min(Math.max(val, 1), 1000000));
+                        const raw = e.target.value.replace(/[^0-9]/g, '');
+                        if (raw === '') {
+                          setAmountInput('');
+                          return;
+                        }
+                        const val = parseInt(raw, 10);
+                        if (!isNaN(val)) {
+                          const clamped = Math.min(val, 1000000);
+                          setAmountInput(clamped.toLocaleString());
+                          setAmount(Math.max(clamped, 1));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (amountInput === '' || parseInt(amountInput.replace(/[^0-9]/g, ''), 10) < 1) {
+                          setAmount(1);
+                          setAmountInput('1');
+                        }
                       }}
                       className="bg-transparent border-none outline-none font-bold w-full"
                       style={{ color: "#eef2f7", fontSize: "14px" }}
                     />
                   </div>
                   <div className="flex flex-col" style={{ borderLeft: "1px solid #1a2d45", width: "22px" }}>
-                    <button onClick={() => setAmount(Math.min(amount + 1000, 1000000))} className="flex-1 flex items-center justify-center transition-colors text-sm font-bold" style={{ color: "#4a6080", borderBottom: "1px solid #1a2d45" }} onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")} onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}>+</button>
-                    <button onClick={() => setAmount(Math.max(amount - 1000, 1))} className="flex-1 flex items-center justify-center transition-colors text-sm font-bold" style={{ color: "#4a6080" }} onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")} onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}>-</button>
+                    <button onClick={() => { const v = Math.min(amount + 1, 1000000); setAmount(v); setAmountInput(v.toLocaleString()); }} className="flex-1 flex items-center justify-center transition-colors text-sm font-bold" style={{ color: "#4a6080", borderBottom: "1px solid #1a2d45" }} onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")} onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}>+</button>
+                    <button onClick={() => { const v = Math.max(amount - 1, 1); setAmount(v); setAmountInput(v.toLocaleString()); }} className="flex-1 flex items-center justify-center transition-colors text-sm font-bold" style={{ color: "#4a6080" }} onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")} onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}>-</button>
                   </div>
                 </div>
               </div>
@@ -4706,19 +4987,13 @@ function TradingInterface() {
                 // NEW OPTION Button - Shows when there's a finished trade result displayed
                 <motion.button
                   onClick={() => {
-                    // Get current tab type
-                    const currentTab = openTabs[activeTab];
-                    const currentType = currentTab?.type || "Blitz";
-                    
-                    // Add new tab with same symbol and type
-                    const newTab = { symbol: selectedSymbol, type: currentType };
-                    setOpenTabs([...openTabs, newTab]);
-                    
-                    // Switch to the new tab
-                    setActiveTab(openTabs.length);
-                    
-                    // Clear finished trade result for fresh state
+                    // Stay in same tab, just clear finished trade result for fresh state
                     setLastFinishedTrade(null);
+                    
+                    // Clear lastResult from the current tab
+                    setOpenTabs(prev => prev.map((tab, i) => 
+                      i === activeTab ? { ...tab, lastResult: undefined } : tab
+                    ));
                     
                     // Focus on amount input
                     setTimeout(() => {
@@ -5087,6 +5362,11 @@ function TradingInterface() {
               // Check if this symbol+type combination already exists
               const existingTabIndex = openTabs.findIndex(t => t.symbol === sym.symbol && t.type === selectedMarket);
               if (existingTabIndex === -1) {
+                // Limit to 8 tabs maximum
+                if (openTabs.length >= 4) {
+                  alert("Maximum of 4 tabs allowed. Please close a tab first.");
+                  return;
+                }
                 // Add new tab with symbol and selected market type
                 setOpenTabs([...openTabs, { symbol: sym.symbol, type: selectedMarket }]);
                 setActiveTab(openTabs.length);
@@ -5585,28 +5865,6 @@ function TradingInterface() {
                 </motion.div>
             );
           })()}
-        </AnimatePresence>
-
-        {/* Trade Execution Indicator */}
-        <AnimatePresence>
-          {isExecutingTrade && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="fixed top-20 right-4 p-4 rounded-lg shadow-lg"
-              style={{
-                backgroundColor:
-                  tradeDirection === "higher" ? "#5ddf38" : "#ff4747",
-                color: "#ffffff",
-              }}
-            >
-              <div className="flex items-center space-x-2">
-                <RefreshCw className="w-5 h-5 animate-spin" />
-                <span>Executing {tradeDirection} trade...</span>
-              </div>
-            </motion.div>
-          )}
         </AnimatePresence>
 
         {/* Footer */}

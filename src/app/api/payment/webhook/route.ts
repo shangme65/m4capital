@@ -261,12 +261,20 @@ export async function POST(request: NextRequest) {
     console.log("  - Confirmations:", confirmations);
 
     // If payment is completed, credit user's portfolio
+    // IMPORTANT: Also recover deposits that were incorrectly marked as FAILED due to local expiration
     console.log("🔍 Checking if should credit user...");
     console.log("  - New status:", newStatus);
     console.log("  - Previous status:", deposit.status);
-    console.log("  - Should credit?", newStatus === "COMPLETED" && deposit.status !== "COMPLETED");
+    const shouldCredit = newStatus === "COMPLETED" && deposit.status !== "COMPLETED";
+    console.log("  - Should credit?", shouldCredit);
     
-    if (newStatus === "COMPLETED" && deposit.status !== "COMPLETED") {
+    // Also check if this is a recovery case - deposit was FAILED but NowPayments says finished
+    const isRecovery = newStatus === "COMPLETED" && deposit.status === "FAILED";
+    if (isRecovery) {
+      console.log("🔄 RECOVERY CASE: Deposit was FAILED but NowPayments confirms payment!");
+    }
+    
+    if (shouldCredit || isRecovery) {
       console.log("💰💰💰 PAYMENT COMPLETED! Starting credit process...");
 
       // Check if user exists

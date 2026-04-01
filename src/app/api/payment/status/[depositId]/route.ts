@@ -48,7 +48,81 @@ export async function GET(
       deposit.expiresAt &&
       deposit.expiresAt < now
     ) {
-      console.log(`⏰ Deposit ${depositId} has expired, marking as FAILED`);
+      console.log(`⏰ Deposit ${depositId} has expired locally, checking NowPayments...`);
+      
+      // IMPORTANT: Before marking as expired, check NowPayments to see if payment was received
+      let nowPaymentsStatus = null;
+      if (deposit.paymentId && deposit.method !== "NOWPAYMENTS_INVOICE_BTC") {
+        try {
+          nowPaymentsStatus = await nowPayments.getPaymentStatus(deposit.paymentId);
+          console.log(`📡 NowPayments status for expired deposit: ${nowPaymentsStatus.payment_status}`);
+          
+          // If payment is confirmed/finished in NowPayments, don't mark as failed!
+          if (nowPaymentsStatus.payment_status === "confirmed" || 
+              nowPaymentsStatus.payment_status === "finished" ||
+              nowPaymentsStatus.payment_status === "confirming" ||
+              nowPaymentsStatus.payment_status === "waiting" ||
+              nowPaymentsStatus.payment_status === "partially_paid") {
+            console.log(`✅ Payment is still valid in NowPayments (${nowPaymentsStatus.payment_status}), NOT marking as failed`);
+            
+            // Update the payment status from NowPayments
+            await prisma.deposit.update({
+              where: { id: depositId },
+              data: {
+                paymentStatus: nowPaymentsStatus.payment_status,
+                // Extend expiration if payment is in progress
+                expiresAt: new Date(Date.now() + 50 * 60 * 1000), // Extend by 50 minutes
+                updatedAt: now,
+              },
+            });
+            
+            // Return current status without marking as failed
+            return NextResponse.json({
+              success: true,
+              deposit: {
+                id: deposit.id,
+                amount: parseFloat(deposit.amount.toString()),
+                currency: deposit.currency,
+                status: deposit.status,
+                method: deposit.method,
+                createdAt: deposit.createdAt,
+                paymentId: deposit.paymentId,
+                paymentAddress: deposit.paymentAddress,
+                paymentAmount: deposit.paymentAmount
+                  ? parseFloat(deposit.paymentAmount.toString())
+                  : null,
+                paymentStatus: nowPaymentsStatus.payment_status,
+                cryptoCurrency: deposit.cryptoCurrency,
+              },
+              nowPaymentsData: nowPaymentsStatus,
+            });
+          }
+        } catch (npError) {
+          console.error("Failed to check NowPayments status:", npError);
+          // If we can't check NowPayments, don't auto-fail - just return current status
+          return NextResponse.json({
+            success: true,
+            deposit: {
+              id: deposit.id,
+              amount: parseFloat(deposit.amount.toString()),
+              currency: deposit.currency,
+              status: deposit.status,
+              method: deposit.method,
+              createdAt: deposit.createdAt,
+              paymentId: deposit.paymentId,
+              paymentAddress: deposit.paymentAddress,
+              paymentAmount: deposit.paymentAmount
+                ? parseFloat(deposit.paymentAmount.toString())
+                : null,
+              paymentStatus: deposit.paymentStatus || "unknown",
+              cryptoCurrency: deposit.cryptoCurrency,
+            },
+          });
+        }
+      }
+      
+      // Only if NowPayments confirms it's truly expired/failed
+      console.log(`❌ Deposit ${depositId} confirmed as expired, marking as FAILED`);
       
       // Update to FAILED status
       await prisma.deposit.update({

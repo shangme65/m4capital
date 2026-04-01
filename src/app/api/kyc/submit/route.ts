@@ -18,11 +18,19 @@ const MAX_FILE_SIZE = 20 * 1024 * 1024;
 // Maximum total size: 80MB (20MB per file x 4 files)
 const MAX_TOTAL_SIZE = 80 * 1024 * 1024;
 
-// Allowed file types
+// Allowed file types - accept all common image formats plus PDF
 const ALLOWED_TYPES = [
   "image/jpeg",
   "image/jpg",
   "image/png",
+  "image/gif",
+  "image/webp",
+  "image/bmp",
+  "image/tiff",
+  "image/heic",
+  "image/heif",
+  "image/svg+xml",
+  "image/avif",
   "application/pdf",
 ];
 
@@ -141,7 +149,7 @@ export async function POST(req: NextRequest) {
     if (!ALLOWED_TYPES.includes(idDocumentFront.type)) {
       return NextResponse.json(
         {
-          error: "Invalid ID document front format. Allowed: PNG, JPG, JPEG, or PDF.",
+          error: "Invalid ID document front format. Please upload an image file or PDF.",
         },
         { status: 400 }
       );
@@ -149,7 +157,7 @@ export async function POST(req: NextRequest) {
     if (!ALLOWED_TYPES.includes(idDocumentBack.type)) {
       return NextResponse.json(
         {
-          error: "Invalid ID document back format. Allowed: PNG, JPG, JPEG, or PDF.",
+          error: "Invalid ID document back format. Please upload an image file or PDF.",
         },
         { status: 400 }
       );
@@ -158,7 +166,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Invalid proof of address format. Allowed: PNG, JPG, JPEG, or PDF.",
+            "Invalid proof of address format. Please upload an image file or PDF.",
         },
         { status: 400 }
       );
@@ -168,7 +176,7 @@ export async function POST(req: NextRequest) {
       selfie.type === "application/pdf"
     ) {
       return NextResponse.json(
-        { error: "Invalid selfie format. Allowed: PNG, JPG, or JPEG only." },
+        { error: "Invalid selfie format. Please upload an image file (not PDF)." },
         { status: 400 }
       );
     }

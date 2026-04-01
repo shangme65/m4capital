@@ -271,7 +271,8 @@ export class MarketDataService {
           `❌ Error fetching historical data for ${symbol}:`,
           error
         );
-        reject(error);
+        // Return empty array instead of rejecting to prevent uncaught errors
+        resolve([]);
       }
     });
   }

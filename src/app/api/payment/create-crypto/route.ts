@@ -234,6 +234,9 @@ async function createCryptoPayment(
 
   console.log("Payment created:", payment);
 
+  // Use a longer expiration time (50 minutes) to allow for blockchain confirmations
+  const expiresAt = new Date(Date.now() + 50 * 60 * 1000); // 50 minutes
+
   // Update deposit with payment details
   await prisma.deposit.update({
     where: { id: deposit.id },
@@ -242,9 +245,7 @@ async function createCryptoPayment(
       paymentAddress: payment.pay_address,
       paymentAmount: payment.pay_amount,
       paymentStatus: payment.payment_status,
-      expiresAt: payment.expiration_estimate_date
-        ? new Date(payment.expiration_estimate_date)
-        : undefined,
+      expiresAt: expiresAt,
     },
   });
 
@@ -261,7 +262,7 @@ async function createCryptoPayment(
         paymentStatus: payment.payment_status,
         status: "PENDING",
         createdAt: deposit.createdAt,
-        expiresAt: payment.expiration_estimate_date,
+        expiresAt: expiresAt.toISOString(),
         method: "payment",
       },
     },
@@ -319,6 +320,9 @@ async function createCryptoInvoice(
 
   console.log("Invoice created:", invoice);
 
+  // Use a longer expiration time (50 minutes) for invoices too
+  const invoiceExpiresAt = new Date(Date.now() + 50 * 60 * 1000); // 50 minutes
+
   // Update deposit with invoice details
   await prisma.deposit.update({
     where: { id: deposit.id },
@@ -327,6 +331,7 @@ async function createCryptoInvoice(
       invoiceUrl: invoice.invoice_url,
       paymentAddress: invoice.pay_address,
       paymentAmount: invoice.pay_amount,
+      expiresAt: invoiceExpiresAt,
     },
   });
 
@@ -344,6 +349,7 @@ async function createCryptoInvoice(
         paymentAmount: invoice.pay_amount,
         status: "PENDING",
         createdAt: deposit.createdAt,
+        expiresAt: invoiceExpiresAt.toISOString(),
         method: "invoice",
       },
     },

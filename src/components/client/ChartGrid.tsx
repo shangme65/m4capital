@@ -8,10 +8,18 @@ interface ChartGridProps {
   defaultSymbol: string;
   availableSymbols?: string[];
   onPriceYPosition?: (yPercent: number) => void;
+  onLivePriceUpdate?: (price: number) => void;
+  onPriceToYConverter?: (converter: (price: number) => number) => void;
+  onTimeToXConverter?: (converter: (timestamp: number) => number) => void;
   // Expiration time props for IQ Option style
   expirationSeconds?: number;
   expirationCountdown?: number;
   hasActiveTrades?: boolean;
+  // Active trade timestamps for end time line
+  activeTradeExpirationTime?: number;
+  activeTradeEntryTime?: number;
+  // Candle interval for chart
+  candleInterval?: string;
 }
 
 export default function ChartGrid({
@@ -30,9 +38,15 @@ export default function ChartGrid({
     "USDT",
   ],
   onPriceYPosition,
+  onLivePriceUpdate,
+  onPriceToYConverter,
+  onTimeToXConverter,
   expirationSeconds,
   expirationCountdown,
   hasActiveTrades,
+  activeTradeExpirationTime,
+  activeTradeEntryTime,
+  candleInterval,
 }: ChartGridProps) {
   // Initialize chart symbols based on grid type
   const getInitialSymbols = () => {
@@ -96,9 +110,15 @@ export default function ChartGrid({
             <RealTimeTradingChart 
               symbol={chartSymbols[0]} 
               onPriceYPosition={onPriceYPosition}
+              onLivePriceUpdate={onLivePriceUpdate}
+              onPriceToYConverter={onPriceToYConverter}
+              onTimeToXConverter={onTimeToXConverter}
               expirationSeconds={expirationSeconds}
               expirationCountdown={expirationCountdown}
               hasActiveTrades={hasActiveTrades}
+              activeTradeExpirationTime={activeTradeExpirationTime}
+              activeTradeEntryTime={activeTradeEntryTime}
+              interval={candleInterval}
             />
           </div>
         );
@@ -213,7 +233,7 @@ export default function ChartGrid({
       default:
         return (
           <div className="w-full h-full">
-            <RealTimeTradingChart symbol={chartSymbols[0]} onPriceYPosition={onPriceYPosition} />
+            <RealTimeTradingChart symbol={chartSymbols[0]} onPriceYPosition={onPriceYPosition} onPriceToYConverter={onPriceToYConverter} onTimeToXConverter={onTimeToXConverter} />
           </div>
         );
     }

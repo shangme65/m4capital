@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { init, dispose } from "klinecharts";
+import { init, dispose, registerYAxis } from "klinecharts";
 import { useCryptoMarket } from "./CryptoMarketProvider";
 import {
   fetchKlineData,
@@ -30,6 +30,17 @@ function isForexSymbol(symbol: string): boolean {
   return hasForex;
 }
 
+// Register custom Y-axis that shows fewer tick labels (wider spacing like IQ Option)
+registerYAxis({
+  name: "spacedYAxis",
+  createTicks: ({ defaultTicks }) => {
+    // Show at most ~4 ticks for wide spacing (IQ Option style)
+    if (defaultTicks.length <= 4) return defaultTicks;
+    const step = Math.ceil(defaultTicks.length / 4);
+    return defaultTicks.filter((_, i) => i % step === 0);
+  },
+});
+
 interface RealTimeTradingChartProps {
   symbol: string;
   interval?: string;
@@ -37,12 +48,21 @@ interface RealTimeTradingChartProps {
   limit?: number;
   // Callback with the Y position percentage (0-100) of the current price on the chart
   onPriceYPosition?: (yPercent: number) => void;
+  // Callback with the actual live price number
+  onLivePriceUpdate?: (price: number) => void;
   // Expiration time in seconds (for binary options - IQ Option style)
   expirationSeconds?: number;
   // Countdown to next expiration (seconds remaining)
   expirationCountdown?: number;
   // Whether there are active trades
   hasActiveTrades?: boolean;
+  // Actual active trade timestamps (ms) for end time line
+  activeTradeExpirationTime?: number;
+  activeTradeEntryTime?: number;
+  // Callback that provides a function to convert price -> Y percentage
+  onPriceToYConverter?: (converter: (price: number) => number) => void;
+  // Callback that provides a function to convert timestamp -> X percentage
+  onTimeToXConverter?: (converter: (timestamp: number) => number) => void;
 }
 
 export default function RealTimeTradingChart({
@@ -50,9 +70,14 @@ export default function RealTimeTradingChart({
   interval = "1m",
   limit = 3000, // Maximum candles for full chart coverage
   onPriceYPosition,
+  onLivePriceUpdate,
   expirationSeconds = 60,
   expirationCountdown,
   hasActiveTrades = false,
+  activeTradeExpirationTime,
+  activeTradeEntryTime,
+  onPriceToYConverter,
+  onTimeToXConverter,
 }: RealTimeTradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -175,12 +200,12 @@ export default function RealTimeTradingChart({
               text: {
                 show: true,
                 paddingLeft: 8,
-                paddingRight: 8,
+                paddingRight: 12,
                 paddingTop: 6,
                 paddingBottom: 6,
                 color: "#ffffff",
                 family: "Arial",
-                size: 20,
+                size: 18,
                 weight: "bold" as any,
                 borderRadius: 6,
               },
@@ -190,22 +215,27 @@ export default function RealTimeTradingChart({
         // Subtle grid for dark theme
         grid: {
           horizontal: {
-            color: "rgba(100, 100, 100, 0.2)",
-            style: "dashed" as any,
+            show: true,
+            color: "rgba(255, 255, 255, 0.04)",
+            style: "solid" as any,
+            size: 1,
           },
           vertical: {
-            show: false, // Hide vertical grid lines
+            show: true,
+            color: "rgba(255, 255, 255, 0.04)",
+            style: "solid" as any,
+            size: 1,
           },
         },
         // Y-axis styling - enable scroll zooming on Y-axis
         yAxis: {
           type: "normal" as any,
           position: "right" as any,
-          inside: false,
+          inside: true,
           reverse: false,
           axisLine: { show: false }, // Hide Y-axis line
           tickLine: { show: true, color: "rgba(150, 150, 150, 0.3)" },
-          tickText: { show: true, color: "#9e9aa7", size: 11 },
+          tickText: { show: true, color: "#9e9aa7", size: 12 },
         },
         // X-axis styling
         xAxis: {
@@ -262,6 +292,15 @@ export default function RealTimeTradingChart({
     // Set price precision to show more decimal places (IQ Option style)
     if (chart) {
       chart.setPriceVolumePrecision(5, 0); // 5 decimal places for price, 0 for volume
+    }
+    
+    // Apply custom Y-axis with wider tick spacing (IQ Option style)
+    if (chart) {
+      chart.setPaneOptions({
+        id: "candle_pane",
+        gap: { top: 0.3, bottom: 0.3 },
+        axisOptions: { name: "spacedYAxis" },
+      });
     }
     
     // Zoom out the chart to create more space
@@ -450,9 +489,16 @@ export default function RealTimeTradingChart({
     };
   }, [symbol, currentInterval]);
 
+  // Report live price to parent whenever it changes
+  useEffect(() => {
+    if (onLivePriceUpdate && livePrice) {
+      onLivePriceUpdate(livePrice.price);
+    }
+  }, [livePrice, onLivePriceUpdate]);
+
   // Report Y position of current price to parent
   useEffect(() => {
-    if (!onPriceYPosition || !livePrice || !chartRef.current || !chartContainerRef.current) return;
+    if (!livePrice || !chartRef.current || !chartContainerRef.current) return;
 
     try {
       const chart = chartRef.current;
@@ -466,14 +512,43 @@ export default function RealTimeTradingChart({
           const yPercent = (point.y / containerHeight) * 100;
           // Clamp between 10% and 90% for reasonable display
           const clampedPercent = Math.max(10, Math.min(90, yPercent));
-          onPriceYPosition(clampedPercent);
+          if (onPriceYPosition) onPriceYPosition(clampedPercent);
+        }
+
+        // Provide price-to-Y converter function to parent
+        if (onPriceToYConverter) {
+          onPriceToYConverter((price: number) => {
+            try {
+              const pt = chart.convertToPixel({ value: price }, { paneId: 'candle_pane' });
+              if (pt && typeof pt.y === 'number' && containerHeight > 0) {
+                const pct = (pt.y / containerHeight) * 100;
+                return Math.max(5, Math.min(95, pct));
+              }
+            } catch {}
+            return 50;
+          });
+        }
+
+        // Provide timestamp-to-X converter function to parent
+        if (onTimeToXConverter) {
+          const containerWidth = container.clientWidth;
+          onTimeToXConverter((timestamp: number) => {
+            try {
+              const pt = chart.convertToPixel({ timestamp }, { paneId: 'candle_pane' });
+              if (pt && typeof pt.x === 'number' && containerWidth > 0) {
+                const pct = (pt.x / containerWidth) * 100;
+                return pct;
+              }
+            } catch {}
+            return -100;
+          });
         }
       }
     } catch (e) {
       // Fallback to center if conversion fails
-      onPriceYPosition(50);
+      if (onPriceYPosition) onPriceYPosition(50);
     }
-  }, [livePrice, onPriceYPosition]);
+  }, [livePrice, onPriceYPosition, onPriceToYConverter, onTimeToXConverter]);
 
   const addIndicator = (type: string) => {
     if (!chartRef.current) return;
@@ -622,13 +697,13 @@ export default function RealTimeTradingChart({
   return (
     <div
       className="relative w-full h-full overflow-visible"
-      style={{ maxHeight: "100%", paddingRight: "25px", zIndex: 30 }}
+      style={{ maxHeight: "100%", zIndex: 30 }}
     >
       {/* Chart container - klinecharts will render here */}
       <div className="h-full w-full flex flex-col">
         <div
           ref={chartContainerRef}
-          className="flex-1 w-full overflow-hidden"
+          className="flex-1 w-full overflow-visible"
           style={{
             minHeight: 0, // Allow flex shrinking
           }}
@@ -637,43 +712,11 @@ export default function RealTimeTradingChart({
 
       {/* Y-axis drag/scroll zone - IQ Option style price scale control on right side */}
       <div
-        className={`absolute top-0 right-0 w-20 h-full cursor-ns-resize z-10 transition-all ${
-          isDraggingYAxis ? "bg-orange-500/10" : "hover:bg-white/5"
-        }`}
+        className="absolute top-0 right-0 w-20 h-full cursor-ns-resize z-10"
         onWheel={handleYAxisWheel}
         onMouseDown={handleYAxisMouseDown}
         title="Drag up/down to adjust price scale"
       >
-        {/* Visual indicator for Y-axis zoom zone */}
-        <div className="absolute top-1/2 right-2 -translate-y-1/2 flex flex-col items-center gap-1 opacity-30 hover:opacity-60 transition-opacity pointer-events-none">
-          <svg
-            className="w-4 h-4 text-[#9e9aa7]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 15l7-7 7 7"
-            />
-          </svg>
-          <div className="w-0.5 h-8 bg-[#9e9aa7] rounded" />
-          <svg
-            className="w-4 h-4 text-[#9e9aa7]"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M19 9l-7 7-7-7"
-            />
-          </svg>
-        </div>
       </div>
 
       {/* Loading indicator */}
@@ -697,12 +740,12 @@ export default function RealTimeTradingChart({
       <div className="absolute bottom-2 left-4 flex items-center gap-2 z-10">
       </div>
 
-      {/* Zoom & Focus Controls - Bottom center */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10">
+      {/* Zoom & Focus Controls - Bottom center, visible on hover only */}
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10 opacity-0 hover:opacity-60 transition-opacity duration-300">
         {/* Zoom out button */}
         <button
           onClick={zoomOut}
-          className="w-8 h-8 flex items-center justify-center rounded bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white transition-colors border border-[#38312e]"
+          className="w-8 h-8 flex items-center justify-center rounded text-[#9e9aa7] hover:text-white transition-colors"
           title="Zoom Out"
         >
           <svg
@@ -723,7 +766,7 @@ export default function RealTimeTradingChart({
         {/* Focus on current price button */}
         <button
           onClick={focusOnCurrentPrice}
-          className="w-8 h-8 flex items-center justify-center rounded bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white transition-colors border border-[#38312e]"
+          className="w-8 h-8 flex items-center justify-center rounded text-[#9e9aa7] hover:text-white transition-colors"
           title="Focus on current price"
         >
           <svg
@@ -745,7 +788,7 @@ export default function RealTimeTradingChart({
         {/* Zoom in button */}
         <button
           onClick={zoomIn}
-          className="w-8 h-8 flex items-center justify-center rounded bg-[#2a2522]/90 text-[#9e9aa7] hover:bg-[#38312e] hover:text-white transition-colors border border-[#38312e]"
+          className="w-8 h-8 flex items-center justify-center rounded text-[#9e9aa7] hover:text-white transition-colors"
           title="Zoom In"
         >
           <svg
@@ -764,66 +807,120 @@ export default function RealTimeTradingChart({
         </button>
       </div>
 
-      {/* IQ Option Style Expiration Line - Dashed white line with countdown */}
-      {expirationCountdown !== undefined && (
-        <>
-          
-          {/* The expiration line */}
-          <div 
-            className="absolute top-0 bottom-8 pointer-events-none"
-            style={{ 
-              left: '60%',
-              transform: 'translateX(-50%)',
-              zIndex: 1000,
-            }}
-          >
-            {/* Vertical dashed white line (IQ Option style) */}
+      {/* IQ Option Style Expiration Lines - Purchase time (white) and End time (red) */}
+      {expirationCountdown !== undefined && (() => {
+        const purchaseLinePos = 60; // current time at 60%
+
+        // End line: only show when there's an actual active trade
+        const hasActiveTradeData = activeTradeExpirationTime && activeTradeEntryTime;
+        let endLinePos = 95;
+        let endTimeDisplay = "00:00";
+
+        if (hasActiveTradeData) {
+          const now = Date.now();
+          const totalDuration = activeTradeExpirationTime - activeTradeEntryTime; // total trade duration in ms
+          const remaining = Math.max(0, activeTradeExpirationTime - now); // remaining ms
+          const maxEndLinePos = 95;
+
+          // progress goes from 1 (just started) to 0 (trade ending)
+          const progress = totalDuration > 0 ? remaining / totalDuration : 0;
+          endLinePos = purchaseLinePos + (maxEndLinePos - purchaseLinePos) * progress;
+
+          // Calculate the actual clock time when the trade expires (entry time + expiration duration)
+          const endClockTime = new Date(activeTradeEntryTime + totalDuration);
+          const endHours = endClockTime.getHours();
+          const endMinutes = endClockTime.getMinutes();
+          const endSeconds = endClockTime.getSeconds();
+          endTimeDisplay = `${String(endHours).padStart(2, "0")}:${String(endMinutes).padStart(2, "0")}:${String(endSeconds).padStart(2, "0")}`;
+        }
+
+        return (
+          <>
+            {/* Purchase Time Line (White dashed) */}
             <div 
-              className="h-full"
-              style={{
-                width: '2px',
-                backgroundImage: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 50%, transparent 50%)',
-                backgroundSize: '2px 8px',
-              }}
-            />
-            
-            {/* PURCHASE TIME label at top */}
-            <div 
-              className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
+              className="absolute top-0 bottom-8 pointer-events-none"
               style={{ 
-                color: 'rgba(255, 255, 255, 0.7)',
+                left: `${purchaseLinePos}%`,
+                transform: 'translateX(-50%)',
+                zIndex: 1000,
               }}
             >
-              <span className="text-[10px] tracking-wide whitespace-nowrap">PURCHASE TIME</span>
-              <span className="text-white text-2xl font-bold font-mono tracking-wide">
-                {String(Math.floor((expirationCountdown || 0) / 60)).padStart(2, "0")}:
-                {String((expirationCountdown || 0) % 60).padStart(2, "0")}
-              </span>
+              <div 
+                className="h-full"
+                style={{
+                  width: '2px',
+                  backgroundImage: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 50%, transparent 50%)',
+                  backgroundSize: '2px 8px',
+                }}
+              />
+              
+              {/* PURCHASE TIME label at top - hide when trade is active */}
+              {!hasActiveTradeData && (
+              <div 
+                className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
+                style={{ color: 'rgba(255, 255, 255, 0.7)' }}
+              >
+                <span className="text-[10px] tracking-wide whitespace-nowrap">PURCHASE TIME</span>
+                <span className="text-white text-2xl font-bold font-mono tracking-wide">
+                  {String(Math.floor((expirationCountdown || 0) / 60)).padStart(2, "0")}:
+                  {String((expirationCountdown || 0) % 60).padStart(2, "0")}
+                </span>
+              </div>
+              )}
+
+              {/* Countdown at bottom of line during active trade */}
+              {hasActiveTradeData && (
+              <div 
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
+                style={{ color: 'rgba(255, 255, 255, 0.8)' }}
+              >
+                <span className="text-white text-sm font-bold font-mono tracking-wide whitespace-nowrap">
+                  {String(Math.floor((expirationCountdown || 0) / 60)).padStart(2, "0")}:{String((expirationCountdown || 0) % 60).padStart(2, "0")}
+                </span>
+              </div>
+              )}
             </div>
-            
-            {/* Countdown badge in the middle of the line */}
-            <div 
-              className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-              style={{ 
-                top: '45%',
-                backgroundColor: 'rgba(239, 68, 68, 0.9)',
-                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
-              }}
-            >
-              {/* Clock icon */}
-              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <circle cx="12" cy="12" r="9" />
-                <path d="M12 7v5l3 2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              {/* Countdown text */}
-              <span className="text-white text-sm font-bold font-mono tracking-wide">
-                {String(Math.floor((expirationCountdown || 0) / 60)).padStart(2, "0")}:
-                {String((expirationCountdown || 0) % 60).padStart(2, "0")}
-              </span>
-            </div>
-          </div>
-        </>
-      )}
+
+            {/* Trade End Time Line (Solid Red) - Only shows with active trade, moves as time passes */}
+            {hasActiveTradeData && (
+              <div 
+                className="absolute top-0 bottom-8 pointer-events-none"
+                style={{ 
+                  left: `${endLinePos}%`,
+                  transform: 'translateX(-50%)',
+                  zIndex: 1000,
+                  transition: 'left 1s linear',
+                }}
+              >
+                {/* Solid red vertical line */}
+                <div 
+                  className="h-full"
+                  style={{
+                    width: '2px',
+                    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                  }}
+                />
+                
+                {/* END TIME label at top with real clock time */}
+                <div 
+                  className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
+                  style={{ color: 'rgba(239, 68, 68, 0.9)' }}
+                >
+                </div>
+                
+                {/* Red glow effect at bottom of line */}
+                <div 
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
+                  style={{
+                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                    boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.5)',
+                  }}
+                />
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Live Price Display - Hidden */}
     </div>

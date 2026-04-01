@@ -622,23 +622,53 @@ export default function NotificationsPanel({
                             }
                           }}
                           className={`group relative overflow-hidden rounded-lg border transition-all duration-300 cursor-pointer ${
-                            !notification.read
-                              ? isDark
-                                ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-orange-500/30 shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20"
-                                : "bg-gradient-to-br from-orange-50 to-amber-50/50 border-orange-300/50 shadow-lg shadow-orange-200/30 hover:shadow-orange-300/40"
-                              : isDark
+                            (() => {
+                              const titleLow = notification.title?.toLowerCase() || "";
+                              const isWon = titleLow.includes("trade won") || titleLow.includes("trade earned");
+                              const isLost = titleLow.includes("trade lost");
+                              if (!notification.read) {
+                                if (isWon) {
+                                  return isDark
+                                    ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-green-500/30 shadow-lg shadow-green-500/10 hover:shadow-green-500/20"
+                                    : "bg-gradient-to-br from-green-50 to-emerald-50/50 border-green-300/50 shadow-lg shadow-green-200/30 hover:shadow-green-300/40";
+                                }
+                                if (isLost) {
+                                  return isDark
+                                    ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-red-500/30 shadow-lg shadow-red-500/10 hover:shadow-red-500/20"
+                                    : "bg-gradient-to-br from-red-50 to-rose-50/50 border-red-300/50 shadow-lg shadow-red-200/30 hover:shadow-red-300/40";
+                                }
+                                return isDark
+                                  ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-orange-500/30 shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20"
+                                  : "bg-gradient-to-br from-orange-50 to-amber-50/50 border-orange-300/50 shadow-lg shadow-orange-200/30 hover:shadow-orange-300/40";
+                              }
+                              return isDark
                                 ? "bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50"
-                                : "bg-gray-50/50 border-gray-200/50 hover:bg-gray-100/70"
+                                : "bg-gray-50/50 border-gray-200/50 hover:bg-gray-100/70";
+                            })()
                           }`}
                         >
                           {/* Gradient overlay for unread */}
                           {!notification.read && (
-                            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-purple-500/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+                              (() => {
+                                const titleLow = notification.title?.toLowerCase() || "";
+                                if (titleLow.includes("trade won") || titleLow.includes("trade earned")) return "bg-gradient-to-r from-green-500/5 via-emerald-500/5 to-green-500/5";
+                                if (titleLow.includes("trade lost")) return "bg-gradient-to-r from-red-500/5 via-rose-500/5 to-red-500/5";
+                                return "bg-gradient-to-r from-orange-500/5 via-purple-500/5 to-blue-500/5";
+                              })()
+                            }`}></div>
                           )}
 
                           {/* Unread indicator line */}
                           {!notification.read && (
-                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-500 via-purple-500 to-blue-500"></div>
+                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${
+                              (() => {
+                                const titleLow = notification.title?.toLowerCase() || "";
+                                if (titleLow.includes("trade won") || titleLow.includes("trade earned")) return "bg-gradient-to-b from-green-400 via-emerald-500 to-green-600";
+                                if (titleLow.includes("trade lost")) return "bg-gradient-to-b from-red-400 via-rose-500 to-red-600";
+                                return "bg-gradient-to-b from-orange-500 via-purple-500 to-blue-500";
+                              })()
+                            }`}></div>
                           )}
 
                           <div className="relative p-2.5">

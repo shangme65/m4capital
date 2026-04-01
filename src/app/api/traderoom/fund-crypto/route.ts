@@ -223,6 +223,9 @@ async function createTraderoomCryptoPayment(
 
   console.log("Traderoom payment created:", payment);
 
+  // Use a longer expiration time (50 minutes) to allow for blockchain confirmations
+  const expiresAt = new Date(Date.now() + 50 * 60 * 1000); // 50 minutes
+
   // Update deposit with payment details
   await prisma.deposit.update({
     where: { id: deposit.id },
@@ -231,6 +234,7 @@ async function createTraderoomCryptoPayment(
       paymentAddress: payment.pay_address,
       paymentAmount: payment.pay_amount,
       paymentStatus: payment.payment_status,
+      expiresAt: expiresAt,
     },
   });
 
@@ -247,7 +251,7 @@ async function createTraderoomCryptoPayment(
         paymentStatus: payment.payment_status,
         status: "PENDING",
         createdAt: deposit.createdAt,
-        expiresAt: payment.expiration_estimate_date,
+        expiresAt: expiresAt.toISOString(),
         method: "payment",
         target: "TRADEROOM",
       },
@@ -308,6 +312,9 @@ async function createTraderoomCryptoInvoice(
   console.log("Traderoom invoice created:", invoice);
 
   // Update deposit with invoice details
+  // Use a longer expiration time (50 minutes) for invoices too
+  const invoiceExpiresAt = new Date(Date.now() + 50 * 60 * 1000); // 50 minutes
+
   await prisma.deposit.update({
     where: { id: deposit.id },
     data: {
@@ -315,6 +322,7 @@ async function createTraderoomCryptoInvoice(
       invoiceUrl: invoice.invoice_url,
       paymentAddress: invoice.pay_address,
       paymentAmount: invoice.pay_amount,
+      expiresAt: invoiceExpiresAt,
     },
   });
 
@@ -332,6 +340,7 @@ async function createTraderoomCryptoInvoice(
         paymentAmount: invoice.pay_amount,
         status: "PENDING",
         createdAt: deposit.createdAt,
+        expiresAt: invoiceExpiresAt.toISOString(),
         method: "invoice",
         target: "TRADEROOM",
       },
