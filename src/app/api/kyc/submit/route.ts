@@ -12,11 +12,11 @@ import { sendWebPushToUser } from "@/lib/push-notifications";
 // Maximum function duration (60 seconds for file uploads)
 export const maxDuration = 60;
 
-// Maximum file size per file: 5MB (to stay under serverless limits)
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// Maximum file size per file: 20MB
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
-// Maximum total size: 20MB
-const MAX_TOTAL_SIZE = 20 * 1024 * 1024;
+// Maximum total size: 80MB (20MB per file x 4 files)
+const MAX_TOTAL_SIZE = 80 * 1024 * 1024;
 
 // Allowed file types
 const ALLOWED_TYPES = [
@@ -102,28 +102,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Validate file sizes (5MB per file)
+    // Validate file sizes (20MB per file)
     if (idDocumentFront.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "ID document front file is too large. Maximum size is 5MB. Please compress your image." },
+        { error: "ID document front file is too large. Maximum size is 20MB. Please compress your image." },
         { status: 400 }
       );
     }
     if (idDocumentBack.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "ID document back file is too large. Maximum size is 5MB. Please compress your image." },
+        { error: "ID document back file is too large. Maximum size is 20MB. Please compress your image." },
         { status: 400 }
       );
     }
     if (proofOfAddress.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "Proof of address file is too large. Maximum size is 5MB. Please compress your image." },
+        { error: "Proof of address file is too large. Maximum size is 20MB. Please compress your image." },
         { status: 400 }
       );
     }
     if (selfie.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: "Selfie file is too large. Maximum size is 5MB. Please compress your image." },
+        { error: "Selfie file is too large. Maximum size is 20MB. Please compress your image." },
         { status: 400 }
       );
     }
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
     const totalSize = idDocumentFront.size + idDocumentBack.size + proofOfAddress.size + selfie.size;
     if (totalSize > MAX_TOTAL_SIZE) {
       return NextResponse.json(
-        { error: "Total file size exceeds 20MB. Please compress your images and try again." },
+        { error: "Total file size exceeds 80MB. Please compress your images and try again." },
         { status: 400 }
       );
     }

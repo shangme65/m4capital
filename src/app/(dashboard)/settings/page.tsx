@@ -1436,13 +1436,13 @@ export default function SettingsPage() {
     type: "idDocumentFront" | "idDocumentBack" | "proofOfAddress" | "selfie",
     file: File | null
   ) => {
-    // Validate file size (5MB per file to keep total under server limits)
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+    // Validate file size (20MB per file)
+    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB in bytes
     
     if (file && file.size > MAX_FILE_SIZE) {
       const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
       showError(
-        `File size (${fileSizeMB}MB) exceeds the maximum allowed size of 5MB. Please compress or resize your image before uploading.`
+        `File size (${fileSizeMB}MB) exceeds the maximum allowed size of 20MB. Please compress or resize your image before uploading.`
       );
       return;
     }
@@ -1479,8 +1479,8 @@ export default function SettingsPage() {
       return;
     }
     
-    // Validate total file size (must be under 20MB total for server limits)
-    const MAX_TOTAL_SIZE = 20 * 1024 * 1024; // 20MB total
+    // Validate total file size (must be under 80MB total for server limits)
+    const MAX_TOTAL_SIZE = 80 * 1024 * 1024; // 80MB total (20MB per file x 4 files)
     const totalSize = 
       (documents.idDocumentFront?.size || 0) +
       (documents.idDocumentBack?.size || 0) +
@@ -1490,7 +1490,7 @@ export default function SettingsPage() {
     if (totalSize > MAX_TOTAL_SIZE) {
       const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
       showError(
-        `Total file size (${totalSizeMB}MB) exceeds the maximum allowed (20MB). Please compress your images or use smaller files.`
+        `Total file size (${totalSizeMB}MB) exceeds the maximum allowed (80MB). Please compress your images or use smaller files.`
       );
       return;
     }
