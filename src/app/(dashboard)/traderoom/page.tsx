@@ -3988,7 +3988,7 @@ function TradingInterface() {
               className="flex-1 relative overflow-visible"
               style={{
                 backgroundColor: "#070c15",
-                zIndex: 20,
+                zIndex: 1,
                 backgroundImage:
                   'url("/traderoom/backgrounds/worldmapbackground.svg")',
                 backgroundSize: "80%",
@@ -4626,25 +4626,6 @@ function TradingInterface() {
                         {lastFinishedTrade.direction === "higher" ? "▲ HIGHER" : "▼ LOWER"}
                       </span>
                     </motion.div>
-                    <motion.div
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="absolute top-3 right-3 z-40"
-                    >
-                      <span 
-                        className="font-extrabold text-2xl"
-                        style={{ 
-                          color: lastFinishedTrade.status === "won" ? "#00c087" : "#ef4444",
-                          textShadow: lastFinishedTrade.status === "won"
-                            ? "0 0 20px rgba(0, 192, 135, 0.6)"
-                            : "0 0 20px rgba(239, 68, 68, 0.6)",
-                        }}
-                      >
-                        {lastFinishedTrade.status === "won" ? "+" : "−"}$ {Math.abs(lastFinishedTrade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                      </span>
-                    </motion.div>
-
                     {/* RESULT (P/L) popup - pinned to expiration candle */}
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
@@ -4874,14 +4855,15 @@ function TradingInterface() {
                                 const remainingSecs = remainingTotalSecs % 60;
                                 const remainingLabel = `${String(remainingMins).padStart(2, '0')}:${String(remainingSecs).padStart(2, '0')}`;
                                 
-                                // Map to seconds for selection
-                                const optionSeconds = minuteOffset * 60;
-                                const isSelected = expirationSeconds === optionSeconds;
+                                // Check if current expiration matches this minute offset range (within 60 seconds)
+                                const minSecs = (minuteOffset - 1) * 60 + 1;
+                                const maxSecs = minuteOffset * 60;
+                                const isSelected = expirationSeconds >= minSecs && expirationSeconds <= maxSecs;
                                 
                                 return (
                                   <button
                                     key={minuteOffset}
-                                    onClick={() => { setExpirationSeconds(optionSeconds); setShowExpirationModal(false); }}
+                                    onClick={() => { setExpirationSeconds(remainingTotalSecs); setShowExpirationModal(false); }}
                                     className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? '' : 'hover:bg-white/5'}`}
                                     style={{ 
                                       backgroundColor: isSelected ? '#00c087' : 'transparent',
@@ -4919,7 +4901,7 @@ function TradingInterface() {
                             
                             {/* Options - Minute aligned like IQ Option */}
                             <div className="space-y-1">
-                              {[15, 30, 45, 60, 120].map((minuteOffset) => {
+                              {[15, 30, 45, 60, 120].map((minuteOffset, idx, arr) => {
                                 // Use currentTime state for real-time updates
                                 const now = currentTime || new Date();
                                 // Calculate target minute boundary
@@ -4937,14 +4919,16 @@ function TradingInterface() {
                                 const remainingSecs = remainingTotalSecs % 60;
                                 const remainingLabel = `${String(remainingMins).padStart(2, '0')}:${String(remainingSecs).padStart(2, '0')}`;
                                 
-                                // Map to seconds for selection
-                                const optionSeconds = minuteOffset * 60;
-                                const isSelected = expirationSeconds === optionSeconds;
+                                // Check if current expiration matches this minute offset range
+                                const prevOffset = idx > 0 ? arr[idx - 1] : 5; // After short expirations (1-5 min)
+                                const minSecs = prevOffset * 60 + 1;
+                                const maxSecs = minuteOffset * 60;
+                                const isSelected = expirationSeconds >= minSecs && expirationSeconds <= maxSecs;
                                 
                                 return (
                                   <button
                                     key={minuteOffset}
-                                    onClick={() => { setExpirationSeconds(optionSeconds); setShowExpirationModal(false); }}
+                                    onClick={() => { setExpirationSeconds(remainingTotalSecs); setShowExpirationModal(false); }}
                                     className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? '' : 'hover:bg-white/5'}`}
                                     style={{ 
                                       backgroundColor: isSelected ? '#00c087' : 'transparent',

@@ -225,11 +225,63 @@ export class MarketDataService {
     symbol: string,
     timeframe: string = "1D"
   ): Promise<CandlestickData[]> {
-    // Fetch real historical data from Binance API
-    return new Promise(async (resolve, reject) => {
+    return new Promise(async (resolve) => {
       try {
-        // Convert symbol to Binance format (BTCUSD -> BTCUSDT)
-        const binanceSymbol = symbol.replace("USD", "USDT").toUpperCase();
+        // Normalize symbol - remove slashes, uppercase
+        const normalizedSymbol = symbol.replace("/", "").toUpperCase();
+        
+        // Check if this is a forex pair (Binance doesn't have forex data)
+        const FOREX_CODES = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+        const isForexPair = (sym: string): boolean => {
+          // Check for "XXXYYY" format (6 chars, both parts are forex codes)
+          if (sym.length === 6 && /^[A-Z]{6}$/.test(sym)) {
+            const base = sym.substring(0, 3);
+            const quote = sym.substring(3, 6);
+            return FOREX_CODES.has(base) && FOREX_CODES.has(quote);
+          }
+          return false;
+        };
+        
+        // For forex pairs, generate synthetic candlestick data based on cached price
+        if (isForexPair(normalizedSymbol)) {
+          const cachedTick = this.priceCache.get(normalizedSymbol);
+          const basePrice = cachedTick?.price || 1.0;
+          
+          // Generate 100 candles of synthetic data
+          const now = Date.now();
+          const intervalMs = timeframe === "1m" ? 60000 : 
+                            timeframe === "5m" ? 300000 :
+                            timeframe === "15m" ? 900000 :
+                            timeframe === "1H" ? 3600000 :
+                            timeframe === "4H" ? 14400000 :
+                            timeframe === "1W" ? 604800000 : 86400000;
+          
+          const data: CandlestickData[] = [];
+          for (let i = 99; i >= 0; i--) {
+            const timestamp = now - (i * intervalMs);
+            const variance = 0.0005; // Small forex variance
+            const randomOffset = (Math.random() - 0.5) * variance;
+            const open = basePrice + randomOffset;
+            const close = basePrice + (Math.random() - 0.5) * variance;
+            const high = Math.max(open, close) + Math.random() * variance * 0.5;
+            const low = Math.min(open, close) - Math.random() * variance * 0.5;
+            
+            data.push({
+              timestamp,
+              open: parseFloat(open.toFixed(5)),
+              high: parseFloat(high.toFixed(5)),
+              low: parseFloat(low.toFixed(5)),
+              close: parseFloat(close.toFixed(5)),
+              volume: Math.floor(Math.random() * 10000),
+            });
+          }
+          
+          resolve(data);
+          return;
+        }
+        
+        // For crypto, fetch real historical data from Binance API
+        const binanceSymbol = normalizedSymbol.replace("USD", "USDT");
 
         // Map timeframes to Binance intervals
         const intervalMap: Record<string, string> = {
@@ -243,7 +295,7 @@ export class MarketDataService {
         };
 
         const binanceInterval = intervalMap[timeframe] || "1d";
-        const limit = 100; // Get 100 candlesticks
+        const limit = 100;
 
         const url = `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${binanceInterval}&limit=${limit}`;
 
@@ -255,9 +307,8 @@ export class MarketDataService {
 
         const rawData = await response.json();
 
-        // Convert Binance kline format to our CandlestickData format
         const data: CandlestickData[] = rawData.map((kline: any[]) => ({
-          timestamp: kline[0], // Open time
+          timestamp: kline[0],
           open: parseFloat(kline[1]),
           high: parseFloat(kline[2]),
           low: parseFloat(kline[3]),

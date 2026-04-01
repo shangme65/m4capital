@@ -159,20 +159,141 @@ export async function GET(
     // Note: For invoices, we rely on webhook callbacks instead of polling
     // because NOWPayments doesn't provide a direct invoice status endpoint
     let nowPaymentsStatus = null;
+    let finalStatus = deposit.status;
+    
     if (deposit.paymentId && deposit.method !== "NOWPAYMENTS_INVOICE_BTC") {
       try {
         nowPaymentsStatus = await nowPayments.getPaymentStatus(
           deposit.paymentId
         );
+        
+        console.log(`📡 NowPayments status check for ${depositId}: ${nowPaymentsStatus.payment_status}`);
 
-        // Update local status if different
-        if (nowPaymentsStatus.payment_status !== deposit.paymentStatus) {
-          await prisma.deposit.update({
-            where: { id: depositId },
-            data: {
-              paymentStatus: nowPaymentsStatus.payment_status,
-            },
-          });
+        // CRITICAL: If NowPayments says finished/confirmed but local status isn't COMPLETED,
+        // we need to complete the payment (webhook may have failed)
+        const isNowPaymentsComplete = 
+          nowPaymentsStatus.payment_status === "finished" || 
+          nowPaymentsStatus.payment_status === "confirmed";
+        
+        if (isNowPaymentsComplete && deposit.status !== "COMPLETED") {
+          console.log(`🔄 RECOVERY: NowPayments says ${nowPaymentsStatus.payment_status} but local status is ${deposit.status}`);
+          console.log(`💰 Processing payment completion via status check...`);
+          
+          // Check if deposit has a userId
+          if (!deposit.userId) {
+            console.error("Deposit has no userId, cannot credit");
+          } else {
+            // Get user with portfolio
+            const user = await prisma.user.findUnique({
+              where: { id: deposit.userId },
+              include: { Portfolio: true },
+            });
+          
+          if (user) {
+            const depositCurrency = deposit.currency || "USD";
+            let depositAmount = parseFloat(deposit.amount.toString());
+            const userPreferredCurrency = user.preferredCurrency || "USD";
+            
+            // Convert deposit amount to user's preferred currency if different
+            if (depositCurrency !== userPreferredCurrency) {
+              try {
+                const ratesResponse = await fetch(
+                  `https://api.frankfurter.app/latest?from=${depositCurrency}&to=${userPreferredCurrency}`
+                );
+                if (ratesResponse.ok) {
+                  const ratesData = await ratesResponse.json();
+                  const rate = ratesData.rates[userPreferredCurrency];
+                  if (rate) {
+                    depositAmount = depositAmount * rate;
+                    console.log(`💱 Converted ${deposit.amount} ${depositCurrency} to ${depositAmount.toFixed(2)} ${userPreferredCurrency}`);
+                  }
+                }
+              } catch (conversionError) {
+                console.error("Currency conversion error:", conversionError);
+              }
+            }
+            
+            // Ensure portfolio exists
+            let portfolio = user.Portfolio;
+            if (!portfolio) {
+              const { generateId } = await import("@/lib/generate-id");
+              portfolio = await prisma.portfolio.create({
+                data: {
+                  id: generateId(),
+                  userId: user.id,
+                  balance: 0,
+                  traderoomBalance: 0,
+                  assets: [],
+                },
+              });
+            }
+            
+            // Credit based on target asset type
+            if (deposit.targetAsset === "TRADEROOM") {
+              await prisma.portfolio.update({
+                where: { id: portfolio.id },
+                data: {
+                  traderoomBalance: {
+                    increment: depositAmount,
+                  },
+                },
+              });
+              console.log(`✅ Credited ${depositAmount} to traderoom balance`);
+            } else {
+              await prisma.portfolio.update({
+                where: { id: portfolio.id },
+                data: {
+                  balance: {
+                    increment: depositAmount,
+                  },
+                  balanceCurrency: userPreferredCurrency,
+                },
+              });
+              console.log(`✅ Credited ${depositAmount} to main balance`);
+            }
+            
+            // Update deposit status
+            await prisma.deposit.update({
+              where: { id: depositId },
+              data: {
+                status: "COMPLETED",
+                paymentStatus: nowPaymentsStatus.payment_status,
+                confirmations: 6,
+              },
+            });
+            
+            // Create notification
+            const { generateId } = await import("@/lib/generate-id");
+            const { getCurrencySymbol } = await import("@/lib/currencies");
+            const currSym = getCurrencySymbol(userPreferredCurrency);
+            
+            await prisma.notification.create({
+              data: {
+                id: generateId(),
+                userId: user.id,
+                type: "DEPOSIT",
+                title: `${deposit.cryptoCurrency || "BTC"} Deposit Confirmed!`,
+                message: `Your deposit of ${currSym}${depositAmount.toFixed(2)} has been confirmed and credited to your ${deposit.targetAsset === "TRADEROOM" ? "traderoom" : ""} account.`,
+                amount: Math.round(depositAmount * 100) / 100,
+                asset: userPreferredCurrency,
+                read: false,
+              },
+            });
+            
+            finalStatus = "COMPLETED";
+            console.log(`✅ Payment completion recovered successfully!`);
+          }
+          } // Close the else block for deposit.userId check
+        } else {
+          // Just update the payment status if different
+          if (nowPaymentsStatus.payment_status !== deposit.paymentStatus) {
+            await prisma.deposit.update({
+              where: { id: depositId },
+              data: {
+                paymentStatus: nowPaymentsStatus.payment_status,
+              },
+            });
+          }
         }
       } catch (error) {
         console.error("Failed to fetch NOWPayments status:", error);
@@ -186,7 +307,7 @@ export async function GET(
         id: deposit.id,
         amount: parseFloat(deposit.amount.toString()),
         currency: deposit.currency,
-        status: deposit.status,
+        status: finalStatus,
         method: deposit.method,
         createdAt: deposit.createdAt,
         paymentId: deposit.paymentId,

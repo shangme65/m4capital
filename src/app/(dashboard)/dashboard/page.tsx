@@ -1868,27 +1868,54 @@ function DashboardContent() {
                       <div className="flex justify-between items-start gap-3">
                         <div className="flex flex-col">
                           <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Amount:</span>
-                          <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
-                            activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw"
-                              ? isDark ? "bg-red-500/20 text-red-400" : "bg-red-100 text-red-500"
-                              : isDark ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-600"
-                          }`}>
-                            {activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw" ? "-" : "+"}
-                            {activity.type === "trade_earned"
-                              ? formatCryptoAmount(
-                                  activity.amount || 0,
-                                  "USD"
-                                )
-                              : (activity.type === "convert" || activity.type === "swap") && activity.toAsset
-                              ? `${formatCryptoAmount(
-                                  activity.amount || 0,
-                                  activity.toAsset
-                                )} ${activity.toAsset}`
-                              : `${formatCryptoAmount(
-                                  activity.amount || 0,
-                                  activity.asset?.split(" ")[0] || ""
-                                )} ${activity.asset?.split(" ")[0]}`}
-                          </span>
+                          {(() => {
+                            // Check if this is a closed trade (forex pair)
+                            const assetSymbolAmt = activity.asset?.split(" ")[0] || "";
+                            const FOREX_CODES_AMT = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+                            const isForexPairTradeAmt = (sym: string) => {
+                              if (sym.includes("/")) {
+                                const [base, quote] = sym.split("/");
+                                return FOREX_CODES_AMT.has(base) && FOREX_CODES_AMT.has(quote);
+                              }
+                              if (sym.length === 6 && /^[A-Z]{6}$/.test(sym)) {
+                                const base = sym.substring(0, 3);
+                                const quote = sym.substring(3, 6);
+                                return FOREX_CODES_AMT.has(base) && FOREX_CODES_AMT.has(quote);
+                              }
+                              return false;
+                            };
+                            const isClosedTradeAmt = activity.type === "trade_earned" || 
+                              ((activity.type === "buy" || activity.type === "sell") && isForexPairTradeAmt(assetSymbolAmt));
+                            
+                            // For closed trades, use the value to determine win/loss color
+                            const tradeValueAmt = activity.value || activity.amount || 0;
+                            const isTradeWin = tradeValueAmt > 0;
+                            
+                            // Determine if this is a debit (negative) transaction
+                            const isDebit = activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw";
+                            
+                            // For closed trades, color based on win/loss; otherwise based on debit/credit
+                            const showRed = isClosedTradeAmt ? !isTradeWin : isDebit;
+                            
+                            return (
+                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
+                                showRed
+                                  ? isDark ? "bg-red-500/20 text-red-400" : "bg-red-100 text-red-500"
+                                  : isDark ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-600"
+                              }`}>
+                                {isClosedTradeAmt 
+                                  ? `${isTradeWin ? "+" : "-"}$${formatCryptoAmount(Math.abs(activity.amount || 0), "USD")}`
+                                  : `${isDebit ? "-" : "+"}${
+                                      activity.type === "trade_earned"
+                                        ? formatCryptoAmount(activity.amount || 0, "USD")
+                                        : (activity.type === "convert" || activity.type === "swap") && activity.toAsset
+                                        ? `${formatCryptoAmount(activity.amount || 0, activity.toAsset)} ${activity.toAsset}`
+                                        : `${formatCryptoAmount(activity.amount || 0, activity.asset?.split(" ")[0] || "")} ${activity.asset?.split(" ")[0]}`
+                                    }`
+                                }
+                              </span>
+                            );
+                          })()}
                         </div>
                         <div className="flex flex-col items-end">
                               <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Value:</span>

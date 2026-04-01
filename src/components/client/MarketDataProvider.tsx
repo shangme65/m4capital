@@ -202,10 +202,16 @@ export function MarketDataProvider({
     timeframe: string = "1D"
   ): Promise<CandlestickData[]> => {
     if (!marketDataService.current) {
-      throw new Error("Market data service not connected");
+      console.warn("Market data service not connected - returning empty data");
+      return [];
     }
 
-    return marketDataService.current.getHistoricalData(symbol, timeframe);
+    try {
+      return await marketDataService.current.getHistoricalData(symbol, timeframe);
+    } catch (error) {
+      console.error(`Failed to get historical data for ${symbol}:`, error);
+      return [];
+    }
   };
 
   const refreshNews = async () => {

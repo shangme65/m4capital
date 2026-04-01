@@ -319,14 +319,11 @@ export default function RealTimeTradingChart({
     }
 
     // Make the chart background transparent to show the world map
-    // klinecharts uses internal div containers, we need to make them all transparent
+    // Be selective - only make the main canvas container transparent, not the price badge
     const chartContainer = chartContainerRef.current;
     if (chartContainer) {
-      // Set all child divs to transparent
-      const allDivs = chartContainer.querySelectorAll("div");
-      allDivs.forEach((div) => {
-        (div as HTMLElement).style.backgroundColor = "transparent";
-      });
+      // Set only the immediate chart wrapper to transparent, preserve price axis styling
+      chartContainer.style.backgroundColor = "transparent";
       // Also try to set the chart's internal background via the API
       if (chart && typeof chart.setStyles === "function") {
         chart.setStyles({
@@ -697,7 +694,7 @@ export default function RealTimeTradingChart({
   return (
     <div
       className="relative w-full h-full overflow-visible"
-      style={{ maxHeight: "100%", zIndex: 30 }}
+      style={{ maxHeight: "100%", zIndex: 60 }}
     >
       {/* Chart container - klinecharts will render here */}
       <div className="h-full w-full flex flex-col">
