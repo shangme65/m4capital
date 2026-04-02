@@ -142,10 +142,32 @@ export async function POST(req: NextRequest) {
 
     // Convert files to base64 data URLs for storage
     // This works on serverless platforms like Vercel where filesystem is read-only
-    const idDocumentFrontUrl = await fileToBase64DataUrl(idDocumentFront);
-    const idDocumentBackUrl = await fileToBase64DataUrl(idDocumentBack);
-    const proofOfAddressUrl = await fileToBase64DataUrl(proofOfAddress);
-    const selfieUrl = await fileToBase64DataUrl(selfie);
+    let idDocumentFrontUrl, idDocumentBackUrl, proofOfAddressUrl, selfieUrl;
+    
+    try {
+      console.log("Converting files to base64. File sizes:", {
+        idFront: idDocumentFront.size,
+        idBack: idDocumentBack.size,
+        proofOfAddress: proofOfAddress.size,
+        selfie: selfie.size,
+        total: idDocumentFront.size + idDocumentBack.size + proofOfAddress.size + selfie.size
+      });
+
+      idDocumentFrontUrl = await fileToBase64DataUrl(idDocumentFront);
+      idDocumentBackUrl = await fileToBase64DataUrl(idDocumentBack);
+      proofOfAddressUrl = await fileToBase64DataUrl(proofOfAddress);
+      selfieUrl = await fileToBase64DataUrl(selfie);
+      
+      console.log("Successfully converted all files to base64");
+    } catch (conversionError) {
+      console.error("File conversion error:", conversionError);
+      return NextResponse.json(
+        {
+          error: "Failed to process your files. They may be corrupted or too large. Please try compressing them.",
+        },
+        { status: 500 }
+      );
+    }
 
     // Create or update KYC verification
     const kycData = {
@@ -171,21 +193,34 @@ export async function POST(req: NextRequest) {
     };
 
     let kycVerification;
-    if (user.KycVerification) {
-      // Update existing KYC
-      kycVerification = await prisma.kycVerification.update({
-        where: { userId: user.id },
-        data: kycData,
-      });
-    } else {
-      // Create new KYC
-      kycVerification = await prisma.kycVerification.create({
-        data: {
-          id: generateId(),
-          ...kycData,
-          userId: user.id,
+    try {
+      console.log("Saving KYC data to database...");
+      if (user.KycVerification) {
+        // Update existing KYC
+        kycVerification = await prisma.kycVerification.update({
+          where: { userId: user.id },
+          data: kycData,
+        });
+        console.log("Updated existing KYC record");
+      } else {
+        // Create new KYC
+        kycVerification = await prisma.kycVerification.create({
+          data: {
+            id: generateId(),
+            ...kycData,
+            userId: user.id,
+          },
+        });
+        console.log("Created new KYC record");
+      }
+    } catch (dbError) {
+      console.error("Database operation failed:", dbError);
+      return NextResponse.json(
+        {
+          error: "Failed to save your verification data. Your files may be too large for our database. Please compress them to under 2MB each and try again.",
         },
-      });
+        { status: 500 }
+      );
     }
 
     // Send confirmation email to user
@@ -296,25 +331,46 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error("KYC submission error:", error);
+    console.error("Error details:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
 
     // Provide more specific error messages
     if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+      
       if (
         error.message.includes("PayloadTooLarge") ||
-        error.message.includes("body exceeded")
+        error.message.includes("body exceeded") ||
+        error.message.includes("ECONNRESET") ||
+        error.message.includes("timeout")
       ) {
         return NextResponse.json(
           {
             error:
-              "Files are too large. Please reduce the file sizes and try again.",
+              "Request timeout or connection error. Your files may be too large. Please compress them and try again.",
           },
           { status: 413 }
         );
       }
+
+      if (error.message.includes("prisma") || error.message.includes("database")) {
+        return NextResponse.json(
+          {
+            error: "Database error. Your files may exceed storage limits. Please use smaller files.",
+          },
+          { status: 500 }
+        );
+      }
+
+      // Return the actual error message for debugging
+      return NextResponse.json(
+        { error: `Submission failed: ${error.message}` },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json(
-      { error: "Failed to submit KYC verification. Please try again." },
+      { error: "Failed to submit KYC verification. Please try again or contact support." },
       { status: 500 }
     );
   }

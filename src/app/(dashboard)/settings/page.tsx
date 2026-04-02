@@ -1511,20 +1511,31 @@ export default function SettingsPage() {
         body: formData,
       });
 
-
-
-      const data = await response.json();
+      // Try to parse JSON response
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Failed to parse response:", parseError);
+        showError(`Server error: ${response.status} ${response.statusText}. Please try again or contact support.`);
+        return;
+      }
 
       if (response.ok) {
         setKycStatus("PENDING");
         setShowKycDetails(false);
         setShowKycSuccessModal(true);
       } else {
-        showError(data.error || "Failed to submit KYC verification");
+        // Show the actual error message from the server
+        const errorMessage = data.error || data.message || `Server error: ${response.status} ${response.statusText}`;
+        console.error("KYC submission failed:", errorMessage, data);
+        showError(errorMessage);
       }
     } catch (error: any) {
       console.error("KYC submission error:", error);
-      showError("Failed to submit KYC verification. Please check your internet connection and try again.");
+      // Show more detailed error message
+      const errorMsg = error.message || error.toString();
+      showError(`Failed to submit KYC: ${errorMsg}. Please try again or contact support.`);
     } finally {
       setSubmittingKyc(false);
     }
