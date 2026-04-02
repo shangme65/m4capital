@@ -1436,17 +1436,6 @@ export default function SettingsPage() {
     type: "idDocumentFront" | "idDocumentBack" | "proofOfAddress" | "selfie",
     file: File | null
   ) => {
-    // Validate file size (20MB per file)
-    const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB in bytes
-    
-    if (file && file.size > MAX_FILE_SIZE) {
-      const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
-      showError(
-        `File size (${fileSizeMB}MB) exceeds the maximum allowed size of 20MB. Please compress or resize your image before uploading.`
-      );
-      return;
-    }
-    
     setDocuments((prev) => ({ ...prev, [type]: file }));
   };
 
@@ -1522,13 +1511,7 @@ export default function SettingsPage() {
         body: formData,
       });
 
-      // Handle 413 error specifically (payload too large)
-      if (response.status === 413) {
-        showError(
-          "Your files are too large to upload. Please compress your images (under 20MB each) and try again. You can use online tools like TinyPNG or ILoveIMG to reduce file sizes."
-        );
-        return;
-      }
+
 
       const data = await response.json();
 
@@ -1541,14 +1524,7 @@ export default function SettingsPage() {
       }
     } catch (error: any) {
       console.error("KYC submission error:", error);
-      // Check if it's a network error due to large payload
-      if (error.message?.includes("413") || error.message?.includes("too large")) {
-        showError(
-          "Your files are too large to upload. Please compress your images (under 20MB each) and try again."
-        );
-      } else {
-        showError("Failed to submit KYC verification. Please check your internet connection and try again.");
-      }
+      showError("Failed to submit KYC verification. Please check your internet connection and try again.");
     } finally {
       setSubmittingKyc(false);
     }
@@ -3944,7 +3920,7 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         <p className={`text-xs mt-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                          Please upload clear images of both sides of your ID (max 20MB each)
+                          Please upload clear images of both sides of your ID
                         </p>
                       </div>
 
@@ -3991,7 +3967,7 @@ export default function SettingsPage() {
                                   Click to upload or drag and drop
                                 </p>
                                 <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                                  PNG, JPG or PDF (max 20MB)
+                                  PNG, JPG or PDF
                                 </p>
                               </div>
                             )}
@@ -4038,7 +4014,7 @@ export default function SettingsPage() {
                                   Click to upload or drag and drop
                                 </p>
                                 <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                                  PNG or JPG (max 20MB)
+                                  PNG or JPG
                                 </p>
                               </div>
                             )}

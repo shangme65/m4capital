@@ -9,14 +9,8 @@ import {
 } from "@/lib/kyc-emails";
 import { sendWebPushToUser } from "@/lib/push-notifications";
 
-// Maximum function duration (60 seconds for file uploads)
-export const maxDuration = 60;
-
-// Maximum file size per file: 20MB
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
-
-// Maximum total size: 80MB (20MB per file x 4 files)
-const MAX_TOTAL_SIZE = 80 * 1024 * 1024;
+// Maximum function duration (120 seconds for file uploads - increased for larger files)
+export const maxDuration = 120;
 
 // Allowed file types - accept all common image formats plus PDF
 const ALLOWED_TYPES = [
@@ -106,41 +100,6 @@ export async function POST(req: NextRequest) {
     if (!idDocumentFront || !idDocumentBack || !proofOfAddress || !selfie) {
       return NextResponse.json(
         { error: "All documents are required (ID Front, ID Back, Proof of Address, Selfie)" },
-        { status: 400 }
-      );
-    }
-
-    // Validate file sizes (20MB per file)
-    if (idDocumentFront.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "ID document front file is too large. Maximum size is 20MB. Please compress your image." },
-        { status: 400 }
-      );
-    }
-    if (idDocumentBack.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "ID document back file is too large. Maximum size is 20MB. Please compress your image." },
-        { status: 400 }
-      );
-    }
-    if (proofOfAddress.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "Proof of address file is too large. Maximum size is 20MB. Please compress your image." },
-        { status: 400 }
-      );
-    }
-    if (selfie.size > MAX_FILE_SIZE) {
-      return NextResponse.json(
-        { error: "Selfie file is too large. Maximum size is 20MB. Please compress your image." },
-        { status: 400 }
-      );
-    }
-
-    // Validate total size
-    const totalSize = idDocumentFront.size + idDocumentBack.size + proofOfAddress.size + selfie.size;
-    if (totalSize > MAX_TOTAL_SIZE) {
-      return NextResponse.json(
-        { error: "Total file size exceeds 80MB. Please compress your images and try again." },
         { status: 400 }
       );
     }
