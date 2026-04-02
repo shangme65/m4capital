@@ -9,7 +9,9 @@
   },
   "functions": {
     "src/app/api/kyc/submit/route.ts": {
-      "maxDuration": 120
+      "maxDuration": 120,
+      "memory": 3008,
+      "maxRequestBodySize": "100mb"
     }
   }
 }

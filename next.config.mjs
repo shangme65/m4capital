@@ -165,7 +165,7 @@ const nextConfig = {
   // Experimental features - increase body size limit for file uploads
   experimental: {
     serverActions: {
-      bodySizeLimit: "25mb",
+      bodySizeLimit: "150mb", // Increased to handle base64 encoded files (33% larger than original)
     },
   },
 };

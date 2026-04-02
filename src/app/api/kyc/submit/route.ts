@@ -12,6 +12,9 @@ import { sendWebPushToUser } from "@/lib/push-notifications";
 // Maximum function duration (120 seconds for file uploads - increased for larger files)
 export const maxDuration = 120;
 
+// Disable body size limit for this route
+export const runtime = "nodejs";
+
 // Allowed file types - accept all common image formats plus PDF
 const ALLOWED_TYPES = [
   "image/jpeg",
