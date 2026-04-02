@@ -43,12 +43,18 @@ export async function GET(
 
     // Check if deposit has expired locally
     const now = new Date();
+    // Give crypto payments MORE time - add 15 minute grace period before marking as failed
+    const graceMinutes = 15;
+    const expiryWithGrace = deposit.expiresAt 
+      ? new Date(deposit.expiresAt.getTime() + graceMinutes * 60 * 1000)
+      : null;
+    
     if (
       deposit.status === "PENDING" &&
-      deposit.expiresAt &&
-      deposit.expiresAt < now
+      expiryWithGrace &&
+      expiryWithGrace < now
     ) {
-      console.log(`⏰ Deposit ${depositId} has expired locally, checking NowPayments...`);
+      console.log(`⏰ Deposit ${depositId} has expired locally (with ${graceMinutes}min grace), checking NowPayments...`);
       
       // IMPORTANT: Before marking as expired, check NowPayments to see if payment was received
       let nowPaymentsStatus = null;

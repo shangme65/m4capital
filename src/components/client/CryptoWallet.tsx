@@ -135,13 +135,13 @@ export default function CryptoWallet({
     }
   }, [amount, cryptoCurrency, existingPayment]);
 
-  // Poll payment status every 10 seconds
+  // Poll payment status every 30 seconds (reduced frequency to avoid premature expiration)
   useEffect(() => {
     if (!paymentData?.depositId) return;
 
     const statusInterval = setInterval(async () => {
       await checkPaymentStatus();
-    }, 10000); // Check every 10 seconds
+    }, 30000); // Check every 30 seconds
 
     return () => clearInterval(statusInterval);
   }, [paymentData?.depositId]);

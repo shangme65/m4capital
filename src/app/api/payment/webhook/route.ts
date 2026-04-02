@@ -272,9 +272,11 @@ export async function POST(request: NextRequest) {
     const isRecovery = newStatus === "COMPLETED" && deposit.status === "FAILED";
     if (isRecovery) {
       console.log("🔄 RECOVERY CASE: Deposit was FAILED but NowPayments confirms payment!");
+      console.log("  - This payment was marked as FAILED locally but NowPayments shows it succeeded!");
     }
     
     if (shouldCredit || isRecovery) {
+      try {
       console.log("💰💰💰 PAYMENT COMPLETED! Starting credit process...");
 
       // Check if user exists
@@ -585,6 +587,20 @@ export async function POST(request: NextRequest) {
 
       // TODO: Send email notification to user
       // TODO: Send Telegram notification if enabled
+      } catch (creditError) {
+        console.error("❌❌❌ CRITICAL ERROR IN CREDIT PROCESS:");
+        console.error("Error type:", creditError instanceof Error ? creditError.name : typeof creditError);
+        console.error("Error message:", creditError instanceof Error ? creditError.message : String(creditError));
+        console.error("Stack trace:", creditError instanceof Error ? creditError.stack : "No stack trace");
+        console.error("Deposit ID:", deposit.id);
+        console.error("User ID:", deposit.User?.id);
+        console.error("Amount:", deposit.amount, deposit.currency);
+        
+        // Don't throw - respond success to NowPayments so they don't retry
+        // We'll need to manually recover this deposit
+        console.error("⚠️ Responding with success to prevent retry loop - MANUAL RECOVERY REQUIRED!");
+        console.error("Run recovery: POST /api/admin/recover-deposit with depositId:", deposit.id);
+      }
     } else {
       console.log("⏭️ Skipping credit process (not completed or already credited)");
     }
