@@ -1,3 +1,4 @@
+// M4Capital Next.js Configuration - Updated 2026-04-02
 import bundleAnalyzer from "@next/bundle-analyzer";
 
 const withBundleAnalyzer = bundleAnalyzer({
