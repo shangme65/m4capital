@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useRef,
   ReactNode,
 } from "react";
 import { useMarketData, MarketDataProvider } from "./MarketDataProvider";
@@ -119,6 +120,7 @@ interface TradingProviderProps {
 // Internal TradingProvider that uses market data
 function InternalTradingProvider({ children }: TradingProviderProps) {
   const marketDataContext = useMarketData();
+  const marketDataRef = useRef(marketDataContext);
   const [openPositions, setOpenPositions] = useState<Position[]>([]);
   const [tradeHistory, setTradeHistory] = useState<Trade[]>([]);
   const [subscribedSymbols, setSubscribedSymbols] = useState<Set<string>>(
@@ -128,6 +130,11 @@ function InternalTradingProvider({ children }: TradingProviderProps) {
   const [candlestickData, setCandlestickData] = useState<
     Record<string, CandlestickData[]>
   >({});
+
+  // Keep ref updated with latest context
+  useEffect(() => {
+    marketDataRef.current = marketDataContext;
+  }, [marketDataContext]);
 
   // Initialize with default symbols
   useEffect(() => {
@@ -193,7 +200,8 @@ function InternalTradingProvider({ children }: TradingProviderProps) {
   // Subscribe to market data updates
   useEffect(() => {
     if (subscribedSymbols.size > 0) {
-      const subscriptionId = marketDataContext.subscribe(
+      const ctx = marketDataRef.current;
+      const subscriptionId = ctx.subscribe(
         Array.from(subscribedSymbols),
         (tick: MarketTick) => {
           const marketDataUpdate = convertTickToMarketData(tick);
@@ -219,16 +227,17 @@ function InternalTradingProvider({ children }: TradingProviderProps) {
         }
       );
 
-      return () => marketDataContext.unsubscribe(subscriptionId);
+      return () => ctx.unsubscribe(subscriptionId);
     }
-  }, [subscribedSymbols, marketDataContext]);
+  }, [subscribedSymbols]);
 
   // Load historical data for subscribed symbols
   useEffect(() => {
     const loadHistoricalData = async () => {
+      const ctx = marketDataRef.current;
       const promises = Array.from(subscribedSymbols).map(async (symbol) => {
         try {
-          const historicalData = await marketDataContext.getHistoricalData(
+          const historicalData = await ctx.getHistoricalData(
             symbol,
             "1m"
           );
@@ -258,7 +267,7 @@ function InternalTradingProvider({ children }: TradingProviderProps) {
     if (subscribedSymbols.size > 0) {
       loadHistoricalData();
     }
-  }, [subscribedSymbols, marketDataContext]);
+  }, [subscribedSymbols]);
 
   const calculatePnL = (position: Position, currentPrice: number): number => {
     const priceDiff = currentPrice - position.entryPrice;

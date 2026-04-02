@@ -82,6 +82,7 @@ export default function RealTimeTradingChart({
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const wsUnsubscribeRef = useRef<(() => void) | null>(null);
+  const onLivePriceUpdateRef = useRef(onLivePriceUpdate);
   const { cryptoPrices } = useCryptoMarket();
   const [currentInterval, setCurrentInterval] = useState(interval);
   const [showIndicators, setShowIndicators] = useState(false);
@@ -92,6 +93,11 @@ export default function RealTimeTradingChart({
     price: number;
     direction: "up" | "down" | "neutral";
   } | null>(null);
+
+  // Keep the ref updated with latest callback without triggering re-renders
+  useEffect(() => {
+    onLivePriceUpdateRef.current = onLivePriceUpdate;
+  }, [onLivePriceUpdate]);
 
   // Candle time period options like IQ Option
   const candleTimePeriods = [
@@ -368,10 +374,10 @@ export default function RealTimeTradingChart({
 
           // Set scroll limit to data range - position current price in middle like IQ Option
           if (forexData.length > 0) {
-            // Large right offset to position current price in the middle of the screen
-            chartRef.current.setOffsetRightDistance(400); // Increased to center current price, clear sidebar
+            // Large right offset to show future time (for trade expiration visibility)
+            chartRef.current.setOffsetRightDistance(600); // Increased to show future times
             chartRef.current.setLeftMinVisibleBarCount(10); // Minimum visible bars when scrolled left
-            chartRef.current.setRightMinVisibleBarCount(5); // Fewer bars needed on right with larger offset
+            chartRef.current.setRightMinVisibleBarCount(3); // Fewer bars needed on right
             chartRef.current.setBarSpace(12); // Default zoom level - more zoomed in
             // Scroll to show latest/current price
             chartRef.current.scrollToRealTime();
@@ -429,10 +435,10 @@ export default function RealTimeTradingChart({
 
           // Set scroll limit to data range - position current price in middle like IQ Option
           if (klineData.length > 0) {
-            // Large right offset to position current price in the middle of the screen
-            chartRef.current.setOffsetRightDistance(400); // Increased to center current price, clear sidebar
+            // Large right offset to show future time (for trade expiration visibility)
+            chartRef.current.setOffsetRightDistance(600); // Increased to show future times
             chartRef.current.setLeftMinVisibleBarCount(10); // Minimum visible bars when scrolled left
-            chartRef.current.setRightMinVisibleBarCount(5); // Fewer bars needed on right with larger offset
+            chartRef.current.setRightMinVisibleBarCount(3); // Fewer bars needed on right
             chartRef.current.setBarSpace(12); // Default zoom level - more zoomed in
             // Scroll to show latest/current price
             chartRef.current.scrollToRealTime();
@@ -488,10 +494,10 @@ export default function RealTimeTradingChart({
 
   // Report live price to parent whenever it changes
   useEffect(() => {
-    if (onLivePriceUpdate && livePrice) {
-      onLivePriceUpdate(livePrice.price);
+    if (onLivePriceUpdateRef.current && livePrice) {
+      onLivePriceUpdateRef.current(livePrice.price);
     }
-  }, [livePrice, onLivePriceUpdate]);
+  }, [livePrice]);
 
   // Report Y position of current price to parent
   useEffect(() => {
@@ -694,7 +700,7 @@ export default function RealTimeTradingChart({
   return (
     <div
       className="relative w-full h-full overflow-visible"
-      style={{ maxHeight: "100%", zIndex: 60 }}
+      style={{ maxHeight: "100%", zIndex: 100 }}
     >
       {/* Chart container - klinecharts will render here */}
       <div className="h-full w-full flex flex-col">

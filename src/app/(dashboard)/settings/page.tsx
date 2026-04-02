@@ -1525,7 +1525,7 @@ export default function SettingsPage() {
       // Handle 413 error specifically (payload too large)
       if (response.status === 413) {
         showError(
-          "Your files are too large to upload. Please compress your images (under 5MB each) and try again. You can use online tools like TinyPNG or ILoveIMG to reduce file sizes."
+          "Your files are too large to upload. Please compress your images (under 20MB each) and try again. You can use online tools like TinyPNG or ILoveIMG to reduce file sizes."
         );
         return;
       }
@@ -1544,7 +1544,7 @@ export default function SettingsPage() {
       // Check if it's a network error due to large payload
       if (error.message?.includes("413") || error.message?.includes("too large")) {
         showError(
-          "Your files are too large to upload. Please compress your images (under 5MB each) and try again."
+          "Your files are too large to upload. Please compress your images (under 20MB each) and try again."
         );
       } else {
         showError("Failed to submit KYC verification. Please check your internet connection and try again.");
@@ -3944,7 +3944,7 @@ export default function SettingsPage() {
                           </div>
                         </div>
                         <p className={`text-xs mt-2 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                          Please upload clear images of both sides of your ID (max 5MB each)
+                          Please upload clear images of both sides of your ID (max 20MB each)
                         </p>
                       </div>
 
@@ -3991,7 +3991,7 @@ export default function SettingsPage() {
                                   Click to upload or drag and drop
                                 </p>
                                 <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                                  PNG, JPG or PDF (max 5MB)
+                                  PNG, JPG or PDF (max 20MB)
                                 </p>
                               </div>
                             )}
@@ -4038,7 +4038,7 @@ export default function SettingsPage() {
                                   Click to upload or drag and drop
                                 </p>
                                 <p className={`text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                                  PNG or JPG (max 5MB)
+                                  PNG or JPG (max 20MB)
                                 </p>
                               </div>
                             )}

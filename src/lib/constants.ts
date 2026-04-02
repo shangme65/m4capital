@@ -88,9 +88,9 @@ export const PAGINATION = {
 
 export const LIMITS = {
   // File uploads
-  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_FILE_SIZE: 20 * 1024 * 1024, // 20MB
   MAX_AVATAR_SIZE: 2 * 1024 * 1024, // 2MB
-  MAX_KYC_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+  MAX_KYC_FILE_SIZE: 20 * 1024 * 1024, // 20MB
 
   // Input validation
   MIN_PASSWORD_LENGTH: 6,

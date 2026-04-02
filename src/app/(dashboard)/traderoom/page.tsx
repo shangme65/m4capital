@@ -1115,7 +1115,7 @@ function TradingInterface() {
           fontFamily: '"Inter", Arial, sans-serif',
           margin: 0,
           padding: 0,
-          paddingBottom: "40px",
+          paddingBottom: "40px", /* footer height */
           overflow: "hidden",
           position: "fixed",
           top: 0,
@@ -2443,21 +2443,35 @@ function TradingInterface() {
               const expirationTime = trade.expirationTime;
               
               // Format date as "23 Mar 2026" to match IQ Option
-              const formatDate = (date: Date) => {
-                return new Intl.DateTimeFormat('en-GB', { 
-                  day: 'numeric', 
-                  month: 'short', 
-                  year: 'numeric' 
-                }).format(new Date(date));
+              const formatDate = (date: Date | number | undefined | null) => {
+                if (!date) return 'N/A';
+                try {
+                  const d = new Date(date);
+                  if (isNaN(d.getTime())) return 'N/A';
+                  return new Intl.DateTimeFormat('en-GB', { 
+                    day: 'numeric', 
+                    month: 'short', 
+                    year: 'numeric' 
+                  }).format(d);
+                } catch {
+                  return 'N/A';
+                }
               };
               
-              const formatTime = (date: Date) => {
-                return new Date(date).toLocaleTimeString([], { 
-                  hour: '2-digit', 
-                  minute: '2-digit', 
-                  second: '2-digit', 
-                  hour12: false 
-                });
+              const formatTime = (date: Date | number | undefined | null) => {
+                if (!date) return 'N/A';
+                try {
+                  const d = new Date(date);
+                  if (isNaN(d.getTime())) return 'N/A';
+                  return d.toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit', 
+                    second: '2-digit', 
+                    hour12: false 
+                  });
+                } catch {
+                  return 'N/A';
+                }
               };
               
               return (
@@ -2466,7 +2480,7 @@ function TradingInterface() {
                   animate={{ width: 380, opacity: 1 }}
                   exit={{ width: 0, opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="border-r flex-shrink-0 overflow-y-auto z-30 flex flex-col"
+                  className="border-r flex-shrink-0 overflow-y-auto z-30 flex flex-col relative"
                   style={{ 
                     backgroundColor: "#1a1f2e", 
                     borderColor: "#2a2e39",
@@ -2475,9 +2489,9 @@ function TradingInterface() {
                   {/* Close Button */}
                   <button
                     onClick={() => setExpandedHistoryTradeId(null)}
-                    className="absolute top-2 right-2 p-1.5 rounded hover:bg-white/10 transition-colors z-10"
+                    className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/10 transition-colors z-50"
                   >
-                    <X className="w-5 h-5 text-gray-400" />
+                    <X className="w-5 h-5 text-gray-400 hover:text-white" />
                   </button>
 
                   {/* Asset Header with Chart Background */}
@@ -2561,7 +2575,7 @@ function TradingInterface() {
                     <div>
                       <div className="text-xs text-gray-400 mb-1">NET P/L</div>
                       <div className={`text-3xl font-bold ${isWin ? "text-green-400" : "text-red-400"}`}>
-                        {isWin ? "+" : ""}{formatAmount(trade.profit, 0)} <span className="text-lg">({isWin ? "+" : ""}{plPercent}.00%)</span>
+                        {isWin ? "+" : ""}${trade.profit.toFixed(2)} <span className="text-lg">({isWin ? "+" : ""}{plPercent}.00%)</span>
                       </div>
                     </div>
 
@@ -2578,7 +2592,7 @@ function TradingInterface() {
                               <path d="M6 10L1 2H11L6 10Z" />
                             )}
                           </svg>
-                          <span className="text-base text-white font-medium">{formatAmount(trade.amount, 0)}</span>
+                          <span className="text-base text-white font-medium">${trade.amount.toFixed(2)}</span>
                         </div>
                       </div>
 
@@ -3988,7 +4002,7 @@ function TradingInterface() {
               className="flex-1 relative overflow-visible"
               style={{
                 backgroundColor: "#070c15",
-                zIndex: 1,
+                zIndex: 100,
                 backgroundImage:
                   'url("/traderoom/backgrounds/worldmapbackground.svg")',
                 backgroundSize: "80%",
@@ -4316,11 +4330,11 @@ function TradingInterface() {
                   <div className="absolute top-2 right-2 z-20">
                     {/* Compact stats bar - labels on top, values below */}
                     <div className="flex items-start gap-6">
-                      {/* Purchase Time */}
+                      {/* Remaining Time */}
                       <div className="flex flex-col items-center">
                         <div className="flex items-center gap-1 text-[10px] text-white/70 uppercase tracking-wider">
                           <Clock className="w-3 h-3" />
-                          PURCHASE TIME
+                          Remaining
                         </div>
                         <span className="text-lg text-white">
                           {String(Math.floor(tradeCountdown / 60)).padStart(2, "0")}:{String(tradeCountdown % 60).padStart(2, "0")}
@@ -4379,7 +4393,7 @@ function TradingInterface() {
                   "LINK",
                 ]}
                 onPriceYPosition={setPriceYPosition}
-                onLivePriceUpdate={(price) => setCurrentPrice(price)}
+                onLivePriceUpdate={setCurrentPrice}
                 onPriceToYConverter={handlePriceToYConverter}
                 onTimeToXConverter={handleTimeToXConverter}
                 expirationSeconds={expirationSeconds}
@@ -4496,24 +4510,40 @@ function TradingInterface() {
                 .filter((t) => t.symbol === selectedSymbol && t.status === "active")
                 .map((trade) => {
                   const dynamicY = priceToYRef.current ? priceToYRef.current(trade.entryPrice) : trade.entryYPosition;
+                  const isGreen = trade.direction === "higher";
                   return (
-                  <div key={`entry-line-${trade.id}`} className="absolute left-0 right-0 z-30 pointer-events-none" style={{ top: `${dynamicY}%` }}>
+                  <div key={`entry-line-${trade.id}`} className="absolute left-0 right-0 z-10 pointer-events-none" style={{ top: `${dynamicY}%` }}>
                     <div
                       style={{
                         height: '1px',
-                        backgroundImage: `repeating-linear-gradient(to right, ${trade.direction === "higher" ? "#22c55e" : "#ef4444"} 0, ${trade.direction === "higher" ? "#22c55e" : "#ef4444"} 6px, transparent 6px, transparent 12px)`,
+                        backgroundImage: `repeating-linear-gradient(to right, ${isGreen ? "#22c55e" : "#ef4444"} 0, ${isGreen ? "#22c55e" : "#ef4444"} 6px, transparent 6px, transparent 12px)`,
                       }}
                     />
-                    <span
-                      className="absolute left-1 text-[10px] font-bold"
-                      style={{
-                        top: '-14px',
-                        color: trade.direction === "higher" ? "#22c55e" : "#ef4444",
-                        textShadow: '0 0 4px rgba(0,0,0,0.8)',
-                      }}
-                    >
-                      {trade.direction === "higher" ? "▲ HIGHER" : "▼ LOWER"}
-                    </span>
+                    {/* IQ Option style entry point icons on the line */}
+                    <div className="absolute flex items-center gap-1" style={{ left: '12px', top: '-10px' }}>
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center"
+                        style={{
+                          backgroundColor: isGreen ? "#166534" : "#991b1b",
+                          border: `2px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
+                        }}
+                      >
+                        <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                          <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                      </div>
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center"
+                        style={{
+                          backgroundColor: isGreen ? "#166534" : "#991b1b",
+                          border: `2px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
+                        }}
+                      >
+                        <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor">
+                          <circle cx="12" cy="12" r="4"/>
+                        </svg>
+                      </div>
+                    </div>
                   </div>
                   );
                 })}
@@ -4527,6 +4557,9 @@ function TradingInterface() {
                     const elapsed = now - trade.entryTime;
                     const remaining = Math.max(0, trade.expirationTime - now);
                     const remainingSeconds = Math.ceil(remaining / 1000);
+                    const minutes = Math.floor(remainingSeconds / 60);
+                    const seconds = remainingSeconds % 60;
+                    const timeDisplay = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
                     const progress = Math.min(
                       1,
                       elapsed / (trade.expirationSeconds * 1000)
@@ -4534,6 +4567,7 @@ function TradingInterface() {
                     const dynamicY = priceToYRef.current ? priceToYRef.current(trade.entryPrice) : trade.entryYPosition;
                     const dynamicX = timeToXRef.current ? timeToXRef.current(trade.entryTime) : null;
                     const isOffScreen = dynamicX !== null && (dynamicX < -5 || dynamicX > 100);
+                    const isGreen = trade.direction === "higher";
 
                     if (isOffScreen) return null;
 
@@ -4543,7 +4577,7 @@ function TradingInterface() {
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.8 }}
-                        className="absolute z-40 pointer-events-none"
+                        className="absolute z-20 pointer-events-none"
                         style={{
                           top: `${dynamicY}%`,
                           left: dynamicX !== null ? `${dynamicX}%` : undefined,
@@ -4551,35 +4585,23 @@ function TradingInterface() {
                           transform: "translate(-50%, -50%)",
                         }}
                       >
-                        {/* Trade Direction Arrow Badge - small, at current price */}
-                        <motion.div
-                          className="flex items-center justify-center rounded-full"
+                        {/* IQ Option style pill with amount */}
+                        <div
+                          className="flex items-center justify-center"
                           style={{
-                            width: "18px",
-                            height: "18px",
-                            backgroundColor:
-                              trade.direction === "higher"
-                                ? "#22c55e"
-                                : "#ef4444",
-                            boxShadow:
-                              trade.direction === "higher"
-                                ? "0 0 10px rgba(34, 197, 94, 0.5)"
-                                : "0 0 10px rgba(239, 68, 68, 0.5)",
+                            backgroundColor: isGreen ? "#22c55e" : "#ef4444",
+                            borderRadius: "8px",
+                            padding: "6px 12px",
+                            boxShadow: isGreen
+                              ? "0 0 20px rgba(34, 197, 94, 0.6)"
+                              : "0 0 20px rgba(239, 68, 68, 0.6)",
                           }}
                         >
-                          <svg
-                            className="w-3 h-3 text-white"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            stroke="none"
-                          >
-                            {trade.direction === "higher" ? (
-                              <path d="M12 4l-8 8h5v8h6v-8h5z" />
-                            ) : (
-                              <path d="M12 20l8-8h-5V4h-6v8H4z" />
-                            )}
-                          </svg>
-                        </motion.div>
+                          {/* Amount */}
+                          <span className="text-white font-bold text-sm leading-tight">
+                            $ {trade.amount.toLocaleString()}
+                          </span>
+                        </div>
                       </motion.div>
                     );
                   })}
@@ -4596,6 +4618,7 @@ function TradingInterface() {
                   // Hide if result popup is completely off screen
                   const endOffScreen = finishedEndX !== null && (finishedEndX < -10 || finishedEndX > 110);
                   if (endOffScreen) return null;
+                  const isWin = lastFinishedTrade.status === "won";
                   return (
                   <>
                     {/* Entry price horizontal dashed line for finished trade */}
@@ -4603,35 +4626,49 @@ function TradingInterface() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="absolute left-0 right-[140px] h-[1px] z-30 pointer-events-none"
+                      className="absolute left-0 right-[140px] h-[1px] z-10 pointer-events-none"
                       style={{
                         top: `${finishedY}%`,
-                        backgroundImage: `linear-gradient(to right, ${lastFinishedTrade.status === "won" ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)"} 50%, transparent 50%)`,
+                        backgroundImage: `linear-gradient(to right, ${isWin ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)"} 50%, transparent 50%)`,
                         backgroundSize: "8px 1px",
                       }}
                     />
 
-                    {/* Direction & payout label at left edge */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute left-1 z-40 pointer-events-none"
-                      style={{
-                        top: `${finishedY}%`,
-                        transform: "translateY(-100%)",
-                      }}
-                    >
-                      <span className="text-xs font-bold" style={{ color: lastFinishedTrade.direction === "higher" ? "#22c55e" : "#ef4444", textShadow: '0 0 4px rgba(0,0,0,0.8)' }}>
-                        {lastFinishedTrade.direction === "higher" ? "▲ HIGHER" : "▼ LOWER"}
-                      </span>
-                    </motion.div>
-                    {/* RESULT (P/L) popup - pinned to expiration candle */}
+                    {/* Original investment badge - IQ Option style */}
+                    {finishedEntryX !== null && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute z-20 pointer-events-none"
+                        style={{
+                          left: `${finishedEntryX}%`,
+                          top: `${finishedY}%`,
+                          transform: "translate(-50%, -50%)",
+                        }}
+                      >
+                        <div
+                          className="px-2.5 py-1 rounded-md"
+                          style={{
+                            backgroundColor: isWin ? "#22c55e" : "#ef4444",
+                            boxShadow: isWin
+                              ? "0 0 15px rgba(34, 197, 94, 0.5)"
+                              : "0 0 15px rgba(239, 68, 68, 0.5)",
+                          }}
+                        >
+                          <span className="text-white font-bold text-xs">
+                            $ {lastFinishedTrade.amount.toLocaleString()}
+                          </span>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* RESULT (P/L) popup - IQ Option style with close button */}
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      className="absolute z-40"
+                      className="absolute z-20 pointer-events-auto"
                       style={{
                         left: finishedEndX !== null ? `${finishedEndX}%` : "55%",
                         top: `${finishedY}%`,
@@ -4639,19 +4676,28 @@ function TradingInterface() {
                       }}
                     >
                       <div 
-                        className="flex flex-col items-start px-3 py-2 rounded-lg"
+                        className="relative flex flex-col items-start px-4 py-2.5 rounded-lg min-w-[140px]"
                         style={{
-                          backgroundColor: lastFinishedTrade.status === "won" ? "#22c55e" : "#ef4444",
-                          boxShadow: lastFinishedTrade.status === "won"
+                          backgroundColor: isWin ? "#22c55e" : "#ef4444",
+                          boxShadow: isWin
                             ? "0 0 40px rgba(34, 197, 94, 0.7), 0 0 15px rgba(34, 197, 94, 0.4)"
                             : "0 0 40px rgba(239, 68, 68, 0.7), 0 0 15px rgba(239, 68, 68, 0.4)",
                         }}
                       >
-                        <span className="text-[11px] text-white/90 font-bold tracking-wider leading-tight">
+                        {/* Close button */}
+                        <button
+                          onClick={() => setLastFinishedTrade(null)}
+                          className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                            <path d="M18 6L6 18M6 6l12 12" />
+                          </svg>
+                        </button>
+                        <span className="text-[10px] text-white/90 font-semibold tracking-wider leading-tight uppercase">
                           RESULT (P/L)
                         </span>
-                        <span className="text-white font-extrabold text-base leading-tight">
-                          {lastFinishedTrade.status === "won" ? "+" : "−"}$ {Math.abs(lastFinishedTrade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        <span className="text-white font-extrabold text-xl leading-tight mt-0.5">
+                          {isWin ? "+" : "−"}$ {Math.abs(lastFinishedTrade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </span>
                       </div>
                     </motion.div>
@@ -4766,7 +4812,11 @@ function TradingInterface() {
                       <div className="px-2 py-1.5 flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" style={{ color: "#8b9ab8" }} />
                         <span className="font-bold font-mono" style={{ color: "#eef2f7", fontSize: "14px" }}>
-                          {String(Math.floor(countdown / 60)).padStart(2, '0')}:{String(countdown % 60).padStart(2, '0')}
+                          {(() => {
+                            const now = currentTime || new Date();
+                            const expirationTime = new Date(now.getTime() + expirationSeconds * 1000);
+                            return `${String(expirationTime.getHours()).padStart(2, '0')}:${String(expirationTime.getMinutes()).padStart(2, '0')}`;
+                          })()}
                         </span>
                       </div>
                     </div>
