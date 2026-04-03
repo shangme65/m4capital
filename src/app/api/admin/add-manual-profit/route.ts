@@ -222,10 +222,10 @@ export async function POST(req: NextRequest) {
     // Send browser push notification (matching real trade format)
     try {
       await sendWebPushToUser(user.id, {
-        title: "Trade Won!",
+        title: "Trade Won",
         body: `${asset} ${direction} trade won. Profit: $${profit.toFixed(2)}`,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-96.png",
+        icon: "/icons/icon-48.png",
+        badge: "/icons/icon-48.png",
         tag: `m4capital-trade-${Date.now()}`,
         data: {
           url: "/traderoom",

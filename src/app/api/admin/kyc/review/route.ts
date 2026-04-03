@@ -151,9 +151,9 @@ export async function POST(req: NextRequest) {
 
       void withTimeout(
         sendWebPushToUser(kycVerification.userId, {
-          title: "✅ KYC Approved",
+          title: "KYC Approved",
           body: "Your identity verification has been approved. Full platform access is now unlocked!",
-          icon: "/icons/icon-192.png",
+          icon: "/icons/icon-48.png",
           badge: "/icons/icon-96.png",
           tag: "kyc-approved",
           data: { url: "/settings" },
@@ -194,9 +194,9 @@ export async function POST(req: NextRequest) {
 
       void withTimeout(
         sendWebPushToUser(kycVerification.userId, {
-          title: "⚠️ KYC Action Required",
+          title: "KYC Action Required",
           body: "Your verification requires attention. Please review the feedback and resubmit your documents.",
-          icon: "/icons/icon-192.png",
+          icon: "/icons/icon-48.png",
           badge: "/icons/icon-96.png",
           tag: "kyc-rejected",
           data: { url: "/settings?tab=verification" },
@@ -224,9 +224,9 @@ export async function POST(req: NextRequest) {
 
       void withTimeout(
         sendWebPushToUser(kycVerification.userId, {
-          title: "🔍 KYC Under Review",
+          title: "KYC Under Review",
           body: "Your verification documents are being reviewed. We'll notify you once it's complete.",
-          icon: "/icons/icon-192.png",
+          icon: "/icons/icon-48.png",
           badge: "/icons/icon-96.png",
           tag: "kyc-under-review",
           data: { url: "/settings?tab=verification" },

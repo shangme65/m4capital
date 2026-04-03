@@ -34,8 +34,8 @@ self.addEventListener("push", (event) => {
   let data = {
     title: "M4Capital",
     body: "You have a new notification",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-96.png",
+    icon: "/icons/icon-48.png",
+    badge: "/icons/icon-48.png",
     tag: "m4capital-notification",
     data: {},
   };

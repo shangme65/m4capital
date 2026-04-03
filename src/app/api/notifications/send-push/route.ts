@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
     const pushPayload = {
       title,
       body: message,
-      icon: icon || "/icons/icon-192.png",
-      badge: "/icons/icon-96.png",
+      icon: icon || "/icons/icon-48.png",
+      badge: "/icons/icon-48.png",
       tag: `m4capital-${type}-${Date.now()}`,
       data: {
         url: "/dashboard",

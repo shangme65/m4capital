@@ -317,9 +317,9 @@ export async function POST(req: NextRequest) {
 
       // Web push to user confirming submission
       await sendWebPushToUser(user.id, {
-        title: "📋 KYC Submitted",
+        title: "KYC Submitted",
         body: "Your verification documents have been received. We'll notify you once reviewed.",
-        icon: "/icons/icon-192.png",
+        icon: "/icons/icon-48.png",
         badge: "/icons/icon-96.png",
         tag: "kyc-submitted",
         data: { url: "/settings" },
@@ -356,7 +356,7 @@ export async function POST(req: NextRequest) {
               id: generateId(),
               userId: admin.id,
               type: "INFO",
-              title: "🔔 New KYC Submission",
+              title: "New KYC Submission",
               message: `${
                 user.name || user.email
               } has submitted KYC verification documents. Review required.`,
@@ -377,9 +377,9 @@ export async function POST(req: NextRequest) {
       await Promise.all(
         admins.map((admin) =>
           sendWebPushToUser(admin.id, {
-            title: "🔔 New KYC Submission",
+            title: "New KYC Submission",
             body: `${user.name || user.email} has submitted KYC documents for review.`,
-            icon: "/icons/icon-192.png",
+            icon: "/icons/icon-48.png",
             badge: "/icons/icon-96.png",
             tag: `kyc-admin-${kycVerification.id}`,
             data: { url: "/admin/kyc" },

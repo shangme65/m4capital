@@ -125,8 +125,8 @@ export async function sendPushNotification(
     const pushPayload = {
       title,
       body: message,
-      icon: options?.icon || "/icons/icon-192.png",
-      badge: "/icons/icon-96.png",
+      icon: options?.icon || "/icons/icon-48.png",
+      badge: "/icons/icon-48.png",
       tag: `m4capital-${options?.type || "notification"}-${Date.now()}`,
       data: {
         url: options?.url || "/dashboard",

@@ -357,8 +357,8 @@ export async function POST(request: NextRequest) {
       await sendWebPushToUser(user.id, {
         title: notificationTitle,
         body: notificationMessage,
-        icon: "/icons/icon-192.png",
-        badge: "/icons/icon-96.png",
+        icon: "/icons/icon-48.png",
+        badge: "/icons/icon-48.png",
         tag: `m4capital-buy-${Date.now()}`,
         data: {
           url: "/dashboard",
