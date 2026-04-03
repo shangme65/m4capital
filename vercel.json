@@ -8,7 +8,7 @@
     }
   },
   "functions": {
-    "src/app/api/kyc/submit/route.ts": {
+    "api/kyc/submit": {
       "maxDuration": 120,
       "memory": 3008
     }

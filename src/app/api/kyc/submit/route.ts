@@ -12,8 +12,11 @@ import { sendWebPushToUser } from "@/lib/push-notifications";
 // Maximum function duration (120 seconds for file uploads - increased for larger files)
 export const maxDuration = 120;
 
-// Disable body size limit for this route
+// Use nodejs runtime for larger memory and better file handling
 export const runtime = "nodejs";
+
+// Disable built-in body parsing to handle large FormData
+export const dynamic = "force-dynamic";
 
 // Allowed file types - accept all common image formats plus PDF
 const ALLOWED_TYPES = [
@@ -63,7 +66,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const formData = await req.formData();
+    let formData;
+    try {
+      formData = await req.formData();
+    } catch (formError: any) {
+      console.error("FormData parsing error:", formError);
+      // Check if it's a payload too large error
+      if (formError.message?.includes("payload") || formError.message?.includes("size")) {
+        return NextResponse.json(
+          { 
+            error: "Your files are too large. Please compress each image to under 5MB and ensure total size is under 20MB." 
+          },
+          { status: 413 }
+        );
+      }
+      return NextResponse.json(
+        { error: "Failed to process your upload. Please try smaller files." },
+        { status: 400 }
+      );
+    }
 
     // Extract form fields
     const firstName = formData.get("firstName") as string;
