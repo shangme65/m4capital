@@ -6,11 +6,5 @@
       "master": true,
       "develop": true
     }
-  },
-  "functions": {
-    "api/kyc/submit": {
-      "maxDuration": 120,
-      "memory": 3008
-    }
   }
 }
