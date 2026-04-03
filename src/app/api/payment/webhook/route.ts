@@ -306,6 +306,31 @@ export async function POST(request: NextRequest) {
       try {
       console.log("💰💰💰 PAYMENT COMPLETED! Starting credit process...");
 
+      // IMPORTANT: Check if we already processed this deposit to prevent duplicate notifications
+      // This can happen if NowPayments sends both 'confirmed' and 'finished' webhooks quickly
+      const existingCompletedNotif = await prisma.notification.findFirst({
+        where: {
+          userId: deposit.userId || "",
+          type: "DEPOSIT",
+          metadata: {
+            path: ["depositId"],
+            equals: deposit.id,
+          },
+          title: {
+            contains: "Completed",
+          },
+        },
+      });
+      
+      if (existingCompletedNotif) {
+        console.log("⚠️ Deposit already processed - completion notification exists, skipping duplicate");
+        console.log("  - Existing notification ID:", existingCompletedNotif.id);
+        return NextResponse.json({
+          success: true,
+          message: "Webhook acknowledged (deposit already credited)",
+        });
+      }
+
       // Check if user exists
       if (!deposit.User) {
         console.error("❌ Deposit has no associated user!");
@@ -463,7 +488,7 @@ export async function POST(request: NextRequest) {
             const cryptoCoin = deposit.cryptoCurrency || "BTC";
             await sendEmail({
               to: deposit.User.email,
-              subject: `✅ ${cryptoCoin} Traderoom Deposit Completed - M4 Capital`,
+              subject: `${cryptoCoin} Traderoom Deposit Completed - M4 Capital`,
               html: depositConfirmedTemplate(
                 deposit.User.name || "User",
                 displayAmount,
@@ -703,13 +728,20 @@ export async function POST(request: NextRequest) {
         console.log("✅ Deposit notification created");
 
         // Send email notification if user preferences allow and email exists
+        console.log("📧 Checking email notification eligibility...");
+        console.log("  - User email:", deposit.User.email);
+        console.log("  - Email verified:", deposit.User.isEmailVerified);
+        console.log("  - Email notifications enabled:", deposit.User.emailNotifications);
+        console.log("  - Trading notifications enabled:", deposit.User.tradingNotifications);
+        
         if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
           try {
             const displayAmount = (Math.round(depositAmount * 100) / 100).toFixed(2);
             const cryptoCoin = deposit.cryptoCurrency || "BTC";
+            console.log("📧 Sending email to:", deposit.User.email);
             await sendEmail({
               to: deposit.User.email,
-              subject: `✅ ${cryptoCoin} Deposit Completed - M4 Capital`,
+              subject: `${cryptoCoin} Deposit Completed - M4 Capital`,
               html: depositConfirmedTemplate(
                 deposit.User.name || "User",
                 displayAmount,
@@ -719,19 +751,20 @@ export async function POST(request: NextRequest) {
                 false
               ),
             });
-            console.log("✅ Email notification sent");
+            console.log("✅ Email notification sent successfully");
           } catch (emailError) {
             console.error("❌ Failed to send email notification:", emailError);
           }
         } else {
-          console.log("📧 Email notification skipped (user preferences or unverified email)");
+          console.log("📧 Email notification skipped - eligibility check failed");
         }
 
         // Send web push notification
+        console.log("📱 Sending push notification to user:", deposit.User.id);
         try {
           const pushBonusText = bonusAmount > 0 ? ` (includes ${PROMO_BONUS_PERCENT}% bonus!)` : '';
           const cryptoCoin = deposit.cryptoCurrency || "BTC";
-          await sendPushNotification(
+          const pushResult = await sendPushNotification(
             deposit.User.id,
             bonusAmount > 0 ? `${cryptoCoin} Deposit + Bonus!` : `${cryptoCoin} Deposit Completed!`,
             `Your ${cryptoCoin} deposit of ${getCurrencySymbol(userCurrency2)}${depositAmount.toFixed(2)} has been credited to your account.${pushBonusText}`,
@@ -742,7 +775,7 @@ export async function POST(request: NextRequest) {
               url: "/dashboard",
             }
           );
-          console.log("✅ Web push notification sent");
+          console.log("✅ Web push notification result:", pushResult);
         } catch (pushError) {
           console.error("❌ Failed to send push notification:", pushError);
         }
