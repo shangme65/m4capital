@@ -156,33 +156,70 @@ interface KycSubmission {
 // Helper to check if URL is base64 data URL
 const isBase64DataUrl = (url: string) => url?.startsWith("data:");
 
-// Helper to get file extension from base64 data URL
-const getFileExtension = (dataUrl: string): string => {
-  if (!dataUrl) return "file";
-  const match = dataUrl.match(/data:([^;]+)/);
-  if (match) {
-    const mimeType = match[1];
-    if (mimeType.includes("pdf")) return "pdf";
-    if (mimeType.includes("png")) return "png";
-    if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return "jpg";
+// Helper to check if URL is a Cloudinary URL
+const isCloudinaryUrl = (url: string) => url?.includes("cloudinary.com") || url?.includes("res.cloudinary");
+
+// Helper to get file extension from URL (supports base64 and Cloudinary)
+const getFileExtension = (url: string): string => {
+  if (!url) return "file";
+  
+  // Handle base64 data URLs
+  if (isBase64DataUrl(url)) {
+    const match = url.match(/data:([^;]+)/);
+    if (match) {
+      const mimeType = match[1];
+      if (mimeType.includes("pdf")) return "pdf";
+      if (mimeType.includes("png")) return "png";
+      if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return "jpg";
+    }
+    return "file";
   }
-  return "file";
+  
+  // Handle external URLs (Cloudinary, etc.)
+  const urlPath = url.split("?")[0]; // Remove query params
+  if (urlPath.toLowerCase().endsWith(".pdf")) return "pdf";
+  if (urlPath.toLowerCase().endsWith(".png")) return "png";
+  if (urlPath.toLowerCase().endsWith(".jpg") || urlPath.toLowerCase().endsWith(".jpeg")) return "jpg";
+  if (urlPath.toLowerCase().endsWith(".webp")) return "webp";
+  
+  return "jpg"; // Default to jpg for Cloudinary images
 };
 
 // Helper to check if it's a PDF
 const isPdf = (url: string): boolean => {
   if (!url) return false;
-  return url.includes("application/pdf") || url.toLowerCase().endsWith(".pdf");
+  return url.includes("application/pdf") || url.toLowerCase().includes(".pdf");
 };
 
-// Download handler for base64 data URLs
-const downloadBase64File = (dataUrl: string, filename: string) => {
-  const link = document.createElement("a");
-  link.href = dataUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+// Download handler - supports both base64 and external URLs
+const downloadFile = async (url: string, filename: string) => {
+  if (isBase64DataUrl(url)) {
+    // Direct download for base64
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } else {
+    // Fetch and download for external URLs (Cloudinary)
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Download failed:", error);
+      // Fallback: open in new tab
+      window.open(url, "_blank");
+    }
+  }
 };
 
 // Document Preview Component
@@ -225,7 +262,7 @@ function DocumentPreview({
           <div className="flex items-center gap-2">
             <button
               onClick={() =>
-                downloadBase64File(
+                downloadFile(
                   url,
                   `${title.replace(/\s+/g, "_")}.${getFileExtension(url)}`
                 )
@@ -313,7 +350,7 @@ function DocumentCard({
           View
         </button>
         <button
-          onClick={() => downloadBase64File(url, filename)}
+          onClick={() => downloadFile(url, filename)}
           className={`flex-1 flex items-center justify-center gap-2 text-sm py-2 rounded-lg transition-colors ${isDark ? "text-orange-400 hover:text-orange-300 bg-gray-700 hover:bg-gray-600" : "text-orange-600 hover:text-orange-500 bg-gray-200 hover:bg-gray-300"}`}
         >
           <Download className="w-4 h-4" />

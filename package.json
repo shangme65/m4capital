@@ -44,6 +44,7 @@
     "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
+    "cloudinary": "^2.9.0",
     "clsx": "^2.1.1",
     "d3-scale": "^4.0.2",
     "d3-time-format": "^4.1.0",

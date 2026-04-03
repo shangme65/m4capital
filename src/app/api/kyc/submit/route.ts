@@ -9,16 +9,16 @@ import {
 } from "@/lib/kyc-emails";
 import { sendWebPushToUser } from "@/lib/push-notifications";
 
-// Maximum function duration (120 seconds for file uploads - increased for larger files)
-export const maxDuration = 120;
+// Maximum function duration
+export const maxDuration = 60;
 
-// Use nodejs runtime for larger memory and better file handling
+// Use nodejs runtime
 export const runtime = "nodejs";
 
-// Disable built-in body parsing to handle large FormData
+// Force dynamic to handle both JSON and FormData
 export const dynamic = "force-dynamic";
 
-// Allowed file types - accept all common image formats plus PDF
+// Allowed file types for legacy FormData uploads
 const ALLOWED_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -33,6 +33,12 @@ const ALLOWED_TYPES = [
   "image/avif",
   "application/pdf",
 ];
+
+// Validate Cloudinary URL
+function isValidCloudinaryUrl(url: string): boolean {
+  return url.startsWith("https://res.cloudinary.com/") || 
+         url.startsWith("http://res.cloudinary.com/");
+}
 
 async function fileToBase64DataUrl(file: File): Promise<string> {
   const buffer = await file.arrayBuffer();
@@ -66,36 +72,149 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let formData;
-    try {
-      formData = await req.formData();
-    } catch (formError: any) {
-      console.error("FormData parsing error:", formError);
-      // Check if it's a payload too large error
-      if (formError.message?.includes("payload") || formError.message?.includes("size")) {
+    // Check content type to determine if this is a Cloudinary URL submission or legacy FormData
+    const contentType = req.headers.get("content-type") || "";
+    const isJsonRequest = contentType.includes("application/json");
+
+    let firstName: string;
+    let lastName: string;
+    let dateOfBirth: string;
+    let nationality: string;
+    let phoneNumber: string;
+    let address: string;
+    let city: string;
+    let postalCode: string;
+    let country: string;
+    let idDocumentFrontUrl: string;
+    let idDocumentBackUrl: string;
+    let proofOfAddressUrl: string;
+    let selfieUrl: string;
+
+    if (isJsonRequest) {
+      // New approach: Cloudinary URLs submitted as JSON
+      const body = await req.json();
+      
+      firstName = body.firstName;
+      lastName = body.lastName;
+      dateOfBirth = body.dateOfBirth;
+      nationality = body.nationality;
+      phoneNumber = body.phoneNumber;
+      address = body.address;
+      city = body.city;
+      postalCode = body.postalCode;
+      country = body.country || body.nationality;
+
+      // Get document URLs from Cloudinary
+      idDocumentFrontUrl = body.idDocumentFrontUrl;
+      idDocumentBackUrl = body.idDocumentBackUrl;
+      proofOfAddressUrl = body.proofOfAddressUrl;
+      selfieUrl = body.selfieUrl;
+
+      // Validate Cloudinary URLs
+      if (!idDocumentFrontUrl || !idDocumentBackUrl || !proofOfAddressUrl || !selfieUrl) {
         return NextResponse.json(
-          { 
-            error: "Your files are too large. Please compress each image to under 5MB and ensure total size is under 20MB." 
-          },
-          { status: 413 }
+          { error: "All document URLs are required" },
+          { status: 400 }
         );
       }
-      return NextResponse.json(
-        { error: "Failed to process your upload. Please try smaller files." },
-        { status: 400 }
-      );
-    }
 
-    // Extract form fields
-    const firstName = formData.get("firstName") as string;
-    const lastName = formData.get("lastName") as string;
-    const dateOfBirth = formData.get("dateOfBirth") as string;
-    const nationality = formData.get("nationality") as string;
-    const phoneNumber = formData.get("phoneNumber") as string;
-    const address = formData.get("address") as string;
-    const city = formData.get("city") as string;
-    const postalCode = formData.get("postalCode") as string;
-    const country = formData.get("country") as string;
+      // Validate URL format
+      const urls = [idDocumentFrontUrl, idDocumentBackUrl, proofOfAddressUrl, selfieUrl];
+      for (const url of urls) {
+        if (!isValidCloudinaryUrl(url)) {
+          return NextResponse.json(
+            { error: "Invalid document URL format" },
+            { status: 400 }
+          );
+        }
+      }
+
+      console.log("Processing KYC with Cloudinary URLs");
+    } else {
+      // Legacy approach: FormData with files (kept for backward compatibility)
+      let formData;
+      try {
+        formData = await req.formData();
+      } catch (formError: any) {
+        console.error("FormData parsing error:", formError);
+        if (formError.message?.includes("payload") || formError.message?.includes("size")) {
+          return NextResponse.json(
+            { 
+              error: "Your files are too large. Please use a smaller image or wait for our CDN upload to complete." 
+            },
+            { status: 413 }
+          );
+        }
+        return NextResponse.json(
+          { error: "Failed to process your upload. Please try again." },
+          { status: 400 }
+        );
+      }
+
+      firstName = formData.get("firstName") as string;
+      lastName = formData.get("lastName") as string;
+      dateOfBirth = formData.get("dateOfBirth") as string;
+      nationality = formData.get("nationality") as string;
+      phoneNumber = formData.get("phoneNumber") as string;
+      address = formData.get("address") as string;
+      city = formData.get("city") as string;
+      postalCode = formData.get("postalCode") as string;
+      country = formData.get("country") as string;
+
+      // Extract files
+      const idDocumentFront = formData.get("idDocumentFront") as File | null;
+      const idDocumentBack = formData.get("idDocumentBack") as File | null;
+      const proofOfAddress = formData.get("proofOfAddress") as File | null;
+      const selfie = formData.get("selfie") as File | null;
+
+      if (!idDocumentFront || !idDocumentBack || !proofOfAddress || !selfie) {
+        return NextResponse.json(
+          { error: "All documents are required (ID Front, ID Back, Proof of Address, Selfie)" },
+          { status: 400 }
+        );
+      }
+
+      // Validate file types
+      if (!ALLOWED_TYPES.includes(idDocumentFront.type)) {
+        return NextResponse.json(
+          { error: "Invalid ID document front format. Please upload an image file or PDF." },
+          { status: 400 }
+        );
+      }
+      if (!ALLOWED_TYPES.includes(idDocumentBack.type)) {
+        return NextResponse.json(
+          { error: "Invalid ID document back format. Please upload an image file or PDF." },
+          { status: 400 }
+        );
+      }
+      if (!ALLOWED_TYPES.includes(proofOfAddress.type)) {
+        return NextResponse.json(
+          { error: "Invalid proof of address format. Please upload an image file or PDF." },
+          { status: 400 }
+        );
+      }
+      if (!ALLOWED_TYPES.includes(selfie.type) || selfie.type === "application/pdf") {
+        return NextResponse.json(
+          { error: "Invalid selfie format. Please upload an image file (not PDF)." },
+          { status: 400 }
+        );
+      }
+
+      // Convert files to base64 data URLs
+      try {
+        console.log("Converting files to base64 (legacy upload)");
+        idDocumentFrontUrl = await fileToBase64DataUrl(idDocumentFront);
+        idDocumentBackUrl = await fileToBase64DataUrl(idDocumentBack);
+        proofOfAddressUrl = await fileToBase64DataUrl(proofOfAddress);
+        selfieUrl = await fileToBase64DataUrl(selfie);
+      } catch (conversionError) {
+        console.error("File conversion error:", conversionError);
+        return NextResponse.json(
+          { error: "Failed to process your files. Please try compressing them." },
+          { status: 500 }
+        );
+      }
+    }
 
     // Validate required fields
     if (
@@ -106,8 +225,7 @@ export async function POST(req: NextRequest) {
       !phoneNumber ||
       !address ||
       !city ||
-      !postalCode ||
-      !country
+      !postalCode
     ) {
       return NextResponse.json(
         { error: "All personal information fields are required" },
@@ -115,81 +233,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Extract files
-    const idDocumentFront = formData.get("idDocumentFront") as File | null;
-    const idDocumentBack = formData.get("idDocumentBack") as File | null;
-    const proofOfAddress = formData.get("proofOfAddress") as File | null;
-    const selfie = formData.get("selfie") as File | null;
-
-    if (!idDocumentFront || !idDocumentBack || !proofOfAddress || !selfie) {
+    // Validate all document URLs are set
+    if (!idDocumentFrontUrl || !idDocumentBackUrl || !proofOfAddressUrl || !selfieUrl) {
       return NextResponse.json(
         { error: "All documents are required (ID Front, ID Back, Proof of Address, Selfie)" },
         { status: 400 }
-      );
-    }
-
-    // Validate file types
-    if (!ALLOWED_TYPES.includes(idDocumentFront.type)) {
-      return NextResponse.json(
-        {
-          error: "Invalid ID document front format. Please upload an image file or PDF.",
-        },
-        { status: 400 }
-      );
-    }
-    if (!ALLOWED_TYPES.includes(idDocumentBack.type)) {
-      return NextResponse.json(
-        {
-          error: "Invalid ID document back format. Please upload an image file or PDF.",
-        },
-        { status: 400 }
-      );
-    }
-    if (!ALLOWED_TYPES.includes(proofOfAddress.type)) {
-      return NextResponse.json(
-        {
-          error:
-            "Invalid proof of address format. Please upload an image file or PDF.",
-        },
-        { status: 400 }
-      );
-    }
-    if (
-      !ALLOWED_TYPES.includes(selfie.type) ||
-      selfie.type === "application/pdf"
-    ) {
-      return NextResponse.json(
-        { error: "Invalid selfie format. Please upload an image file (not PDF)." },
-        { status: 400 }
-      );
-    }
-
-    // Convert files to base64 data URLs for storage
-    // This works on serverless platforms like Vercel where filesystem is read-only
-    let idDocumentFrontUrl, idDocumentBackUrl, proofOfAddressUrl, selfieUrl;
-    
-    try {
-      console.log("Converting files to base64. File sizes:", {
-        idFront: idDocumentFront.size,
-        idBack: idDocumentBack.size,
-        proofOfAddress: proofOfAddress.size,
-        selfie: selfie.size,
-        total: idDocumentFront.size + idDocumentBack.size + proofOfAddress.size + selfie.size
-      });
-
-      idDocumentFrontUrl = await fileToBase64DataUrl(idDocumentFront);
-      idDocumentBackUrl = await fileToBase64DataUrl(idDocumentBack);
-      proofOfAddressUrl = await fileToBase64DataUrl(proofOfAddress);
-      selfieUrl = await fileToBase64DataUrl(selfie);
-      
-      console.log("Successfully converted all files to base64");
-    } catch (conversionError) {
-      console.error("File conversion error:", conversionError);
-      return NextResponse.json(
-        {
-          error: "Failed to process your files. They may be corrupted or too large. Please try compressing them.",
-        },
-        { status: 500 }
       );
     }
 

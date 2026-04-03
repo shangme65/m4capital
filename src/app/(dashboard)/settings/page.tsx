@@ -11,7 +11,7 @@ import { useSidebar } from "@/components/client/SidebarContext";
 import NotificationsPanel from "@/components/client/NotificationsPanel";
 import ConfirmModal from "@/components/client/ConfirmModal";
 import CurrencySelector from "@/components/client/CurrencySelector";
-import { compressImage, formatFileSize } from "@/lib/compress-image";
+import { uploadMultipleToCloudinary } from "@/lib/cloudinary-upload";
 import Image from "next/image";
 import {
   Upload,
@@ -1437,11 +1437,11 @@ export default function SettingsPage() {
     type: "idDocumentFront" | "idDocumentBack" | "proofOfAddress" | "selfie",
     file: File | null
   ) => {
-    // Validate individual file size (max 5MB per file)
-    if (file && file.size > 5 * 1024 * 1024) {
+    // Validate individual file size (max 20MB per file - Cloudinary handles large files)
+    if (file && file.size > 20 * 1024 * 1024) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       showError(
-        `File "${file.name}" is too large (${sizeMB}MB). Please compress it to under 5MB before uploading.`
+        `File "${file.name}" is too large (${sizeMB}MB). Please use a file under 20MB.`
       );
       return;
     }
@@ -1476,114 +1476,65 @@ export default function SettingsPage() {
       showError("Please fill in all required fields");
       return;
     }
-    
-    // Validate total file size (20MB total - after base64 encoding becomes ~26MB)
-    // This ensures we stay well under server limits while maintaining good quality
-    const MAX_TOTAL_SIZE = 20 * 1024 * 1024; // 20MB total (5MB per file max)
-    const totalSize = 
-      (documents.idDocumentFront?.size || 0) +
-      (documents.idDocumentBack?.size || 0) +
-      (documents.proofOfAddress?.size || 0) +
-      (documents.selfie?.size || 0);
-    
-    if (totalSize > MAX_TOTAL_SIZE) {
-      const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
-      showError(
-        `Total file size (${totalSizeMB}MB) exceeds 20MB. Please compress your images. Tip: Use online tools like TinyPNG or reduce image resolution to 1920x1080.`
-      );
-      return;
-    }
 
     setSubmittingKyc(true);
 
     try {
-      // Compress images before upload to stay under server limits
-      // Target: 500KB per image, max 1920px dimensions
-      console.log('Compressing images before upload...');
-      const [compressedFront, compressedBack, compressedAddress, compressedSelfie] = await Promise.all([
-        compressImage(documents.idDocumentFront!, { maxSizeKB: 500, maxWidth: 1920, maxHeight: 1920, quality: 0.8 }),
-        compressImage(documents.idDocumentBack!, { maxSizeKB: 500, maxWidth: 1920, maxHeight: 1920, quality: 0.8 }),
-        compressImage(documents.proofOfAddress!, { maxSizeKB: 500, maxWidth: 1920, maxHeight: 1920, quality: 0.8 }),
-        compressImage(documents.selfie!, { maxSizeKB: 500, maxWidth: 1920, maxHeight: 1920, quality: 0.8 }),
-      ]);
+      // Upload files directly to Cloudinary CDN (bypasses Vercel's 4.5MB limit)
+      console.log('Uploading documents to secure CDN...');
       
-      // Log compression results
-      const originalTotal = (documents.idDocumentFront?.size || 0) + (documents.idDocumentBack?.size || 0) + 
-                           (documents.proofOfAddress?.size || 0) + (documents.selfie?.size || 0);
-      const compressedTotal = compressedFront.size + compressedBack.size + compressedAddress.size + compressedSelfie.size;
-      console.log(`Total size: ${formatFileSize(originalTotal)} → ${formatFileSize(compressedTotal)}`);
+      const filesToUpload = [
+        { file: documents.idDocumentFront!, name: 'idDocumentFront' },
+        { file: documents.idDocumentBack!, name: 'idDocumentBack' },
+        { file: documents.proofOfAddress!, name: 'proofOfAddress' },
+        { file: documents.selfie!, name: 'selfie' },
+      ];
       
-      // Verify compressed total is under Vercel's limit (4.5MB for request body)
-      if (compressedTotal > 4 * 1024 * 1024) {
-        showError(`Even after compression, files are too large (${formatFileSize(compressedTotal)}). Please use smaller images or reduce the quality.`);
-        setSubmittingKyc(false);
+      let uploadedUrls: Record<string, string>;
+      try {
+        uploadedUrls = await uploadMultipleToCloudinary(filesToUpload, 'kyc');
+      } catch (uploadError: any) {
+        console.error("CDN upload failed:", uploadError);
+        showError("Failed to upload documents. Please check your internet connection and try again.");
         return;
       }
 
-      const formData = new FormData();
-
-      // Add text fields
-      formData.append("firstName", kycData.firstName);
-      formData.append("lastName", kycData.lastName);
-      formData.append("dateOfBirth", kycData.dateOfBirth);
-      formData.append("nationality", kycData.nationality);
-      formData.append("phoneNumber", kycData.phoneNumber);
-      formData.append("address", kycData.address);
-      formData.append("city", kycData.city);
-      formData.append("postalCode", kycData.postalCode);
-      formData.append("country", kycData.nationality); // Using nationality as country for now
-
-      // Add compressed files
-      formData.append("idDocumentFront", compressedFront);
-      formData.append("idDocumentBack", compressedBack);
-      formData.append("proofOfAddress", compressedAddress);
-      formData.append("selfie", compressedSelfie);
-
+      // Send JSON with Cloudinary URLs to API
       const response = await fetch("/api/kyc/submit", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: kycData.firstName,
+          lastName: kycData.lastName,
+          dateOfBirth: kycData.dateOfBirth,
+          nationality: kycData.nationality,
+          phoneNumber: kycData.phoneNumber,
+          address: kycData.address,
+          city: kycData.city,
+          postalCode: kycData.postalCode,
+          country: kycData.nationality,
+          idDocumentFrontUrl: uploadedUrls.idDocumentFront,
+          idDocumentBackUrl: uploadedUrls.idDocumentBack,
+          proofOfAddressUrl: uploadedUrls.proofOfAddress,
+          selfieUrl: uploadedUrls.selfie,
+        }),
       });
 
-      // Try to parse JSON response
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error("Failed to parse response:", parseError);
-        
-        // Enhanced error messages based on status code
-        if (response.status === 403) {
-          showError("Upload forbidden. Your files may be too large or in an unsupported format. Please compress images to under 5MB each.");
-          return;
-        }
-        if (response.status === 413) {
-          showError("Files too large. Please compress each image to under 5MB and ensure total size is under 20MB.");
-          return;
-        }
-        
-        showError(`Server error: ${response.status} ${response.statusText}. Please try again or contact support.`);
-        return;
-      }
+      const data = await response.json();
 
       if (response.ok) {
         setKycStatus("PENDING");
         setShowKycDetails(false);
         setShowKycSuccessModal(true);
       } else {
-        // Show the actual error message from the server
-        const errorMessage = data.error || data.message || `Server error: ${response.status} ${response.statusText}`;
+        const errorMessage = data.error || data.message || `Server error: ${response.status}`;
         console.error("KYC submission failed:", errorMessage, data);
-        
-        // Add hint for common errors
-        if (response.status === 403 || response.status === 413) {
-          showError(`${errorMessage}\n\nTip: Compress your images using online tools like TinyPNG or reduce resolution to 1920x1080.`);
-        } else {
-          showError(errorMessage);
-        }
+        showError(errorMessage);
       }
     } catch (error: any) {
       console.error("KYC submission error:", error);
-      // Show more detailed error message
       const errorMsg = error.message || error.toString();
       showError(`Failed to submit KYC: ${errorMsg}. Please try again or contact support.`);
     } finally {
