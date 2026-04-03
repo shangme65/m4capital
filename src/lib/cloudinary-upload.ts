@@ -117,48 +117,36 @@ export async function uploadToCloudinary(
   // Upload directly to Cloudinary (bypasses Vercel limits!)
   const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
 
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
+  try {
+    const response = await fetch(uploadUrl, {
+      method: "POST",
+      body: formData,
+    });
 
-    // Track upload progress
-    if (onProgress) {
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const percent = Math.round((e.loaded / e.total) * 100);
-          onProgress(percent);
-        }
-      });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `Upload failed with status ${response.status}`);
     }
 
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        const result = JSON.parse(xhr.responseText);
-        resolve({
-          url: result.url,
-          secureUrl: result.secure_url,
-          publicId: result.public_id,
-          format: result.format,
-          width: result.width,
-          height: result.height,
-          bytes: result.bytes,
-        });
-      } else {
-        try {
-          const error = JSON.parse(xhr.responseText);
-          reject(new Error(error.error?.message || "Upload failed"));
-        } catch {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
-        }
-      }
-    };
+    const result = await response.json();
+    
+    if (onProgress) {
+      onProgress(100);
+    }
 
-    xhr.onerror = () => {
-      reject(new Error("Network error during upload"));
+    return {
+      url: result.url,
+      secureUrl: result.secure_url,
+      publicId: result.public_id,
+      format: result.format,
+      width: result.width,
+      height: result.height,
+      bytes: result.bytes,
     };
-
-    xhr.open("POST", uploadUrl);
-    xhr.send(formData);
-  });
+  } catch (error: any) {
+    console.error("Cloudinary upload error:", error);
+    throw new Error(error.message || "Failed to upload to CDN");
+  }
 }
 
 /**

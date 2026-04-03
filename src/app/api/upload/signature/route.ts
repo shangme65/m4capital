@@ -43,15 +43,12 @@ export async function POST(req: NextRequest) {
     const timestamp = Math.round(new Date().getTime() / 1000);
 
     // Create signature for secure upload
+    // Only include params that will also be sent in the upload form data
     const signature = cloudinary.utils.api_sign_request(
       {
         timestamp,
         folder: folder || "kyc-documents",
         public_id: publicId,
-        // Security: restrict upload transformations
-        allowed_formats: "jpg,jpeg,png,gif,webp,pdf",
-        // Max file size: 10MB (Cloudinary handles larger files fine)
-        max_file_size: 10000000,
       },
       process.env.CLOUDINARY_API_SECRET
     );
