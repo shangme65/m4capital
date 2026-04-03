@@ -97,26 +97,36 @@ export default function AssetReceiveModal({
       const cryptoAmount = getCryptoAmount();
       const amountUSD = cryptoAmount * asset.price;
 
-      const res = await fetch("/api/nowpayments/create-payment", {
+      // Call the create-crypto API with targetAsset set to the crypto symbol
+      // This will credit directly to the crypto asset balance, not fiat
+      const res = await fetch("/api/payment/create-crypto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           amount: amountUSD,
-          currency: asset.symbol,
+          currency: "USD",
+          cryptoCurrency: asset.symbol.toLowerCase(),
+          targetAsset: asset.symbol.toUpperCase(), // Credit to crypto asset balance
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || "Failed to create deposit");
+        throw new Error(data.details || data.error || "Failed to create deposit");
+      }
+
+      // Parse response from create-crypto API
+      const deposit = data.data?.deposit;
+      if (!deposit) {
+        throw new Error("Invalid response from server");
       }
 
       setPaymentData({
-        paymentId: data.paymentId,
-        payAddress: data.payAddress,
-        payAmount: data.payAmount,
-        payCurrency: data.payCurrency,
+        paymentId: deposit.paymentId || deposit.invoiceId,
+        payAddress: deposit.paymentAddress,
+        payAmount: deposit.cryptoAmount || deposit.paymentAmount,
+        payCurrency: deposit.cryptoCurrency,
       });
       setStep("deposit");
     } catch (err: unknown) {

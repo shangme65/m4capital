@@ -500,6 +500,132 @@ export async function POST(request: NextRequest) {
         } catch (pushError) {
           console.error("❌ Failed to send push notification:", pushError);
         }
+      } else if (deposit.targetAsset && deposit.targetAsset !== "TRADEROOM") {
+        // Direct crypto asset deposit - credit to the specific crypto asset balance
+        console.log(`🪙 Processing DIRECT CRYPTO ASSET deposit to ${deposit.targetAsset}...`);
+        
+        // Get the actual crypto amount received
+        const cryptoAmount = parseFloat(deposit.cryptoAmount?.toString() || "0");
+        const cryptoSymbol = deposit.targetAsset.toUpperCase();
+        
+        if (cryptoAmount <= 0) {
+          console.error("❌ No crypto amount found for direct asset deposit");
+          console.error("  - cryptoAmount:", deposit.cryptoAmount);
+          throw new Error("Invalid crypto amount for direct asset deposit");
+        }
+        
+        console.log("  - Crypto amount:", cryptoAmount);
+        console.log("  - Target asset:", cryptoSymbol);
+        
+        // Get current assets from portfolio
+        const currentAssets = (portfolio.assets as any[]) || [];
+        console.log("  - Current assets:", JSON.stringify(currentAssets));
+        
+        // Find existing asset or create new one
+        const existingAssetIndex = currentAssets.findIndex(
+          (a: any) => a.symbol?.toUpperCase() === cryptoSymbol
+        );
+        
+        let updatedAssets;
+        if (existingAssetIndex >= 0) {
+          // Update existing asset
+          const existingAsset = currentAssets[existingAssetIndex];
+          const currentAmount = parseFloat(existingAsset.amount?.toString() || "0");
+          const newAmount = currentAmount + cryptoAmount;
+          
+          console.log("  - Existing asset amount:", currentAmount);
+          console.log("  - New asset amount:", newAmount);
+          
+          updatedAssets = [...currentAssets];
+          updatedAssets[existingAssetIndex] = {
+            ...existingAsset,
+            amount: newAmount,
+          };
+        } else {
+          // Add new asset
+          console.log("  - Creating new asset entry");
+          updatedAssets = [
+            ...currentAssets,
+            {
+              symbol: cryptoSymbol,
+              amount: cryptoAmount,
+              name: deposit.cryptoCurrency || cryptoSymbol,
+            },
+          ];
+        }
+        
+        // Update portfolio with new assets
+        await prisma.portfolio.update({
+          where: { id: portfolio.id },
+          data: {
+            assets: updatedAssets,
+          },
+        });
+        
+        console.log(`✅ Credited ${cryptoAmount} ${cryptoSymbol} to user ${deposit.User.email}'s crypto holdings`);
+        
+        // Create notification
+        const userCurrency = userPreferredCurrency;
+        const cryptoCurrencyCode = deposit.cryptoCurrency || cryptoSymbol;
+        await prisma.notification.create({
+          data: {
+            id: generateId(),
+            userId: deposit.User.id,
+            type: "DEPOSIT",
+            title: `${cryptoCurrencyCode} Deposit Completed`,
+            message: `Your deposit of ${cryptoAmount.toFixed(8)} ${cryptoCurrencyCode} has been credited to your ${cryptoCurrencyCode} holdings.`,
+            amount: cryptoAmount,
+            asset: cryptoCurrencyCode,
+            metadata: {
+              depositId: deposit.id,
+              transactionId: payment_id,
+              method: deposit.method,
+              target: "CRYPTO_ASSET",
+              cryptoCurrency: cryptoCurrencyCode,
+              cryptoAmount: cryptoAmount,
+            },
+          },
+        });
+        console.log("✅ Crypto asset deposit notification created");
+        
+        // Send email notification if user preferences allow
+        if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
+          try {
+            await sendEmail({
+              to: deposit.User.email,
+              subject: `${cryptoCurrencyCode} Deposit Completed - M4 Capital`,
+              html: depositConfirmedTemplate(
+                deposit.User.name || "User",
+                cryptoAmount.toFixed(8),
+                cryptoCurrencyCode,
+                "",
+                payment_id,
+                false
+              ),
+            });
+            console.log("✅ Email notification sent");
+          } catch (emailError) {
+            console.error("❌ Failed to send email notification:", emailError);
+          }
+        }
+        
+        // Send web push notification
+        try {
+          await sendPushNotification(
+            deposit.User.id,
+            `${cryptoCurrencyCode} Deposit Completed!`,
+            `Your deposit of ${cryptoAmount.toFixed(8)} ${cryptoCurrencyCode} has been added to your holdings.`,
+            {
+              type: "deposit",
+              amount: cryptoAmount,
+              asset: cryptoCurrencyCode,
+              url: "/dashboard",
+            }
+          );
+          console.log("✅ Web push notification sent");
+        } catch (pushError) {
+          console.error("❌ Failed to send push notification:", pushError);
+        }
       } else {
         console.log("💰 Processing REGULAR deposit...");
         

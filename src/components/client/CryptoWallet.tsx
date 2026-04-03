@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -121,7 +120,6 @@ export default function CryptoWallet({
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
-  const router = useRouter();
   const { addNotification, addTransaction } = useNotifications();
   const { preferredCurrency, formatAmount, convertAmount } = useCurrency();
   const { resolvedTheme } = useTheme();
@@ -703,7 +701,7 @@ export default function CryptoWallet({
       {/* Done Button */}
       <div className="flex">
         <button
-          onClick={() => router.push("/dashboard")}
+          onClick={onComplete}
           className={`w-full py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors ${cryptoConfig.bgColor} hover:opacity-90 text-white`}
         >
           Done

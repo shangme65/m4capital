@@ -39,7 +39,11 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { amount, currency = "USD", cryptoCurrency = "btc" } = body;
+    const { amount, currency = "USD", cryptoCurrency = "btc", targetAsset } = body;
+    // targetAsset can be:
+    // - undefined/null: credits to fiat balance (default)
+    // - "TRADEROOM": credits to traderoom balance
+    // - crypto symbol (e.g., "BTC"): credits directly to crypto asset balance
 
     if (!amount || amount <= 0) {
       return createErrorResponse(
@@ -102,7 +106,8 @@ export async function POST(request: NextRequest) {
         amount,
         currency,
         cryptoInfo.code,
-        cryptoInfo.name
+        cryptoInfo.name,
+        targetAsset
       );
     } catch (error: any) {
       console.error(
@@ -117,7 +122,8 @@ export async function POST(request: NextRequest) {
           amount,
           currency,
           cryptoInfo.code,
-          cryptoInfo.name
+          cryptoInfo.name,
+          targetAsset
         );
       } catch (invoiceError: any) {
         console.error(
@@ -163,7 +169,8 @@ async function createCryptoPayment(
   amount: number,
   currency: string,
   payCurrency: string,
-  cryptoName: string
+  cryptoName: string,
+  targetAsset?: string
 ) {
   // Get minimum amount for the selected crypto
   let minAmount = { min_amount: 0 };
@@ -216,6 +223,7 @@ async function createCryptoPayment(
       cryptoCurrency: payCurrency.toUpperCase(),
       status: "PENDING",
       method: `NOWPAYMENTS_${payCurrency.toUpperCase()}`,
+      targetAsset: targetAsset || null,
       updatedAt: new Date(),
     },
   });
@@ -279,7 +287,8 @@ async function createCryptoInvoice(
   amount: number,
   currency: string,
   payCurrency: string,
-  cryptoName: string
+  cryptoName: string,
+  targetAsset?: string
 ) {
   // Estimate crypto amount
   const estimate = await nowPayments.estimatePrice({
@@ -300,6 +309,7 @@ async function createCryptoInvoice(
       cryptoCurrency: payCurrency.toUpperCase(),
       status: "PENDING",
       method: `NOWPAYMENTS_${payCurrency.toUpperCase()}_INVOICE`,
+      targetAsset: targetAsset || null,
       updatedAt: new Date(),
     },
   });
