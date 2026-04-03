@@ -53,7 +53,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: blob: https: http:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://api.binance.com wss://stream.binance.com https://api.frankfurter.app https://*.neon.tech https://*.vercel.app https://s3.tradingview.com https://s.tradingview.com",
+              "connect-src 'self' https://api.binance.com wss://stream.binance.com https://api.frankfurter.app https://*.neon.tech https://*.vercel.app https://s3.tradingview.com https://s.tradingview.com https://api.cloudinary.com https://res.cloudinary.com",
               "frame-src 'self' https://s3.tradingview.com https://s.tradingview.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",
