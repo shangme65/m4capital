@@ -11,6 +11,7 @@ import { useSidebar } from "@/components/client/SidebarContext";
 import NotificationsPanel from "@/components/client/NotificationsPanel";
 import ConfirmModal from "@/components/client/ConfirmModal";
 import CurrencySelector from "@/components/client/CurrencySelector";
+import { compressImage, formatFileSize } from "@/lib/compress-image";
 import Image from "next/image";
 import {
   Upload,
@@ -1436,6 +1437,14 @@ export default function SettingsPage() {
     type: "idDocumentFront" | "idDocumentBack" | "proofOfAddress" | "selfie",
     file: File | null
   ) => {
+    // Validate individual file size (max 5MB per file)
+    if (file && file.size > 5 * 1024 * 1024) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      showError(
+        `File "${file.name}" is too large (${sizeMB}MB). Please compress it to under 5MB before uploading.`
+      );
+      return;
+    }
     setDocuments((prev) => ({ ...prev, [type]: file }));
   };
 
@@ -1468,8 +1477,9 @@ export default function SettingsPage() {
       return;
     }
     
-    // Validate total file size (must be under 80MB total for server limits)
-    const MAX_TOTAL_SIZE = 80 * 1024 * 1024; // 80MB total (20MB per file x 4 files)
+    // Validate total file size (20MB total - after base64 encoding becomes ~26MB)
+    // This ensures we stay well under server limits while maintaining good quality
+    const MAX_TOTAL_SIZE = 20 * 1024 * 1024; // 20MB total (5MB per file max)
     const totalSize = 
       (documents.idDocumentFront?.size || 0) +
       (documents.idDocumentBack?.size || 0) +
@@ -1479,7 +1489,7 @@ export default function SettingsPage() {
     if (totalSize > MAX_TOTAL_SIZE) {
       const totalSizeMB = (totalSize / (1024 * 1024)).toFixed(2);
       showError(
-        `Total file size (${totalSizeMB}MB) exceeds the maximum allowed (80MB). Please compress your images or use smaller files.`
+        `Total file size (${totalSizeMB}MB) exceeds 20MB. Please compress your images. Tip: Use online tools like TinyPNG or reduce image resolution to 1920x1080.`
       );
       return;
     }
@@ -1487,6 +1497,29 @@ export default function SettingsPage() {
     setSubmittingKyc(true);
 
     try {
+      // Compress images before upload to stay under server limits
+      // Target: 500KB per image, max 1920px dimensions
+      console.log('Compressing images before upload...');
+      const [compressedFront, compressedBack, compressedAddress, compressedSelfie] = await Promise.all([
+        compressImage(documents.idDocumentFront!, { maxSizeKB: 500, maxWidth: 1920, maxHeight: 1920, quality: 0.8 }),
+        compressImage(documents.idDocumentBack!, { maxSizeKB: 500, maxWidth: 1920, maxHeight: 1920, quality: 0.8 }),
+        compressImage(documents.proofOfAddress!, { maxSizeKB: 500, maxWidth: 1920, maxHeight: 1920, quality: 0.8 }),
+        compressImage(documents.selfie!, { maxSizeKB: 500, maxWidth: 1920, maxHeight: 1920, quality: 0.8 }),
+      ]);
+      
+      // Log compression results
+      const originalTotal = (documents.idDocumentFront?.size || 0) + (documents.idDocumentBack?.size || 0) + 
+                           (documents.proofOfAddress?.size || 0) + (documents.selfie?.size || 0);
+      const compressedTotal = compressedFront.size + compressedBack.size + compressedAddress.size + compressedSelfie.size;
+      console.log(`Total size: ${formatFileSize(originalTotal)} → ${formatFileSize(compressedTotal)}`);
+      
+      // Verify compressed total is under Vercel's limit (4.5MB for request body)
+      if (compressedTotal > 4 * 1024 * 1024) {
+        showError(`Even after compression, files are too large (${formatFileSize(compressedTotal)}). Please use smaller images or reduce the quality.`);
+        setSubmittingKyc(false);
+        return;
+      }
+
       const formData = new FormData();
 
       // Add text fields
@@ -1500,11 +1533,11 @@ export default function SettingsPage() {
       formData.append("postalCode", kycData.postalCode);
       formData.append("country", kycData.nationality); // Using nationality as country for now
 
-      // Add files
-      formData.append("idDocumentFront", documents.idDocumentFront);
-      formData.append("idDocumentBack", documents.idDocumentBack);
-      formData.append("proofOfAddress", documents.proofOfAddress);
-      formData.append("selfie", documents.selfie);
+      // Add compressed files
+      formData.append("idDocumentFront", compressedFront);
+      formData.append("idDocumentBack", compressedBack);
+      formData.append("proofOfAddress", compressedAddress);
+      formData.append("selfie", compressedSelfie);
 
       const response = await fetch("/api/kyc/submit", {
         method: "POST",
@@ -1517,6 +1550,17 @@ export default function SettingsPage() {
         data = await response.json();
       } catch (parseError) {
         console.error("Failed to parse response:", parseError);
+        
+        // Enhanced error messages based on status code
+        if (response.status === 403) {
+          showError("Upload forbidden. Your files may be too large or in an unsupported format. Please compress images to under 5MB each.");
+          return;
+        }
+        if (response.status === 413) {
+          showError("Files too large. Please compress each image to under 5MB and ensure total size is under 20MB.");
+          return;
+        }
+        
         showError(`Server error: ${response.status} ${response.statusText}. Please try again or contact support.`);
         return;
       }
@@ -1529,7 +1573,13 @@ export default function SettingsPage() {
         // Show the actual error message from the server
         const errorMessage = data.error || data.message || `Server error: ${response.status} ${response.statusText}`;
         console.error("KYC submission failed:", errorMessage, data);
-        showError(errorMessage);
+        
+        // Add hint for common errors
+        if (response.status === 403 || response.status === 413) {
+          showError(`${errorMessage}\n\nTip: Compress your images using online tools like TinyPNG or reduce resolution to 1920x1080.`);
+        } else {
+          showError(errorMessage);
+        }
       }
     } catch (error: any) {
       console.error("KYC submission error:", error);
