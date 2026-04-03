@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =============================================================================
+   GLOBAL BACKDROP-BLUR FIX
+   Disables backdrop-blur on ALL platforms to prevent GPU rendering artifacts.
+   backdrop-filter causes GPU compositing issues across various browsers and
+   devices, causing visual glitches and corrupted rendering.
+============================================================================= */
+.backdrop-blur-sm,
+.backdrop-blur-md,
+.backdrop-blur-lg,
+.backdrop-blur-xl,
+.backdrop-blur-2xl,
+.backdrop-blur-3xl,
+.backdrop-blur {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 /* Safe area insets for native app (Android/iOS status bar) */
 :root {
   --sat: env(safe-area-inset-top, 0px);

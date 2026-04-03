@@ -418,27 +418,16 @@ export default function NotificationsPanel({
           className="fixed inset-0 z-[99999]"
           style={{
             isolation: "isolate",
-            transform: "translateZ(0)",
-            willChange: "transform",
           }}
         >
-          {/* Solid backdrop layer to block everything - fully opaque */}
+          {/* Solid backdrop layer - clickable to close */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 0.7 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black"
-            style={{ zIndex: 1 }}
-          />
-
-          {/* Backdrop with blur - clickable to close */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 backdrop-blur-md"
-            style={{ zIndex: 2 }}
+            className="absolute inset-0 bg-black/80"
+            style={{ zIndex: 1 }}
           />
 
           {/* Enhanced Panel */}
@@ -448,7 +437,7 @@ export default function NotificationsPanel({
             exit={{ opacity: 0, x: 400, scale: 0.9 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className={`absolute right-0 top-0 h-full w-full sm:w-[480px] border-l flex flex-col shadow-2xl ${isDark ? "bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-gray-700/50" : "bg-gradient-to-br from-white via-gray-50 to-gray-100 border-gray-200"}`}
-            style={{ zIndex: 3 }}
+            style={{ zIndex: 2 }}
           >
             {/* Smaller Header */}
             <div className="relative overflow-hidden">

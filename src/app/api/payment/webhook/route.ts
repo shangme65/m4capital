@@ -28,6 +28,33 @@ function calculateBonusAmount(amount: number): number {
 }
 
 /**
+ * Check if email notification should be sent for deposit
+ * Respects user email preferences
+ */
+function shouldSendDepositEmail(user: {
+  email: string | null;
+  isEmailVerified: boolean;
+  emailNotifications: boolean;
+  tradingNotifications: boolean;
+}): boolean {
+  // Must have email and it must be verified
+  if (!user.email || !user.isEmailVerified) {
+    return false;
+  }
+  // Must have email notifications enabled
+  if (user.emailNotifications === false) {
+    console.log("📧 Skipping email - user has disabled email notifications");
+    return false;
+  }
+  // Must have trading notifications enabled (deposits fall under trading)
+  if (user.tradingNotifications === false) {
+    console.log("📧 Skipping email - user has disabled trading notifications");
+    return false;
+  }
+  return true;
+}
+
+/**
  * POST /api/payment/webhook
  * Webhook endpoint for NOWPayments IPN callbacks
  */
@@ -404,13 +431,14 @@ export async function POST(request: NextRequest) {
 
         console.log("📧 Creating TRADEROOM deposit notification...");
         // Create notification for successful traderoom deposit
+        const cryptoCurrencyCode = deposit.cryptoCurrency || "BTC";
         await prisma.notification.create({
           data: {
             id: generateId(),
             userId: deposit.User.id,
             type: "DEPOSIT",
-            title: bonusAmount > 0 ? `${userCurrency} Traderoom Deposit + Bonus!` : `${userCurrency} Traderoom Deposit Completed`,
-            message: `Your deposit of ${getCurrencySymbol(userCurrency)}${
+            title: bonusAmount > 0 ? `${cryptoCurrencyCode} Traderoom Deposit + Bonus!` : `${cryptoCurrencyCode} Traderoom Deposit Completed`,
+            message: `Your ${cryptoCurrencyCode} deposit of ${getCurrencySymbol(userCurrency)}${
               depositAmount.toFixed(2)
             } has been successfully credited to your Traderoom balance.${bonusMessage}`,
             amount: totalCredit, // Include bonus in the displayed amount
@@ -420,6 +448,7 @@ export async function POST(request: NextRequest) {
               transactionId: payment_id,
               method: deposit.method,
               target: "TRADEROOM",
+              cryptoCurrency: cryptoCurrencyCode,
               bonusAmount: bonusAmount > 0 ? bonusAmount : undefined,
               bonusPercent: bonusAmount > 0 ? PROMO_BONUS_PERCENT : undefined,
             },
@@ -427,13 +456,14 @@ export async function POST(request: NextRequest) {
         });
         console.log("✅ TRADEROOM notification created");
 
-        // Send email notification
-        if (deposit.User.email && deposit.User.isEmailVerified) {
+        // Send email notification if user preferences allow and email exists
+        if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
           try {
             const displayAmount = (Math.round(depositAmount * 100) / 100).toFixed(2);
+            const cryptoCoin = deposit.cryptoCurrency || "BTC";
             await sendEmail({
               to: deposit.User.email,
-              subject: `✅ ${userPreferredCurrency} Traderoom Deposit Completed - M4 Capital`,
+              subject: `✅ ${cryptoCoin} Traderoom Deposit Completed - M4 Capital`,
               html: depositConfirmedTemplate(
                 deposit.User.name || "User",
                 displayAmount,
@@ -447,15 +477,18 @@ export async function POST(request: NextRequest) {
           } catch (emailError) {
             console.error("❌ Failed to send email notification:", emailError);
           }
+        } else {
+          console.log("📧 Email notification skipped (user preferences or unverified email)");
         }
 
         // Send web push notification
         try {
           const pushBonusText = bonusAmount > 0 ? ` (includes ${PROMO_BONUS_PERCENT}% bonus!)` : '';
+          const cryptoCoin = deposit.cryptoCurrency || "BTC";
           await sendPushNotification(
             deposit.User.id,
-            bonusAmount > 0 ? `${userCurrency} Traderoom Deposit + Bonus!` : `${userCurrency} Traderoom Deposit Completed!`,
-            `Your deposit of ${getCurrencySymbol(userCurrency)}${depositAmount.toFixed(2)} has been credited to your Traderoom balance.${pushBonusText}`,
+            bonusAmount > 0 ? `${cryptoCoin} Traderoom Deposit + Bonus!` : `${cryptoCoin} Traderoom Deposit Completed!`,
+            `Your ${cryptoCoin} deposit of ${getCurrencySymbol(userCurrency)}${depositAmount.toFixed(2)} has been credited to your Traderoom balance.${pushBonusText}`,
             {
               type: "deposit",
               amount: totalCredit,
@@ -516,6 +549,7 @@ export async function POST(request: NextRequest) {
         console.log("📧 Creating deposit notification...");
         // Create notification for successful deposit
         const userCurrency2 = userPreferredCurrency;
+        const cryptoCurrencyCode2 = deposit.cryptoCurrency || "BTC";
         const bonusMessage = bonusAmount > 0 
           ? ` Plus ${PROMO_BONUS_PERCENT}% bonus: ${getCurrencySymbol(userCurrency2)}${bonusAmount.toFixed(2)}!`
           : '';
@@ -524,8 +558,8 @@ export async function POST(request: NextRequest) {
             id: generateId(),
             userId: deposit.User.id,
             type: "DEPOSIT",
-            title: bonusAmount > 0 ? `${userCurrency2} Deposit + Bonus!` : `${userCurrency2} Deposit Completed`,
-            message: `Your deposit of ${getCurrencySymbol(userCurrency2)}${
+            title: bonusAmount > 0 ? `${cryptoCurrencyCode2} Deposit + Bonus!` : `${cryptoCurrencyCode2} Deposit Completed`,
+            message: `Your ${cryptoCurrencyCode2} deposit of ${getCurrencySymbol(userCurrency2)}${
               depositAmount.toFixed(2)
             } has been successfully credited to your account.${bonusMessage}`,
             amount: totalCredit, // Include bonus in the displayed amount
@@ -534,6 +568,7 @@ export async function POST(request: NextRequest) {
               depositId: deposit.id,
               transactionId: payment_id,
               method: deposit.method,
+              cryptoCurrency: cryptoCurrencyCode2,
               bonusAmount: bonusAmount > 0 ? bonusAmount : undefined,
               bonusPercent: bonusAmount > 0 ? PROMO_BONUS_PERCENT : undefined,
             },
@@ -541,13 +576,14 @@ export async function POST(request: NextRequest) {
         });
         console.log("✅ Deposit notification created");
 
-        // Send email notification
-        if (deposit.User.email && deposit.User.isEmailVerified) {
+        // Send email notification if user preferences allow and email exists
+        if (shouldSendDepositEmail(deposit.User) && deposit.User.email) {
           try {
             const displayAmount = (Math.round(depositAmount * 100) / 100).toFixed(2);
+            const cryptoCoin = deposit.cryptoCurrency || "BTC";
             await sendEmail({
               to: deposit.User.email,
-              subject: `✅ ${userPreferredCurrency} Deposit Completed - M4 Capital`,
+              subject: `✅ ${cryptoCoin} Deposit Completed - M4 Capital`,
               html: depositConfirmedTemplate(
                 deposit.User.name || "User",
                 displayAmount,
@@ -561,15 +597,18 @@ export async function POST(request: NextRequest) {
           } catch (emailError) {
             console.error("❌ Failed to send email notification:", emailError);
           }
+        } else {
+          console.log("📧 Email notification skipped (user preferences or unverified email)");
         }
 
         // Send web push notification
         try {
           const pushBonusText = bonusAmount > 0 ? ` (includes ${PROMO_BONUS_PERCENT}% bonus!)` : '';
+          const cryptoCoin = deposit.cryptoCurrency || "BTC";
           await sendPushNotification(
             deposit.User.id,
-            bonusAmount > 0 ? `${userCurrency2} Deposit + Bonus!` : `${userCurrency2} Deposit Completed!`,
-            `Your deposit of ${getCurrencySymbol(userCurrency2)}${depositAmount.toFixed(2)} has been credited to your account.${pushBonusText}`,
+            bonusAmount > 0 ? `${cryptoCoin} Deposit + Bonus!` : `${cryptoCoin} Deposit Completed!`,
+            `Your ${cryptoCoin} deposit of ${getCurrencySymbol(userCurrency2)}${depositAmount.toFixed(2)} has been credited to your account.${pushBonusText}`,
             {
               type: "deposit",
               amount: totalCredit,
