@@ -225,56 +225,69 @@ export default function BuyModal({ isOpen, onClose }: BuyModalProps) {
   };
 
   const confirmBuy = async () => {
-    try {
-      // Validate one more time before purchase
-      if (!validateAmount()) {
-        setStep(2);
-        return;
-      }
-
-      const price = getCurrentPrice();
-      const inputAmount = parseFloat(buyData.amount);
-      const usdValue = convertAmount(inputAmount, true);
-      const assetAmount = usdValue / price;
-
-      // Use Server Action with transition - optimistic update must be inside transition
-      startTransition(async () => {
-        // React 19: Show optimistic update immediately inside transition
-        setOptimisticBalance(availableBalance - usdValue);
-
-        const result = await buyCryptoAction(buyData.asset, assetAmount, price);
-
-        if (result.success && result.data) {
-          // Add to local transaction list
-          addTransaction({
-            type: "buy" as const,
-            asset: buyData.asset,
-            amount: assetAmount,
-            value: usdValue,
-            timestamp: new Date().toLocaleString(),
-            status: "completed" as const,
-            fee: usdValue * 0.015,
-            method: `${preferredCurrency} Balance`,
-            description: `Market buy order for ${buyData.asset}`,
-            rate: price,
-          });
-
-          setSuccessData({
-            asset: buyData.asset,
-            amount: assetAmount,
-            value: usdValue,
-          });
-          setStep(4);
-        } else {
-          throw new Error(result.error || "Failed to process purchase");
-        }
-      });
-    } catch (error) {
-      setErrors({
-        amount: error instanceof Error ? error.message : "Purchase failed",
-      });
+    // Validate one more time before purchase
+    if (!validateAmount()) {
       setStep(2);
+      return;
     }
+
+    const price = getCurrentPrice();
+    
+    // Check if price is valid
+    if (!price || price <= 0) {
+      setErrors({ amount: "Price not available. Please wait for prices to load." });
+      setStep(2);
+      return;
+    }
+    
+    const inputAmount = parseFloat(buyData.amount);
+    const usdValue = convertAmount(inputAmount, true);
+    const assetAmount = usdValue / price;
+
+    // Validate calculated values
+    if (!Number.isFinite(assetAmount) || assetAmount <= 0) {
+      setErrors({ amount: "Invalid calculation. Please try again." });
+      setStep(2);
+      return;
+    }
+
+    // Use Server Action with transition - handle errors inside transition
+    startTransition(async () => {
+      // React 19: Show optimistic update immediately inside transition
+      setOptimisticBalance(availableBalance - usdValue);
+
+      const result = await buyCryptoAction(buyData.asset, assetAmount, price);
+
+      if (result.success && result.data) {
+        // Add to local transaction list
+        addTransaction({
+          type: "buy" as const,
+          asset: buyData.asset,
+          amount: assetAmount,
+          value: usdValue,
+          timestamp: new Date().toLocaleString(),
+          status: "completed" as const,
+          fee: usdValue * 0.015,
+          method: `${preferredCurrency} Balance`,
+          description: `Market buy order for ${buyData.asset}`,
+          rate: price,
+        });
+
+        setSuccessData({
+          asset: buyData.asset,
+          amount: assetAmount,
+          value: usdValue,
+        });
+        setStep(4);
+      } else {
+        // Handle error inside transition - set state, don't throw
+        setErrors({
+          amount: result.error || "Failed to process purchase",
+        });
+        setOptimisticBalance(availableBalance); // Reset optimistic update
+        setStep(2);
+      }
+    });
   };
 
   const handleDone = () => {

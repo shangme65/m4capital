@@ -182,6 +182,38 @@ export function getCurrencySymbol(code: string): string {
   return currency?.symbol || code;
 }
 
+// Fallback exchange rates (approximate) for when API is unavailable
+// These should be updated periodically but provide reasonable defaults
+export const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
+  USD: 1,
+  BRL: 5.2, // Brazilian Real
+  EUR: 0.92, // Euro
+  GBP: 0.79, // British Pound
+  JPY: 154.5, // Japanese Yen
+  CAD: 1.37, // Canadian Dollar
+  AUD: 1.53, // Australian Dollar
+  CHF: 0.88, // Swiss Franc
+  CNY: 7.24, // Chinese Yuan
+  INR: 83.5, // Indian Rupee
+  MXN: 17.1, // Mexican Peso
+  KRW: 1350, // South Korean Won
+  SGD: 1.35, // Singapore Dollar
+  HKD: 7.82, // Hong Kong Dollar
+  NOK: 10.8, // Norwegian Krone
+  SEK: 10.5, // Swedish Krona
+  DKK: 6.87, // Danish Krone
+  NZD: 1.65, // New Zealand Dollar
+  ZAR: 18.5, // South African Rand
+  TRY: 32.0, // Turkish Lira
+  PLN: 3.95, // Polish Zloty
+  THB: 35.5, // Thai Baht
+  IDR: 15900, // Indonesian Rupiah
+  MYR: 4.47, // Malaysian Ringgit
+  PHP: 56.5, // Philippine Peso
+  NGN: 1550, // Nigerian Naira
+  RUB: 92.0, // Russian Ruble
+};
+
 /**
  * Fetch exchange rates from an external API
  * Returns rates with USD as base currency
@@ -194,11 +226,12 @@ export async function getExchangeRates(): Promise<Record<string, number>> {
       throw new Error("Failed to fetch exchange rates");
     }
     const data = await response.json();
-    return { USD: 1, ...data.rates };
+    // Merge API rates with fallback rates (API rates take precedence)
+    return { ...FALLBACK_EXCHANGE_RATES, ...data.rates };
   } catch (error) {
     console.error("Error fetching exchange rates:", error);
-    // Return default rates if fetch fails
-    return { USD: 1 };
+    // Return fallback rates if fetch fails
+    return { ...FALLBACK_EXCHANGE_RATES };
   }
 }
 

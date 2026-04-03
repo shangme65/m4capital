@@ -214,7 +214,22 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
       return;
     }
 
+    // Check if price is valid
+    if (!currentPrice || currentPrice <= 0) {
+      setErrors({ amount: "Price not available. Please wait for prices to load." });
+      setStep(2);
+      return;
+    }
+
     const cryptoAmount = getCryptoAmountFromCurrency();
+    
+    // Validate calculated values
+    if (!Number.isFinite(cryptoAmount) || cryptoAmount <= 0) {
+      setErrors({ amount: "Invalid calculation. Please try again." });
+      setStep(2);
+      return;
+    }
+
     const currencyValue = parseFloat(sellData.amount);
     const fee = currencyValue * 0.015;
     const receivedValue = currencyValue - fee; // Amount after fee in preferred currency
@@ -222,45 +237,44 @@ export default function SellModal({ isOpen, onClose }: SellModalProps) {
     const usdValue = convertAmount(receivedValue, true); // true = convert FROM preferred TO USD
 
     startTransition(async () => {
-      try {
-        // Optimistic update: add the received amount to balance inside transition
-        setOptimisticBalance(availableBalance + usdValue);
+      // Optimistic update: add the received amount to balance (value in preferred currency)
+      // Note: This is approximate since balance might be in different currency
+      setOptimisticBalance(availableBalance + receivedValue);
 
-        const result = await sellCryptoAction(
-          sellData.asset,
-          cryptoAmount,
-          currentPrice
-        );
+      const result = await sellCryptoAction(
+        sellData.asset,
+        cryptoAmount,
+        currentPrice
+      );
 
-        if (result.success && result.data) {
-          // Store the received value (after fee) in USD
-          addTransaction({
-            type: "sell" as const,
-            asset: sellData.asset,
-            amount: cryptoAmount,
-            value: usdValue, // This is the received amount after fee in USD
-            timestamp: new Date().toLocaleString(),
-            status: "completed" as const,
-            fee: convertAmount(fee, true), // Store fee in USD
-            method: `${preferredCurrency} Balance`,
-            description: `Market sell order for ${sellData.asset}`,
-            rate: currentPrice,
-          });
-
-          setSuccessData({
-            asset: sellData.asset,
-            amount: cryptoAmount,
-            value: receivedValue, // Store in preferred currency for display
-          });
-          setStep(4);
-          await refetch(); // Refresh portfolio data
-        } else {
-          throw new Error(result.error || "Failed to process sale");
-        }
-      } catch (error) {
-        setErrors({
-          amount: error instanceof Error ? error.message : "Sale failed",
+      if (result.success && result.data) {
+        // Store the received value (after fee) in USD
+        addTransaction({
+          type: "sell" as const,
+          asset: sellData.asset,
+          amount: cryptoAmount,
+          value: usdValue, // This is the received amount after fee in USD
+          timestamp: new Date().toLocaleString(),
+          status: "completed" as const,
+          fee: convertAmount(fee, true), // Store fee in USD
+          method: `${preferredCurrency} Balance`,
+          description: `Market sell order for ${sellData.asset}`,
+          rate: currentPrice,
         });
+
+        setSuccessData({
+          asset: sellData.asset,
+          amount: cryptoAmount,
+          value: receivedValue, // Store in preferred currency for display
+        });
+        setStep(4);
+        await refetch(); // Refresh portfolio data
+      } else {
+        // Handle error inside transition - set state, don't throw
+        setErrors({
+          amount: result.error || "Failed to process sale",
+        });
+        setOptimisticBalance(availableBalance); // Reset optimistic update
         setStep(2);
       }
     });

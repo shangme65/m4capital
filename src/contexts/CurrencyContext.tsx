@@ -11,6 +11,7 @@ import {
   getExchangeRates,
   convertCurrency,
   formatCurrency as formatCurrencyUtil,
+  FALLBACK_EXCHANGE_RATES,
 } from "@/lib/currencies";
 
 interface CurrencyContextType {
@@ -42,9 +43,10 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [preferredCurrency, setPreferredCurrencyState] = useState<string>(
     getStoredCurrency
   );
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({
-    USD: 1,
-  });
+  // Initialize with fallback rates to ensure conversion works even before API loads
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(
+    FALLBACK_EXCHANGE_RATES
+  );
   const [isLoading, setIsLoading] = useState(false);
 
   const setPreferredCurrency = (currency: string) => {

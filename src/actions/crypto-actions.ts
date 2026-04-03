@@ -69,6 +69,11 @@ export async function buyCryptoAction(
       return { success: false, error: "Amount must be greater than 0" };
     }
 
+    // Validate for Infinity/NaN which can happen if price is 0
+    if (!Number.isFinite(amount) || !Number.isFinite(price)) {
+      return { success: false, error: "Invalid amount or price. Please try again." };
+    }
+
     // Calculate total cost in USD
     const totalCostUSD = amount * price;
 
@@ -294,6 +299,11 @@ export async function sellCryptoAction(
 
     if (amount <= 0) {
       return { success: false, error: "Amount must be greater than 0" };
+    }
+
+    // Validate for Infinity/NaN which can happen if price is 0
+    if (!Number.isFinite(amount) || !Number.isFinite(price)) {
+      return { success: false, error: "Invalid amount or price. Please try again." };
     }
 
     // Calculate total value in USD
