@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { useNotifications } from "@/contexts/NotificationContext";
@@ -120,6 +121,7 @@ export default function CryptoWallet({
   const [isCancelling, setIsCancelling] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
+  const router = useRouter();
   const { addNotification, addTransaction } = useNotifications();
   const { preferredCurrency, formatAmount, convertAmount } = useCurrency();
   const { resolvedTheme } = useTheme();
@@ -698,20 +700,13 @@ export default function CryptoWallet({
         </div>
       )}
 
-      {/* Action Buttons */}
-      <div className="flex space-x-2">
+      {/* Done Button */}
+      <div className="flex">
         <button
-          onClick={onBack}
-          className={`flex-1 py-1.5 px-2 rounded-lg text-sm font-medium transition-colors ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-300 hover:bg-gray-400 text-gray-800"}`}
+          onClick={() => router.push("/dashboard")}
+          className={`w-full py-2.5 px-4 rounded-lg text-sm font-semibold transition-colors ${cryptoConfig.bgColor} hover:opacity-90 text-white`}
         >
-          Back
-        </button>
-        <button
-          onClick={() => setShowCancelConfirm(true)}
-          disabled={isCancelling || paymentStatus === "COMPLETED"}
-          className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-500 py-1.5 px-2 rounded-lg text-sm font-medium transition-colors border border-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isCancelling ? "Cancelling..." : "Cancel Payment"}
+          Done
         </button>
       </div>
 
