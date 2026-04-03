@@ -26,9 +26,13 @@ export async function POST(req: NextRequest) {
     if (!process.env.CLOUDINARY_CLOUD_NAME || 
         !process.env.CLOUDINARY_API_KEY || 
         !process.env.CLOUDINARY_API_SECRET) {
-      console.error("Cloudinary not configured");
+      console.error("Cloudinary not configured. Missing env vars:", {
+        hasCloudName: !!process.env.CLOUDINARY_CLOUD_NAME,
+        hasApiKey: !!process.env.CLOUDINARY_API_KEY,
+        hasApiSecret: !!process.env.CLOUDINARY_API_SECRET,
+      });
       return NextResponse.json(
-        { error: "Upload service not configured" },
+        { error: "Upload service not configured. Check CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in environment variables." },
         { status: 500 }
       );
     }

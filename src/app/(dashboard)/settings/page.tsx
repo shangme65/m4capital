@@ -1495,7 +1495,15 @@ export default function SettingsPage() {
         uploadedUrls = await uploadMultipleToCloudinary(filesToUpload, 'kyc');
       } catch (uploadError: any) {
         console.error("CDN upload failed:", uploadError);
-        showError("Failed to upload documents. Please check your internet connection and try again.");
+        // Show more specific error message
+        const errorMsg = uploadError?.message || "Unknown error";
+        if (errorMsg.includes("not configured")) {
+          showError("Upload service is not configured. Please contact support.");
+        } else if (errorMsg.includes("signature") || errorMsg.includes("401")) {
+          showError("Upload authentication failed. Please try again or contact support.");
+        } else {
+          showError(`Failed to upload documents: ${errorMsg}`);
+        }
         return;
       }
 
