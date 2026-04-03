@@ -37,18 +37,27 @@ interface UploadOptions {
  * Get upload signature from our API
  */
 async function getUploadSignature(folder: string, publicId: string): Promise<UploadSignature> {
-  const response = await fetch("/api/upload/signature", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ folder, publicId }),
-  });
+  try {
+    const response = await fetch("/api/upload/signature", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ folder, publicId }),
+    });
 
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "Failed to get upload signature");
+    if (!response.ok) {
+      let errorMsg = `Signature API returned ${response.status}`;
+      try {
+        const error = await response.json();
+        errorMsg = error.error || errorMsg;
+      } catch {}
+      throw new Error(errorMsg);
+    }
+
+    return response.json();
+  } catch (error: any) {
+    console.error("getUploadSignature failed:", error);
+    throw new Error(error.message || "Failed to get upload signature");
   }
-
-  return response.json();
 }
 
 /**
