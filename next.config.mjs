@@ -162,6 +162,9 @@ const nextConfig = {
     },
   },
 
+  // Enable React Compiler for automatic memoization (moved from experimental in Next.js 16)
+  reactCompiler: true,
+
   // Experimental features - increase body size limit for file uploads
   experimental: {
     serverActions: {

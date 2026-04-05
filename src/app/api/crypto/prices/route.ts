@@ -250,10 +250,20 @@ export async function GET(request: NextRequest) {
         prices: cached.data,
         cached: true,
         timestamp: cached.timestamp,
+      }, {
+        headers: {
+          'Cache-Control': 'public, max-age=60',
+          'CDN-Cache-Control': 'max-age=60',
+        },
       });
     const prices = await fetchCryptoPrices(validSymbols);
     priceCache.set(cacheKey, { data: prices, timestamp: Date.now() });
-    return NextResponse.json({ prices, cached: false, timestamp: Date.now() });
+    return NextResponse.json({ prices, cached: false, timestamp: Date.now() }, {
+      headers: {
+        'Cache-Control': 'public, max-age=60',
+        'CDN-Cache-Control': 'max-age=60',
+      },
+    });
   } catch (error) {
     return NextResponse.json(
       {

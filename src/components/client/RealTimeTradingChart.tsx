@@ -339,6 +339,21 @@ export default function RealTimeTradingChart({
           },
         });
       }
+
+      // Override klinecharts crosshair cursor on all canvases
+      const canvases = chartContainer.querySelectorAll("canvas");
+      canvases.forEach((canvas: HTMLCanvasElement) => {
+        canvas.style.cursor = "default";
+      });
+      // Observe for dynamically added canvases
+      const observer = new MutationObserver(() => {
+        chartContainer.querySelectorAll("canvas").forEach((canvas: HTMLCanvasElement) => {
+          canvas.style.cursor = "default";
+        });
+      });
+      observer.observe(chartContainer, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] });
+      // Store observer for cleanup
+      (chartContainerRef.current as any).__cursorObserver = observer;
     }
 
     // Fetch historical data - use forex API for forex pairs, Binance for crypto
@@ -483,6 +498,11 @@ export default function RealTimeTradingChart({
       if (wsUnsubscribeRef.current) {
         wsUnsubscribeRef.current();
         wsUnsubscribeRef.current = null;
+      }
+
+      // Clean up cursor observer
+      if (chartContainerRef.current && (chartContainerRef.current as any).__cursorObserver) {
+        (chartContainerRef.current as any).__cursorObserver.disconnect();
       }
 
       if (chartRef.current && chartContainerRef.current) {
@@ -706,9 +726,10 @@ export default function RealTimeTradingChart({
       <div className="h-full w-full flex flex-col">
         <div
           ref={chartContainerRef}
-          className="flex-1 w-full overflow-visible"
+          className="flex-1 w-full overflow-visible [&_canvas]:!cursor-default"
           style={{
             minHeight: 0, // Allow flex shrinking
+            cursor: "default",
           }}
         />
       </div>

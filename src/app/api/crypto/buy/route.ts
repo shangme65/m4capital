@@ -7,8 +7,12 @@ import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
 import { sendWebPushToUser } from "@/lib/push-notifications";
 import { validateBody, schemas } from "@/lib/api-validation";
+import { rateLimit } from "@/lib/middleware/ratelimit";
 
 export const dynamic = "force-dynamic";
+
+// Rate limiter: 10 requests per minute for buy operations
+const buyRateLimiter = rateLimit({ windowMs: 60000, maxRequests: 10 });
 
 // Crypto name mapping
 const CRYPTO_NAMES: Record<string, string> = {
@@ -42,6 +46,12 @@ interface BuyCryptoRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const rateLimitResult = await buyRateLimiter(request);
+    if (rateLimitResult instanceof NextResponse) {
+      return rateLimitResult;
+    }
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.email) {

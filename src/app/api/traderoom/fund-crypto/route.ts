@@ -1,3 +1,19 @@
+/**
+ * ⚠️ DEPRECATED - DO NOT USE
+ * 
+ * This endpoint is deprecated and should NOT be used.
+ * 
+ * REASON: The traderoom should ONLY accept internal transfers from the user's 
+ * existing portfolio balance (fiat or crypto), NOT external crypto deposits via NowPayments.
+ * 
+ * CORRECT FLOW:
+ * - Users deposit crypto to their main portfolio via NowPayments (dashboard)
+ * - Users transfer crypto from portfolio to traderoom (internal transfer)
+ * - Use fundTraderoomCryptoAction() server action for internal crypto transfers
+ * 
+ * This file is kept for reference only and will be removed in a future cleanup.
+ */
+
 import { generateId } from "@/lib/generate-id";
 import { getCurrencySymbol } from "@/lib/currencies";
 import { SUPPORTED_CRYPTOS } from "@/lib/crypto-constants";
@@ -16,136 +32,24 @@ export const dynamic = "force-dynamic";
 
 /**
  * POST /api/traderoom/fund-crypto
- * Create a cryptocurrency deposit payment for traderoom balance via NOWPayments
+ * ⚠️ DEPRECATED - Return error explaining the correct flow
  */
 export async function POST(request: NextRequest) {
-  // Apply rate limiting
-  const rateLimitResult = await rateLimiters.standard(request);
-  if (rateLimitResult instanceof NextResponse) {
-    return rateLimitResult;
-  }
-
-  try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user?.email) {
-      return createErrorResponse(
-        "Unauthorized",
-        "Authentication required",
-        undefined,
-        401
-      );
-    }
-
-    const body = await request.json();
-    const { amount, currency = "USD", cryptoCurrency = "btc" } = body;
-
-    if (!amount || amount <= 0) {
-      return createErrorResponse(
-        "Invalid input",
-        "Amount must be greater than 0",
-        undefined,
-        400
-      );
-    }
-
-    // Validate cryptocurrency
-    const cryptoKey = cryptoCurrency.toLowerCase();
-    const cryptoInfo = SUPPORTED_CRYPTOS[cryptoKey];
-
-    if (!cryptoInfo) {
-      return createErrorResponse(
-        "Invalid cryptocurrency",
-        `Cryptocurrency ${cryptoCurrency} is not supported. Supported: ${Object.keys(
-          SUPPORTED_CRYPTOS
-        ).join(", ")}`,
-        undefined,
-        400
-      );
-    }
-
-    // Find user with portfolio
-    const user = await prisma.user.findUnique({
-      where: { email: session.user?.email! },
-      include: { Portfolio: true },
-    });
-
-    if (!user) {
-      return createErrorResponse("Not found", "User not found", undefined, 404);
-    }
-
-    // Get or create portfolio
-    let portfolio = user.Portfolio;
-    if (!portfolio) {
-      portfolio = await prisma.portfolio.create({
-        data: {
-          id: generateId(),
-          userId: user.id,
-          balance: 0,
-          traderoomBalance: 0,
-          assets: [],
-        },
-      });
-    }
-
-    // Try payment API first, fall back to invoice API
-    try {
-      return await createTraderoomCryptoPayment(
-        user,
-        portfolio,
-        amount,
-        currency,
-        cryptoInfo.code,
-        cryptoInfo.name
-      );
-    } catch (error: any) {
-      console.log(
-        "Payment API failed, falling back to invoice API:",
-        error?.message || error
-      );
-      try {
-        return await createTraderoomCryptoInvoice(
-          user,
-          portfolio,
-          amount,
-          currency,
-          cryptoInfo.code,
-          cryptoInfo.name
-        );
-      } catch (invoiceError: any) {
-        console.error(
-          "Invoice API also failed:",
-          invoiceError?.message || invoiceError
-        );
-        const errorMessage =
-          invoiceError?.message ||
-          error?.message ||
-          "Payment provider unavailable";
-        return createErrorResponse(
-          "Payment creation failed",
-          errorMessage.includes("API key")
-            ? "Payment service is not configured. Please contact support."
-            : errorMessage,
-          invoiceError,
-          500
-        );
-      }
-    }
-  } catch (error) {
-    console.error("Create traderoom crypto payment error:", error);
-    return createErrorResponse(
-      "Internal server error",
-      error instanceof Error ? error.message : "Failed to create payment",
-      error,
-      500
-    );
-  }
+  return createErrorResponse(
+    "Endpoint deprecated",
+    "This endpoint is no longer supported. Please transfer crypto from your main portfolio instead. Go to Dashboard → Transfer crypto to Traderoom.",
+    undefined,
+    410 // 410 Gone - indicates resource is permanently unavailable
+  );
 }
 
+// ===== DEPRECATED CODE BELOW - KEPT FOR REFERENCE =====
+
 /**
- * Create payment using standard NOWPayments payment API for traderoom
+ * OLD DEPRECATED IMPLEMENTATION
+ * DO NOT USE - Creates external crypto deposits which violates the internal-only transfer model
  */
-async function createTraderoomCryptoPayment(
+async function DEPRECATED_createTraderoomCryptoPayment(
   user: any,
   portfolio: any,
   amount: number,

@@ -109,6 +109,15 @@ html::-webkit-scrollbar {
   box-sizing: border-box;
 }
 
+/* Override klinecharts crosshair cursor to default pointer */
+.klinecharts-pro canvas,
+[class*="klinecharts"] canvas,
+div[id^="klinecharts"] canvas,
+canvas[style*="cursor: crosshair"],
+canvas[style*="cursor:crosshair"] {
+  cursor: default !important;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

@@ -267,7 +267,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(responseData, {
       headers: {
-        'Cache-Control': 'no-store',
+        'Cache-Control': 'private, max-age=30',
       },
     });
   } catch (error) {

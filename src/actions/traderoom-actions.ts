@@ -377,6 +377,128 @@ export async function withdrawFromTraderoomAction(
 }
 
 /**
+ * Withdraw from traderoom to crypto - Convert USD from traderoom into crypto asset
+ */
+export async function withdrawToCryptoAction(params: {
+  symbol: string;
+  amountUSD: number;
+  price: number;
+}): Promise<ActionResult> {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+      return { success: false, error: "Authentication required" };
+    }
+
+    const { symbol, amountUSD, price } = params;
+
+    if (!symbol || !amountUSD || amountUSD <= 0 || !price || price <= 0) {
+      return { success: false, error: "Invalid parameters" };
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      include: { Portfolio: true },
+    });
+
+    if (!user || !user.Portfolio) {
+      return { success: false, error: "Portfolio not found" };
+    }
+
+    const portfolio = user.Portfolio;
+    const currentTraderoomBalance = Number(portfolio.traderoomBalance || 0);
+
+    if (currentTraderoomBalance < amountUSD) {
+      return {
+        success: false,
+        error: `Insufficient traderoom balance. You have $${currentTraderoomBalance.toFixed(2)} available.`,
+      };
+    }
+
+    // Calculate crypto amount from USD
+    const cryptoAmount = amountUSD / price;
+    const assets = (portfolio.assets as any[]) || [];
+    const assetIndex = assets.findIndex(
+      (a) => a.symbol.toUpperCase() === symbol.toUpperCase()
+    );
+
+    // Add crypto to portfolio assets
+    if (assetIndex >= 0) {
+      assets[assetIndex].amount = parseFloat(assets[assetIndex].amount.toString()) + cryptoAmount;
+    } else {
+      assets.push({ symbol: symbol.toUpperCase(), amount: cryptoAmount });
+    }
+
+    // Update portfolio - deduct traderoom, add crypto asset
+    const updatedPortfolio = await prisma.portfolio.update({
+      where: { id: portfolio.id },
+      data: {
+        assets,
+        traderoomBalance: currentTraderoomBalance - amountUSD,
+      },
+    });
+
+    // Create withdrawal record
+    await prisma.withdrawal.create({
+      data: {
+        id: generateId(),
+        portfolioId: portfolio.id,
+        userId: user.id,
+        amount: amountUSD,
+        currency: "USD",
+        status: "COMPLETED",
+        method: "Traderoom Crypto Withdrawal",
+        type: "TRADEROOM_CRYPTO_WITHDRAWAL",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        metadata: {
+          symbol,
+          cryptoAmount,
+          priceUSD: price,
+          valueUSD: amountUSD,
+        },
+      },
+    });
+
+    // Create notification
+    await prisma.notification.create({
+      data: {
+        id: generateId(),
+        userId: user.id,
+        type: "TRANSACTION",
+        title: "Traderoom Crypto Withdrawal",
+        message: `Withdrew $${amountUSD.toFixed(2)} as ${cryptoAmount.toFixed(8)} ${symbol} from Traderoom`,
+        amount: amountUSD,
+        asset: symbol,
+      },
+    });
+
+    revalidatePath("/traderoom");
+    revalidatePath("/dashboard");
+
+    return {
+      success: true,
+      data: {
+        symbol,
+        cryptoAmount,
+        valueUSD: amountUSD,
+        newTraderoomBalance: Number(updatedPortfolio.traderoomBalance),
+      },
+    };
+  } catch (error) {
+    console.error("Withdraw to crypto action error:", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to withdraw to crypto",
+    };
+  }
+}
+
+/**
  * Record trade action - Record a trade in the traderoom
  */
 export async function recordTradeAction(params: {

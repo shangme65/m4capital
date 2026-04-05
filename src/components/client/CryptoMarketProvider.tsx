@@ -6,6 +6,8 @@ import {
   useEffect,
   useState,
   useRef,
+  useCallback,
+  useMemo,
   type ReactNode,
 } from "react";
 
@@ -182,7 +184,7 @@ export function CryptoMarketProvider({
   });
 
   // REST API for crypto prices (using our internal API with CoinMarketCap)
-  const fetchCryptoPricesREST = async () => {
+  const fetchCryptoPricesREST = useCallback(async () => {
     try {
       console.log("🔄 Fetching crypto prices via CoinMarketCap API...");
 
@@ -203,36 +205,32 @@ export function CryptoMarketProvider({
       }
 
       const now = Date.now();
-      let processedCount = 0;
-
+      
+      // Batch all price updates into single state update
+      const newCryptoPrices: Record<string, CryptoPrice> = {};
+      const newMarketTicks: Record<string, MarketTick> = {};
+      
       // Process each price from our API
       data.prices.forEach((cryptoPrice: CryptoPrice) => {
-        setCryptoPrices((prev) => ({
-          ...prev,
-          [cryptoPrice.symbol]: cryptoPrice,
-        }));
-
-        // Also update market ticks
-        const marketTick = convertToMarketTick(cryptoPrice);
-        setMarketTicks((prev) => ({
-          ...prev,
-          [cryptoPrice.symbol]: marketTick,
-        }));
-
+        newCryptoPrices[cryptoPrice.symbol] = cryptoPrice;
+        newMarketTicks[cryptoPrice.symbol] = convertToMarketTick(cryptoPrice);
+        
         // Notify subscribers
         subscriptionsRef.current.forEach((subscription) => {
           if (subscription.symbols.includes(cryptoPrice.symbol)) {
             subscription.onUpdate(cryptoPrice);
           }
         });
-
-        processedCount++;
       });
 
+      // Single state update for all prices
+      setCryptoPrices((prev) => ({ ...prev, ...newCryptoPrices }));
+      setMarketTicks((prev) => ({ ...prev, ...newMarketTicks }));
+      
       setLastUpdate(now);
       setIsConnected(true);
       console.log(
-        `✅ Crypto prices fetched via API (${processedCount} symbols, cached: ${data.cached})`
+        `✅ Crypto prices fetched via API (${data.prices.length} symbols, cached: ${data.cached})`
       );
       setError(null);
     } catch (error) {
@@ -240,10 +238,10 @@ export function CryptoMarketProvider({
       setError("Failed to fetch crypto prices");
       setIsConnected(false);
     }
-  };
+  }, []);
 
   // Fetch crypto prices (REST API method)
-  const fetchCryptoPrices = async (symbols?: string[]) => {
+  const fetchCryptoPrices = useCallback(async (symbols?: string[]) => {
     try {
       setError(null);
 
@@ -306,7 +304,7 @@ export function CryptoMarketProvider({
         console.error("Failed to fetch crypto prices:", errorMessage);
       }
     }
-  };
+  }, []);
 
   // Initialize crypto price fetching on mount
   useEffect(() => {
@@ -330,7 +328,7 @@ export function CryptoMarketProvider({
   }, [autoStart]);
 
   // Subscription management
-  const subscribeToCrypto = (
+  const subscribeToCrypto = useCallback((
     symbols: string[],
     onUpdate: (price: CryptoPrice) => void
   ): string => {
@@ -356,32 +354,32 @@ export function CryptoMarketProvider({
       console.log(`Subscribed to crypto prices: ${symbols.join(", ")}`);
     }
     return subscriptionId;
-  };
+  }, [cryptoPrices]);
 
-  const unsubscribeFromCrypto = (subscriptionId: string) => {
+  const unsubscribeFromCrypto = useCallback((subscriptionId: string) => {
     subscriptionsRef.current.delete(subscriptionId);
 
     // Only log in development
     if (process.env.NODE_ENV === "development") {
       console.log(`Unsubscribed from crypto prices: ${subscriptionId}`);
     }
-  };
+  }, []);
 
   // Get individual prices
-  const getCryptoPrice = (symbol: string): CryptoPrice | null => {
+  const getCryptoPrice = useCallback((symbol: string): CryptoPrice | null => {
     return cryptoPrices[symbol] || null;
-  };
+  }, [cryptoPrices]);
 
-  const getMarketTick = (symbol: string): MarketTick | null => {
+  const getMarketTick = useCallback((symbol: string): MarketTick | null => {
     return marketTicks[symbol] || null;
-  };
+  }, [marketTicks]);
 
   // Manual refresh (uses REST API as fallback)
-  const refreshPrices = async () => {
+  const refreshPrices = useCallback(async () => {
     await fetchCryptoPrices();
-  };
+  }, [fetchCryptoPrices]);
 
-  const contextValue: CryptoMarketContextType = {
+  const contextValue: CryptoMarketContextType = useMemo(() => ({
     cryptoPrices,
     getCryptoPrice,
     marketTicks,
@@ -393,7 +391,18 @@ export function CryptoMarketProvider({
     lastUpdate,
     error,
     supportedCryptos,
-  };
+  }), [
+    cryptoPrices,
+    getCryptoPrice,
+    marketTicks,
+    getMarketTick,
+    subscribeToCrypto,
+    unsubscribeFromCrypto,
+    refreshPrices,
+    isConnected,
+    lastUpdate,
+    error,
+  ]);
 
   return (
     <CryptoMarketContext.Provider value={contextValue}>

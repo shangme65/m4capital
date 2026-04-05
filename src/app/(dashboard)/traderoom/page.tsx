@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense, useTransition, useRef, useCallback } from "react";
+import { useEffect, useState, Suspense, useTransition, useRef, useCallback, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -75,6 +75,7 @@ import {
   fundTraderoomAction,
   fundTraderoomCryptoAction,
   withdrawFromTraderoomAction,
+  withdrawToCryptoAction,
   settleBinaryTradeAction,
   deductTradeAmountAction,
 } from "@/actions/traderoom-actions";
@@ -221,6 +222,8 @@ function TradingInterface() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawError, setWithdrawError] = useState("");
   const [withdrawSuccess, setWithdrawSuccess] = useState("");
+  const [withdrawMethod, setWithdrawMethod] = useState<"fiat" | "crypto">("fiat");
+  const [withdrawCryptoSymbol, setWithdrawCryptoSymbol] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState<
     "real" | "practice"
   >("real"); // Default to real account
@@ -231,10 +234,11 @@ function TradingInterface() {
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundMethod, setFundMethod] = useState<"fiat" | "crypto">("fiat");
   const [fundAmount, setFundAmount] = useState("");
-  const [selectedCrypto, setSelectedCrypto] = useState("btc");
+  const [selectedCrypto, setSelectedCrypto] = useState("");
+  const [selectedCryptoAmount, setSelectedCryptoAmount] = useState("");
   const [isFunding, setIsFunding] = useState(false);
   const [fundingError, setFundingError] = useState("");
-  const [cryptoPaymentInfo, setCryptoPaymentInfo] = useState<any>(null);
+  const [cryptoAssets, setCryptoAssets] = useState<Array<{ symbol: string; amount: number }>>([]);
   const [fundingSuccessMessage, setFundingSuccessMessage] = useState<string | null>(null);
   const [practiceAccountBalance, setPracticeAccountBalance] = useState(10000.0); // Practice account default balance
   const [showPracticeTopUpModal, setShowPracticeTopUpModal] = useState(false);
@@ -271,6 +275,10 @@ function TradingInterface() {
   
   // Last finished trade - stays visible until new trade is placed
   const [lastFinishedTrade, setLastFinishedTrade] = useState<ActiveTrade | null>(null);
+  // Session accumulated results across all trades
+  const [sessionTotalResult, setSessionTotalResult] = useState(0);
+  const [sessionTotalInvested, setSessionTotalInvested] = useState(0);
+  const [sessionTradeCount, setSessionTradeCount] = useState(0);
 
   // Candle time period & chart timeframe state
   const [candleInterval, setCandleInterval] = useState("30s");
@@ -338,7 +346,7 @@ function TradingInterface() {
     return forexRates[pair] || null;
   };
 
-  const symbols = [
+  const symbols = useMemo(() => [
     // ===== CURRENCY INDICES (NEW) =====
     { symbol: "AUD Index", displayName: "Australian Dollar In.", price: "71.40563", change: "+0.123", percentage: "+0.17%", flag: "AUD", category: "Index" },
     { symbol: "GBP Index", displayName: "Pound Index", price: "134.8180", change: "+0.234", percentage: "+0.17%", flag: "GBP", category: "Index" },
@@ -494,7 +502,7 @@ function TradingInterface() {
     { symbol: "Natural Gas", price: "2.032750", change: "-0.0234", percentage: "-1.14%", flag: "⛽", category: "Stocks" },
     { symbol: "UKOUSD", displayName: "UK Crude Oil", price: "82.83250", change: "+0.678", percentage: "+0.82%", flag: "🛢️", category: "Stocks" },
     { symbol: "USOUSD", displayName: "US Crude Oil", price: "92.78519", change: "+0.789", percentage: "+0.86%", flag: "🛢️", category: "Stocks" },
-  ];
+  ], [cryptoPrices, forexRates]);
 
   const quickAmounts = [1, 5, 10, 25, 50, 100];
 
@@ -621,7 +629,7 @@ function TradingInterface() {
       }
     }, 1000);
 
-    // Fetch user balance
+    // Fetch user balance and crypto assets
     const fetchBalance = async () => {
       try {
         const response = await fetch("/api/user/balance");
@@ -631,8 +639,9 @@ function TradingInterface() {
           setRealAccountBalance(data.realBalance);
           setBalanceCurrency(userBalanceCurrency);
           setTraderoomBalance(data.traderoomBalance || 0);
+          setCryptoAssets(data.cryptoAssets || []);
           console.log(
-            `✅ User balance loaded: Real=${data.realBalance} ${userBalanceCurrency}, Traderoom=$${data.traderoomBalance}, Practice=$${data.practiceBalance}`
+            `✅ User balance loaded: Real=${data.realBalance} ${userBalanceCurrency}, Traderoom=$${data.traderoomBalance}, Practice=$${data.practiceBalance}, Crypto Assets=${data.cryptoAssets?.length || 0}`
           );
         }
       } catch (error) {
@@ -782,11 +791,33 @@ function TradingInterface() {
     }
   };
 
-  // Handle funding via crypto
+  // Handle funding via crypto (internal transfer from portfolio)
   const handleFundWithCrypto = async () => {
-    const amount = parseFloat(fundAmount);
-    if (isNaN(amount) || amount < 10) {
-      setFundingError("Minimum deposit is $10");
+    if (!selectedCrypto) {
+      setFundingError("Please select a cryptocurrency");
+      return;
+    }
+
+    const amount = parseFloat(selectedCryptoAmount);
+    if (isNaN(amount) || amount <= 0) {
+      setFundingError("Please enter a valid amount");
+      return;
+    }
+
+    // Find the selected crypto in user's assets
+    const cryptoAsset = cryptoAssets.find(
+      (asset) => asset.symbol.toUpperCase() === selectedCrypto.toUpperCase()
+    );
+
+    if (!cryptoAsset) {
+      setFundingError(`You don't have any ${selectedCrypto}`);
+      return;
+    }
+
+    if (amount > cryptoAsset.amount) {
+      setFundingError(
+        `Insufficient ${selectedCrypto} balance. You have ${cryptoAsset.amount} ${selectedCrypto}`
+      );
       return;
     }
 
@@ -794,22 +825,43 @@ function TradingInterface() {
     setFundingError("");
 
     try {
-      const response = await fetch("/api/traderoom/fund-crypto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount,
-          currency: "USD",
-          cryptoCurrency: selectedCrypto,
-        }),
+      // Get current crypto price from market
+      const cryptoPriceData = getCryptoPrice(selectedCrypto);
+      const currentPrice = cryptoPriceData?.price || 0;
+
+      if (currentPrice <= 0) {
+        setFundingError("Unable to get current price. Please try again.");
+        setIsFunding(false);
+        return;
+      }
+
+      // Transfer crypto to traderoom using server action
+      const result = await fundTraderoomCryptoAction({
+        symbol: selectedCrypto,
+        amount,
+        price: currentPrice,
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.data?.deposit) {
-        setCryptoPaymentInfo(data.data.deposit);
+      if (result.success && result.data) {
+        // Update balances
+        setTraderoomBalance(result.data.newTraderoomBalance);
+        
+        // Refresh balance and crypto assets
+        const response = await fetch("/api/user/balance");
+        if (response.ok) {
+          const data = await response.json();
+          setCryptoAssets(data.cryptoAssets || []);
+        }
+        
+        setFundAmount("");
+        setSelectedCryptoAmount("");
+        setSelectedCrypto("");
+        setShowFundModal(false);
+        setFundingSuccessMessage(
+          `Successfully transferred ${amount} ${selectedCrypto} to your Traderoom balance!`
+        );
       } else {
-        setFundingError(data.message || "Failed to create payment");
+        setFundingError(result.error || "Failed to transfer crypto");
       }
     } catch (error) {
       setFundingError("Network error. Please try again.");
@@ -817,15 +869,6 @@ function TradingInterface() {
       setIsFunding(false);
     }
   };
-
-  const supportedCryptos = [
-    { code: "btc", name: "Bitcoin", icon: "₿" },
-    { code: "eth", name: "Ethereum", icon: "⟠" },
-    { code: "usdt", name: "USDT", icon: "₮" },
-    { code: "usdc", name: "USDC", icon: "$" },
-    { code: "ltc", name: "Litecoin", icon: "Ł" },
-    { code: "sol", name: "Solana", icon: "◎" },
-  ];
 
   const executeTrade = async (direction: "higher" | "lower") => {
     if (isExecutingTrade) return;
@@ -880,9 +923,6 @@ function TradingInterface() {
     };
 
     setActiveTrades((prev) => [...prev, newTrade]);
-    
-    // Clear last finished trade when new trade is placed
-    setLastFinishedTrade(null);
     
     // Clear lastResult from the current tab
     setOpenTabs(prev => prev.map(tab => 
@@ -954,8 +994,13 @@ function TradingInterface() {
               result: won ? payout - trade.amount : -trade.amount,
             };
             
-            // Save as last finished trade (for display after removal)
+            // Save as last finished trade (for positioning the popup)
             setLastFinishedTrade(finishedTrade);
+            
+            // Accumulate session totals
+            setSessionTotalResult(prev => prev + (finishedTrade.result || 0));
+            setSessionTotalInvested(prev => prev + trade.amount);
+            setSessionTradeCount(prev => prev + 1);
             
             // Save result to the corresponding tab
             setOpenTabs(prev => prev.map(tab => 
@@ -1127,7 +1172,7 @@ function TradingInterface() {
       >
         {/* M4Capital Header */}
         <header
-          className="flex-shrink-0"
+          className="flex-shrink-0 relative z-[100]"
           style={{
             backgroundColor: "#0a1020",
             borderBottom: "1px solid #1a2d45",
@@ -1590,11 +1635,11 @@ function TradingInterface() {
                   <>
                     {/* Backdrop for click outside */}
                     <div 
-                      className="fixed inset-0 z-40" 
+                      className="fixed inset-0 z-[150]" 
                       onClick={() => setIsBalanceDropdownOpen(false)}
                     />
                     <div
-                      className="fixed z-50 flex overflow-hidden rounded-l-md shadow-2xl"
+                      className="fixed z-[200] flex overflow-hidden rounded-l-md shadow-2xl"
                       style={{
                         backgroundColor: "#0a1020",
                         border: "1px solid #1a2d45",
@@ -1639,7 +1684,7 @@ function TradingInterface() {
                       {/* Right Panel - Account Selection */}
                       <div className="flex flex-col">
                         {/* Real Account Row */}
-                        <button
+                        <div
                           onClick={() => {
                             if (!isLoggedIn) {
                               alert("Please log in to access your real account");
@@ -1649,7 +1694,6 @@ function TradingInterface() {
                             setIsBalanceDropdownOpen(false);
                             localStorage.setItem("selectedAccountType", "real");
                           }}
-                          disabled={!isLoggedIn}
                           className={`flex items-center justify-between px-4 py-3 w-[280px] transition-all ${
                             selectedAccountType === "real" ? "bg-white/5" : "hover:bg-white/5"
                           } ${!isLoggedIn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
@@ -1681,10 +1725,10 @@ function TradingInterface() {
                               Deposit
                             </button>
                           </div>
-                        </button>
+                        </div>
 
                         {/* Practice Account Row */}
-                        <button
+                        <div
                           onClick={() => {
                             setSelectedAccountType("practice");
                             setIsBalanceDropdownOpen(false);
@@ -1709,8 +1753,8 @@ function TradingInterface() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setShowPracticeTopUpModal(true);
                                 setIsBalanceDropdownOpen(false);
+                                setShowPracticeTopUpModal(true);
                               }}
                               className="w-6 h-6 rounded flex items-center justify-center transition-all hover:opacity-80"
                               style={{ backgroundColor: "#1a2d45" }}
@@ -1722,8 +1766,8 @@ function TradingInterface() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setShowPracticeTopUpModal(true);
                                 setIsBalanceDropdownOpen(false);
+                                setShowPracticeTopUpModal(true);
                               }}
                               className="px-4 py-1.5 rounded text-xs font-medium transition-all hover:opacity-80"
                               style={{ backgroundColor: "#1a2d45", color: "#ffffff" }}
@@ -1731,7 +1775,7 @@ function TradingInterface() {
                               Top Up
                             </button>
                           </div>
-                        </button>
+                        </div>
                       </div>
                     </div>
                   </>
@@ -1740,8 +1784,10 @@ function TradingInterface() {
               
               {/* Deposit Button - IQ Option style green outline with $ icon */}
               <button
-                onClick={() => setShowFundModal(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-semibold transition-all duration-200 hover:bg-[#5ddf38]/10"
+                onClick={() => {
+                  setShowFundModal(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-semibold transition-all duration-200 hover:bg-[#5ddf38]/10 relative z-[110]"
                 style={{ 
                   backgroundColor: "transparent", 
                   color: "#5ddf38",
@@ -4002,7 +4048,7 @@ function TradingInterface() {
               className="flex-1 relative overflow-visible"
               style={{
                 backgroundColor: "#070c15",
-                zIndex: 100,
+                zIndex: 10,
                 backgroundImage:
                   'url("/traderoom/backgrounds/worldmapbackground.svg")',
                 backgroundSize: "80%",
@@ -4376,132 +4422,119 @@ function TradingInterface() {
                 );
               })()}
 
-              <ChartGrid
-                key={selectedSymbol}
-                gridType={selectedChartGrid}
-                defaultSymbol={selectedSymbol}
-                availableSymbols={[
-                  "BTC",
-                  "ETH",
-                  "BNB",
-                  "SOL",
-                  "ADA",
-                  "DOGE",
-                  "XRP",
-                  "DOT",
-                  "MATIC",
-                  "LINK",
-                ]}
-                onPriceYPosition={setPriceYPosition}
-                onLivePriceUpdate={setCurrentPrice}
-                onPriceToYConverter={handlePriceToYConverter}
-                onTimeToXConverter={handleTimeToXConverter}
-                expirationSeconds={expirationSeconds}
-                expirationCountdown={countdown}
-                hasActiveTrades={activeTrades.filter(t => t.status === "active").length > 0}
-                candleInterval={candleInterval}
-                activeTradeExpirationTime={
-                  (() => {
-                    const active = activeTrades.filter(t => t.status === "active");
-                    if (active.length === 0) return undefined;
-                    return active.reduce((earliest, t) => 
-                      t.expirationTime < earliest.expirationTime ? t : earliest
-                    ).expirationTime;
-                  })()
-                }
-                activeTradeEntryTime={
-                  (() => {
-                    const active = activeTrades.filter(t => t.status === "active");
-                    if (active.length === 0) return undefined;
-                    return active.reduce((earliest, t) => 
-                      t.expirationTime < earliest.expirationTime ? t : earliest
-                    ).entryTime;
-                  })()
-                }
-              />
+              {/* Candlestick Chart Container - z-index 2 */}
+              <div className="relative z-[2] h-full w-full">
+                <ChartGrid
+                  key={selectedSymbol}
+                  gridType={selectedChartGrid}
+                  defaultSymbol={selectedSymbol}
+                  availableSymbols={[
+                    "BTC",
+                    "ETH",
+                    "BNB",
+                    "SOL",
+                    "ADA",
+                    "DOGE",
+                    "XRP",
+                    "DOT",
+                    "MATIC",
+                    "LINK",
+                  ]}
+                  onPriceYPosition={setPriceYPosition}
+                  onLivePriceUpdate={setCurrentPrice}
+                  onPriceToYConverter={handlePriceToYConverter}
+                  onTimeToXConverter={handleTimeToXConverter}
+                  expirationSeconds={expirationSeconds}
+                  expirationCountdown={countdown}
+                  hasActiveTrades={activeTrades.filter(t => t.status === "active").length > 0}
+                  candleInterval={candleInterval}
+                  activeTradeExpirationTime={
+                    (() => {
+                      const active = activeTrades.filter(t => t.status === "active");
+                      if (active.length === 0) return undefined;
+                      return active.reduce((earliest, t) => 
+                        t.expirationTime < earliest.expirationTime ? t : earliest
+                      ).expirationTime;
+                    })()
+                  }
+                  activeTradeEntryTime={
+                    (() => {
+                      const active = activeTrades.filter(t => t.status === "active");
+                      if (active.length === 0) return undefined;
+                      return active.reduce((earliest, t) => 
+                        t.expirationTime < earliest.expirationTime ? t : earliest
+                      ).entryTime;
+                    })()
+                  }
+                />
+              </div>
 
-
-
-              {/* IQ Option Style Strike Line Overlay - Shows when hovering HIGHER/LOWER */}
+              {/* Hover Color Tint Overlay - subtle color wash when hovering HIGHER/LOWER */}
               <AnimatePresence>
                 {hoveredButton && (
-                  <motion.div
-                    key={hoveredButton}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute inset-0 z-25 pointer-events-none"
-                  >
-                    {/* Strike Line with Glow - Full width like IQ Option */}
-                    <div
-                      className="absolute left-0 right-0"
-                      style={{
-                        top: `${priceYPosition}%`,
-                        height: "2px",
-                        background: hoveredButton === "higher" 
-                          ? "#22c55e"
-                          : "#ef4444",
-                        boxShadow: hoveredButton === "higher"
-                          ? "0 0 10px rgba(34, 197, 94, 0.5), 0 0 20px rgba(34, 197, 94, 0.3)"
-                          : "0 0 10px rgba(239, 68, 68, 0.5), 0 0 20px rgba(239, 68, 68, 0.3)",
-                      }}
-                    />
-
-                    {/* Countdown Timer on Line */}
-                    <div
-                      className="absolute flex items-center justify-center"
-                      style={{
-                        top: `calc(${priceYPosition}% - 12px)`,
-                        left: "55%",
-                        transform: "translateX(-50%)",
-                      }}
-                    >
-                      <span className="text-white text-xs font-mono bg-black/50 px-1.5 py-0.5 rounded">
-                        {String(Math.floor(countdown / 60)).padStart(2, "0")}:
-                        {String(countdown % 60).padStart(2, "0")}
-                      </span>
-                    </div>
-
-                    {/* Direction Arrow Indicator */}
+                  <>
                     <motion.div
-                      className="absolute"
+                      key={hoveredButton}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute left-0 right-0 pointer-events-none"
                       style={{
-                        top: hoveredButton === "higher" ? `calc(${priceYPosition}% - 20px)` : `calc(${priceYPosition}% + 5px)`,
-                        left: "58%",
-                      }}
-                      animate={{
-                        y: hoveredButton === "higher" ? [-3, 0, -3] : [3, 0, 3],
-                      }}
-                      transition={{
-                        duration: 0.8,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                    >
-                      {hoveredButton === "higher" ? (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#22c55e">
-                          <path d="M12 4l-8 8h6v8h4v-8h6z" />
-                        </svg>
-                      ) : (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#ef4444">
-                          <path d="M12 20l8-8h-6V4h-4v8H4z" />
-                        </svg>
-                      )}
-                    </motion.div>
-
-                    {/* Semi-transparent fill area below/above line */}
-                    <div
-                      className="absolute left-0 right-0"
-                      style={{
-                        top: hoveredButton === "higher" ? "0" : `${priceYPosition}%`,
-                        bottom: hoveredButton === "higher" ? `${100 - priceYPosition}%` : "0",
-                        background: hoveredButton === "higher"
-                          ? "linear-gradient(to bottom, transparent 0%, rgba(34, 197, 94, 0.1) 100%)"
-                          : "linear-gradient(to top, transparent 0%, rgba(239, 68, 68, 0.1) 100%)",
+                        zIndex: 200,
+                        ...(hoveredButton === "higher"
+                          ? {
+                              top: 0,
+                              bottom: `${100 - priceYPosition}%`,
+                              background: `linear-gradient(to top, rgba(34, 197, 94, 0.19) 0%, rgba(34, 197, 94, 0.09) 50%, rgba(34, 197, 94, 0.02) 80%, transparent 100%)`,
+                            }
+                          : {
+                              top: `${priceYPosition}%`,
+                              bottom: 0,
+                              background: `linear-gradient(to bottom, rgba(239, 68, 68, 0.19) 0%, rgba(239, 68, 68, 0.09) 50%, rgba(239, 68, 68, 0.02) 80%, transparent 100%)`,
+                            }),
                       }}
                     />
-                  </motion.div>
+                    {/* Direction Arrow */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.5 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.5 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute pointer-events-none"
+                      style={{
+                        zIndex: 201,
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        top: hoveredButton === "higher"
+                          ? `calc(${priceYPosition}% - 28px)`
+                          : `calc(${priceYPosition}% + 6px)`,
+                      }}
+                    >
+                      <div
+                        style={{
+                          transform: hoveredButton === "higher"
+                            ? "rotate(-45deg)"
+                            : "rotate(135deg)",
+                          filter: hoveredButton === "higher"
+                            ? "drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))"
+                            : "drop-shadow(0 0 6px rgba(239, 68, 68, 0.6))",
+                        }}
+                      >
+                        <svg
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          {/* Colored shaft - shortened from tail end */}
+                          <line x1="7" y1="12" x2="16" y2="12" stroke={hoveredButton === "higher" ? "#22c55e" : "#ef4444"} strokeWidth="2.5" strokeLinecap="round" />
+                          {/* Filled colored pointer head */}
+                          <polygon points="14,4 23,12 14,20" fill={hoveredButton === "higher" ? "#22c55e" : "#ef4444"} stroke={hoveredButton === "higher" ? "#22c55e" : "#ef4444"} strokeWidth="1" strokeLinejoin="round" />
+                        </svg>
+                      </div>
+                    </motion.div>
+                  </>
                 )}
               </AnimatePresence>
 
@@ -4510,19 +4543,29 @@ function TradingInterface() {
                 .filter((t) => t.symbol === selectedSymbol && t.status === "active")
                 .map((trade) => {
                   const dynamicY = priceToYRef.current ? priceToYRef.current(trade.entryPrice) : trade.entryYPosition;
+                  const dynamicX = timeToXRef.current ? timeToXRef.current(trade.entryTime) : null;
                   const isGreen = trade.direction === "higher";
                   return (
-                  <div key={`entry-line-${trade.id}`} className="absolute left-0 right-0 z-10 pointer-events-none" style={{ top: `${dynamicY}%` }}>
+                  <div key={`entry-line-${trade.id}`} className="absolute left-0 right-0 z-[50] pointer-events-none" style={{ top: `${dynamicY}%` }}>
                     <div
                       style={{
                         height: '1px',
                         backgroundImage: `repeating-linear-gradient(to right, ${isGreen ? "#22c55e" : "#ef4444"} 0, ${isGreen ? "#22c55e" : "#ef4444"} 6px, transparent 6px, transparent 12px)`,
                       }}
                     />
-                    {/* IQ Option style entry point icons on the line */}
-                    <div className="absolute flex items-center gap-1" style={{ left: '12px', top: '-10px' }}>
+                    {/* Entry point: check circle + dot + price badge together */}
+                    <div
+                      className="absolute flex items-center gap-1"
+                      style={{
+                        left: dynamicX !== null ? `${dynamicX}%` : undefined,
+                        right: dynamicX === null ? '142px' : undefined,
+                        top: '-10px',
+                        transform: dynamicX !== null ? 'translateX(-50%)' : undefined,
+                      }}
+                    >
+                      {/* Check circle */}
                       <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center"
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{
                           backgroundColor: isGreen ? "#166534" : "#991b1b",
                           border: `2px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
@@ -4532,8 +4575,9 @@ function TradingInterface() {
                           <polyline points="20 6 9 17 4 12"/>
                         </svg>
                       </div>
+                      {/* Dot circle */}
                       <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center"
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{
                           backgroundColor: isGreen ? "#166534" : "#991b1b",
                           border: `2px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
@@ -4543,69 +4587,23 @@ function TradingInterface() {
                           <circle cx="12" cy="12" r="4"/>
                         </svg>
                       </div>
+                      {/* Entry price badge */}
+                      <div
+                        className="flex items-center justify-center flex-shrink-0"
+                        style={{
+                          backgroundColor: isGreen ? "#22c55e" : "#ef4444",
+                          borderRadius: "8px",
+                          padding: "4px 10px",
+                        }}
+                      >
+                        <span className="text-white font-bold text-sm leading-tight whitespace-nowrap">
+                          $ {trade.amount.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   );
                 })}
-
-              {/* Active Trades Overlay - IQ Option Style */}
-              <AnimatePresence>
-                {activeTrades
-                  .filter((t) => t.symbol === selectedSymbol && t.status === "active")
-                  .map((trade) => {
-                    const now = Date.now();
-                    const elapsed = now - trade.entryTime;
-                    const remaining = Math.max(0, trade.expirationTime - now);
-                    const remainingSeconds = Math.ceil(remaining / 1000);
-                    const minutes = Math.floor(remainingSeconds / 60);
-                    const seconds = remainingSeconds % 60;
-                    const timeDisplay = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-                    const progress = Math.min(
-                      1,
-                      elapsed / (trade.expirationSeconds * 1000)
-                    );
-                    const dynamicY = priceToYRef.current ? priceToYRef.current(trade.entryPrice) : trade.entryYPosition;
-                    const dynamicX = timeToXRef.current ? timeToXRef.current(trade.entryTime) : null;
-                    const isOffScreen = dynamicX !== null && (dynamicX < -5 || dynamicX > 100);
-                    const isGreen = trade.direction === "higher";
-
-                    if (isOffScreen) return null;
-
-                    return (
-                      <motion.div
-                        key={trade.id}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="absolute z-20 pointer-events-none"
-                        style={{
-                          top: `${dynamicY}%`,
-                          left: dynamicX !== null ? `${dynamicX}%` : undefined,
-                          right: dynamicX === null ? "142px" : undefined,
-                          transform: "translate(-50%, -50%)",
-                        }}
-                      >
-                        {/* IQ Option style pill with amount */}
-                        <div
-                          className="flex items-center justify-center"
-                          style={{
-                            backgroundColor: isGreen ? "#22c55e" : "#ef4444",
-                            borderRadius: "8px",
-                            padding: "6px 12px",
-                            boxShadow: isGreen
-                              ? "0 0 20px rgba(34, 197, 94, 0.6)"
-                              : "0 0 20px rgba(239, 68, 68, 0.6)",
-                          }}
-                        >
-                          {/* Amount */}
-                          <span className="text-white font-bold text-sm leading-tight">
-                            $ {trade.amount.toLocaleString()}
-                          </span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-              </AnimatePresence>
 
               {/* Last Finished Trade Result - IQ Option Style */}
               <AnimatePresence>
@@ -4618,29 +4616,31 @@ function TradingInterface() {
                   // Hide if result popup is completely off screen
                   const endOffScreen = finishedEndX !== null && (finishedEndX < -10 || finishedEndX > 110);
                   if (endOffScreen) return null;
-                  const isWin = lastFinishedTrade.status === "won";
+                  const isSessionWin = sessionTotalResult >= 0;
+                  // Entry price color stays based on trade direction (higher=green, lower=red) — never changes
+                  const isEntryGreen = lastFinishedTrade.direction === "higher";
                   return (
                   <>
-                    {/* Entry price horizontal dashed line for finished trade */}
+                    {/* Entry price horizontal dashed line - color based on trade direction, not win/loss */}
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
-                      className="absolute left-0 right-[140px] h-[1px] z-10 pointer-events-none"
+                      className="absolute left-0 right-[140px] h-[1px] z-[50] pointer-events-none"
                       style={{
                         top: `${finishedY}%`,
-                        backgroundImage: `linear-gradient(to right, ${isWin ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)"} 50%, transparent 50%)`,
+                        backgroundImage: `linear-gradient(to right, ${isEntryGreen ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)"} 50%, transparent 50%)`,
                         backgroundSize: "8px 1px",
                       }}
                     />
 
-                    {/* Original investment badge - IQ Option style */}
+                    {/* Entry price badge - shows THIS trade's amount only, color = trade direction */}
                     {finishedEntryX !== null && (
                       <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute z-20 pointer-events-none"
+                        className="absolute z-[50] pointer-events-none"
                         style={{
                           left: `${finishedEntryX}%`,
                           top: `${finishedY}%`,
@@ -4650,8 +4650,8 @@ function TradingInterface() {
                         <div
                           className="px-2.5 py-1 rounded-md"
                           style={{
-                            backgroundColor: isWin ? "#22c55e" : "#ef4444",
-                            boxShadow: isWin
+                            backgroundColor: isEntryGreen ? "#22c55e" : "#ef4444",
+                            boxShadow: isEntryGreen
                               ? "0 0 15px rgba(34, 197, 94, 0.5)"
                               : "0 0 15px rgba(239, 68, 68, 0.5)",
                           }}
@@ -4663,12 +4663,12 @@ function TradingInterface() {
                       </motion.div>
                     )}
 
-                    {/* RESULT (P/L) popup - IQ Option style with close button */}
+                    {/* TOTAL RESULT (P/L) popup - shows accumulated session total */}
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.8 }}
-                      className="absolute z-20 pointer-events-auto"
+                      className="absolute z-[50] pointer-events-auto"
                       style={{
                         left: finishedEndX !== null ? `${finishedEndX}%` : "55%",
                         top: `${finishedY}%`,
@@ -4678,64 +4678,34 @@ function TradingInterface() {
                       <div 
                         className="relative flex flex-col items-start px-4 py-2.5 rounded-lg min-w-[140px]"
                         style={{
-                          backgroundColor: isWin ? "#22c55e" : "#ef4444",
-                          boxShadow: isWin
-                            ? "0 0 40px rgba(34, 197, 94, 0.7), 0 0 15px rgba(34, 197, 94, 0.4)"
-                            : "0 0 40px rgba(239, 68, 68, 0.7), 0 0 15px rgba(239, 68, 68, 0.4)",
+                          backgroundColor: isSessionWin ? "#5ddf38" : "#ef4444",
                         }}
                       >
                         {/* Close button */}
                         <button
-                          onClick={() => setLastFinishedTrade(null)}
+                          onClick={() => {
+                            setLastFinishedTrade(null);
+                            setSessionTotalResult(0);
+                            setSessionTotalInvested(0);
+                            setSessionTradeCount(0);
+                          }}
                           className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
                         >
                           <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                             <path d="M18 6L6 18M6 6l12 12" />
                           </svg>
                         </button>
-                        <span className="text-[10px] text-white/90 font-semibold tracking-wider leading-tight uppercase">
-                          RESULT (P/L)
+                        <span className="text-sm text-white/90 font-bold tracking-wider leading-tight uppercase">
+                          {sessionTradeCount > 1 ? "TOTAL P/L" : "RESULT (P/L)"}
                         </span>
                         <span className="text-white font-extrabold text-xl leading-tight mt-0.5">
-                          {isWin ? "+" : "−"}$ {Math.abs(lastFinishedTrade.result || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                          {isSessionWin ? "+" : "−"}$ {Math.abs(sessionTotalResult).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </span>
                       </div>
                     </motion.div>
                   </>
                   );
                 })()}
-              </AnimatePresence>
-
-              {/* Hover Effect Overlay for HIGHER */}
-              <AnimatePresence>
-                {hoveredButton === "higher" && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 pointer-events-none z-50"
-                    style={{
-                      background:
-                        "linear-gradient(to bottom, transparent 0%, rgba(34, 197, 94, 0.15) 15%, transparent 60%)",
-                    }}
-                  />
-                )}
-              </AnimatePresence>
-
-              {/* Hover Effect Overlay for LOWER */}
-              <AnimatePresence>
-                {hoveredButton === "lower" && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    className="absolute inset-0 pointer-events-none z-50"
-                    style={{
-                      background:
-                        "linear-gradient(to top, transparent 0%, rgba(239, 68, 68, 0.15) 15%, transparent 60%)",
-                    }}
-                  />
-                )}
               </AnimatePresence>
             </div>
           </div>
@@ -5023,6 +4993,9 @@ function TradingInterface() {
                   onClick={() => {
                     // Stay in same tab, just clear finished trade result for fresh state
                     setLastFinishedTrade(null);
+                    setSessionTotalResult(0);
+                    setSessionTotalInvested(0);
+                    setSessionTradeCount(0);
                     
                     // Clear lastResult from the current tab
                     setOpenTabs(prev => prev.map((tab, i) => 
@@ -5999,7 +5972,7 @@ function TradingInterface() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-[10001] flex items-center justify-center p-4"
             style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
             onClick={() => {
               setShowPracticeTopUpModal(false);
@@ -6131,368 +6104,304 @@ function TradingInterface() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ backgroundColor: "rgba(0,0,0,0.8)" }}
+            className="fixed inset-0 z-[10001] flex items-center justify-center p-3"
+            style={{ backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)" }}
             onClick={() => {
               setShowFundModal(false);
-              setCryptoPaymentInfo(null);
               setFundingError("");
+              setSelectedCrypto("");
+              setSelectedCryptoAmount("");
+              setFundAmount("");
             }}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md rounded-xl overflow-hidden"
+              initial={{ scale: 0.92, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
+              className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
               style={{
-                backgroundColor: "#2a2624",
-                border: "1px solid #38312e",
+                backgroundColor: "#0f1520",
+                border: "1px solid #1e2a3a",
               }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
-              <div className="p-4 border-b" style={{ borderColor: "#1a2d45" }}>
-                <div className="flex items-center justify-between">
-                  <h2
-                    className="text-xl font-bold"
-                    style={{ color: "#eef2f7" }}
-                  >
-                    Fund Traderoom
-                  </h2>
+              {/* Header - Compact */}
+              <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: fundMethod === "fiat" ? "rgba(93,223,56,0.15)" : "rgba(255,133,22,0.15)" }}>
+                    <Wallet className="w-4 h-4" style={{ color: fundMethod === "fiat" ? "#5ddf38" : "#ff8516" }} />
+                  </div>
+                  <div>
+                    <h2 className="text-base font-bold" style={{ color: "#eef2f7" }}>Fund Traderoom</h2>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowFundModal(false);
+                    setFundingError("");
+                    setSelectedCrypto("");
+                    setSelectedCryptoAmount("");
+                    setFundAmount("");
+                  }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+                  style={{ color: "#4a6080" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+
+              {/* Method Tabs - Compact pill style */}
+              <div className="px-5 pb-3">
+                <div className="flex gap-1 p-0.5 rounded-lg" style={{ backgroundColor: "#1a2235" }}>
                   <button
-                    onClick={() => {
-                      setShowFundModal(false);
-                      setCryptoPaymentInfo(null);
-                      setFundingError("");
-                    }}
-                    className="p-2 rounded-lg hover:bg-white/10 transition-colors"
-                    style={{ color: "#8b9ab8" }}
+                    onClick={() => setFundMethod("fiat")}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold tracking-wide uppercase transition-all ${
+                      fundMethod === "fiat"
+                        ? "text-white shadow-md"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}
+                    style={fundMethod === "fiat" ? { backgroundColor: "#5ddf38", color: "#0a0f18" } : {}}
                   >
-                    ✕
+                    Fiat Balance
+                  </button>
+                  <button
+                    onClick={() => setFundMethod("crypto")}
+                    className={`flex-1 py-2 rounded-md text-xs font-semibold tracking-wide uppercase transition-all ${
+                      fundMethod === "crypto"
+                        ? "text-white shadow-md"
+                        : "text-gray-500 hover:text-gray-300"
+                    }`}
+                    style={fundMethod === "crypto" ? { backgroundColor: "#ff8516", color: "#0a0f18" } : {}}
+                  >
+                    Crypto Assets
                   </button>
                 </div>
-                <p className="text-sm mt-1" style={{ color: "#8b9ab8" }}>
-                  Choose how you want to fund your Traderoom balance
-                </p>
               </div>
 
               {/* Content */}
-              {!cryptoPaymentInfo ? (
-                <div className="p-4 space-y-4">
-                  {/* Method Selection */}
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setFundMethod("fiat")}
-                      className={`flex-1 py-3 rounded-lg font-medium transition-all ${
-                        fundMethod === "fiat"
-                          ? "bg-green-600 text-white"
-                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                      }`}
-                    >
-                      From Fiat Balance
-                    </button>
-                    <button
-                      onClick={() => setFundMethod("crypto")}
-                      className={`flex-1 py-3 rounded-lg font-medium transition-all ${
-                        fundMethod === "crypto"
-                          ? "bg-orange-500 text-white"
-                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                      }`}
-                    >
-                      Crypto Deposit
-                    </button>
-                  </div>
-
-                  {/* Current Balances */}
-                  <div
-                    className="p-3 rounded-lg"
-                    style={{ backgroundColor: "#070c15" }}
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm" style={{ color: "#8b9ab8" }}>
-                        Fiat Balance
-                      </span>
-                      <span
-                        className="font-medium"
-                        style={{ color: "#ffffff" }}
-                      >
-                        ${realAccountBalanceUSD.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm" style={{ color: "#8b9ab8" }}>
-                        Traderoom Balance
-                      </span>
-                      <span
-                        className="font-medium"
-                        style={{ color: "#5ddf38" }}
-                      >
-                        ${traderoomBalance.toFixed(2)}
-                      </span>
+              <div className="px-5 pb-5 space-y-3">
+                {/* Balance Cards - Compact side-by-side */}
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#141c2b", border: "1px solid #1e2a3a" }}>
+                    <div className="text-[10px] uppercase tracking-wider font-medium mb-1" style={{ color: "#4a6080" }}>Available</div>
+                    <div className="text-sm font-bold tabular-nums" style={{ color: "#ffffff" }}>
+                      ${Math.floor(realAccountBalanceUSD * 100 / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </div>
                   </div>
+                  <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#141c2b", border: "1px solid #1e2a3a" }}>
+                    <div className="text-[10px] uppercase tracking-wider font-medium mb-1" style={{ color: "#4a6080" }}>Traderoom</div>
+                    <div className="text-sm font-bold tabular-nums" style={{ color: "#5ddf38" }}>
+                      ${traderoomBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  </div>
+                </div>
 
-                  {fundMethod === "fiat" ? (
-                    <>
-                      {/* Amount Input for Fiat */}
-                      <div>
-                        <label
-                          className="block text-sm mb-2"
-                          style={{ color: "#8b9ab8" }}
-                        >
-                          Amount to Transfer
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            $
-                          </span>
-                          <input
-                            type="number"
-                            value={fundAmount}
-                            onChange={(e) => setFundAmount(e.target.value)}
-                            placeholder="0.00"
-                            className="w-full pl-8 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-green-500 focus:outline-none"
-                          />
-                        </div>
-                        <p
-                          className="text-xs mt-1"
-                          style={{ color: "#8b9ab8" }}
-                        >
-                          Max: ${realAccountBalanceUSD.toFixed(2)}
-                        </p>
-                      </div>
-
-                      {/* Quick amounts */}
-                      <div className="flex flex-wrap gap-2">
-                        {[50, 100, 250, 500, 1000].map((amt) => (
-                          <button
-                            key={amt}
-                            onClick={() =>
-                              setFundAmount(
-                                Math.min(amt, realAccountBalanceUSD).toString()
-                              )
-                            }
-                            disabled={realAccountBalanceUSD < amt}
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30"
-                            style={{
-                              backgroundColor: "#1a2d45",
-                              color: "#eef2f7",
-                            }}
-                          >
-                            ${amt}
-                          </button>
-                        ))}
+                {fundMethod === "fiat" ? (
+                  <>
+                    {/* Amount Input - Enhanced */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-medium" style={{ color: "#4a6080" }}>Amount (USD)</label>
                         <button
-                          onClick={() =>
-                            setFundAmount(realAccountBalanceUSD.toString())
-                          }
+                          onClick={() => setFundAmount((Math.floor(realAccountBalanceUSD * 100) / 100).toString())}
                           disabled={realAccountBalanceUSD <= 0}
-                          className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30"
-                          style={{
-                            backgroundColor: "#1a2d45",
-                            color: "#5ddf38",
-                          }}
+                          className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all hover:opacity-80 disabled:opacity-30"
+                          style={{ backgroundColor: "rgba(93,223,56,0.12)", color: "#5ddf38" }}
                         >
-                          MAX
+                          Use Max
                         </button>
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      {/* Crypto Selection */}
-                      <div>
-                        <label
-                          className="block text-sm mb-2"
-                          style={{ color: "#8b9ab8" }}
-                        >
-                          Select Cryptocurrency
-                        </label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {supportedCryptos.map((crypto) => (
-                            <button
-                              key={crypto.code}
-                              onClick={() => setSelectedCrypto(crypto.code)}
-                              className={`p-3 rounded-lg text-center transition-all ${
-                                selectedCrypto === crypto.code
-                                  ? "bg-orange-500/20 border-orange-500"
-                                  : "bg-gray-800 border-gray-700 hover:border-gray-600"
-                              } border`}
-                            >
-                              <div className="text-xl mb-1">{crypto.icon}</div>
-                              <div
-                                className="text-xs"
-                                style={{ color: "#eef2f7" }}
-                              >
-                                {crypto.name}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Amount Input for Crypto */}
-                      <div>
-                        <label
-                          className="block text-sm mb-2"
-                          style={{ color: "#8b9ab8" }}
-                        >
-                          Amount (USD)
-                        </label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                            $
-                          </span>
-                          <input
-                            type="number"
-                            value={fundAmount}
-                            onChange={(e) => setFundAmount(e.target.value)}
-                            placeholder="100.00"
-                            min="10"
-                            className="w-full pl-8 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-orange-500 focus:outline-none"
-                          />
-                        </div>
-                        <p
-                          className="text-xs mt-1"
-                          style={{ color: "#8b9ab8" }}
-                        >
-                          Min: $10.00
-                        </p>
-                      </div>
-                    </>
-                  )}
-
-                  {/* Error */}
-                  {fundingError && (
-                    <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
-                      {fundingError}
-                    </div>
-                  )}
-
-                  {/* Submit Button */}
-                  <button
-                    onClick={
-                      fundMethod === "fiat"
-                        ? handleFundFromFiat
-                        : handleFundWithCrypto
-                    }
-                    disabled={isFunding || !fundAmount}
-                    className={`w-full py-3 rounded-lg font-bold text-white transition-all disabled:opacity-50 ${
-                      fundMethod === "fiat"
-                        ? "bg-green-600 hover:bg-green-700"
-                        : "bg-orange-500 hover:bg-orange-600"
-                    }`}
-                  >
-                    {isFunding
-                      ? "Processing..."
-                      : fundMethod === "fiat"
-                      ? "Transfer to Traderoom"
-                      : "Generate Payment Address"}
-                  </button>
-                </div>
-              ) : (
-                /* Crypto Payment Info */
-                <div className="p-4 space-y-4">
-                  <div className="text-center mb-4">
-                    <div className="text-4xl mb-2">
-                      {supportedCryptos.find((c) => c.code === selectedCrypto)
-                        ?.icon || "₿"}
-                    </div>
-                    <h3
-                      className="text-lg font-bold"
-                      style={{ color: "#eef2f7" }}
-                    >
-                      Send {cryptoPaymentInfo.cryptoCurrency} Payment
-                    </h3>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div
-                      className="p-3 rounded-lg"
-                      style={{ backgroundColor: "#070c15" }}
-                    >
-                      <div
-                        className="text-xs mb-1"
-                        style={{ color: "#8b9ab8" }}
-                      >
-                        Amount to Send
-                      </div>
-                      <div
-                        className="font-mono font-bold text-lg"
-                        style={{ color: "#ff8516" }}
-                      >
-                        {cryptoPaymentInfo.cryptoAmount ||
-                          cryptoPaymentInfo.paymentAmount}{" "}
-                        {cryptoPaymentInfo.cryptoCurrency}
-                      </div>
-                      <div className="text-sm" style={{ color: "#8b9ab8" }}>
-                        ≈ ${cryptoPaymentInfo.amount}
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold" style={{ color: "#4a6080" }}>$</span>
+                        <input
+                          type="number"
+                          value={fundAmount}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "" || /^\d*\.?\d{0,2}$/.test(val)) {
+                              setFundAmount(val);
+                            }
+                          }}
+                          onBlur={() => {
+                            if (fundAmount && !isNaN(parseFloat(fundAmount))) {
+                              setFundAmount(parseFloat(fundAmount).toFixed(2));
+                            }
+                          }}
+                          placeholder="0.00"
+                          step="0.01"
+                          className="w-full pl-8 pr-4 py-2.5 rounded-lg text-lg font-semibold tabular-nums focus:outline-none transition-all"
+                          style={{ backgroundColor: "#1a2235", border: "1px solid #2a3548", color: "#ffffff" }}
+                          onFocus={(e) => (e.target.style.borderColor = "#5ddf38")}
+                        />
                       </div>
                     </div>
 
-                    {cryptoPaymentInfo.paymentAddress && (
-                      <div
-                        className="p-3 rounded-lg"
-                        style={{ backgroundColor: "#070c15" }}
-                      >
-                        <div
-                          className="text-xs mb-1"
-                          style={{ color: "#8b9ab8" }}
-                        >
-                          Payment Address
-                        </div>
-                        <div
-                          className="font-mono text-xs break-all"
-                          style={{ color: "#eef2f7" }}
-                        >
-                          {cryptoPaymentInfo.paymentAddress}
-                        </div>
+                    {/* Quick Amount Grid - Compact */}
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {[50, 100, 250, 500, 1000, 2500].map((amt) => (
                         <button
-                          onClick={() => {
-                            navigator.clipboard.writeText(
-                              cryptoPaymentInfo.paymentAddress
-                            );
-                            alert("Address copied!");
-                          }}
-                          className="mt-2 text-xs px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 transition-colors"
-                          style={{ color: "#8b9ab8" }}
+                          key={amt}
+                          onClick={() => setFundAmount(Math.min(amt, Math.floor(realAccountBalanceUSD * 100) / 100).toString())}
+                          disabled={realAccountBalanceUSD < amt}
+                          className="py-1.5 rounded-md text-[11px] font-semibold tabular-nums transition-all hover:brightness-125 disabled:opacity-20 disabled:hover:brightness-100"
+                          style={{ backgroundColor: "#1a2235", color: "#8b9ab8", border: "1px solid #1e2a3a" }}
                         >
-                          Copy Address
+                          {amt >= 1000 ? `${amt / 1000}k` : `$${amt}`}
                         </button>
+                      ))}
+                    </div>
+
+                    {/* Transfer Preview */}
+                    {fundAmount && parseFloat(fundAmount) > 0 && (
+                      <div className="p-2.5 rounded-lg flex items-center justify-between" style={{ backgroundColor: "rgba(93,223,56,0.06)", border: "1px solid rgba(93,223,56,0.15)" }}>
+                        <div className="flex items-center gap-2">
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(93,223,56,0.2)" }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#5ddf38" strokeWidth="3" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                          </div>
+                          <span className="text-xs" style={{ color: "#8b9ab8" }}>New balance</span>
+                        </div>
+                        <span className="text-sm font-bold tabular-nums" style={{ color: "#5ddf38" }}>
+                          ${(traderoomBalance + parseFloat(fundAmount)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </span>
                       </div>
                     )}
+                  </>
+                ) : (
+                  <>
+                    {/* Crypto Assets Selection - Enhanced */}
+                    <div>
+                      {cryptoAssets.length === 0 ? (
+                        <div className="p-4 rounded-lg text-center" style={{ backgroundColor: "rgba(255,193,7,0.06)", border: "1px solid rgba(255,193,7,0.15)" }}>
+                          <Wallet className="w-8 h-8 mx-auto mb-2" style={{ color: "#ffc107", opacity: 0.5 }} />
+                          <p className="text-xs font-medium" style={{ color: "#ffc107" }}>
+                            No crypto assets available
+                          </p>
+                          <p className="text-[10px] mt-0.5" style={{ color: "#4a6080" }}>
+                            Deposit crypto to your main balance first
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
+                          {cryptoAssets.map((asset) => {
+                            const cryptoPrice = getCryptoPrice(asset.symbol);
+                            const valueUSD = cryptoPrice?.price ? (asset.amount * cryptoPrice.price) : 0;
+                            const isSelected = selectedCrypto === asset.symbol;
+                            
+                            return (
+                              <button
+                                key={asset.symbol}
+                                onClick={() => {
+                                  setSelectedCrypto(asset.symbol);
+                                  setSelectedCryptoAmount("");
+                                }}
+                                className="w-full p-2.5 rounded-lg text-left transition-all"
+                                style={{
+                                  backgroundColor: isSelected ? "rgba(255,133,22,0.1)" : "#141c2b",
+                                  border: `1px solid ${isSelected ? "#ff8516" : "#1e2a3a"}`,
+                                }}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2.5">
+                                    <CryptoIcon symbol={asset.symbol} size="sm" />
+                                    <div>
+                                      <div className="text-xs font-bold text-white">{asset.symbol}</div>
+                                      <div className="text-[10px] tabular-nums" style={{ color: "#4a6080" }}>
+                                        {asset.amount.toFixed(6)} {asset.symbol}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-xs font-bold tabular-nums" style={{ color: "#5ddf38" }}>
+                                      ${valueUSD.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    </div>
+                                    {cryptoPrice?.price && (
+                                      <div className="text-[10px] tabular-nums" style={{ color: "#4a6080" }}>
+                                        @${cryptoPrice.price.toLocaleString()}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
 
-                    {cryptoPaymentInfo.invoiceUrl && (
-                      <a
-                        href={cryptoPaymentInfo.invoiceUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full py-3 rounded-lg font-bold text-center bg-orange-500 hover:bg-orange-600 text-white transition-all"
-                      >
-                        Open Payment Page
-                      </a>
+                    {/* Crypto Amount Input */}
+                    {selectedCrypto && (
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-medium" style={{ color: "#4a6080" }}>
+                            Amount ({selectedCrypto})
+                          </label>
+                          <button
+                            onClick={() => {
+                              const asset = cryptoAssets.find(a => a.symbol === selectedCrypto);
+                              if (asset) setSelectedCryptoAmount(asset.amount.toFixed(8));
+                            }}
+                            className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all hover:opacity-80"
+                            style={{ backgroundColor: "rgba(255,133,22,0.12)", color: "#ff8516" }}
+                          >
+                            Use Max
+                          </button>
+                        </div>
+                        <input
+                          type="number"
+                          value={selectedCryptoAmount}
+                          onChange={(e) => setSelectedCryptoAmount(e.target.value)}
+                          placeholder="0.00000000"
+                          step="0.00000001"
+                          className="w-full px-3 py-2.5 rounded-lg text-sm font-medium tabular-nums focus:outline-none transition-all"
+                          style={{ backgroundColor: "#1a2235", border: "1px solid #2a3548", color: "#ffffff" }}
+                          onFocus={(e) => (e.target.style.borderColor = "#ff8516")}
+                          onBlur={(e) => (e.target.style.borderColor = "#2a3548")}
+                        />
+                        {selectedCryptoAmount && parseFloat(selectedCryptoAmount) > 0 && (
+                          <div className="mt-1.5 p-2 rounded-lg flex items-center justify-between" style={{ backgroundColor: "rgba(255,133,22,0.06)", border: "1px solid rgba(255,133,22,0.15)" }}>
+                            <span className="text-[10px]" style={{ color: "#4a6080" }}>USD Value</span>
+                            <span className="text-xs font-bold tabular-nums" style={{ color: "#ff8516" }}>
+                              ≈ ${((parseFloat(selectedCryptoAmount) || 0) * (getCryptoPrice(selectedCrypto)?.price || 0)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     )}
-                  </div>
+                  </>
+                )}
 
-                  <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
-                    <p className="text-xs" style={{ color: "#ffc107" }}>
-                      ⚠️ Send exactly the amount shown above. Your balance will
-                      be credited automatically after blockchain confirmation
-                      (usually 10-30 minutes).
-                    </p>
+                {/* Error */}
+                {fundingError && (
+                  <div className="p-2.5 rounded-lg flex items-center gap-2" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                    <span className="text-xs text-red-400">{fundingError}</span>
                   </div>
+                )}
 
-                  <button
-                    onClick={() => {
-                      setCryptoPaymentInfo(null);
-                      setFundAmount("");
-                    }}
-                    className="w-full py-2 text-sm rounded-lg border border-gray-700 hover:bg-gray-800 transition-colors"
-                    style={{ color: "#8b9ab8" }}
-                  >
-                    Create New Payment
-                  </button>
-                </div>
-              )}
+                {/* Submit Button - Enhanced */}
+                <button
+                  onClick={fundMethod === "fiat" ? handleFundFromFiat : handleFundWithCrypto}
+                  disabled={
+                    isFunding || 
+                    (fundMethod === "fiat" ? !fundAmount || parseFloat(fundAmount) <= 0 : (!selectedCrypto || !selectedCryptoAmount || parseFloat(selectedCryptoAmount) <= 0))
+                  }
+                  className="w-full py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                  style={{
+                    backgroundColor: fundMethod === "fiat" ? "#5ddf38" : "#ff8516",
+                    color: "#0a0f18",
+                  }}
+                >
+                  {isFunding ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Processing...
+                    </span>
+                  ) : (
+                    <>Transfer {fundMethod === "fiat" && fundAmount ? `$${parseFloat(fundAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""} to Traderoom</>
+                  )}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -6505,171 +6414,249 @@ function TradingInterface() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+            className="fixed inset-0 z-[10001] flex items-center justify-center p-3"
+            style={{ backgroundColor: "rgba(0, 0, 0, 0.85)", backdropFilter: "blur(4px)" }}
             onClick={() => {
               setShowWithdrawModal(false);
               setWithdrawAmount("");
               setWithdrawError("");
               setWithdrawSuccess("");
+              setWithdrawMethod("fiat");
+              setWithdrawCryptoSymbol("");
             }}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.95, opacity: 0 }}
+              initial={{ scale: 0.92, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.92, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 25, stiffness: 350 }}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-md rounded-xl overflow-hidden"
+              className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
               style={{
-                backgroundColor: "#0a1020",
-                border: "1px solid #3d3c4f",
+                backgroundColor: "#0f1520",
+                border: "1px solid #1e2a3a",
               }}
             >
-              {/* Header */}
-              <div
-                className="flex items-center justify-between p-4 border-b"
-                style={{ borderColor: "#1a2d45" }}
-              >
-                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                  <ArrowDownCircle className="w-5 h-5 text-[#5ddf38]" />
-                  Withdraw to Main Balance
-                </h3>
+              {/* Header - Compact */}
+              <div className="px-5 pt-4 pb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: withdrawMethod === "fiat" ? "rgba(93,223,56,0.15)" : "rgba(255,133,22,0.15)" }}>
+                    <ArrowDownCircle className="w-4 h-4" style={{ color: withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516" }} />
+                  </div>
+                  <h2 className="text-base font-bold" style={{ color: "#eef2f7" }}>Withdraw Funds</h2>
+                </div>
                 <button
                   onClick={() => {
                     setShowWithdrawModal(false);
                     setWithdrawAmount("");
                     setWithdrawError("");
                     setWithdrawSuccess("");
+                    setWithdrawMethod("fiat");
+                    setWithdrawCryptoSymbol("");
                   }}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
+                  style={{ color: "#4a6080" }}
                 >
-                  ✕
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
               </div>
 
               {/* Content */}
-              <div className="p-4 space-y-4">
+              <div className="px-5 pb-5 space-y-3">
                 {withdrawSuccess ? (
-                  <div className="text-center py-6">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
-                      <svg className="w-8 h-8 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                  <div className="text-center py-5">
+                    <div className="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(93,223,56,0.15)" }}>
+                      <svg className="w-7 h-7" viewBox="0 0 20 20" fill="#5ddf38">
                         <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                       </svg>
                     </div>
-                    <h4 className="text-lg font-semibold text-white mb-2">Withdrawal Successful!</h4>
-                    <p className="text-gray-400 text-sm">{withdrawSuccess}</p>
+                    <h4 className="text-base font-bold text-white mb-1">Withdrawal Successful</h4>
+                    <p className="text-xs mb-4" style={{ color: "#4a6080" }}>{withdrawSuccess}</p>
                     <button
                       onClick={() => {
                         setShowWithdrawModal(false);
                         setWithdrawAmount("");
                         setWithdrawSuccess("");
+                        setWithdrawMethod("fiat");
+                        setWithdrawCryptoSymbol("");
                       }}
-                      className="mt-4 px-6 py-2 rounded-lg font-medium transition-all"
-                      style={{ backgroundColor: "#5ddf38", color: "#070c15" }}
+                      className="px-8 py-2 rounded-xl font-bold text-sm transition-all active:scale-[0.98]"
+                      style={{ backgroundColor: "#5ddf38", color: "#0a0f18" }}
                     >
                       Done
                     </button>
                   </div>
                 ) : (
                   <>
-                    {/* Balance Info */}
-                    <div
-                      className="p-3 rounded-lg"
-                      style={{ backgroundColor: "#070c15" }}
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm text-gray-400">
-                          Traderoom Balance
-                        </span>
-                        <span className="font-medium text-[#5ddf38]">
-                          ${traderoomBalance.toFixed(2)}
-                        </span>
+                    {/* Withdraw Method Tabs */}
+                    <div className="flex gap-1 p-0.5 rounded-lg" style={{ backgroundColor: "#1a2235" }}>
+                      <button
+                        onClick={() => { setWithdrawMethod("fiat"); setWithdrawCryptoSymbol(""); setWithdrawAmount(""); setWithdrawError(""); }}
+                        className={`flex-1 py-2 rounded-md text-xs font-semibold tracking-wide uppercase transition-all ${
+                          withdrawMethod === "fiat" ? "text-white shadow-md" : "text-gray-500 hover:text-gray-300"
+                        }`}
+                        style={withdrawMethod === "fiat" ? { backgroundColor: "#5ddf38", color: "#0a0f18" } : {}}
+                      >
+                        To Fiat Balance
+                      </button>
+                      <button
+                        onClick={() => { setWithdrawMethod("crypto"); setWithdrawAmount(""); setWithdrawError(""); }}
+                        className={`flex-1 py-2 rounded-md text-xs font-semibold tracking-wide uppercase transition-all ${
+                          withdrawMethod === "crypto" ? "text-white shadow-md" : "text-gray-500 hover:text-gray-300"
+                        }`}
+                        style={withdrawMethod === "crypto" ? { backgroundColor: "#ff8516", color: "#0a0f18" } : {}}
+                      >
+                        To Crypto
+                      </button>
+                    </div>
+
+                    {/* Balance Cards */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#141c2b", border: "1px solid #1e2a3a" }}>
+                        <div className="text-[10px] uppercase tracking-wider font-medium mb-1" style={{ color: "#4a6080" }}>Traderoom</div>
+                        <div className="text-sm font-bold tabular-nums" style={{ color: "#5ddf38" }}>
+                          ${traderoomBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
                       </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-400">
-                          Current Fiat Balance
-                        </span>
-                        <span className="font-medium text-white">
-                          ${realAccountBalanceUSD.toFixed(2)}
-                        </span>
+                      <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#141c2b", border: "1px solid #1e2a3a" }}>
+                        <div className="text-[10px] uppercase tracking-wider font-medium mb-1" style={{ color: "#4a6080" }}>
+                          {withdrawMethod === "fiat" ? "Fiat Balance" : "Withdraw To"}
+                        </div>
+                        <div className="text-sm font-bold tabular-nums" style={{ color: "#ffffff" }}>
+                          {withdrawMethod === "fiat" 
+                            ? `$${realAccountBalanceUSD.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            : withdrawCryptoSymbol || "Select crypto"
+                          }
+                        </div>
                       </div>
                     </div>
 
+                    {withdrawMethod === "crypto" && (
+                      <>
+                        {/* Crypto Selection Grid */}
+                        <div>
+                          <label className="text-xs font-medium mb-1.5 block" style={{ color: "#4a6080" }}>Select Cryptocurrency</label>
+                          <div className="grid grid-cols-4 gap-1.5">
+                            {["BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "DOT"].map((sym) => {
+                              const price = getCryptoPrice(sym);
+                              const isSelected = withdrawCryptoSymbol === sym;
+                              return (
+                                <button
+                                  key={sym}
+                                  onClick={() => { setWithdrawCryptoSymbol(sym); setWithdrawError(""); }}
+                                  className="p-2 rounded-lg text-center transition-all"
+                                  style={{
+                                    backgroundColor: isSelected ? "rgba(255,133,22,0.12)" : "#141c2b",
+                                    border: `1px solid ${isSelected ? "#ff8516" : "#1e2a3a"}`,
+                                  }}
+                                >
+                                  <CryptoIcon symbol={sym} size="sm" />
+                                  <div className="text-[10px] font-bold mt-1" style={{ color: isSelected ? "#ff8516" : "#8b9ab8" }}>{sym}</div>
+                                  {price?.price && (
+                                    <div className="text-[9px] tabular-nums" style={{ color: "#4a6080" }}>
+                                      ${price.price >= 1000 ? `${(price.price / 1000).toFixed(1)}k` : price.price.toFixed(2)}
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
                     {/* Amount Input */}
                     <div>
-                      <label className="block text-sm mb-2 text-gray-400">
-                        Amount to Withdraw
-                      </label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="text-xs font-medium" style={{ color: "#4a6080" }}>Amount (USD)</label>
+                        <button
+                          onClick={() => setWithdrawAmount((Math.floor(traderoomBalance * 100) / 100).toString())}
+                          disabled={traderoomBalance <= 0}
+                          className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all hover:opacity-80 disabled:opacity-30"
+                          style={{ backgroundColor: withdrawMethod === "fiat" ? "rgba(93,223,56,0.12)" : "rgba(255,133,22,0.12)", color: withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516" }}
+                        >
+                          Use Max
+                        </button>
+                      </div>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                          $
-                        </span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold" style={{ color: "#4a6080" }}>$</span>
                         <input
                           type="number"
                           value={withdrawAmount}
                           onChange={(e) => {
-                            setWithdrawAmount(e.target.value);
-                            setWithdrawError("");
+                            const val = e.target.value;
+                            if (val === "" || /^\d*\.?\d{0,2}$/.test(val)) {
+                              setWithdrawAmount(val);
+                              setWithdrawError("");
+                            }
+                          }}
+                          onBlur={() => {
+                            if (withdrawAmount && !isNaN(parseFloat(withdrawAmount))) {
+                              setWithdrawAmount(parseFloat(withdrawAmount).toFixed(2));
+                            }
                           }}
                           placeholder="0.00"
-                          className="w-full pl-8 pr-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white focus:border-[#5ddf38] focus:outline-none"
+                          step="0.01"
+                          className="w-full pl-8 pr-4 py-2.5 rounded-lg text-lg font-semibold tabular-nums focus:outline-none transition-all"
+                          style={{ backgroundColor: "#1a2235", border: "1px solid #2a3548", color: "#ffffff" }}
+                          onFocus={(e) => (e.target.style.borderColor = withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516")}
                         />
                       </div>
-                      <p className="text-xs mt-1 text-gray-500">
-                        Max: ${traderoomBalance.toFixed(2)}
-                      </p>
                     </div>
 
-                    {/* Quick amounts */}
-                    <div className="flex flex-wrap gap-2">
-                      {[50, 100, 250, 500, 1000].map((amt) => (
+                    {/* Quick Amount Grid */}
+                    <div className="grid grid-cols-6 gap-1.5">
+                      {[50, 100, 250, 500, 1000, 2500].map((amt) => (
                         <button
                           key={amt}
-                          onClick={() =>
-                            setWithdrawAmount(
-                              Math.min(amt, traderoomBalance).toString()
-                            )
-                          }
+                          onClick={() => setWithdrawAmount(Math.min(amt, Math.floor(traderoomBalance * 100) / 100).toString())}
                           disabled={traderoomBalance < amt}
-                          className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30"
-                          style={{
-                            backgroundColor: "#1a2d45",
-                            color: "#eef2f7",
-                          }}
+                          className="py-1.5 rounded-md text-[11px] font-semibold tabular-nums transition-all hover:brightness-125 disabled:opacity-20 disabled:hover:brightness-100"
+                          style={{ backgroundColor: "#1a2235", color: "#8b9ab8", border: "1px solid #1e2a3a" }}
                         >
-                          ${amt}
+                          {amt >= 1000 ? `${amt / 1000}k` : `$${amt}`}
                         </button>
                       ))}
-                      <button
-                        onClick={() =>
-                          setWithdrawAmount(traderoomBalance.toString())
-                        }
-                        disabled={traderoomBalance <= 0}
-                        className="px-3 py-1.5 rounded-lg text-sm font-medium transition-all disabled:opacity-30"
-                        style={{
-                          backgroundColor: "#1a2d45",
-                          color: "#5ddf38",
-                        }}
-                      >
-                        MAX
-                      </button>
                     </div>
 
-                    {/* Error Message */}
-                    {withdrawError && (
-                      <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                        <p className="text-sm text-red-400">{withdrawError}</p>
+                    {/* Transfer Preview */}
+                    {withdrawAmount && parseFloat(withdrawAmount) > 0 && (
+                      <div className="p-2.5 rounded-lg space-y-1.5" style={{ backgroundColor: withdrawMethod === "fiat" ? "rgba(93,223,56,0.06)" : "rgba(255,133,22,0.06)", border: `1px solid ${withdrawMethod === "fiat" ? "rgba(93,223,56,0.15)" : "rgba(255,133,22,0.15)"}` }}>
+                        {withdrawMethod === "fiat" ? (
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs" style={{ color: "#8b9ab8" }}>New fiat balance</span>
+                            <span className="text-sm font-bold tabular-nums" style={{ color: "#5ddf38" }}>
+                              ${(realAccountBalanceUSD + parseFloat(withdrawAmount)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </div>
+                        ) : withdrawCryptoSymbol ? (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs" style={{ color: "#8b9ab8" }}>You receive</span>
+                              <span className="text-sm font-bold tabular-nums" style={{ color: "#ff8516" }}>
+                                {((parseFloat(withdrawAmount) || 0) / (getCryptoPrice(withdrawCryptoSymbol)?.price || 1)).toFixed(8)} {withdrawCryptoSymbol}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px]" style={{ color: "#4a6080" }}>Rate</span>
+                              <span className="text-[10px] tabular-nums" style={{ color: "#4a6080" }}>
+                                1 {withdrawCryptoSymbol} = ${(getCryptoPrice(withdrawCryptoSymbol)?.price || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          </>
+                        ) : null}
                       </div>
                     )}
 
-                    {/* Info Note */}
-                    <div className="p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                      <p className="text-xs text-blue-400">
-                        💡 Funds will be transferred instantly to your main dashboard balance.
-                      </p>
-                    </div>
+                    {/* Error */}
+                    {withdrawError && (
+                      <div className="p-2.5 rounded-lg flex items-center gap-2" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                        <span className="text-xs text-red-400">{withdrawError}</span>
+                      </div>
+                    )}
 
-                    {/* Action Button */}
+                    {/* Submit Button */}
                     <button
                       onClick={async () => {
                         const amount = parseFloat(withdrawAmount);
@@ -6681,20 +6668,54 @@ function TradingInterface() {
                           setWithdrawError("Insufficient traderoom balance");
                           return;
                         }
+                        if (withdrawMethod === "crypto" && !withdrawCryptoSymbol) {
+                          setWithdrawError("Please select a cryptocurrency");
+                          return;
+                        }
+                        if (withdrawMethod === "crypto") {
+                          const price = getCryptoPrice(withdrawCryptoSymbol)?.price;
+                          if (!price) {
+                            setWithdrawError(`Unable to get ${withdrawCryptoSymbol} price. Try again.`);
+                            return;
+                          }
+                        }
 
                         setIsWithdrawing(true);
                         setWithdrawError("");
 
                         try {
-                          const result = await withdrawFromTraderoomAction(amount);
-                          if (result.success) {
-                            setTraderoomBalance(result.data.newTraderoomBalance);
-                            setRealAccountBalanceUSD(result.data.newFiatBalance);
-                            setWithdrawSuccess(
-                              `$${amount.toFixed(2)} has been transferred to your main balance.`
-                            );
+                          if (withdrawMethod === "fiat") {
+                            const result = await withdrawFromTraderoomAction(amount);
+                            if (result.success) {
+                              setTraderoomBalance(result.data.newTraderoomBalance);
+                              setRealAccountBalanceUSD(result.data.newFiatBalance);
+                              setWithdrawSuccess(`$${amount.toFixed(2)} has been transferred to your main balance.`);
+                            } else {
+                              setWithdrawError(result.error || "Withdrawal failed");
+                            }
                           } else {
-                            setWithdrawError(result.error || "Withdrawal failed");
+                            const price = getCryptoPrice(withdrawCryptoSymbol)?.price || 0;
+                            const cryptoAmount = amount / price;
+                            const result = await withdrawToCryptoAction({
+                              symbol: withdrawCryptoSymbol,
+                              amountUSD: amount,
+                              price,
+                            });
+                            if (result.success) {
+                              setTraderoomBalance(result.data.newTraderoomBalance);
+                              setCryptoAssets(prev => {
+                                const existing = prev.findIndex(a => a.symbol.toUpperCase() === withdrawCryptoSymbol.toUpperCase());
+                                if (existing >= 0) {
+                                  const updated = [...prev];
+                                  updated[existing] = { ...updated[existing], amount: updated[existing].amount + cryptoAmount };
+                                  return updated;
+                                }
+                                return [...prev, { symbol: withdrawCryptoSymbol.toUpperCase(), amount: cryptoAmount }];
+                              });
+                              setWithdrawSuccess(`$${amount.toFixed(2)} withdrawn as ${cryptoAmount.toFixed(8)} ${withdrawCryptoSymbol} to your portfolio.`);
+                            } else {
+                              setWithdrawError(result.error || "Withdrawal failed");
+                            }
                           }
                         } catch (error) {
                           setWithdrawError("An error occurred. Please try again.");
@@ -6706,18 +6727,22 @@ function TradingInterface() {
                         isWithdrawing ||
                         !withdrawAmount ||
                         parseFloat(withdrawAmount) <= 0 ||
-                        parseFloat(withdrawAmount) > traderoomBalance
+                        parseFloat(withdrawAmount) > traderoomBalance ||
+                        (withdrawMethod === "crypto" && !withdrawCryptoSymbol)
                       }
-                      className="w-full py-3 rounded-lg font-bold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{ backgroundColor: "#5ddf38", color: "#070c15" }}
+                      className="w-full py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
+                      style={{
+                        backgroundColor: withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516",
+                        color: "#0a0f18",
+                      }}
                     >
                       {isWithdrawing ? (
                         <span className="flex items-center justify-center gap-2">
-                          <RefreshCw className="w-5 h-5 animate-spin" />
+                          <RefreshCw className="w-4 h-4 animate-spin" />
                           Processing...
                         </span>
                       ) : (
-                        "Withdraw"
+                        <>Withdraw {withdrawAmount && parseFloat(withdrawAmount) > 0 ? `$${parseFloat(withdrawAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""} {withdrawMethod === "crypto" && withdrawCryptoSymbol ? `to ${withdrawCryptoSymbol}` : ""}</>
                       )}
                     </button>
                   </>

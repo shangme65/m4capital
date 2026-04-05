@@ -8,15 +8,16 @@ import { CURRENCIES } from "@/lib/currencies";
 const transactionsCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 5000; // 5 seconds
 
-// Cleanup old cache entries every 30 seconds
-setInterval(() => {
+// Lazy cleanup: Check and clean on each request instead of setInterval
+// This avoids memory leaks in serverless environments
+function cleanupCache() {
   const now = Date.now();
   for (const [key, value] of transactionsCache.entries()) {
     if (now - value.timestamp > CACHE_TTL * 2) {
       transactionsCache.delete(key);
     }
   }
-}, 30000);
+}
 
 /**
  * GET /api/transactions
@@ -25,6 +26,9 @@ setInterval(() => {
  */
 export async function GET(req: NextRequest) {
   try {
+    // Lazy cleanup on each request (avoids setInterval in serverless)
+    cleanupCache();
+    
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {

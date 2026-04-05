@@ -107,6 +107,10 @@ model Deposit {
   transactionHash String?
   Portfolio       Portfolio @relation(fields: [portfolioId], references: [id])
   User            User?     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([portfolioId, status, createdAt])
+  @@index([paymentId])
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -244,6 +248,8 @@ model Portfolio {
   Deposit          Deposit[]
   User             User         @relation(fields: [userId], references: [id])
   Withdrawal       Withdrawal[]
+
+  @@index([userId])
 }
 
 /// Push notification subscriptions for Web Push API
@@ -602,6 +608,9 @@ model Withdrawal {
   fee           Decimal?
   Portfolio     Portfolio @relation(fields: [portfolioId], references: [id])
   User          User?     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([portfolioId, status, createdAt])
 }
 
 enum AccountType {

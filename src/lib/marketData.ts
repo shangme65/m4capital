@@ -54,6 +54,9 @@ export class MarketDataService {
   private forexCache: Map<string, { rate: number; timestamp: number }> =
     new Map();
   private forexInterval: NodeJS.Timeout | null = null;
+  // Throttling: Track last notification time per symbol (max 10 updates/sec)
+  private lastNotifyTime: Map<string, number> = new Map();
+  private readonly THROTTLE_MS = 100; // 100ms = max 10 updates per second per symbol
 
 
 
@@ -104,9 +107,19 @@ export class MarketDataService {
     // Fetch forex rates every 60 seconds (Frankfurter API limit)
     const fetchForexRates = async () => {
       try {
+        // Use AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const response = await fetch(
-          "https://api.frankfurter.app/latest?from=USD"
+          "https://api.frankfurter.app/latest?from=USD",
+          { signal: controller.signal }
         );
+        
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) return; // Silently fail on HTTP errors
+        
         const data = await response.json();
 
         if (data.rates) {
@@ -123,8 +136,8 @@ export class MarketDataService {
           // Update our tracked forex pairs
           this.updateForexPrices(data.rates, timestamp);
         }
-      } catch (error) {
-        console.error("❌ Error fetching forex rates:", error);
+      } catch {
+        // Silently ignore network errors (common when offline)
       }
     };
 
@@ -183,6 +196,16 @@ export class MarketDataService {
 
   private updatePrice(tick: MarketTick) {
     this.priceCache.set(tick.symbol, tick);
+
+    // Throttle subscriber notifications (max 10 updates/sec per symbol)
+    const now = Date.now();
+    const lastNotify = this.lastNotifyTime.get(tick.symbol) || 0;
+    
+    if (now - lastNotify < this.THROTTLE_MS) {
+      return; // Skip notification if within throttle window
+    }
+    
+    this.lastNotifyTime.set(tick.symbol, now);
 
     // Notify all subscribers
     this.subscribers.forEach((subscriber) => {
@@ -299,10 +322,18 @@ export class MarketDataService {
 
         const url = `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${binanceInterval}&limit=${limit}`;
 
-        const response = await fetch(url);
+        // Use AbortController for timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        
+        const response = await fetch(url, { signal: controller.signal });
+        
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
-          throw new Error(`Binance API error: ${response.statusText}`);
+          // Silently return empty data on HTTP errors
+          resolve([]);
+          return;
         }
 
         const rawData = await response.json();
@@ -317,12 +348,8 @@ export class MarketDataService {
         }));
 
         resolve(data);
-      } catch (error) {
-        console.error(
-          `❌ Error fetching historical data for ${symbol}:`,
-          error
-        );
-        // Return empty array instead of rejecting to prevent uncaught errors
+      } catch {
+        // Silently return empty array on network errors
         resolve([]);
       }
     });

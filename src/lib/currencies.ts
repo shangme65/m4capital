@@ -219,18 +219,31 @@ export const FALLBACK_EXCHANGE_RATES: Record<string, number> = {
  * Returns rates with USD as base currency
  */
 export async function getExchangeRates(): Promise<Record<string, number>> {
+  // Return fallback rates immediately in server-side rendering
+  if (typeof window === "undefined") {
+    return { ...FALLBACK_EXCHANGE_RATES };
+  }
+  
   try {
-    // Use Frankfurter API for forex rates
-    const response = await fetch("https://api.frankfurter.app/latest?from=USD");
+    // Use AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch("https://api.frankfurter.app/latest?from=USD", {
+      signal: controller.signal,
+    });
+    
+    clearTimeout(timeoutId);
+    
     if (!response.ok) {
-      throw new Error("Failed to fetch exchange rates");
+      // Silently return fallback rates on HTTP errors
+      return { ...FALLBACK_EXCHANGE_RATES };
     }
     const data = await response.json();
     // Merge API rates with fallback rates (API rates take precedence)
     return { ...FALLBACK_EXCHANGE_RATES, ...data.rates };
-  } catch (error) {
-    console.error("Error fetching exchange rates:", error);
-    // Return fallback rates if fetch fails
+  } catch {
+    // Silently return fallback rates on network failures (common when offline)
     return { ...FALLBACK_EXCHANGE_RATES };
   }
 }
