@@ -63,6 +63,10 @@ interface RealTimeTradingChartProps {
   onPriceToYConverter?: (converter: (price: number) => number) => void;
   // Callback that provides a function to convert timestamp -> X percentage
   onTimeToXConverter?: (converter: (timestamp: number) => number) => void;
+  // Hovered trade button for dynamic price line color
+  hoveredButton?: "higher" | "lower" | null;
+  // Callback with the timestamp of the latest candle on the chart
+  onLastCandleTimestamp?: (timestamp: number) => void;
 }
 
 export default function RealTimeTradingChart({
@@ -78,11 +82,14 @@ export default function RealTimeTradingChart({
   activeTradeEntryTime,
   onPriceToYConverter,
   onTimeToXConverter,
+  hoveredButton,
+  onLastCandleTimestamp,
 }: RealTimeTradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
   const wsUnsubscribeRef = useRef<(() => void) | null>(null);
   const onLivePriceUpdateRef = useRef(onLivePriceUpdate);
+  const onLastCandleTimestampRef = useRef(onLastCandleTimestamp);
   const { cryptoPrices } = useCryptoMarket();
   const [currentInterval, setCurrentInterval] = useState(interval);
   const [showIndicators, setShowIndicators] = useState(false);
@@ -98,6 +105,33 @@ export default function RealTimeTradingChart({
   useEffect(() => {
     onLivePriceUpdateRef.current = onLivePriceUpdate;
   }, [onLivePriceUpdate]);
+
+  useEffect(() => {
+    onLastCandleTimestampRef.current = onLastCandleTimestamp;
+  }, [onLastCandleTimestamp]);
+
+  // Dynamically update price line color based on hovered button
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || typeof chart.setStyles !== "function") return;
+    const color =
+      hoveredButton === "higher"
+        ? "#00c853"
+        : hoveredButton === "lower"
+          ? "#ff1744"
+          : "#888888";
+    chart.setStyles({
+      candle: {
+        priceMark: {
+          last: {
+            upColor: color,
+            downColor: color,
+            noChangeColor: color,
+          },
+        },
+      },
+    });
+  }, [hoveredButton]);
 
   // Candle time period options like IQ Option
   const candleTimePeriods = [
@@ -164,7 +198,7 @@ export default function RealTimeTradingChart({
         formatDate: (
           dateTimeFormat: any,
           timestamp: number,
-          format: string
+          format: string,
         ) => {
           const date = new Date(timestamp);
           // Always show only time (HH:mm:ss) for x-axis like IQ Option
@@ -176,7 +210,7 @@ export default function RealTimeTradingChart({
           });
         },
         formatBigNumber: (value: string | number) => {
-          const num = typeof value === 'string' ? parseFloat(value) : value;
+          const num = typeof value === "string" ? parseFloat(value) : value;
           // IQ Option shows 5 decimal places for forex pairs
           return num.toFixed(5);
         },
@@ -198,13 +232,17 @@ export default function RealTimeTradingChart({
             high: { show: true, color: "#00c853", textFamily: "Arial" },
             low: { show: true, color: "#ff1744", textFamily: "Arial" },
             last: {
-              show: true,
-              upColor: "#00c853",
-              downColor: "#ff1744",
+              show: false,
+              upColor: "#888888",
+              downColor: "#888888",
               noChangeColor: "#888888",
-              line: { show: true, style: "dashed" as any, dashedValue: [4, 4] },
+              line: {
+                show: false,
+                style: "dashed" as any,
+                dashedValue: [4, 4],
+              },
               text: {
-                show: true,
+                show: false,
                 paddingLeft: 8,
                 paddingRight: 12,
                 paddingTop: 6,
@@ -287,19 +325,19 @@ export default function RealTimeTradingChart({
         indicator: {
           lineColors: ["#f7931a", "#26a69a", "#ef5350", "#7b68ee", "#00bcd4"],
           tooltip: {
-            showRule: 'none' as any, // Hide indicator tooltip
+            showRule: "none" as any, // Hide indicator tooltip
           },
         },
       },
     });
 
     chartRef.current = chart;
-    
+
     // Set price precision to show more decimal places (IQ Option style)
     if (chart) {
       chart.setPriceVolumePrecision(5, 0); // 5 decimal places for price, 0 for volume
     }
-    
+
     // Apply custom Y-axis with wider tick spacing (IQ Option style)
     if (chart) {
       chart.setPaneOptions({
@@ -308,17 +346,17 @@ export default function RealTimeTradingChart({
         axisOptions: { name: "spacedYAxis" },
       });
     }
-    
+
     // Zoom out the chart to create more space
     if (chart) {
       chart.setBarSpace(8); // Reduce bar spacing to zoom out (default is ~12)
       chart.setOffsetRightDistance(200); // Add more space on the right for price indicator
-      
+
       // Hide candle tooltip after chart initialization
       chart.setStyles({
         candle: {
           tooltip: {
-            showRule: 'none' as any, // Don't show candle OHLC data
+            showRule: "none" as any, // Don't show candle OHLC data
           } as any,
         },
       });
@@ -347,11 +385,18 @@ export default function RealTimeTradingChart({
       });
       // Observe for dynamically added canvases
       const observer = new MutationObserver(() => {
-        chartContainer.querySelectorAll("canvas").forEach((canvas: HTMLCanvasElement) => {
-          canvas.style.cursor = "default";
-        });
+        chartContainer
+          .querySelectorAll("canvas")
+          .forEach((canvas: HTMLCanvasElement) => {
+            canvas.style.cursor = "default";
+          });
       });
-      observer.observe(chartContainer, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] });
+      observer.observe(chartContainer, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["style"],
+      });
       // Store observer for cleanup
       (chartContainerRef.current as any).__cursorObserver = observer;
     }
@@ -369,19 +414,19 @@ export default function RealTimeTradingChart({
         if (isForex) {
           // Use forex data provider for forex pairs
           console.log(
-            `Fetching FOREX chart data for ${symbol} at ${currentInterval} interval...`
+            `Fetching FOREX chart data for ${symbol} at ${currentInterval} interval...`,
           );
 
           const forexData = await fetchForexCandles(
             symbol,
             currentInterval,
-            limit
+            limit,
           );
 
           if (!isMounted || !chartRef.current) return;
 
           console.log(
-            `Successfully loaded ${forexData.length} candles for ${symbol}`
+            `Successfully loaded ${forexData.length} candles for ${symbol}`,
           );
 
           // Apply data to chart
@@ -417,7 +462,7 @@ export default function RealTimeTradingChart({
             (price: number, direction: "up" | "down" | "neutral") => {
               if (!isMounted) return;
               setLivePrice({ price, direction });
-            }
+            },
           );
           console.log(`Live updates started for ${symbol}`);
         } else {
@@ -429,20 +474,20 @@ export default function RealTimeTradingChart({
           const binanceInterval = normalizeInterval(currentInterval);
 
           console.log(
-            `Fetching CRYPTO chart data for ${binanceSymbol} at ${binanceInterval} interval...`
+            `Fetching CRYPTO chart data for ${binanceSymbol} at ${binanceInterval} interval...`,
           );
 
           // Fetch most recent candles (limit adjustable)
           const klineData = await fetchKlineData(
             binanceSymbol,
             binanceInterval,
-            limit
+            limit,
           );
 
           if (!isMounted || !chartRef.current) return;
 
           console.log(
-            `Successfully loaded ${klineData.length} candles for ${binanceSymbol}`
+            `Successfully loaded ${klineData.length} candles for ${binanceSymbol}`,
           );
 
           // Apply data to chart
@@ -467,13 +512,13 @@ export default function RealTimeTradingChart({
               (newKline: KlineData) => {
                 if (!isMounted || !chartRef.current) return;
                 chartRef.current.updateData(newKline);
-              }
+              },
             );
             console.log(`WebSocket subscribed for ${binanceSymbol}`);
           } catch (wsError) {
             console.warn(
               "WebSocket subscription failed, chart will not update in real-time:",
-              wsError
+              wsError,
             );
           }
         }
@@ -483,7 +528,7 @@ export default function RealTimeTradingChart({
         console.error("Failed to load chart data:", err);
         if (isMounted) {
           setError(
-            "Failed to load chart data. Please check your internet connection and try again."
+            "Failed to load chart data. Please check your internet connection and try again.",
           );
           setIsLoading(false);
         }
@@ -501,7 +546,10 @@ export default function RealTimeTradingChart({
       }
 
       // Clean up cursor observer
-      if (chartContainerRef.current && (chartContainerRef.current as any).__cursorObserver) {
+      if (
+        chartContainerRef.current &&
+        (chartContainerRef.current as any).__cursorObserver
+      ) {
         (chartContainerRef.current as any).__cursorObserver.disconnect();
       }
 
@@ -528,10 +576,27 @@ export default function RealTimeTradingChart({
       const container = chartContainerRef.current;
       const containerHeight = container.clientHeight;
 
+      // Report the latest candle timestamp to parent
+      if (
+        onLastCandleTimestampRef.current &&
+        typeof chart.getDataList === "function"
+      ) {
+        const dataList = chart.getDataList();
+        if (dataList && dataList.length > 0) {
+          const lastCandle = dataList[dataList.length - 1];
+          if (lastCandle && lastCandle.timestamp) {
+            onLastCandleTimestampRef.current(lastCandle.timestamp);
+          }
+        }
+      }
+
       // Use klinecharts convertToPixel to get Y position of current price
-      if (typeof chart.convertToPixel === 'function') {
-        const point = chart.convertToPixel({ value: livePrice.price }, { paneId: 'candle_pane' });
-        if (point && typeof point.y === 'number' && containerHeight > 0) {
+      if (typeof chart.convertToPixel === "function") {
+        const point = chart.convertToPixel(
+          { value: livePrice.price },
+          { paneId: "candle_pane" },
+        );
+        if (point && typeof point.y === "number" && containerHeight > 0) {
           const yPercent = (point.y / containerHeight) * 100;
           // Clamp between 10% and 90% for reasonable display
           const clampedPercent = Math.max(10, Math.min(90, yPercent));
@@ -542,8 +607,11 @@ export default function RealTimeTradingChart({
         if (onPriceToYConverter) {
           onPriceToYConverter((price: number) => {
             try {
-              const pt = chart.convertToPixel({ value: price }, { paneId: 'candle_pane' });
-              if (pt && typeof pt.y === 'number' && containerHeight > 0) {
+              const pt = chart.convertToPixel(
+                { value: price },
+                { paneId: "candle_pane" },
+              );
+              if (pt && typeof pt.y === "number" && containerHeight > 0) {
                 const pct = (pt.y / containerHeight) * 100;
                 return Math.max(5, Math.min(95, pct));
               }
@@ -557,8 +625,11 @@ export default function RealTimeTradingChart({
           const containerWidth = container.clientWidth;
           onTimeToXConverter((timestamp: number) => {
             try {
-              const pt = chart.convertToPixel({ timestamp }, { paneId: 'candle_pane' });
-              if (pt && typeof pt.x === 'number' && containerWidth > 0) {
+              const pt = chart.convertToPixel(
+                { timestamp },
+                { paneId: "candle_pane" },
+              );
+              if (pt && typeof pt.x === "number" && containerWidth > 0) {
                 const pct = (pt.x / containerWidth) * 100;
                 return pct;
               }
@@ -653,7 +724,7 @@ export default function RealTimeTradingChart({
       const sensitivity = 0.005;
       const newZoom = Math.max(
         0.2,
-        Math.min(5, yAxisDragStartRef.current.zoom - deltaY * sensitivity)
+        Math.min(5, yAxisDragStartRef.current.zoom - deltaY * sensitivity),
       );
 
       setPriceScaleZoom(newZoom);
@@ -740,8 +811,7 @@ export default function RealTimeTradingChart({
         onWheel={handleYAxisWheel}
         onMouseDown={handleYAxisMouseDown}
         title="Drag up/down to adjust price scale"
-      >
-      </div>
+      ></div>
 
       {/* Loading indicator */}
       {isLoading && (
@@ -761,8 +831,7 @@ export default function RealTimeTradingChart({
       )}
 
       {/* Chart controls - Bottom left */}
-      <div className="absolute bottom-2 left-4 flex items-center gap-2 z-10">
-      </div>
+      <div className="absolute bottom-2 left-4 flex items-center gap-2 z-10"></div>
 
       {/* Zoom & Focus Controls - Bottom center, visible on hover only */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10 opacity-0 hover:opacity-60 transition-opacity duration-300">
@@ -832,119 +901,132 @@ export default function RealTimeTradingChart({
       </div>
 
       {/* IQ Option Style Expiration Lines - Purchase time (white) and End time (red) */}
-      {expirationCountdown !== undefined && (() => {
-        const purchaseLinePos = 60; // current time at 60%
+      {expirationCountdown !== undefined &&
+        (() => {
+          const purchaseLinePos = 60; // current time at 60%
 
-        // End line: only show when there's an actual active trade
-        const hasActiveTradeData = activeTradeExpirationTime && activeTradeEntryTime;
-        let endLinePos = 95;
-        let endTimeDisplay = "00:00";
+          // End line: only show when there's an actual active trade
+          const hasActiveTradeData =
+            activeTradeExpirationTime && activeTradeEntryTime;
+          let endLinePos = 95;
+          let endTimeDisplay = "00:00";
 
-        if (hasActiveTradeData) {
-          const now = Date.now();
-          const totalDuration = activeTradeExpirationTime - activeTradeEntryTime; // total trade duration in ms
-          const remaining = Math.max(0, activeTradeExpirationTime - now); // remaining ms
-          const maxEndLinePos = 95;
+          if (hasActiveTradeData) {
+            const now = Date.now();
+            const totalDuration =
+              activeTradeExpirationTime - activeTradeEntryTime; // total trade duration in ms
+            const remaining = Math.max(0, activeTradeExpirationTime - now); // remaining ms
+            const maxEndLinePos = 95;
 
-          // progress goes from 1 (just started) to 0 (trade ending)
-          const progress = totalDuration > 0 ? remaining / totalDuration : 0;
-          endLinePos = purchaseLinePos + (maxEndLinePos - purchaseLinePos) * progress;
+            // progress goes from 1 (just started) to 0 (trade ending)
+            const progress = totalDuration > 0 ? remaining / totalDuration : 0;
+            endLinePos =
+              purchaseLinePos + (maxEndLinePos - purchaseLinePos) * progress;
 
-          // Calculate the actual clock time when the trade expires (entry time + expiration duration)
-          const endClockTime = new Date(activeTradeEntryTime + totalDuration);
-          const endHours = endClockTime.getHours();
-          const endMinutes = endClockTime.getMinutes();
-          const endSeconds = endClockTime.getSeconds();
-          endTimeDisplay = `${String(endHours).padStart(2, "0")}:${String(endMinutes).padStart(2, "0")}:${String(endSeconds).padStart(2, "0")}`;
-        }
+            // Calculate the actual clock time when the trade expires (entry time + expiration duration)
+            const endClockTime = new Date(activeTradeEntryTime + totalDuration);
+            const endHours = endClockTime.getHours();
+            const endMinutes = endClockTime.getMinutes();
+            const endSeconds = endClockTime.getSeconds();
+            endTimeDisplay = `${String(endHours).padStart(2, "0")}:${String(endMinutes).padStart(2, "0")}:${String(endSeconds).padStart(2, "0")}`;
+          }
 
-        return (
-          <>
-            {/* Purchase Time Line (White dashed) */}
-            <div 
-              className="absolute top-0 bottom-8 pointer-events-none"
-              style={{ 
-                left: `${purchaseLinePos}%`,
-                transform: 'translateX(-50%)',
-                zIndex: 1000,
-              }}
-            >
-              <div 
-                className="h-full"
-                style={{
-                  width: '2px',
-                  backgroundImage: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 50%, transparent 50%)',
-                  backgroundSize: '2px 8px',
-                }}
-              />
-              
-              {/* PURCHASE TIME label at top - hide when trade is active */}
-              {!hasActiveTradeData && (
-              <div 
-                className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
-                style={{ color: 'rgba(255, 255, 255, 0.7)' }}
-              >
-                <span className="text-[10px] tracking-wide whitespace-nowrap">PURCHASE TIME</span>
-                <span className="text-white text-2xl font-bold font-mono tracking-wide">
-                  {String(Math.floor((expirationCountdown || 0) / 60)).padStart(2, "0")}:
-                  {String((expirationCountdown || 0) % 60).padStart(2, "0")}
-                </span>
-              </div>
-              )}
-
-              {/* Countdown at bottom of line during active trade */}
-              {hasActiveTradeData && (
-              <div 
-                className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
-                style={{ color: 'rgba(255, 255, 255, 0.8)' }}
-              >
-                <span className="text-white text-sm font-bold font-mono tracking-wide whitespace-nowrap">
-                  {String(Math.floor((expirationCountdown || 0) / 60)).padStart(2, "0")}:{String((expirationCountdown || 0) % 60).padStart(2, "0")}
-                </span>
-              </div>
-              )}
-            </div>
-
-            {/* Trade End Time Line (Solid Red) - Only shows with active trade, moves as time passes */}
-            {hasActiveTradeData && (
-              <div 
+          return (
+            <>
+              {/* Purchase Time Line (White dashed) */}
+              <div
                 className="absolute top-0 bottom-8 pointer-events-none"
-                style={{ 
-                  left: `${endLinePos}%`,
-                  transform: 'translateX(-50%)',
+                style={{
+                  left: `${purchaseLinePos}%`,
+                  transform: "translateX(-50%)",
                   zIndex: 1000,
-                  transition: 'left 1s linear',
                 }}
               >
-                {/* Solid red vertical line */}
-                <div 
+                <div
                   className="h-full"
                   style={{
-                    width: '2px',
-                    backgroundColor: 'rgba(239, 68, 68, 0.9)',
+                    width: "2px",
+                    backgroundImage:
+                      "linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 50%, transparent 50%)",
+                    backgroundSize: "2px 8px",
                   }}
                 />
-                
-                {/* END TIME label at top with real clock time */}
-                <div 
-                  className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
-                  style={{ color: 'rgba(239, 68, 68, 0.9)' }}
-                >
-                </div>
-                
-                {/* Red glow effect at bottom of line */}
-                <div 
-                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
-                  style={{
-                    backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                    boxShadow: '0 0 8px 2px rgba(239, 68, 68, 0.5)',
-                  }}
-                />
+
+                {/* PURCHASE TIME label at top - hide when trade is active */}
+                {!hasActiveTradeData && (
+                  <div
+                    className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
+                    style={{ color: "rgba(255, 255, 255, 0.7)" }}
+                  >
+                    <span className="text-[10px] tracking-wide whitespace-nowrap">
+                      PURCHASE TIME
+                    </span>
+                    <span className="text-white text-2xl font-bold font-mono tracking-wide">
+                      {String(
+                        Math.floor((expirationCountdown || 0) / 60),
+                      ).padStart(2, "0")}
+                      :
+                      {String((expirationCountdown || 0) % 60).padStart(2, "0")}
+                    </span>
+                  </div>
+                )}
+
+                {/* Countdown at bottom of line during active trade */}
+                {hasActiveTradeData && (
+                  <div
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
+                    style={{ color: "rgba(255, 255, 255, 0.8)" }}
+                  >
+                    <span className="text-white text-sm font-bold font-mono tracking-wide whitespace-nowrap">
+                      {String(
+                        Math.floor((expirationCountdown || 0) / 60),
+                      ).padStart(2, "0")}
+                      :
+                      {String((expirationCountdown || 0) % 60).padStart(2, "0")}
+                    </span>
+                  </div>
+                )}
               </div>
-            )}
-          </>
-        );
-      })()}
+
+              {/* Trade End Time Line (Solid Red) - Only shows with active trade, moves as time passes */}
+              {hasActiveTradeData && (
+                <div
+                  className="absolute top-0 bottom-8 pointer-events-none"
+                  style={{
+                    left: `${endLinePos}%`,
+                    transform: "translateX(-50%)",
+                    zIndex: 1000,
+                    transition: "left 1s linear",
+                  }}
+                >
+                  {/* Solid red vertical line */}
+                  <div
+                    className="h-full"
+                    style={{
+                      width: "2px",
+                      backgroundColor: "rgba(239, 68, 68, 0.9)",
+                    }}
+                  />
+
+                  {/* END TIME label at top with real clock time */}
+                  <div
+                    className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
+                    style={{ color: "rgba(239, 68, 68, 0.9)" }}
+                  ></div>
+
+                  {/* Red glow effect at bottom of line */}
+                  <div
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
+                    style={{
+                      backgroundColor: "rgba(239, 68, 68, 0.8)",
+                      boxShadow: "0 0 8px 2px rgba(239, 68, 68, 0.5)",
+                    }}
+                  />
+                </div>
+              )}
+            </>
+          );
+        })()}
 
       {/* Live Price Display - Hidden */}
     </div>

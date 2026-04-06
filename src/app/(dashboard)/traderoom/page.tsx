@@ -1,6 +1,14 @@
 "use client";
 
-import { useEffect, useState, Suspense, useTransition, useRef, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  Suspense,
+  useTransition,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -83,59 +91,77 @@ import { getCurrencySymbol, formatCurrency } from "@/lib/currencies";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 // Helper to render asset icon - SVG for forex currencies, fallback for others
-const AssetFlag = ({ flag, symbol, size = 20, className }: { flag: string; symbol: string; size?: number; className?: string }) => {
+const AssetFlag = ({
+  flag,
+  symbol,
+  size = 20,
+  className,
+}: {
+  flag: string;
+  symbol: string;
+  size?: number;
+  className?: string;
+}) => {
   // For forex pairs like "EUR,USD" - render two currency SVG icons
   if (flag.includes(",")) {
     const [first, second] = flag.split(",");
     return (
-      <span className={`inline-flex items-center -space-x-1 ${className || ""}`}>
+      <span
+        className={`inline-flex items-center -space-x-1 ${className || ""}`}
+      >
         <CryptoIcon symbol={first} size="xs" />
         <CryptoIcon symbol={second} size="xs" />
       </span>
     );
   }
-  
+
   // For single currency/crypto codes (2-8 uppercase letters), use CryptoIcon
   if (/^[A-Z]{2,8}$/.test(flag)) {
     return <CryptoIcon symbol={flag} size="xs" className={className} />;
   }
-  
+
   // For symbols with "/" - extract parts and render pair icons
   if (symbol.includes("/")) {
     const [base, quote] = symbol.split("/");
     // Clean the symbol (remove numbers, spaces)
     const cleanBase = base.replace(/[0-9\s]/g, "").toUpperCase();
     const cleanQuote = quote.replace(/[0-9\s]/g, "").toUpperCase();
-    
+
     // If quote is USD, just show the base crypto icon
     if (cleanQuote === "USD" && /^[A-Z]{2,10}$/.test(cleanBase)) {
       return <CryptoIcon symbol={cleanBase} size="xs" className={className} />;
     }
-    
+
     // Show both icons for pairs
     if (/^[A-Z]{2,10}$/.test(cleanBase) && /^[A-Z]{2,10}$/.test(cleanQuote)) {
       return (
-        <span className={`inline-flex items-center -space-x-1 ${className || ""}`}>
+        <span
+          className={`inline-flex items-center -space-x-1 ${className || ""}`}
+        >
           <CryptoIcon symbol={cleanBase} size="xs" />
           <CryptoIcon symbol={cleanQuote} size="xs" />
         </span>
       );
     }
   }
-  
+
   // For single asset symbols (no "/"), try to use the symbol as icon
-  const cleanSymbol = symbol.replace(/[0-9\s]/g, "").replace(/Index$/i, "").toUpperCase().trim();
+  const cleanSymbol = symbol
+    .replace(/[0-9\s]/g, "")
+    .replace(/Index$/i, "")
+    .toUpperCase()
+    .trim();
   if (/^[A-Z]{2,10}$/.test(cleanSymbol)) {
     return <CryptoIcon symbol={cleanSymbol} size="xs" className={className} />;
   }
-  
+
   // For crypto/stocks with emoji flags, try using the symbol directly
   // Extract first word of symbol to use as icon code
   const symbolCode = symbol.split(/[\s\/]/)[0].toUpperCase();
   if (/^[A-Z]{2,10}$/.test(symbolCode)) {
     return <CryptoIcon symbol={symbolCode} size="xs" className={className} />;
   }
-  
+
   // Fallback to emoji/text flag
   return <span className={className}>{flag}</span>;
 };
@@ -153,12 +179,14 @@ interface ActiveTrade {
   expirationSeconds: number;
   status: "active" | "won" | "lost" | "pending";
   result?: number;
+  exitPrice?: number;
 }
 
 function TradingInterface() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { formatAmount, preferredCurrency, exchangeRates, convertAmount } = useCurrency();
+  const { formatAmount, preferredCurrency, exchangeRates, convertAmount } =
+    useCurrency();
   const [amount, setAmount] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("m4_trade_amount");
@@ -174,7 +202,8 @@ function TradingInterface() {
       const saved = localStorage.getItem("m4_trade_amount");
       if (saved) {
         const parsed = parseInt(saved, 10);
-        if (!isNaN(parsed) && parsed >= 1 && parsed <= 1000000) return parsed.toLocaleString();
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 1000000)
+          return parsed.toLocaleString();
       }
     }
     return "1";
@@ -189,17 +218,36 @@ function TradingInterface() {
   >(null);
   const [showQuickAmounts, setShowQuickAmounts] = useState(false);
   const [tradingMode, setTradingMode] = useState<"binary" | "forex" | "crypto">(
-    "binary"
+    "binary",
   );
   const [selectedMarket, setSelectedMarket] = useState("Blitz");
-  const marketCategories = ["Blitz", "Binary", "Digital", "Forex", "Stocks", "Crypto", "Commodities", "Indices"];
+  const marketCategories = [
+    "Blitz",
+    "Binary",
+    "Digital",
+    "Forex",
+    "Stocks",
+    "Crypto",
+    "Commodities",
+    "Indices",
+  ];
   const [showAddAssetModal, setShowAddAssetModal] = useState(false);
-  const [addAssetSideTab, setAddAssetSideTab] = useState<"trending" | "options" | "margin" | "watchlist">("trending");
+  const [addAssetSideTab, setAddAssetSideTab] = useState<
+    "trending" | "options" | "margin" | "watchlist"
+  >("trending");
   const [showMarketDropdown, setShowMarketDropdown] = useState(false);
   const [addAssetSearch, setAddAssetSearch] = useState("");
-  const [addAssetGeoTab, setAddAssetGeoTab] = useState<"worldwide" | "local">("worldwide");
+  const [addAssetGeoTab, setAddAssetGeoTab] = useState<"worldwide" | "local">(
+    "worldwide",
+  );
   const [watchlistedSymbols, setWatchlistedSymbols] = useState<string[]>([]);
-  const [openTabs, setOpenTabs] = useState<Array<{ symbol: string; type: string; lastResult?: { amount: number; status: "won" | "lost" } }>>([
+  const [openTabs, setOpenTabs] = useState<
+    Array<{
+      symbol: string;
+      type: string;
+      lastResult?: { amount: number; status: "won" | "lost" };
+    }>
+  >([
     { symbol: "USD/CAD", type: "Blitz" },
     { symbol: "EUR/USD", type: "Digital" },
   ]);
@@ -208,12 +256,17 @@ function TradingInterface() {
   const [showChartGrids, setShowChartGrids] = useState(false);
   const [selectedChartGrid, setSelectedChartGrid] = useState(1);
   const [showTradingHistory, setShowTradingHistory] = useState(false);
-  const [expandedHistoryTradeId, setExpandedHistoryTradeId] = useState<string | null>(null);
+  const [expandedHistoryTradeId, setExpandedHistoryTradeId] = useState<
+    string | null
+  >(null);
   const [historyFilter, setHistoryFilter] = useState("All Positions");
   const [showMoreItems, setShowMoreItems] = useState(false);
   const [showCalculators, setShowCalculators] = useState(false);
   const [showExpirationModal, setShowExpirationModal] = useState(false);
-  const [expirationDropdownPos, setExpirationDropdownPos] = useState<{ top: number; right: number } | null>(null);
+  const [expirationDropdownPos, setExpirationDropdownPos] = useState<{
+    top: number;
+    right: number;
+  } | null>(null);
   const expirationButtonRef = useRef<HTMLDivElement>(null);
   const [isBalanceDropdownOpen, setIsBalanceDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
@@ -222,7 +275,9 @@ function TradingInterface() {
   const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [withdrawError, setWithdrawError] = useState("");
   const [withdrawSuccess, setWithdrawSuccess] = useState("");
-  const [withdrawMethod, setWithdrawMethod] = useState<"fiat" | "crypto">("fiat");
+  const [withdrawMethod, setWithdrawMethod] = useState<"fiat" | "crypto">(
+    "fiat",
+  );
   const [withdrawCryptoSymbol, setWithdrawCryptoSymbol] = useState("");
   const [selectedAccountType, setSelectedAccountType] = useState<
     "real" | "practice"
@@ -238,8 +293,12 @@ function TradingInterface() {
   const [selectedCryptoAmount, setSelectedCryptoAmount] = useState("");
   const [isFunding, setIsFunding] = useState(false);
   const [fundingError, setFundingError] = useState("");
-  const [cryptoAssets, setCryptoAssets] = useState<Array<{ symbol: string; amount: number }>>([]);
-  const [fundingSuccessMessage, setFundingSuccessMessage] = useState<string | null>(null);
+  const [cryptoAssets, setCryptoAssets] = useState<
+    Array<{ symbol: string; amount: number }>
+  >([]);
+  const [fundingSuccessMessage, setFundingSuccessMessage] = useState<
+    string | null
+  >(null);
   const [practiceAccountBalance, setPracticeAccountBalance] = useState(10000.0); // Practice account default balance
   const [showPracticeTopUpModal, setShowPracticeTopUpModal] = useState(false);
   const [practiceTopUpAmount, setPracticeTopUpAmount] = useState("");
@@ -249,22 +308,37 @@ function TradingInterface() {
 
   // Hover state for HIGHER/LOWER buttons (IQ Option style overlay)
   const [hoveredButton, setHoveredButton] = useState<"higher" | "lower" | null>(
-    null
+    null,
   );
-  
+
   // Current price Y position on chart (percentage from top)
   const [priceYPosition, setPriceYPosition] = useState<number>(50);
 
+  // Track which trades have already been settled to prevent double-counting
+  const settledTradeIdsRef = useRef<Set<string>>(new Set());
+
   // Dynamic price-to-Y converter from chart (converts any price to Y% position)
   const priceToYRef = useRef<((price: number) => number) | null>(null);
-  const handlePriceToYConverter = useCallback((converter: (price: number) => number) => {
-    priceToYRef.current = converter;
-  }, []);
+  const handlePriceToYConverter = useCallback(
+    (converter: (price: number) => number) => {
+      priceToYRef.current = converter;
+    },
+    [],
+  );
 
   // Dynamic timestamp-to-X converter from chart (converts timestamp to X% position)
   const timeToXRef = useRef<((timestamp: number) => number) | null>(null);
-  const handleTimeToXConverter = useCallback((converter: (timestamp: number) => number) => {
-    timeToXRef.current = converter;
+  const handleTimeToXConverter = useCallback(
+    (converter: (timestamp: number) => number) => {
+      timeToXRef.current = converter;
+    },
+    [],
+  );
+
+  // Last candle timestamp from chart - used for accurate entry marker positioning
+  const lastCandleTimestampRef = useRef<number>(0);
+  const handleLastCandleTimestamp = useCallback((timestamp: number) => {
+    lastCandleTimestampRef.current = timestamp;
   }, []);
 
   // Active trades state for chart markers
@@ -272,9 +346,37 @@ function TradingInterface() {
   const activeTradesRef = useRef<ActiveTrade[]>([]);
   activeTradesRef.current = activeTrades;
   const [currentPrice, setCurrentPrice] = useState<number>(0);
-  
+  const prevPriceRef = useRef<number>(0);
+  const [priceDirection, setPriceDirection] = useState<"up" | "down" | "none">(
+    "none",
+  );
+
+  // Track price direction for the custom price badge color
+  const handleLivePriceUpdate = useCallback((price: number) => {
+    setCurrentPrice(price);
+    if (prevPriceRef.current > 0) {
+      if (price > prevPriceRef.current) setPriceDirection("up");
+      else if (price < prevPriceRef.current) setPriceDirection("down");
+    }
+    prevPriceRef.current = price;
+  }, []);
+
+  // Persistent entry markers - survive after trades are cleaned up from activeTrades
+  const [entryMarkers, setEntryMarkers] = useState<
+    Array<{
+      id: string;
+      symbol: string;
+      direction: "higher" | "lower";
+      amount: number;
+      entryPrice: number;
+      entryYPosition: number;
+      entryTime: number;
+    }>
+  >([]);
+
   // Last finished trade - stays visible until new trade is placed
-  const [lastFinishedTrade, setLastFinishedTrade] = useState<ActiveTrade | null>(null);
+  const [lastFinishedTrade, setLastFinishedTrade] =
+    useState<ActiveTrade | null>(null);
   // Session accumulated results across all trades
   const [sessionTotalResult, setSessionTotalResult] = useState(0);
   const [sessionTotalInvested, setSessionTotalInvested] = useState(0);
@@ -332,7 +434,8 @@ function TradingInterface() {
   };
 
   // Get trading context for history data
-  const { tradeHistory, openPositions, reloadTradeHistory } = useTradingContext();
+  const { tradeHistory, openPositions, reloadTradeHistory } =
+    useTradingContext();
 
   // Get crypto market data
   const {
@@ -346,163 +449,1267 @@ function TradingInterface() {
     return forexRates[pair] || null;
   };
 
-  const symbols = useMemo(() => [
-    // ===== CURRENCY INDICES (NEW) =====
-    { symbol: "AUD Index", displayName: "Australian Dollar In.", price: "71.40563", change: "+0.123", percentage: "+0.17%", flag: "AUD", category: "Index" },
-    { symbol: "GBP Index", displayName: "Pound Index", price: "134.8180", change: "+0.234", percentage: "+0.17%", flag: "GBP", category: "Index" },
-    { symbol: "CAD Index", displayName: "Canadian Dollar Ind.", price: "73.87260", change: "-0.145", percentage: "-0.20%", flag: "CAD", category: "Index" },
-    { symbol: "EUR Index", displayName: "Euro Index", price: "116.8683", change: "+0.543", percentage: "+0.47%", flag: "EUR", category: "Index" },
-    { symbol: "Dollar Index", price: "99.62505", change: "-0.234", percentage: "-0.23%", flag: "USD", category: "Index" },
-    { symbol: "Yen Index", price: "63.44698", change: "+0.123", percentage: "+0.19%", flag: "JPY", category: "Index" },
-    // ===== MARKET INDICES =====
-    { symbol: "Magnificent 7", price: "2264.468", change: "+45.23", percentage: "+2.04%", flag: "✦", category: "Index" },
-    { symbol: "AUS 200", price: "8641.562", change: "+23.45", percentage: "+0.27%", flag: "AUD", category: "Index" },
-    { symbol: "EU 50", price: "5661.541", change: "+12.34", percentage: "+0.22%", flag: "EUR", category: "Index" },
-    { symbol: "FR 40", price: "7956.030", change: "-34.56", percentage: "-0.43%", flag: "EUR", category: "Index" },
-    { symbol: "GER 30", price: "23751.42", change: "+156.23", percentage: "+0.66%", flag: "EUR", category: "Index" },
-    // ===== SECTOR INDICES =====
-    { symbol: "Airlines", price: "2978.252", change: "+12.34", percentage: "+0.42%", flag: "✈️", category: "Index" },
-    { symbol: "Cannabis", price: "1556.239", change: "-5.67", percentage: "-0.36%", flag: "🌿", category: "Index" },
-    { symbol: "Casino", price: "2465.190", change: "+34.56", percentage: "+1.42%", flag: "🎰", category: "Index" },
-    // ===== FOREX PAIRS =====
-    { symbol: "EUR/USD", price: getForexRate("EUR")?.price || "1.08532", change: getForexRate("EUR")?.change || "-0.0023", percentage: `${getForexRate("EUR")?.changePercent >= 0 ? "+" : ""}${getForexRate("EUR")?.changePercent || "-0.21"}%`, flag: "EUR,USD", category: "Forex" },
-    { symbol: "GBP/USD", price: getForexRate("GBP")?.price || "1.32165", change: getForexRate("GBP")?.change || "+0.0045", percentage: `${getForexRate("GBP")?.changePercent >= 0 ? "+" : ""}${getForexRate("GBP")?.changePercent || "0.35"}%`, flag: "GBP,USD", category: "Forex" },
-    { symbol: "USD/JPY", price: getForexRate("JPY")?.price || "149.235", change: getForexRate("JPY")?.change || "+0.125", percentage: `${getForexRate("JPY")?.changePercent >= 0 ? "+" : ""}${getForexRate("JPY")?.changePercent || "0.08"}%`, flag: "USD,JPY", category: "Forex" },
-    { symbol: "USD/CAD", price: getForexRate("CAD")?.price || "1.35742", change: getForexRate("CAD")?.change || "+0.0015", percentage: `${getForexRate("CAD")?.changePercent >= 0 ? "+" : ""}${getForexRate("CAD")?.changePercent || "0.11"}%`, flag: "USD,CAD", category: "Forex" },
-    { symbol: "AUD/USD", price: getForexRate("AUD")?.price || "0.67321", change: getForexRate("AUD")?.change || "-0.0012", percentage: `${getForexRate("AUD")?.changePercent >= 0 ? "+" : ""}${getForexRate("AUD")?.changePercent || "-0.18"}%`, flag: "AUD,USD", category: "Forex" },
-    { symbol: "AUD/CAD", price: "0.91250", change: "+0.0008", percentage: "+0.09%", flag: "AUD,CAD", category: "Forex" },
-    { symbol: "AUD/CHF", price: "0.55839", change: "-0.0012", percentage: "-0.21%", flag: "AUD,CHF", category: "Forex" },
-    { symbol: "AUD/JPY", price: "113.0758", change: "+0.345", percentage: "+0.31%", flag: "AUD,JPY", category: "Forex" },
-    { symbol: "AUD/NZD", price: "1.18783", change: "+0.0023", percentage: "+0.19%", flag: "AUD,NZD", category: "Forex" },
-    { symbol: "CAD/CHF", price: "0.57409", change: "-0.0018", percentage: "-0.31%", flag: "CAD,CHF", category: "Forex" },
-    { symbol: "CAD/JPY", price: "116.7675", change: "+0.234", percentage: "+0.20%", flag: "CAD,JPY", category: "Forex" },
-    { symbol: "CHF/JPY", price: "201.627", change: "+0.567", percentage: "+0.28%", flag: "CHF,JPY", category: "Forex" },
-    { symbol: "EUR/AUD", price: "1.62874", change: "+0.0034", percentage: "+0.21%", flag: "EUR,AUD", category: "Forex" },
-    { symbol: "EUR/CAD", price: "1.58147", change: "+0.0021", percentage: "+0.13%", flag: "EUR,CAD", category: "Forex" },
-    { symbol: "EUR/CHF", price: "0.90397", change: "-0.0015", percentage: "-0.17%", flag: "EUR,CHF", category: "Forex" },
-    { symbol: "EUR/GBP", price: "0.86266", change: "+0.0012", percentage: "+0.14%", flag: "EUR,GBP", category: "Forex" },
-    { symbol: "EUR/JPY", price: "182.818", change: "+0.456", percentage: "+0.25%", flag: "EUR,JPY", category: "Forex" },
-    { symbol: "EUR/NZD", price: "1.95006", change: "+0.0045", percentage: "+0.23%", flag: "EUR,NZD", category: "Forex" },
-    { symbol: "EUR/THB", price: "36.2385", change: "+0.123", percentage: "+0.34%", flag: "EUR,THB", category: "Forex" },
-    { symbol: "GBP/AUD", price: "1.88020", change: "+0.0034", percentage: "+0.18%", flag: "GBP,AUD", category: "Forex" },
-    { symbol: "GBP/CAD", price: "1.81737", change: "+0.0056", percentage: "+0.31%", flag: "GBP,CAD", category: "Forex" },
-    { symbol: "GBP/CHF", price: "1.05276", change: "-0.0023", percentage: "-0.22%", flag: "GBP,CHF", category: "Forex" },
-    { symbol: "GBP/JPY", price: "211.890", change: "+0.678", percentage: "+0.32%", flag: "GBP,JPY", category: "Forex" },
-    { symbol: "GBP/NZD", price: "2.26695", change: "+0.0089", percentage: "+0.39%", flag: "GBP,NZD", category: "Forex" },
-    { symbol: "USD/BRL", price: "4.84483", change: "+0.0234", percentage: "+0.49%", flag: "USD,BRL", category: "Forex" },
-    { symbol: "USD/MXN", price: "17.7583", change: "-0.0456", percentage: "-0.26%", flag: "USD,MXN", category: "Forex" },
-    // ===== CRYPTO =====
-    { symbol: "BTC/USD", price: getCryptoPrice("BTC")?.price?.toLocaleString("en-US", { maximumFractionDigits: 2 }) || "67890.45", change: getCryptoPrice("BTC")?.change24h?.toFixed(2) || "+1234.56", percentage: `${(getCryptoPrice("BTC")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("BTC")?.changePercent24h?.toFixed(2) || "1.85"}%`, flag: "BTC", category: "Crypto" },
-    { symbol: "ETH/USD", price: getCryptoPrice("ETH")?.price?.toLocaleString("en-US", { maximumFractionDigits: 2 }) || "2342.043", change: getCryptoPrice("ETH")?.change24h?.toFixed(2) || "-23.45", percentage: `${(getCryptoPrice("ETH")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("ETH")?.changePercent24h?.toFixed(2) || "0.95"}%`, flag: "ETH", category: "Crypto" },
-    { symbol: "XRP/USD", price: getCryptoPrice("XRP")?.price?.toLocaleString("en-US", { maximumFractionDigits: 4 }) || "0.6234", change: getCryptoPrice("XRP")?.change24h?.toFixed(4) || "+0.0234", percentage: `${(getCryptoPrice("XRP")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("XRP")?.changePercent24h?.toFixed(2) || "3.89"}%`, flag: "XRP", category: "Crypto" },
-    { symbol: "ADA/USD", displayName: "Cardano", price: getCryptoPrice("ADA")?.price?.toFixed(6) || "0.367185", change: getCryptoPrice("ADA")?.change24h?.toFixed(4) || "+0.0089", percentage: `${(getCryptoPrice("ADA")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("ADA")?.changePercent24h?.toFixed(2) || "2.49"}%`, flag: "ADA", category: "Crypto" },
-    { symbol: "DOGE/USD", displayName: "Dogecoin", price: getCryptoPrice("DOGE")?.price?.toFixed(6) || "0.106155", change: getCryptoPrice("DOGE")?.change24h?.toFixed(4) || "-0.0023", percentage: `${(getCryptoPrice("DOGE")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("DOGE")?.changePercent24h?.toFixed(2) || "-2.12"}%`, flag: "DOGE", category: "Crypto" },
-    { symbol: "DOT/USD", displayName: "Polkadot", price: getCryptoPrice("DOT")?.price?.toFixed(6) || "1.754805", change: getCryptoPrice("DOT")?.change24h?.toFixed(4) || "+0.0345", percentage: `${(getCryptoPrice("DOT")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("DOT")?.changePercent24h?.toFixed(2) || "2.00"}%`, flag: "DOT", category: "Crypto" },
-    { symbol: "BCH/USD", displayName: "Bitcoin Cash", price: getCryptoPrice("BCH")?.price?.toFixed(4) || "490.9216", change: getCryptoPrice("BCH")?.change24h?.toFixed(2) || "+8.45", percentage: `${(getCryptoPrice("BCH")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("BCH")?.changePercent24h?.toFixed(2) || "1.75"}%`, flag: "BCH", category: "Crypto" },
-    { symbol: "ARB/USD", displayName: "Arbitrum", price: "0.133475", change: "+0.0023", percentage: "+1.75%", flag: "ARB", category: "Crypto" },
-    { symbol: "ATOM/USD", displayName: "Cosmos", price: "1.897285", change: "+0.0345", percentage: "+1.85%", flag: "ATOM", category: "Crypto" },
-    { symbol: "EOS/USD", displayName: "Vaulta", price: "0.083095", change: "-0.0012", percentage: "-1.42%", flag: "EOS", category: "Crypto" },
-    { symbol: "FET/USD", displayName: "FET", price: "0.274395", change: "+0.0078", percentage: "+2.93%", flag: "FET", category: "Crypto" },
-    { symbol: "FLOKI/USD", displayName: "Floki", price: "0.031385", change: "-0.0008", percentage: "-2.49%", flag: "FLOKI", category: "Crypto" },
-    { symbol: "FARTCOIN", displayName: "Fartcoin", price: "0.239575", change: "+0.0123", percentage: "+5.42%", flag: "💨", category: "Crypto" },
-    // ===== STOCKS =====
-    { symbol: "AAPL", displayName: "Apple", price: "246.168", change: "+2.15", percentage: "+0.88%", flag: "🍎", category: "Stocks" },
-    { symbol: "TSLA", displayName: "Tesla", price: "247.50", change: "+5.20", percentage: "+2.14%", flag: "🚗", category: "Stocks" },
-    { symbol: "NVDA", displayName: "Nvidia", price: "875.30", change: "+12.45", percentage: "+1.44%", flag: "🎮", category: "Stocks" },
-    { symbol: "GOOGL", displayName: "Google", price: "142.65", change: "-1.25", percentage: "-0.87%", flag: "🔍", category: "Stocks" },
-    { symbol: "MSFT", displayName: "Microsoft", price: "378.90", change: "+3.50", percentage: "+0.93%", flag: "🪟", category: "Stocks" },
-    { symbol: "AMZN", displayName: "Amazon", price: "222.17", change: "+2.30", percentage: "+1.05%", flag: "📦", category: "Stocks" },
-    { symbol: "META", displayName: "Meta", price: "677.685", change: "+4.20", percentage: "+0.62%", flag: "👤", category: "Stocks" },
-    { symbol: "NFLX", displayName: "Netflix", price: "512.40", change: "+8.90", percentage: "+1.77%", flag: "🎬", category: "Stocks" },
-    { symbol: "AIG", displayName: "AIG", price: "77.3995", change: "-0.345", percentage: "-0.44%", flag: "🏛️", category: "Stocks" },
-    { symbol: "BABA", displayName: "Alibaba Group", price: "144.798", change: "+1.234", percentage: "+0.86%", flag: "🛒", category: "Stocks" },
-    { symbol: "BIDU", displayName: "Baidu, Inc. ADR", price: "124.663", change: "-0.567", percentage: "-0.45%", flag: "🔎", category: "Stocks" },
-    { symbol: "C", displayName: "Citigroup, Inc", price: "108.063", change: "+0.789", percentage: "+0.74%", flag: "🏦", category: "Stocks" },
-    { symbol: "KO", displayName: "Coca-Cola Company", price: "80.0905", change: "+0.345", percentage: "+0.43%", flag: "🥤", category: "Stocks" },
-    { symbol: "FONE", displayName: "Formula One Group", price: "48.7250", change: "+0.234", percentage: "+0.48%", flag: "🏎️", category: "Stocks" },
-    { symbol: "AMZN/BABA", displayName: "Amazon/Alibaba", price: "1.584555", change: "+0.0023", percentage: "+0.15%", flag: "📦", category: "Stocks" },
-    { symbol: "AMZN/EBAY", displayName: "Amazon/Ebay", price: "2.199395", change: "+0.0056", percentage: "+0.26%", flag: "📦", category: "Stocks" },
-    { symbol: "Palladium", price: "1345.447", change: "+12.34", percentage: "+0.92%", flag: "🥈", category: "Stocks" },
-    { symbol: "Platinum", price: "2162.622", change: "+23.45", percentage: "+1.10%", flag: "⬜", category: "Stocks" },
-    // ===== ADDITIONAL MARKET INDICES =====
-    { symbol: "GER30/UK100", displayName: "GER30/UK100", price: "2.214715", change: "+0.0045", percentage: "+0.21%", flag: "EUR,GBP", category: "Index" },
-    { symbol: "HK 33", displayName: "HK 33", price: "27173.79", change: "+123.45", percentage: "+0.46%", flag: "HKD", category: "Index" },
-    { symbol: "UK 100", displayName: "UK 100", price: "10397.57", change: "+45.67", percentage: "+0.44%", flag: "GBP", category: "Index" },
-    { symbol: "US100/JP225", displayName: "US100/JP225", price: "73.98650", change: "+0.567", percentage: "+0.77%", flag: "USD,JPY", category: "Index" },
-    { symbol: "US2000", price: "2586.985", change: "+12.34", percentage: "+0.48%", flag: "USD", category: "Index" },
-    { symbol: "US 30", price: "45938.51", change: "+234.56", percentage: "+0.51%", flag: "USD", category: "Index" },
-    { symbol: "US30/JP225", displayName: "US30/JP225", price: "143.4738", change: "+0.678", percentage: "+0.47%", flag: "USD,JPY", category: "Index" },
-    { symbol: "US 500", price: "6625.189", change: "+23.45", percentage: "+0.36%", flag: "USD", category: "Index" },
-    { symbol: "US 100", price: "24862.53", change: "+156.78", percentage: "+0.63%", flag: "USD", category: "Index" },
-    { symbol: "SP 35", displayName: "SP 35", price: "17303.30", change: "+78.90", percentage: "+0.46%", flag: "EUR", category: "Index" },
-    // ===== ADDITIONAL FOREX PAIRS =====
-    { symbol: "NZD/CAD", price: "0.798095", change: "+0.0012", percentage: "+0.15%", flag: "NZD,CAD", category: "Forex" },
-    { symbol: "NZD/JPY", price: "92.09785", change: "+0.234", percentage: "+0.25%", flag: "NZD,JPY", category: "Forex" },
-    { symbol: "NZD/USD", price: "0.584945", change: "-0.0008", percentage: "-0.14%", flag: "NZD,USD", category: "Forex" },
-    { symbol: "USD/CHF", price: "0.789325", change: "+0.0015", percentage: "+0.19%", flag: "USD,CHF", category: "Forex" },
-    { symbol: "USD/HKD", price: "7.851635", change: "+0.0023", percentage: "+0.03%", flag: "USD,HKD", category: "Forex" },
-    { symbol: "USD/NOK", price: "9.625115", change: "+0.0234", percentage: "+0.24%", flag: "USD,NOK", category: "Forex" },
-    { symbol: "USD/PLN", price: "3.681655", change: "-0.0045", percentage: "-0.12%", flag: "USD,PLN", category: "Forex" },
-    { symbol: "USD/SEK", price: "9.482325", change: "+0.0178", percentage: "+0.19%", flag: "USD,SEK", category: "Forex" },
-    { symbol: "USD/SGD", price: "1.274865", change: "+0.0012", percentage: "+0.09%", flag: "USD,SGD", category: "Forex" },
-    { symbol: "USD/THB", price: "32.40686", change: "+0.0678", percentage: "+0.21%", flag: "USD,THB", category: "Forex" },
-    { symbol: "USD/TRY", price: "44.22107", change: "+0.1234", percentage: "+0.28%", flag: "USD,TRY", category: "Forex" },
-    { symbol: "USD/ZAR", price: "16.62457", change: "+0.0456", percentage: "+0.27%", flag: "USD,ZAR", category: "Forex" },
-    { symbol: "USD/COP", price: "3954.023", change: "+12.34", percentage: "+0.31%", flag: "USD,COP", category: "Forex" },
-    // ===== ADDITIONAL CRYPTO =====
-    { symbol: "SOL/USD", displayName: "Solana", price: "94.54191", change: "+1.234", percentage: "+1.32%", flag: "SOL", category: "Crypto" },
-    { symbol: "LINK/USD", displayName: "Chainlink", price: "9.221925", change: "+0.123", percentage: "+1.35%", flag: "LINK", category: "Crypto" },
-    { symbol: "LTC/USD", displayName: "Litecoin", price: "62.06647", change: "+0.567", percentage: "+0.92%", flag: "LTC", category: "Crypto" },
-    { symbol: "HBAR/USD", displayName: "Hedera", price: "0.096285", change: "+0.0012", percentage: "+1.26%", flag: "HBAR", category: "Crypto" },
-    { symbol: "ICP/USD", displayName: "Internet Computer", price: "2.898925", change: "-0.0345", percentage: "-1.18%", flag: "ICP", category: "Crypto" },
-    { symbol: "IMX/USD", displayName: "Immutable", price: "0.184235", change: "+0.0023", percentage: "+1.27%", flag: "IMX", category: "Crypto" },
-    { symbol: "IOTA/USD", displayName: "IOTA", price: "0.059485", change: "-0.0008", percentage: "-1.33%", flag: "IOTA", category: "Crypto" },
-    { symbol: "MANA/USD", displayName: "Decentraland", price: "0.098465", change: "+0.0012", percentage: "+1.23%", flag: "MANA", category: "Crypto" },
-    { symbol: "MATIC/USD", displayName: "Polygon", price: "0.104525", change: "+0.0015", percentage: "+1.46%", flag: "MATIC", category: "Crypto" },
-    { symbol: "MELANIA/USD", displayName: "MELANIA Coin", price: "0.129825", change: "-0.0034", percentage: "-2.55%", flag: "MELANIA", category: "Crypto" },
-    { symbol: "GRT/USD", displayName: "The Graph", price: "0.030315", change: "+0.0005", percentage: "+1.68%", flag: "GRT", category: "Crypto" },
-    { symbol: "ORDI/USD", displayName: "ORDI", price: "2.737535", change: "+0.0456", percentage: "+1.69%", flag: "ORDI", category: "Crypto" },
-    { symbol: "PENGU/USD", displayName: "Pudgy Penguins", price: "9.906975", change: "+0.1234", percentage: "+1.26%", flag: "PENGU", category: "Crypto" },
-    { symbol: "PEPE/USD", displayName: "Pepe", price: "0.675045", change: "+0.0089", percentage: "+1.34%", flag: "PEPE", category: "Crypto" },
-    { symbol: "PYTH/USD", displayName: "Pyth", price: "0.047515", change: "-0.0008", percentage: "-1.65%", flag: "PYTH", category: "Crypto" },
-    { symbol: "RAY/USD", displayName: "Raydium", price: "0.673945", change: "+0.0089", percentage: "+1.34%", flag: "RAY", category: "Crypto" },
-    { symbol: "RNDR/USD", displayName: "Render", price: "1.665075", change: "+0.0234", percentage: "+1.43%", flag: "RNDR", category: "Crypto" },
-    { symbol: "RON/USD", displayName: "Ronin", price: "0.112645", change: "+0.0015", percentage: "+1.35%", flag: "RON", category: "Crypto" },
-    { symbol: "SAND/USD", displayName: "Sandbox", price: "0.098665", change: "+0.0012", percentage: "+1.23%", flag: "SAND", category: "Crypto" },
-    { symbol: "1000SATS/USD", displayName: "1000Sats", price: "0.008785", change: "+0.0001", percentage: "+1.15%", flag: "BTC", category: "Crypto" },
-    { symbol: "SEI/USD", displayName: "Sei", price: "0.074345", change: "+0.0009", percentage: "+1.23%", flag: "SEI", category: "Crypto" },
-    { symbol: "STX/USD", displayName: "Stacks", price: "0.187625", change: "+0.0023", percentage: "+1.24%", flag: "STX", category: "Crypto" },
-    { symbol: "SUI/USD", displayName: "Sui", price: "1.117935", change: "+0.0145", percentage: "+1.31%", flag: "SUI", category: "Crypto" },
-    { symbol: "TAO/USD", displayName: "Bittensor", price: "296.4252", change: "+3.456", percentage: "+1.18%", flag: "TAO", category: "Crypto" },
-    { symbol: "TIA/USD", displayName: "Celestia", price: "0.338965", change: "+0.0045", percentage: "+1.35%", flag: "TIA", category: "Crypto" },
-    { symbol: "TON/USD", displayName: "Toncoin", price: "1.384595", change: "+0.0178", percentage: "+1.30%", flag: "TON", category: "Crypto" },
-    { symbol: "TRUMP/USD", displayName: "TRUMP Coin", price: "13.18692", change: "+0.1678", percentage: "+1.29%", flag: "TRUMP", category: "Crypto" },
-    { symbol: "WLD/USD", displayName: "Worldcoin", price: "0.488035", change: "+0.0067", percentage: "+1.39%", flag: "WLD", category: "Crypto" },
-    { symbol: "DYDX/USD", displayName: "DYDX", price: "0.130205", change: "-0.0023", percentage: "-1.74%", flag: "DYDX", category: "Crypto" },
-    { symbol: "WIF/USD", displayName: "Dogwifhat", price: "0.220755", change: "+0.0034", percentage: "+1.56%", flag: "WIF", category: "Crypto" },
-    { symbol: "LABUBU/USD", displayName: "Labubu", price: "1.091795", change: "+0.0145", percentage: "+1.35%", flag: "LABUBU", category: "Crypto" },
-    // ===== ADDITIONAL STOCKS & PAIRS =====
-    { symbol: "GOOGL/MSFT", displayName: "Alphabet/Microsoft", price: "0.903765", change: "+0.0023", percentage: "+0.25%", flag: "🔍", category: "Stocks" },
-    { symbol: "GS", displayName: "Goldman Sachs Gr.", price: "807.9605", change: "+4.567", percentage: "+0.57%", flag: "🏛️", category: "Stocks" },
-    { symbol: "INTC", displayName: "Intel Corporation", price: "43.12950", change: "-0.345", percentage: "-0.79%", flag: "💻", category: "Stocks" },
-    { symbol: "INTC/IBM", displayName: "Intel/IBM", price: "0.180875", change: "+0.0012", percentage: "+0.67%", flag: "💻", category: "Stocks" },
-    { symbol: "KLARNA", displayName: "Klarna Group plc", price: "13.26850", change: "+0.1234", percentage: "+0.94%", flag: "🛍️", category: "Stocks" },
-    { symbol: "MCD", displayName: "McDonald's Corpo.", price: "320.2750", change: "+2.345", percentage: "+0.74%", flag: "🍔", category: "Stocks" },
-    { symbol: "META/GOOGL", displayName: "Meta/Alphabet", price: "2.638075", change: "+0.0345", percentage: "+1.32%", flag: "👤", category: "Stocks" },
-    { symbol: "MS", displayName: "Morgan Stanley", price: "158.3735", change: "+0.789", percentage: "+0.50%", flag: "🏦", category: "Stocks" },
-    { symbol: "MSFT/AAPL", displayName: "Microsoft/Apple", price: "1.391175", change: "+0.0123", percentage: "+0.89%", flag: "🪟", category: "Stocks" },
-    { symbol: "NFLX/AMZN", displayName: "Netflix/Amazon", price: "0.507325", change: "+0.0067", percentage: "+1.34%", flag: "🎬", category: "Stocks" },
-    { symbol: "NKE", displayName: "Nike, Inc.", price: "58.72250", change: "+0.345", percentage: "+0.59%", flag: "👟", category: "Stocks" },
-    { symbol: "PLTR", displayName: "Palantir Technolog.", price: "101.8525", change: "+1.234", percentage: "+1.23%", flag: "🎯", category: "Stocks" },
-    { symbol: "TSLA/F", displayName: "Tesla/Ford", price: "32.87720", change: "+0.234", percentage: "+0.72%", flag: "🚗", category: "Stocks" },
-    // ===== COMMODITIES =====
-    { symbol: "XAGUSD", displayName: "Silver", price: "64.57717", change: "+0.567", percentage: "+0.88%", flag: "🥈", category: "Stocks" },
-    { symbol: "XAUUSD", displayName: "Gold", price: "4980.765", change: "+23.45", percentage: "+0.47%", flag: "🥇", category: "Stocks" },
-    { symbol: "Gold/Silver", price: "63.17810", change: "+0.456", percentage: "+0.73%", flag: "🥇", category: "Stocks" },
-    { symbol: "Natural Gas", price: "2.032750", change: "-0.0234", percentage: "-1.14%", flag: "⛽", category: "Stocks" },
-    { symbol: "UKOUSD", displayName: "UK Crude Oil", price: "82.83250", change: "+0.678", percentage: "+0.82%", flag: "🛢️", category: "Stocks" },
-    { symbol: "USOUSD", displayName: "US Crude Oil", price: "92.78519", change: "+0.789", percentage: "+0.86%", flag: "🛢️", category: "Stocks" },
-  ], [cryptoPrices, forexRates]);
+  const symbols = useMemo(
+    () => [
+      // ===== CURRENCY INDICES (NEW) =====
+      {
+        symbol: "AUD Index",
+        displayName: "Australian Dollar In.",
+        price: "71.40563",
+        change: "+0.123",
+        percentage: "+0.17%",
+        flag: "AUD",
+        category: "Index",
+      },
+      {
+        symbol: "GBP Index",
+        displayName: "Pound Index",
+        price: "134.8180",
+        change: "+0.234",
+        percentage: "+0.17%",
+        flag: "GBP",
+        category: "Index",
+      },
+      {
+        symbol: "CAD Index",
+        displayName: "Canadian Dollar Ind.",
+        price: "73.87260",
+        change: "-0.145",
+        percentage: "-0.20%",
+        flag: "CAD",
+        category: "Index",
+      },
+      {
+        symbol: "EUR Index",
+        displayName: "Euro Index",
+        price: "116.8683",
+        change: "+0.543",
+        percentage: "+0.47%",
+        flag: "EUR",
+        category: "Index",
+      },
+      {
+        symbol: "Dollar Index",
+        price: "99.62505",
+        change: "-0.234",
+        percentage: "-0.23%",
+        flag: "USD",
+        category: "Index",
+      },
+      {
+        symbol: "Yen Index",
+        price: "63.44698",
+        change: "+0.123",
+        percentage: "+0.19%",
+        flag: "JPY",
+        category: "Index",
+      },
+      // ===== MARKET INDICES =====
+      {
+        symbol: "Magnificent 7",
+        price: "2264.468",
+        change: "+45.23",
+        percentage: "+2.04%",
+        flag: "✦",
+        category: "Index",
+      },
+      {
+        symbol: "AUS 200",
+        price: "8641.562",
+        change: "+23.45",
+        percentage: "+0.27%",
+        flag: "AUD",
+        category: "Index",
+      },
+      {
+        symbol: "EU 50",
+        price: "5661.541",
+        change: "+12.34",
+        percentage: "+0.22%",
+        flag: "EUR",
+        category: "Index",
+      },
+      {
+        symbol: "FR 40",
+        price: "7956.030",
+        change: "-34.56",
+        percentage: "-0.43%",
+        flag: "EUR",
+        category: "Index",
+      },
+      {
+        symbol: "GER 30",
+        price: "23751.42",
+        change: "+156.23",
+        percentage: "+0.66%",
+        flag: "EUR",
+        category: "Index",
+      },
+      // ===== SECTOR INDICES =====
+      {
+        symbol: "Airlines",
+        price: "2978.252",
+        change: "+12.34",
+        percentage: "+0.42%",
+        flag: "✈️",
+        category: "Index",
+      },
+      {
+        symbol: "Cannabis",
+        price: "1556.239",
+        change: "-5.67",
+        percentage: "-0.36%",
+        flag: "🌿",
+        category: "Index",
+      },
+      {
+        symbol: "Casino",
+        price: "2465.190",
+        change: "+34.56",
+        percentage: "+1.42%",
+        flag: "🎰",
+        category: "Index",
+      },
+      // ===== FOREX PAIRS =====
+      {
+        symbol: "EUR/USD",
+        price: getForexRate("EUR")?.price || "1.08532",
+        change: getForexRate("EUR")?.change || "-0.0023",
+        percentage: `${getForexRate("EUR")?.changePercent >= 0 ? "+" : ""}${getForexRate("EUR")?.changePercent || "-0.21"}%`,
+        flag: "EUR,USD",
+        category: "Forex",
+      },
+      {
+        symbol: "GBP/USD",
+        price: getForexRate("GBP")?.price || "1.32165",
+        change: getForexRate("GBP")?.change || "+0.0045",
+        percentage: `${getForexRate("GBP")?.changePercent >= 0 ? "+" : ""}${getForexRate("GBP")?.changePercent || "0.35"}%`,
+        flag: "GBP,USD",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/JPY",
+        price: getForexRate("JPY")?.price || "149.235",
+        change: getForexRate("JPY")?.change || "+0.125",
+        percentage: `${getForexRate("JPY")?.changePercent >= 0 ? "+" : ""}${getForexRate("JPY")?.changePercent || "0.08"}%`,
+        flag: "USD,JPY",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/CAD",
+        price: getForexRate("CAD")?.price || "1.35742",
+        change: getForexRate("CAD")?.change || "+0.0015",
+        percentage: `${getForexRate("CAD")?.changePercent >= 0 ? "+" : ""}${getForexRate("CAD")?.changePercent || "0.11"}%`,
+        flag: "USD,CAD",
+        category: "Forex",
+      },
+      {
+        symbol: "AUD/USD",
+        price: getForexRate("AUD")?.price || "0.67321",
+        change: getForexRate("AUD")?.change || "-0.0012",
+        percentage: `${getForexRate("AUD")?.changePercent >= 0 ? "+" : ""}${getForexRate("AUD")?.changePercent || "-0.18"}%`,
+        flag: "AUD,USD",
+        category: "Forex",
+      },
+      {
+        symbol: "AUD/CAD",
+        price: "0.91250",
+        change: "+0.0008",
+        percentage: "+0.09%",
+        flag: "AUD,CAD",
+        category: "Forex",
+      },
+      {
+        symbol: "AUD/CHF",
+        price: "0.55839",
+        change: "-0.0012",
+        percentage: "-0.21%",
+        flag: "AUD,CHF",
+        category: "Forex",
+      },
+      {
+        symbol: "AUD/JPY",
+        price: "113.0758",
+        change: "+0.345",
+        percentage: "+0.31%",
+        flag: "AUD,JPY",
+        category: "Forex",
+      },
+      {
+        symbol: "AUD/NZD",
+        price: "1.18783",
+        change: "+0.0023",
+        percentage: "+0.19%",
+        flag: "AUD,NZD",
+        category: "Forex",
+      },
+      {
+        symbol: "CAD/CHF",
+        price: "0.57409",
+        change: "-0.0018",
+        percentage: "-0.31%",
+        flag: "CAD,CHF",
+        category: "Forex",
+      },
+      {
+        symbol: "CAD/JPY",
+        price: "116.7675",
+        change: "+0.234",
+        percentage: "+0.20%",
+        flag: "CAD,JPY",
+        category: "Forex",
+      },
+      {
+        symbol: "CHF/JPY",
+        price: "201.627",
+        change: "+0.567",
+        percentage: "+0.28%",
+        flag: "CHF,JPY",
+        category: "Forex",
+      },
+      {
+        symbol: "EUR/AUD",
+        price: "1.62874",
+        change: "+0.0034",
+        percentage: "+0.21%",
+        flag: "EUR,AUD",
+        category: "Forex",
+      },
+      {
+        symbol: "EUR/CAD",
+        price: "1.58147",
+        change: "+0.0021",
+        percentage: "+0.13%",
+        flag: "EUR,CAD",
+        category: "Forex",
+      },
+      {
+        symbol: "EUR/CHF",
+        price: "0.90397",
+        change: "-0.0015",
+        percentage: "-0.17%",
+        flag: "EUR,CHF",
+        category: "Forex",
+      },
+      {
+        symbol: "EUR/GBP",
+        price: "0.86266",
+        change: "+0.0012",
+        percentage: "+0.14%",
+        flag: "EUR,GBP",
+        category: "Forex",
+      },
+      {
+        symbol: "EUR/JPY",
+        price: "182.818",
+        change: "+0.456",
+        percentage: "+0.25%",
+        flag: "EUR,JPY",
+        category: "Forex",
+      },
+      {
+        symbol: "EUR/NZD",
+        price: "1.95006",
+        change: "+0.0045",
+        percentage: "+0.23%",
+        flag: "EUR,NZD",
+        category: "Forex",
+      },
+      {
+        symbol: "EUR/THB",
+        price: "36.2385",
+        change: "+0.123",
+        percentage: "+0.34%",
+        flag: "EUR,THB",
+        category: "Forex",
+      },
+      {
+        symbol: "GBP/AUD",
+        price: "1.88020",
+        change: "+0.0034",
+        percentage: "+0.18%",
+        flag: "GBP,AUD",
+        category: "Forex",
+      },
+      {
+        symbol: "GBP/CAD",
+        price: "1.81737",
+        change: "+0.0056",
+        percentage: "+0.31%",
+        flag: "GBP,CAD",
+        category: "Forex",
+      },
+      {
+        symbol: "GBP/CHF",
+        price: "1.05276",
+        change: "-0.0023",
+        percentage: "-0.22%",
+        flag: "GBP,CHF",
+        category: "Forex",
+      },
+      {
+        symbol: "GBP/JPY",
+        price: "211.890",
+        change: "+0.678",
+        percentage: "+0.32%",
+        flag: "GBP,JPY",
+        category: "Forex",
+      },
+      {
+        symbol: "GBP/NZD",
+        price: "2.26695",
+        change: "+0.0089",
+        percentage: "+0.39%",
+        flag: "GBP,NZD",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/BRL",
+        price: "4.84483",
+        change: "+0.0234",
+        percentage: "+0.49%",
+        flag: "USD,BRL",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/MXN",
+        price: "17.7583",
+        change: "-0.0456",
+        percentage: "-0.26%",
+        flag: "USD,MXN",
+        category: "Forex",
+      },
+      // ===== CRYPTO =====
+      {
+        symbol: "BTC/USD",
+        price:
+          getCryptoPrice("BTC")?.price?.toLocaleString("en-US", {
+            maximumFractionDigits: 2,
+          }) || "67890.45",
+        change: getCryptoPrice("BTC")?.change24h?.toFixed(2) || "+1234.56",
+        percentage: `${(getCryptoPrice("BTC")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("BTC")?.changePercent24h?.toFixed(2) || "1.85"}%`,
+        flag: "BTC",
+        category: "Crypto",
+      },
+      {
+        symbol: "ETH/USD",
+        price:
+          getCryptoPrice("ETH")?.price?.toLocaleString("en-US", {
+            maximumFractionDigits: 2,
+          }) || "2342.043",
+        change: getCryptoPrice("ETH")?.change24h?.toFixed(2) || "-23.45",
+        percentage: `${(getCryptoPrice("ETH")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("ETH")?.changePercent24h?.toFixed(2) || "0.95"}%`,
+        flag: "ETH",
+        category: "Crypto",
+      },
+      {
+        symbol: "XRP/USD",
+        price:
+          getCryptoPrice("XRP")?.price?.toLocaleString("en-US", {
+            maximumFractionDigits: 4,
+          }) || "0.6234",
+        change: getCryptoPrice("XRP")?.change24h?.toFixed(4) || "+0.0234",
+        percentage: `${(getCryptoPrice("XRP")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("XRP")?.changePercent24h?.toFixed(2) || "3.89"}%`,
+        flag: "XRP",
+        category: "Crypto",
+      },
+      {
+        symbol: "ADA/USD",
+        displayName: "Cardano",
+        price: getCryptoPrice("ADA")?.price?.toFixed(6) || "0.367185",
+        change: getCryptoPrice("ADA")?.change24h?.toFixed(4) || "+0.0089",
+        percentage: `${(getCryptoPrice("ADA")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("ADA")?.changePercent24h?.toFixed(2) || "2.49"}%`,
+        flag: "ADA",
+        category: "Crypto",
+      },
+      {
+        symbol: "DOGE/USD",
+        displayName: "Dogecoin",
+        price: getCryptoPrice("DOGE")?.price?.toFixed(6) || "0.106155",
+        change: getCryptoPrice("DOGE")?.change24h?.toFixed(4) || "-0.0023",
+        percentage: `${(getCryptoPrice("DOGE")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("DOGE")?.changePercent24h?.toFixed(2) || "-2.12"}%`,
+        flag: "DOGE",
+        category: "Crypto",
+      },
+      {
+        symbol: "DOT/USD",
+        displayName: "Polkadot",
+        price: getCryptoPrice("DOT")?.price?.toFixed(6) || "1.754805",
+        change: getCryptoPrice("DOT")?.change24h?.toFixed(4) || "+0.0345",
+        percentage: `${(getCryptoPrice("DOT")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("DOT")?.changePercent24h?.toFixed(2) || "2.00"}%`,
+        flag: "DOT",
+        category: "Crypto",
+      },
+      {
+        symbol: "BCH/USD",
+        displayName: "Bitcoin Cash",
+        price: getCryptoPrice("BCH")?.price?.toFixed(4) || "490.9216",
+        change: getCryptoPrice("BCH")?.change24h?.toFixed(2) || "+8.45",
+        percentage: `${(getCryptoPrice("BCH")?.changePercent24h || 0) >= 0 ? "+" : ""}${getCryptoPrice("BCH")?.changePercent24h?.toFixed(2) || "1.75"}%`,
+        flag: "BCH",
+        category: "Crypto",
+      },
+      {
+        symbol: "ARB/USD",
+        displayName: "Arbitrum",
+        price: "0.133475",
+        change: "+0.0023",
+        percentage: "+1.75%",
+        flag: "ARB",
+        category: "Crypto",
+      },
+      {
+        symbol: "ATOM/USD",
+        displayName: "Cosmos",
+        price: "1.897285",
+        change: "+0.0345",
+        percentage: "+1.85%",
+        flag: "ATOM",
+        category: "Crypto",
+      },
+      {
+        symbol: "EOS/USD",
+        displayName: "Vaulta",
+        price: "0.083095",
+        change: "-0.0012",
+        percentage: "-1.42%",
+        flag: "EOS",
+        category: "Crypto",
+      },
+      {
+        symbol: "FET/USD",
+        displayName: "FET",
+        price: "0.274395",
+        change: "+0.0078",
+        percentage: "+2.93%",
+        flag: "FET",
+        category: "Crypto",
+      },
+      {
+        symbol: "FLOKI/USD",
+        displayName: "Floki",
+        price: "0.031385",
+        change: "-0.0008",
+        percentage: "-2.49%",
+        flag: "FLOKI",
+        category: "Crypto",
+      },
+      {
+        symbol: "FARTCOIN",
+        displayName: "Fartcoin",
+        price: "0.239575",
+        change: "+0.0123",
+        percentage: "+5.42%",
+        flag: "💨",
+        category: "Crypto",
+      },
+      // ===== STOCKS =====
+      {
+        symbol: "AAPL",
+        displayName: "Apple",
+        price: "246.168",
+        change: "+2.15",
+        percentage: "+0.88%",
+        flag: "🍎",
+        category: "Stocks",
+      },
+      {
+        symbol: "TSLA",
+        displayName: "Tesla",
+        price: "247.50",
+        change: "+5.20",
+        percentage: "+2.14%",
+        flag: "🚗",
+        category: "Stocks",
+      },
+      {
+        symbol: "NVDA",
+        displayName: "Nvidia",
+        price: "875.30",
+        change: "+12.45",
+        percentage: "+1.44%",
+        flag: "🎮",
+        category: "Stocks",
+      },
+      {
+        symbol: "GOOGL",
+        displayName: "Google",
+        price: "142.65",
+        change: "-1.25",
+        percentage: "-0.87%",
+        flag: "🔍",
+        category: "Stocks",
+      },
+      {
+        symbol: "MSFT",
+        displayName: "Microsoft",
+        price: "378.90",
+        change: "+3.50",
+        percentage: "+0.93%",
+        flag: "🪟",
+        category: "Stocks",
+      },
+      {
+        symbol: "AMZN",
+        displayName: "Amazon",
+        price: "222.17",
+        change: "+2.30",
+        percentage: "+1.05%",
+        flag: "📦",
+        category: "Stocks",
+      },
+      {
+        symbol: "META",
+        displayName: "Meta",
+        price: "677.685",
+        change: "+4.20",
+        percentage: "+0.62%",
+        flag: "👤",
+        category: "Stocks",
+      },
+      {
+        symbol: "NFLX",
+        displayName: "Netflix",
+        price: "512.40",
+        change: "+8.90",
+        percentage: "+1.77%",
+        flag: "🎬",
+        category: "Stocks",
+      },
+      {
+        symbol: "AIG",
+        displayName: "AIG",
+        price: "77.3995",
+        change: "-0.345",
+        percentage: "-0.44%",
+        flag: "🏛️",
+        category: "Stocks",
+      },
+      {
+        symbol: "BABA",
+        displayName: "Alibaba Group",
+        price: "144.798",
+        change: "+1.234",
+        percentage: "+0.86%",
+        flag: "🛒",
+        category: "Stocks",
+      },
+      {
+        symbol: "BIDU",
+        displayName: "Baidu, Inc. ADR",
+        price: "124.663",
+        change: "-0.567",
+        percentage: "-0.45%",
+        flag: "🔎",
+        category: "Stocks",
+      },
+      {
+        symbol: "C",
+        displayName: "Citigroup, Inc",
+        price: "108.063",
+        change: "+0.789",
+        percentage: "+0.74%",
+        flag: "🏦",
+        category: "Stocks",
+      },
+      {
+        symbol: "KO",
+        displayName: "Coca-Cola Company",
+        price: "80.0905",
+        change: "+0.345",
+        percentage: "+0.43%",
+        flag: "🥤",
+        category: "Stocks",
+      },
+      {
+        symbol: "FONE",
+        displayName: "Formula One Group",
+        price: "48.7250",
+        change: "+0.234",
+        percentage: "+0.48%",
+        flag: "🏎️",
+        category: "Stocks",
+      },
+      {
+        symbol: "AMZN/BABA",
+        displayName: "Amazon/Alibaba",
+        price: "1.584555",
+        change: "+0.0023",
+        percentage: "+0.15%",
+        flag: "📦",
+        category: "Stocks",
+      },
+      {
+        symbol: "AMZN/EBAY",
+        displayName: "Amazon/Ebay",
+        price: "2.199395",
+        change: "+0.0056",
+        percentage: "+0.26%",
+        flag: "📦",
+        category: "Stocks",
+      },
+      {
+        symbol: "Palladium",
+        price: "1345.447",
+        change: "+12.34",
+        percentage: "+0.92%",
+        flag: "🥈",
+        category: "Stocks",
+      },
+      {
+        symbol: "Platinum",
+        price: "2162.622",
+        change: "+23.45",
+        percentage: "+1.10%",
+        flag: "⬜",
+        category: "Stocks",
+      },
+      // ===== ADDITIONAL MARKET INDICES =====
+      {
+        symbol: "GER30/UK100",
+        displayName: "GER30/UK100",
+        price: "2.214715",
+        change: "+0.0045",
+        percentage: "+0.21%",
+        flag: "EUR,GBP",
+        category: "Index",
+      },
+      {
+        symbol: "HK 33",
+        displayName: "HK 33",
+        price: "27173.79",
+        change: "+123.45",
+        percentage: "+0.46%",
+        flag: "HKD",
+        category: "Index",
+      },
+      {
+        symbol: "UK 100",
+        displayName: "UK 100",
+        price: "10397.57",
+        change: "+45.67",
+        percentage: "+0.44%",
+        flag: "GBP",
+        category: "Index",
+      },
+      {
+        symbol: "US100/JP225",
+        displayName: "US100/JP225",
+        price: "73.98650",
+        change: "+0.567",
+        percentage: "+0.77%",
+        flag: "USD,JPY",
+        category: "Index",
+      },
+      {
+        symbol: "US2000",
+        price: "2586.985",
+        change: "+12.34",
+        percentage: "+0.48%",
+        flag: "USD",
+        category: "Index",
+      },
+      {
+        symbol: "US 30",
+        price: "45938.51",
+        change: "+234.56",
+        percentage: "+0.51%",
+        flag: "USD",
+        category: "Index",
+      },
+      {
+        symbol: "US30/JP225",
+        displayName: "US30/JP225",
+        price: "143.4738",
+        change: "+0.678",
+        percentage: "+0.47%",
+        flag: "USD,JPY",
+        category: "Index",
+      },
+      {
+        symbol: "US 500",
+        price: "6625.189",
+        change: "+23.45",
+        percentage: "+0.36%",
+        flag: "USD",
+        category: "Index",
+      },
+      {
+        symbol: "US 100",
+        price: "24862.53",
+        change: "+156.78",
+        percentage: "+0.63%",
+        flag: "USD",
+        category: "Index",
+      },
+      {
+        symbol: "SP 35",
+        displayName: "SP 35",
+        price: "17303.30",
+        change: "+78.90",
+        percentage: "+0.46%",
+        flag: "EUR",
+        category: "Index",
+      },
+      // ===== ADDITIONAL FOREX PAIRS =====
+      {
+        symbol: "NZD/CAD",
+        price: "0.798095",
+        change: "+0.0012",
+        percentage: "+0.15%",
+        flag: "NZD,CAD",
+        category: "Forex",
+      },
+      {
+        symbol: "NZD/JPY",
+        price: "92.09785",
+        change: "+0.234",
+        percentage: "+0.25%",
+        flag: "NZD,JPY",
+        category: "Forex",
+      },
+      {
+        symbol: "NZD/USD",
+        price: "0.584945",
+        change: "-0.0008",
+        percentage: "-0.14%",
+        flag: "NZD,USD",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/CHF",
+        price: "0.789325",
+        change: "+0.0015",
+        percentage: "+0.19%",
+        flag: "USD,CHF",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/HKD",
+        price: "7.851635",
+        change: "+0.0023",
+        percentage: "+0.03%",
+        flag: "USD,HKD",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/NOK",
+        price: "9.625115",
+        change: "+0.0234",
+        percentage: "+0.24%",
+        flag: "USD,NOK",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/PLN",
+        price: "3.681655",
+        change: "-0.0045",
+        percentage: "-0.12%",
+        flag: "USD,PLN",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/SEK",
+        price: "9.482325",
+        change: "+0.0178",
+        percentage: "+0.19%",
+        flag: "USD,SEK",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/SGD",
+        price: "1.274865",
+        change: "+0.0012",
+        percentage: "+0.09%",
+        flag: "USD,SGD",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/THB",
+        price: "32.40686",
+        change: "+0.0678",
+        percentage: "+0.21%",
+        flag: "USD,THB",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/TRY",
+        price: "44.22107",
+        change: "+0.1234",
+        percentage: "+0.28%",
+        flag: "USD,TRY",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/ZAR",
+        price: "16.62457",
+        change: "+0.0456",
+        percentage: "+0.27%",
+        flag: "USD,ZAR",
+        category: "Forex",
+      },
+      {
+        symbol: "USD/COP",
+        price: "3954.023",
+        change: "+12.34",
+        percentage: "+0.31%",
+        flag: "USD,COP",
+        category: "Forex",
+      },
+      // ===== ADDITIONAL CRYPTO =====
+      {
+        symbol: "SOL/USD",
+        displayName: "Solana",
+        price: "94.54191",
+        change: "+1.234",
+        percentage: "+1.32%",
+        flag: "SOL",
+        category: "Crypto",
+      },
+      {
+        symbol: "LINK/USD",
+        displayName: "Chainlink",
+        price: "9.221925",
+        change: "+0.123",
+        percentage: "+1.35%",
+        flag: "LINK",
+        category: "Crypto",
+      },
+      {
+        symbol: "LTC/USD",
+        displayName: "Litecoin",
+        price: "62.06647",
+        change: "+0.567",
+        percentage: "+0.92%",
+        flag: "LTC",
+        category: "Crypto",
+      },
+      {
+        symbol: "HBAR/USD",
+        displayName: "Hedera",
+        price: "0.096285",
+        change: "+0.0012",
+        percentage: "+1.26%",
+        flag: "HBAR",
+        category: "Crypto",
+      },
+      {
+        symbol: "ICP/USD",
+        displayName: "Internet Computer",
+        price: "2.898925",
+        change: "-0.0345",
+        percentage: "-1.18%",
+        flag: "ICP",
+        category: "Crypto",
+      },
+      {
+        symbol: "IMX/USD",
+        displayName: "Immutable",
+        price: "0.184235",
+        change: "+0.0023",
+        percentage: "+1.27%",
+        flag: "IMX",
+        category: "Crypto",
+      },
+      {
+        symbol: "IOTA/USD",
+        displayName: "IOTA",
+        price: "0.059485",
+        change: "-0.0008",
+        percentage: "-1.33%",
+        flag: "IOTA",
+        category: "Crypto",
+      },
+      {
+        symbol: "MANA/USD",
+        displayName: "Decentraland",
+        price: "0.098465",
+        change: "+0.0012",
+        percentage: "+1.23%",
+        flag: "MANA",
+        category: "Crypto",
+      },
+      {
+        symbol: "MATIC/USD",
+        displayName: "Polygon",
+        price: "0.104525",
+        change: "+0.0015",
+        percentage: "+1.46%",
+        flag: "MATIC",
+        category: "Crypto",
+      },
+      {
+        symbol: "MELANIA/USD",
+        displayName: "MELANIA Coin",
+        price: "0.129825",
+        change: "-0.0034",
+        percentage: "-2.55%",
+        flag: "MELANIA",
+        category: "Crypto",
+      },
+      {
+        symbol: "GRT/USD",
+        displayName: "The Graph",
+        price: "0.030315",
+        change: "+0.0005",
+        percentage: "+1.68%",
+        flag: "GRT",
+        category: "Crypto",
+      },
+      {
+        symbol: "ORDI/USD",
+        displayName: "ORDI",
+        price: "2.737535",
+        change: "+0.0456",
+        percentage: "+1.69%",
+        flag: "ORDI",
+        category: "Crypto",
+      },
+      {
+        symbol: "PENGU/USD",
+        displayName: "Pudgy Penguins",
+        price: "9.906975",
+        change: "+0.1234",
+        percentage: "+1.26%",
+        flag: "PENGU",
+        category: "Crypto",
+      },
+      {
+        symbol: "PEPE/USD",
+        displayName: "Pepe",
+        price: "0.675045",
+        change: "+0.0089",
+        percentage: "+1.34%",
+        flag: "PEPE",
+        category: "Crypto",
+      },
+      {
+        symbol: "PYTH/USD",
+        displayName: "Pyth",
+        price: "0.047515",
+        change: "-0.0008",
+        percentage: "-1.65%",
+        flag: "PYTH",
+        category: "Crypto",
+      },
+      {
+        symbol: "RAY/USD",
+        displayName: "Raydium",
+        price: "0.673945",
+        change: "+0.0089",
+        percentage: "+1.34%",
+        flag: "RAY",
+        category: "Crypto",
+      },
+      {
+        symbol: "RNDR/USD",
+        displayName: "Render",
+        price: "1.665075",
+        change: "+0.0234",
+        percentage: "+1.43%",
+        flag: "RNDR",
+        category: "Crypto",
+      },
+      {
+        symbol: "RON/USD",
+        displayName: "Ronin",
+        price: "0.112645",
+        change: "+0.0015",
+        percentage: "+1.35%",
+        flag: "RON",
+        category: "Crypto",
+      },
+      {
+        symbol: "SAND/USD",
+        displayName: "Sandbox",
+        price: "0.098665",
+        change: "+0.0012",
+        percentage: "+1.23%",
+        flag: "SAND",
+        category: "Crypto",
+      },
+      {
+        symbol: "1000SATS/USD",
+        displayName: "1000Sats",
+        price: "0.008785",
+        change: "+0.0001",
+        percentage: "+1.15%",
+        flag: "BTC",
+        category: "Crypto",
+      },
+      {
+        symbol: "SEI/USD",
+        displayName: "Sei",
+        price: "0.074345",
+        change: "+0.0009",
+        percentage: "+1.23%",
+        flag: "SEI",
+        category: "Crypto",
+      },
+      {
+        symbol: "STX/USD",
+        displayName: "Stacks",
+        price: "0.187625",
+        change: "+0.0023",
+        percentage: "+1.24%",
+        flag: "STX",
+        category: "Crypto",
+      },
+      {
+        symbol: "SUI/USD",
+        displayName: "Sui",
+        price: "1.117935",
+        change: "+0.0145",
+        percentage: "+1.31%",
+        flag: "SUI",
+        category: "Crypto",
+      },
+      {
+        symbol: "TAO/USD",
+        displayName: "Bittensor",
+        price: "296.4252",
+        change: "+3.456",
+        percentage: "+1.18%",
+        flag: "TAO",
+        category: "Crypto",
+      },
+      {
+        symbol: "TIA/USD",
+        displayName: "Celestia",
+        price: "0.338965",
+        change: "+0.0045",
+        percentage: "+1.35%",
+        flag: "TIA",
+        category: "Crypto",
+      },
+      {
+        symbol: "TON/USD",
+        displayName: "Toncoin",
+        price: "1.384595",
+        change: "+0.0178",
+        percentage: "+1.30%",
+        flag: "TON",
+        category: "Crypto",
+      },
+      {
+        symbol: "TRUMP/USD",
+        displayName: "TRUMP Coin",
+        price: "13.18692",
+        change: "+0.1678",
+        percentage: "+1.29%",
+        flag: "TRUMP",
+        category: "Crypto",
+      },
+      {
+        symbol: "WLD/USD",
+        displayName: "Worldcoin",
+        price: "0.488035",
+        change: "+0.0067",
+        percentage: "+1.39%",
+        flag: "WLD",
+        category: "Crypto",
+      },
+      {
+        symbol: "DYDX/USD",
+        displayName: "DYDX",
+        price: "0.130205",
+        change: "-0.0023",
+        percentage: "-1.74%",
+        flag: "DYDX",
+        category: "Crypto",
+      },
+      {
+        symbol: "WIF/USD",
+        displayName: "Dogwifhat",
+        price: "0.220755",
+        change: "+0.0034",
+        percentage: "+1.56%",
+        flag: "WIF",
+        category: "Crypto",
+      },
+      {
+        symbol: "LABUBU/USD",
+        displayName: "Labubu",
+        price: "1.091795",
+        change: "+0.0145",
+        percentage: "+1.35%",
+        flag: "LABUBU",
+        category: "Crypto",
+      },
+      // ===== ADDITIONAL STOCKS & PAIRS =====
+      {
+        symbol: "GOOGL/MSFT",
+        displayName: "Alphabet/Microsoft",
+        price: "0.903765",
+        change: "+0.0023",
+        percentage: "+0.25%",
+        flag: "🔍",
+        category: "Stocks",
+      },
+      {
+        symbol: "GS",
+        displayName: "Goldman Sachs Gr.",
+        price: "807.9605",
+        change: "+4.567",
+        percentage: "+0.57%",
+        flag: "🏛️",
+        category: "Stocks",
+      },
+      {
+        symbol: "INTC",
+        displayName: "Intel Corporation",
+        price: "43.12950",
+        change: "-0.345",
+        percentage: "-0.79%",
+        flag: "💻",
+        category: "Stocks",
+      },
+      {
+        symbol: "INTC/IBM",
+        displayName: "Intel/IBM",
+        price: "0.180875",
+        change: "+0.0012",
+        percentage: "+0.67%",
+        flag: "💻",
+        category: "Stocks",
+      },
+      {
+        symbol: "KLARNA",
+        displayName: "Klarna Group plc",
+        price: "13.26850",
+        change: "+0.1234",
+        percentage: "+0.94%",
+        flag: "🛍️",
+        category: "Stocks",
+      },
+      {
+        symbol: "MCD",
+        displayName: "McDonald's Corpo.",
+        price: "320.2750",
+        change: "+2.345",
+        percentage: "+0.74%",
+        flag: "🍔",
+        category: "Stocks",
+      },
+      {
+        symbol: "META/GOOGL",
+        displayName: "Meta/Alphabet",
+        price: "2.638075",
+        change: "+0.0345",
+        percentage: "+1.32%",
+        flag: "👤",
+        category: "Stocks",
+      },
+      {
+        symbol: "MS",
+        displayName: "Morgan Stanley",
+        price: "158.3735",
+        change: "+0.789",
+        percentage: "+0.50%",
+        flag: "🏦",
+        category: "Stocks",
+      },
+      {
+        symbol: "MSFT/AAPL",
+        displayName: "Microsoft/Apple",
+        price: "1.391175",
+        change: "+0.0123",
+        percentage: "+0.89%",
+        flag: "🪟",
+        category: "Stocks",
+      },
+      {
+        symbol: "NFLX/AMZN",
+        displayName: "Netflix/Amazon",
+        price: "0.507325",
+        change: "+0.0067",
+        percentage: "+1.34%",
+        flag: "🎬",
+        category: "Stocks",
+      },
+      {
+        symbol: "NKE",
+        displayName: "Nike, Inc.",
+        price: "58.72250",
+        change: "+0.345",
+        percentage: "+0.59%",
+        flag: "👟",
+        category: "Stocks",
+      },
+      {
+        symbol: "PLTR",
+        displayName: "Palantir Technolog.",
+        price: "101.8525",
+        change: "+1.234",
+        percentage: "+1.23%",
+        flag: "🎯",
+        category: "Stocks",
+      },
+      {
+        symbol: "TSLA/F",
+        displayName: "Tesla/Ford",
+        price: "32.87720",
+        change: "+0.234",
+        percentage: "+0.72%",
+        flag: "🚗",
+        category: "Stocks",
+      },
+      // ===== COMMODITIES =====
+      {
+        symbol: "XAGUSD",
+        displayName: "Silver",
+        price: "64.57717",
+        change: "+0.567",
+        percentage: "+0.88%",
+        flag: "🥈",
+        category: "Stocks",
+      },
+      {
+        symbol: "XAUUSD",
+        displayName: "Gold",
+        price: "4980.765",
+        change: "+23.45",
+        percentage: "+0.47%",
+        flag: "🥇",
+        category: "Stocks",
+      },
+      {
+        symbol: "Gold/Silver",
+        price: "63.17810",
+        change: "+0.456",
+        percentage: "+0.73%",
+        flag: "🥇",
+        category: "Stocks",
+      },
+      {
+        symbol: "Natural Gas",
+        price: "2.032750",
+        change: "-0.0234",
+        percentage: "-1.14%",
+        flag: "⛽",
+        category: "Stocks",
+      },
+      {
+        symbol: "UKOUSD",
+        displayName: "UK Crude Oil",
+        price: "82.83250",
+        change: "+0.678",
+        percentage: "+0.82%",
+        flag: "🛢️",
+        category: "Stocks",
+      },
+      {
+        symbol: "USOUSD",
+        displayName: "US Crude Oil",
+        price: "92.78519",
+        change: "+0.789",
+        percentage: "+0.86%",
+        flag: "🛢️",
+        category: "Stocks",
+      },
+    ],
+    [cryptoPrices, forexRates],
+  );
 
   const quickAmounts = [1, 5, 10, 25, 50, 100];
 
@@ -612,12 +1819,19 @@ function TradingInterface() {
     setCountdown(expirationSeconds);
     const countdownInterval = setInterval(() => {
       // If there are active trades, use the actual trade's remaining time
-      const activeTradesList = activeTradesRef.current.filter(t => t.status === "active");
+      const activeTradesList = activeTradesRef.current.filter(
+        (t) => t.status === "active",
+      );
       if (activeTradesList.length > 0) {
         const earliestTrade = activeTradesList.reduce((earliest, trade) => {
-          return trade.expirationTime < earliest.expirationTime ? trade : earliest;
+          return trade.expirationTime < earliest.expirationTime
+            ? trade
+            : earliest;
         });
-        const remaining = Math.max(0, Math.ceil((earliestTrade.expirationTime - Date.now()) / 1000));
+        const remaining = Math.max(
+          0,
+          Math.ceil((earliestTrade.expirationTime - Date.now()) / 1000),
+        );
         setCountdown(remaining);
       } else {
         setCountdown((prev) => {
@@ -641,7 +1855,7 @@ function TradingInterface() {
           setTraderoomBalance(data.traderoomBalance || 0);
           setCryptoAssets(data.cryptoAssets || []);
           console.log(
-            `✅ User balance loaded: Real=${data.realBalance} ${userBalanceCurrency}, Traderoom=$${data.traderoomBalance}, Practice=$${data.practiceBalance}, Crypto Assets=${data.cryptoAssets?.length || 0}`
+            `✅ User balance loaded: Real=${data.realBalance} ${userBalanceCurrency}, Traderoom=$${data.traderoomBalance}, Practice=$${data.practiceBalance}, Crypto Assets=${data.cryptoAssets?.length || 0}`,
           );
         }
       } catch (error) {
@@ -653,7 +1867,7 @@ function TradingInterface() {
     const fetchForexRates = async () => {
       try {
         const response = await fetch(
-          "/api/forex/rates?symbols=CAD,EUR,GBP,JPY,AUD,CHF,NZD"
+          "/api/forex/rates?symbols=CAD,EUR,GBP,JPY,AUD,CHF,NZD",
         );
         if (response.ok) {
           const data = await response.json();
@@ -661,7 +1875,7 @@ function TradingInterface() {
           console.log(
             `✅ Forex rates loaded:`,
             Object.keys(data).length,
-            "pairs"
+            "pairs",
           );
         }
       } catch (error) {
@@ -737,7 +1951,7 @@ function TradingInterface() {
     setCurrentPrice(0);
     const selectedSymbolData = symbols.find((s) => s.symbol === selectedSymbol);
     if (selectedSymbolData?.price) {
-      const priceNum = parseFloat(selectedSymbolData.price.replace(/,/g, ''));
+      const priceNum = parseFloat(selectedSymbolData.price.replace(/,/g, ""));
       if (!isNaN(priceNum)) {
         setCurrentPrice(priceNum);
       }
@@ -751,19 +1965,20 @@ function TradingInterface() {
       setFundingError("Please enter a valid amount");
       return;
     }
-    
+
     // Convert USD amount to user's currency for comparison
     // Check against the USD-equivalent balance
     if (amountUSD > realAccountBalanceUSD) {
       setFundingError(
-        `Insufficient balance. You have $${realAccountBalanceUSD.toFixed(2)} USD available.`
+        `Insufficient balance. You have $${realAccountBalanceUSD.toFixed(2)} USD available.`,
       );
       return;
     }
-    
+
     // Convert USD to user's currency for the actual deduction
     const rate = exchangeRates[balanceCurrency] || 1;
-    const amountInUserCurrency = balanceCurrency === "USD" ? amountUSD : amountUSD * rate;
+    const amountInUserCurrency =
+      balanceCurrency === "USD" ? amountUSD : amountUSD * rate;
 
     setIsFunding(true);
     setFundingError("");
@@ -779,7 +1994,7 @@ function TradingInterface() {
         setFundAmount("");
         setShowFundModal(false);
         setFundingSuccessMessage(
-          `Successfully transferred $${amountUSD.toFixed(2)} to your Traderoom balance!`
+          `Successfully transferred $${amountUSD.toFixed(2)} to your Traderoom balance!`,
         );
       } else {
         setFundingError(result.error || "Failed to transfer funds");
@@ -806,7 +2021,7 @@ function TradingInterface() {
 
     // Find the selected crypto in user's assets
     const cryptoAsset = cryptoAssets.find(
-      (asset) => asset.symbol.toUpperCase() === selectedCrypto.toUpperCase()
+      (asset) => asset.symbol.toUpperCase() === selectedCrypto.toUpperCase(),
     );
 
     if (!cryptoAsset) {
@@ -816,7 +2031,7 @@ function TradingInterface() {
 
     if (amount > cryptoAsset.amount) {
       setFundingError(
-        `Insufficient ${selectedCrypto} balance. You have ${cryptoAsset.amount} ${selectedCrypto}`
+        `Insufficient ${selectedCrypto} balance. You have ${cryptoAsset.amount} ${selectedCrypto}`,
       );
       return;
     }
@@ -845,20 +2060,20 @@ function TradingInterface() {
       if (result.success && result.data) {
         // Update balances
         setTraderoomBalance(result.data.newTraderoomBalance);
-        
+
         // Refresh balance and crypto assets
         const response = await fetch("/api/user/balance");
         if (response.ok) {
           const data = await response.json();
           setCryptoAssets(data.cryptoAssets || []);
         }
-        
+
         setFundAmount("");
         setSelectedCryptoAmount("");
         setSelectedCrypto("");
         setShowFundModal(false);
         setFundingSuccessMessage(
-          `Successfully transferred ${amount} ${selectedCrypto} to your Traderoom balance!`
+          `Successfully transferred ${amount} ${selectedCrypto} to your Traderoom balance!`,
         );
       } else {
         setFundingError(result.error || "Failed to transfer crypto");
@@ -890,23 +2105,29 @@ function TradingInterface() {
     const tradeId = `trade_${Date.now()}_${Math.random()
       .toString(36)
       .substr(2, 9)}`;
-    const entryTime = Date.now();
-    
+    const now = Date.now();
+    // Use the latest chart candle timestamp for accurate X positioning on the chart
+    const entryTime = lastCandleTimestampRef.current || now;
+
     // If there are already active trades on this symbol/tab, inherit the earliest expiration time
     const existingActiveOnTab = activeTradesRef.current.filter(
-      t => t.symbol === selectedSymbol && t.status === "active" && t.expirationTime > entryTime
+      (t) =>
+        t.symbol === selectedSymbol &&
+        t.status === "active" &&
+        t.expirationTime > now,
     );
-    const expirationTime = existingActiveOnTab.length > 0
-      ? existingActiveOnTab.reduce((earliest, t) => 
-          t.expirationTime < earliest.expirationTime ? t : earliest
-        ).expirationTime
-      : entryTime + expirationSeconds * 1000;
+    const expirationTime =
+      existingActiveOnTab.length > 0
+        ? existingActiveOnTab.reduce((earliest, t) =>
+            t.expirationTime < earliest.expirationTime ? t : earliest,
+          ).expirationTime
+        : now + expirationSeconds * 1000;
 
     // Get current entry price (you'd get this from the chart in production)
     const entryPrice = currentPrice || 1.35742; // Default to USDCAD base price if not set
 
     // Calculate effective expiration seconds for this trade
-    const effectiveExpirationSeconds = Math.ceil((expirationTime - entryTime) / 1000);
+    const effectiveExpirationSeconds = Math.ceil((expirationTime - now) / 1000);
 
     // Create new active trade
     const newTrade: ActiveTrade = {
@@ -923,11 +2144,27 @@ function TradingInterface() {
     };
 
     setActiveTrades((prev) => [...prev, newTrade]);
-    
+
+    // Add persistent entry marker
+    setEntryMarkers((prev) => [
+      ...prev,
+      {
+        id: newTrade.id,
+        symbol: newTrade.symbol,
+        direction: newTrade.direction,
+        amount: newTrade.amount,
+        entryPrice: newTrade.entryPrice,
+        entryYPosition: newTrade.entryYPosition,
+        entryTime: newTrade.entryTime,
+      },
+    ]);
+
     // Clear lastResult from the current tab
-    setOpenTabs(prev => prev.map(tab => 
-      tab.symbol === selectedSymbol ? { ...tab, lastResult: undefined } : tab
-    ));
+    setOpenTabs((prev) =>
+      prev.map((tab) =>
+        tab.symbol === selectedSymbol ? { ...tab, lastResult: undefined } : tab,
+      ),
+    );
 
     // Deduct from balance
     if (selectedAccountType === "real") {
@@ -956,6 +2193,8 @@ function TradingInterface() {
 
           // Check if trade has expired
           if (now >= trade.expirationTime) {
+            const tradeId = `${trade.symbol}-${trade.entryTime}-${trade.amount}`;
+
             // Determine win/loss based on price movement
             const priceChange = currentPrice - trade.entryPrice;
             const won =
@@ -964,57 +2203,77 @@ function TradingInterface() {
 
             const payout = won ? trade.amount * 1.85 : 0; // 85% profit + original amount
 
-            // Update balance and persist to database for real account
-            if (selectedAccountType === "real") {
-              if (won) {
-                setTraderoomBalance((prev) => prev + payout);
-              }
-              // Settle trade in database (records trade history and updates balance)
-              settleBinaryTradeAction({
-                payout,
-                tradeAmount: trade.amount,
-                won,
-                symbol: trade.symbol,
-                direction: trade.direction,
-                entryPrice: trade.entryPrice,
-                exitPrice: currentPrice,
-              })
-                .then(() => reloadTradeHistory())
-                .catch(console.error);
-            } else {
-              // Practice account - only update local state
-              if (won) {
-                setPracticeAccountBalance((prev) => prev + payout);
-              }
-            }
-
             const finishedTrade = {
               ...trade,
-              status: won ? "won" as const : "lost" as const,
+              status: won ? ("won" as const) : ("lost" as const),
               result: won ? payout - trade.amount : -trade.amount,
+              exitPrice: currentPrice,
             };
-            
-            // Save as last finished trade (for positioning the popup)
-            setLastFinishedTrade(finishedTrade);
-            
-            // Accumulate session totals
-            setSessionTotalResult(prev => prev + (finishedTrade.result || 0));
-            setSessionTotalInvested(prev => prev + trade.amount);
-            setSessionTradeCount(prev => prev + 1);
-            
-            // Save result to the corresponding tab
-            setOpenTabs(prev => prev.map(tab => 
-              tab.symbol === trade.symbol
-                ? { ...tab, lastResult: { amount: finishedTrade.result || 0, status: won ? "won" : "lost" } }
-                : tab
-            ));
-            
+
+            // Only process side effects once per trade using ref guard
+            if (!settledTradeIdsRef.current.has(tradeId)) {
+              settledTradeIdsRef.current.add(tradeId);
+
+              // Update balance and persist to database for real account
+              if (selectedAccountType === "real") {
+                if (won) {
+                  setTraderoomBalance((prev) => prev + payout);
+                }
+                // Settle trade in database (records trade history and updates balance)
+                settleBinaryTradeAction({
+                  payout,
+                  tradeAmount: trade.amount,
+                  won,
+                  symbol: trade.symbol,
+                  direction: trade.direction,
+                  entryPrice: trade.entryPrice,
+                  exitPrice: currentPrice,
+                })
+                  .then(() => reloadTradeHistory())
+                  .catch(console.error);
+              } else {
+                // Practice account - only update local state
+                if (won) {
+                  setPracticeAccountBalance((prev) => prev + payout);
+                }
+              }
+
+              // Save as last finished trade (for positioning the popup)
+              setLastFinishedTrade(finishedTrade);
+
+              // Clear hover overlay immediately when trade ends
+              setHoveredButton(null);
+
+              // Accumulate session totals
+              setSessionTotalResult(
+                (prev) => prev + (finishedTrade.result || 0),
+              );
+              setSessionTotalInvested((prev) => prev + trade.amount);
+              setSessionTradeCount((prev) => prev + 1);
+
+              // Accumulate result to the corresponding tab (sum across multiple trades)
+              setOpenTabs((prev) =>
+                prev.map((tab) => {
+                  if (tab.symbol !== trade.symbol) return tab;
+                  const prevAmount = tab.lastResult?.amount || 0;
+                  const newAmount = prevAmount + (finishedTrade.result || 0);
+                  return {
+                    ...tab,
+                    lastResult: {
+                      amount: newAmount,
+                      status: newAmount >= 0 ? "won" : "lost",
+                    },
+                  };
+                }),
+              );
+            }
+
             return finishedTrade;
           }
 
           return trade;
         });
-        
+
         return updatedTrades;
       });
 
@@ -1023,10 +2282,16 @@ function TradingInterface() {
         prev.filter((trade) => {
           if (trade.status === "won" || trade.status === "lost") {
             const completedTime = trade.expirationTime;
-            return now - completedTime < 3000; // Keep for 3 seconds after completion
+            const shouldRemove = now - completedTime >= 3000;
+            if (shouldRemove) {
+              // Clean up settled ref entry
+              const tradeId = `${trade.symbol}-${trade.entryTime}-${trade.amount}`;
+              settledTradeIdsRef.current.delete(tradeId);
+            }
+            return !shouldRemove;
           }
           return true;
-        })
+        }),
       );
     }, 100);
 
@@ -1114,15 +2379,29 @@ function TradingInterface() {
             {/* Success Header */}
             <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-center">
               <div className="w-16 h-16 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-4">
-                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-10 h-10 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-white">Transfer Successful!</h3>
+              <h3 className="text-xl font-bold text-white">
+                Transfer Successful!
+              </h3>
             </div>
             {/* Message */}
             <div className="p-6">
-              <p className="text-gray-300 text-center text-lg">{fundingSuccessMessage}</p>
+              <p className="text-gray-300 text-center text-lg">
+                {fundingSuccessMessage}
+              </p>
             </div>
             {/* Button */}
             <div className="px-6 pb-6">
@@ -1160,7 +2439,7 @@ function TradingInterface() {
           fontFamily: '"Inter", Arial, sans-serif',
           margin: 0,
           padding: 0,
-          paddingBottom: "40px", /* footer height */
+          paddingBottom: "40px" /* footer height */,
           overflow: "hidden",
           position: "fixed",
           top: 0,
@@ -1269,7 +2548,10 @@ function TradingInterface() {
                     }}
                     className="relative group cursor-pointer rounded transition-all duration-200 h-9 md:h-11 lg:h-[52px]"
                     style={{
-                      backgroundColor: activeTab === index ? "rgba(255, 133, 22, 0.08)" : "transparent",
+                      backgroundColor:
+                        activeTab === index
+                          ? "rgba(255, 133, 22, 0.08)"
+                          : "transparent",
                       border: "1px solid #6b6b6b",
                       paddingLeft: openTabs.length > 1 ? "12px" : "8px",
                       paddingRight: "10px",
@@ -1281,7 +2563,7 @@ function TradingInterface() {
                         onClick={(e) => {
                           e.stopPropagation();
                           const newTabs = openTabs.filter(
-                            (_, i) => i !== index
+                            (_, i) => i !== index,
                           );
                           setOpenTabs(newTabs);
                           if (activeTab === index && newTabs.length > 0) {
@@ -1300,15 +2582,25 @@ function TradingInterface() {
                       </span>
                     )}
                     {(() => {
-                      const tabActiveTrades = activeTrades.filter(t => t.symbol === tab.symbol && t.status === "active");
+                      const tabActiveTrades = activeTrades.filter(
+                        (t) => t.symbol === tab.symbol && t.status === "active",
+                      );
                       const hasActiveTrades = tabActiveTrades.length > 0;
-                      const hasFinishedResult = !hasActiveTrades && !!tab.lastResult;
+                      const hasFinishedResult =
+                        !hasActiveTrades && !!tab.lastResult;
 
                       // Calculate countdown for earliest active trade on this tab
                       let tradeCountdownSec = 0;
                       if (hasActiveTrades) {
-                        const earliest = tabActiveTrades.reduce((a, b) => a.expirationTime < b.expirationTime ? a : b);
-                        tradeCountdownSec = Math.max(0, Math.ceil((earliest.expirationTime - Date.now()) / 1000));
+                        const earliest = tabActiveTrades.reduce((a, b) =>
+                          a.expirationTime < b.expirationTime ? a : b,
+                        );
+                        tradeCountdownSec = Math.max(
+                          0,
+                          Math.ceil(
+                            (earliest.expirationTime - Date.now()) / 1000,
+                          ),
+                        );
                       }
 
                       // Calculate P/L for active trades
@@ -1316,24 +2608,33 @@ function TradingInterface() {
                       if (hasActiveTrades) {
                         totalPL = tabActiveTrades.reduce((sum, trade) => {
                           const priceChange = currentPrice - trade.entryPrice;
-                          const isWinning = 
+                          const isWinning =
                             (trade.direction === "higher" && priceChange > 0) ||
                             (trade.direction === "lower" && priceChange < 0);
-                          return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
+                          return (
+                            sum +
+                            (isWinning ? trade.amount * 0.85 : -trade.amount)
+                          );
                         }, 0);
                       }
 
                       const countdownMin = Math.floor(tradeCountdownSec / 60);
                       const countdownSecDisplay = tradeCountdownSec % 60;
-                      const countdownText = countdownMin > 0 
-                        ? `${countdownMin}:${countdownSecDisplay.toString().padStart(2, "0")}`
-                        : `:${countdownSecDisplay.toString().padStart(2, "0")}`;
+                      const countdownText =
+                        countdownMin > 0
+                          ? `${countdownMin}:${countdownSecDisplay.toString().padStart(2, "0")}`
+                          : `:${countdownSecDisplay.toString().padStart(2, "0")}`;
 
                       // Calculate progress for the circular timer (0 to 1)
-                      const totalDuration = hasActiveTrades 
-                        ? tabActiveTrades.reduce((a, b) => a.expirationTime < b.expirationTime ? a : b).expirationSeconds
+                      const totalDuration = hasActiveTrades
+                        ? tabActiveTrades.reduce((a, b) =>
+                            a.expirationTime < b.expirationTime ? a : b,
+                          ).expirationSeconds
                         : 0;
-                      const progress = totalDuration > 0 ? 1 - (tradeCountdownSec / totalDuration) : 0;
+                      const progress =
+                        totalDuration > 0
+                          ? 1 - tradeCountdownSec / totalDuration
+                          : 0;
                       const radius = 12;
                       const circumference = 2 * Math.PI * radius;
                       const strokeDashoffset = circumference * (1 - progress);
@@ -1342,32 +2643,68 @@ function TradingInterface() {
                         <div className="flex items-center space-x-1 md:space-x-1.5 lg:space-x-2 h-full">
                           {/* Left icon: countdown circle for active trades, flag for others */}
                           {hasActiveTrades ? (
-                            <div className="relative flex items-center justify-center" style={{ width: 28, height: 28 }}>
-                              <svg width="28" height="28" viewBox="0 0 28 28" className="absolute">
+                            <div
+                              className="relative flex items-center justify-center"
+                              style={{ width: 28, height: 28 }}
+                            >
+                              <svg
+                                width="28"
+                                height="28"
+                                viewBox="0 0 28 28"
+                                className="absolute"
+                              >
                                 {/* Background circle */}
-                                <circle cx="14" cy="14" r={radius} fill="none" stroke="#3a3a3a" strokeWidth="2" />
+                                <circle
+                                  cx="14"
+                                  cy="14"
+                                  r={radius}
+                                  fill="none"
+                                  stroke="#3a3a3a"
+                                  strokeWidth="2"
+                                />
                                 {/* Progress arc */}
-                                <circle 
-                                  cx="14" cy="14" r={radius} fill="none" 
-                                  stroke="#ff8516" strokeWidth="2"
+                                <circle
+                                  cx="14"
+                                  cy="14"
+                                  r={radius}
+                                  fill="none"
+                                  stroke="#ff8516"
+                                  strokeWidth="2"
                                   strokeLinecap="round"
                                   strokeDasharray={circumference}
                                   strokeDashoffset={strokeDashoffset}
-                                  style={{ transform: "rotate(-90deg)", transformOrigin: "center", transition: "stroke-dashoffset 1s linear" }}
+                                  style={{
+                                    transform: "rotate(-90deg)",
+                                    transformOrigin: "center",
+                                    transition: "stroke-dashoffset 1s linear",
+                                  }}
                                 />
                               </svg>
-                              <span className="text-[9px] font-bold text-white z-10">{countdownText}</span>
+                              <span className="text-[9px] font-bold text-white z-10">
+                                {countdownText}
+                              </span>
                             </div>
                           ) : (
                             <span className="text-xs md:text-sm">
-                              <AssetFlag flag={symbols.find((s) => s.symbol === tab.symbol)?.flag || ""} symbol={tab.symbol} size={20} className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8" />
+                              <AssetFlag
+                                flag={
+                                  symbols.find((s) => s.symbol === tab.symbol)
+                                    ?.flag || ""
+                                }
+                                symbol={tab.symbol}
+                                size={20}
+                                className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8"
+                              />
                             </span>
                           )}
 
                           <div className="flex flex-col items-start">
-                            <span 
+                            <span
                               className="text-xs md:text-sm font-medium"
-                              style={{ color: activeTab === index ? "#ffffff" : "#8b8b8b" }}
+                              style={{
+                                color:
+                                  activeTab === index ? "#ffffff" : "#8b8b8b",
+                              }}
                             >
                               {tab.symbol}
                             </span>
@@ -1376,9 +2713,15 @@ function TradingInterface() {
                             {hasActiveTrades && (
                               <span
                                 className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
-                                style={{ color: totalPL >= 0 ? "#00c087" : "#ef4444" }}
+                                style={{
+                                  color: totalPL >= 0 ? "#00c087" : "#ef4444",
+                                }}
                               >
-                                {totalPL >= 0 ? "+" : ""}$ {Math.abs(totalPL).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {totalPL >= 0 ? "+" : ""}${" "}
+                                {Math.abs(totalPL).toLocaleString(undefined, {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
                               </span>
                             )}
 
@@ -1386,9 +2729,21 @@ function TradingInterface() {
                             {hasFinishedResult && tab.lastResult && (
                               <span
                                 className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
-                                style={{ color: tab.lastResult.status === "won" ? "#00c087" : "#ef4444" }}
+                                style={{
+                                  color:
+                                    tab.lastResult.status === "won"
+                                      ? "#00c087"
+                                      : "#ef4444",
+                                }}
                               >
-                                {tab.lastResult.amount >= 0 ? "+" : ""}$ {Math.abs(tab.lastResult.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {tab.lastResult.amount >= 0 ? "+$ " : "-$ "}
+                                {Math.abs(tab.lastResult.amount).toLocaleString(
+                                  undefined,
+                                  {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  },
+                                )}
                               </span>
                             )}
 
@@ -1408,7 +2763,11 @@ function TradingInterface() {
                   </div>
                 ))}
                 <button
-                  onClick={() => { setAddAssetSideTab("trending"); setAddAssetSearch(""); setShowAddAssetModal(true); }}
+                  onClick={() => {
+                    setAddAssetSideTab("trending");
+                    setAddAssetSearch("");
+                    setShowAddAssetModal(true);
+                  }}
                   className="rounded hover:bg-white/5 transition-all duration-200 flex items-center justify-center h-9 w-9 md:h-11 md:w-11 lg:h-[52px] lg:w-[52px]"
                   style={{
                     backgroundColor: "transparent",
@@ -1426,7 +2785,9 @@ function TradingInterface() {
               {/* Profile Avatar with verified badge and dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  onClick={() =>
+                    setIsProfileDropdownOpen(!isProfileDropdownOpen)
+                  }
                   className="relative cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1"
                 >
                   <div className="w-7 h-7 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden border-2 border-gray-600">
@@ -1441,7 +2802,13 @@ function TradingInterface() {
                   {/* Green verified checkmark badge */}
                   <div className="absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 bg-[#5ddf38] rounded-full flex items-center justify-center border-2 border-[#1b1817]">
                     <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path
+                        d="M2 6L5 9L10 3"
+                        stroke="white"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   </div>
                   <ChevronDown className="w-3 h-3 text-gray-400 ml-0.5" />
@@ -1475,7 +2842,9 @@ function TradingInterface() {
                         <div className="flex items-start gap-3 mb-4">
                           <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-600 flex-shrink-0">
                             <Image
-                              src={session?.user?.image || "/avatars/default.png"}
+                              src={
+                                session?.user?.image || "/avatars/default.png"
+                              }
                               alt="Profile"
                               width={48}
                               height={48}
@@ -1487,8 +2856,16 @@ function TradingInterface() {
                               <span className="text-white font-semibold text-sm truncate max-w-[130px]">
                                 {session?.user?.name || "User"}
                               </span>
-                              <svg className="w-4 h-4 text-[#5ddf38] flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              <svg
+                                className="w-4 h-4 text-[#5ddf38] flex-shrink-0"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                  clipRule="evenodd"
+                                />
                               </svg>
                             </div>
                             <div className="text-xs text-gray-400 truncate">
@@ -1500,33 +2877,61 @@ function TradingInterface() {
                         {/* Currency */}
                         <div className="flex items-center gap-2 mb-4">
                           <CryptoIcon symbol={preferredCurrency} size="sm" />
-                          <span className="text-sm text-[#5ddf38]">{preferredCurrency}</span>
+                          <span className="text-sm text-[#5ddf38]">
+                            {preferredCurrency}
+                          </span>
                         </div>
 
                         {/* Date and User ID */}
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <div className="text-xs text-gray-500 mb-1">Date registered</div>
+                            <div className="text-xs text-gray-500 mb-1">
+                              Date registered
+                            </div>
                             <div className="text-sm text-white">
-                              {(session?.user as any)?.createdAt 
-                                ? new Date((session?.user as any).createdAt as string).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                              {(session?.user as any)?.createdAt
+                                ? new Date(
+                                    (session?.user as any).createdAt as string,
+                                  ).toLocaleDateString("en-GB", {
+                                    day: "2-digit",
+                                    month: "short",
+                                    year: "numeric",
+                                  })
                                 : "17 Apr 2025"}
                             </div>
                           </div>
                           <div>
-                            <div className="text-xs text-gray-500 mb-1">User ID</div>
+                            <div className="text-xs text-gray-500 mb-1">
+                              User ID
+                            </div>
                             <div className="flex items-center gap-1">
                               <span className="text-sm text-white">
-                                {(session?.user as any)?.accountNumber || "177863954"}
+                                {(session?.user as any)?.accountNumber ||
+                                  "177863954"}
                               </span>
-                              <button 
+                              <button
                                 onClick={() => {
-                                  navigator.clipboard.writeText((session?.user as any)?.accountNumber || "177863954");
+                                  navigator.clipboard.writeText(
+                                    (session?.user as any)?.accountNumber ||
+                                      "177863954",
+                                  );
                                 }}
                                 className="text-gray-400 hover:text-white transition-colors"
                               >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <svg
+                                  className="w-3.5 h-3.5"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <rect
+                                    x="9"
+                                    y="9"
+                                    width="13"
+                                    height="13"
+                                    rx="2"
+                                    ry="2"
+                                  ></rect>
                                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
                                 </svg>
                               </button>
@@ -1547,20 +2952,64 @@ function TradingInterface() {
                           style={{ backgroundColor: "#5ddf38" }}
                         >
                           <Crown className="w-5 h-5 text-[#1b1817]" />
-                          <span className="text-sm font-medium text-[#1b1817]">VIP program</span>
+                          <span className="text-sm font-medium text-[#1b1817]">
+                            VIP program
+                          </span>
                         </button>
 
                         {/* Menu Items */}
                         {[
-                          { icon: Camera, label: "Change Photo", action: () => router.push("/settings?tab=profile") },
-                          { icon: User, label: "Personal Data", action: () => router.push("/settings?tab=profile") },
-                          { icon: ShieldCheck, label: "Verify Account", action: () => router.push("/settings?tab=kyc") },
-                          { icon: Wallet, label: "Deposit Funds", action: () => { setIsProfileDropdownOpen(false); setShowFundModal(true); } },
-                          { icon: ArrowDownCircle, label: "Withdraw Funds", action: () => { setIsProfileDropdownOpen(false); setShowWithdrawModal(true); } },
-                          { icon: HelpCircle, label: "Contact Support", action: () => router.push("/help") },
-                          { icon: FileText, label: "Balance History", action: () => router.push("/dashboard?tab=history") },
-                          { icon: History, label: "Trading History", action: () => setShowTradingHistory(true) },
-                          { icon: Settings, label: "Settings", action: () => router.push("/settings") },
+                          {
+                            icon: Camera,
+                            label: "Change Photo",
+                            action: () => router.push("/settings?tab=profile"),
+                          },
+                          {
+                            icon: User,
+                            label: "Personal Data",
+                            action: () => router.push("/settings?tab=profile"),
+                          },
+                          {
+                            icon: ShieldCheck,
+                            label: "Verify Account",
+                            action: () => router.push("/settings?tab=kyc"),
+                          },
+                          {
+                            icon: Wallet,
+                            label: "Deposit Funds",
+                            action: () => {
+                              setIsProfileDropdownOpen(false);
+                              setShowFundModal(true);
+                            },
+                          },
+                          {
+                            icon: ArrowDownCircle,
+                            label: "Withdraw Funds",
+                            action: () => {
+                              setIsProfileDropdownOpen(false);
+                              setShowWithdrawModal(true);
+                            },
+                          },
+                          {
+                            icon: HelpCircle,
+                            label: "Contact Support",
+                            action: () => router.push("/help"),
+                          },
+                          {
+                            icon: FileText,
+                            label: "Balance History",
+                            action: () => router.push("/dashboard?tab=history"),
+                          },
+                          {
+                            icon: History,
+                            label: "Trading History",
+                            action: () => setShowTradingHistory(true),
+                          },
+                          {
+                            icon: Settings,
+                            label: "Settings",
+                            action: () => router.push("/settings"),
+                          },
                         ].map((item, index) => (
                           <button
                             key={index}
@@ -1571,12 +3020,17 @@ function TradingInterface() {
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5 transition-colors"
                           >
                             <item.icon className="w-5 h-5 text-gray-400" />
-                            <span className="text-sm text-white">{item.label}</span>
+                            <span className="text-sm text-white">
+                              {item.label}
+                            </span>
                           </button>
                         ))}
 
                         {/* Divider */}
-                        <div className="my-2 border-t" style={{ borderColor: "#1a2d45" }} />
+                        <div
+                          className="my-2 border-t"
+                          style={{ borderColor: "#1a2d45" }}
+                        />
 
                         {/* Log Out */}
                         <button
@@ -1592,7 +3046,9 @@ function TradingInterface() {
 
                         {/* Version */}
                         <div className="px-4 py-2 text-right">
-                          <span className="text-xs text-gray-500">Version: 3835.4.4938</span>
+                          <span className="text-xs text-gray-500">
+                            Version: 3835.4.4938
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -1610,13 +3066,17 @@ function TradingInterface() {
                 >
                   <span
                     style={{
-                      color: selectedAccountType === "practice" ? "#ff8516" : "#5ddf38",
+                      color:
+                        selectedAccountType === "practice"
+                          ? "#ff8516"
+                          : "#5ddf38",
                       fontSize: "16px",
                       fontWeight: "600",
                       letterSpacing: "-0.02em",
                     }}
                   >
-                    $ {(selectedAccountType === "real"
+                    ${" "}
+                    {(selectedAccountType === "real"
                       ? traderoomBalance
                       : practiceAccountBalance
                     ).toLocaleString("en-US", {
@@ -1626,7 +3086,12 @@ function TradingInterface() {
                   </span>
                   <ChevronDown
                     className="w-3.5 h-3.5"
-                    style={{ color: selectedAccountType === "practice" ? "#ff8516" : "#5ddf38" }}
+                    style={{
+                      color:
+                        selectedAccountType === "practice"
+                          ? "#ff8516"
+                          : "#5ddf38",
+                    }}
                   />
                 </button>
 
@@ -1634,8 +3099,8 @@ function TradingInterface() {
                 {isBalanceDropdownOpen && (
                   <>
                     {/* Backdrop for click outside */}
-                    <div 
-                      className="fixed inset-0 z-[150]" 
+                    <div
+                      className="fixed inset-0 z-[150]"
                       onClick={() => setIsBalanceDropdownOpen(false)}
                     />
                     <div
@@ -1658,15 +3123,44 @@ function TradingInterface() {
                       >
                         <div className="space-y-2">
                           <div className="flex items-baseline gap-1">
-                            <span className="text-xs whitespace-nowrap" style={{ color: "#8b9ab8" }}>Available</span>
-                            <span className="flex-1 border-b border-dotted" style={{ borderColor: "#2a3a50", marginBottom: "2px" }}></span>
+                            <span
+                              className="text-xs whitespace-nowrap"
+                              style={{ color: "#8b9ab8" }}
+                            >
+                              Available
+                            </span>
+                            <span
+                              className="flex-1 border-b border-dotted"
+                              style={{
+                                borderColor: "#2a3a50",
+                                marginBottom: "2px",
+                              }}
+                            ></span>
                             <span className="text-xs font-semibold text-white whitespace-nowrap">
-                              $ {(selectedAccountType === "real" ? traderoomBalance : practiceAccountBalance).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              ${" "}
+                              {(selectedAccountType === "real"
+                                ? traderoomBalance
+                                : practiceAccountBalance
+                              ).toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
                             </span>
                           </div>
                           <div className="flex items-baseline gap-1">
-                            <span className="text-xs whitespace-nowrap" style={{ color: "#8b9ab8" }}>Investment</span>
-                            <span className="flex-1 border-b border-dotted" style={{ borderColor: "#2a3a50", marginBottom: "2px" }}></span>
+                            <span
+                              className="text-xs whitespace-nowrap"
+                              style={{ color: "#8b9ab8" }}
+                            >
+                              Investment
+                            </span>
+                            <span
+                              className="flex-1 border-b border-dotted"
+                              style={{
+                                borderColor: "#2a3a50",
+                                marginBottom: "2px",
+                              }}
+                            ></span>
                             <span className="text-xs font-semibold text-white whitespace-nowrap">
                               $ 0.00
                             </span>
@@ -1674,7 +3168,10 @@ function TradingInterface() {
                         </div>
 
                         <div className="mt-4 pt-2">
-                          <button className="flex items-center gap-1 text-xs" style={{ color: "#8b9ab8" }}>
+                          <button
+                            className="flex items-center gap-1 text-xs"
+                            style={{ color: "#8b9ab8" }}
+                          >
                             <CircleHelp className="w-3.5 h-3.5" />
                             <span>What is this?</span>
                           </button>
@@ -1687,7 +3184,9 @@ function TradingInterface() {
                         <div
                           onClick={() => {
                             if (!isLoggedIn) {
-                              alert("Please log in to access your real account");
+                              alert(
+                                "Please log in to access your real account",
+                              );
                               return;
                             }
                             setSelectedAccountType("real");
@@ -1695,7 +3194,9 @@ function TradingInterface() {
                             localStorage.setItem("selectedAccountType", "real");
                           }}
                           className={`flex items-center justify-between px-4 py-3 w-[280px] transition-all ${
-                            selectedAccountType === "real" ? "bg-white/5" : "hover:bg-white/5"
+                            selectedAccountType === "real"
+                              ? "bg-white/5"
+                              : "hover:bg-white/5"
                           } ${!isLoggedIn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
                           style={{ borderBottom: "1px solid #1a2d45" }}
                         >
@@ -1703,14 +3204,35 @@ function TradingInterface() {
                             <div className="text-xs uppercase tracking-wider font-bold mb-0.5 text-white whitespace-nowrap">
                               REAL ACCOUNT
                             </div>
-                            <div className="text-base font-semibold" style={{ color: "#5ddf38" }}>
-                              $ {traderoomBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            <div
+                              className="text-base font-semibold"
+                              style={{ color: "#5ddf38" }}
+                            >
+                              ${" "}
+                              {traderoomBalance.toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded flex items-center justify-center" style={{ backgroundColor: "#1a2d45" }}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b9ab8" strokeWidth="2">
-                                <path d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z" strokeLinecap="round" strokeLinejoin="round"/>
+                            <div
+                              className="w-6 h-6 rounded flex items-center justify-center"
+                              style={{ backgroundColor: "#1a2d45" }}
+                            >
+                              <svg
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#8b9ab8"
+                                strokeWidth="2"
+                              >
+                                <path
+                                  d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
                               </svg>
                             </div>
                             <button
@@ -1720,7 +3242,10 @@ function TradingInterface() {
                                 setShowFundModal(true);
                               }}
                               className="px-4 py-1.5 rounded text-xs font-medium transition-all hover:opacity-80"
-                              style={{ backgroundColor: "#1a2d45", color: "#ffffff" }}
+                              style={{
+                                backgroundColor: "#1a2d45",
+                                color: "#ffffff",
+                              }}
                             >
                               Deposit
                             </button>
@@ -1732,18 +3257,27 @@ function TradingInterface() {
                           onClick={() => {
                             setSelectedAccountType("practice");
                             setIsBalanceDropdownOpen(false);
-                            localStorage.setItem("selectedAccountType", "practice");
+                            localStorage.setItem(
+                              "selectedAccountType",
+                              "practice",
+                            );
                           }}
                           className={`flex items-center justify-between px-4 py-3 w-[280px] transition-all ${
-                            selectedAccountType === "practice" ? "bg-white/5" : "hover:bg-white/5"
+                            selectedAccountType === "practice"
+                              ? "bg-white/5"
+                              : "hover:bg-white/5"
                           } cursor-pointer`}
                         >
                           <div className="text-left">
                             <div className="text-xs uppercase tracking-wider font-bold mb-0.5 text-white whitespace-nowrap">
                               PRACTICE ACCOUNT
                             </div>
-                            <div className="text-base font-semibold" style={{ color: "#ff8516" }}>
-                              $ {practiceAccountBalance.toLocaleString("en-US", {
+                            <div
+                              className="text-base font-semibold"
+                              style={{ color: "#ff8516" }}
+                            >
+                              ${" "}
+                              {practiceAccountBalance.toLocaleString("en-US", {
                                 minimumFractionDigits: 2,
                                 maximumFractionDigits: 2,
                               })}
@@ -1759,8 +3293,19 @@ function TradingInterface() {
                               className="w-6 h-6 rounded flex items-center justify-center transition-all hover:opacity-80"
                               style={{ backgroundColor: "#1a2d45" }}
                             >
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#8b9ab8" strokeWidth="2">
-                                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                              <svg
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#8b9ab8"
+                                strokeWidth="2"
+                              >
+                                <path
+                                  d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                />
                               </svg>
                             </button>
                             <button
@@ -1770,7 +3315,10 @@ function TradingInterface() {
                                 setShowPracticeTopUpModal(true);
                               }}
                               className="px-4 py-1.5 rounded text-xs font-medium transition-all hover:opacity-80"
-                              style={{ backgroundColor: "#1a2d45", color: "#ffffff" }}
+                              style={{
+                                backgroundColor: "#1a2d45",
+                                color: "#ffffff",
+                              }}
                             >
                               Top Up
                             </button>
@@ -1781,22 +3329,31 @@ function TradingInterface() {
                   </>
                 )}
               </div>
-              
+
               {/* Deposit Button - IQ Option style green outline with $ icon */}
               <button
                 onClick={() => {
                   setShowFundModal(true);
                 }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-semibold transition-all duration-200 hover:bg-[#5ddf38]/10 relative z-[110]"
-                style={{ 
-                  backgroundColor: "transparent", 
+                style={{
+                  backgroundColor: "transparent",
                   color: "#5ddf38",
-                  border: "2px solid #5ddf38"
+                  border: "2px solid #5ddf38",
                 }}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#5ddf38" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M12 6v12M9 9.5c0-.83.672-1.5 1.5-1.5h1.5c1.105 0 2 .895 2 2s-.895 2-2 2h-2c-1.105 0-2 .895-2 2s.895 2 2 2h1.5c.828 0 1.5-.672 1.5-1.5"/>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#5ddf38"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v12M9 9.5c0-.83.672-1.5 1.5-1.5h1.5c1.105 0 2 .895 2 2s-.895 2-2 2h-2c-1.105 0-2 .895-2 2s.895 2 2 2h1.5c.828 0 1.5-.672 1.5-1.5" />
                 </svg>
                 Deposit
               </button>
@@ -2283,11 +3840,11 @@ function TradingInterface() {
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="flex flex-col overflow-hidden"
-                style={{ 
+                style={{
                   flexShrink: 0,
                   backgroundColor: "#131722",
                   borderRight: "1px solid #2a2e39",
-                  height: "100%"
+                  height: "100%",
                 }}
               >
                 {/* Header */}
@@ -2295,7 +3852,9 @@ function TradingInterface() {
                   className="px-4 py-3 flex items-center justify-between"
                   style={{ borderBottom: "1px solid #2a2e39" }}
                 >
-                  <span className="text-white font-medium text-sm">Trading History</span>
+                  <span className="text-white font-medium text-sm">
+                    Trading History
+                  </span>
                   <button
                     onClick={() => setShowTradingHistory(false)}
                     className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
@@ -2305,7 +3864,10 @@ function TradingInterface() {
                 </div>
 
                 {/* Filter Dropdown */}
-                <div className="px-4 py-2" style={{ borderBottom: "1px solid #2a2e39" }}>
+                <div
+                  className="px-4 py-2"
+                  style={{ borderBottom: "1px solid #2a2e39" }}
+                >
                   <select
                     value={historyFilter}
                     onChange={(e) => setHistoryFilter(e.target.value)}
@@ -2315,7 +3877,7 @@ function TradingInterface() {
                       backgroundRepeat: "no-repeat",
                       backgroundPosition: "right 10px center",
                       backgroundSize: "16px",
-                      paddingRight: "36px"
+                      paddingRight: "36px",
                     }}
                   >
                     <option value="All Positions">All Positions</option>
@@ -2323,7 +3885,9 @@ function TradingInterface() {
                     <option value="Binary Options">Binary Options</option>
                     <option value="Digital Options">Digital Options</option>
                     <option value="Forex">Forex</option>
-                    <option value="Stocks, ETFs, Commodities">Stocks, ETFs, Commodities</option>
+                    <option value="Stocks, ETFs, Commodities">
+                      Stocks, ETFs, Commodities
+                    </option>
                     <option value="Crypto">Crypto</option>
                     <option value="Indices">Indices</option>
                   </select>
@@ -2332,60 +3896,100 @@ function TradingInterface() {
                 {/* Trades List */}
                 <div className="flex-1 overflow-y-auto">
                   {/* Open Positions */}
-                  {openPositions.length > 0 && openPositions.map((position) => {
-                    const now = Date.now();
-                    const expTime = position.expirationTime instanceof Date ? position.expirationTime.getTime() : position.expirationTime;
-                    const remaining = Math.max(0, expTime - now);
-                    const remainingSeconds = Math.ceil(remaining / 1000);
-                    const isWinning = position.direction === "HIGHER" 
-                      ? currentPrice > position.entryPrice 
-                      : currentPrice < position.entryPrice;
-                    const currentPL = isWinning ? position.amount * 0.85 : -position.amount;
-                    const plPercent = isWinning ? 85 : -100;
-                    
-                    return (
-                      <div
-                        key={position.id}
-                        className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
-                        style={{ borderBottom: "1px solid #2a2e39" }}
-                      >
-                        {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
-                        <div className="flex items-center gap-1.5">
-                          <div className="text-sm text-white font-bold w-10">
-                            {new Date(position.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                          </div>
-                          <div className="flex items-center gap-1.5 ml-2 flex-1">
-                            <AssetFlag flag={symbols.find((s) => s.symbol === position.symbol)?.flag || ""} symbol={position.symbol} size={18} />
-                            <div className="text-white text-xs truncate">
-                              {position.symbol}
+                  {openPositions.length > 0 &&
+                    openPositions.map((position) => {
+                      const now = Date.now();
+                      const expTime =
+                        position.expirationTime instanceof Date
+                          ? position.expirationTime.getTime()
+                          : position.expirationTime;
+                      const remaining = Math.max(0, expTime - now);
+                      const remainingSeconds = Math.ceil(remaining / 1000);
+                      const isWinning =
+                        position.direction === "HIGHER"
+                          ? currentPrice > position.entryPrice
+                          : currentPrice < position.entryPrice;
+                      const currentPL = isWinning
+                        ? position.amount * 0.85
+                        : -position.amount;
+                      const plPercent = isWinning ? 85 : -100;
+
+                      return (
+                        <div
+                          key={position.id}
+                          className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
+                          style={{ borderBottom: "1px solid #2a2e39" }}
+                        >
+                          {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
+                          <div className="flex items-center gap-1.5">
+                            <div className="text-sm text-white font-bold w-10">
+                              {new Date(position.entryTime).toLocaleTimeString(
+                                [],
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                },
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 ml-2 flex-1">
+                              <AssetFlag
+                                flag={
+                                  symbols.find(
+                                    (s) => s.symbol === position.symbol,
+                                  )?.flag || ""
+                                }
+                                symbol={position.symbol}
+                                size={18}
+                              />
+                              <div className="text-white text-xs truncate">
+                                {position.symbol}
+                              </div>
+                            </div>
+                            <svg
+                              className="w-2.5 h-2.5 flex-shrink-0"
+                              viewBox="0 0 12 12"
+                              fill={
+                                position.direction === "HIGHER"
+                                  ? "#22c55e"
+                                  : "#ef4444"
+                              }
+                            >
+                              {position.direction === "HIGHER" ? (
+                                <path d="M6 2L11 10H1L6 2Z" />
+                              ) : (
+                                <path d="M6 10L1 2H11L6 10Z" />
+                              )}
+                            </svg>
+                            <div className="text-white text-xs font-medium whitespace-nowrap text-right">
+                              ${position.amount.toLocaleString()}
                             </div>
                           </div>
-                          <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 12 12" fill={position.direction === "HIGHER" ? "#22c55e" : "#ef4444"}>
-                            {position.direction === "HIGHER" ? (
-                              <path d="M6 2L11 10H1L6 2Z" />
-                            ) : (
-                              <path d="M6 10L1 2H11L6 10Z" />
-                            )}
-                          </svg>
-                          <div className="text-white text-xs font-medium whitespace-nowrap text-right">
-                            ${position.amount.toLocaleString()}
-                          </div>
-                        </div>
-                        {/* Row 2: Date under time, Binary under logo, P/L right */}
-                        <div className="flex items-center justify-between mt-0.5">
-                          <div className="flex items-center">
-                            <span className="text-[10px] text-gray-500 w-10">
-                              {new Date(position.entryTime).getDate()} {new Date(position.entryTime).toLocaleDateString([], { month: 'short' })}
+                          {/* Row 2: Date under time, Binary under logo, P/L right */}
+                          <div className="flex items-center justify-between mt-0.5">
+                            <div className="flex items-center">
+                              <span className="text-[10px] text-gray-500 w-10">
+                                {new Date(position.entryTime).getDate()}{" "}
+                                {new Date(
+                                  position.entryTime,
+                                ).toLocaleDateString([], { month: "short" })}
+                              </span>
+                              <span className="text-[10px] text-gray-500 ml-4">
+                                Blitz
+                              </span>
+                            </div>
+                            <span
+                              className={`text-xs ${isWinning ? "text-green-400" : "text-red-400"}`}
+                            >
+                              {isWinning ? "+" : "-"}$
+                              {Math.abs(currentPL).toLocaleString()} (
+                              {isWinning ? "+" : ""}
+                              {plPercent}%)
                             </span>
-                            <span className="text-[10px] text-gray-500 ml-4">Blitz</span>
                           </div>
-                          <span className={`text-xs ${isWinning ? "text-green-400" : "text-red-400"}`}>
-                            {isWinning ? "+" : "-"}${Math.abs(currentPL).toLocaleString()} ({isWinning ? "+" : ""}{plPercent}%)
-                          </span>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
 
                   {/* Completed Trades */}
                   {tradeHistory
@@ -2397,27 +4001,86 @@ function TradingInterface() {
                       if (historyFilter === "Digital Options") return true;
                       if (historyFilter === "Forex") {
                         // Check if symbol contains forex pairs
-                        const forexPairs = ["EUR", "USD", "GBP", "JPY", "CHF", "AUD", "CAD", "NZD"];
-                        return forexPairs.some(pair => trade.symbol.toUpperCase().includes(pair));
+                        const forexPairs = [
+                          "EUR",
+                          "USD",
+                          "GBP",
+                          "JPY",
+                          "CHF",
+                          "AUD",
+                          "CAD",
+                          "NZD",
+                        ];
+                        return forexPairs.some((pair) =>
+                          trade.symbol.toUpperCase().includes(pair),
+                        );
                       }
                       if (historyFilter === "Crypto") {
-                        const cryptoSymbols = ["BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "DOGE", "DOT", "MATIC", "LINK", "AVAX", "UNI", "ATOM", "LTC", "SHIB"];
-                        return cryptoSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
+                        const cryptoSymbols = [
+                          "BTC",
+                          "ETH",
+                          "BNB",
+                          "SOL",
+                          "XRP",
+                          "ADA",
+                          "DOGE",
+                          "DOT",
+                          "MATIC",
+                          "LINK",
+                          "AVAX",
+                          "UNI",
+                          "ATOM",
+                          "LTC",
+                          "SHIB",
+                        ];
+                        return cryptoSymbols.some((sym) =>
+                          trade.symbol.toUpperCase().includes(sym),
+                        );
                       }
                       if (historyFilter === "Stocks, ETFs, Commodities") {
-                        const stockSymbols = ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "META", "NVDA", "GOLD", "OIL", "SILVER"];
-                        return stockSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
+                        const stockSymbols = [
+                          "AAPL",
+                          "GOOGL",
+                          "MSFT",
+                          "AMZN",
+                          "TSLA",
+                          "META",
+                          "NVDA",
+                          "GOLD",
+                          "OIL",
+                          "SILVER",
+                        ];
+                        return stockSymbols.some((sym) =>
+                          trade.symbol.toUpperCase().includes(sym),
+                        );
                       }
                       if (historyFilter === "Indices") {
-                        const indexSymbols = ["INDEX", "AUS 200", "EU 50", "FR 40", "GER 30", "US 500", "NASDAQ", "DOW", "MAGNIFICENT", "AIRLINES", "CANNABIS", "CASINO"];
-                        return indexSymbols.some(sym => trade.symbol.toUpperCase().includes(sym));
+                        const indexSymbols = [
+                          "INDEX",
+                          "AUS 200",
+                          "EU 50",
+                          "FR 40",
+                          "GER 30",
+                          "US 500",
+                          "NASDAQ",
+                          "DOW",
+                          "MAGNIFICENT",
+                          "AIRLINES",
+                          "CANNABIS",
+                          "CASINO",
+                        ];
+                        return indexSymbols.some((sym) =>
+                          trade.symbol.toUpperCase().includes(sym),
+                        );
                       }
                       return true;
                     })
                     .map((trade) => {
                       const isWin = trade.status === "WIN";
-                      const plPercent = isWin ? Math.round((trade.profit / trade.amount) * 100) : -100;
-                      
+                      const plPercent = isWin
+                        ? Math.round((trade.profit / trade.amount) * 100)
+                        : -100;
+
                       return (
                         <div
                           key={trade.id}
@@ -2428,22 +4091,46 @@ function TradingInterface() {
                           {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
                           <div className="flex items-center gap-1.5">
                             <div className="text-sm text-white font-bold w-10">
-                              {new Date(trade.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                              {new Date(trade.entryTime).toLocaleTimeString(
+                                [],
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                },
+                              )}
                             </div>
                             <div className="flex items-center gap-1.5 ml-2 flex-1">
-                              <AssetFlag flag={symbols.find((s) => s.symbol === trade.symbol)?.flag || ""} symbol={trade.symbol} size={18} />
+                              <AssetFlag
+                                flag={
+                                  symbols.find((s) => s.symbol === trade.symbol)
+                                    ?.flag || ""
+                                }
+                                symbol={trade.symbol}
+                                size={18}
+                              />
                               <div className="text-white text-xs truncate">
                                 {trade.symbol}
                               </div>
                             </div>
-                            <svg className="w-2.5 h-2.5 flex-shrink-0" viewBox="0 0 12 12" fill={trade.direction === "HIGHER" ? "#22c55e" : "#ef4444"}>
+                            <svg
+                              className="w-2.5 h-2.5 flex-shrink-0"
+                              viewBox="0 0 12 12"
+                              fill={
+                                trade.direction === "HIGHER"
+                                  ? "#22c55e"
+                                  : "#ef4444"
+                              }
+                            >
                               {trade.direction === "HIGHER" ? (
                                 <path d="M6 2L11 10H1L6 2Z" />
                               ) : (
                                 <path d="M6 10L1 2H11L6 10Z" />
                               )}
                             </svg>
-                            <div className={`text-xs font-medium whitespace-nowrap text-right ${isWin ? "text-green-400" : "text-red-400"}`}>
+                            <div
+                              className={`text-xs font-medium whitespace-nowrap text-right ${isWin ? "text-green-400" : "text-red-400"}`}
+                            >
                               ${trade.amount.toLocaleString()}
                             </div>
                           </div>
@@ -2451,12 +4138,23 @@ function TradingInterface() {
                           <div className="flex items-center justify-between mt-0.5">
                             <div className="flex items-center">
                               <span className="text-[10px] text-gray-500 w-10">
-                                {new Date(trade.entryTime).getDate()} {new Date(trade.entryTime).toLocaleDateString([], { month: 'short' })}
+                                {new Date(trade.entryTime).getDate()}{" "}
+                                {new Date(trade.entryTime).toLocaleDateString(
+                                  [],
+                                  { month: "short" },
+                                )}
                               </span>
-                              <span className="text-[10px] text-gray-500 ml-4">{selectedMarket}</span>
+                              <span className="text-[10px] text-gray-500 ml-4">
+                                {selectedMarket}
+                              </span>
                             </div>
-                            <span className={`text-xs ${isWin ? "text-green-400" : "text-red-400"}`}>
-                              {isWin ? "+" : "-"}${Math.abs(trade.profit).toLocaleString()} ({isWin ? "+" : ""}{plPercent}%)
+                            <span
+                              className={`text-xs ${isWin ? "text-green-400" : "text-red-400"}`}
+                            >
+                              {isWin ? "+" : "-"}$
+                              {Math.abs(trade.profit).toLocaleString()} (
+                              {isWin ? "+" : ""}
+                              {plPercent}%)
                             </span>
                           </div>
                         </div>
@@ -2467,8 +4165,12 @@ function TradingInterface() {
                   {tradeHistory.length === 0 && openPositions.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-16 px-4">
                       <History className="w-12 h-12 text-gray-600 mb-3" />
-                      <p className="text-gray-400 text-sm text-center">No trading history yet</p>
-                      <p className="text-gray-500 text-xs text-center mt-1">Execute some trades to see your history here</p>
+                      <p className="text-gray-400 text-sm text-center">
+                        No trading history yet
+                      </p>
+                      <p className="text-gray-500 text-xs text-center mt-1">
+                        Execute some trades to see your history here
+                      </p>
                     </div>
                   )}
                 </div>
@@ -2478,234 +4180,397 @@ function TradingInterface() {
 
           {/* Trade Detail Panel - Opens between Trading History and Chart */}
           <AnimatePresence>
-            {expandedHistoryTradeId && (() => {
-              const trade = tradeHistory.find((t) => t.id === expandedHistoryTradeId);
-              if (!trade) return null;
-              
-              const isWin = trade.status === "WIN";
-              const plPercent = isWin ? Math.round((trade.profit / trade.amount) * 100) : -100;
-              const exitPrice = trade.exitPrice || trade.entryPrice;
-              const exitTime = trade.exitTime || trade.expirationTime;
-              const expirationTime = trade.expirationTime;
-              
-              // Format date as "23 Mar 2026" to match IQ Option
-              const formatDate = (date: Date | number | undefined | null) => {
-                if (!date) return 'N/A';
-                try {
-                  const d = new Date(date);
-                  if (isNaN(d.getTime())) return 'N/A';
-                  return new Intl.DateTimeFormat('en-GB', { 
-                    day: 'numeric', 
-                    month: 'short', 
-                    year: 'numeric' 
-                  }).format(d);
-                } catch {
-                  return 'N/A';
-                }
-              };
-              
-              const formatTime = (date: Date | number | undefined | null) => {
-                if (!date) return 'N/A';
-                try {
-                  const d = new Date(date);
-                  if (isNaN(d.getTime())) return 'N/A';
-                  return d.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit', 
-                    second: '2-digit', 
-                    hour12: false 
-                  });
-                } catch {
-                  return 'N/A';
-                }
-              };
-              
-              return (
-                <motion.div
-                  initial={{ width: 0, opacity: 0 }}
-                  animate={{ width: 380, opacity: 1 }}
-                  exit={{ width: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="border-r flex-shrink-0 overflow-y-auto z-30 flex flex-col relative"
-                  style={{ 
-                    backgroundColor: "#1a1f2e", 
-                    borderColor: "#2a2e39",
-                  }}
-                >
-                  {/* Close Button */}
-                  <button
-                    onClick={() => setExpandedHistoryTradeId(null)}
-                    className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/10 transition-colors z-50"
+            {expandedHistoryTradeId &&
+              (() => {
+                const trade = tradeHistory.find(
+                  (t) => t.id === expandedHistoryTradeId,
+                );
+                if (!trade) return null;
+
+                const isWin = trade.status === "WIN";
+                const plPercent = isWin
+                  ? Math.round((trade.profit / trade.amount) * 100)
+                  : -100;
+                const exitPrice = trade.exitPrice || trade.entryPrice;
+                const exitTime = trade.exitTime || trade.expirationTime;
+                const expirationTime = trade.expirationTime;
+
+                // Format date as "23 Mar 2026" to match IQ Option
+                const formatDate = (date: Date | number | undefined | null) => {
+                  if (!date) return "N/A";
+                  try {
+                    const d = new Date(date);
+                    if (isNaN(d.getTime())) return "N/A";
+                    return new Intl.DateTimeFormat("en-GB", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    }).format(d);
+                  } catch {
+                    return "N/A";
+                  }
+                };
+
+                const formatTime = (date: Date | number | undefined | null) => {
+                  if (!date) return "N/A";
+                  try {
+                    const d = new Date(date);
+                    if (isNaN(d.getTime())) return "N/A";
+                    return d.toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: false,
+                    });
+                  } catch {
+                    return "N/A";
+                  }
+                };
+
+                return (
+                  <motion.div
+                    initial={{ width: 0, opacity: 0 }}
+                    animate={{ width: 380, opacity: 1 }}
+                    exit={{ width: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="border-r flex-shrink-0 overflow-y-auto z-30 flex flex-col relative"
+                    style={{
+                      backgroundColor: "#1a1f2e",
+                      borderColor: "#2a2e39",
+                    }}
                   >
-                    <X className="w-5 h-5 text-gray-400 hover:text-white" />
-                  </button>
+                    {/* Close Button */}
+                    <button
+                      onClick={() => setExpandedHistoryTradeId(null)}
+                      className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/10 transition-colors z-50"
+                    >
+                      <X className="w-5 h-5 text-gray-400 hover:text-white" />
+                    </button>
 
-                  {/* Asset Header with Chart Background */}
-                  <div className="relative px-4 pt-4 pb-2" style={{ backgroundColor: "#1a1f2e" }}>
-                    <div className="flex items-center gap-2 mb-1">
-                      <AssetFlag flag={symbols.find((s) => s.symbol === trade.symbol)?.flag || ""} symbol={trade.symbol} size={24} />
-                      <span className="text-sm font-medium text-white">{trade.symbol} (OTC)</span>
-                      <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: "#2a2e39", color: "#8b9ab8" }}>
-                        Binary
-                      </span>
-                    </div>
-                    <div className="text-base font-bold text-white mb-1">{exitPrice.toFixed(6)}</div>
-                  </div>
-
-                  {/* Mini Chart Area */}
-                  <div className="relative px-4" style={{ height: "200px", backgroundColor: "#1a1f2e" }}>
-                    {/* Simple candlestick visualization */}
-                    <svg width="100%" height="180" viewBox="0 0 340 180" style={{ marginTop: "10px" }}>
-                      {/* Grid lines */}
-                      <line x1="0" y1="60" x2="340" y2="60" stroke="#2a2e39" strokeWidth="1" />
-                      <line x1="0" y1="90" x2="340" y2="90" stroke="#2a2e39" strokeWidth="1" />
-                      <line x1="0" y1="120" x2="340" y2="120" stroke="#2a2e39" strokeWidth="1" />
-                      
-                      {/* Entry price line */}
-                      <line x1="0" y1="90" x2="340" y2="90" stroke="#ff8516" strokeWidth="2" strokeDasharray="4 4" />
-                      
-                      {/* Simple candlesticks - using trade data to show movement */}
-                      {Array.from({ length: 12 }).map((_, i) => {
-                        const x = 20 + i * 28;
-                        const variance = (Math.sin(i * 0.8) * 20) + (i === 11 ? (isWin ? -15 : 15) : 0);
-                        const bodyTop = 90 - variance;
-                        const bodyBottom = 90 - variance + 15;
-                        const wickTop = bodyTop - 8;
-                        const wickBottom = bodyBottom + 8;
-                        const isGreen = variance < 0;
-                        const color = isGreen ? "#22c55e" : "#ef4444";
-                        
-                        return (
-                          <g key={i}>
-                            {/* Wick */}
-                            <line x1={x} y1={wickTop} x2={x} y2={wickBottom} stroke={color} strokeWidth="1" />
-                            {/* Body */}
-                            <rect 
-                              x={x - 6} 
-                              y={Math.min(bodyTop, bodyBottom)} 
-                              width="12" 
-                              height={Math.abs(bodyBottom - bodyTop)} 
-                              fill={color}
-                            />
-                          </g>
-                        );
-                      })}
-                      
-                      {/* Entry marker */}
-                      <circle cx="100" cy="90" r="8" fill="white" stroke="#ff8516" strokeWidth="2" />
-                      <circle cx="100" cy="90" r="3" fill="#ff8516" />
-                      
-                      {/* Exit marker */}
-                      <g>
-                        <circle cx="320" cy={isWin ? 75 : 105} r="10" fill={isWin ? "#22c55e" : "#ef4444"} />
-                        <path 
-                          d={isWin ? "M316 75 L319 78 L324 73" : "M316 102 L324 110 M324 102 L316 110"} 
-                          stroke="white" 
-                          strokeWidth="2" 
-                          fill="none"
+                    {/* Asset Header with Chart Background */}
+                    <div
+                      className="relative px-4 pt-4 pb-2"
+                      style={{ backgroundColor: "#1a1f2e" }}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <AssetFlag
+                          flag={
+                            symbols.find((s) => s.symbol === trade.symbol)
+                              ?.flag || ""
+                          }
+                          symbol={trade.symbol}
+                          size={24}
                         />
-                      </g>
-                    </svg>
-                    
-                    {/* Timeline */}
-                    <div className="flex justify-between text-[10px] text-gray-500 px-2">
-                      <span>{formatTime(trade.entryTime)}</span>
-                      <span className="text-orange-500">Historical Quotes</span>
-                      <span>{formatTime(expirationTime)}</span>
-                    </div>
-                  </div>
-
-                  {/* Trade Information Section */}
-                  <div className="p-4 space-y-4">
-                    {/* NET P/L */}
-                    <div>
-                      <div className="text-xs text-gray-400 mb-1">NET P/L</div>
-                      <div className={`text-3xl font-bold ${isWin ? "text-green-400" : "text-red-400"}`}>
-                        {isWin ? "+" : ""}${trade.profit.toFixed(2)} <span className="text-lg">({isWin ? "+" : ""}{plPercent}.00%)</span>
+                        <span className="text-sm font-medium text-white">
+                          {trade.symbol} (OTC)
+                        </span>
+                        <span
+                          className="text-xs px-1.5 py-0.5 rounded"
+                          style={{
+                            backgroundColor: "#2a2e39",
+                            color: "#8b9ab8",
+                          }}
+                        >
+                          Binary
+                        </span>
+                      </div>
+                      <div className="text-base font-bold text-white mb-1">
+                        {exitPrice.toFixed(6)}
                       </div>
                     </div>
 
-                    {/* Three Column Layout */}
-                    <div className="grid grid-cols-3 gap-4">
-                      {/* INVEST */}
+                    {/* Mini Chart Area */}
+                    <div
+                      className="relative px-4"
+                      style={{ height: "200px", backgroundColor: "#1a1f2e" }}
+                    >
+                      {/* Simple candlestick visualization */}
+                      <svg
+                        width="100%"
+                        height="180"
+                        viewBox="0 0 340 180"
+                        style={{ marginTop: "10px" }}
+                      >
+                        {/* Grid lines */}
+                        <line
+                          x1="0"
+                          y1="60"
+                          x2="340"
+                          y2="60"
+                          stroke="#2a2e39"
+                          strokeWidth="1"
+                        />
+                        <line
+                          x1="0"
+                          y1="90"
+                          x2="340"
+                          y2="90"
+                          stroke="#2a2e39"
+                          strokeWidth="1"
+                        />
+                        <line
+                          x1="0"
+                          y1="120"
+                          x2="340"
+                          y2="120"
+                          stroke="#2a2e39"
+                          strokeWidth="1"
+                        />
+
+                        {/* Entry price line */}
+                        <line
+                          x1="0"
+                          y1="90"
+                          x2="340"
+                          y2="90"
+                          stroke="#ff8516"
+                          strokeWidth="2"
+                          strokeDasharray="4 4"
+                        />
+
+                        {/* Simple candlesticks - using trade data to show movement */}
+                        {Array.from({ length: 12 }).map((_, i) => {
+                          const x = 20 + i * 28;
+                          const variance =
+                            Math.sin(i * 0.8) * 20 +
+                            (i === 11 ? (isWin ? -15 : 15) : 0);
+                          const bodyTop = 90 - variance;
+                          const bodyBottom = 90 - variance + 15;
+                          const wickTop = bodyTop - 8;
+                          const wickBottom = bodyBottom + 8;
+                          const isGreen = variance < 0;
+                          const color = isGreen ? "#22c55e" : "#ef4444";
+
+                          return (
+                            <g key={i}>
+                              {/* Wick */}
+                              <line
+                                x1={x}
+                                y1={wickTop}
+                                x2={x}
+                                y2={wickBottom}
+                                stroke={color}
+                                strokeWidth="1"
+                              />
+                              {/* Body */}
+                              <rect
+                                x={x - 6}
+                                y={Math.min(bodyTop, bodyBottom)}
+                                width="12"
+                                height={Math.abs(bodyBottom - bodyTop)}
+                                fill={color}
+                              />
+                            </g>
+                          );
+                        })}
+
+                        {/* Entry marker */}
+                        <circle
+                          cx="100"
+                          cy="90"
+                          r="8"
+                          fill="white"
+                          stroke="#ff8516"
+                          strokeWidth="2"
+                        />
+                        <circle cx="100" cy="90" r="3" fill="#ff8516" />
+
+                        {/* Exit marker */}
+                        <g>
+                          <circle
+                            cx="320"
+                            cy={isWin ? 75 : 105}
+                            r="10"
+                            fill={isWin ? "#22c55e" : "#ef4444"}
+                          />
+                          <path
+                            d={
+                              isWin
+                                ? "M316 75 L319 78 L324 73"
+                                : "M316 102 L324 110 M324 102 L316 110"
+                            }
+                            stroke="white"
+                            strokeWidth="2"
+                            fill="none"
+                          />
+                        </g>
+                      </svg>
+
+                      {/* Timeline */}
+                      <div className="flex justify-between text-[10px] text-gray-500 px-2">
+                        <span>{formatTime(trade.entryTime)}</span>
+                        <span className="text-orange-500">
+                          Historical Quotes
+                        </span>
+                        <span>{formatTime(expirationTime)}</span>
+                      </div>
+                    </div>
+
+                    {/* Trade Information Section */}
+                    <div className="p-4 space-y-4">
+                      {/* NET P/L */}
                       <div>
-                        <div className="text-xs text-gray-400 mb-1">INVEST</div>
-                        <div className="flex items-center gap-1">
-                          <svg className="w-3 h-3" viewBox="0 0 12 12" fill={trade.direction === "HIGHER" ? "#22c55e" : "#ef4444"}>
-                            {trade.direction === "HIGHER" ? (
-                              <path d="M6 2L11 10H1L6 2Z" />
-                            ) : (
-                              <path d="M6 10L1 2H11L6 10Z" />
-                            )}
-                          </svg>
-                          <span className="text-base text-white font-medium">${trade.amount.toFixed(2)}</span>
+                        <div className="text-xs text-gray-400 mb-1">
+                          NET P/L
+                        </div>
+                        <div
+                          className={`text-3xl font-bold ${isWin ? "text-green-400" : "text-red-400"}`}
+                        >
+                          {isWin ? "+" : ""}${trade.profit.toFixed(2)}{" "}
+                          <span className="text-lg">
+                            ({isWin ? "+" : ""}
+                            {plPercent}.00%)
+                          </span>
                         </div>
                       </div>
 
-                      {/* OPEN PRICE */}
-                      <div>
-                        <div className="text-xs text-gray-400 mb-1">OPEN PRICE</div>
-                        <div className="text-base text-white">{trade.entryPrice.toFixed(6)}</div>
-                      </div>
-
-                      {/* CLOSE PRICE */}
-                      <div>
-                        <div className="text-xs text-gray-400 mb-1 flex items-center gap-1">
-                          CLOSE PRICE
-                          <svg className="w-3 h-3 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
-                            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1" fill="none"/>
-                            <text x="8" y="11" fontSize="10" textAnchor="middle" fill="currentColor">?</text>
-                          </svg>
+                      {/* Three Column Layout */}
+                      <div className="grid grid-cols-3 gap-4">
+                        {/* INVEST */}
+                        <div>
+                          <div className="text-xs text-gray-400 mb-1">
+                            INVEST
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <svg
+                              className="w-3 h-3"
+                              viewBox="0 0 12 12"
+                              fill={
+                                trade.direction === "HIGHER"
+                                  ? "#22c55e"
+                                  : "#ef4444"
+                              }
+                            >
+                              {trade.direction === "HIGHER" ? (
+                                <path d="M6 2L11 10H1L6 2Z" />
+                              ) : (
+                                <path d="M6 10L1 2H11L6 10Z" />
+                              )}
+                            </svg>
+                            <span className="text-base text-white font-medium">
+                              ${trade.amount.toFixed(2)}
+                            </span>
+                          </div>
                         </div>
-                        <div className="text-base text-white">{exitPrice.toFixed(6)}</div>
-                      </div>
-                    </div>
 
-                    {/* Position Closed Message */}
-                    <div className="text-center py-3">
-                      <div className="text-sm text-gray-400">Position closed automatically</div>
-                      <div className="flex items-center justify-center gap-1 mt-1">
-                        <svg className="w-4 h-4 text-gray-500" viewBox="0 0 16 16" fill="currentColor">
-                          <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" fill="none"/>
-                          <path d="M8 4v4.5l3 1.5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                        </svg>
-                        <span className="text-xs text-gray-400">
-                          {formatDate(expirationTime).slice(0, -5)}, {formatTime(expirationTime).slice(0, 5)}
-                        </span>
-                      </div>
-                    </div>
+                        {/* OPEN PRICE */}
+                        <div>
+                          <div className="text-xs text-gray-400 mb-1">
+                            OPEN PRICE
+                          </div>
+                          <div className="text-base text-white">
+                            {trade.entryPrice.toFixed(6)}
+                          </div>
+                        </div>
 
-                    {/* Detailed Times */}
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Purchase time</span>
-                        <span className="text-white">
-                          {formatTime(trade.entryTime)}, {formatDate(trade.entryTime)}
-                        </span>
+                        {/* CLOSE PRICE */}
+                        <div>
+                          <div className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                            CLOSE PRICE
+                            <svg
+                              className="w-3 h-3 text-gray-500"
+                              viewBox="0 0 16 16"
+                              fill="currentColor"
+                            >
+                              <circle
+                                cx="8"
+                                cy="8"
+                                r="7"
+                                stroke="currentColor"
+                                strokeWidth="1"
+                                fill="none"
+                              />
+                              <text
+                                x="8"
+                                y="11"
+                                fontSize="10"
+                                textAnchor="middle"
+                                fill="currentColor"
+                              >
+                                ?
+                              </text>
+                            </svg>
+                          </div>
+                          <div className="text-base text-white">
+                            {exitPrice.toFixed(6)}
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Close Time</span>
-                        <span className="text-white">
-                          {formatTime(exitTime)}, {formatDate(exitTime)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Expiration Time</span>
-                        <span className="text-white">
-                          {formatTime(expirationTime)}, {formatDate(expirationTime)}
-                        </span>
-                      </div>
-                    </div>
 
-                    {/* Position ID */}
-                    <div className="pt-3 border-t" style={{ borderColor: "#2a2e39" }}>
-                      <div className="text-xs text-gray-400 mb-1">Position ID</div>
-                      <div className="text-sm text-white font-mono">{trade.id}</div>
+                      {/* Position Closed Message */}
+                      <div className="text-center py-3">
+                        <div className="text-sm text-gray-400">
+                          Position closed automatically
+                        </div>
+                        <div className="flex items-center justify-center gap-1 mt-1">
+                          <svg
+                            className="w-4 h-4 text-gray-500"
+                            viewBox="0 0 16 16"
+                            fill="currentColor"
+                          >
+                            <circle
+                              cx="8"
+                              cy="8"
+                              r="7"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                            />
+                            <path
+                              d="M8 4v4.5l3 1.5"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              fill="none"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <span className="text-xs text-gray-400">
+                            {formatDate(expirationTime).slice(0, -5)},{" "}
+                            {formatTime(expirationTime).slice(0, 5)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Detailed Times */}
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Purchase time</span>
+                          <span className="text-white">
+                            {formatTime(trade.entryTime)},{" "}
+                            {formatDate(trade.entryTime)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Close Time</span>
+                          <span className="text-white">
+                            {formatTime(exitTime)}, {formatDate(exitTime)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Expiration Time</span>
+                          <span className="text-white">
+                            {formatTime(expirationTime)},{" "}
+                            {formatDate(expirationTime)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Position ID */}
+                      <div
+                        className="pt-3 border-t"
+                        style={{ borderColor: "#2a2e39" }}
+                      >
+                        <div className="text-xs text-gray-400 mb-1">
+                          Position ID
+                        </div>
+                        <div className="text-sm text-white font-mono">
+                          {trade.id}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })()}
+                  </motion.div>
+                );
+              })()}
           </AnimatePresence>
 
           {/* Center: Chart and Controls */}
@@ -4083,7 +5948,9 @@ function TradingInterface() {
                       </span>
                       <ChevronDown className="w-2.5 h-2.5 text-gray-400" />
                     </div>
-                    <span className="text-gray-400 text-[10px]">{openTabs[activeTab]?.type || selectedMarket}</span>
+                    <span className="text-gray-400 text-[10px]">
+                      {openTabs[activeTab]?.type || selectedMarket}
+                    </span>
                   </div>
                 </div>
 
@@ -4265,7 +6132,11 @@ function TradingInterface() {
                           >
                             <span>{period.label}</span>
                             {candleInterval === period.value && (
-                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                              <svg
+                                className="w-3 h-3"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                              >
                                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                               </svg>
                             )}
@@ -4312,7 +6183,11 @@ function TradingInterface() {
                           >
                             <span>{tf.label}</span>
                             {chartTimeframe === tf.value && (
-                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                              <svg
+                                className="w-3 h-3"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                              >
                                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                               </svg>
                             )}
@@ -4326,48 +6201,67 @@ function TradingInterface() {
 
               {/* IQ Option Style Stats Bar - Shows when trades are active */}
               {(() => {
-                const activeTradesList = activeTrades.filter(t => t.status === "active" && t.symbol === selectedSymbol);
+                const activeTradesList = activeTrades.filter(
+                  (t) => t.status === "active" && t.symbol === selectedSymbol,
+                );
                 const hasActiveTrades = activeTradesList.length > 0;
-                
+
                 // Calculate totals
-                const totalInvestment = activeTradesList.reduce((sum, t) => sum + t.amount, 0);
-                
+                const totalInvestment = activeTradesList.reduce(
+                  (sum, t) => sum + t.amount,
+                  0,
+                );
+
                 // Calculate expected profit based on current price movement
                 const calculateExpectedProfit = () => {
                   return activeTradesList.reduce((sum, trade) => {
                     const priceChange = currentPrice - trade.entryPrice;
-                    const isWinning = 
+                    const isWinning =
                       (trade.direction === "higher" && priceChange > 0) ||
                       (trade.direction === "lower" && priceChange < 0);
                     // 85% profit if winning, -100% if losing
-                    return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
+                    return (
+                      sum + (isWinning ? trade.amount * 0.85 : -trade.amount)
+                    );
                   }, 0);
                 };
-                
+
                 const expectedProfit = calculateExpectedProfit();
-                
+
                 // Calculate profit after sell (what you'd get if you close now)
-                const profitAfterSell = activeTradesList.reduce((sum, trade) => {
-                  const priceChange = currentPrice - trade.entryPrice;
-                  const isWinning = 
-                    (trade.direction === "higher" && priceChange > 0) ||
-                    (trade.direction === "lower" && priceChange < 0);
-                  // If winning, you get back investment + 85% profit
-                  // If losing, you lose everything (0 return - investment = negative)
-                  const payout = isWinning ? trade.amount * 1.85 : 0;
-                  return sum + (payout - trade.amount);
-                }, 0);
-                
+                const profitAfterSell = activeTradesList.reduce(
+                  (sum, trade) => {
+                    const priceChange = currentPrice - trade.entryPrice;
+                    const isWinning =
+                      (trade.direction === "higher" && priceChange > 0) ||
+                      (trade.direction === "lower" && priceChange < 0);
+                    // If winning, you get back investment + 85% profit
+                    // If losing, you lose everything (0 return - investment = negative)
+                    const payout = isWinning ? trade.amount * 1.85 : 0;
+                    return sum + (payout - trade.amount);
+                  },
+                  0,
+                );
+
                 // Find earliest active trade for countdown
-                const earliestTrade = activeTradesList.reduce((earliest, trade) => {
-                  if (!earliest) return trade;
-                  const remainingTime = trade.expirationTime - Date.now();
-                  const earliestRemaining = earliest.expirationTime - Date.now();
-                  return remainingTime < earliestRemaining ? trade : earliest;
-                }, null as ActiveTrade | null);
-                
-                const tradeCountdown = earliestTrade 
-                  ? Math.max(0, Math.ceil((earliestTrade.expirationTime - Date.now()) / 1000))
+                const earliestTrade = activeTradesList.reduce(
+                  (earliest, trade) => {
+                    if (!earliest) return trade;
+                    const remainingTime = trade.expirationTime - Date.now();
+                    const earliestRemaining =
+                      earliest.expirationTime - Date.now();
+                    return remainingTime < earliestRemaining ? trade : earliest;
+                  },
+                  null as ActiveTrade | null,
+                );
+
+                const tradeCountdown = earliestTrade
+                  ? Math.max(
+                      0,
+                      Math.ceil(
+                        (earliestTrade.expirationTime - Date.now()) / 1000,
+                      ),
+                    )
                   : countdown;
 
                 if (!hasActiveTrades) return null;
@@ -4383,31 +6277,57 @@ function TradingInterface() {
                           Remaining
                         </div>
                         <span className="text-lg text-white">
-                          {String(Math.floor(tradeCountdown / 60)).padStart(2, "0")}:{String(tradeCountdown % 60).padStart(2, "0")}
+                          {String(Math.floor(tradeCountdown / 60)).padStart(
+                            2,
+                            "0",
+                          )}
+                          :{String(tradeCountdown % 60).padStart(2, "0")}
                         </span>
                       </div>
 
                       {/* Total Investment */}
                       <div className="flex flex-col items-center">
-                        <span className="text-[10px] text-white/70 uppercase tracking-wider">TOTAL INVESTMENT</span>
+                        <span className="text-[10px] text-white/70 uppercase tracking-wider">
+                          TOTAL INVESTMENT
+                        </span>
                         <span className="text-lg text-white">
-                          $ {totalInvestment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          ${" "}
+                          {totalInvestment.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </span>
                       </div>
 
                       {/* Expected Profit */}
                       <div className="flex flex-col items-center">
-                        <span className="text-[10px] text-white/70 uppercase tracking-wider">EXPECTED PROFIT</span>
-                        <span className={`text-lg ${expectedProfit >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {expectedProfit >= 0 ? "+" : "−"}$ {Math.abs(expectedProfit).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <span className="text-[10px] text-white/70 uppercase tracking-wider">
+                          EXPECTED PROFIT
+                        </span>
+                        <span
+                          className={`text-lg ${expectedProfit >= 0 ? "text-green-400" : "text-red-400"}`}
+                        >
+                          {expectedProfit >= 0 ? "+" : "−"}${" "}
+                          {Math.abs(expectedProfit).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </span>
                       </div>
 
                       {/* Profit After Sell */}
                       <div className="flex flex-col items-center">
-                        <span className="text-[10px] text-white/70 uppercase tracking-wider">PROFIT AFTER SELL (P/L)</span>
-                        <span className={`text-lg ${profitAfterSell >= 0 ? "text-green-400" : "text-red-400"}`}>
-                          {profitAfterSell >= 0 ? "+" : "−"}$ {Math.abs(profitAfterSell).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <span className="text-[10px] text-white/70 uppercase tracking-wider">
+                          PROFIT AFTER SELL (P/L)
+                        </span>
+                        <span
+                          className={`text-lg ${profitAfterSell >= 0 ? "text-green-400" : "text-red-400"}`}
+                        >
+                          {profitAfterSell >= 0 ? "+" : "−"}${" "}
+                          {Math.abs(profitAfterSell).toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </span>
                       </div>
 
@@ -4422,8 +6342,11 @@ function TradingInterface() {
                 );
               })()}
 
-              {/* Candlestick Chart Container - z-index 2 */}
-              <div className="relative z-[2] h-full w-full">
+              {/* Candlestick Chart Container */}
+              <div
+                className="relative z-[2] h-full w-full"
+                style={{ pointerEvents: "auto" }}
+              >
                 <ChartGrid
                   key={selectedSymbol}
                   gridType={selectedChartGrid}
@@ -4441,37 +6364,127 @@ function TradingInterface() {
                     "LINK",
                   ]}
                   onPriceYPosition={setPriceYPosition}
-                  onLivePriceUpdate={setCurrentPrice}
+                  onLivePriceUpdate={handleLivePriceUpdate}
                   onPriceToYConverter={handlePriceToYConverter}
                   onTimeToXConverter={handleTimeToXConverter}
                   expirationSeconds={expirationSeconds}
                   expirationCountdown={countdown}
-                  hasActiveTrades={activeTrades.filter(t => t.status === "active").length > 0}
+                  hasActiveTrades={
+                    activeTrades.filter((t) => t.status === "active").length > 0
+                  }
                   candleInterval={candleInterval}
-                  activeTradeExpirationTime={
-                    (() => {
-                      const active = activeTrades.filter(t => t.status === "active");
-                      if (active.length === 0) return undefined;
-                      return active.reduce((earliest, t) => 
-                        t.expirationTime < earliest.expirationTime ? t : earliest
-                      ).expirationTime;
-                    })()
-                  }
-                  activeTradeEntryTime={
-                    (() => {
-                      const active = activeTrades.filter(t => t.status === "active");
-                      if (active.length === 0) return undefined;
-                      return active.reduce((earliest, t) => 
-                        t.expirationTime < earliest.expirationTime ? t : earliest
-                      ).entryTime;
-                    })()
-                  }
+                  hoveredButton={hoveredButton}
+                  onLastCandleTimestamp={handleLastCandleTimestamp}
+                  activeTradeExpirationTime={(() => {
+                    const active = activeTrades.filter(
+                      (t) => t.status === "active",
+                    );
+                    if (active.length === 0) return undefined;
+                    return active.reduce((earliest, t) =>
+                      t.expirationTime < earliest.expirationTime ? t : earliest,
+                    ).expirationTime;
+                  })()}
+                  activeTradeEntryTime={(() => {
+                    const active = activeTrades.filter(
+                      (t) => t.status === "active",
+                    );
+                    if (active.length === 0) return undefined;
+                    return active.reduce((earliest, t) =>
+                      t.expirationTime < earliest.expirationTime ? t : earliest,
+                    ).entryTime;
+                  })()}
                 />
               </div>
 
+              {/* Custom DOM-based live price badge - renders above all overlays */}
+              {currentPrice > 0 &&
+                (() => {
+                  // When a trade has finished on this symbol, freeze badge at exit price
+                  const isTradeFinished =
+                    lastFinishedTrade &&
+                    lastFinishedTrade.symbol === selectedSymbol &&
+                    lastFinishedTrade.exitPrice &&
+                    activeTrades.filter(
+                      (t) =>
+                        t.symbol === selectedSymbol && t.status === "active",
+                    ).length === 0;
+
+                  const displayPrice = isTradeFinished
+                    ? lastFinishedTrade.exitPrice!
+                    : currentPrice;
+                  const displayY = isTradeFinished
+                    ? priceToYRef.current
+                      ? priceToYRef.current(lastFinishedTrade.exitPrice!)
+                      : priceYPosition
+                    : priceYPosition;
+
+                  const priceStr = displayPrice.toFixed(5);
+                  const smallPart = priceStr.slice(0, -4);
+                  const largePart = priceStr.slice(-4);
+
+                  // When trade finished: match result color (green win, red loss)
+                  // When hovering buttons: match hover color
+                  // Default: grey
+                  const badgeColor = isTradeFinished
+                    ? lastFinishedTrade.status === "won"
+                      ? "#22c55e"
+                      : "#ef4444"
+                    : hoveredButton === "higher"
+                      ? "#00c853"
+                      : hoveredButton === "lower"
+                        ? "#ff1744"
+                        : "#888888";
+                  return (
+                    <div
+                      className="absolute left-0 right-0 z-[60] pointer-events-none flex items-center"
+                      style={{
+                        top: `${displayY}%`,
+                        transform: "translateY(-50%)",
+                      }}
+                    >
+                      {/* Dashed line extending from left edge to badge */}
+                      <div
+                        className="flex-1"
+                        style={{
+                          height: "1px",
+                          backgroundImage: `repeating-linear-gradient(to right, ${badgeColor} 0, ${badgeColor} 4px, transparent 4px, transparent 8px)`,
+                        }}
+                      />
+                      {/* Sharp arrow edge on the left */}
+                      <div
+                        style={{
+                          width: 0,
+                          height: 0,
+                          borderTop: "14px solid transparent",
+                          borderBottom: "14px solid transparent",
+                          borderRight: `10px solid ${badgeColor}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div
+                        className="px-2 py-0.5 text-white font-bold whitespace-nowrap flex items-baseline"
+                        style={{
+                          backgroundColor: badgeColor,
+                          fontFamily: "Arial, sans-serif",
+                          lineHeight: 1.2,
+                          minHeight: "28px",
+                          alignItems: "center",
+                        }}
+                      >
+                        <span style={{ fontSize: "13px", fontWeight: 600 }}>
+                          {smallPart}
+                        </span>
+                        <span style={{ fontSize: "18px", fontWeight: 700 }}>
+                          {largePart}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+
               {/* Hover Color Tint Overlay - subtle color wash when hovering HIGHER/LOWER */}
               <AnimatePresence>
-                {hoveredButton && (
+                {hoveredButton && !lastFinishedTrade && (
                   <>
                     <motion.div
                       key={hoveredButton}
@@ -4506,19 +6519,22 @@ function TradingInterface() {
                         zIndex: 201,
                         left: "50%",
                         transform: "translateX(-50%)",
-                        top: hoveredButton === "higher"
-                          ? `calc(${priceYPosition}% - 28px)`
-                          : `calc(${priceYPosition}% + 6px)`,
+                        top:
+                          hoveredButton === "higher"
+                            ? `calc(${priceYPosition}% - 28px)`
+                            : `calc(${priceYPosition}% + 6px)`,
                       }}
                     >
                       <div
                         style={{
-                          transform: hoveredButton === "higher"
-                            ? "rotate(-45deg)"
-                            : "rotate(135deg)",
-                          filter: hoveredButton === "higher"
-                            ? "drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))"
-                            : "drop-shadow(0 0 6px rgba(239, 68, 68, 0.6))",
+                          transform:
+                            hoveredButton === "higher"
+                              ? "rotate(-45deg)"
+                              : "rotate(135deg)",
+                          filter:
+                            hoveredButton === "higher"
+                              ? "drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))"
+                              : "drop-shadow(0 0 6px rgba(239, 68, 68, 0.6))",
                         }}
                       >
                         <svg
@@ -4528,9 +6544,29 @@ function TradingInterface() {
                           fill="none"
                         >
                           {/* Colored shaft - shortened from tail end */}
-                          <line x1="7" y1="12" x2="16" y2="12" stroke={hoveredButton === "higher" ? "#22c55e" : "#ef4444"} strokeWidth="2.5" strokeLinecap="round" />
+                          <line
+                            x1="7"
+                            y1="12"
+                            x2="16"
+                            y2="12"
+                            stroke={
+                              hoveredButton === "higher" ? "#22c55e" : "#ef4444"
+                            }
+                            strokeWidth="2.5"
+                            strokeLinecap="round"
+                          />
                           {/* Filled colored pointer head */}
-                          <polygon points="14,4 23,12 14,20" fill={hoveredButton === "higher" ? "#22c55e" : "#ef4444"} stroke={hoveredButton === "higher" ? "#22c55e" : "#ef4444"} strokeWidth="1" strokeLinejoin="round" />
+                          <polygon
+                            points="14,4 23,12 14,20"
+                            fill={
+                              hoveredButton === "higher" ? "#22c55e" : "#ef4444"
+                            }
+                            stroke={
+                              hoveredButton === "higher" ? "#22c55e" : "#ef4444"
+                            }
+                            strokeWidth="1"
+                            strokeLinejoin="round"
+                          />
                         </svg>
                       </div>
                     </motion.div>
@@ -4538,174 +6574,179 @@ function TradingInterface() {
                 )}
               </AnimatePresence>
 
-              {/* Active Trades Entry Lines - Full Width Dashed Lines */}
-              {activeTrades
-                .filter((t) => t.symbol === selectedSymbol && t.status === "active")
-                .map((trade) => {
-                  const dynamicY = priceToYRef.current ? priceToYRef.current(trade.entryPrice) : trade.entryYPosition;
-                  const dynamicX = timeToXRef.current ? timeToXRef.current(trade.entryTime) : null;
-                  const isGreen = trade.direction === "higher";
+              {/* Persistent Entry Markers - Stay visible after trade finishes */}
+              {entryMarkers
+                .filter((m) => m.symbol === selectedSymbol)
+                .map((marker) => {
+                  const dynamicY = priceToYRef.current
+                    ? priceToYRef.current(marker.entryPrice)
+                    : marker.entryYPosition;
+                  const dynamicX = timeToXRef.current
+                    ? timeToXRef.current(marker.entryTime)
+                    : null;
+                  const isGreen = marker.direction === "higher";
                   return (
-                  <div key={`entry-line-${trade.id}`} className="absolute left-0 right-0 z-[50] pointer-events-none" style={{ top: `${dynamicY}%` }}>
                     <div
-                      style={{
-                        height: '1px',
-                        backgroundImage: `repeating-linear-gradient(to right, ${isGreen ? "#22c55e" : "#ef4444"} 0, ${isGreen ? "#22c55e" : "#ef4444"} 6px, transparent 6px, transparent 12px)`,
-                      }}
-                    />
-                    {/* Entry point: check circle + dot + price badge together */}
-                    <div
-                      className="absolute flex items-center gap-1"
-                      style={{
-                        left: dynamicX !== null ? `${dynamicX}%` : undefined,
-                        right: dynamicX === null ? '142px' : undefined,
-                        top: '-10px',
-                        transform: dynamicX !== null ? 'translateX(-50%)' : undefined,
-                      }}
+                      key={`entry-line-${marker.id}`}
+                      className="absolute left-0 right-[80px] z-[500] pointer-events-none"
+                      style={{ top: `${dynamicY}%` }}
                     >
-                      {/* Check circle */}
                       <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                         style={{
-                          backgroundColor: isGreen ? "#166534" : "#991b1b",
-                          border: `2px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
+                          height: "1px",
+                          backgroundImage: `repeating-linear-gradient(to right, ${isGreen ? "#22c55e" : "#ef4444"} 0, ${isGreen ? "#22c55e" : "#ef4444"} 6px, transparent 6px, transparent 12px)`,
+                        }}
+                      />
+                      {/* Entry point: check circle + price badge */}
+                      <div
+                        className="absolute flex items-center gap-1"
+                        style={{
+                          left: dynamicX !== null ? `${dynamicX}%` : undefined,
+                          right: dynamicX === null ? "142px" : undefined,
+                          top: "-10px",
+                          transform:
+                            dynamicX !== null ? "translateX(-50%)" : undefined,
                         }}
                       >
-                        <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                          <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                      </div>
-                      {/* Dot circle */}
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{
-                          backgroundColor: isGreen ? "#166534" : "#991b1b",
-                          border: `2px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
-                        }}
-                      >
-                        <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="currentColor">
-                          <circle cx="12" cy="12" r="4"/>
-                        </svg>
-                      </div>
-                      {/* Entry price badge */}
-                      <div
-                        className="flex items-center justify-center flex-shrink-0"
-                        style={{
-                          backgroundColor: isGreen ? "#22c55e" : "#ef4444",
-                          borderRadius: "8px",
-                          padding: "4px 10px",
-                        }}
-                      >
-                        <span className="text-white font-bold text-sm leading-tight whitespace-nowrap">
-                          $ {trade.amount.toLocaleString()}
-                        </span>
+                        {/* Check circle */}
+                        <div
+                          className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{
+                            backgroundColor: isGreen ? "#166534" : "#991b1b",
+                            border: `1.5px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
+                          }}
+                        >
+                          <svg
+                            className="w-2.5 h-2.5 text-white"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        </div>
+                        {/* Entry price badge */}
+                        <div
+                          className="flex items-center justify-center flex-shrink-0"
+                          style={{
+                            backgroundColor: isGreen ? "#22c55e" : "#ef4444",
+                            borderRadius: "8px",
+                            padding: "4px 10px",
+                          }}
+                        >
+                          <span className="text-white font-bold text-sm leading-tight whitespace-nowrap">
+                            $ {marker.amount.toLocaleString()}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
                   );
                 })}
 
               {/* Last Finished Trade Result - IQ Option Style */}
               <AnimatePresence>
-                {lastFinishedTrade && 
-                 lastFinishedTrade.symbol === selectedSymbol && 
-                 activeTrades.filter(t => t.symbol === selectedSymbol && t.status === "active").length === 0 && (() => {
-                  const finishedY = priceToYRef.current ? priceToYRef.current(lastFinishedTrade.entryPrice) : lastFinishedTrade.entryYPosition;
-                  const finishedEntryX = timeToXRef.current ? timeToXRef.current(lastFinishedTrade.entryTime) : null;
-                  const finishedEndX = timeToXRef.current ? timeToXRef.current(lastFinishedTrade.expirationTime) : null;
-                  // Hide if result popup is completely off screen
-                  const endOffScreen = finishedEndX !== null && (finishedEndX < -10 || finishedEndX > 110);
-                  if (endOffScreen) return null;
-                  const isSessionWin = sessionTotalResult >= 0;
-                  // Entry price color stays based on trade direction (higher=green, lower=red) — never changes
-                  const isEntryGreen = lastFinishedTrade.direction === "higher";
-                  return (
-                  <>
-                    {/* Entry price horizontal dashed line - color based on trade direction, not win/loss */}
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute left-0 right-[140px] h-[1px] z-[50] pointer-events-none"
-                      style={{
-                        top: `${finishedY}%`,
-                        backgroundImage: `linear-gradient(to right, ${isEntryGreen ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)"} 50%, transparent 50%)`,
-                        backgroundSize: "8px 1px",
-                      }}
-                    />
-
-                    {/* Entry price badge - shows THIS trade's amount only, color = trade direction */}
-                    {finishedEntryX !== null && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="absolute z-[50] pointer-events-none"
-                        style={{
-                          left: `${finishedEntryX}%`,
-                          top: `${finishedY}%`,
-                          transform: "translate(-50%, -50%)",
-                        }}
-                      >
-                        <div
-                          className="px-2.5 py-1 rounded-md"
+                {lastFinishedTrade &&
+                  lastFinishedTrade.symbol === selectedSymbol &&
+                  activeTrades.filter(
+                    (t) => t.symbol === selectedSymbol && t.status === "active",
+                  ).length === 0 &&
+                  (() => {
+                    const finishedY = priceToYRef.current
+                      ? priceToYRef.current(lastFinishedTrade.entryPrice)
+                      : lastFinishedTrade.entryYPosition;
+                    const finishedEntryX = timeToXRef.current
+                      ? timeToXRef.current(lastFinishedTrade.entryTime)
+                      : null;
+                    const finishedEndX = timeToXRef.current
+                      ? timeToXRef.current(lastFinishedTrade.expirationTime)
+                      : null;
+                    // Hide if result popup is completely off screen
+                    const endOffScreen =
+                      finishedEndX !== null &&
+                      (finishedEndX < -10 || finishedEndX > 110);
+                    if (endOffScreen) return null;
+                    const isSessionWin = sessionTotalResult >= 0;
+                    // Entry price color stays based on trade direction (higher=green, lower=red) — never changes
+                    const isEntryGreen =
+                      lastFinishedTrade.direction === "higher";
+                    return (
+                      <>
+                        {/* Entry price horizontal dashed line - color based on trade direction, not win/loss */}
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="absolute left-0 right-[140px] h-[1px] z-[500] pointer-events-none"
                           style={{
-                            backgroundColor: isEntryGreen ? "#22c55e" : "#ef4444",
-                            boxShadow: isEntryGreen
-                              ? "0 0 15px rgba(34, 197, 94, 0.5)"
-                              : "0 0 15px rgba(239, 68, 68, 0.5)",
+                            top: `${finishedY}%`,
+                            backgroundImage: `linear-gradient(to right, ${isEntryGreen ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)"} 50%, transparent 50%)`,
+                            backgroundSize: "8px 1px",
                           }}
-                        >
-                          <span className="text-white font-bold text-xs">
-                            $ {lastFinishedTrade.amount.toLocaleString()}
-                          </span>
-                        </div>
-                      </motion.div>
-                    )}
+                        />
 
-                    {/* TOTAL RESULT (P/L) popup - shows accumulated session total */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.8 }}
-                      className="absolute z-[50] pointer-events-auto"
-                      style={{
-                        left: finishedEndX !== null ? `${finishedEndX}%` : "55%",
-                        top: `${finishedY}%`,
-                        transform: "translate(-50%, -50%)",
-                      }}
-                    >
-                      <div 
-                        className="relative flex flex-col items-start px-4 py-2.5 rounded-lg min-w-[140px]"
-                        style={{
-                          backgroundColor: isSessionWin ? "#5ddf38" : "#ef4444",
-                        }}
-                      >
-                        {/* Close button */}
-                        <button
-                          onClick={() => {
-                            setLastFinishedTrade(null);
-                            setSessionTotalResult(0);
-                            setSessionTotalInvested(0);
-                            setSessionTradeCount(0);
+                        {/* TOTAL RESULT (P/L) popup - shows accumulated session total */}
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="absolute z-[500] pointer-events-auto"
+                          style={{
+                            left:
+                              finishedEndX !== null
+                                ? `${finishedEndX}%`
+                                : "55%",
+                            top: `${finishedY}%`,
+                            transform: "translate(-50%, -50%)",
                           }}
-                          className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
                         >
-                          <svg className="w-3.5 h-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                            <path d="M18 6L6 18M6 6l12 12" />
-                          </svg>
-                        </button>
-                        <span className="text-sm text-white/90 font-bold tracking-wider leading-tight uppercase">
-                          {sessionTradeCount > 1 ? "TOTAL P/L" : "RESULT (P/L)"}
-                        </span>
-                        <span className="text-white font-extrabold text-xl leading-tight mt-0.5">
-                          {isSessionWin ? "+" : "−"}$ {Math.abs(sessionTotalResult).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
-                        </span>
-                      </div>
-                    </motion.div>
-                  </>
-                  );
-                })()}
+                          <div
+                            className="relative flex flex-col items-start px-4 py-2.5 rounded-lg min-w-[140px]"
+                            style={{
+                              backgroundColor: isSessionWin
+                                ? "#22c55e"
+                                : "#ef4444",
+                            }}
+                          >
+                            {/* Close button */}
+                            <button
+                              onClick={() => {
+                                setLastFinishedTrade(null);
+                                setSessionTotalResult(0);
+                                setSessionTotalInvested(0);
+                                setSessionTradeCount(0);
+                                setEntryMarkers([]);
+                              }}
+                              className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                            >
+                              <svg
+                                className="w-3.5 h-3.5 text-white"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                              >
+                                <path d="M18 6L6 18M6 6l12 12" />
+                              </svg>
+                            </button>
+                            <span className="text-xs text-white/90 font-bold tracking-wider leading-tight uppercase">
+                              RESULTS (P/L)
+                            </span>
+                            <span className="text-white font-extrabold text-lg leading-tight mt-0.5">
+                              {isSessionWin ? "+" : "−"}${" "}
+                              {Math.abs(sessionTotalResult).toLocaleString(
+                                undefined,
+                                {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: 0,
+                                },
+                              )}
+                            </span>
+                          </div>
+                        </motion.div>
+                      </>
+                    );
+                  })()}
               </AnimatePresence>
             </div>
           </div>
@@ -4714,8 +6755,6 @@ function TradingInterface() {
           <div
             className="flex-col flex"
             style={{
-              backgroundColor: "#0a1020",
-              borderLeft: "1px solid #1a2d45",
               overflow: "hidden",
               width: "130px",
               minWidth: "130px",
@@ -4723,21 +6762,45 @@ function TradingInterface() {
           >
             <div className="p-2 h-full overflow-y-auto flex flex-col gap-1.5">
               {/* Invest Section */}
-              <div className="rounded overflow-hidden" style={{ backgroundColor: "#0f1a2a", border: "1px solid #1a2d45" }}>
-                <div className="flex items-center justify-between px-2 py-1" style={{ borderBottom: "1px solid #1a2d45" }}>
-                  <span className="text-[11px] font-medium" style={{ color: "#8b9ab8" }}>Invest</span>
-                  <button className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: "#1a2d45", color: "#4a6080" }}>?</button>
+              <div
+                className="rounded overflow-hidden"
+                style={{
+                  backgroundColor: "#0f1a2a",
+                  border: "1px solid #1a2d45",
+                }}
+              >
+                <div
+                  className="flex items-center justify-between px-2 py-1"
+                  style={{ borderBottom: "1px solid #1a2d45" }}
+                >
+                  <span
+                    className="text-[11px] font-medium"
+                    style={{ color: "#8b9ab8" }}
+                  >
+                    Invest
+                  </span>
+                  <button
+                    className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold"
+                    style={{ backgroundColor: "#1a2d45", color: "#4a6080" }}
+                  >
+                    ?
+                  </button>
                 </div>
                 <div className="flex items-stretch">
                   <div className="flex-1 px-2 py-1.5 flex items-center gap-0.5">
-                    <span className="font-semibold" style={{ color: "#4a6080", fontSize: "12px" }}>$</span>
+                    <span
+                      className="font-semibold"
+                      style={{ color: "#4a6080", fontSize: "12px" }}
+                    >
+                      $
+                    </span>
                     <input
                       type="text"
                       value={amountInput}
                       onChange={(e) => {
-                        const raw = e.target.value.replace(/[^0-9]/g, '');
-                        if (raw === '') {
-                          setAmountInput('');
+                        const raw = e.target.value.replace(/[^0-9]/g, "");
+                        if (raw === "") {
+                          setAmountInput("");
                           return;
                         }
                         const val = parseInt(raw, 10);
@@ -4748,18 +6811,63 @@ function TradingInterface() {
                         }
                       }}
                       onBlur={() => {
-                        if (amountInput === '' || parseInt(amountInput.replace(/[^0-9]/g, ''), 10) < 1) {
+                        if (
+                          amountInput === "" ||
+                          parseInt(amountInput.replace(/[^0-9]/g, ""), 10) < 1
+                        ) {
                           setAmount(1);
-                          setAmountInput('1');
+                          setAmountInput("1");
                         }
                       }}
                       className="bg-transparent border-none outline-none font-bold w-full"
                       style={{ color: "#eef2f7", fontSize: "14px" }}
                     />
                   </div>
-                  <div className="flex flex-col" style={{ borderLeft: "1px solid #1a2d45", width: "22px" }}>
-                    <button onClick={() => { const v = Math.min(amount + 1, 1000000); setAmount(v); setAmountInput(v.toLocaleString()); }} className="flex-1 flex items-center justify-center transition-colors text-sm font-bold" style={{ color: "#4a6080", borderBottom: "1px solid #1a2d45" }} onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")} onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}>+</button>
-                    <button onClick={() => { const v = Math.max(amount - 1, 1); setAmount(v); setAmountInput(v.toLocaleString()); }} className="flex-1 flex items-center justify-center transition-colors text-sm font-bold" style={{ color: "#4a6080" }} onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")} onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}>-</button>
+                  <div
+                    className="flex flex-col"
+                    style={{ borderLeft: "1px solid #1a2d45", width: "22px" }}
+                  >
+                    <button
+                      onClick={() => {
+                        const v = Math.min(amount + 1, 1000000);
+                        setAmount(v);
+                        setAmountInput(v.toLocaleString());
+                      }}
+                      className="flex-1 flex items-center justify-center transition-colors text-sm font-bold"
+                      style={{
+                        color: "#4a6080",
+                        borderBottom: "1px solid #1a2d45",
+                      }}
+                      onMouseEnter={(e) => (
+                        (e.currentTarget.style.backgroundColor = "#1a2d45"),
+                        (e.currentTarget.style.color = "#eef2f7")
+                      )}
+                      onMouseLeave={(e) => (
+                        (e.currentTarget.style.backgroundColor = "transparent"),
+                        (e.currentTarget.style.color = "#4a6080")
+                      )}
+                    >
+                      +
+                    </button>
+                    <button
+                      onClick={() => {
+                        const v = Math.max(amount - 1, 1);
+                        setAmount(v);
+                        setAmountInput(v.toLocaleString());
+                      }}
+                      className="flex-1 flex items-center justify-center transition-colors text-sm font-bold"
+                      style={{ color: "#4a6080" }}
+                      onMouseEnter={(e) => (
+                        (e.currentTarget.style.backgroundColor = "#1a2d45"),
+                        (e.currentTarget.style.color = "#eef2f7")
+                      )}
+                      onMouseLeave={(e) => (
+                        (e.currentTarget.style.backgroundColor = "transparent"),
+                        (e.currentTarget.style.color = "#4a6080")
+                      )}
+                    >
+                      -
+                    </button>
                   </div>
                 </div>
               </div>
@@ -4768,53 +6876,113 @@ function TradingInterface() {
               <div className="relative" ref={expirationButtonRef}>
                 <div
                   className="rounded overflow-hidden cursor-pointer transition-opacity hover:opacity-90"
-                  style={{ backgroundColor: "#0f1a2a", border: "1px solid #1a2d45" }}
+                  style={{
+                    backgroundColor: "#0f1a2a",
+                    border: "1px solid #1a2d45",
+                  }}
                   onClick={() => {
                     setShowExpirationModal(!showExpirationModal);
                   }}
                 >
                   <div className="flex items-stretch flex-1">
                     <div className="flex-1">
-                      <div className="flex items-center justify-between px-2 py-1" style={{ borderBottom: "1px solid #1a2d45" }}>
-                        <span className="text-[11px] font-medium" style={{ color: "#8b9ab8" }}>Expiration</span>
-                        <button className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold" style={{ backgroundColor: "#1a2d45", color: "#4a6080" }} onClick={e => e.stopPropagation()}>?</button>
+                      <div
+                        className="flex items-center justify-between px-2 py-1"
+                        style={{ borderBottom: "1px solid #1a2d45" }}
+                      >
+                        <span
+                          className="text-[11px] font-medium"
+                          style={{ color: "#8b9ab8" }}
+                        >
+                          Expiration
+                        </span>
+                        <button
+                          className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold"
+                          style={{
+                            backgroundColor: "#1a2d45",
+                            color: "#4a6080",
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          ?
+                        </button>
                       </div>
                       <div className="px-2 py-1.5 flex items-center gap-1">
-                        <Clock className="w-3.5 h-3.5" style={{ color: "#8b9ab8" }} />
-                        <span className="font-bold font-mono" style={{ color: "#eef2f7", fontSize: "14px" }}>
+                        <Clock
+                          className="w-3.5 h-3.5"
+                          style={{ color: "#8b9ab8" }}
+                        />
+                        <span
+                          className="font-bold font-mono"
+                          style={{ color: "#eef2f7", fontSize: "14px" }}
+                        >
                           {(() => {
                             const now = currentTime || new Date();
-                            const expirationTime = new Date(now.getTime() + expirationSeconds * 1000);
-                            return `${String(expirationTime.getHours()).padStart(2, '0')}:${String(expirationTime.getMinutes()).padStart(2, '0')}`;
+                            const expirationTime = new Date(
+                              now.getTime() + expirationSeconds * 1000,
+                            );
+                            return `${String(expirationTime.getHours()).padStart(2, "0")}:${String(expirationTime.getMinutes()).padStart(2, "0")}`;
                           })()}
                         </span>
                       </div>
                     </div>
-                    <div className="flex flex-col" style={{ borderLeft: "1px solid #1a2d45", width: "22px" }}>
+                    <div
+                      className="flex flex-col"
+                      style={{ borderLeft: "1px solid #1a2d45", width: "22px" }}
+                    >
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          const options = [30, 60, 120, 180, 240, 300, 600, 900, 1800, 3600];
-                          const currentIndex = options.indexOf(expirationSeconds);
-                          if (currentIndex < options.length - 1) setExpirationSeconds(options[currentIndex + 1]);
+                          const options = [
+                            30, 60, 120, 180, 240, 300, 600, 900, 1800, 3600,
+                          ];
+                          const currentIndex =
+                            options.indexOf(expirationSeconds);
+                          if (currentIndex < options.length - 1)
+                            setExpirationSeconds(options[currentIndex + 1]);
                         }}
                         className="flex-1 flex items-center justify-center transition-colors text-sm font-bold"
-                        style={{ color: "#4a6080", borderBottom: "1px solid #1a2d45" }}
-                        onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")}
-                        onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}
-                      >+</button>
+                        style={{
+                          color: "#4a6080",
+                          borderBottom: "1px solid #1a2d45",
+                        }}
+                        onMouseEnter={(e) => (
+                          (e.currentTarget.style.backgroundColor = "#1a2d45"),
+                          (e.currentTarget.style.color = "#eef2f7")
+                        )}
+                        onMouseLeave={(e) => (
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent"),
+                          (e.currentTarget.style.color = "#4a6080")
+                        )}
+                      >
+                        +
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          const options = [30, 60, 120, 180, 240, 300, 600, 900, 1800, 3600];
-                          const currentIndex = options.indexOf(expirationSeconds);
-                          if (currentIndex > 0) setExpirationSeconds(options[currentIndex - 1]);
+                          const options = [
+                            30, 60, 120, 180, 240, 300, 600, 900, 1800, 3600,
+                          ];
+                          const currentIndex =
+                            options.indexOf(expirationSeconds);
+                          if (currentIndex > 0)
+                            setExpirationSeconds(options[currentIndex - 1]);
                         }}
                         className="flex-1 flex items-center justify-center transition-colors text-sm font-bold"
                         style={{ color: "#4a6080" }}
-                        onMouseEnter={e => (e.currentTarget.style.backgroundColor="#1a2d45", e.currentTarget.style.color="#eef2f7")}
-                        onMouseLeave={e => (e.currentTarget.style.backgroundColor="transparent", e.currentTarget.style.color="#4a6080")}
-                      >-</button>
+                        onMouseEnter={(e) => (
+                          (e.currentTarget.style.backgroundColor = "#1a2d45"),
+                          (e.currentTarget.style.color = "#eef2f7")
+                        )}
+                        onMouseLeave={(e) => (
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent"),
+                          (e.currentTarget.style.color = "#4a6080")
+                        )}
+                      >
+                        -
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -4822,39 +6990,73 @@ function TradingInterface() {
                 {/* Expiration Time Panel - IQ Option Style (beside right sidebar) */}
                 {showExpirationModal && (
                   <>
-                    <div className="fixed inset-0 z-[200]" onClick={() => setShowExpirationModal(false)} />
+                    <div
+                      className="fixed inset-0 z-[200]"
+                      onClick={() => setShowExpirationModal(false)}
+                    />
                     <div
                       className="fixed z-[201] rounded-l-xl shadow-2xl overflow-hidden"
-                      style={{ 
-                        backgroundColor: "#1c2127", 
-                        border: "1px solid #2a2e35", 
+                      style={{
+                        backgroundColor: "#1c2127",
+                        border: "1px solid #2a2e35",
                         borderRight: "none",
                         width: "420px",
                         right: "170px",
                         top: "60px",
-                        maxHeight: "calc(100vh - 120px)"
+                        maxHeight: "calc(100vh - 120px)",
                       }}
                     >
                       {/* Header */}
-                      <div className="px-4 py-3 border-b" style={{ borderColor: "#2a2e35" }}>
-                        <h3 className="text-sm font-semibold tracking-wide" style={{ color: "#eef2f7" }}>EXPIRATION TIME</h3>
+                      <div
+                        className="px-4 py-3 border-b"
+                        style={{ borderColor: "#2a2e35" }}
+                      >
+                        <h3
+                          className="text-sm font-semibold tracking-wide"
+                          style={{ color: "#eef2f7" }}
+                        >
+                          EXPIRATION TIME
+                        </h3>
                       </div>
-                      
+
                       <div className="p-4">
                         <div className="flex gap-4">
                           {/* Left Column - Short Expirations (1-5 minutes) */}
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-3">
-                              <span className="text-sm font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
-                              <span className="px-2 py-0.5 rounded text-xs font-bold" style={{ backgroundColor: "#00c087", color: "white" }}>85%</span>
+                              <span
+                                className="text-sm font-medium"
+                                style={{ color: "#8b9ab8" }}
+                              >
+                                Profit
+                              </span>
+                              <span
+                                className="px-2 py-0.5 rounded text-xs font-bold"
+                                style={{
+                                  backgroundColor: "#00c087",
+                                  color: "white",
+                                }}
+                              >
+                                85%
+                              </span>
                             </div>
-                            
+
                             {/* Column Headers */}
                             <div className="flex items-center justify-between mb-2 px-2">
-                              <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Time</span>
-                              <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Remaining</span>
+                              <span
+                                className="text-xs font-medium"
+                                style={{ color: "#4a6080" }}
+                              >
+                                Time
+                              </span>
+                              <span
+                                className="text-xs font-medium"
+                                style={{ color: "#4a6080" }}
+                              >
+                                Remaining
+                              </span>
                             </div>
-                            
+
                             {/* Options - Minute aligned like IQ Option */}
                             <div className="space-y-1">
                               {[1, 2, 3, 4, 5].map((minuteOffset) => {
@@ -4863,37 +7065,77 @@ function TradingInterface() {
                                 // Calculate next minute boundary
                                 const nextMinute = new Date(now);
                                 nextMinute.setSeconds(0, 0);
-                                nextMinute.setMinutes(nextMinute.getMinutes() + minuteOffset);
-                                
+                                nextMinute.setMinutes(
+                                  nextMinute.getMinutes() + minuteOffset,
+                                );
+
                                 // Time string (HH:MM)
-                                const timeStr = `${String(nextMinute.getHours()).padStart(2, '0')}:${String(nextMinute.getMinutes()).padStart(2, '0')}`;
-                                
+                                const timeStr = `${String(nextMinute.getHours()).padStart(2, "0")}:${String(nextMinute.getMinutes()).padStart(2, "0")}`;
+
                                 // Calculate remaining seconds until that target time
-                                const remainingMs = nextMinute.getTime() - now.getTime();
-                                const remainingTotalSecs = Math.max(0, Math.ceil(remainingMs / 1000));
-                                const remainingMins = Math.floor(remainingTotalSecs / 60);
+                                const remainingMs =
+                                  nextMinute.getTime() - now.getTime();
+                                const remainingTotalSecs = Math.max(
+                                  0,
+                                  Math.ceil(remainingMs / 1000),
+                                );
+                                const remainingMins = Math.floor(
+                                  remainingTotalSecs / 60,
+                                );
                                 const remainingSecs = remainingTotalSecs % 60;
-                                const remainingLabel = `${String(remainingMins).padStart(2, '0')}:${String(remainingSecs).padStart(2, '0')}`;
-                                
+                                const remainingLabel = `${String(remainingMins).padStart(2, "0")}:${String(remainingSecs).padStart(2, "0")}`;
+
                                 // Check if current expiration matches this minute offset range (within 60 seconds)
                                 const minSecs = (minuteOffset - 1) * 60 + 1;
                                 const maxSecs = minuteOffset * 60;
-                                const isSelected = expirationSeconds >= minSecs && expirationSeconds <= maxSecs;
-                                
+                                const isSelected =
+                                  expirationSeconds >= minSecs &&
+                                  expirationSeconds <= maxSecs;
+
                                 return (
                                   <button
                                     key={minuteOffset}
-                                    onClick={() => { setExpirationSeconds(remainingTotalSecs); setShowExpirationModal(false); }}
-                                    className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? '' : 'hover:bg-white/5'}`}
-                                    style={{ 
-                                      backgroundColor: isSelected ? '#00c087' : 'transparent',
+                                    onClick={() => {
+                                      setExpirationSeconds(remainingTotalSecs);
+                                      setShowExpirationModal(false);
+                                    }}
+                                    className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? "" : "hover:bg-white/5"}`}
+                                    style={{
+                                      backgroundColor: isSelected
+                                        ? "#00c087"
+                                        : "transparent",
                                     }}
                                   >
-                                    <span className="text-sm font-medium" style={{ color: isSelected ? '#ffffff' : '#eef2f7' }}>{timeStr}</span>
-                                    <span className="flex items-center gap-1.5 text-sm" style={{ color: isSelected ? '#ffffff' : '#8b9ab8' }}>
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <polyline points="12 6 12 12 16 14"/>
+                                    <span
+                                      className="text-sm font-medium"
+                                      style={{
+                                        color: isSelected
+                                          ? "#ffffff"
+                                          : "#eef2f7",
+                                      }}
+                                    >
+                                      {timeStr}
+                                    </span>
+                                    <span
+                                      className="flex items-center gap-1.5 text-sm"
+                                      style={{
+                                        color: isSelected
+                                          ? "#ffffff"
+                                          : "#8b9ab8",
+                                      }}
+                                    >
+                                      <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <circle cx="12" cy="12" r="10" />
+                                        <polyline points="12 6 12 12 16 14" />
                                       </svg>
                                       {remainingLabel}
                                     </span>
@@ -4902,69 +7144,139 @@ function TradingInterface() {
                               })}
                             </div>
                           </div>
-                          
+
                           {/* Divider */}
-                          <div className="w-px" style={{ backgroundColor: "#2a2e35" }} />
-                          
+                          <div
+                            className="w-px"
+                            style={{ backgroundColor: "#2a2e35" }}
+                          />
+
                           {/* Right Column - Long Expirations (15-60 minutes) */}
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-3">
-                              <span className="text-sm font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
-                              <span className="px-2 py-0.5 rounded text-xs font-bold" style={{ backgroundColor: "#00c087", color: "white" }}>84%</span>
+                              <span
+                                className="text-sm font-medium"
+                                style={{ color: "#8b9ab8" }}
+                              >
+                                Profit
+                              </span>
+                              <span
+                                className="px-2 py-0.5 rounded text-xs font-bold"
+                                style={{
+                                  backgroundColor: "#00c087",
+                                  color: "white",
+                                }}
+                              >
+                                84%
+                              </span>
                             </div>
-                            
+
                             {/* Column Headers */}
                             <div className="flex items-center justify-between mb-2 px-2">
-                              <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Time</span>
-                              <span className="text-xs font-medium" style={{ color: "#4a6080" }}>Remaining</span>
+                              <span
+                                className="text-xs font-medium"
+                                style={{ color: "#4a6080" }}
+                              >
+                                Time
+                              </span>
+                              <span
+                                className="text-xs font-medium"
+                                style={{ color: "#4a6080" }}
+                              >
+                                Remaining
+                              </span>
                             </div>
-                            
+
                             {/* Options - Minute aligned like IQ Option */}
                             <div className="space-y-1">
-                              {[15, 30, 45, 60, 120].map((minuteOffset, idx, arr) => {
-                                // Use currentTime state for real-time updates
-                                const now = currentTime || new Date();
-                                // Calculate target minute boundary
-                                const targetTime = new Date(now);
-                                targetTime.setSeconds(0, 0);
-                                targetTime.setMinutes(targetTime.getMinutes() + minuteOffset);
-                                
-                                // Time string (HH:MM)
-                                const timeStr = `${String(targetTime.getHours()).padStart(2, '0')}:${String(targetTime.getMinutes()).padStart(2, '0')}`;
-                                
-                                // Calculate remaining seconds until that target time
-                                const remainingMs = targetTime.getTime() - now.getTime();
-                                const remainingTotalSecs = Math.max(0, Math.ceil(remainingMs / 1000));
-                                const remainingMins = Math.floor(remainingTotalSecs / 60);
-                                const remainingSecs = remainingTotalSecs % 60;
-                                const remainingLabel = `${String(remainingMins).padStart(2, '0')}:${String(remainingSecs).padStart(2, '0')}`;
-                                
-                                // Check if current expiration matches this minute offset range
-                                const prevOffset = idx > 0 ? arr[idx - 1] : 5; // After short expirations (1-5 min)
-                                const minSecs = prevOffset * 60 + 1;
-                                const maxSecs = minuteOffset * 60;
-                                const isSelected = expirationSeconds >= minSecs && expirationSeconds <= maxSecs;
-                                
-                                return (
-                                  <button
-                                    key={minuteOffset}
-                                    onClick={() => { setExpirationSeconds(remainingTotalSecs); setShowExpirationModal(false); }}
-                                    className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? '' : 'hover:bg-white/5'}`}
-                                    style={{ 
-                                      backgroundColor: isSelected ? '#00c087' : 'transparent',
-                                    }}
-                                  >
-                                    <span className="text-sm font-medium" style={{ color: isSelected ? '#ffffff' : '#eef2f7' }}>{timeStr}</span>
-                                    <span className="flex items-center gap-1.5 text-sm" style={{ color: isSelected ? '#ffffff' : '#8b9ab8' }}>
-                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <circle cx="12" cy="12" r="10"/>
-                                        <polyline points="12 6 12 12 16 14"/>
-                                      </svg>
-                                      {remainingLabel}
-                                    </span>
-                                  </button>
-                                );
-                              })}
+                              {[15, 30, 45, 60, 120].map(
+                                (minuteOffset, idx, arr) => {
+                                  // Use currentTime state for real-time updates
+                                  const now = currentTime || new Date();
+                                  // Calculate target minute boundary
+                                  const targetTime = new Date(now);
+                                  targetTime.setSeconds(0, 0);
+                                  targetTime.setMinutes(
+                                    targetTime.getMinutes() + minuteOffset,
+                                  );
+
+                                  // Time string (HH:MM)
+                                  const timeStr = `${String(targetTime.getHours()).padStart(2, "0")}:${String(targetTime.getMinutes()).padStart(2, "0")}`;
+
+                                  // Calculate remaining seconds until that target time
+                                  const remainingMs =
+                                    targetTime.getTime() - now.getTime();
+                                  const remainingTotalSecs = Math.max(
+                                    0,
+                                    Math.ceil(remainingMs / 1000),
+                                  );
+                                  const remainingMins = Math.floor(
+                                    remainingTotalSecs / 60,
+                                  );
+                                  const remainingSecs = remainingTotalSecs % 60;
+                                  const remainingLabel = `${String(remainingMins).padStart(2, "0")}:${String(remainingSecs).padStart(2, "0")}`;
+
+                                  // Check if current expiration matches this minute offset range
+                                  const prevOffset = idx > 0 ? arr[idx - 1] : 5; // After short expirations (1-5 min)
+                                  const minSecs = prevOffset * 60 + 1;
+                                  const maxSecs = minuteOffset * 60;
+                                  const isSelected =
+                                    expirationSeconds >= minSecs &&
+                                    expirationSeconds <= maxSecs;
+
+                                  return (
+                                    <button
+                                      key={minuteOffset}
+                                      onClick={() => {
+                                        setExpirationSeconds(
+                                          remainingTotalSecs,
+                                        );
+                                        setShowExpirationModal(false);
+                                      }}
+                                      className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? "" : "hover:bg-white/5"}`}
+                                      style={{
+                                        backgroundColor: isSelected
+                                          ? "#00c087"
+                                          : "transparent",
+                                      }}
+                                    >
+                                      <span
+                                        className="text-sm font-medium"
+                                        style={{
+                                          color: isSelected
+                                            ? "#ffffff"
+                                            : "#eef2f7",
+                                        }}
+                                      >
+                                        {timeStr}
+                                      </span>
+                                      <span
+                                        className="flex items-center gap-1.5 text-sm"
+                                        style={{
+                                          color: isSelected
+                                            ? "#ffffff"
+                                            : "#8b9ab8",
+                                        }}
+                                      >
+                                        <svg
+                                          width="14"
+                                          height="14"
+                                          viewBox="0 0 24 24"
+                                          fill="none"
+                                          stroke="currentColor"
+                                          strokeWidth="2"
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                        >
+                                          <circle cx="12" cy="12" r="10" />
+                                          <polyline points="12 6 12 12 16 14" />
+                                        </svg>
+                                        {remainingLabel}
+                                      </span>
+                                    </button>
+                                  );
+                                },
+                              )}
                             </div>
                           </div>
                         </div>
@@ -4977,17 +7289,52 @@ function TradingInterface() {
               {/* Profit Display */}
               <div className="py-2.5 text-center">
                 <div className="flex items-center justify-center gap-1 mb-1.5">
-                  <span className="text-[10px] font-medium" style={{ color: "#8b9ab8" }}>Profit</span>
-                  <div className="w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold cursor-pointer" style={{ backgroundColor: "#1a2d45", color: "#4a6080" }}>?</div>
+                  <span
+                    className="text-[10px] font-medium"
+                    style={{ color: "#8b9ab8" }}
+                  >
+                    Profit
+                  </span>
+                  <div
+                    className="w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold cursor-pointer"
+                    style={{ backgroundColor: "#1a2d45", color: "#4a6080" }}
+                  >
+                    ?
+                  </div>
                 </div>
-                <div className="font-normal" style={{ color: "#00c087", fontSize: "40px", lineHeight: 1.6, fontWeight: 400 }}>+85%</div>
-                <div className="font-normal mt-1.5" style={{ color: "#00c087", fontSize: "20px", lineHeight: 1.6, fontWeight: 400 }}>
-                  +$ {(amount * 0.85).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                <div
+                  className="font-normal"
+                  style={{
+                    color: "#00c087",
+                    fontSize: "40px",
+                    lineHeight: 1.6,
+                    fontWeight: 400,
+                  }}
+                >
+                  +85%
+                </div>
+                <div
+                  className="font-normal mt-1.5"
+                  style={{
+                    color: "#00c087",
+                    fontSize: "20px",
+                    lineHeight: 1.6,
+                    fontWeight: 400,
+                  }}
+                >
+                  +${" "}
+                  {(amount * 0.85)
+                    .toFixed(0)
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 </div>
               </div>
 
               {/* Conditional: NEW OPTION or HIGHER/LOWER buttons */}
-              {lastFinishedTrade && lastFinishedTrade.symbol === selectedSymbol && activeTrades.filter(t => t.symbol === selectedSymbol && t.status === "active").length === 0 ? (
+              {lastFinishedTrade &&
+              lastFinishedTrade.symbol === selectedSymbol &&
+              activeTrades.filter(
+                (t) => t.symbol === selectedSymbol && t.status === "active",
+              ).length === 0 ? (
                 // NEW OPTION Button - Shows when there's a finished trade result displayed
                 <motion.button
                   onClick={() => {
@@ -4996,16 +7343,23 @@ function TradingInterface() {
                     setSessionTotalResult(0);
                     setSessionTotalInvested(0);
                     setSessionTradeCount(0);
-                    
+                    setEntryMarkers([]);
+
                     // Clear lastResult from the current tab
-                    setOpenTabs(prev => prev.map((tab, i) => 
-                      i === activeTab ? { ...tab, lastResult: undefined } : tab
-                    ));
-                    
+                    setOpenTabs((prev) =>
+                      prev.map((tab, i) =>
+                        i === activeTab
+                          ? { ...tab, lastResult: undefined }
+                          : tab,
+                      ),
+                    );
+
                     // Focus on amount input
                     setTimeout(() => {
-                      const amountInput = document.querySelector('input[type="text"]');
-                      if (amountInput) (amountInput as HTMLInputElement).focus();
+                      const amountInput =
+                        document.querySelector('input[type="text"]');
+                      if (amountInput)
+                        (amountInput as HTMLInputElement).focus();
                     }, 100);
                   }}
                   className="w-full flex flex-col items-center justify-center py-6 rounded-lg transition-all duration-200 cursor-pointer"
@@ -5016,38 +7370,55 @@ function TradingInterface() {
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.96 }}
                 >
-                  <Plus className="w-10 h-10 text-white mb-1" strokeWidth={2.5} />
-                  <span className="text-white text-sm font-bold tracking-wide">NEW</span>
-                  <span className="text-white text-sm font-bold tracking-wide">OPTION</span>
+                  <Plus
+                    className="w-10 h-10 text-white mb-1"
+                    strokeWidth={2.5}
+                  />
+                  <span className="text-white text-sm font-bold tracking-wide">
+                    NEW
+                  </span>
+                  <span className="text-white text-sm font-bold tracking-wide">
+                    OPTION
+                  </span>
                 </motion.button>
               ) : (
                 // HIGHER/LOWER Buttons - Shows when there are active trades
                 <>
                   {/* HIGHER Button */}
-                  <motion.button
+                  <button
                     onClick={() => executeTrade("higher")}
                     onMouseEnter={() => setHoveredButton("higher")}
                     onMouseLeave={() => setHoveredButton(null)}
                     disabled={isExecutingTrade}
-                    className="w-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.96 }}
+                    className="w-full flex items-center justify-center disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0 select-none hover:brightness-75 transition-[filter] duration-200"
                   >
-                    <img src="/traderoom/icons/higher-button.png" alt="Higher" className="w-full object-contain" style={{ maxHeight: "96px" }} />
-                  </motion.button>
+                    <img
+                      src="/traderoom/icons/higher-button.png"
+                      alt="Higher"
+                      className="w-full object-contain pointer-events-none select-none"
+                      style={{ maxHeight: "96px" }}
+                      draggable={false}
+                      onDragStart={(e) => e.preventDefault()}
+                    />
+                  </button>
 
                   {/* LOWER Button */}
-                  <motion.button
+                  <button
                     onClick={() => executeTrade("lower")}
                     onMouseEnter={() => setHoveredButton("lower")}
                     onMouseLeave={() => setHoveredButton(null)}
                     disabled={isExecutingTrade}
-                    className="w-full flex items-center justify-center transition-all duration-200 disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.96 }}
+                    className="w-full flex items-center justify-center disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0 select-none hover:brightness-75 transition-[filter] duration-200"
                   >
-                    <img src="/traderoom/icons/lower-button.png" alt="Lower" className="w-full object-contain" style={{ maxHeight: "96px" }} />
-                  </motion.button>
+                    <img
+                      src="/traderoom/icons/lower-button.png"
+                      alt="Lower"
+                      className="w-full object-contain pointer-events-none select-none"
+                      style={{ maxHeight: "96px" }}
+                      draggable={false}
+                      onDragStart={(e) => e.preventDefault()}
+                    />
+                  </button>
                 </>
               )}
             </div>
@@ -5063,28 +7434,47 @@ function TradingInterface() {
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.2 }}
               className="border-t overflow-hidden transition-all duration-300 z-40"
-              style={{ 
-                backgroundColor: "#131722", 
+              style={{
+                backgroundColor: "#131722",
                 borderColor: "#1e2a3a",
               }}
             >
               {/* Header Row */}
-              <div className="flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: "#1e2a3a" }}>
+              <div
+                className="flex items-center justify-between px-4 py-2 border-b"
+                style={{ borderColor: "#1e2a3a" }}
+              >
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium" style={{ color: "#eef2f7" }}>
-                    Options ({activeTrades.filter((t) => t.status === "active").length})
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: "#eef2f7" }}
+                  >
+                    Options (
+                    {activeTrades.filter((t) => t.status === "active").length})
                   </span>
                   {(() => {
-                    const activePositions = activeTrades.filter((t) => t.status === "active");
+                    const activePositions = activeTrades.filter(
+                      (t) => t.status === "active",
+                    );
                     const totalPL = activePositions.reduce((sum, trade) => {
                       const priceChange = currentPrice - trade.entryPrice;
-                      const isWinning = trade.direction === "higher" ? priceChange > 0 : priceChange < 0;
-                      return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
+                      const isWinning =
+                        trade.direction === "higher"
+                          ? priceChange > 0
+                          : priceChange < 0;
+                      return (
+                        sum + (isWinning ? trade.amount * 0.85 : -trade.amount)
+                      );
                     }, 0);
-                    return totalPL !== 0 && (
-                      <span className={`text-sm font-medium ${totalPL >= 0 ? "text-green-400" : "text-red-400"}`}>
-                        {totalPL >= 0 ? "+" : ""}{formatAmount(totalPL, 2)}
-                      </span>
+                    return (
+                      totalPL !== 0 && (
+                        <span
+                          className={`text-sm font-medium ${totalPL >= 0 ? "text-green-400" : "text-red-400"}`}
+                        >
+                          {totalPL >= 0 ? "+" : ""}
+                          {formatAmount(totalPL, 2)}
+                        </span>
+                      )
                     );
                   })()}
                 </div>
@@ -5097,13 +7487,21 @@ function TradingInterface() {
               </div>
 
               {/* Content */}
-              {activeTrades.filter((t) => t.status === "active").length === 0 ? (
-                <div className="p-8 flex flex-col items-center justify-center" style={{ minHeight: "120px" }}>
+              {activeTrades.filter((t) => t.status === "active").length ===
+              0 ? (
+                <div
+                  className="p-8 flex flex-col items-center justify-center"
+                  style={{ minHeight: "120px" }}
+                >
                   <p className="text-sm mb-3" style={{ color: "#8b9ab8" }}>
                     You have no open positions yet
                   </p>
                   <button
-                    onClick={() => { setAddAssetSideTab("trending"); setAddAssetSearch(""); setShowAddAssetModal(true); }}
+                    onClick={() => {
+                      setAddAssetSideTab("trending");
+                      setAddAssetSearch("");
+                      setShowAddAssetModal(true);
+                    }}
                     className="flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:bg-[#1e2a3a]"
                     style={{ borderColor: "#1e2a3a", color: "#8b9ab8" }}
                   >
@@ -5114,7 +7512,10 @@ function TradingInterface() {
               ) : (
                 <>
                   {/* Table Header */}
-                  <div className="grid grid-cols-8 gap-2 px-4 py-2 text-xs border-b" style={{ borderColor: "#1e2a3a", color: "#626d7d" }}>
+                  <div
+                    className="grid grid-cols-8 gap-2 px-4 py-2 text-xs border-b"
+                    style={{ borderColor: "#1e2a3a", color: "#626d7d" }}
+                  >
                     <div className="flex items-center gap-1">
                       <Settings className="w-3 h-3" />
                       <span>Name</span>
@@ -5133,19 +7534,34 @@ function TradingInterface() {
                     {activeTrades
                       .filter((t) => t.status === "active")
                       .map((trade) => {
-                        const remaining = Math.max(0, trade.expirationTime - Date.now());
+                        const remaining = Math.max(
+                          0,
+                          trade.expirationTime - Date.now(),
+                        );
                         const remainingSeconds = Math.ceil(remaining / 1000);
                         const minutes = Math.floor(remainingSeconds / 60);
                         const seconds = remainingSeconds % 60;
-                        const timeStr = minutes > 0 ? `${minutes}:${seconds.toString().padStart(2, "0")}` : `00:${seconds.toString().padStart(2, "0")}`;
-                        
+                        const timeStr =
+                          minutes > 0
+                            ? `${minutes}:${seconds.toString().padStart(2, "0")}`
+                            : `00:${seconds.toString().padStart(2, "0")}`;
+
                         const priceChange = currentPrice - trade.entryPrice;
-                        const isWinning = trade.direction === "higher" ? priceChange > 0 : priceChange < 0;
-                        const expectedPL = isWinning ? trade.amount * 0.85 : -trade.amount;
-                        
-                        const symbolData = symbols.find((s) => s.symbol === trade.symbol);
+                        const isWinning =
+                          trade.direction === "higher"
+                            ? priceChange > 0
+                            : priceChange < 0;
+                        const expectedPL = isWinning
+                          ? trade.amount * 0.85
+                          : -trade.amount;
+
+                        const symbolData = symbols.find(
+                          (s) => s.symbol === trade.symbol,
+                        );
                         const flagStr = symbolData?.flag || "";
-                        const flags = flagStr.includes(",") ? flagStr.split(",") : [flagStr];
+                        const flags = flagStr.includes(",")
+                          ? flagStr.split(",")
+                          : [flagStr];
 
                         return (
                           <div
@@ -5158,42 +7574,66 @@ function TradingInterface() {
                               <div className="relative flex items-center">
                                 {flags.length === 2 ? (
                                   <>
-                                    <img 
-                                      src={`/currencies/${flags[0].toLowerCase()}.svg`} 
-                                      alt={flags[0]} 
+                                    <img
+                                      src={`/currencies/${flags[0].toLowerCase()}.svg`}
+                                      alt={flags[0]}
                                       className="w-5 h-5 rounded-full object-cover border border-gray-600"
-                                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                      }}
                                     />
-                                    <img 
-                                      src={`/currencies/${flags[1].toLowerCase()}.svg`} 
-                                      alt={flags[1]} 
+                                    <img
+                                      src={`/currencies/${flags[1].toLowerCase()}.svg`}
+                                      alt={flags[1]}
                                       className="w-5 h-5 rounded-full object-cover border border-gray-600 -ml-2"
-                                      onError={(e) => { e.currentTarget.style.display = "none"; }}
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = "none";
+                                      }}
                                     />
                                   </>
                                 ) : (
-                                  <AssetFlag flag={flagStr} symbol={trade.symbol} size={20} />
+                                  <AssetFlag
+                                    flag={flagStr}
+                                    symbol={trade.symbol}
+                                    size={20}
+                                  />
                                 )}
                               </div>
-                              <span className="text-sm font-medium" style={{ color: "#eef2f7" }}>
+                              <span
+                                className="text-sm font-medium"
+                                style={{ color: "#eef2f7" }}
+                              >
                                 {trade.symbol}
                               </span>
                             </div>
 
                             {/* Type */}
-                            <div className="text-sm" style={{ color: "#eef2f7" }}>Blitz</div>
+                            <div
+                              className="text-sm"
+                              style={{ color: "#eef2f7" }}
+                            >
+                              Blitz
+                            </div>
 
                             {/* Expiration countdown */}
                             <div className="flex items-center gap-1">
                               <div className="w-3 h-3 rounded-full border-2 border-green-400 flex items-center justify-center">
                                 <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
                               </div>
-                              <span className="text-sm font-mono" style={{ color: "#00c853" }}>{timeStr}</span>
+                              <span
+                                className="text-sm font-mono"
+                                style={{ color: "#00c853" }}
+                              >
+                                {timeStr}
+                              </span>
                             </div>
 
                             {/* Investment */}
                             <div className="flex items-center gap-1">
-                              <span className="text-sm font-medium" style={{ color: "#eef2f7" }}>
+                              <span
+                                className="text-sm font-medium"
+                                style={{ color: "#eef2f7" }}
+                              >
                                 {formatAmount(trade.amount, 2)}
                               </span>
                               {trade.direction === "higher" ? (
@@ -5204,19 +7644,35 @@ function TradingInterface() {
                             </div>
 
                             {/* Open price */}
-                            <div className="text-sm" style={{ color: "#eef2f7" }}>{trade.entryPrice.toFixed(5)}</div>
+                            <div
+                              className="text-sm"
+                              style={{ color: "#eef2f7" }}
+                            >
+                              {trade.entryPrice.toFixed(5)}
+                            </div>
 
                             {/* Current price */}
-                            <div className="text-sm" style={{ color: "#eef2f7" }}>{currentPrice.toFixed(5)}</div>
+                            <div
+                              className="text-sm"
+                              style={{ color: "#eef2f7" }}
+                            >
+                              {currentPrice.toFixed(5)}
+                            </div>
 
                             {/* Expected P/L */}
-                            <div className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}>
-                              {expectedPL >= 0 ? "+" : ""}{formatAmount(expectedPL, 2)}
+                            <div
+                              className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}
+                            >
+                              {expectedPL >= 0 ? "+" : ""}
+                              {formatAmount(expectedPL, 2)}
                             </div>
 
                             {/* P/L after sell - Same as Expected P/L in binary options */}
-                            <div className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}>
-                              {expectedPL >= 0 ? "+" : ""}{formatAmount(expectedPL, 2)}
+                            <div
+                              className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}
+                            >
+                              {expectedPL >= 0 ? "+" : ""}
+                              {formatAmount(expectedPL, 2)}
                             </div>
                           </div>
                         );
@@ -5224,39 +7680,85 @@ function TradingInterface() {
                   </div>
 
                   {/* Footer Summary */}
-                  <div className="flex items-center justify-between px-4 py-2 border-t" style={{ borderColor: "#1e2a3a" }}>
+                  <div
+                    className="flex items-center justify-between px-4 py-2 border-t"
+                    style={{ borderColor: "#1e2a3a" }}
+                  >
                     <div className="flex items-center gap-6">
                       {(() => {
-                        const activePositions = activeTrades.filter((t) => t.status === "active");
-                        const totalInvestment = activePositions.reduce((sum, t) => sum + t.amount, 0);
-                        const totalExpectedPL = activePositions.reduce((sum, trade) => {
-                          const priceChange = currentPrice - trade.entryPrice;
-                          const isWinning = trade.direction === "higher" ? priceChange > 0 : priceChange < 0;
-                          return sum + (isWinning ? trade.amount * 0.85 : -trade.amount);
-                        }, 0);
+                        const activePositions = activeTrades.filter(
+                          (t) => t.status === "active",
+                        );
+                        const totalInvestment = activePositions.reduce(
+                          (sum, t) => sum + t.amount,
+                          0,
+                        );
+                        const totalExpectedPL = activePositions.reduce(
+                          (sum, trade) => {
+                            const priceChange = currentPrice - trade.entryPrice;
+                            const isWinning =
+                              trade.direction === "higher"
+                                ? priceChange > 0
+                                : priceChange < 0;
+                            return (
+                              sum +
+                              (isWinning ? trade.amount * 0.85 : -trade.amount)
+                            );
+                          },
+                          0,
+                        );
                         return (
                           <>
                             <div className="flex items-center gap-2">
-                              <Clock className="w-4 h-4" style={{ color: "#626d7d" }} />
-                              <Settings className="w-4 h-4" style={{ color: "#626d7d" }} />
-                              <span className="text-sm" style={{ color: "#8b9ab8" }}>
-                                Investment <span style={{ color: "#eef2f7" }}>{formatAmount(totalInvestment, 2)}</span>
+                              <Clock
+                                className="w-4 h-4"
+                                style={{ color: "#626d7d" }}
+                              />
+                              <Settings
+                                className="w-4 h-4"
+                                style={{ color: "#626d7d" }}
+                              />
+                              <span
+                                className="text-sm"
+                                style={{ color: "#8b9ab8" }}
+                              >
+                                Investment{" "}
+                                <span style={{ color: "#eef2f7" }}>
+                                  {formatAmount(totalInvestment, 2)}
+                                </span>
                               </span>
                             </div>
-                            <div className="text-sm" style={{ color: "#8b9ab8" }}>
+                            <div
+                              className="text-sm"
+                              style={{ color: "#8b9ab8" }}
+                            >
                               Expected P/L{" "}
-                              <span className={totalExpectedPL >= 0 ? "text-green-400" : "text-red-400"}>
-                                {totalExpectedPL >= 0 ? "+" : ""}{formatAmount(totalExpectedPL, 2)}
+                              <span
+                                className={
+                                  totalExpectedPL >= 0
+                                    ? "text-green-400"
+                                    : "text-red-400"
+                                }
+                              >
+                                {totalExpectedPL >= 0 ? "+" : ""}
+                                {formatAmount(totalExpectedPL, 2)}
                               </span>
                             </div>
-                            <div className="text-sm" style={{ color: "#8b9ab8" }}>
-                              P/L after sell <span style={{ color: "#626d7d" }}>—</span>
+                            <div
+                              className="text-sm"
+                              style={{ color: "#8b9ab8" }}
+                            >
+                              P/L after sell{" "}
+                              <span style={{ color: "#626d7d" }}>—</span>
                             </div>
                           </>
                         );
                       })()}
                     </div>
-                    <button className="px-4 py-1.5 text-sm font-medium rounded border transition-colors hover:bg-[#1e2a3a]" style={{ borderColor: "#3a4553", color: "#8b9ab8" }}>
+                    <button
+                      className="px-4 py-1.5 text-sm font-medium rounded border transition-colors hover:bg-[#1e2a3a]"
+                      style={{ borderColor: "#3a4553", color: "#8b9ab8" }}
+                    >
                       Sell All
                     </button>
                   </div>
@@ -5269,12 +7771,14 @@ function TradingInterface() {
         {/* Show/Hide Positions Toggle - Total Portfolio Bar */}
         <div
           className="border-t flex items-center justify-between px-3 py-1 transition-all duration-300 flex-shrink-0"
-          style={{ 
-            backgroundColor: "#131722", 
+          style={{
+            backgroundColor: "#131722",
             borderColor: "#1e2a3a",
           }}
         >
-          <span className="text-xs font-medium text-white">Total portfolio</span>
+          <span className="text-xs font-medium text-white">
+            Total portfolio
+          </span>
           <button
             onClick={() => setShowPortfolioPanel(!showPortfolioPanel)}
             className="text-xs flex items-center gap-1 hover:opacity-80 transition-opacity"
@@ -5289,171 +7793,278 @@ function TradingInterface() {
 
         {/* Add Asset Modal - IQ Option Style */}
         <AnimatePresence>
-          {showAddAssetModal && (() => {
-            const profitPctMap: Record<string, number> = {
-              "EUR/USD": 86, "GBP/USD": 85, "USD/JPY": 84, "USD/CAD": 83,
-              "AUD/USD": 82, "USD/BRL": 88, "AUD/CHF": 88,
-              "BTC/USD": 87, "ETH/USD": 85, "XRP/USD": 84,
-              "TSLA": 87, "AAPL": 89, "NVDA": 88, "GOOGL": 86,
-              "MSFT": 85, "AMZN": 86, "META": 87, "NFLX": 83,
-            };
-            const popularityMap: Record<string, number> = {
-              "EUR/USD": 3, "GBP/USD": 3, "USD/JPY": 2, "USD/CAD": 2,
-              "AUD/USD": 2, "BTC/USD": 3, "ETH/USD": 3, "XRP/USD": 2,
-              "TSLA": 3, "AAPL": 3, "NVDA": 3, "GOOGL": 2,
-              "MSFT": 2, "AMZN": 2, "META": 2, "NFLX": 2,
-            };
-            const volatilityMap: Record<string, number> = {
-              "EUR/USD": 2, "GBP/USD": 2, "USD/JPY": 2, "USD/CAD": 1,
-              "AUD/USD": 2, "BTC/USD": 3, "ETH/USD": 3, "XRP/USD": 3,
-              "TSLA": 2, "AAPL": 1, "NVDA": 2, "GOOGL": 1,
-              "MSFT": 1, "AMZN": 2, "META": 2, "NFLX": 2,
-            };
-            const newBadgeSymbols = new Set(["AUD Index", "GBP Index", "CAD Index", "EUR Index"]);
+          {showAddAssetModal &&
+            (() => {
+              const profitPctMap: Record<string, number> = {
+                "EUR/USD": 86,
+                "GBP/USD": 85,
+                "USD/JPY": 84,
+                "USD/CAD": 83,
+                "AUD/USD": 82,
+                "USD/BRL": 88,
+                "AUD/CHF": 88,
+                "BTC/USD": 87,
+                "ETH/USD": 85,
+                "XRP/USD": 84,
+                TSLA: 87,
+                AAPL: 89,
+                NVDA: 88,
+                GOOGL: 86,
+                MSFT: 85,
+                AMZN: 86,
+                META: 87,
+                NFLX: 83,
+              };
+              const popularityMap: Record<string, number> = {
+                "EUR/USD": 3,
+                "GBP/USD": 3,
+                "USD/JPY": 2,
+                "USD/CAD": 2,
+                "AUD/USD": 2,
+                "BTC/USD": 3,
+                "ETH/USD": 3,
+                "XRP/USD": 2,
+                TSLA: 3,
+                AAPL: 3,
+                NVDA: 3,
+                GOOGL: 2,
+                MSFT: 2,
+                AMZN: 2,
+                META: 2,
+                NFLX: 2,
+              };
+              const volatilityMap: Record<string, number> = {
+                "EUR/USD": 2,
+                "GBP/USD": 2,
+                "USD/JPY": 2,
+                "USD/CAD": 1,
+                "AUD/USD": 2,
+                "BTC/USD": 3,
+                "ETH/USD": 3,
+                "XRP/USD": 3,
+                TSLA: 2,
+                AAPL: 1,
+                NVDA: 2,
+                GOOGL: 1,
+                MSFT: 1,
+                AMZN: 2,
+                META: 2,
+                NFLX: 2,
+              };
+              const newBadgeSymbols = new Set([
+                "AUD Index",
+                "GBP Index",
+                "CAD Index",
+                "EUR Index",
+              ]);
 
-            // Count for Options (total assets)
-            const optionsCount = symbols.length;
-            const marginCount = symbols.filter(s => s.category === "Crypto").length;
+              // Count for Options (total assets)
+              const optionsCount = symbols.length;
+              const marginCount = symbols.filter(
+                (s) => s.category === "Crypto",
+              ).length;
 
-            // Filter based on selected market in dropdown
-            const getFilteredByMarket = () => {
-              const market = selectedMarket.toLowerCase();
-              if (market === "blitz" || market === "binary" || market === "digital") {
-                return [...symbols]; // All assets available
-              } else if (market === "forex") {
-                return symbols.filter(s => s.category === "Forex");
-              } else if (market === "crypto") {
-                return symbols.filter(s => s.category === "Crypto");
-              } else if (market === "stocks") {
-                return symbols.filter(s => s.category === "Stocks");
-              } else if (market === "commodities") {
-                return symbols.filter(s => s.category === "Commodities");
-              } else if (market === "indices") {
-                return symbols.filter(s => s.category === "Index");
-              }
-              return symbols;
-            };
-
-            const getDisplaySymbols = () => {
-              let filtered = [...symbols];
-              if (addAssetSideTab === "options") {
-                filtered = getFilteredByMarket();
-              } else if (addAssetSideTab === "margin") {
-                filtered = symbols.filter(s => s.category === "Crypto");
-              } else if (addAssetSideTab === "watchlist") {
-                filtered = symbols.filter(s => watchlistedSymbols.includes(s.symbol));
-              } else if (addAssetSideTab === "trending") {
-                filtered = getFilteredByMarket();
-              }
-              if (addAssetSearch.trim()) {
-                const q = addAssetSearch.toLowerCase();
-                filtered = filtered.filter(s => s.symbol.toLowerCase().includes(q));
-              }
-              return filtered;
-            };
-
-            const displaySymbols = getDisplaySymbols();
-
-            // Get top gainers and losers for trending view
-            const trendingGainers = [...displaySymbols]
-              .filter(s => s.change.startsWith("+"))
-              .sort((a, b) => parseFloat(b.percentage) - parseFloat(a.percentage))
-              .slice(0, 3);
-            const trendingLosers = [...displaySymbols]
-              .filter(s => s.change.startsWith("-"))
-              .sort((a, b) => parseFloat(a.percentage) - parseFloat(b.percentage))
-              .slice(0, 3);
-            const tradersChoice = displaySymbols.slice(0, 3);
-
-            const handleSelectSymbol = (sym: typeof symbols[0]) => {
-              // Check if this symbol+type combination already exists
-              const existingTabIndex = openTabs.findIndex(t => t.symbol === sym.symbol && t.type === selectedMarket);
-              if (existingTabIndex === -1) {
-                // Limit to 8 tabs maximum
-                if (openTabs.length >= 4) {
-                  alert("Maximum of 4 tabs allowed. Please close a tab first.");
-                  return;
+              // Filter based on selected market in dropdown
+              const getFilteredByMarket = () => {
+                const market = selectedMarket.toLowerCase();
+                if (
+                  market === "blitz" ||
+                  market === "binary" ||
+                  market === "digital"
+                ) {
+                  return [...symbols]; // All assets available
+                } else if (market === "forex") {
+                  return symbols.filter((s) => s.category === "Forex");
+                } else if (market === "crypto") {
+                  return symbols.filter((s) => s.category === "Crypto");
+                } else if (market === "stocks") {
+                  return symbols.filter((s) => s.category === "Stocks");
+                } else if (market === "commodities") {
+                  return symbols.filter((s) => s.category === "Commodities");
+                } else if (market === "indices") {
+                  return symbols.filter((s) => s.category === "Index");
                 }
-                // Add new tab with symbol and selected market type
-                setOpenTabs([...openTabs, { symbol: sym.symbol, type: selectedMarket }]);
-                setActiveTab(openTabs.length);
-              } else {
-                // Switch to existing tab
-                setActiveTab(existingTabIndex);
-              }
-              setSelectedSymbol(sym.symbol);
-              setShowAddAssetModal(false);
-            };
+                return symbols;
+              };
 
-            const toggleWatchlist = (e: React.MouseEvent, symName: string) => {
-              e.stopPropagation();
-              setWatchlistedSymbols(prev =>
-                prev.includes(symName) ? prev.filter(s => s !== symName) : [...prev, symName]
+              const getDisplaySymbols = () => {
+                let filtered = [...symbols];
+                if (addAssetSideTab === "options") {
+                  filtered = getFilteredByMarket();
+                } else if (addAssetSideTab === "margin") {
+                  filtered = symbols.filter((s) => s.category === "Crypto");
+                } else if (addAssetSideTab === "watchlist") {
+                  filtered = symbols.filter((s) =>
+                    watchlistedSymbols.includes(s.symbol),
+                  );
+                } else if (addAssetSideTab === "trending") {
+                  filtered = getFilteredByMarket();
+                }
+                if (addAssetSearch.trim()) {
+                  const q = addAssetSearch.toLowerCase();
+                  filtered = filtered.filter((s) =>
+                    s.symbol.toLowerCase().includes(q),
+                  );
+                }
+                return filtered;
+              };
+
+              const displaySymbols = getDisplaySymbols();
+
+              // Get top gainers and losers for trending view
+              const trendingGainers = [...displaySymbols]
+                .filter((s) => s.change.startsWith("+"))
+                .sort(
+                  (a, b) => parseFloat(b.percentage) - parseFloat(a.percentage),
+                )
+                .slice(0, 3);
+              const trendingLosers = [...displaySymbols]
+                .filter((s) => s.change.startsWith("-"))
+                .sort(
+                  (a, b) => parseFloat(a.percentage) - parseFloat(b.percentage),
+                )
+                .slice(0, 3);
+              const tradersChoice = displaySymbols.slice(0, 3);
+
+              const handleSelectSymbol = (sym: (typeof symbols)[0]) => {
+                // Check if this symbol+type combination already exists
+                const existingTabIndex = openTabs.findIndex(
+                  (t) => t.symbol === sym.symbol && t.type === selectedMarket,
+                );
+                if (existingTabIndex === -1) {
+                  // Limit to 8 tabs maximum
+                  if (openTabs.length >= 4) {
+                    alert(
+                      "Maximum of 4 tabs allowed. Please close a tab first.",
+                    );
+                    return;
+                  }
+                  // Add new tab with symbol and selected market type
+                  setOpenTabs([
+                    ...openTabs,
+                    { symbol: sym.symbol, type: selectedMarket },
+                  ]);
+                  setActiveTab(openTabs.length);
+                } else {
+                  // Switch to existing tab
+                  setActiveTab(existingTabIndex);
+                }
+                setSelectedSymbol(sym.symbol);
+                setShowAddAssetModal(false);
+              };
+
+              const toggleWatchlist = (
+                e: React.MouseEvent,
+                symName: string,
+              ) => {
+                e.stopPropagation();
+                setWatchlistedSymbols((prev) =>
+                  prev.includes(symName)
+                    ? prev.filter((s) => s !== symName)
+                    : [...prev, symName],
+                );
+              };
+
+              const FlameIcons = ({ count }: { count: number }) => (
+                <div className="flex items-center gap-0.5">
+                  {[1, 2, 3].map((i) => (
+                    <svg
+                      key={i}
+                      viewBox="0 0 24 24"
+                      className="w-3.5 h-3.5"
+                      fill="currentColor"
+                      style={{ color: i <= count ? "#e8690a" : "#1e2f44" }}
+                    >
+                      <path d="M12 2c0 0-5 5-5 10a5 5 0 0010 0c0-5-5-10-5-10zm0 14a3 3 0 110-6 3 3 0 010 6z" />
+                    </svg>
+                  ))}
+                </div>
               );
-            };
 
-            const FlameIcons = ({ count }: { count: number }) => (
-              <div className="flex items-center gap-0.5">
-                {[1,2,3].map(i => (
-                  <svg key={i} viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor"
-                    style={{ color: i <= count ? "#e8690a" : "#1e2f44" }}>
-                    <path d="M12 2c0 0-5 5-5 10a5 5 0 0010 0c0-5-5-10-5-10zm0 14a3 3 0 110-6 3 3 0 010 6z"/>
-                  </svg>
-                ))}
-              </div>
-            );
+              const VolatilityBars = ({ count }: { count: number }) => (
+                <div className="flex items-end gap-0.5 h-4">
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="w-1.5 rounded-sm"
+                      style={{
+                        height: i === 1 ? "5px" : i === 2 ? "9px" : "14px",
+                        backgroundColor: i <= count ? "#e8690a" : "#1e2f44",
+                      }}
+                    />
+                  ))}
+                </div>
+              );
 
-            const VolatilityBars = ({ count }: { count: number }) => (
-              <div className="flex items-end gap-0.5 h-4">
-                {[1,2,3].map(i => (
-                  <div key={i} className="w-1.5 rounded-sm"
-                    style={{
-                      height: i === 1 ? "5px" : i === 2 ? "9px" : "14px",
-                      backgroundColor: i <= count ? "#e8690a" : "#1e2f44",
-                    }}
-                  />
-                ))}
-              </div>
-            );
-
-            return (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ type: "spring", damping: 30, stiffness: 340 }}
-                className="absolute top-12 left-[700px] z-[60] flex rounded-xl overflow-hidden shadow-2xl"
-                style={{ width: "720px", maxWidth: "calc(100vw - 20px)", height: "520px", maxHeight: "calc(100vh - 150px)" }}
-              >
-                {/* Close button */}
-                <button
-                  onClick={() => setShowAddAssetModal(false)}
-                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-colors hover:bg-white/10"
-                  style={{ color: "#6b82a0" }}
+              return (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ type: "spring", damping: 30, stiffness: 340 }}
+                  className="absolute top-12 left-[700px] z-[60] flex rounded-xl overflow-hidden shadow-2xl"
+                  style={{
+                    width: "720px",
+                    maxWidth: "calc(100vw - 20px)",
+                    height: "520px",
+                    maxHeight: "calc(100vh - 150px)",
+                  }}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                    <path d="M18 6L6 18M6 6l12 12"/>
-                  </svg>
-                </button>
-
-                {/* ── Left Sidebar ── */}
-                <div className="flex flex-col flex-shrink-0 overflow-y-auto rounded-l-xl"
-                  style={{ width: "176px", backgroundColor: "#131c2e", borderRight: "1px solid #1d2d45" }}>
-
-                  {/* Trending */}
+                  {/* Close button */}
                   <button
-                    onClick={() => setAddAssetSideTab("trending")}
-                    className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                    onClick={() => setShowAddAssetModal(false)}
+                    className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                    style={{ color: "#6b82a0" }}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      className="w-4 h-4"
+                    >
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+
+                  {/* ── Left Sidebar ── */}
+                  <div
+                    className="flex flex-col flex-shrink-0 overflow-y-auto rounded-l-xl"
                     style={{
-                        backgroundColor: addAssetSideTab === "trending" ? "#1a2840" : "transparent",
-                        color: addAssetSideTab === "trending" ? "#fff" : "#6b82a0",
-                        borderLeft: addAssetSideTab === "trending" ? "2px solid #4c8dff" : "2px solid transparent",
+                      width: "176px",
+                      backgroundColor: "#131c2e",
+                      borderRight: "1px solid #1d2d45",
+                    }}
+                  >
+                    {/* Trending */}
+                    <button
+                      onClick={() => setAddAssetSideTab("trending")}
+                      className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                      style={{
+                        backgroundColor:
+                          addAssetSideTab === "trending"
+                            ? "#1a2840"
+                            : "transparent",
+                        color:
+                          addAssetSideTab === "trending" ? "#fff" : "#6b82a0",
+                        borderLeft:
+                          addAssetSideTab === "trending"
+                            ? "2px solid #4c8dff"
+                            : "2px solid transparent",
                       }}
                     >
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
-                          <path d="M12 20V10M18 20V4M6 20v-4"/>
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: "#162032" }}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-3 h-3"
+                        >
+                          <path d="M12 20V10M18 20V4M6 20v-4" />
                         </svg>
                       </div>
                       <span className="text-sm font-medium">Trending</span>
@@ -5464,20 +8075,44 @@ function TradingInterface() {
                       onClick={() => setAddAssetSideTab("options")}
                       className="flex items-center gap-1.5 px-2 py-2 transition-colors"
                       style={{
-                        backgroundColor: addAssetSideTab === "options" ? "#1a2840" : "transparent",
-                        color: addAssetSideTab === "options" ? "#fff" : "#6b82a0",
-                        borderLeft: addAssetSideTab === "options" ? "2px solid #4c8dff" : "2px solid transparent",
+                        backgroundColor:
+                          addAssetSideTab === "options"
+                            ? "#1a2840"
+                            : "transparent",
+                        color:
+                          addAssetSideTab === "options" ? "#fff" : "#6b82a0",
+                        borderLeft:
+                          addAssetSideTab === "options"
+                            ? "2px solid #4c8dff"
+                            : "2px solid transparent",
                       }}
                     >
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
-                          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: "#162032" }}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-3 h-3"
+                        >
+                          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium flex-1 text-left">Options</span>
-                      <span className="text-xs font-bold rounded-full px-1.5 py-0.5"
-                        style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "26px", textAlign: "center" }}>
+                      <span className="text-sm font-medium flex-1 text-left">
+                        Options
+                      </span>
+                      <span
+                        className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                        style={{
+                          backgroundColor: "#e8690a",
+                          color: "#fff",
+                          minWidth: "26px",
+                          textAlign: "center",
+                        }}
+                      >
                         {optionsCount}
                       </span>
                     </button>
@@ -5487,20 +8122,45 @@ function TradingInterface() {
                       onClick={() => setAddAssetSideTab("margin")}
                       className="flex items-center gap-1.5 px-2 py-2 transition-colors"
                       style={{
-                        backgroundColor: addAssetSideTab === "margin" ? "#1a2840" : "transparent",
-                        color: addAssetSideTab === "margin" ? "#fff" : "#6b82a0",
-                        borderLeft: addAssetSideTab === "margin" ? "2px solid #4c8dff" : "2px solid transparent",
+                        backgroundColor:
+                          addAssetSideTab === "margin"
+                            ? "#1a2840"
+                            : "transparent",
+                        color:
+                          addAssetSideTab === "margin" ? "#fff" : "#6b82a0",
+                        borderLeft:
+                          addAssetSideTab === "margin"
+                            ? "2px solid #4c8dff"
+                            : "2px solid transparent",
                       }}
                     >
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
-                          <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: "#162032" }}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-3 h-3"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 8v4l3 3" />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium flex-1 text-left">Margin</span>
-                      <span className="text-xs font-bold rounded-full px-1.5 py-0.5"
-                        style={{ backgroundColor: "#e8690a", color: "#fff", minWidth: "26px", textAlign: "center" }}>
+                      <span className="text-sm font-medium flex-1 text-left">
+                        Margin
+                      </span>
+                      <span
+                        className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                        style={{
+                          backgroundColor: "#e8690a",
+                          color: "#fff",
+                          minWidth: "26px",
+                          textAlign: "center",
+                        }}
+                      >
                         {marginCount}
                       </span>
                     </button>
@@ -5510,38 +8170,70 @@ function TradingInterface() {
                       onClick={() => setAddAssetSideTab("watchlist")}
                       className="flex items-center gap-1.5 px-2 py-2 transition-colors"
                       style={{
-                        backgroundColor: addAssetSideTab === "watchlist" ? "#1a2840" : "transparent",
-                        color: addAssetSideTab === "watchlist" ? "#fff" : "#6b82a0",
-                        borderLeft: addAssetSideTab === "watchlist" ? "2px solid #4c8dff" : "2px solid transparent",
+                        backgroundColor:
+                          addAssetSideTab === "watchlist"
+                            ? "#1a2840"
+                            : "transparent",
+                        color:
+                          addAssetSideTab === "watchlist" ? "#fff" : "#6b82a0",
+                        borderLeft:
+                          addAssetSideTab === "watchlist"
+                            ? "2px solid #4c8dff"
+                            : "2px solid transparent",
                       }}
                     >
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#162032" }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                      <div
+                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: "#162032" }}
+                      >
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          className="w-3 h-3"
+                        >
+                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                         </svg>
                       </div>
-                      <span className="text-sm font-medium flex-1 text-left">Watchlist</span>
-                      <span className="text-xs font-bold rounded-full px-1.5 py-0.5"
-                        style={{ backgroundColor: "#162032", color: "#6b82a0", minWidth: "26px", textAlign: "center" }}>
+                      <span className="text-sm font-medium flex-1 text-left">
+                        Watchlist
+                      </span>
+                      <span
+                        className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                        style={{
+                          backgroundColor: "#162032",
+                          color: "#6b82a0",
+                          minWidth: "26px",
+                          textAlign: "center",
+                        }}
+                      >
                         {watchlistedSymbols.length}
                       </span>
                     </button>
                   </div>
 
                   {/* ── Main Content Panel ── */}
-                  <div className="flex flex-col flex-1 overflow-hidden rounded-r-xl" style={{ backgroundColor: "#0f1a2a" }}>
-
+                  <div
+                    className="flex flex-col flex-1 overflow-hidden rounded-r-xl"
+                    style={{ backgroundColor: "#0f1a2a" }}
+                  >
                     {/* Search bar + Market Dropdown + Geo Toggle */}
-                    <div className="px-4 py-3 flex-shrink-0 space-y-3" style={{ borderBottom: "1px solid #1a2d45" }}>
+                    <div
+                      className="px-4 py-3 flex-shrink-0 space-y-3"
+                      style={{ borderBottom: "1px solid #1a2d45" }}
+                    >
                       {/* Search */}
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#3d5470" }} />
+                        <Search
+                          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                          style={{ color: "#3d5470" }}
+                        />
                         <input
                           type="text"
                           placeholder="Search by name or ticker"
                           value={addAssetSearch}
-                          onChange={e => setAddAssetSearch(e.target.value)}
+                          onChange={(e) => setAddAssetSearch(e.target.value)}
                           autoFocus
                           className="w-full rounded-full pl-9 pr-4 py-2 text-sm outline-none"
                           style={{
@@ -5555,27 +8247,56 @@ function TradingInterface() {
                       {/* Market Dropdown + Geo Toggle Row */}
                       <div className="flex items-center justify-between gap-3">
                         {/* Market Dropdown */}
-                        <div className="relative flex-1" style={{ maxWidth: "200px" }}>
+                        <div
+                          className="relative flex-1"
+                          style={{ maxWidth: "200px" }}
+                        >
                           <button
-                            onClick={() => setShowMarketDropdown(!showMarketDropdown)}
+                            onClick={() =>
+                              setShowMarketDropdown(!showMarketDropdown)
+                            }
                             className="w-full flex items-center justify-between gap-2 px-4 py-2 rounded text-sm font-medium transition-colors"
-                            style={{ backgroundColor: "#1e3a5f", color: "#fff" }}
+                            style={{
+                              backgroundColor: "#1e3a5f",
+                              color: "#fff",
+                            }}
                           >
                             <span>{selectedMarket}</span>
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 flex-shrink-0" style={{ color: "#6b82a0" }}>
-                              <path d={showMarketDropdown ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6"}/>
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-4 h-4 flex-shrink-0"
+                              style={{ color: "#6b82a0" }}
+                            >
+                              <path
+                                d={
+                                  showMarketDropdown
+                                    ? "M18 15l-6-6-6 6"
+                                    : "M6 9l6 6 6-6"
+                                }
+                              />
                             </svg>
                           </button>
                           {showMarketDropdown && (
-                            <div className="absolute top-full left-0 mt-1 z-50 rounded overflow-hidden shadow-xl w-full"
-                              style={{ backgroundColor: "#1e3a5f" }}>
-                              {marketCategories.map(cat => (
+                            <div
+                              className="absolute top-full left-0 mt-1 z-50 rounded overflow-hidden shadow-xl w-full"
+                              style={{ backgroundColor: "#1e3a5f" }}
+                            >
+                              {marketCategories.map((cat) => (
                                 <button
                                   key={cat}
-                                  onClick={() => { setSelectedMarket(cat); setShowMarketDropdown(false); }}
+                                  onClick={() => {
+                                    setSelectedMarket(cat);
+                                    setShowMarketDropdown(false);
+                                  }}
                                   className="w-full text-left px-4 py-2 text-sm transition-colors hover:bg-[#2a4a70]"
                                   style={{
-                                    backgroundColor: selectedMarket === cat ? "#2a4a70" : "transparent",
+                                    backgroundColor:
+                                      selectedMarket === cat
+                                        ? "#2a4a70"
+                                        : "transparent",
                                     color: "#fff",
                                   }}
                                 >
@@ -5592,7 +8313,10 @@ function TradingInterface() {
                             onClick={() => setAddAssetGeoTab("worldwide")}
                             className="px-4 py-2 text-sm font-medium transition-colors"
                             style={{
-                              backgroundColor: addAssetGeoTab === "worldwide" ? "#1e3a5f" : "transparent",
+                              backgroundColor:
+                                addAssetGeoTab === "worldwide"
+                                  ? "#1e3a5f"
+                                  : "transparent",
                               color: "#fff",
                             }}
                           >
@@ -5602,8 +8326,12 @@ function TradingInterface() {
                             onClick={() => setAddAssetGeoTab("local")}
                             className="px-4 py-2 text-sm font-medium transition-colors"
                             style={{
-                              backgroundColor: addAssetGeoTab === "local" ? "#1e3a5f" : "transparent",
-                              color: addAssetGeoTab === "local" ? "#fff" : "#6b82a0",
+                              backgroundColor:
+                                addAssetGeoTab === "local"
+                                  ? "#1e3a5f"
+                                  : "transparent",
+                              color:
+                                addAssetGeoTab === "local" ? "#fff" : "#6b82a0",
                             }}
                           >
                             Brazil
@@ -5613,265 +8341,501 @@ function TradingInterface() {
                     </div>
 
                     {/* Trending View with Cards */}
-                    {addAssetSideTab === "trending" && !addAssetSearch.trim() && (
-                      <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-6">
-                        {/* Trader's Choice Section */}
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-lg font-medium text-white">Trader&apos;s choice</span>
-                            <span className="text-xs" style={{ color: "#6b82a0" }}>Last week</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-3">
-                            {tradersChoice.map(sym => {
-                              const profit = profitPctMap[sym.symbol] ?? 87;
-                              return (
-                                <button
-                                  key={sym.symbol}
-                                  onClick={() => handleSelectSymbol(sym)}
-                                  className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
-                                  style={{ backgroundColor: "#131c2e" }}
-                                >
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <AssetFlag flag={sym.flag} symbol={sym.symbol} size={24} />
-                                    <span className="text-sm font-medium text-white truncate">{sym.symbol}</span>
-                                  </div>
-                                  <div className="text-xs mb-1" style={{ color: "#6b82a0" }}>Profit</div>
-                                  <div className="text-lg font-bold text-green-400 mb-2">{profit}%</div>
-                                  <div className="flex justify-between text-xs">
-                                    <div>
-                                      <span style={{ color: "#6b82a0" }}>Price</span>
-                                      <div className="text-white">{sym.price}</div>
+                    {addAssetSideTab === "trending" &&
+                      !addAssetSearch.trim() && (
+                        <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-6">
+                          {/* Trader's Choice Section */}
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-lg font-medium text-white">
+                                Trader&apos;s choice
+                              </span>
+                              <span
+                                className="text-xs"
+                                style={{ color: "#6b82a0" }}
+                              >
+                                Last week
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                              {tradersChoice.map((sym) => {
+                                const profit = profitPctMap[sym.symbol] ?? 87;
+                                return (
+                                  <button
+                                    key={sym.symbol}
+                                    onClick={() => handleSelectSymbol(sym)}
+                                    className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                    style={{ backgroundColor: "#131c2e" }}
+                                  >
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <AssetFlag
+                                        flag={sym.flag}
+                                        symbol={sym.symbol}
+                                        size={24}
+                                      />
+                                      <span className="text-sm font-medium text-white truncate">
+                                        {sym.symbol}
+                                      </span>
                                     </div>
-                                    <div className="text-right">
-                                      <span style={{ color: "#6b82a0" }}>5 min change</span>
-                                      <div style={{ color: sym.change.startsWith("+") ? "#4ade80" : "#f87171" }}>
-                                        {sym.change.startsWith("+") ? "+" : ""}{sym.percentage}%
+                                    <div
+                                      className="text-xs mb-1"
+                                      style={{ color: "#6b82a0" }}
+                                    >
+                                      Profit
+                                    </div>
+                                    <div className="text-lg font-bold text-green-400 mb-2">
+                                      {profit}%
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                      <div>
+                                        <span style={{ color: "#6b82a0" }}>
+                                          Price
+                                        </span>
+                                        <div className="text-white">
+                                          {sym.price}
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <span style={{ color: "#6b82a0" }}>
+                                          5 min change
+                                        </span>
+                                        <div
+                                          style={{
+                                            color: sym.change.startsWith("+")
+                                              ? "#4ade80"
+                                              : "#f87171",
+                                          }}
+                                        >
+                                          {sym.change.startsWith("+")
+                                            ? "+"
+                                            : ""}
+                                          {sym.percentage}%
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </button>
-                              );
-                            })}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Gainers Section */}
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-lg font-medium text-white">Gainers</span>
-                            <span className="text-xs" style={{ color: "#6b82a0" }}>Last week</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-3">
-                            {trendingGainers.map(sym => {
-                              const profit = profitPctMap[sym.symbol] ?? 86;
-                              return (
-                                <button
-                                  key={sym.symbol}
-                                  onClick={() => handleSelectSymbol(sym)}
-                                  className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
-                                  style={{ backgroundColor: "#131c2e" }}
-                                >
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <AssetFlag flag={sym.flag} symbol={sym.symbol} size={24} />
-                                    <span className="text-sm font-medium text-white truncate">{sym.symbol}</span>
-                                  </div>
-                                  <div className="text-xs mb-1" style={{ color: "#6b82a0" }}>Profit</div>
-                                  <div className="text-lg font-bold text-green-400 mb-2">{profit}%</div>
-                                  <div className="flex justify-between text-xs">
-                                    <div>
-                                      <span style={{ color: "#6b82a0" }}>Price</span>
-                                      <div className="text-white">{sym.price}</div>
+                          {/* Gainers Section */}
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-lg font-medium text-white">
+                                Gainers
+                              </span>
+                              <span
+                                className="text-xs"
+                                style={{ color: "#6b82a0" }}
+                              >
+                                Last week
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                              {trendingGainers.map((sym) => {
+                                const profit = profitPctMap[sym.symbol] ?? 86;
+                                return (
+                                  <button
+                                    key={sym.symbol}
+                                    onClick={() => handleSelectSymbol(sym)}
+                                    className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                    style={{ backgroundColor: "#131c2e" }}
+                                  >
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <AssetFlag
+                                        flag={sym.flag}
+                                        symbol={sym.symbol}
+                                        size={24}
+                                      />
+                                      <span className="text-sm font-medium text-white truncate">
+                                        {sym.symbol}
+                                      </span>
                                     </div>
-                                    <div className="text-right">
-                                      <span style={{ color: "#6b82a0" }}>5 min change</span>
-                                      <div style={{ color: sym.change.startsWith("+") ? "#4ade80" : "#f87171" }}>
-                                        {sym.change.startsWith("+") ? "+" : ""}{sym.percentage}%
+                                    <div
+                                      className="text-xs mb-1"
+                                      style={{ color: "#6b82a0" }}
+                                    >
+                                      Profit
+                                    </div>
+                                    <div className="text-lg font-bold text-green-400 mb-2">
+                                      {profit}%
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                      <div>
+                                        <span style={{ color: "#6b82a0" }}>
+                                          Price
+                                        </span>
+                                        <div className="text-white">
+                                          {sym.price}
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <span style={{ color: "#6b82a0" }}>
+                                          5 min change
+                                        </span>
+                                        <div
+                                          style={{
+                                            color: sym.change.startsWith("+")
+                                              ? "#4ade80"
+                                              : "#f87171",
+                                          }}
+                                        >
+                                          {sym.change.startsWith("+")
+                                            ? "+"
+                                            : ""}
+                                          {sym.percentage}%
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </button>
-                              );
-                            })}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Losers Section */}
-                        <div>
-                          <div className="flex items-center justify-between mb-3">
-                            <span className="text-lg font-medium text-white">Losers</span>
-                            <span className="text-xs" style={{ color: "#6b82a0" }}>Last week</span>
-                          </div>
-                          <div className="grid grid-cols-3 gap-3">
-                            {trendingLosers.map(sym => {
-                              const profit = profitPctMap[sym.symbol] ?? 86;
-                              return (
-                                <button
-                                  key={sym.symbol}
-                                  onClick={() => handleSelectSymbol(sym)}
-                                  className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
-                                  style={{ backgroundColor: "#131c2e" }}
-                                >
-                                  <div className="flex items-center gap-2 mb-2">
-                                    <AssetFlag flag={sym.flag} symbol={sym.symbol} size={24} />
-                                    <span className="text-sm font-medium text-white truncate">{sym.symbol}</span>
-                                  </div>
-                                  <div className="text-xs mb-1" style={{ color: "#6b82a0" }}>Profit</div>
-                                  <div className="text-lg font-bold text-green-400 mb-2">{profit}%</div>
-                                  <div className="flex justify-between text-xs">
-                                    <div>
-                                      <span style={{ color: "#6b82a0" }}>Price</span>
-                                      <div className="text-white">{sym.price}</div>
+                          {/* Losers Section */}
+                          <div>
+                            <div className="flex items-center justify-between mb-3">
+                              <span className="text-lg font-medium text-white">
+                                Losers
+                              </span>
+                              <span
+                                className="text-xs"
+                                style={{ color: "#6b82a0" }}
+                              >
+                                Last week
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                              {trendingLosers.map((sym) => {
+                                const profit = profitPctMap[sym.symbol] ?? 86;
+                                return (
+                                  <button
+                                    key={sym.symbol}
+                                    onClick={() => handleSelectSymbol(sym)}
+                                    className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                    style={{ backgroundColor: "#131c2e" }}
+                                  >
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <AssetFlag
+                                        flag={sym.flag}
+                                        symbol={sym.symbol}
+                                        size={24}
+                                      />
+                                      <span className="text-sm font-medium text-white truncate">
+                                        {sym.symbol}
+                                      </span>
                                     </div>
-                                    <div className="text-right">
-                                      <span style={{ color: "#6b82a0" }}>5 min change</span>
-                                      <div style={{ color: sym.change.startsWith("+") ? "#4ade80" : "#f87171" }}>
-                                        {sym.change.startsWith("+") ? "+" : ""}{sym.percentage}%
+                                    <div
+                                      className="text-xs mb-1"
+                                      style={{ color: "#6b82a0" }}
+                                    >
+                                      Profit
+                                    </div>
+                                    <div className="text-lg font-bold text-green-400 mb-2">
+                                      {profit}%
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                      <div>
+                                        <span style={{ color: "#6b82a0" }}>
+                                          Price
+                                        </span>
+                                        <div className="text-white">
+                                          {sym.price}
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <span style={{ color: "#6b82a0" }}>
+                                          5 min change
+                                        </span>
+                                        <div
+                                          style={{
+                                            color: sym.change.startsWith("+")
+                                              ? "#4ade80"
+                                              : "#f87171",
+                                          }}
+                                        >
+                                          {sym.change.startsWith("+")
+                                            ? "+"
+                                            : ""}
+                                          {sym.percentage}%
+                                        </div>
                                       </div>
                                     </div>
-                                  </div>
-                                </button>
-                              );
-                            })}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Table header - for Options/Margin/Watchlist or when searching in Trending */}
-                    {(addAssetSideTab !== "trending" || addAssetSearch.trim()) && addAssetSideTab !== "watchlist" && (
-                      <div className="flex items-center px-4 py-2 flex-shrink-0 text-xs select-none"
-                        style={{ borderBottom: "1px solid #1a2d45", color: "#3d5470" }}>
-                        <div className="flex-1 font-medium">Asset</div>
-                        <div className="w-20 text-right pr-3 font-medium flex items-center justify-end gap-1">
-                          Profit
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3 h-3 flex-shrink-0">
-                            <path d="M18 15l-6-6-6 6"/>
-                          </svg>
+                    {(addAssetSideTab !== "trending" ||
+                      addAssetSearch.trim()) &&
+                      addAssetSideTab !== "watchlist" && (
+                        <div
+                          className="flex items-center px-4 py-2 flex-shrink-0 text-xs select-none"
+                          style={{
+                            borderBottom: "1px solid #1a2d45",
+                            color: "#3d5470",
+                          }}
+                        >
+                          <div className="flex-1 font-medium">Asset</div>
+                          <div className="w-20 text-right pr-3 font-medium flex items-center justify-end gap-1">
+                            Profit
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-3 h-3 flex-shrink-0"
+                            >
+                              <path d="M18 15l-6-6-6 6" />
+                            </svg>
+                          </div>
+                          <div className="w-20 text-center font-medium">
+                            Popular
+                          </div>
+                          <div className="w-20 text-center font-medium">
+                            Volatility
+                          </div>
+                          <div className="w-14 text-center">
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              className="w-3.5 h-3.5 mx-auto"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="12" y1="8" x2="12" y2="12" />
+                              <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                          </div>
                         </div>
-                        <div className="w-20 text-center font-medium">Popular</div>
-                        <div className="w-20 text-center font-medium">Volatility</div>
-                        <div className="w-14 text-center">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 mx-auto">
-                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                          </svg>
-                        </div>
-                      </div>
-                    )}
+                      )}
 
                     {/* Asset rows - for Options/Margin/Watchlist or when searching */}
-                    {(addAssetSideTab !== "trending" || addAssetSearch.trim()) && (
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                      {addAssetSideTab === "watchlist" && displaySymbols.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-52 gap-3 pt-8">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-14 h-14" style={{ color: "#1a2d45" }}>
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                          </svg>
-                          <p className="font-medium text-sm" style={{ color: "#3d5470" }}>Your watchlist is empty</p>
-                          <p className="text-xs text-center max-w-[200px]" style={{ color: "#233344" }}>
-                            Click ☆ on any asset to add it here
-                          </p>
-                        </div>
-                      ) : displaySymbols.length === 0 ? (
-                        <p className="text-center py-12 text-sm" style={{ color: "#3d5470" }}>No assets found</p>
-                      ) : (
-                        displaySymbols.map(sym => {
-                          const profit = profitPctMap[sym.symbol] ?? 87;
-                          const popularity = popularityMap[sym.symbol] ?? 2;
-                          const volatility = volatilityMap[sym.symbol] ?? 2;
-                          const isWatchlisted = watchlistedSymbols.includes(sym.symbol);
-                          const isActive = openTabs.some(t => t.symbol === sym.symbol && t.type === selectedMarket);
-                          const isNew = newBadgeSymbols.has(sym.symbol);
-
-                          return (
-                            <button
-                              key={sym.symbol}
-                              onClick={() => handleSelectSymbol(sym)}
-                              className="w-full flex items-center px-4 py-2 text-left transition-colors"
-                              style={{
-                                backgroundColor: isActive ? "#132030" : "transparent",
-                                borderBottom: "1px solid #0e1d2d",
-                              }}
-                              onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = "#111d2f"; }}
-                              onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = "transparent"; }}
+                    {(addAssetSideTab !== "trending" ||
+                      addAssetSearch.trim()) && (
+                      <div className="flex-1 overflow-y-auto custom-scrollbar">
+                        {addAssetSideTab === "watchlist" &&
+                        displaySymbols.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center h-52 gap-3 pt-8">
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              className="w-14 h-14"
+                              style={{ color: "#1a2d45" }}
                             >
-                              {/* Icon + Name */}
-                              <div className="flex items-center gap-3 flex-1 min-w-0">
-                                <div className="relative flex-shrink-0">
-                                  <div className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
-                                    style={{ backgroundColor: "#172840", border: "2px solid #1e3654" }}>
-                                    <AssetFlag flag={sym.flag} symbol={sym.symbol} size={18} />
+                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                            </svg>
+                            <p
+                              className="font-medium text-sm"
+                              style={{ color: "#3d5470" }}
+                            >
+                              Your watchlist is empty
+                            </p>
+                            <p
+                              className="text-xs text-center max-w-[200px]"
+                              style={{ color: "#233344" }}
+                            >
+                              Click ☆ on any asset to add it here
+                            </p>
+                          </div>
+                        ) : displaySymbols.length === 0 ? (
+                          <p
+                            className="text-center py-12 text-sm"
+                            style={{ color: "#3d5470" }}
+                          >
+                            No assets found
+                          </p>
+                        ) : (
+                          displaySymbols.map((sym) => {
+                            const profit = profitPctMap[sym.symbol] ?? 87;
+                            const popularity = popularityMap[sym.symbol] ?? 2;
+                            const volatility = volatilityMap[sym.symbol] ?? 2;
+                            const isWatchlisted = watchlistedSymbols.includes(
+                              sym.symbol,
+                            );
+                            const isActive = openTabs.some(
+                              (t) =>
+                                t.symbol === sym.symbol &&
+                                t.type === selectedMarket,
+                            );
+                            const isNew = newBadgeSymbols.has(sym.symbol);
+
+                            return (
+                              <button
+                                key={sym.symbol}
+                                onClick={() => handleSelectSymbol(sym)}
+                                className="w-full flex items-center px-4 py-2 text-left transition-colors"
+                                style={{
+                                  backgroundColor: isActive
+                                    ? "#132030"
+                                    : "transparent",
+                                  borderBottom: "1px solid #0e1d2d",
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!isActive)
+                                    (
+                                      e.currentTarget as HTMLElement
+                                    ).style.backgroundColor = "#111d2f";
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!isActive)
+                                    (
+                                      e.currentTarget as HTMLElement
+                                    ).style.backgroundColor = "transparent";
+                                }}
+                              >
+                                {/* Icon + Name */}
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  <div className="relative flex-shrink-0">
+                                    <div
+                                      className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
+                                      style={{
+                                        backgroundColor: "#172840",
+                                        border: "2px solid #1e3654",
+                                      }}
+                                    >
+                                      <AssetFlag
+                                        flag={sym.flag}
+                                        symbol={sym.symbol}
+                                        size={18}
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="min-w-0">
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className="text-sm font-semibold text-white truncate">
-                                      {(sym as any).displayName ?? sym.symbol}
-                                    </span>
-                                    {isNew && (
-                                      <span className="text-white px-1 rounded flex-shrink-0 font-bold"
-                                        style={{ backgroundColor: "#1a5080", fontSize: "9px" }}>
-                                        NEW
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <span className="text-sm font-semibold text-white truncate">
+                                        {(sym as any).displayName ?? sym.symbol}
                                       </span>
-                                    )}
+                                      {isNew && (
+                                        <span
+                                          className="text-white px-1 rounded flex-shrink-0 font-bold"
+                                          style={{
+                                            backgroundColor: "#1a5080",
+                                            fontSize: "9px",
+                                          }}
+                                        >
+                                          NEW
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span
+                                      className="text-xs block"
+                                      style={{ color: "#3d5470" }}
+                                    >
+                                      {sym.price}
+                                    </span>
                                   </div>
-                                  <span className="text-xs block" style={{ color: "#3d5470" }}>{sym.price}</span>
                                 </div>
-                              </div>
 
-                              {/* Profit */}
-                              <div className="w-20 text-right pr-3 flex-shrink-0">
-                                <span className="text-sm font-bold" style={{ color: "#22c55e" }}>{profit}%</span>
-                              </div>
+                                {/* Profit */}
+                                <div className="w-20 text-right pr-3 flex-shrink-0">
+                                  <span
+                                    className="text-sm font-bold"
+                                    style={{ color: "#22c55e" }}
+                                  >
+                                    {profit}%
+                                  </span>
+                                </div>
 
-                              {/* Popular */}
-                              <div className="w-20 flex justify-center flex-shrink-0">
-                                <FlameIcons count={popularity} />
-                              </div>
+                                {/* Popular */}
+                                <div className="w-20 flex justify-center flex-shrink-0">
+                                  <FlameIcons count={popularity} />
+                                </div>
 
-                              {/* Volatility */}
-                              <div className="w-20 flex justify-center flex-shrink-0">
-                                <VolatilityBars count={volatility} />
-                              </div>
+                                {/* Volatility */}
+                                <div className="w-20 flex justify-center flex-shrink-0">
+                                  <VolatilityBars count={volatility} />
+                                </div>
 
-                              {/* Star + Info */}
-                              <div className="w-14 flex items-center justify-center gap-1.5 flex-shrink-0">
-                                <button
-                                  onClick={e => toggleWatchlist(e, sym.symbol)}
-                                  className="p-1 rounded transition-colors"
-                                  style={{ color: isWatchlisted ? "#f59e0b" : "#2a3e56" }}
-                                  onMouseEnter={e => { if (!isWatchlisted) (e.currentTarget as HTMLElement).style.color = "#6b82a0"; }}
-                                  onMouseLeave={e => { if (!isWatchlisted) (e.currentTarget as HTMLElement).style.color = "#2a3e56"; }}
-                                >
-                                  <svg viewBox="0 0 24 24" className="w-4 h-4"
-                                    fill={isWatchlisted ? "currentColor" : "none"}
-                                    stroke="currentColor" strokeWidth="2">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                                  </svg>
-                                </button>
-                                <button
-                                  onClick={e => e.stopPropagation()}
-                                  className="p-1 rounded transition-colors"
-                                  style={{ color: "#2a3e56" }}
-                                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = "#6b82a0"; }}
-                                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = "#2a3e56"; }}
-                                >
-                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4">
-                                    <circle cx="12" cy="12" r="10"/>
-                                    <line x1="12" y1="8" x2="12" y2="12"/>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                                  </svg>
-                                </button>
-                              </div>
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
+                                {/* Star + Info */}
+                                <div className="w-14 flex items-center justify-center gap-1.5 flex-shrink-0">
+                                  <button
+                                    onClick={(e) =>
+                                      toggleWatchlist(e, sym.symbol)
+                                    }
+                                    className="p-1 rounded transition-colors"
+                                    style={{
+                                      color: isWatchlisted
+                                        ? "#f59e0b"
+                                        : "#2a3e56",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                      if (!isWatchlisted)
+                                        (
+                                          e.currentTarget as HTMLElement
+                                        ).style.color = "#6b82a0";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      if (!isWatchlisted)
+                                        (
+                                          e.currentTarget as HTMLElement
+                                        ).style.color = "#2a3e56";
+                                    }}
+                                  >
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      className="w-4 h-4"
+                                      fill={
+                                        isWatchlisted ? "currentColor" : "none"
+                                      }
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                    >
+                                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                    </svg>
+                                  </button>
+                                  <button
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-1 rounded transition-colors"
+                                    style={{ color: "#2a3e56" }}
+                                    onMouseEnter={(e) => {
+                                      (
+                                        e.currentTarget as HTMLElement
+                                      ).style.color = "#6b82a0";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      (
+                                        e.currentTarget as HTMLElement
+                                      ).style.color = "#2a3e56";
+                                    }}
+                                  >
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      className="w-4 h-4"
+                                    >
+                                      <circle cx="12" cy="12" r="10" />
+                                      <line x1="12" y1="8" x2="12" y2="12" />
+                                      <line
+                                        x1="12"
+                                        y1="16"
+                                        x2="12.01"
+                                        y2="16"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
                     )}
                   </div>
                 </motion.div>
-            );
-          })()}
+              );
+            })()}
         </AnimatePresence>
 
         {/* Footer */}
@@ -5984,11 +8948,16 @@ function TradingInterface() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-md rounded-xl p-6"
-              style={{ backgroundColor: "#0a1020", border: "1px solid #1a2d45" }}
+              style={{
+                backgroundColor: "#0a1020",
+                border: "1px solid #1a2d45",
+              }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-white">Top Up Practice Account</h2>
+                <h2 className="text-xl font-bold text-white">
+                  Top Up Practice Account
+                </h2>
                 <button
                   onClick={() => {
                     setShowPracticeTopUpModal(false);
@@ -6001,10 +8970,19 @@ function TradingInterface() {
               </div>
 
               {/* Current Balance Display */}
-              <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: "#1a2d45" }}>
-                <div className="text-sm text-gray-400 mb-1">Current Practice Balance</div>
-                <div className="text-2xl font-bold" style={{ color: "#ff8516" }}>
-                  $ {practiceAccountBalance.toLocaleString("en-US", {
+              <div
+                className="mb-6 p-4 rounded-lg"
+                style={{ backgroundColor: "#1a2d45" }}
+              >
+                <div className="text-sm text-gray-400 mb-1">
+                  Current Practice Balance
+                </div>
+                <div
+                  className="text-2xl font-bold"
+                  style={{ color: "#ff8516" }}
+                >
+                  ${" "}
+                  {practiceAccountBalance.toLocaleString("en-US", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -6013,16 +8991,23 @@ function TradingInterface() {
 
               {/* Amount Input */}
               <div className="mb-6">
-                <label className="text-sm text-gray-400 mb-2 block">Enter Amount to Add (Max $10,000)</label>
+                <label className="text-sm text-gray-400 mb-2 block">
+                  Enter Amount to Add (Max $10,000)
+                </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">$</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+                    $
+                  </span>
                   <input
                     type="number"
                     value={practiceTopUpAmount}
                     onChange={(e) => {
                       const value = e.target.value;
                       // Allow empty or valid numbers up to 10000
-                      if (value === "" || (parseFloat(value) >= 0 && parseFloat(value) <= 10000)) {
+                      if (
+                        value === "" ||
+                        (parseFloat(value) >= 0 && parseFloat(value) <= 10000)
+                      ) {
                         setPracticeTopUpAmount(value);
                       }
                     }}
@@ -6031,15 +9016,19 @@ function TradingInterface() {
                     max="10000"
                     step="0.01"
                     className="w-full pl-10 pr-4 py-3 rounded-lg text-white text-lg font-medium focus:outline-none focus:ring-2"
-                    style={{
-                      backgroundColor: "#0d1829",
-                      border: "1px solid #1a2d45",
-                      "--tw-ring-color": "#ff8516",
-                    } as React.CSSProperties}
+                    style={
+                      {
+                        backgroundColor: "#0d1829",
+                        border: "1px solid #1a2d45",
+                        "--tw-ring-color": "#ff8516",
+                      } as React.CSSProperties
+                    }
                   />
                 </div>
                 {parseFloat(practiceTopUpAmount) > 10000 && (
-                  <p className="text-red-400 text-sm mt-2">Maximum amount is $10,000</p>
+                  <p className="text-red-400 text-sm mt-2">
+                    Maximum amount is $10,000
+                  </p>
                 )}
               </div>
 
@@ -6048,11 +9037,19 @@ function TradingInterface() {
                 {[100, 500, 1000, 5000].map((quickAmount) => (
                   <button
                     key={quickAmount}
-                    onClick={() => setPracticeTopUpAmount(quickAmount.toString())}
+                    onClick={() =>
+                      setPracticeTopUpAmount(quickAmount.toString())
+                    }
                     className="py-2 rounded text-sm font-medium transition-all hover:opacity-80"
                     style={{
-                      backgroundColor: practiceTopUpAmount === quickAmount.toString() ? "#ff8516" : "#1a2d45",
-                      color: practiceTopUpAmount === quickAmount.toString() ? "#000" : "#fff",
+                      backgroundColor:
+                        practiceTopUpAmount === quickAmount.toString()
+                          ? "#ff8516"
+                          : "#1a2d45",
+                      color:
+                        practiceTopUpAmount === quickAmount.toString()
+                          ? "#000"
+                          : "#fff",
                     }}
                   >
                     ${quickAmount.toLocaleString()}
@@ -6077,20 +9074,35 @@ function TradingInterface() {
               <button
                 onClick={() => {
                   const amountToAdd = parseFloat(practiceTopUpAmount);
-                  if (!isNaN(amountToAdd) && amountToAdd > 0 && amountToAdd <= 10000) {
+                  if (
+                    !isNaN(amountToAdd) &&
+                    amountToAdd > 0 &&
+                    amountToAdd <= 10000
+                  ) {
                     setPracticeAccountBalance((prev) => prev + amountToAdd);
                     setShowPracticeTopUpModal(false);
                     setPracticeTopUpAmount("");
                   }
                 }}
-                disabled={!practiceTopUpAmount || parseFloat(practiceTopUpAmount) <= 0 || parseFloat(practiceTopUpAmount) > 10000}
+                disabled={
+                  !practiceTopUpAmount ||
+                  parseFloat(practiceTopUpAmount) <= 0 ||
+                  parseFloat(practiceTopUpAmount) > 10000
+                }
                 className="w-full py-3 rounded-lg text-base font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
                 style={{
                   backgroundColor: "#ff8516",
                   color: "#000",
                 }}
               >
-                Add ${practiceTopUpAmount ? parseFloat(practiceTopUpAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"} to Practice Account
+                Add $
+                {practiceTopUpAmount
+                  ? parseFloat(practiceTopUpAmount).toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  : "0.00"}{" "}
+                to Practice Account
               </button>
             </motion.div>
           </motion.div>
@@ -6105,7 +9117,10 @@ function TradingInterface() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[10001] flex items-center justify-center p-3"
-            style={{ backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)" }}
+            style={{
+              backgroundColor: "rgba(0,0,0,0.85)",
+              backdropFilter: "blur(4px)",
+            }}
             onClick={() => {
               setShowFundModal(false);
               setFundingError("");
@@ -6129,11 +9144,29 @@ function TradingInterface() {
               {/* Header - Compact */}
               <div className="px-5 pt-4 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: fundMethod === "fiat" ? "rgba(93,223,56,0.15)" : "rgba(255,133,22,0.15)" }}>
-                    <Wallet className="w-4 h-4" style={{ color: fundMethod === "fiat" ? "#5ddf38" : "#ff8516" }} />
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{
+                      backgroundColor:
+                        fundMethod === "fiat"
+                          ? "rgba(93,223,56,0.15)"
+                          : "rgba(255,133,22,0.15)",
+                    }}
+                  >
+                    <Wallet
+                      className="w-4 h-4"
+                      style={{
+                        color: fundMethod === "fiat" ? "#5ddf38" : "#ff8516",
+                      }}
+                    />
                   </div>
                   <div>
-                    <h2 className="text-base font-bold" style={{ color: "#eef2f7" }}>Fund Traderoom</h2>
+                    <h2
+                      className="text-base font-bold"
+                      style={{ color: "#eef2f7" }}
+                    >
+                      Fund Traderoom
+                    </h2>
                   </div>
                 </div>
                 <button
@@ -6147,13 +9180,26 @@ function TradingInterface() {
                   className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
                   style={{ color: "#4a6080" }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
 
               {/* Method Tabs - Compact pill style */}
               <div className="px-5 pb-3">
-                <div className="flex gap-1 p-0.5 rounded-lg" style={{ backgroundColor: "#1a2235" }}>
+                <div
+                  className="flex gap-1 p-0.5 rounded-lg"
+                  style={{ backgroundColor: "#1a2235" }}
+                >
                   <button
                     onClick={() => setFundMethod("fiat")}
                     className={`flex-1 py-2 rounded-md text-xs font-semibold tracking-wide uppercase transition-all ${
@@ -6161,7 +9207,11 @@ function TradingInterface() {
                         ? "text-white shadow-md"
                         : "text-gray-500 hover:text-gray-300"
                     }`}
-                    style={fundMethod === "fiat" ? { backgroundColor: "#5ddf38", color: "#0a0f18" } : {}}
+                    style={
+                      fundMethod === "fiat"
+                        ? { backgroundColor: "#5ddf38", color: "#0a0f18" }
+                        : {}
+                    }
                   >
                     Fiat Balance
                   </button>
@@ -6172,7 +9222,11 @@ function TradingInterface() {
                         ? "text-white shadow-md"
                         : "text-gray-500 hover:text-gray-300"
                     }`}
-                    style={fundMethod === "crypto" ? { backgroundColor: "#ff8516", color: "#0a0f18" } : {}}
+                    style={
+                      fundMethod === "crypto"
+                        ? { backgroundColor: "#ff8516", color: "#0a0f18" }
+                        : {}
+                    }
                   >
                     Crypto Assets
                   </button>
@@ -6183,16 +9237,54 @@ function TradingInterface() {
               <div className="px-5 pb-5 space-y-3">
                 {/* Balance Cards - Compact side-by-side */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#141c2b", border: "1px solid #1e2a3a" }}>
-                    <div className="text-[10px] uppercase tracking-wider font-medium mb-1" style={{ color: "#4a6080" }}>Available</div>
-                    <div className="text-sm font-bold tabular-nums" style={{ color: "#ffffff" }}>
-                      ${Math.floor(realAccountBalanceUSD * 100 / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <div
+                    className="p-2.5 rounded-lg"
+                    style={{
+                      backgroundColor: "#141c2b",
+                      border: "1px solid #1e2a3a",
+                    }}
+                  >
+                    <div
+                      className="text-[10px] uppercase tracking-wider font-medium mb-1"
+                      style={{ color: "#4a6080" }}
+                    >
+                      Available
+                    </div>
+                    <div
+                      className="text-sm font-bold tabular-nums"
+                      style={{ color: "#ffffff" }}
+                    >
+                      $
+                      {Math.floor(
+                        (realAccountBalanceUSD * 100) / 100,
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </div>
                   </div>
-                  <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#141c2b", border: "1px solid #1e2a3a" }}>
-                    <div className="text-[10px] uppercase tracking-wider font-medium mb-1" style={{ color: "#4a6080" }}>Traderoom</div>
-                    <div className="text-sm font-bold tabular-nums" style={{ color: "#5ddf38" }}>
-                      ${traderoomBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <div
+                    className="p-2.5 rounded-lg"
+                    style={{
+                      backgroundColor: "#141c2b",
+                      border: "1px solid #1e2a3a",
+                    }}
+                  >
+                    <div
+                      className="text-[10px] uppercase tracking-wider font-medium mb-1"
+                      style={{ color: "#4a6080" }}
+                    >
+                      Traderoom
+                    </div>
+                    <div
+                      className="text-sm font-bold tabular-nums"
+                      style={{ color: "#5ddf38" }}
+                    >
+                      $
+                      {traderoomBalance.toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                     </div>
                   </div>
                 </div>
@@ -6202,18 +9294,37 @@ function TradingInterface() {
                     {/* Amount Input - Enhanced */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-medium" style={{ color: "#4a6080" }}>Amount (USD)</label>
+                        <label
+                          className="text-xs font-medium"
+                          style={{ color: "#4a6080" }}
+                        >
+                          Amount (USD)
+                        </label>
                         <button
-                          onClick={() => setFundAmount((Math.floor(realAccountBalanceUSD * 100) / 100).toString())}
+                          onClick={() =>
+                            setFundAmount(
+                              (
+                                Math.floor(realAccountBalanceUSD * 100) / 100
+                              ).toString(),
+                            )
+                          }
                           disabled={realAccountBalanceUSD <= 0}
                           className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all hover:opacity-80 disabled:opacity-30"
-                          style={{ backgroundColor: "rgba(93,223,56,0.12)", color: "#5ddf38" }}
+                          style={{
+                            backgroundColor: "rgba(93,223,56,0.12)",
+                            color: "#5ddf38",
+                          }}
                         >
                           Use Max
                         </button>
                       </div>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold" style={{ color: "#4a6080" }}>$</span>
+                        <span
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold"
+                          style={{ color: "#4a6080" }}
+                        >
+                          $
+                        </span>
                         <input
                           type="number"
                           value={fundAmount}
@@ -6231,8 +9342,14 @@ function TradingInterface() {
                           placeholder="0.00"
                           step="0.01"
                           className="w-full pl-8 pr-4 py-2.5 rounded-lg text-lg font-semibold tabular-nums focus:outline-none transition-all"
-                          style={{ backgroundColor: "#1a2235", border: "1px solid #2a3548", color: "#ffffff" }}
-                          onFocus={(e) => (e.target.style.borderColor = "#5ddf38")}
+                          style={{
+                            backgroundColor: "#1a2235",
+                            border: "1px solid #2a3548",
+                            color: "#ffffff",
+                          }}
+                          onFocus={(e) =>
+                            (e.target.style.borderColor = "#5ddf38")
+                          }
                         />
                       </div>
                     </div>
@@ -6242,10 +9359,21 @@ function TradingInterface() {
                       {[50, 100, 250, 500, 1000, 2500].map((amt) => (
                         <button
                           key={amt}
-                          onClick={() => setFundAmount(Math.min(amt, Math.floor(realAccountBalanceUSD * 100) / 100).toString())}
+                          onClick={() =>
+                            setFundAmount(
+                              Math.min(
+                                amt,
+                                Math.floor(realAccountBalanceUSD * 100) / 100,
+                              ).toString(),
+                            )
+                          }
                           disabled={realAccountBalanceUSD < amt}
                           className="py-1.5 rounded-md text-[11px] font-semibold tabular-nums transition-all hover:brightness-125 disabled:opacity-20 disabled:hover:brightness-100"
-                          style={{ backgroundColor: "#1a2235", color: "#8b9ab8", border: "1px solid #1e2a3a" }}
+                          style={{
+                            backgroundColor: "#1a2235",
+                            color: "#8b9ab8",
+                            border: "1px solid #1e2a3a",
+                          }}
                         >
                           {amt >= 1000 ? `${amt / 1000}k` : `$${amt}`}
                         </button>
@@ -6254,15 +9382,48 @@ function TradingInterface() {
 
                     {/* Transfer Preview */}
                     {fundAmount && parseFloat(fundAmount) > 0 && (
-                      <div className="p-2.5 rounded-lg flex items-center justify-between" style={{ backgroundColor: "rgba(93,223,56,0.06)", border: "1px solid rgba(93,223,56,0.15)" }}>
+                      <div
+                        className="p-2.5 rounded-lg flex items-center justify-between"
+                        style={{
+                          backgroundColor: "rgba(93,223,56,0.06)",
+                          border: "1px solid rgba(93,223,56,0.15)",
+                        }}
+                      >
                         <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(93,223,56,0.2)" }}>
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#5ddf38" strokeWidth="3" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center"
+                            style={{ backgroundColor: "rgba(93,223,56,0.2)" }}
+                          >
+                            <svg
+                              width="10"
+                              height="10"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="#5ddf38"
+                              strokeWidth="3"
+                              strokeLinecap="round"
+                            >
+                              <path d="M5 12h14M12 5l7 7-7 7" />
+                            </svg>
                           </div>
-                          <span className="text-xs" style={{ color: "#8b9ab8" }}>New balance</span>
+                          <span
+                            className="text-xs"
+                            style={{ color: "#8b9ab8" }}
+                          >
+                            New balance
+                          </span>
                         </div>
-                        <span className="text-sm font-bold tabular-nums" style={{ color: "#5ddf38" }}>
-                          ${(traderoomBalance + parseFloat(fundAmount)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <span
+                          className="text-sm font-bold tabular-nums"
+                          style={{ color: "#5ddf38" }}
+                        >
+                          $
+                          {(
+                            traderoomBalance + parseFloat(fundAmount)
+                          ).toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </span>
                       </div>
                     )}
@@ -6272,22 +9433,42 @@ function TradingInterface() {
                     {/* Crypto Assets Selection - Enhanced */}
                     <div>
                       {cryptoAssets.length === 0 ? (
-                        <div className="p-4 rounded-lg text-center" style={{ backgroundColor: "rgba(255,193,7,0.06)", border: "1px solid rgba(255,193,7,0.15)" }}>
-                          <Wallet className="w-8 h-8 mx-auto mb-2" style={{ color: "#ffc107", opacity: 0.5 }} />
-                          <p className="text-xs font-medium" style={{ color: "#ffc107" }}>
+                        <div
+                          className="p-4 rounded-lg text-center"
+                          style={{
+                            backgroundColor: "rgba(255,193,7,0.06)",
+                            border: "1px solid rgba(255,193,7,0.15)",
+                          }}
+                        >
+                          <Wallet
+                            className="w-8 h-8 mx-auto mb-2"
+                            style={{ color: "#ffc107", opacity: 0.5 }}
+                          />
+                          <p
+                            className="text-xs font-medium"
+                            style={{ color: "#ffc107" }}
+                          >
                             No crypto assets available
                           </p>
-                          <p className="text-[10px] mt-0.5" style={{ color: "#4a6080" }}>
+                          <p
+                            className="text-[10px] mt-0.5"
+                            style={{ color: "#4a6080" }}
+                          >
                             Deposit crypto to your main balance first
                           </p>
                         </div>
                       ) : (
-                        <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1" style={{ scrollbarWidth: "thin" }}>
+                        <div
+                          className="space-y-1.5 max-h-40 overflow-y-auto pr-1"
+                          style={{ scrollbarWidth: "thin" }}
+                        >
                           {cryptoAssets.map((asset) => {
                             const cryptoPrice = getCryptoPrice(asset.symbol);
-                            const valueUSD = cryptoPrice?.price ? (asset.amount * cryptoPrice.price) : 0;
+                            const valueUSD = cryptoPrice?.price
+                              ? asset.amount * cryptoPrice.price
+                              : 0;
                             const isSelected = selectedCrypto === asset.symbol;
-                            
+
                             return (
                               <button
                                 key={asset.symbol}
@@ -6297,26 +9478,46 @@ function TradingInterface() {
                                 }}
                                 className="w-full p-2.5 rounded-lg text-left transition-all"
                                 style={{
-                                  backgroundColor: isSelected ? "rgba(255,133,22,0.1)" : "#141c2b",
+                                  backgroundColor: isSelected
+                                    ? "rgba(255,133,22,0.1)"
+                                    : "#141c2b",
                                   border: `1px solid ${isSelected ? "#ff8516" : "#1e2a3a"}`,
                                 }}
                               >
                                 <div className="flex items-center justify-between">
                                   <div className="flex items-center gap-2.5">
-                                    <CryptoIcon symbol={asset.symbol} size="sm" />
+                                    <CryptoIcon
+                                      symbol={asset.symbol}
+                                      size="sm"
+                                    />
                                     <div>
-                                      <div className="text-xs font-bold text-white">{asset.symbol}</div>
-                                      <div className="text-[10px] tabular-nums" style={{ color: "#4a6080" }}>
+                                      <div className="text-xs font-bold text-white">
+                                        {asset.symbol}
+                                      </div>
+                                      <div
+                                        className="text-[10px] tabular-nums"
+                                        style={{ color: "#4a6080" }}
+                                      >
                                         {asset.amount.toFixed(6)} {asset.symbol}
                                       </div>
                                     </div>
                                   </div>
                                   <div className="text-right">
-                                    <div className="text-xs font-bold tabular-nums" style={{ color: "#5ddf38" }}>
-                                      ${valueUSD.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                    <div
+                                      className="text-xs font-bold tabular-nums"
+                                      style={{ color: "#5ddf38" }}
+                                    >
+                                      $
+                                      {valueUSD.toLocaleString("en-US", {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                      })}
                                     </div>
                                     {cryptoPrice?.price && (
-                                      <div className="text-[10px] tabular-nums" style={{ color: "#4a6080" }}>
+                                      <div
+                                        className="text-[10px] tabular-nums"
+                                        style={{ color: "#4a6080" }}
+                                      >
                                         @${cryptoPrice.price.toLocaleString()}
                                       </div>
                                     )}
@@ -6333,16 +9534,27 @@ function TradingInterface() {
                     {selectedCrypto && (
                       <div>
                         <div className="flex items-center justify-between mb-1.5">
-                          <label className="text-xs font-medium" style={{ color: "#4a6080" }}>
+                          <label
+                            className="text-xs font-medium"
+                            style={{ color: "#4a6080" }}
+                          >
                             Amount ({selectedCrypto})
                           </label>
                           <button
                             onClick={() => {
-                              const asset = cryptoAssets.find(a => a.symbol === selectedCrypto);
-                              if (asset) setSelectedCryptoAmount(asset.amount.toFixed(8));
+                              const asset = cryptoAssets.find(
+                                (a) => a.symbol === selectedCrypto,
+                              );
+                              if (asset)
+                                setSelectedCryptoAmount(
+                                  asset.amount.toFixed(8),
+                                );
                             }}
                             className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all hover:opacity-80"
-                            style={{ backgroundColor: "rgba(255,133,22,0.12)", color: "#ff8516" }}
+                            style={{
+                              backgroundColor: "rgba(255,133,22,0.12)",
+                              color: "#ff8516",
+                            }}
                           >
                             Use Max
                           </button>
@@ -6350,22 +9562,54 @@ function TradingInterface() {
                         <input
                           type="number"
                           value={selectedCryptoAmount}
-                          onChange={(e) => setSelectedCryptoAmount(e.target.value)}
+                          onChange={(e) =>
+                            setSelectedCryptoAmount(e.target.value)
+                          }
                           placeholder="0.00000000"
                           step="0.00000001"
                           className="w-full px-3 py-2.5 rounded-lg text-sm font-medium tabular-nums focus:outline-none transition-all"
-                          style={{ backgroundColor: "#1a2235", border: "1px solid #2a3548", color: "#ffffff" }}
-                          onFocus={(e) => (e.target.style.borderColor = "#ff8516")}
-                          onBlur={(e) => (e.target.style.borderColor = "#2a3548")}
+                          style={{
+                            backgroundColor: "#1a2235",
+                            border: "1px solid #2a3548",
+                            color: "#ffffff",
+                          }}
+                          onFocus={(e) =>
+                            (e.target.style.borderColor = "#ff8516")
+                          }
+                          onBlur={(e) =>
+                            (e.target.style.borderColor = "#2a3548")
+                          }
                         />
-                        {selectedCryptoAmount && parseFloat(selectedCryptoAmount) > 0 && (
-                          <div className="mt-1.5 p-2 rounded-lg flex items-center justify-between" style={{ backgroundColor: "rgba(255,133,22,0.06)", border: "1px solid rgba(255,133,22,0.15)" }}>
-                            <span className="text-[10px]" style={{ color: "#4a6080" }}>USD Value</span>
-                            <span className="text-xs font-bold tabular-nums" style={{ color: "#ff8516" }}>
-                              ≈ ${((parseFloat(selectedCryptoAmount) || 0) * (getCryptoPrice(selectedCrypto)?.price || 0)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                            </span>
-                          </div>
-                        )}
+                        {selectedCryptoAmount &&
+                          parseFloat(selectedCryptoAmount) > 0 && (
+                            <div
+                              className="mt-1.5 p-2 rounded-lg flex items-center justify-between"
+                              style={{
+                                backgroundColor: "rgba(255,133,22,0.06)",
+                                border: "1px solid rgba(255,133,22,0.15)",
+                              }}
+                            >
+                              <span
+                                className="text-[10px]"
+                                style={{ color: "#4a6080" }}
+                              >
+                                USD Value
+                              </span>
+                              <span
+                                className="text-xs font-bold tabular-nums"
+                                style={{ color: "#ff8516" }}
+                              >
+                                ≈ $
+                                {(
+                                  (parseFloat(selectedCryptoAmount) || 0) *
+                                  (getCryptoPrice(selectedCrypto)?.price || 0)
+                                ).toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                            </div>
+                          )}
                       </div>
                     )}
                   </>
@@ -6373,22 +9617,48 @@ function TradingInterface() {
 
                 {/* Error */}
                 {fundingError && (
-                  <div className="p-2.5 rounded-lg flex items-center gap-2" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+                  <div
+                    className="p-2.5 rounded-lg flex items-center gap-2"
+                    style={{
+                      backgroundColor: "rgba(239,68,68,0.08)",
+                      border: "1px solid rgba(239,68,68,0.2)",
+                    }}
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 8v4M12 16h.01" />
+                    </svg>
                     <span className="text-xs text-red-400">{fundingError}</span>
                   </div>
                 )}
 
                 {/* Submit Button - Enhanced */}
                 <button
-                  onClick={fundMethod === "fiat" ? handleFundFromFiat : handleFundWithCrypto}
+                  onClick={
+                    fundMethod === "fiat"
+                      ? handleFundFromFiat
+                      : handleFundWithCrypto
+                  }
                   disabled={
-                    isFunding || 
-                    (fundMethod === "fiat" ? !fundAmount || parseFloat(fundAmount) <= 0 : (!selectedCrypto || !selectedCryptoAmount || parseFloat(selectedCryptoAmount) <= 0))
+                    isFunding ||
+                    (fundMethod === "fiat"
+                      ? !fundAmount || parseFloat(fundAmount) <= 0
+                      : !selectedCrypto ||
+                        !selectedCryptoAmount ||
+                        parseFloat(selectedCryptoAmount) <= 0)
                   }
                   className="w-full py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
                   style={{
-                    backgroundColor: fundMethod === "fiat" ? "#5ddf38" : "#ff8516",
+                    backgroundColor:
+                      fundMethod === "fiat" ? "#5ddf38" : "#ff8516",
                     color: "#0a0f18",
                   }}
                 >
@@ -6398,7 +9668,13 @@ function TradingInterface() {
                       Processing...
                     </span>
                   ) : (
-                    <>Transfer {fundMethod === "fiat" && fundAmount ? `$${parseFloat(fundAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""} to Traderoom</>
+                    <>
+                      Transfer{" "}
+                      {fundMethod === "fiat" && fundAmount
+                        ? `$${parseFloat(fundAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                        : ""}{" "}
+                      to Traderoom
+                    </>
                   )}
                 </button>
               </div>
@@ -6415,7 +9691,10 @@ function TradingInterface() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[10001] flex items-center justify-center p-3"
-            style={{ backgroundColor: "rgba(0, 0, 0, 0.85)", backdropFilter: "blur(4px)" }}
+            style={{
+              backgroundColor: "rgba(0, 0, 0, 0.85)",
+              backdropFilter: "blur(4px)",
+            }}
             onClick={() => {
               setShowWithdrawModal(false);
               setWithdrawAmount("");
@@ -6440,10 +9719,29 @@ function TradingInterface() {
               {/* Header - Compact */}
               <div className="px-5 pt-4 pb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: withdrawMethod === "fiat" ? "rgba(93,223,56,0.15)" : "rgba(255,133,22,0.15)" }}>
-                    <ArrowDownCircle className="w-4 h-4" style={{ color: withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516" }} />
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center"
+                    style={{
+                      backgroundColor:
+                        withdrawMethod === "fiat"
+                          ? "rgba(93,223,56,0.15)"
+                          : "rgba(255,133,22,0.15)",
+                    }}
+                  >
+                    <ArrowDownCircle
+                      className="w-4 h-4"
+                      style={{
+                        color:
+                          withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516",
+                      }}
+                    />
                   </div>
-                  <h2 className="text-base font-bold" style={{ color: "#eef2f7" }}>Withdraw Funds</h2>
+                  <h2
+                    className="text-base font-bold"
+                    style={{ color: "#eef2f7" }}
+                  >
+                    Withdraw Funds
+                  </h2>
                 </div>
                 <button
                   onClick={() => {
@@ -6457,7 +9755,17 @@ function TradingInterface() {
                   className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
                   style={{ color: "#4a6080" }}
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                  >
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
                 </button>
               </div>
 
@@ -6465,13 +9773,28 @@ function TradingInterface() {
               <div className="px-5 pb-5 space-y-3">
                 {withdrawSuccess ? (
                   <div className="text-center py-5">
-                    <div className="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(93,223,56,0.15)" }}>
-                      <svg className="w-7 h-7" viewBox="0 0 20 20" fill="#5ddf38">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    <div
+                      className="w-14 h-14 mx-auto mb-3 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "rgba(93,223,56,0.15)" }}
+                    >
+                      <svg
+                        className="w-7 h-7"
+                        viewBox="0 0 20 20"
+                        fill="#5ddf38"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </div>
-                    <h4 className="text-base font-bold text-white mb-1">Withdrawal Successful</h4>
-                    <p className="text-xs mb-4" style={{ color: "#4a6080" }}>{withdrawSuccess}</p>
+                    <h4 className="text-base font-bold text-white mb-1">
+                      Withdrawal Successful
+                    </h4>
+                    <p className="text-xs mb-4" style={{ color: "#4a6080" }}>
+                      {withdrawSuccess}
+                    </p>
                     <button
                       onClick={() => {
                         setShowWithdrawModal(false);
@@ -6489,22 +9812,46 @@ function TradingInterface() {
                 ) : (
                   <>
                     {/* Withdraw Method Tabs */}
-                    <div className="flex gap-1 p-0.5 rounded-lg" style={{ backgroundColor: "#1a2235" }}>
+                    <div
+                      className="flex gap-1 p-0.5 rounded-lg"
+                      style={{ backgroundColor: "#1a2235" }}
+                    >
                       <button
-                        onClick={() => { setWithdrawMethod("fiat"); setWithdrawCryptoSymbol(""); setWithdrawAmount(""); setWithdrawError(""); }}
+                        onClick={() => {
+                          setWithdrawMethod("fiat");
+                          setWithdrawCryptoSymbol("");
+                          setWithdrawAmount("");
+                          setWithdrawError("");
+                        }}
                         className={`flex-1 py-2 rounded-md text-xs font-semibold tracking-wide uppercase transition-all ${
-                          withdrawMethod === "fiat" ? "text-white shadow-md" : "text-gray-500 hover:text-gray-300"
+                          withdrawMethod === "fiat"
+                            ? "text-white shadow-md"
+                            : "text-gray-500 hover:text-gray-300"
                         }`}
-                        style={withdrawMethod === "fiat" ? { backgroundColor: "#5ddf38", color: "#0a0f18" } : {}}
+                        style={
+                          withdrawMethod === "fiat"
+                            ? { backgroundColor: "#5ddf38", color: "#0a0f18" }
+                            : {}
+                        }
                       >
                         To Fiat Balance
                       </button>
                       <button
-                        onClick={() => { setWithdrawMethod("crypto"); setWithdrawAmount(""); setWithdrawError(""); }}
+                        onClick={() => {
+                          setWithdrawMethod("crypto");
+                          setWithdrawAmount("");
+                          setWithdrawError("");
+                        }}
                         className={`flex-1 py-2 rounded-md text-xs font-semibold tracking-wide uppercase transition-all ${
-                          withdrawMethod === "crypto" ? "text-white shadow-md" : "text-gray-500 hover:text-gray-300"
+                          withdrawMethod === "crypto"
+                            ? "text-white shadow-md"
+                            : "text-gray-500 hover:text-gray-300"
                         }`}
-                        style={withdrawMethod === "crypto" ? { backgroundColor: "#ff8516", color: "#0a0f18" } : {}}
+                        style={
+                          withdrawMethod === "crypto"
+                            ? { backgroundColor: "#ff8516", color: "#0a0f18" }
+                            : {}
+                        }
                       >
                         To Crypto
                       </button>
@@ -6512,21 +9859,52 @@ function TradingInterface() {
 
                     {/* Balance Cards */}
                     <div className="grid grid-cols-2 gap-2">
-                      <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#141c2b", border: "1px solid #1e2a3a" }}>
-                        <div className="text-[10px] uppercase tracking-wider font-medium mb-1" style={{ color: "#4a6080" }}>Traderoom</div>
-                        <div className="text-sm font-bold tabular-nums" style={{ color: "#5ddf38" }}>
-                          ${traderoomBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <div
+                        className="p-2.5 rounded-lg"
+                        style={{
+                          backgroundColor: "#141c2b",
+                          border: "1px solid #1e2a3a",
+                        }}
+                      >
+                        <div
+                          className="text-[10px] uppercase tracking-wider font-medium mb-1"
+                          style={{ color: "#4a6080" }}
+                        >
+                          Traderoom
+                        </div>
+                        <div
+                          className="text-sm font-bold tabular-nums"
+                          style={{ color: "#5ddf38" }}
+                        >
+                          $
+                          {traderoomBalance.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
                         </div>
                       </div>
-                      <div className="p-2.5 rounded-lg" style={{ backgroundColor: "#141c2b", border: "1px solid #1e2a3a" }}>
-                        <div className="text-[10px] uppercase tracking-wider font-medium mb-1" style={{ color: "#4a6080" }}>
-                          {withdrawMethod === "fiat" ? "Fiat Balance" : "Withdraw To"}
+                      <div
+                        className="p-2.5 rounded-lg"
+                        style={{
+                          backgroundColor: "#141c2b",
+                          border: "1px solid #1e2a3a",
+                        }}
+                      >
+                        <div
+                          className="text-[10px] uppercase tracking-wider font-medium mb-1"
+                          style={{ color: "#4a6080" }}
+                        >
+                          {withdrawMethod === "fiat"
+                            ? "Fiat Balance"
+                            : "Withdraw To"}
                         </div>
-                        <div className="text-sm font-bold tabular-nums" style={{ color: "#ffffff" }}>
-                          {withdrawMethod === "fiat" 
+                        <div
+                          className="text-sm font-bold tabular-nums"
+                          style={{ color: "#ffffff" }}
+                        >
+                          {withdrawMethod === "fiat"
                             ? `$${realAccountBalanceUSD.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                            : withdrawCryptoSymbol || "Select crypto"
-                          }
+                            : withdrawCryptoSymbol || "Select crypto"}
                         </div>
                       </div>
                     </div>
@@ -6535,26 +9913,58 @@ function TradingInterface() {
                       <>
                         {/* Crypto Selection Grid */}
                         <div>
-                          <label className="text-xs font-medium mb-1.5 block" style={{ color: "#4a6080" }}>Select Cryptocurrency</label>
+                          <label
+                            className="text-xs font-medium mb-1.5 block"
+                            style={{ color: "#4a6080" }}
+                          >
+                            Select Cryptocurrency
+                          </label>
                           <div className="grid grid-cols-4 gap-1.5">
-                            {["BTC", "ETH", "BNB", "SOL", "XRP", "DOGE", "ADA", "DOT"].map((sym) => {
+                            {[
+                              "BTC",
+                              "ETH",
+                              "BNB",
+                              "SOL",
+                              "XRP",
+                              "DOGE",
+                              "ADA",
+                              "DOT",
+                            ].map((sym) => {
                               const price = getCryptoPrice(sym);
                               const isSelected = withdrawCryptoSymbol === sym;
                               return (
                                 <button
                                   key={sym}
-                                  onClick={() => { setWithdrawCryptoSymbol(sym); setWithdrawError(""); }}
+                                  onClick={() => {
+                                    setWithdrawCryptoSymbol(sym);
+                                    setWithdrawError("");
+                                  }}
                                   className="p-2 rounded-lg text-center transition-all"
                                   style={{
-                                    backgroundColor: isSelected ? "rgba(255,133,22,0.12)" : "#141c2b",
+                                    backgroundColor: isSelected
+                                      ? "rgba(255,133,22,0.12)"
+                                      : "#141c2b",
                                     border: `1px solid ${isSelected ? "#ff8516" : "#1e2a3a"}`,
                                   }}
                                 >
                                   <CryptoIcon symbol={sym} size="sm" />
-                                  <div className="text-[10px] font-bold mt-1" style={{ color: isSelected ? "#ff8516" : "#8b9ab8" }}>{sym}</div>
+                                  <div
+                                    className="text-[10px] font-bold mt-1"
+                                    style={{
+                                      color: isSelected ? "#ff8516" : "#8b9ab8",
+                                    }}
+                                  >
+                                    {sym}
+                                  </div>
                                   {price?.price && (
-                                    <div className="text-[9px] tabular-nums" style={{ color: "#4a6080" }}>
-                                      ${price.price >= 1000 ? `${(price.price / 1000).toFixed(1)}k` : price.price.toFixed(2)}
+                                    <div
+                                      className="text-[9px] tabular-nums"
+                                      style={{ color: "#4a6080" }}
+                                    >
+                                      $
+                                      {price.price >= 1000
+                                        ? `${(price.price / 1000).toFixed(1)}k`
+                                        : price.price.toFixed(2)}
                                     </div>
                                   )}
                                 </button>
@@ -6568,18 +9978,41 @@ function TradingInterface() {
                     {/* Amount Input */}
                     <div>
                       <div className="flex items-center justify-between mb-1.5">
-                        <label className="text-xs font-medium" style={{ color: "#4a6080" }}>Amount (USD)</label>
+                        <label
+                          className="text-xs font-medium"
+                          style={{ color: "#4a6080" }}
+                        >
+                          Amount (USD)
+                        </label>
                         <button
-                          onClick={() => setWithdrawAmount((Math.floor(traderoomBalance * 100) / 100).toString())}
+                          onClick={() =>
+                            setWithdrawAmount(
+                              (
+                                Math.floor(traderoomBalance * 100) / 100
+                              ).toString(),
+                            )
+                          }
                           disabled={traderoomBalance <= 0}
                           className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded transition-all hover:opacity-80 disabled:opacity-30"
-                          style={{ backgroundColor: withdrawMethod === "fiat" ? "rgba(93,223,56,0.12)" : "rgba(255,133,22,0.12)", color: withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516" }}
+                          style={{
+                            backgroundColor:
+                              withdrawMethod === "fiat"
+                                ? "rgba(93,223,56,0.12)"
+                                : "rgba(255,133,22,0.12)",
+                            color:
+                              withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516",
+                          }}
                         >
                           Use Max
                         </button>
                       </div>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold" style={{ color: "#4a6080" }}>$</span>
+                        <span
+                          className="absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold"
+                          style={{ color: "#4a6080" }}
+                        >
+                          $
+                        </span>
                         <input
                           type="number"
                           value={withdrawAmount}
@@ -6591,15 +10024,27 @@ function TradingInterface() {
                             }
                           }}
                           onBlur={() => {
-                            if (withdrawAmount && !isNaN(parseFloat(withdrawAmount))) {
-                              setWithdrawAmount(parseFloat(withdrawAmount).toFixed(2));
+                            if (
+                              withdrawAmount &&
+                              !isNaN(parseFloat(withdrawAmount))
+                            ) {
+                              setWithdrawAmount(
+                                parseFloat(withdrawAmount).toFixed(2),
+                              );
                             }
                           }}
                           placeholder="0.00"
                           step="0.01"
                           className="w-full pl-8 pr-4 py-2.5 rounded-lg text-lg font-semibold tabular-nums focus:outline-none transition-all"
-                          style={{ backgroundColor: "#1a2235", border: "1px solid #2a3548", color: "#ffffff" }}
-                          onFocus={(e) => (e.target.style.borderColor = withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516")}
+                          style={{
+                            backgroundColor: "#1a2235",
+                            border: "1px solid #2a3548",
+                            color: "#ffffff",
+                          }}
+                          onFocus={(e) =>
+                            (e.target.style.borderColor =
+                              withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516")
+                          }
                         />
                       </div>
                     </div>
@@ -6609,10 +10054,21 @@ function TradingInterface() {
                       {[50, 100, 250, 500, 1000, 2500].map((amt) => (
                         <button
                           key={amt}
-                          onClick={() => setWithdrawAmount(Math.min(amt, Math.floor(traderoomBalance * 100) / 100).toString())}
+                          onClick={() =>
+                            setWithdrawAmount(
+                              Math.min(
+                                amt,
+                                Math.floor(traderoomBalance * 100) / 100,
+                              ).toString(),
+                            )
+                          }
                           disabled={traderoomBalance < amt}
                           className="py-1.5 rounded-md text-[11px] font-semibold tabular-nums transition-all hover:brightness-125 disabled:opacity-20 disabled:hover:brightness-100"
-                          style={{ backgroundColor: "#1a2235", color: "#8b9ab8", border: "1px solid #1e2a3a" }}
+                          style={{
+                            backgroundColor: "#1a2235",
+                            color: "#8b9ab8",
+                            border: "1px solid #1e2a3a",
+                          }}
                         >
                           {amt >= 1000 ? `${amt / 1000}k` : `$${amt}`}
                         </button>
@@ -6621,26 +10077,78 @@ function TradingInterface() {
 
                     {/* Transfer Preview */}
                     {withdrawAmount && parseFloat(withdrawAmount) > 0 && (
-                      <div className="p-2.5 rounded-lg space-y-1.5" style={{ backgroundColor: withdrawMethod === "fiat" ? "rgba(93,223,56,0.06)" : "rgba(255,133,22,0.06)", border: `1px solid ${withdrawMethod === "fiat" ? "rgba(93,223,56,0.15)" : "rgba(255,133,22,0.15)"}` }}>
+                      <div
+                        className="p-2.5 rounded-lg space-y-1.5"
+                        style={{
+                          backgroundColor:
+                            withdrawMethod === "fiat"
+                              ? "rgba(93,223,56,0.06)"
+                              : "rgba(255,133,22,0.06)",
+                          border: `1px solid ${withdrawMethod === "fiat" ? "rgba(93,223,56,0.15)" : "rgba(255,133,22,0.15)"}`,
+                        }}
+                      >
                         {withdrawMethod === "fiat" ? (
                           <div className="flex items-center justify-between">
-                            <span className="text-xs" style={{ color: "#8b9ab8" }}>New fiat balance</span>
-                            <span className="text-sm font-bold tabular-nums" style={{ color: "#5ddf38" }}>
-                              ${(realAccountBalanceUSD + parseFloat(withdrawAmount)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            <span
+                              className="text-xs"
+                              style={{ color: "#8b9ab8" }}
+                            >
+                              New fiat balance
+                            </span>
+                            <span
+                              className="text-sm font-bold tabular-nums"
+                              style={{ color: "#5ddf38" }}
+                            >
+                              $
+                              {(
+                                realAccountBalanceUSD +
+                                parseFloat(withdrawAmount)
+                              ).toLocaleString("en-US", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              })}
                             </span>
                           </div>
                         ) : withdrawCryptoSymbol ? (
                           <>
                             <div className="flex items-center justify-between">
-                              <span className="text-xs" style={{ color: "#8b9ab8" }}>You receive</span>
-                              <span className="text-sm font-bold tabular-nums" style={{ color: "#ff8516" }}>
-                                {((parseFloat(withdrawAmount) || 0) / (getCryptoPrice(withdrawCryptoSymbol)?.price || 1)).toFixed(8)} {withdrawCryptoSymbol}
+                              <span
+                                className="text-xs"
+                                style={{ color: "#8b9ab8" }}
+                              >
+                                You receive
+                              </span>
+                              <span
+                                className="text-sm font-bold tabular-nums"
+                                style={{ color: "#ff8516" }}
+                              >
+                                {(
+                                  (parseFloat(withdrawAmount) || 0) /
+                                  (getCryptoPrice(withdrawCryptoSymbol)
+                                    ?.price || 1)
+                                ).toFixed(8)}{" "}
+                                {withdrawCryptoSymbol}
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px]" style={{ color: "#4a6080" }}>Rate</span>
-                              <span className="text-[10px] tabular-nums" style={{ color: "#4a6080" }}>
-                                1 {withdrawCryptoSymbol} = ${(getCryptoPrice(withdrawCryptoSymbol)?.price || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              <span
+                                className="text-[10px]"
+                                style={{ color: "#4a6080" }}
+                              >
+                                Rate
+                              </span>
+                              <span
+                                className="text-[10px] tabular-nums"
+                                style={{ color: "#4a6080" }}
+                              >
+                                1 {withdrawCryptoSymbol} = $
+                                {(
+                                  getCryptoPrice(withdrawCryptoSymbol)?.price ||
+                                  0
+                                ).toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
                               </span>
                             </div>
                           </>
@@ -6650,9 +10158,28 @@ function TradingInterface() {
 
                     {/* Error */}
                     {withdrawError && (
-                      <div className="p-2.5 rounded-lg flex items-center gap-2" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-                        <span className="text-xs text-red-400">{withdrawError}</span>
+                      <div
+                        className="p-2.5 rounded-lg flex items-center gap-2"
+                        style={{
+                          backgroundColor: "rgba(239,68,68,0.08)",
+                          border: "1px solid rgba(239,68,68,0.2)",
+                        }}
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="#ef4444"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 8v4M12 16h.01" />
+                        </svg>
+                        <span className="text-xs text-red-400">
+                          {withdrawError}
+                        </span>
                       </div>
                     )}
 
@@ -6668,14 +10195,20 @@ function TradingInterface() {
                           setWithdrawError("Insufficient traderoom balance");
                           return;
                         }
-                        if (withdrawMethod === "crypto" && !withdrawCryptoSymbol) {
+                        if (
+                          withdrawMethod === "crypto" &&
+                          !withdrawCryptoSymbol
+                        ) {
                           setWithdrawError("Please select a cryptocurrency");
                           return;
                         }
                         if (withdrawMethod === "crypto") {
-                          const price = getCryptoPrice(withdrawCryptoSymbol)?.price;
+                          const price =
+                            getCryptoPrice(withdrawCryptoSymbol)?.price;
                           if (!price) {
-                            setWithdrawError(`Unable to get ${withdrawCryptoSymbol} price. Try again.`);
+                            setWithdrawError(
+                              `Unable to get ${withdrawCryptoSymbol} price. Try again.`,
+                            );
                             return;
                           }
                         }
@@ -6685,16 +10218,26 @@ function TradingInterface() {
 
                         try {
                           if (withdrawMethod === "fiat") {
-                            const result = await withdrawFromTraderoomAction(amount);
+                            const result =
+                              await withdrawFromTraderoomAction(amount);
                             if (result.success) {
-                              setTraderoomBalance(result.data.newTraderoomBalance);
-                              setRealAccountBalanceUSD(result.data.newFiatBalance);
-                              setWithdrawSuccess(`$${amount.toFixed(2)} has been transferred to your main balance.`);
+                              setTraderoomBalance(
+                                result.data.newTraderoomBalance,
+                              );
+                              setRealAccountBalanceUSD(
+                                result.data.newFiatBalance,
+                              );
+                              setWithdrawSuccess(
+                                `$${amount.toFixed(2)} has been transferred to your main balance.`,
+                              );
                             } else {
-                              setWithdrawError(result.error || "Withdrawal failed");
+                              setWithdrawError(
+                                result.error || "Withdrawal failed",
+                              );
                             }
                           } else {
-                            const price = getCryptoPrice(withdrawCryptoSymbol)?.price || 0;
+                            const price =
+                              getCryptoPrice(withdrawCryptoSymbol)?.price || 0;
                             const cryptoAmount = amount / price;
                             const result = await withdrawToCryptoAction({
                               symbol: withdrawCryptoSymbol,
@@ -6702,23 +10245,45 @@ function TradingInterface() {
                               price,
                             });
                             if (result.success) {
-                              setTraderoomBalance(result.data.newTraderoomBalance);
-                              setCryptoAssets(prev => {
-                                const existing = prev.findIndex(a => a.symbol.toUpperCase() === withdrawCryptoSymbol.toUpperCase());
+                              setTraderoomBalance(
+                                result.data.newTraderoomBalance,
+                              );
+                              setCryptoAssets((prev) => {
+                                const existing = prev.findIndex(
+                                  (a) =>
+                                    a.symbol.toUpperCase() ===
+                                    withdrawCryptoSymbol.toUpperCase(),
+                                );
                                 if (existing >= 0) {
                                   const updated = [...prev];
-                                  updated[existing] = { ...updated[existing], amount: updated[existing].amount + cryptoAmount };
+                                  updated[existing] = {
+                                    ...updated[existing],
+                                    amount:
+                                      updated[existing].amount + cryptoAmount,
+                                  };
                                   return updated;
                                 }
-                                return [...prev, { symbol: withdrawCryptoSymbol.toUpperCase(), amount: cryptoAmount }];
+                                return [
+                                  ...prev,
+                                  {
+                                    symbol: withdrawCryptoSymbol.toUpperCase(),
+                                    amount: cryptoAmount,
+                                  },
+                                ];
                               });
-                              setWithdrawSuccess(`$${amount.toFixed(2)} withdrawn as ${cryptoAmount.toFixed(8)} ${withdrawCryptoSymbol} to your portfolio.`);
+                              setWithdrawSuccess(
+                                `$${amount.toFixed(2)} withdrawn as ${cryptoAmount.toFixed(8)} ${withdrawCryptoSymbol} to your portfolio.`,
+                              );
                             } else {
-                              setWithdrawError(result.error || "Withdrawal failed");
+                              setWithdrawError(
+                                result.error || "Withdrawal failed",
+                              );
                             }
                           }
                         } catch (error) {
-                          setWithdrawError("An error occurred. Please try again.");
+                          setWithdrawError(
+                            "An error occurred. Please try again.",
+                          );
                         } finally {
                           setIsWithdrawing(false);
                         }
@@ -6732,7 +10297,8 @@ function TradingInterface() {
                       }
                       className="w-full py-2.5 rounded-xl font-bold text-sm tracking-wide transition-all disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.98]"
                       style={{
-                        backgroundColor: withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516",
+                        backgroundColor:
+                          withdrawMethod === "fiat" ? "#5ddf38" : "#ff8516",
                         color: "#0a0f18",
                       }}
                     >
@@ -6742,7 +10308,15 @@ function TradingInterface() {
                           Processing...
                         </span>
                       ) : (
-                        <>Withdraw {withdrawAmount && parseFloat(withdrawAmount) > 0 ? `$${parseFloat(withdrawAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""} {withdrawMethod === "crypto" && withdrawCryptoSymbol ? `to ${withdrawCryptoSymbol}` : ""}</>
+                        <>
+                          Withdraw{" "}
+                          {withdrawAmount && parseFloat(withdrawAmount) > 0
+                            ? `$${parseFloat(withdrawAmount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            : ""}{" "}
+                          {withdrawMethod === "crypto" && withdrawCryptoSymbol
+                            ? `to ${withdrawCryptoSymbol}`
+                            : ""}
+                        </>
                       )}
                     </button>
                   </>

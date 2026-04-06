@@ -20,6 +20,10 @@ interface ChartGridProps {
   activeTradeEntryTime?: number;
   // Candle interval for chart
   candleInterval?: string;
+  // Hovered trade button for dynamic price line color
+  hoveredButton?: "higher" | "lower" | null;
+  // Callback with the timestamp of the latest candle on the chart
+  onLastCandleTimestamp?: (timestamp: number) => void;
 }
 
 export default function ChartGrid({
@@ -47,6 +51,8 @@ export default function ChartGrid({
   activeTradeExpirationTime,
   activeTradeEntryTime,
   candleInterval,
+  hoveredButton,
+  onLastCandleTimestamp,
 }: ChartGridProps) {
   // Initialize chart symbols based on grid type
   const getInitialSymbols = () => {
@@ -89,9 +95,8 @@ export default function ChartGrid({
     }
   };
 
-  const [chartSymbols, setChartSymbols] = useState<string[]>(
-    getInitialSymbols()
-  );
+  const [chartSymbols, setChartSymbols] =
+    useState<string[]>(getInitialSymbols());
 
   // Update chart symbol for a specific index
   const updateChartSymbol = (index: number, symbol: string) => {
@@ -107,8 +112,8 @@ export default function ChartGrid({
         // Single chart
         return (
           <div className="w-full h-full">
-            <RealTimeTradingChart 
-              symbol={chartSymbols[0]} 
+            <RealTimeTradingChart
+              symbol={chartSymbols[0]}
               onPriceYPosition={onPriceYPosition}
               onLivePriceUpdate={onLivePriceUpdate}
               onPriceToYConverter={onPriceToYConverter}
@@ -119,6 +124,8 @@ export default function ChartGrid({
               activeTradeExpirationTime={activeTradeExpirationTime}
               activeTradeEntryTime={activeTradeEntryTime}
               interval={candleInterval}
+              hoveredButton={hoveredButton}
+              onLastCandleTimestamp={onLastCandleTimestamp}
             />
           </div>
         );
@@ -233,7 +240,12 @@ export default function ChartGrid({
       default:
         return (
           <div className="w-full h-full">
-            <RealTimeTradingChart symbol={chartSymbols[0]} onPriceYPosition={onPriceYPosition} onPriceToYConverter={onPriceToYConverter} onTimeToXConverter={onTimeToXConverter} />
+            <RealTimeTradingChart
+              symbol={chartSymbols[0]}
+              onPriceYPosition={onPriceYPosition}
+              onPriceToYConverter={onPriceToYConverter}
+              onTimeToXConverter={onTimeToXConverter}
+            />
           </div>
         );
     }
