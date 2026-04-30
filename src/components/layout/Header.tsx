@@ -43,7 +43,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   const { data: session } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  
+
   // Use light logo in light mode, dark logo in dark mode
   const logoSrc = !isDark ? "/M4LightLogo.png" : "/m4capitallogo1.png";
 
@@ -123,12 +123,12 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
   // Determine header background based on scroll and theme
   const getHeaderBg = () => {
     if (isScrolled) {
-      return !isDark 
-        ? "bg-white text-gray-900 shadow-md" 
-        : "bg-gray-700 text-white shadow-md";
+      return !isDark
+        ? "bg-white text-gray-900 shadow-md"
+        : "bg-[#1a1a1a]/95 backdrop-blur-md text-white shadow-md";
     }
-    return !isDark 
-      ? "bg-transparent text-gray-900" 
+    return !isDark
+      ? "bg-transparent text-gray-900"
       : "bg-transparent text-white";
   };
 
@@ -160,16 +160,20 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           >
             <button
               onClick={() => toggleDropdown("download")}
-              className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
+              className={`flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                 activeDropdown === "download"
-                  ? "text-orange-500 bg-gray-700"
-                  : ""
-              } hover:text-orange-500`}
+                  ? isDark
+                    ? "border border-white/20 text-white"
+                    : "border border-gray-300 text-gray-900"
+                  : isDark
+                    ? "border border-transparent text-white/80 hover:text-white"
+                    : "border border-transparent text-gray-600 hover:text-gray-900"
+              }`}
             >
               Download App
               <ChevronDown
-                size={14}
-                className={`ml-1 transition-transform duration-300 ${
+                size={16}
+                className={`transition-transform duration-200 ${
                   activeDropdown === "download" ? "rotate-180" : ""
                 }`}
               />
@@ -183,16 +187,20 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           >
             <button
               onClick={() => toggleDropdown("traders")}
-              className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
+              className={`flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
                 activeDropdown === "traders"
-                  ? "text-orange-500 bg-gray-700"
-                  : ""
-              } hover:text-orange-500`}
+                  ? isDark
+                    ? "border border-white/20 text-white"
+                    : "border border-gray-300 text-gray-900"
+                  : isDark
+                    ? "border border-transparent text-white/80 hover:text-white"
+                    : "border border-transparent text-gray-600 hover:text-gray-900"
+              }`}
             >
               For Traders
               <ChevronDown
-                size={14}
-                className={`ml-1 transition-transform duration-300 ${
+                size={16}
+                className={`transition-transform duration-200 ${
                   activeDropdown === "traders" ? "rotate-180" : ""
                 }`}
               />
@@ -206,14 +214,20 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
           >
             <button
               onClick={() => toggleDropdown("about")}
-              className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
-                activeDropdown === "about" ? "text-orange-500 bg-gray-700" : ""
-              } hover:text-orange-500`}
+              className={`flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                activeDropdown === "about"
+                  ? isDark
+                    ? "border border-white/20 text-white"
+                    : "border border-gray-300 text-gray-900"
+                  : isDark
+                    ? "border border-transparent text-white/80 hover:text-white"
+                    : "border border-transparent text-gray-600 hover:text-gray-900"
+              }`}
             >
               About Us
               <ChevronDown
-                size={14}
-                className={`ml-1 transition-transform duration-300 ${
+                size={16}
+                className={`transition-transform duration-200 ${
                   activeDropdown === "about" ? "rotate-180" : ""
                 }`}
               />
@@ -232,14 +246,20 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
             >
               <button
                 onClick={() => toggleDropdown("lang")}
-                className={`flex items-center px-2 py-1 rounded-lg transition-all duration-300 hover:bg-gray-700 hover:scale-105 text-sm font-bold ${
-                  activeDropdown === "lang" ? "text-orange-500 bg-gray-700" : ""
-                } hover:text-orange-500`}
+                className={`flex items-center gap-1 px-4 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                  activeDropdown === "lang"
+                    ? isDark
+                      ? "border border-white/20 text-white"
+                      : "border border-gray-300 text-gray-900"
+                    : isDark
+                      ? "border border-transparent text-white/80 hover:text-white"
+                      : "border border-transparent text-gray-600 hover:text-gray-900"
+                }`}
               >
                 EN
                 <ChevronDown
-                  size={14}
-                  className={`ml-1 transition-transform duration-300 ${
+                  size={16}
+                  className={`transition-transform duration-200 ${
                     activeDropdown === "lang" ? "rotate-180" : ""
                   }`}
                 />
@@ -264,12 +284,12 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   variant="primary"
                   size="sm"
                   aria-label="Login"
-                  className="min-w-[100px] !bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
+                  className="!bg-gradient-to-b !from-gray-500 !via-gray-600 !via-40% !to-gray-700 !shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_#111827,0_10px_8px_-2px_rgba(0,0,0,0.5),0_15px_25px_-5px_rgba(0,0,0,0.4)] hover:!shadow-[inset_0_-2px_4px_0_rgba(0,0,0,0.2),0_8px_0_0_rgba(107,114,128,0.8),0_10px_8px_-2px_rgba(107,114,128,0.6),0_25px_50px_-12px_rgba(0,0,0,0.25),0_0_50px_rgba(107,114,128,0.5)] hover:translate-y-[2px]"
                 >
                   <LogIn size={16} />
                   <span>Log in</span>
                 </Button>
-                <Button onClick={onSignupClick} variant="primary" size="sm" className="min-w-[100px]">
+                <Button onClick={onSignupClick} variant="primary" size="sm">
                   Sign Up
                 </Button>
               </>
@@ -302,11 +322,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   <span className="hidden xs:inline">Log in</span>
                   <span className="xs:hidden">Login</span>
                 </Button>
-                <Button
-                  onClick={onSignupClick}
-                  variant="primary"
-                  size="sm"
-                >
+                <Button onClick={onSignupClick} variant="primary" size="sm">
                   <span>Sign Up</span>
                 </Button>
               </>
@@ -378,11 +394,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                     <span className="hidden xs:inline">Log in</span>
                     <span className="xs:hidden">Login</span>
                   </Button>
-                  <Button
-                    onClick={onSignupClick}
-                    variant="primary"
-                    size="sm"
-                  >
+                  <Button onClick={onSignupClick} variant="primary" size="sm">
                     <span>Sign Up</span>
                   </Button>
                 </>
@@ -414,7 +426,13 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                   className="w-full flex items-center justify-between bg-gray-100 dark:bg-gray-800 rounded-xl px-4 py-3.5 text-gray-900 dark:text-white font-semibold"
                 >
                   <span className="flex items-center gap-2">
-                    <Image src={getCurrencyFlagUrl(currentLanguage.flag)} alt={currentLanguage.name} width={20} height={20} className="rounded-full" />
+                    <Image
+                      src={getCurrencyFlagUrl(currentLanguage.flag)}
+                      alt={currentLanguage.name}
+                      width={20}
+                      height={20}
+                      className="rounded-full"
+                    />
                     <span>{currentLanguage.name}</span>
                   </span>
                   <ChevronDown
@@ -440,7 +458,13 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
                         }`}
                       >
                         <span className="flex items-center gap-3">
-                          <Image src={getCurrencyFlagUrl(lang.flag)} alt={lang.name} width={24} height={24} className="rounded-full" />
+                          <Image
+                            src={getCurrencyFlagUrl(lang.flag)}
+                            alt={lang.name}
+                            width={24}
+                            height={24}
+                            className="rounded-full"
+                          />
                           <span className="text-gray-900 dark:text-white">
                             {lang.name}
                           </span>

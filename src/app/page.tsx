@@ -69,38 +69,41 @@ function Hero() {
   };
 
   // Use React.useMemo to regenerate heroContent when language changes
-  const heroContent = React.useMemo(() => [
-    {
-      title: `${t("hero.title1")} ${t("hero.title2")} ${t("hero.title3")}`,
-      description: t("hero.description"),
-      titleAnimation: "slideLeft",
-      descAnimation: "slideRight",
-    },
-    {
-      title: t("hero.slide2.title"),
-      description: t("hero.slide2.description"),
-      titleAnimation: "slideRight",
-      descAnimation: "fadeInUp",
-    },
-    {
-      title: t("hero.slide3.title"),
-      description: t("hero.slide3.description"),
-      titleAnimation: "fadeInDown",
-      descAnimation: "scaleUp",
-    },
-    {
-      title: t("hero.slide4.title"),
-      description: t("hero.slide4.description"),
-      titleAnimation: "scaleUp",
-      descAnimation: "slideLeft",
-    },
-    {
-      title: t("hero.slide5.title"),
-      description: t("hero.slide5.description"),
-      titleAnimation: "fadeInUp",
-      descAnimation: "fadeInDown",
-    },
-  ], [language, t]);
+  const heroContent = React.useMemo(
+    () => [
+      {
+        title: `${t("hero.title1")} ${t("hero.title2")} ${t("hero.title3")}`,
+        description: t("hero.description"),
+        titleAnimation: "slideLeft",
+        descAnimation: "slideRight",
+      },
+      {
+        title: t("hero.slide2.title"),
+        description: t("hero.slide2.description"),
+        titleAnimation: "slideRight",
+        descAnimation: "fadeInUp",
+      },
+      {
+        title: t("hero.slide3.title"),
+        description: t("hero.slide3.description"),
+        titleAnimation: "fadeInDown",
+        descAnimation: "scaleUp",
+      },
+      {
+        title: t("hero.slide4.title"),
+        description: t("hero.slide4.description"),
+        titleAnimation: "scaleUp",
+        descAnimation: "slideLeft",
+      },
+      {
+        title: t("hero.slide5.title"),
+        description: t("hero.slide5.description"),
+        titleAnimation: "fadeInUp",
+        descAnimation: "fadeInDown",
+      },
+    ],
+    [language, t],
+  );
 
   const animationVariants: AnimationVariants = {
     slideLeft: {
@@ -135,8 +138,12 @@ function Hero() {
   const [descriptionIndex, setDescriptionIndex] = useState(0);
   const [title, setTitle] = useState<React.ReactNode>(heroContent[0].title);
   const [description, setDescription] = useState(heroContent[0].description);
-  const [titleAnimation, setTitleAnimation] = useState(heroContent[0].titleAnimation);
-  const [descAnimation, setDescAnimation] = useState(heroContent[0].descAnimation);
+  const [titleAnimation, setTitleAnimation] = useState(
+    heroContent[0].titleAnimation,
+  );
+  const [descAnimation, setDescAnimation] = useState(
+    heroContent[0].descAnimation,
+  );
 
   // Update title and description when language changes
   useEffect(() => {
@@ -191,7 +198,14 @@ function Hero() {
       <CursorSpotlight />
 
       {/* Optional subtle pattern overlay */}
-      <div className="absolute inset-0 opacity-10 dark:opacity-10 z-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+      <div
+        className="absolute inset-0 opacity-10 dark:opacity-10 z-0"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 2px 2px, rgba(255,255,255,0.15) 1px, transparent 0)",
+          backgroundSize: "32px 32px",
+        }}
+      />
 
       {/* Particle System */}
       <div className="absolute inset-0 z-[2]">
@@ -246,14 +260,28 @@ function Hero() {
       {/* Testimonial Slider - Bottom Right */}
       <TestimonialSlider />
 
-      {/* Trustpilot Badge - separate positioning */}
+      {/* Trustpilot Badge - IQ Option style */}
       <div className="absolute inset-0 z-20 pointer-events-none flex items-end justify-center pb-44">
-        <div className="flex items-center gap-2 bg-gray-800/10 dark:bg-white/5 backdrop-blur-sm px-4 py-1 rounded-full">
-          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-sm">★</span>
-          </div>
-          <span className="text-gray-900 dark:text-white text-sm font-medium">4.5 Trustpilot</span>
-        </div>
+        <p className="flex items-center text-[16px] font-medium leading-6 tracking-[0.1px] text-[#4a4a4a] dark:text-[#afadac]">
+          <svg
+            width="25"
+            height="24"
+            viewBox="0 0 25 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="mr-3"
+          >
+            <path
+              d="M0.5 12C0.5 18.6274 5.87258 24 12.5 24C19.1274 24 24.5 18.6274 24.5 12C24.5 5.37258 19.1274 0 12.5 0C5.87258 0 0.5 5.37258 0.5 12Z"
+              fill="#219653"
+            />
+            <path
+              d="M12.4999 16.175L16.1499 15.25L17.6749 19.95L12.4999 16.175ZM20.8999 10.1H14.4749L12.4999 4.04999L10.5249 10.1H4.09985L9.29986 13.85L7.32485 19.9L12.5249 16.15L15.7249 13.85L20.8999 10.1Z"
+              fill="white"
+            />
+          </svg>
+          4.5 ★ on Trustpilot
+        </p>
       </div>
 
       {/* Crypto Price Ticker at bottom - fixed position */}

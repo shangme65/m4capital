@@ -76,6 +76,8 @@ import TradingCalculators from "@/components/client/TradingCalculators";
 import RealTimeTradingChart from "@/components/client/RealTimeTradingChart";
 import ChartGrid from "@/components/client/ChartGrid";
 import ErrorBoundary from "@/components/client/ErrorBoundary";
+import MobileTradingView from "@/components/traderoom/MobileTradingView";
+import DesktopTradingPanel from "@/components/traderoom/DesktopTradingPanel";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -166,7 +168,7 @@ const AssetFlag = ({
   return <span className={className}>{flag}</span>;
 };
 
-// Active trade interface for binary options
+// Adjust ActiveTrade to make 'result' required for lastFinishedTrade context
 interface ActiveTrade {
   id: string;
   symbol: string;
@@ -178,15 +180,29 @@ interface ActiveTrade {
   expirationTime: number;
   expirationSeconds: number;
   status: "active" | "won" | "lost" | "pending";
-  result?: number;
+  result: number; // Make result required
   exitPrice?: number;
 }
+
+type FinishedTrade = Omit<ActiveTrade, "status"> & {
+  status: "won" | "lost";
+};
 
 function TradingInterface() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { formatAmount, preferredCurrency, exchangeRates, convertAmount } =
     useCurrency();
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const [amount, setAmount] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("m4_trade_amount");
@@ -267,7 +283,6 @@ function TradingInterface() {
     top: number;
     right: number;
   } | null>(null);
-  const expirationButtonRef = useRef<HTMLDivElement>(null);
   const [isBalanceDropdownOpen, setIsBalanceDropdownOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
@@ -376,7 +391,7 @@ function TradingInterface() {
 
   // Last finished trade - stays visible until new trade is placed
   const [lastFinishedTrade, setLastFinishedTrade] =
-    useState<ActiveTrade | null>(null);
+    useState<FinishedTrade | null>(null);
   // Session accumulated results across all trades
   const [sessionTotalResult, setSessionTotalResult] = useState(0);
   const [sessionTotalInvested, setSessionTotalInvested] = useState(0);
@@ -2141,6 +2156,7 @@ function TradingInterface() {
       expirationTime,
       expirationSeconds: effectiveExpirationSeconds,
       status: "active",
+      result: 0, // Default result value for new trades
     };
 
     setActiveTrades((prev) => [...prev, newTrade]);
@@ -2298,6 +2314,19 @@ function TradingInterface() {
     return () => clearInterval(interval);
   }, [currentPrice, selectedAccountType]);
 
+  // Close tab handler for mobile (must be before early returns to respect Rules of Hooks)
+  const handleCloseTab = useCallback(
+    (index: number) => {
+      const newTabs = openTabs.filter((_, i) => i !== index);
+      setOpenTabs(newTabs);
+      if (activeTab === index && newTabs.length > 0) {
+        setActiveTab(0);
+        setSelectedSymbol(newTabs[0].symbol);
+      }
+    },
+    [openTabs, activeTab],
+  );
+
   if (!mounted) {
     return (
       <div
@@ -2431,2044 +2460,2166 @@ function TradingInterface() {
           scrollbar-width: none;
         }
       `}</style>
-      <div
-        className="h-screen w-screen flex flex-col m-0"
-        style={{
-          backgroundColor: "#070c15",
-          color: "#eef2f7",
-          fontFamily: '"Inter", Arial, sans-serif',
-          margin: 0,
-          padding: 0,
-          paddingBottom: "40px" /* footer height */,
-          overflow: "hidden",
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 9999,
-        }}
-      >
-        {/* M4Capital Header */}
-        <header
-          className="flex-shrink-0 relative z-[100]"
+
+      {/* ─── Mobile Trading View ─── */}
+      {isMobile && (
+        <MobileTradingView
+          selectedSymbol={selectedSymbol}
+          currentPrice={currentPrice}
+          priceDirection={priceDirection}
+          onSymbolChange={(sym) => {
+            setSelectedSymbol(sym);
+          }}
+          AssetFlag={AssetFlag}
+          symbols={symbols}
+          openTabs={openTabs}
+          activeTab={activeTab}
+          onTabChange={(index) => {
+            setActiveTab(index);
+            setSelectedSymbol(openTabs[index].symbol);
+          }}
+          onCloseTab={handleCloseTab}
+          onAddAsset={() => setShowAddAssetModal(true)}
+          amount={amount}
+          amountInput={amountInput}
+          onAmountChange={(val) => {
+            setAmount(val);
+            localStorage.setItem("m4_trade_amount", val.toString());
+          }}
+          onAmountInputChange={setAmountInput}
+          expirationSeconds={expirationSeconds}
+          countdown={countdown}
+          onExpirationChange={setExpirationSeconds}
+          onExecuteTrade={executeTrade}
+          isExecutingTrade={isExecutingTrade}
+          tradeDirection={tradeDirection}
+          selectedAccountType={selectedAccountType}
+          traderoomBalance={traderoomBalance}
+          practiceAccountBalance={practiceAccountBalance}
+          onAccountTypeChange={setSelectedAccountType}
+          onDeposit={() => setShowFundModal(true)}
+          activeTrades={activeTrades}
+          selectedChartGrid={1}
+          candleInterval={candleInterval}
+          hoveredButton={hoveredButton}
+          onHoveredButton={setHoveredButton}
+          onPriceYPosition={setPriceYPosition}
+          onLivePriceUpdate={handleLivePriceUpdate}
+          onPriceToYConverter={handlePriceToYConverter}
+          onTimeToXConverter={handleTimeToXConverter}
+          onLastCandleTimestamp={handleLastCandleTimestamp}
+          activeTradeExpirationTime={
+            activeTrades.find((t) => t.status === "active")?.expirationTime
+          }
+          activeTradeEntryTime={
+            activeTrades.find((t) => t.status === "active")?.entryTime
+          }
+          onShowHistory={() => setShowTradingHistory(true)}
+          onShowPortfolio={() => setShowPortfolioPanel(true)}
+          onShowAddAsset={() => setShowAddAssetModal(true)}
+        />
+      )}
+
+      {/* ─── Desktop Trading View ─── */}
+      {!isMobile && (
+        <div
+          className="h-screen w-screen flex flex-col m-0"
           style={{
-            backgroundColor: "#0a1020",
-            borderBottom: "1px solid #1a2d45",
+            backgroundColor: "#070c15",
+            color: "#eef2f7",
+            fontFamily: '"Inter", Arial, sans-serif',
+            margin: 0,
+            padding: 0,
+            paddingBottom: "40px" /* footer height */,
+            overflow: "hidden",
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 9999,
           }}
         >
-          <div className="flex items-center justify-between h-12 md:h-16 lg:h-20 px-2 md:px-3 lg:px-4">
-            {/* Left: Logo and Navigation */}
-            <div className="flex items-center space-x-1 md:space-x-2 lg:space-x-3">
+          {/* M4Capital Header */}
+          <header
+            className="flex-shrink-0 relative z-[100]"
+            style={{
+              backgroundColor: "#0a1020",
+              borderBottom: "1px solid #1a2d45",
+            }}
+          >
+            <div className="flex items-center justify-between h-12 md:h-16 lg:h-20 px-2 md:px-3 lg:px-4">
+              {/* Left: Logo and Navigation */}
               <div className="flex items-center space-x-1 md:space-x-2 lg:space-x-3">
-                {/* Desktop: logo1, Mobile: logo2 */}
-                <div className="hidden md:block">
-                  <Image
-                    src="/m4capitallogo1.png"
-                    alt="M4Capital"
-                    width={120}
-                    height={40}
-                    className="object-contain w-16 md:w-20 lg:w-[120px]"
-                  />
+                <div className="flex items-center space-x-1 md:space-x-2 lg:space-x-3">
+                  {/* Desktop: logo1, Mobile: logo2 */}
+                  <div className="hidden md:block">
+                    <Image
+                      src="/m4capitallogo1.png"
+                      alt="M4Capital"
+                      width={120}
+                      height={40}
+                      className="object-contain w-16 md:w-20 lg:w-[120px]"
+                    />
+                  </div>
+                  <div className="block md:hidden w-8 h-8 relative">
+                    <Image
+                      src="/m4capitallogo2.png"
+                      alt="M4Capital"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
                 </div>
-                <div className="block md:hidden w-8 h-8 relative">
-                  <Image
-                    src="/m4capitallogo2.png"
-                    alt="M4Capital"
-                    fill
-                    className="object-contain"
-                  />
+
+                {/* Chart Grid Icon */}
+                <button
+                  onClick={() => setShowChartGrids(!showChartGrids)}
+                  className="rounded transition-all duration-200 hover:opacity-80 h-9 w-9 md:h-12 lg:h-[52px] md:w-12 lg:w-[52px] flex items-center justify-center"
+                  style={{
+                    backgroundColor: "transparent",
+                    border: "1px solid #6b6b6b",
+                  }}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8"
+                  >
+                    {/* Top-left box */}
+                    <rect
+                      x="4"
+                      y="4"
+                      width="7"
+                      height="7"
+                      fill="#8b8583"
+                      rx="1"
+                    />
+                    {/* Top-right box */}
+                    <rect
+                      x="13"
+                      y="4"
+                      width="7"
+                      height="7"
+                      fill="#8b8583"
+                      rx="1"
+                    />
+                    {/* Bottom-left box */}
+                    <rect
+                      x="4"
+                      y="13"
+                      width="7"
+                      height="7"
+                      fill="#8b8583"
+                      rx="1"
+                    />
+                    {/* Bottom-right box */}
+                    <rect
+                      x="13"
+                      y="13"
+                      width="7"
+                      height="7"
+                      fill="#8b8583"
+                      rx="1"
+                    />
+                  </svg>
+                </button>
+
+                {/* Trading Pair Tabs */}
+                <div className="flex items-center space-x-1">
+                  {openTabs.map((tab, index) => (
+                    <div
+                      key={`header-tab-${index}-${tab.symbol}-${tab.type}`}
+                      onClick={() => {
+                        setActiveTab(index);
+                        setSelectedSymbol(tab.symbol);
+                      }}
+                      className="relative group cursor-pointer rounded transition-all duration-200 h-9 md:h-11 lg:h-[52px]"
+                      style={{
+                        backgroundColor:
+                          activeTab === index
+                            ? "rgba(255, 133, 22, 0.08)"
+                            : "transparent",
+                        border: "1px solid #6b6b6b",
+                        paddingLeft: openTabs.length > 1 ? "12px" : "8px",
+                        paddingRight: "10px",
+                      }}
+                    >
+                      {/* Close button at top-left corner */}
+                      {openTabs.length > 1 && (
+                        <span
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const newTabs = openTabs.filter(
+                              (_, i) => i !== index,
+                            );
+                            setOpenTabs(newTabs);
+                            if (activeTab === index && newTabs.length > 0) {
+                              setActiveTab(0);
+                              setSelectedSymbol(newTabs[0].symbol);
+                            }
+                          }}
+                          className="absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 bg-gray-700 hover:bg-gray-600 rounded-full transition-all w-4 h-4 flex items-center justify-center cursor-pointer z-10"
+                          style={{
+                            color: "#ffffff",
+                            fontSize: "10px",
+                            lineHeight: 1,
+                          }}
+                        >
+                          ×
+                        </span>
+                      )}
+                      {(() => {
+                        const tabActiveTrades = activeTrades.filter(
+                          (t) =>
+                            t.symbol === tab.symbol && t.status === "active",
+                        );
+                        const hasActiveTrades = tabActiveTrades.length > 0;
+                        const hasFinishedResult =
+                          !hasActiveTrades && !!tab.lastResult;
+
+                        // Calculate countdown for earliest active trade on this tab
+                        let tradeCountdownSec = 0;
+                        if (hasActiveTrades) {
+                          const earliest = tabActiveTrades.reduce((a, b) =>
+                            a.expirationTime < b.expirationTime ? a : b,
+                          );
+                          tradeCountdownSec = Math.max(
+                            0,
+                            Math.ceil(
+                              (earliest.expirationTime - Date.now()) / 1000,
+                            ),
+                          );
+                        }
+
+                        // Calculate P/L for active trades
+                        let totalPL = 0;
+                        if (hasActiveTrades) {
+                          totalPL = tabActiveTrades.reduce((sum, trade) => {
+                            const priceChange = currentPrice - trade.entryPrice;
+                            const isWinning =
+                              (trade.direction === "higher" &&
+                                priceChange > 0) ||
+                              (trade.direction === "lower" && priceChange < 0);
+                            return (
+                              sum +
+                              (isWinning ? trade.amount * 0.85 : -trade.amount)
+                            );
+                          }, 0);
+                        }
+
+                        const countdownMin = Math.floor(tradeCountdownSec / 60);
+                        const countdownSecDisplay = tradeCountdownSec % 60;
+                        const countdownText =
+                          countdownMin > 0
+                            ? `${countdownMin}:${countdownSecDisplay.toString().padStart(2, "0")}`
+                            : `:${countdownSecDisplay.toString().padStart(2, "0")}`;
+
+                        // Calculate progress for the circular timer (0 to 1)
+                        const totalDuration = hasActiveTrades
+                          ? tabActiveTrades.reduce((a, b) =>
+                              a.expirationTime < b.expirationTime ? a : b,
+                            ).expirationSeconds
+                          : 0;
+                        const progress =
+                          totalDuration > 0
+                            ? 1 - tradeCountdownSec / totalDuration
+                            : 0;
+                        const radius = 12;
+                        const circumference = 2 * Math.PI * radius;
+                        const strokeDashoffset = circumference * (1 - progress);
+
+                        return (
+                          <div className="flex items-center space-x-1 md:space-x-1.5 lg:space-x-2 h-full">
+                            {/* Left icon: countdown circle for active trades, flag for others */}
+                            {hasActiveTrades ? (
+                              <div
+                                className="relative flex items-center justify-center"
+                                style={{ width: 28, height: 28 }}
+                              >
+                                <svg
+                                  width="28"
+                                  height="28"
+                                  viewBox="0 0 28 28"
+                                  className="absolute"
+                                >
+                                  {/* Background circle */}
+                                  <circle
+                                    cx="14"
+                                    cy="14"
+                                    r={radius}
+                                    fill="none"
+                                    stroke="#3a3a3a"
+                                    strokeWidth="2"
+                                  />
+                                  {/* Progress arc */}
+                                  <circle
+                                    cx="14"
+                                    cy="14"
+                                    r={radius}
+                                    fill="none"
+                                    stroke="#ff8516"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeDasharray={circumference}
+                                    strokeDashoffset={strokeDashoffset}
+                                    style={{
+                                      transform: "rotate(-90deg)",
+                                      transformOrigin: "center",
+                                      transition: "stroke-dashoffset 1s linear",
+                                    }}
+                                  />
+                                </svg>
+                                <span className="text-[9px] font-bold text-white z-10">
+                                  {countdownText}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-xs md:text-sm">
+                                <AssetFlag
+                                  flag={
+                                    symbols.find((s) => s.symbol === tab.symbol)
+                                      ?.flag || ""
+                                  }
+                                  symbol={tab.symbol}
+                                  size={20}
+                                  className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8"
+                                />
+                              </span>
+                            )}
+
+                            <div className="flex flex-col items-start">
+                              <span
+                                className="text-xs md:text-sm font-medium"
+                                style={{
+                                  color:
+                                    activeTab === index ? "#ffffff" : "#8b8b8b",
+                                }}
+                              >
+                                {tab.symbol}
+                              </span>
+
+                              {/* State 1: Ongoing trade - show P/L */}
+                              {hasActiveTrades && (
+                                <span
+                                  className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
+                                  style={{
+                                    color: totalPL >= 0 ? "#00c087" : "#ef4444",
+                                  }}
+                                >
+                                  {totalPL >= 0 ? "+" : ""}${" "}
+                                  {Math.abs(totalPL).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                              )}
+
+                              {/* State 2: Finished trade - show result */}
+                              {hasFinishedResult && tab.lastResult && (
+                                <span
+                                  className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
+                                  style={{
+                                    color:
+                                      tab.lastResult.status === "won"
+                                        ? "#00c087"
+                                        : "#ef4444",
+                                  }}
+                                >
+                                  {tab.lastResult.amount >= 0 ? "+$ " : "-$ "}
+                                  {Math.abs(
+                                    tab.lastResult.amount,
+                                  ).toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                              )}
+
+                              {/* State 3: Normal tab - show trade type */}
+                              {!hasActiveTrades && !hasFinishedResult && (
+                                <span
+                                  className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
+                                  style={{ color: "#8b8b8b" }}
+                                >
+                                  {tab.type}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ))}
+                  <button
+                    onClick={() => {
+                      setAddAssetSideTab("trending");
+                      setAddAssetSearch("");
+                      setShowAddAssetModal(true);
+                    }}
+                    className="rounded hover:bg-white/5 transition-all duration-200 flex items-center justify-center h-9 w-9 md:h-11 md:w-11 lg:h-[52px] lg:w-[52px]"
+                    style={{
+                      backgroundColor: "transparent",
+                      border: "1px solid #6b6b6b",
+                      color: "#8b8b8b",
+                    }}
+                  >
+                    <Plus className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
+                  </button>
                 </div>
               </div>
 
-              {/* Chart Grid Icon */}
-              <button
-                onClick={() => setShowChartGrids(!showChartGrids)}
-                className="rounded transition-all duration-200 hover:opacity-80 h-9 w-9 md:h-12 lg:h-[52px] md:w-12 lg:w-[52px] flex items-center justify-center"
-                style={{
-                  backgroundColor: "transparent",
-                  border: "1px solid #6b6b6b",
-                }}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8"
-                >
-                  {/* Top-left box */}
-                  <rect
-                    x="4"
-                    y="4"
-                    width="7"
-                    height="7"
-                    fill="#8b8583"
-                    rx="1"
-                  />
-                  {/* Top-right box */}
-                  <rect
-                    x="13"
-                    y="4"
-                    width="7"
-                    height="7"
-                    fill="#8b8583"
-                    rx="1"
-                  />
-                  {/* Bottom-left box */}
-                  <rect
-                    x="4"
-                    y="13"
-                    width="7"
-                    height="7"
-                    fill="#8b8583"
-                    rx="1"
-                  />
-                  {/* Bottom-right box */}
-                  <rect
-                    x="13"
-                    y="13"
-                    width="7"
-                    height="7"
-                    fill="#8b8583"
-                    rx="1"
-                  />
-                </svg>
-              </button>
-
-              {/* Trading Pair Tabs */}
-              <div className="flex items-center space-x-1">
-                {openTabs.map((tab, index) => (
-                  <div
-                    key={`header-tab-${index}-${tab.symbol}-${tab.type}`}
-                    onClick={() => {
-                      setActiveTab(index);
-                      setSelectedSymbol(tab.symbol);
-                    }}
-                    className="relative group cursor-pointer rounded transition-all duration-200 h-9 md:h-11 lg:h-[52px]"
-                    style={{
-                      backgroundColor:
-                        activeTab === index
-                          ? "rgba(255, 133, 22, 0.08)"
-                          : "transparent",
-                      border: "1px solid #6b6b6b",
-                      paddingLeft: openTabs.length > 1 ? "12px" : "8px",
-                      paddingRight: "10px",
-                    }}
+              {/* Right: Profile Avatar, Balance and Deposit */}
+              <div className="flex items-center space-x-1.5 md:space-x-2 lg:space-x-3">
+                {/* Profile Avatar with verified badge and dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() =>
+                      setIsProfileDropdownOpen(!isProfileDropdownOpen)
+                    }
+                    className="relative cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1"
                   >
-                    {/* Close button at top-left corner */}
-                    {openTabs.length > 1 && (
-                      <span
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const newTabs = openTabs.filter(
-                            (_, i) => i !== index,
-                          );
-                          setOpenTabs(newTabs);
-                          if (activeTab === index && newTabs.length > 0) {
-                            setActiveTab(0);
-                            setSelectedSymbol(newTabs[0].symbol);
-                          }
-                        }}
-                        className="absolute -top-1 -left-1 opacity-0 group-hover:opacity-100 bg-gray-700 hover:bg-gray-600 rounded-full transition-all w-4 h-4 flex items-center justify-center cursor-pointer z-10"
+                    <div className="w-7 h-7 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden border-2 border-gray-600">
+                      <Image
+                        src={session?.user?.image || "/avatars/default.png"}
+                        alt="Profile"
+                        width={40}
+                        height={40}
+                        className="object-cover"
+                      />
+                    </div>
+                    {/* Green verified checkmark badge */}
+                    <div className="absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 bg-[#5ddf38] rounded-full flex items-center justify-center border-2 border-[#1b1817]">
+                      <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
+                        <path
+                          d="M2 6L5 9L10 3"
+                          stroke="white"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <ChevronDown className="w-3 h-3 text-gray-400 ml-0.5" />
+                  </button>
+
+                  {/* Profile Dropdown Menu */}
+                  {isProfileDropdownOpen && (
+                    <>
+                      {/* Backdrop */}
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsProfileDropdownOpen(false)}
+                      />
+                      <div
+                        className="absolute top-full right-0 mt-2 z-50 rounded-lg shadow-2xl overflow-hidden flex"
                         style={{
-                          color: "#ffffff",
-                          fontSize: "10px",
-                          lineHeight: 1,
+                          backgroundColor: "#0a1020",
+                          border: "1px solid #3d3c4f",
+                          minWidth: "520px",
                         }}
                       >
-                        ×
-                      </span>
-                    )}
-                    {(() => {
-                      const tabActiveTrades = activeTrades.filter(
-                        (t) => t.symbol === tab.symbol && t.status === "active",
-                      );
-                      const hasActiveTrades = tabActiveTrades.length > 0;
-                      const hasFinishedResult =
-                        !hasActiveTrades && !!tab.lastResult;
-
-                      // Calculate countdown for earliest active trade on this tab
-                      let tradeCountdownSec = 0;
-                      if (hasActiveTrades) {
-                        const earliest = tabActiveTrades.reduce((a, b) =>
-                          a.expirationTime < b.expirationTime ? a : b,
-                        );
-                        tradeCountdownSec = Math.max(
-                          0,
-                          Math.ceil(
-                            (earliest.expirationTime - Date.now()) / 1000,
-                          ),
-                        );
-                      }
-
-                      // Calculate P/L for active trades
-                      let totalPL = 0;
-                      if (hasActiveTrades) {
-                        totalPL = tabActiveTrades.reduce((sum, trade) => {
-                          const priceChange = currentPrice - trade.entryPrice;
-                          const isWinning =
-                            (trade.direction === "higher" && priceChange > 0) ||
-                            (trade.direction === "lower" && priceChange < 0);
-                          return (
-                            sum +
-                            (isWinning ? trade.amount * 0.85 : -trade.amount)
-                          );
-                        }, 0);
-                      }
-
-                      const countdownMin = Math.floor(tradeCountdownSec / 60);
-                      const countdownSecDisplay = tradeCountdownSec % 60;
-                      const countdownText =
-                        countdownMin > 0
-                          ? `${countdownMin}:${countdownSecDisplay.toString().padStart(2, "0")}`
-                          : `:${countdownSecDisplay.toString().padStart(2, "0")}`;
-
-                      // Calculate progress for the circular timer (0 to 1)
-                      const totalDuration = hasActiveTrades
-                        ? tabActiveTrades.reduce((a, b) =>
-                            a.expirationTime < b.expirationTime ? a : b,
-                          ).expirationSeconds
-                        : 0;
-                      const progress =
-                        totalDuration > 0
-                          ? 1 - tradeCountdownSec / totalDuration
-                          : 0;
-                      const radius = 12;
-                      const circumference = 2 * Math.PI * radius;
-                      const strokeDashoffset = circumference * (1 - progress);
-
-                      return (
-                        <div className="flex items-center space-x-1 md:space-x-1.5 lg:space-x-2 h-full">
-                          {/* Left icon: countdown circle for active trades, flag for others */}
-                          {hasActiveTrades ? (
-                            <div
-                              className="relative flex items-center justify-center"
-                              style={{ width: 28, height: 28 }}
-                            >
-                              <svg
-                                width="28"
-                                height="28"
-                                viewBox="0 0 28 28"
-                                className="absolute"
-                              >
-                                {/* Background circle */}
-                                <circle
-                                  cx="14"
-                                  cy="14"
-                                  r={radius}
-                                  fill="none"
-                                  stroke="#3a3a3a"
-                                  strokeWidth="2"
-                                />
-                                {/* Progress arc */}
-                                <circle
-                                  cx="14"
-                                  cy="14"
-                                  r={radius}
-                                  fill="none"
-                                  stroke="#ff8516"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeDasharray={circumference}
-                                  strokeDashoffset={strokeDashoffset}
-                                  style={{
-                                    transform: "rotate(-90deg)",
-                                    transformOrigin: "center",
-                                    transition: "stroke-dashoffset 1s linear",
-                                  }}
-                                />
-                              </svg>
-                              <span className="text-[9px] font-bold text-white z-10">
-                                {countdownText}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-xs md:text-sm">
-                              <AssetFlag
-                                flag={
-                                  symbols.find((s) => s.symbol === tab.symbol)
-                                    ?.flag || ""
+                        {/* Left Panel - User Info */}
+                        <div
+                          className="p-4 w-[240px]"
+                          style={{
+                            backgroundColor: "#070c15",
+                            borderRight: "1px solid #3d3c4f",
+                          }}
+                        >
+                          {/* User Avatar and Name */}
+                          <div className="flex items-start gap-3 mb-4">
+                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-600 flex-shrink-0">
+                              <Image
+                                src={
+                                  session?.user?.image || "/avatars/default.png"
                                 }
-                                symbol={tab.symbol}
-                                size={20}
-                                className="w-5 h-5 md:w-6 md:h-6 lg:w-8 lg:h-8"
+                                alt="Profile"
+                                width={48}
+                                height={48}
+                                className="object-cover"
                               />
-                            </span>
-                          )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1">
+                                <span className="text-white font-semibold text-sm truncate max-w-[130px]">
+                                  {session?.user?.name || "User"}
+                                </span>
+                                <svg
+                                  className="w-4 h-4 text-[#5ddf38] flex-shrink-0"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                              <div className="text-xs text-gray-400 truncate">
+                                {session?.user?.email || ""}
+                              </div>
+                            </div>
+                          </div>
 
-                          <div className="flex flex-col items-start">
-                            <span
-                              className="text-xs md:text-sm font-medium"
-                              style={{
-                                color:
-                                  activeTab === index ? "#ffffff" : "#8b8b8b",
+                          {/* Currency */}
+                          <div className="flex items-center gap-2 mb-4">
+                            <CryptoIcon symbol={preferredCurrency} size="sm" />
+                            <span className="text-sm text-[#5ddf38]">
+                              {preferredCurrency}
+                            </span>
+                          </div>
+
+                          {/* Date and User ID */}
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">
+                                Date registered
+                              </div>
+                              <div className="text-sm text-white">
+                                {(session?.user as any)?.createdAt
+                                  ? new Date(
+                                      (session?.user as any)
+                                        .createdAt as string,
+                                    ).toLocaleDateString("en-GB", {
+                                      day: "2-digit",
+                                      month: "short",
+                                      year: "numeric",
+                                    })
+                                  : "17 Apr 2025"}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="text-xs text-gray-500 mb-1">
+                                User ID
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm text-white">
+                                  {(session?.user as any)?.accountNumber ||
+                                    "177863954"}
+                                </span>
+                                <button
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(
+                                      (session?.user as any)?.accountNumber ||
+                                        "177863954",
+                                    );
+                                  }}
+                                  className="text-gray-400 hover:text-white transition-colors"
+                                >
+                                  <svg
+                                    className="w-3.5 h-3.5"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <rect
+                                      x="9"
+                                      y="9"
+                                      width="13"
+                                      height="13"
+                                      rx="2"
+                                      ry="2"
+                                    ></rect>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                  </svg>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right Panel - Menu Items */}
+                        <div className="flex-1 py-2">
+                          {/* VIP Program - Highlighted */}
+                          <button
+                            onClick={() => {
+                              setIsProfileDropdownOpen(false);
+                              router.push("/dashboard?tab=vip");
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
+                            style={{ backgroundColor: "#5ddf38" }}
+                          >
+                            <Crown className="w-5 h-5 text-[#1b1817]" />
+                            <span className="text-sm font-medium text-[#1b1817]">
+                              VIP program
+                            </span>
+                          </button>
+
+                          {/* Menu Items */}
+                          {[
+                            {
+                              icon: Camera,
+                              label: "Change Photo",
+                              action: () =>
+                                router.push("/settings?tab=profile"),
+                            },
+                            {
+                              icon: User,
+                              label: "Personal Data",
+                              action: () =>
+                                router.push("/settings?tab=profile"),
+                            },
+                            {
+                              icon: ShieldCheck,
+                              label: "Verify Account",
+                              action: () => router.push("/settings?tab=kyc"),
+                            },
+                            {
+                              icon: Wallet,
+                              label: "Deposit Funds",
+                              action: () => {
+                                setIsProfileDropdownOpen(false);
+                                setShowFundModal(true);
+                              },
+                            },
+                            {
+                              icon: ArrowDownCircle,
+                              label: "Withdraw Funds",
+                              action: () => {
+                                setIsProfileDropdownOpen(false);
+                                setShowWithdrawModal(true);
+                              },
+                            },
+                            {
+                              icon: HelpCircle,
+                              label: "Contact Support",
+                              action: () => router.push("/help"),
+                            },
+                            {
+                              icon: FileText,
+                              label: "Balance History",
+                              action: () =>
+                                router.push("/dashboard?tab=history"),
+                            },
+                            {
+                              icon: History,
+                              label: "Trading History",
+                              action: () => setShowTradingHistory(true),
+                            },
+                            {
+                              icon: Settings,
+                              label: "Settings",
+                              action: () => router.push("/settings"),
+                            },
+                          ].map((item, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                setIsProfileDropdownOpen(false);
+                                item.action();
                               }}
+                              className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5 transition-colors"
                             >
-                              {tab.symbol}
-                            </span>
+                              <item.icon className="w-5 h-5 text-gray-400" />
+                              <span className="text-sm text-white">
+                                {item.label}
+                              </span>
+                            </button>
+                          ))}
 
-                            {/* State 1: Ongoing trade - show P/L */}
-                            {hasActiveTrades && (
+                          {/* Divider */}
+                          <div
+                            className="my-2 border-t"
+                            style={{ borderColor: "#1a2d45" }}
+                          />
+
+                          {/* Log Out */}
+                          <button
+                            onClick={() => {
+                              setIsProfileDropdownOpen(false);
+                              signOut({ callbackUrl: "/" });
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5 transition-colors"
+                          >
+                            <LogOut className="w-5 h-5 text-gray-400" />
+                            <span className="text-sm text-white">Log Out</span>
+                          </button>
+
+                          {/* Version */}
+                          <div className="px-4 py-2 text-right">
+                            <span className="text-xs text-gray-500">
+                              Version: 3835.4.4938
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Balance Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() =>
+                      setIsBalanceDropdownOpen(!isBalanceDropdownOpen)
+                    }
+                    className="flex items-center space-x-1.5 hover:opacity-90 transition-opacity"
+                  >
+                    <span
+                      style={{
+                        color:
+                          selectedAccountType === "practice"
+                            ? "#ff8516"
+                            : "#5ddf38",
+                        fontSize: "16px",
+                        fontWeight: "600",
+                        letterSpacing: "-0.02em",
+                      }}
+                    >
+                      ${" "}
+                      {(selectedAccountType === "real"
+                        ? traderoomBalance
+                        : practiceAccountBalance
+                      ).toLocaleString("en-US", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </span>
+                    <ChevronDown
+                      className="w-3.5 h-3.5"
+                      style={{
+                        color:
+                          selectedAccountType === "practice"
+                            ? "#ff8516"
+                            : "#5ddf38",
+                      }}
+                    />
+                  </button>
+
+                  {/* Balance Dropdown - Compact IQ Option Style */}
+                  {isBalanceDropdownOpen && (
+                    <>
+                      {/* Backdrop for click outside */}
+                      <div
+                        className="fixed inset-0 z-[150]"
+                        onClick={() => setIsBalanceDropdownOpen(false)}
+                      />
+                      <div
+                        className="fixed z-[200] flex overflow-hidden rounded-l-md shadow-2xl"
+                        style={{
+                          backgroundColor: "#0a1020",
+                          border: "1px solid #1a2d45",
+                          borderRight: "none",
+                          right: "168px",
+                          top: "42px",
+                        }}
+                      >
+                        {/* Left Panel - Available/Investment Info */}
+                        <div
+                          className="px-4 py-3 w-[180px]"
+                          style={{
+                            backgroundColor: "#070c15",
+                            borderRight: "1px solid #1a2d45",
+                          }}
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-baseline gap-1">
                               <span
-                                className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
-                                style={{
-                                  color: totalPL >= 0 ? "#00c087" : "#ef4444",
-                                }}
+                                className="text-xs whitespace-nowrap"
+                                style={{ color: "#8b9ab8" }}
                               >
-                                {totalPL >= 0 ? "+" : ""}${" "}
-                                {Math.abs(totalPL).toLocaleString(undefined, {
+                                Available
+                              </span>
+                              <span
+                                className="flex-1 border-b border-dotted"
+                                style={{
+                                  borderColor: "#2a3a50",
+                                  marginBottom: "2px",
+                                }}
+                              ></span>
+                              <span className="text-xs font-semibold text-white whitespace-nowrap">
+                                ${" "}
+                                {(selectedAccountType === "real"
+                                  ? traderoomBalance
+                                  : practiceAccountBalance
+                                ).toLocaleString("en-US", {
                                   minimumFractionDigits: 2,
                                   maximumFractionDigits: 2,
                                 })}
                               </span>
-                            )}
-
-                            {/* State 2: Finished trade - show result */}
-                            {hasFinishedResult && tab.lastResult && (
+                            </div>
+                            <div className="flex items-baseline gap-1">
                               <span
-                                className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
+                                className="text-xs whitespace-nowrap"
+                                style={{ color: "#8b9ab8" }}
+                              >
+                                Investment
+                              </span>
+                              <span
+                                className="flex-1 border-b border-dotted"
                                 style={{
-                                  color:
-                                    tab.lastResult.status === "won"
-                                      ? "#00c087"
-                                      : "#ef4444",
+                                  borderColor: "#2a3a50",
+                                  marginBottom: "2px",
+                                }}
+                              ></span>
+                              <span className="text-xs font-semibold text-white whitespace-nowrap">
+                                $ 0.00
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 pt-2">
+                            <button
+                              className="flex items-center gap-1 text-xs"
+                              style={{ color: "#8b9ab8" }}
+                            >
+                              <CircleHelp className="w-3.5 h-3.5" />
+                              <span>What is this?</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Right Panel - Account Selection */}
+                        <div className="flex flex-col">
+                          {/* Real Account Row */}
+                          <div
+                            onClick={() => {
+                              if (!isLoggedIn) {
+                                alert(
+                                  "Please log in to access your real account",
+                                );
+                                return;
+                              }
+                              setSelectedAccountType("real");
+                              setIsBalanceDropdownOpen(false);
+                              localStorage.setItem(
+                                "selectedAccountType",
+                                "real",
+                              );
+                            }}
+                            className={`flex items-center justify-between px-4 py-3 w-[280px] transition-all ${
+                              selectedAccountType === "real"
+                                ? "bg-white/5"
+                                : "hover:bg-white/5"
+                            } ${!isLoggedIn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                            style={{ borderBottom: "1px solid #1a2d45" }}
+                          >
+                            <div className="text-left">
+                              <div className="text-xs uppercase tracking-wider font-bold mb-0.5 text-white whitespace-nowrap">
+                                REAL ACCOUNT
+                              </div>
+                              <div
+                                className="text-base font-semibold"
+                                style={{ color: "#5ddf38" }}
+                              >
+                                ${" "}
+                                {traderoomBalance.toLocaleString("en-US", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-6 h-6 rounded flex items-center justify-center"
+                                style={{ backgroundColor: "#1a2d45" }}
+                              >
+                                <svg
+                                  width="10"
+                                  height="10"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#8b9ab8"
+                                  strokeWidth="2"
+                                >
+                                  <path
+                                    d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsBalanceDropdownOpen(false);
+                                  setShowFundModal(true);
+                                }}
+                                className="px-4 py-1.5 rounded text-xs font-medium transition-all hover:opacity-80"
+                                style={{
+                                  backgroundColor: "#1a2d45",
+                                  color: "#ffffff",
                                 }}
                               >
-                                {tab.lastResult.amount >= 0 ? "+$ " : "-$ "}
-                                {Math.abs(tab.lastResult.amount).toLocaleString(
-                                  undefined,
+                                Deposit
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Practice Account Row */}
+                          <div
+                            onClick={() => {
+                              setSelectedAccountType("practice");
+                              setIsBalanceDropdownOpen(false);
+                              localStorage.setItem(
+                                "selectedAccountType",
+                                "practice",
+                              );
+                            }}
+                            className={`flex items-center justify-between px-4 py-3 w-[280px] transition-all ${
+                              selectedAccountType === "practice"
+                                ? "bg-white/5"
+                                : "hover:bg-white/5"
+                            } cursor-pointer`}
+                          >
+                            <div className="text-left">
+                              <div className="text-xs uppercase tracking-wider font-bold mb-0.5 text-white whitespace-nowrap">
+                                PRACTICE ACCOUNT
+                              </div>
+                              <div
+                                className="text-base font-semibold"
+                                style={{ color: "#ff8516" }}
+                              >
+                                ${" "}
+                                {practiceAccountBalance.toLocaleString(
+                                  "en-US",
                                   {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                   },
                                 )}
-                              </span>
-                            )}
-
-                            {/* State 3: Normal tab - show trade type */}
-                            {!hasActiveTrades && !hasFinishedResult && (
-                              <span
-                                className="text-[9px] md:text-[10px] lg:text-[11px] font-medium"
-                                style={{ color: "#8b8b8b" }}
-                              >
-                                {tab.type}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
-                ))}
-                <button
-                  onClick={() => {
-                    setAddAssetSideTab("trending");
-                    setAddAssetSearch("");
-                    setShowAddAssetModal(true);
-                  }}
-                  className="rounded hover:bg-white/5 transition-all duration-200 flex items-center justify-center h-9 w-9 md:h-11 md:w-11 lg:h-[52px] lg:w-[52px]"
-                  style={{
-                    backgroundColor: "transparent",
-                    border: "1px solid #6b6b6b",
-                    color: "#8b8b8b",
-                  }}
-                >
-                  <Plus className="w-3 h-3 md:w-3.5 md:h-3.5 lg:w-4 lg:h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Right: Profile Avatar, Balance and Deposit */}
-            <div className="flex items-center space-x-1.5 md:space-x-2 lg:space-x-3">
-              {/* Profile Avatar with verified badge and dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setIsProfileDropdownOpen(!isProfileDropdownOpen)
-                  }
-                  className="relative cursor-pointer hover:opacity-90 transition-opacity flex items-center gap-1"
-                >
-                  <div className="w-7 h-7 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full overflow-hidden border-2 border-gray-600">
-                    <Image
-                      src={session?.user?.image || "/avatars/default.png"}
-                      alt="Profile"
-                      width={40}
-                      height={40}
-                      className="object-cover"
-                    />
-                  </div>
-                  {/* Green verified checkmark badge */}
-                  <div className="absolute bottom-0 right-0 w-2.5 h-2.5 md:w-3 md:h-3 lg:w-4 lg:h-4 bg-[#5ddf38] rounded-full flex items-center justify-center border-2 border-[#1b1817]">
-                    <svg width="8" height="8" viewBox="0 0 12 12" fill="none">
-                      <path
-                        d="M2 6L5 9L10 3"
-                        stroke="white"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                  <ChevronDown className="w-3 h-3 text-gray-400 ml-0.5" />
-                </button>
-
-                {/* Profile Dropdown Menu */}
-                {isProfileDropdownOpen && (
-                  <>
-                    {/* Backdrop */}
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setIsProfileDropdownOpen(false)}
-                    />
-                    <div
-                      className="absolute top-full right-0 mt-2 z-50 rounded-lg shadow-2xl overflow-hidden flex"
-                      style={{
-                        backgroundColor: "#0a1020",
-                        border: "1px solid #3d3c4f",
-                        minWidth: "520px",
-                      }}
-                    >
-                      {/* Left Panel - User Info */}
-                      <div
-                        className="p-4 w-[240px]"
-                        style={{
-                          backgroundColor: "#070c15",
-                          borderRight: "1px solid #3d3c4f",
-                        }}
-                      >
-                        {/* User Avatar and Name */}
-                        <div className="flex items-start gap-3 mb-4">
-                          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-600 flex-shrink-0">
-                            <Image
-                              src={
-                                session?.user?.image || "/avatars/default.png"
-                              }
-                              alt="Profile"
-                              width={48}
-                              height={48}
-                              className="object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-1">
-                              <span className="text-white font-semibold text-sm truncate max-w-[130px]">
-                                {session?.user?.name || "User"}
-                              </span>
-                              <svg
-                                className="w-4 h-4 text-[#5ddf38] flex-shrink-0"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
+                              </div>
                             </div>
-                            <div className="text-xs text-gray-400 truncate">
-                              {session?.user?.email || ""}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Currency */}
-                        <div className="flex items-center gap-2 mb-4">
-                          <CryptoIcon symbol={preferredCurrency} size="sm" />
-                          <span className="text-sm text-[#5ddf38]">
-                            {preferredCurrency}
-                          </span>
-                        </div>
-
-                        {/* Date and User ID */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <div className="text-xs text-gray-500 mb-1">
-                              Date registered
-                            </div>
-                            <div className="text-sm text-white">
-                              {(session?.user as any)?.createdAt
-                                ? new Date(
-                                    (session?.user as any).createdAt as string,
-                                  ).toLocaleDateString("en-GB", {
-                                    day: "2-digit",
-                                    month: "short",
-                                    year: "numeric",
-                                  })
-                                : "17 Apr 2025"}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-xs text-gray-500 mb-1">
-                              User ID
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="text-sm text-white">
-                                {(session?.user as any)?.accountNumber ||
-                                  "177863954"}
-                              </span>
+                            <div className="flex items-center gap-2">
                               <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(
-                                    (session?.user as any)?.accountNumber ||
-                                      "177863954",
-                                  );
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsBalanceDropdownOpen(false);
+                                  setShowPracticeTopUpModal(true);
                                 }}
-                                className="text-gray-400 hover:text-white transition-colors"
+                                className="w-6 h-6 rounded flex items-center justify-center transition-all hover:opacity-80"
+                                style={{ backgroundColor: "#1a2d45" }}
                               >
                                 <svg
-                                  className="w-3.5 h-3.5"
-                                  fill="none"
-                                  stroke="currentColor"
+                                  width="10"
+                                  height="10"
                                   viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="#8b9ab8"
+                                  strokeWidth="2"
                                 >
-                                  <rect
-                                    x="9"
-                                    y="9"
-                                    width="13"
-                                    height="13"
-                                    rx="2"
-                                    ry="2"
-                                  ></rect>
-                                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                                  <path
+                                    d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
                                 </svg>
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsBalanceDropdownOpen(false);
+                                  setShowPracticeTopUpModal(true);
+                                }}
+                                className="px-4 py-1.5 rounded text-xs font-medium transition-all hover:opacity-80"
+                                style={{
+                                  backgroundColor: "#1a2d45",
+                                  color: "#ffffff",
+                                }}
+                              >
+                                Top Up
                               </button>
                             </div>
                           </div>
                         </div>
                       </div>
-
-                      {/* Right Panel - Menu Items */}
-                      <div className="flex-1 py-2">
-                        {/* VIP Program - Highlighted */}
-                        <button
-                          onClick={() => {
-                            setIsProfileDropdownOpen(false);
-                            router.push("/dashboard?tab=vip");
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                          style={{ backgroundColor: "#5ddf38" }}
-                        >
-                          <Crown className="w-5 h-5 text-[#1b1817]" />
-                          <span className="text-sm font-medium text-[#1b1817]">
-                            VIP program
-                          </span>
-                        </button>
-
-                        {/* Menu Items */}
-                        {[
-                          {
-                            icon: Camera,
-                            label: "Change Photo",
-                            action: () => router.push("/settings?tab=profile"),
-                          },
-                          {
-                            icon: User,
-                            label: "Personal Data",
-                            action: () => router.push("/settings?tab=profile"),
-                          },
-                          {
-                            icon: ShieldCheck,
-                            label: "Verify Account",
-                            action: () => router.push("/settings?tab=kyc"),
-                          },
-                          {
-                            icon: Wallet,
-                            label: "Deposit Funds",
-                            action: () => {
-                              setIsProfileDropdownOpen(false);
-                              setShowFundModal(true);
-                            },
-                          },
-                          {
-                            icon: ArrowDownCircle,
-                            label: "Withdraw Funds",
-                            action: () => {
-                              setIsProfileDropdownOpen(false);
-                              setShowWithdrawModal(true);
-                            },
-                          },
-                          {
-                            icon: HelpCircle,
-                            label: "Contact Support",
-                            action: () => router.push("/help"),
-                          },
-                          {
-                            icon: FileText,
-                            label: "Balance History",
-                            action: () => router.push("/dashboard?tab=history"),
-                          },
-                          {
-                            icon: History,
-                            label: "Trading History",
-                            action: () => setShowTradingHistory(true),
-                          },
-                          {
-                            icon: Settings,
-                            label: "Settings",
-                            action: () => router.push("/settings"),
-                          },
-                        ].map((item, index) => (
-                          <button
-                            key={index}
-                            onClick={() => {
-                              setIsProfileDropdownOpen(false);
-                              item.action();
-                            }}
-                            className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5 transition-colors"
-                          >
-                            <item.icon className="w-5 h-5 text-gray-400" />
-                            <span className="text-sm text-white">
-                              {item.label}
-                            </span>
-                          </button>
-                        ))}
-
-                        {/* Divider */}
-                        <div
-                          className="my-2 border-t"
-                          style={{ borderColor: "#1a2d45" }}
-                        />
-
-                        {/* Log Out */}
-                        <button
-                          onClick={() => {
-                            setIsProfileDropdownOpen(false);
-                            signOut({ callbackUrl: "/" });
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/5 transition-colors"
-                        >
-                          <LogOut className="w-5 h-5 text-gray-400" />
-                          <span className="text-sm text-white">Log Out</span>
-                        </button>
-
-                        {/* Version */}
-                        <div className="px-4 py-2 text-right">
-                          <span className="text-xs text-gray-500">
-                            Version: 3835.4.4938
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Balance Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setIsBalanceDropdownOpen(!isBalanceDropdownOpen)
-                  }
-                  className="flex items-center space-x-1.5 hover:opacity-90 transition-opacity"
-                >
-                  <span
-                    style={{
-                      color:
-                        selectedAccountType === "practice"
-                          ? "#ff8516"
-                          : "#5ddf38",
-                      fontSize: "16px",
-                      fontWeight: "600",
-                      letterSpacing: "-0.02em",
-                    }}
-                  >
-                    ${" "}
-                    {(selectedAccountType === "real"
-                      ? traderoomBalance
-                      : practiceAccountBalance
-                    ).toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                  <ChevronDown
-                    className="w-3.5 h-3.5"
-                    style={{
-                      color:
-                        selectedAccountType === "practice"
-                          ? "#ff8516"
-                          : "#5ddf38",
-                    }}
-                  />
-                </button>
-
-                {/* Balance Dropdown - Compact IQ Option Style */}
-                {isBalanceDropdownOpen && (
-                  <>
-                    {/* Backdrop for click outside */}
-                    <div
-                      className="fixed inset-0 z-[150]"
-                      onClick={() => setIsBalanceDropdownOpen(false)}
-                    />
-                    <div
-                      className="fixed z-[200] flex overflow-hidden rounded-l-md shadow-2xl"
-                      style={{
-                        backgroundColor: "#0a1020",
-                        border: "1px solid #1a2d45",
-                        borderRight: "none",
-                        right: "168px",
-                        top: "42px",
-                      }}
-                    >
-                      {/* Left Panel - Available/Investment Info */}
-                      <div
-                        className="px-4 py-3 w-[180px]"
-                        style={{
-                          backgroundColor: "#070c15",
-                          borderRight: "1px solid #1a2d45",
-                        }}
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-baseline gap-1">
-                            <span
-                              className="text-xs whitespace-nowrap"
-                              style={{ color: "#8b9ab8" }}
-                            >
-                              Available
-                            </span>
-                            <span
-                              className="flex-1 border-b border-dotted"
-                              style={{
-                                borderColor: "#2a3a50",
-                                marginBottom: "2px",
-                              }}
-                            ></span>
-                            <span className="text-xs font-semibold text-white whitespace-nowrap">
-                              ${" "}
-                              {(selectedAccountType === "real"
-                                ? traderoomBalance
-                                : practiceAccountBalance
-                              ).toLocaleString("en-US", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </span>
-                          </div>
-                          <div className="flex items-baseline gap-1">
-                            <span
-                              className="text-xs whitespace-nowrap"
-                              style={{ color: "#8b9ab8" }}
-                            >
-                              Investment
-                            </span>
-                            <span
-                              className="flex-1 border-b border-dotted"
-                              style={{
-                                borderColor: "#2a3a50",
-                                marginBottom: "2px",
-                              }}
-                            ></span>
-                            <span className="text-xs font-semibold text-white whitespace-nowrap">
-                              $ 0.00
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 pt-2">
-                          <button
-                            className="flex items-center gap-1 text-xs"
-                            style={{ color: "#8b9ab8" }}
-                          >
-                            <CircleHelp className="w-3.5 h-3.5" />
-                            <span>What is this?</span>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Right Panel - Account Selection */}
-                      <div className="flex flex-col">
-                        {/* Real Account Row */}
-                        <div
-                          onClick={() => {
-                            if (!isLoggedIn) {
-                              alert(
-                                "Please log in to access your real account",
-                              );
-                              return;
-                            }
-                            setSelectedAccountType("real");
-                            setIsBalanceDropdownOpen(false);
-                            localStorage.setItem("selectedAccountType", "real");
-                          }}
-                          className={`flex items-center justify-between px-4 py-3 w-[280px] transition-all ${
-                            selectedAccountType === "real"
-                              ? "bg-white/5"
-                              : "hover:bg-white/5"
-                          } ${!isLoggedIn ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                          style={{ borderBottom: "1px solid #1a2d45" }}
-                        >
-                          <div className="text-left">
-                            <div className="text-xs uppercase tracking-wider font-bold mb-0.5 text-white whitespace-nowrap">
-                              REAL ACCOUNT
-                            </div>
-                            <div
-                              className="text-base font-semibold"
-                              style={{ color: "#5ddf38" }}
-                            >
-                              ${" "}
-                              {traderoomBalance.toLocaleString("en-US", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="w-6 h-6 rounded flex items-center justify-center"
-                              style={{ backgroundColor: "#1a2d45" }}
-                            >
-                              <svg
-                                width="10"
-                                height="10"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#8b9ab8"
-                                strokeWidth="2"
-                              >
-                                <path
-                                  d="M22 2L11 13M22 2L15 22L11 13L2 9L22 2Z"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsBalanceDropdownOpen(false);
-                                setShowFundModal(true);
-                              }}
-                              className="px-4 py-1.5 rounded text-xs font-medium transition-all hover:opacity-80"
-                              style={{
-                                backgroundColor: "#1a2d45",
-                                color: "#ffffff",
-                              }}
-                            >
-                              Deposit
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Practice Account Row */}
-                        <div
-                          onClick={() => {
-                            setSelectedAccountType("practice");
-                            setIsBalanceDropdownOpen(false);
-                            localStorage.setItem(
-                              "selectedAccountType",
-                              "practice",
-                            );
-                          }}
-                          className={`flex items-center justify-between px-4 py-3 w-[280px] transition-all ${
-                            selectedAccountType === "practice"
-                              ? "bg-white/5"
-                              : "hover:bg-white/5"
-                          } cursor-pointer`}
-                        >
-                          <div className="text-left">
-                            <div className="text-xs uppercase tracking-wider font-bold mb-0.5 text-white whitespace-nowrap">
-                              PRACTICE ACCOUNT
-                            </div>
-                            <div
-                              className="text-base font-semibold"
-                              style={{ color: "#ff8516" }}
-                            >
-                              ${" "}
-                              {practiceAccountBalance.toLocaleString("en-US", {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              })}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsBalanceDropdownOpen(false);
-                                setShowPracticeTopUpModal(true);
-                              }}
-                              className="w-6 h-6 rounded flex items-center justify-center transition-all hover:opacity-80"
-                              style={{ backgroundColor: "#1a2d45" }}
-                            >
-                              <svg
-                                width="10"
-                                height="10"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="#8b9ab8"
-                                strokeWidth="2"
-                              >
-                                <path
-                                  d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setIsBalanceDropdownOpen(false);
-                                setShowPracticeTopUpModal(true);
-                              }}
-                              className="px-4 py-1.5 rounded text-xs font-medium transition-all hover:opacity-80"
-                              style={{
-                                backgroundColor: "#1a2d45",
-                                color: "#ffffff",
-                              }}
-                            >
-                              Top Up
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Deposit Button - IQ Option style green outline with $ icon */}
-              <button
-                onClick={() => {
-                  setShowFundModal(true);
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-semibold transition-all duration-200 hover:bg-[#5ddf38]/10 relative z-[110]"
-                style={{
-                  backgroundColor: "transparent",
-                  color: "#5ddf38",
-                  border: "2px solid #5ddf38",
-                }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#5ddf38"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M12 6v12M9 9.5c0-.83.672-1.5 1.5-1.5h1.5c1.105 0 2 .895 2 2s-.895 2-2 2h-2c-1.105 0-2 .895-2 2s.895 2 2 2h1.5c.828 0 1.5-.672 1.5-1.5" />
-                </svg>
-                Deposit
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Trading Interface */}
-        <div className="flex flex-1 min-h-0 relative">
-          {/* IQ Option Style Sidebar */}
-          <div
-            className="flex-col border-r flex flex-shrink-0 z-50"
-            style={{
-              backgroundColor: "#070c15",
-              borderColor: "#1a2d45",
-              width: "76px",
-            }}
-          >
-            {/* Sidebar Icons */}
-            <div className="flex flex-col items-center py-1.5 space-y-2">
-              {/* Total Portfolio */}
-              <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
-                  <Briefcase
-                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  />
-                </div>
-                <div className="mt-1 text-center">
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  >
-                    TOTAL
-                  </div>
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  >
-                    PORTFOLIO
-                  </div>
-                </div>
-              </div>
-
-              {/* Trading History */}
-              <div
-                className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300"
-                onClick={() => setShowTradingHistory(!showTradingHistory)}
-              >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
-                  style={{
-                    backgroundColor: showTradingHistory
-                      ? "#1a2d45"
-                      : "transparent",
-                  }}
-                >
-                  <History
-                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
-                    style={{
-                      color: showTradingHistory ? "#ffffff" : "#4a6080",
-                    }}
-                  />
-                </div>
-                <div className="mt-1 text-center">
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{
-                      color: showTradingHistory ? "#1a2d45" : "#4a6080",
-                    }}
-                  >
-                    TRADING
-                  </div>
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{
-                      color: showTradingHistory ? "#1a2d45" : "#4a6080",
-                    }}
-                  >
-                    HISTORY
-                  </div>
-                </div>
-              </div>
-
-              {/* Chats & Support */}
-              <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
-                  <MessageCircle
-                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  />
-                </div>
-                <div className="mt-1 text-center">
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  >
-                    CHATS &
-                  </div>
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  >
-                    SUPPORT
-                  </div>
-                </div>
-              </div>
-
-              {/* Promo */}
-              <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
-                  <Gift
-                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  />
-                </div>
-                <div className="mt-1 text-center">
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  >
-                    PROMO
-                  </div>
-                </div>
-              </div>
-
-              {/* Market Analysis */}
-              <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
-                  <BarChart3
-                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  />
-                </div>
-                <div className="mt-1 text-center">
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  >
-                    MARKET
-                  </div>
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  >
-                    ANALYSIS
-                  </div>
-                </div>
-              </div>
-
-              {/* Calculators */}
-              <div
-                className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300"
-                onClick={() => setShowCalculators(!showCalculators)}
-              >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
-                  style={{
-                    backgroundColor: showCalculators
-                      ? "#1a2d45"
-                      : "transparent",
-                  }}
-                >
-                  <Calculator
-                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
-                    style={{
-                      color: showCalculators ? "#ffffff" : "#4a6080",
-                    }}
-                  />
-                </div>
-                <div className="mt-1 text-center">
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{
-                      color: showCalculators ? "#1a2d45" : "#4a6080",
-                    }}
-                  >
-                    CALCULATORS
-                  </div>
-                </div>
-              </div>
-
-              {/* Tutorials */}
-              <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
-                  <BookOpen
-                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  />
-                </div>
-                <div className="mt-1 text-center">
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{ color: "#4a6080" }}
-                  >
-                    TUTORIALS
-                  </div>
-                </div>
-              </div>
-
-              {/* More */}
-              <div
-                className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300"
-                onClick={() => setShowMoreItems(!showMoreItems)}
-              >
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
-                  style={{
-                    backgroundColor: showMoreItems ? "#1a2d45" : "transparent",
-                  }}
-                >
-                  <MoreHorizontal
-                    className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
-                    style={{
-                      color: showMoreItems ? "#ffffff" : "#4a6080",
-                    }}
-                  />
-                </div>
-                <div className="mt-1 text-center">
-                  <div
-                    className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
-                    style={{
-                      color: showMoreItems ? "#1a2d45" : "#4a6080",
-                    }}
-                  >
-                    MORE
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* More Items Popup Panel */}
-          <AnimatePresence>
-            {showMoreItems && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="w-64 flex-col border-r z-10"
-                style={{ backgroundColor: "#0d1626", borderColor: "#1a2d45" }}
-              >
-                {/* Header */}
-                <div
-                  className="flex items-center justify-between p-4 border-b"
-                  style={{ borderColor: "#1a2d45" }}
-                >
-                  <h3
-                    className="font-semibold text-lg"
-                    style={{ color: "#eef2f7" }}
-                  >
-                    More Items
-                  </h3>
-                  <div className="flex items-center space-x-2">
-                    <button
-                      className="hover:opacity-75 transition-opacity"
-                      style={{ color: "#8b9ab8" }}
-                    >
-                      <Settings className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={() => setShowMoreItems(false)}
-                      className="hover:opacity-75 transition-opacity"
-                      style={{ color: "#8b9ab8", fontSize: "20px" }}
-                    >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-
-                {/* More Items List */}
-                <div className="flex-1 overflow-y-auto p-4">
-                  <div className="space-y-4">
-                    {/* Leaderboard */}
-                    <div
-                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
-                      style={{ backgroundColor: "transparent" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#1a2d45")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: "#1a2d45" }}
-                      >
-                        <Target
-                          className="w-4 h-4"
-                          style={{ color: "#8b9ab8" }}
-                        />
-                      </div>
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: "#eef2f7" }}
-                      >
-                        LEADERBOARD
-                      </span>
-                    </div>
-
-                    {/* Partnership */}
-                    <div
-                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
-                      style={{ backgroundColor: "transparent" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#1a2d45")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: "#1a2d45" }}
-                      >
-                        <Handshake
-                          className="w-4 h-4"
-                          style={{ color: "#8b9ab8" }}
-                        />
-                      </div>
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: "#eef2f7" }}
-                      >
-                        PARTNERSHIP
-                      </span>
-                    </div>
-
-                    {/* Tournaments */}
-                    <div
-                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
-                      style={{ backgroundColor: "transparent" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#1a2d45")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: "#1a2d45" }}
-                      >
-                        <Target
-                          className="w-4 h-4"
-                          style={{ color: "#8b9ab8" }}
-                        />
-                      </div>
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: "#eef2f7" }}
-                      >
-                        TOURNAMENTS
-                      </span>
-                    </div>
-
-                    {/* Help */}
-                    <div
-                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
-                      style={{ backgroundColor: "transparent" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#1a2d45")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: "#1a2d45" }}
-                      >
-                        <span
-                          className="text-sm font-bold"
-                          style={{ color: "#8b9ab8" }}
-                        >
-                          ?
-                        </span>
-                      </div>
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: "#eef2f7" }}
-                      >
-                        HELP
-                      </span>
-                    </div>
-
-                    {/* Alerts */}
-                    <div
-                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
-                      style={{ backgroundColor: "transparent" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#1a2d45")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: "#1a2d45" }}
-                      >
-                        <Bell
-                          className="w-4 h-4"
-                          style={{ color: "#8b9ab8" }}
-                        />
-                      </div>
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: "#eef2f7" }}
-                      >
-                        ALERTS
-                      </span>
-                    </div>
-
-                    {/* Tutorials */}
-                    <div
-                      className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
-                      style={{ backgroundColor: "transparent" }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.backgroundColor = "#1a2d45")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.currentTarget.style.backgroundColor = "transparent")
-                      }
-                    >
-                      <div
-                        className="w-8 h-8 rounded-lg flex items-center justify-center"
-                        style={{ backgroundColor: "#1a2d45" }}
-                      >
-                        <BookOpen
-                          className="w-4 h-4"
-                          style={{ color: "#8b9ab8" }}
-                        />
-                      </div>
-                      <span
-                        className="text-sm font-medium"
-                        style={{ color: "#eef2f7" }}
-                      >
-                        TUTORIALS
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Calculators Panel */}
-          <AnimatePresence>
-            {showCalculators && (
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.2 }}
-                className="w-96 flex-col border-r z-10 overflow-hidden relative"
-                style={{ backgroundColor: "#0d1626", borderColor: "#1a2d45" }}
-              >
-                {/* Close Button - Top Right */}
-                <button
-                  onClick={() => setShowCalculators(false)}
-                  className="absolute top-4 right-4 z-20 hover:opacity-75 transition-opacity bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center"
-                  style={{ color: "#8b9ab8" }}
-                >
-                  ✕
-                </button>
-
-                {/* Calculators Content */}
-                <div className="flex-1 overflow-y-auto">
-                  <TradingCalculators />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Trading History Panel - IQ Option Style */}
-          <AnimatePresence>
-            {showTradingHistory && (
-              <motion.div
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 280, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="flex flex-col overflow-hidden"
-                style={{
-                  flexShrink: 0,
-                  backgroundColor: "#131722",
-                  borderRight: "1px solid #2a2e39",
-                  height: "100%",
-                }}
-              >
-                {/* Header */}
-                <div
-                  className="px-4 py-3 flex items-center justify-between"
-                  style={{ borderBottom: "1px solid #2a2e39" }}
-                >
-                  <span className="text-white font-medium text-sm">
-                    Trading History
-                  </span>
-                  <button
-                    onClick={() => setShowTradingHistory(false)}
-                    className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
-                  >
-                    <X className="w-4 h-4 text-gray-400" />
-                  </button>
-                </div>
-
-                {/* Filter Dropdown */}
-                <div
-                  className="px-4 py-2"
-                  style={{ borderBottom: "1px solid #2a2e39" }}
-                >
-                  <select
-                    value={historyFilter}
-                    onChange={(e) => setHistoryFilter(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded text-sm bg-[#1e222d] border border-[#2a2e39] text-white focus:outline-none focus:border-[#ff8516] appearance-none cursor-pointer"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 10px center",
-                      backgroundSize: "16px",
-                      paddingRight: "36px",
-                    }}
-                  >
-                    <option value="All Positions">All Positions</option>
-                    <option value="Blitz Options">Blitz Options</option>
-                    <option value="Binary Options">Binary Options</option>
-                    <option value="Digital Options">Digital Options</option>
-                    <option value="Forex">Forex</option>
-                    <option value="Stocks, ETFs, Commodities">
-                      Stocks, ETFs, Commodities
-                    </option>
-                    <option value="Crypto">Crypto</option>
-                    <option value="Indices">Indices</option>
-                  </select>
-                </div>
-
-                {/* Trades List */}
-                <div className="flex-1 overflow-y-auto">
-                  {/* Open Positions */}
-                  {openPositions.length > 0 &&
-                    openPositions.map((position) => {
-                      const now = Date.now();
-                      const expTime =
-                        position.expirationTime instanceof Date
-                          ? position.expirationTime.getTime()
-                          : position.expirationTime;
-                      const remaining = Math.max(0, expTime - now);
-                      const remainingSeconds = Math.ceil(remaining / 1000);
-                      const isWinning =
-                        position.direction === "HIGHER"
-                          ? currentPrice > position.entryPrice
-                          : currentPrice < position.entryPrice;
-                      const currentPL = isWinning
-                        ? position.amount * 0.85
-                        : -position.amount;
-                      const plPercent = isWinning ? 85 : -100;
-
-                      return (
-                        <div
-                          key={position.id}
-                          className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
-                          style={{ borderBottom: "1px solid #2a2e39" }}
-                        >
-                          {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
-                          <div className="flex items-center gap-1.5">
-                            <div className="text-sm text-white font-bold w-10">
-                              {new Date(position.entryTime).toLocaleTimeString(
-                                [],
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  hour12: false,
-                                },
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 ml-2 flex-1">
-                              <AssetFlag
-                                flag={
-                                  symbols.find(
-                                    (s) => s.symbol === position.symbol,
-                                  )?.flag || ""
-                                }
-                                symbol={position.symbol}
-                                size={18}
-                              />
-                              <div className="text-white text-xs truncate">
-                                {position.symbol}
-                              </div>
-                            </div>
-                            <svg
-                              className="w-2.5 h-2.5 flex-shrink-0"
-                              viewBox="0 0 12 12"
-                              fill={
-                                position.direction === "HIGHER"
-                                  ? "#22c55e"
-                                  : "#ef4444"
-                              }
-                            >
-                              {position.direction === "HIGHER" ? (
-                                <path d="M6 2L11 10H1L6 2Z" />
-                              ) : (
-                                <path d="M6 10L1 2H11L6 10Z" />
-                              )}
-                            </svg>
-                            <div className="text-white text-xs font-medium whitespace-nowrap text-right">
-                              ${position.amount.toLocaleString()}
-                            </div>
-                          </div>
-                          {/* Row 2: Date under time, Binary under logo, P/L right */}
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center">
-                              <span className="text-[10px] text-gray-500 w-10">
-                                {new Date(position.entryTime).getDate()}{" "}
-                                {new Date(
-                                  position.entryTime,
-                                ).toLocaleDateString([], { month: "short" })}
-                              </span>
-                              <span className="text-[10px] text-gray-500 ml-4">
-                                Blitz
-                              </span>
-                            </div>
-                            <span
-                              className={`text-xs ${isWinning ? "text-green-400" : "text-red-400"}`}
-                            >
-                              {isWinning ? "+" : "-"}$
-                              {Math.abs(currentPL).toLocaleString()} (
-                              {isWinning ? "+" : ""}
-                              {plPercent}%)
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                  {/* Completed Trades */}
-                  {tradeHistory
-                    .filter((trade) => {
-                      // Filter by category
-                      if (historyFilter === "All Positions") return true;
-                      if (historyFilter === "Blitz Options") return true; // All short-term trades
-                      if (historyFilter === "Binary Options") return true; // All binary trades
-                      if (historyFilter === "Digital Options") return true;
-                      if (historyFilter === "Forex") {
-                        // Check if symbol contains forex pairs
-                        const forexPairs = [
-                          "EUR",
-                          "USD",
-                          "GBP",
-                          "JPY",
-                          "CHF",
-                          "AUD",
-                          "CAD",
-                          "NZD",
-                        ];
-                        return forexPairs.some((pair) =>
-                          trade.symbol.toUpperCase().includes(pair),
-                        );
-                      }
-                      if (historyFilter === "Crypto") {
-                        const cryptoSymbols = [
-                          "BTC",
-                          "ETH",
-                          "BNB",
-                          "SOL",
-                          "XRP",
-                          "ADA",
-                          "DOGE",
-                          "DOT",
-                          "MATIC",
-                          "LINK",
-                          "AVAX",
-                          "UNI",
-                          "ATOM",
-                          "LTC",
-                          "SHIB",
-                        ];
-                        return cryptoSymbols.some((sym) =>
-                          trade.symbol.toUpperCase().includes(sym),
-                        );
-                      }
-                      if (historyFilter === "Stocks, ETFs, Commodities") {
-                        const stockSymbols = [
-                          "AAPL",
-                          "GOOGL",
-                          "MSFT",
-                          "AMZN",
-                          "TSLA",
-                          "META",
-                          "NVDA",
-                          "GOLD",
-                          "OIL",
-                          "SILVER",
-                        ];
-                        return stockSymbols.some((sym) =>
-                          trade.symbol.toUpperCase().includes(sym),
-                        );
-                      }
-                      if (historyFilter === "Indices") {
-                        const indexSymbols = [
-                          "INDEX",
-                          "AUS 200",
-                          "EU 50",
-                          "FR 40",
-                          "GER 30",
-                          "US 500",
-                          "NASDAQ",
-                          "DOW",
-                          "MAGNIFICENT",
-                          "AIRLINES",
-                          "CANNABIS",
-                          "CASINO",
-                        ];
-                        return indexSymbols.some((sym) =>
-                          trade.symbol.toUpperCase().includes(sym),
-                        );
-                      }
-                      return true;
-                    })
-                    .map((trade) => {
-                      const isWin = trade.status === "WIN";
-                      const plPercent = isWin
-                        ? Math.round((trade.profit / trade.amount) * 100)
-                        : -100;
-
-                      return (
-                        <div
-                          key={trade.id}
-                          className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
-                          style={{ borderBottom: "1px solid #2a2e39" }}
-                          onClick={() => setExpandedHistoryTradeId(trade.id)}
-                        >
-                          {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
-                          <div className="flex items-center gap-1.5">
-                            <div className="text-sm text-white font-bold w-10">
-                              {new Date(trade.entryTime).toLocaleTimeString(
-                                [],
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                  hour12: false,
-                                },
-                              )}
-                            </div>
-                            <div className="flex items-center gap-1.5 ml-2 flex-1">
-                              <AssetFlag
-                                flag={
-                                  symbols.find((s) => s.symbol === trade.symbol)
-                                    ?.flag || ""
-                                }
-                                symbol={trade.symbol}
-                                size={18}
-                              />
-                              <div className="text-white text-xs truncate">
-                                {trade.symbol}
-                              </div>
-                            </div>
-                            <svg
-                              className="w-2.5 h-2.5 flex-shrink-0"
-                              viewBox="0 0 12 12"
-                              fill={
-                                trade.direction === "HIGHER"
-                                  ? "#22c55e"
-                                  : "#ef4444"
-                              }
-                            >
-                              {trade.direction === "HIGHER" ? (
-                                <path d="M6 2L11 10H1L6 2Z" />
-                              ) : (
-                                <path d="M6 10L1 2H11L6 10Z" />
-                              )}
-                            </svg>
-                            <div
-                              className={`text-xs font-medium whitespace-nowrap text-right ${isWin ? "text-green-400" : "text-red-400"}`}
-                            >
-                              ${trade.amount.toLocaleString()}
-                            </div>
-                          </div>
-                          {/* Row 2: Date under time, Binary under logo, P/L right */}
-                          <div className="flex items-center justify-between mt-0.5">
-                            <div className="flex items-center">
-                              <span className="text-[10px] text-gray-500 w-10">
-                                {new Date(trade.entryTime).getDate()}{" "}
-                                {new Date(trade.entryTime).toLocaleDateString(
-                                  [],
-                                  { month: "short" },
-                                )}
-                              </span>
-                              <span className="text-[10px] text-gray-500 ml-4">
-                                {selectedMarket}
-                              </span>
-                            </div>
-                            <span
-                              className={`text-xs ${isWin ? "text-green-400" : "text-red-400"}`}
-                            >
-                              {isWin ? "+" : "-"}$
-                              {Math.abs(trade.profit).toLocaleString()} (
-                              {isWin ? "+" : ""}
-                              {plPercent}%)
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-
-                  {/* Empty State */}
-                  {tradeHistory.length === 0 && openPositions.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-16 px-4">
-                      <History className="w-12 h-12 text-gray-600 mb-3" />
-                      <p className="text-gray-400 text-sm text-center">
-                        No trading history yet
-                      </p>
-                      <p className="text-gray-500 text-xs text-center mt-1">
-                        Execute some trades to see your history here
-                      </p>
-                    </div>
+                    </>
                   )}
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
 
-          {/* Trade Detail Panel - Opens between Trading History and Chart */}
-          <AnimatePresence>
-            {expandedHistoryTradeId &&
-              (() => {
-                const trade = tradeHistory.find(
-                  (t) => t.id === expandedHistoryTradeId,
-                );
-                if (!trade) return null;
+                {/* Deposit Button - IQ Option style green outline with $ icon */}
+                <button
+                  onClick={() => {
+                    setShowFundModal(true);
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-semibold transition-all duration-200 hover:bg-[#5ddf38]/10 relative z-[110]"
+                  style={{
+                    backgroundColor: "transparent",
+                    color: "#5ddf38",
+                    border: "2px solid #5ddf38",
+                  }}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#5ddf38"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v12M9 9.5c0-.83.672-1.5 1.5-1.5h1.5c1.105 0 2 .895 2 2s-.895 2-2 2h-2c-1.105 0-2 .895-2 2s.895 2 2 2h1.5c.828 0 1.5-.672 1.5-1.5" />
+                  </svg>
+                  Deposit
+                </button>
+              </div>
+            </div>
+          </header>
 
-                const isWin = trade.status === "WIN";
-                const plPercent = isWin
-                  ? Math.round((trade.profit / trade.amount) * 100)
-                  : -100;
-                const exitPrice = trade.exitPrice || trade.entryPrice;
-                const exitTime = trade.exitTime || trade.expirationTime;
-                const expirationTime = trade.expirationTime;
+          {/* Main Trading Interface */}
+          <div className="flex flex-1 min-h-0 relative">
+            {/* IQ Option Style Sidebar */}
+            <div
+              className="flex-col border-r flex flex-shrink-0 z-50"
+              style={{
+                backgroundColor: "#070c15",
+                borderColor: "#1a2d45",
+                width: "76px",
+              }}
+            >
+              {/* Sidebar Icons */}
+              <div className="flex flex-col items-center py-1.5 space-y-2">
+                {/* Total Portfolio */}
+                <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
+                    <Briefcase
+                      className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    />
+                  </div>
+                  <div className="mt-1 text-center">
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    >
+                      TOTAL
+                    </div>
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    >
+                      PORTFOLIO
+                    </div>
+                  </div>
+                </div>
 
-                // Format date as "23 Mar 2026" to match IQ Option
-                const formatDate = (date: Date | number | undefined | null) => {
-                  if (!date) return "N/A";
-                  try {
-                    const d = new Date(date);
-                    if (isNaN(d.getTime())) return "N/A";
-                    return new Intl.DateTimeFormat("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    }).format(d);
-                  } catch {
-                    return "N/A";
-                  }
-                };
-
-                const formatTime = (date: Date | number | undefined | null) => {
-                  if (!date) return "N/A";
-                  try {
-                    const d = new Date(date);
-                    if (isNaN(d.getTime())) return "N/A";
-                    return d.toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                      hour12: false,
-                    });
-                  } catch {
-                    return "N/A";
-                  }
-                };
-
-                return (
-                  <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 380, opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="border-r flex-shrink-0 overflow-y-auto z-30 flex flex-col relative"
+                {/* Trading History */}
+                <div
+                  className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300"
+                  onClick={() => setShowTradingHistory(!showTradingHistory)}
+                >
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
                     style={{
-                      backgroundColor: "#1a1f2e",
-                      borderColor: "#2a2e39",
+                      backgroundColor: showTradingHistory
+                        ? "#1a2d45"
+                        : "transparent",
                     }}
                   >
-                    {/* Close Button */}
-                    <button
-                      onClick={() => setExpandedHistoryTradeId(null)}
-                      className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/10 transition-colors z-50"
-                    >
-                      <X className="w-5 h-5 text-gray-400 hover:text-white" />
-                    </button>
-
-                    {/* Asset Header with Chart Background */}
+                    <History
+                      className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                      style={{
+                        color: showTradingHistory ? "#ffffff" : "#4a6080",
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1 text-center">
                     <div
-                      className="relative px-4 pt-4 pb-2"
-                      style={{ backgroundColor: "#1a1f2e" }}
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{
+                        color: showTradingHistory ? "#1a2d45" : "#4a6080",
+                      }}
                     >
-                      <div className="flex items-center gap-2 mb-1">
-                        <AssetFlag
-                          flag={
-                            symbols.find((s) => s.symbol === trade.symbol)
-                              ?.flag || ""
-                          }
-                          symbol={trade.symbol}
-                          size={24}
-                        />
-                        <span className="text-sm font-medium text-white">
-                          {trade.symbol} (OTC)
-                        </span>
-                        <span
-                          className="text-xs px-1.5 py-0.5 rounded"
-                          style={{
-                            backgroundColor: "#2a2e39",
-                            color: "#8b9ab8",
-                          }}
-                        >
-                          Binary
-                        </span>
-                      </div>
-                      <div className="text-base font-bold text-white mb-1">
-                        {exitPrice.toFixed(6)}
-                      </div>
+                      TRADING
                     </div>
-
-                    {/* Mini Chart Area */}
                     <div
-                      className="relative px-4"
-                      style={{ height: "200px", backgroundColor: "#1a1f2e" }}
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{
+                        color: showTradingHistory ? "#1a2d45" : "#4a6080",
+                      }}
                     >
-                      {/* Simple candlestick visualization */}
-                      <svg
-                        width="100%"
-                        height="180"
-                        viewBox="0 0 340 180"
-                        style={{ marginTop: "10px" }}
+                      HISTORY
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chats & Support */}
+                <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
+                    <MessageCircle
+                      className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    />
+                  </div>
+                  <div className="mt-1 text-center">
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    >
+                      CHATS &
+                    </div>
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    >
+                      SUPPORT
+                    </div>
+                  </div>
+                </div>
+
+                {/* Promo */}
+                <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
+                    <Gift
+                      className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    />
+                  </div>
+                  <div className="mt-1 text-center">
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    >
+                      PROMO
+                    </div>
+                  </div>
+                </div>
+
+                {/* Market Analysis */}
+                <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
+                    <BarChart3
+                      className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    />
+                  </div>
+                  <div className="mt-1 text-center">
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    >
+                      MARKET
+                    </div>
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    >
+                      ANALYSIS
+                    </div>
+                  </div>
+                </div>
+
+                {/* Calculators */}
+                <div
+                  className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300"
+                  onClick={() => setShowCalculators(!showCalculators)}
+                >
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
+                    style={{
+                      backgroundColor: showCalculators
+                        ? "#1a2d45"
+                        : "transparent",
+                    }}
+                  >
+                    <Calculator
+                      className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                      style={{
+                        color: showCalculators ? "#ffffff" : "#4a6080",
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1 text-center">
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{
+                        color: showCalculators ? "#1a2d45" : "#4a6080",
+                      }}
+                    >
+                      CALCULATORS
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tutorials */}
+                <div className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200">
+                    <BookOpen
+                      className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    />
+                  </div>
+                  <div className="mt-1 text-center">
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{ color: "#4a6080" }}
+                    >
+                      TUTORIALS
+                    </div>
+                  </div>
+                </div>
+
+                {/* More */}
+                <div
+                  className="group flex flex-col items-center cursor-pointer hover:scale-110 transition-all duration-300"
+                  onClick={() => setShowMoreItems(!showMoreItems)}
+                >
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200"
+                    style={{
+                      backgroundColor: showMoreItems
+                        ? "#1a2d45"
+                        : "transparent",
+                    }}
+                  >
+                    <MoreHorizontal
+                      className="w-6 h-6 transition-all duration-200 group-hover:text-orange-500"
+                      style={{
+                        color: showMoreItems ? "#ffffff" : "#4a6080",
+                      }}
+                    />
+                  </div>
+                  <div className="mt-1 text-center">
+                    <div
+                      className="text-[8px] leading-tight transition-all duration-200 group-hover:text-orange-500"
+                      style={{
+                        color: showMoreItems ? "#1a2d45" : "#4a6080",
+                      }}
+                    >
+                      MORE
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* More Items Popup Panel */}
+            <AnimatePresence>
+              {showMoreItems && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-64 flex-col border-r z-10"
+                  style={{ backgroundColor: "#0d1626", borderColor: "#1a2d45" }}
+                >
+                  {/* Header */}
+                  <div
+                    className="flex items-center justify-between p-4 border-b"
+                    style={{ borderColor: "#1a2d45" }}
+                  >
+                    <h3
+                      className="font-semibold text-lg"
+                      style={{ color: "#eef2f7" }}
+                    >
+                      More Items
+                    </h3>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        className="hover:opacity-75 transition-opacity"
+                        style={{ color: "#8b9ab8" }}
                       >
-                        {/* Grid lines */}
-                        <line
-                          x1="0"
-                          y1="60"
-                          x2="340"
-                          y2="60"
-                          stroke="#2a2e39"
-                          strokeWidth="1"
-                        />
-                        <line
-                          x1="0"
-                          y1="90"
-                          x2="340"
-                          y2="90"
-                          stroke="#2a2e39"
-                          strokeWidth="1"
-                        />
-                        <line
-                          x1="0"
-                          y1="120"
-                          x2="340"
-                          y2="120"
-                          stroke="#2a2e39"
-                          strokeWidth="1"
-                        />
-
-                        {/* Entry price line */}
-                        <line
-                          x1="0"
-                          y1="90"
-                          x2="340"
-                          y2="90"
-                          stroke="#ff8516"
-                          strokeWidth="2"
-                          strokeDasharray="4 4"
-                        />
-
-                        {/* Simple candlesticks - using trade data to show movement */}
-                        {Array.from({ length: 12 }).map((_, i) => {
-                          const x = 20 + i * 28;
-                          const variance =
-                            Math.sin(i * 0.8) * 20 +
-                            (i === 11 ? (isWin ? -15 : 15) : 0);
-                          const bodyTop = 90 - variance;
-                          const bodyBottom = 90 - variance + 15;
-                          const wickTop = bodyTop - 8;
-                          const wickBottom = bodyBottom + 8;
-                          const isGreen = variance < 0;
-                          const color = isGreen ? "#22c55e" : "#ef4444";
-
-                          return (
-                            <g key={i}>
-                              {/* Wick */}
-                              <line
-                                x1={x}
-                                y1={wickTop}
-                                x2={x}
-                                y2={wickBottom}
-                                stroke={color}
-                                strokeWidth="1"
-                              />
-                              {/* Body */}
-                              <rect
-                                x={x - 6}
-                                y={Math.min(bodyTop, bodyBottom)}
-                                width="12"
-                                height={Math.abs(bodyBottom - bodyTop)}
-                                fill={color}
-                              />
-                            </g>
-                          );
-                        })}
-
-                        {/* Entry marker */}
-                        <circle
-                          cx="100"
-                          cy="90"
-                          r="8"
-                          fill="white"
-                          stroke="#ff8516"
-                          strokeWidth="2"
-                        />
-                        <circle cx="100" cy="90" r="3" fill="#ff8516" />
-
-                        {/* Exit marker */}
-                        <g>
-                          <circle
-                            cx="320"
-                            cy={isWin ? 75 : 105}
-                            r="10"
-                            fill={isWin ? "#22c55e" : "#ef4444"}
-                          />
-                          <path
-                            d={
-                              isWin
-                                ? "M316 75 L319 78 L324 73"
-                                : "M316 102 L324 110 M324 102 L316 110"
-                            }
-                            stroke="white"
-                            strokeWidth="2"
-                            fill="none"
-                          />
-                        </g>
-                      </svg>
-
-                      {/* Timeline */}
-                      <div className="flex justify-between text-[10px] text-gray-500 px-2">
-                        <span>{formatTime(trade.entryTime)}</span>
-                        <span className="text-orange-500">
-                          Historical Quotes
-                        </span>
-                        <span>{formatTime(expirationTime)}</span>
-                      </div>
+                        <Settings className="w-5 h-5" />
+                      </button>
+                      <button
+                        onClick={() => setShowMoreItems(false)}
+                        className="hover:opacity-75 transition-opacity"
+                        style={{ color: "#8b9ab8", fontSize: "20px" }}
+                      >
+                        ✕
+                      </button>
                     </div>
+                  </div>
 
-                    {/* Trade Information Section */}
-                    <div className="p-4 space-y-4">
-                      {/* NET P/L */}
-                      <div>
-                        <div className="text-xs text-gray-400 mb-1">
-                          NET P/L
-                        </div>
+                  {/* More Items List */}
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <div className="space-y-4">
+                      {/* Leaderboard */}
+                      <div
+                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
+                        style={{ backgroundColor: "transparent" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = "#1a2d45")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent")
+                        }
+                      >
                         <div
-                          className={`text-3xl font-bold ${isWin ? "text-green-400" : "text-red-400"}`}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: "#1a2d45" }}
                         >
-                          {isWin ? "+" : ""}${trade.profit.toFixed(2)}{" "}
-                          <span className="text-lg">
-                            ({isWin ? "+" : ""}
-                            {plPercent}.00%)
+                          <Target
+                            className="w-4 h-4"
+                            style={{ color: "#8b9ab8" }}
+                          />
+                        </div>
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: "#eef2f7" }}
+                        >
+                          LEADERBOARD
+                        </span>
+                      </div>
+
+                      {/* Partnership */}
+                      <div
+                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
+                        style={{ backgroundColor: "transparent" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = "#1a2d45")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent")
+                        }
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: "#1a2d45" }}
+                        >
+                          <Handshake
+                            className="w-4 h-4"
+                            style={{ color: "#8b9ab8" }}
+                          />
+                        </div>
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: "#eef2f7" }}
+                        >
+                          PARTNERSHIP
+                        </span>
+                      </div>
+
+                      {/* Tournaments */}
+                      <div
+                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
+                        style={{ backgroundColor: "transparent" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = "#1a2d45")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent")
+                        }
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: "#1a2d45" }}
+                        >
+                          <Target
+                            className="w-4 h-4"
+                            style={{ color: "#8b9ab8" }}
+                          />
+                        </div>
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: "#eef2f7" }}
+                        >
+                          TOURNAMENTS
+                        </span>
+                      </div>
+
+                      {/* Help */}
+                      <div
+                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
+                        style={{ backgroundColor: "transparent" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = "#1a2d45")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent")
+                        }
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: "#1a2d45" }}
+                        >
+                          <span
+                            className="text-sm font-bold"
+                            style={{ color: "#8b9ab8" }}
+                          >
+                            ?
                           </span>
                         </div>
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: "#eef2f7" }}
+                        >
+                          HELP
+                        </span>
                       </div>
 
-                      {/* Three Column Layout */}
-                      <div className="grid grid-cols-3 gap-4">
-                        {/* INVEST */}
+                      {/* Alerts */}
+                      <div
+                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
+                        style={{ backgroundColor: "transparent" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = "#1a2d45")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent")
+                        }
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: "#1a2d45" }}
+                        >
+                          <Bell
+                            className="w-4 h-4"
+                            style={{ color: "#8b9ab8" }}
+                          />
+                        </div>
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: "#eef2f7" }}
+                        >
+                          ALERTS
+                        </span>
+                      </div>
+
+                      {/* Tutorials */}
+                      <div
+                        className="flex items-center space-x-3 p-3 rounded-lg hover:bg-opacity-50 transition-all duration-200 cursor-pointer"
+                        style={{ backgroundColor: "transparent" }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.backgroundColor = "#1a2d45")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.backgroundColor =
+                            "transparent")
+                        }
+                      >
+                        <div
+                          className="w-8 h-8 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: "#1a2d45" }}
+                        >
+                          <BookOpen
+                            className="w-4 h-4"
+                            style={{ color: "#8b9ab8" }}
+                          />
+                        </div>
+                        <span
+                          className="text-sm font-medium"
+                          style={{ color: "#eef2f7" }}
+                        >
+                          TUTORIALS
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Calculators Panel */}
+            <AnimatePresence>
+              {showCalculators && (
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-96 flex-col border-r z-10 overflow-hidden relative"
+                  style={{ backgroundColor: "#0d1626", borderColor: "#1a2d45" }}
+                >
+                  {/* Close Button - Top Right */}
+                  <button
+                    onClick={() => setShowCalculators(false)}
+                    className="absolute top-4 right-4 z-20 hover:opacity-75 transition-opacity bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center"
+                    style={{ color: "#8b9ab8" }}
+                  >
+                    ✕
+                  </button>
+
+                  {/* Calculators Content */}
+                  <div className="flex-1 overflow-y-auto">
+                    <TradingCalculators />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Trading History Panel - IQ Option Style */}
+            <AnimatePresence>
+              {showTradingHistory && (
+                <motion.div
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 280, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  className="flex flex-col overflow-hidden"
+                  style={{
+                    flexShrink: 0,
+                    backgroundColor: "#131722",
+                    borderRight: "1px solid #2a2e39",
+                    height: "100%",
+                  }}
+                >
+                  {/* Header */}
+                  <div
+                    className="px-4 py-3 flex items-center justify-between"
+                    style={{ borderBottom: "1px solid #2a2e39" }}
+                  >
+                    <span className="text-white font-medium text-sm">
+                      Trading History
+                    </span>
+                    <button
+                      onClick={() => setShowTradingHistory(false)}
+                      className="w-6 h-6 flex items-center justify-center rounded hover:bg-white/10 transition-colors"
+                    >
+                      <X className="w-4 h-4 text-gray-400" />
+                    </button>
+                  </div>
+
+                  {/* Filter Dropdown */}
+                  <div
+                    className="px-4 py-2"
+                    style={{ borderBottom: "1px solid #2a2e39" }}
+                  >
+                    <select
+                      value={historyFilter}
+                      onChange={(e) => setHistoryFilter(e.target.value)}
+                      className="w-full px-3 py-2.5 rounded text-sm bg-[#1e222d] border border-[#2a2e39] text-white focus:outline-none focus:border-[#ff8516] appearance-none cursor-pointer"
+                      style={{
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                        backgroundRepeat: "no-repeat",
+                        backgroundPosition: "right 10px center",
+                        backgroundSize: "16px",
+                        paddingRight: "36px",
+                      }}
+                    >
+                      <option value="All Positions">All Positions</option>
+                      <option value="Blitz Options">Blitz Options</option>
+                      <option value="Binary Options">Binary Options</option>
+                      <option value="Digital Options">Digital Options</option>
+                      <option value="Forex">Forex</option>
+                      <option value="Stocks, ETFs, Commodities">
+                        Stocks, ETFs, Commodities
+                      </option>
+                      <option value="Crypto">Crypto</option>
+                      <option value="Indices">Indices</option>
+                    </select>
+                  </div>
+
+                  {/* Trades List */}
+                  <div className="flex-1 overflow-y-auto">
+                    {/* Open Positions */}
+                    {openPositions.length > 0 &&
+                      openPositions.map((position) => {
+                        const now = Date.now();
+                        const expTime =
+                          position.expirationTime instanceof Date
+                            ? position.expirationTime.getTime()
+                            : position.expirationTime;
+                        const remaining = Math.max(0, expTime - now);
+                        const remainingSeconds = Math.ceil(remaining / 1000);
+                        const isWinning =
+                          position.direction === "HIGHER"
+                            ? currentPrice > position.entryPrice
+                            : currentPrice < position.entryPrice;
+                        const currentPL = isWinning
+                          ? position.amount * 0.85
+                          : -position.amount;
+                        const plPercent = isWinning ? 85 : -100;
+
+                        return (
+                          <div
+                            key={position.id}
+                            className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
+                            style={{ borderBottom: "1px solid #2a2e39" }}
+                          >
+                            {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
+                            <div className="flex items-center gap-1.5">
+                              <div className="text-sm text-white font-bold w-10">
+                                {new Date(
+                                  position.entryTime,
+                                ).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  hour12: false,
+                                })}
+                              </div>
+                              <div className="flex items-center gap-1.5 ml-2 flex-1">
+                                <AssetFlag
+                                  flag={
+                                    symbols.find(
+                                      (s) => s.symbol === position.symbol,
+                                    )?.flag || ""
+                                  }
+                                  symbol={position.symbol}
+                                  size={18}
+                                />
+                                <div className="text-white text-xs truncate">
+                                  {position.symbol}
+                                </div>
+                              </div>
+                              <svg
+                                className="w-2.5 h-2.5 flex-shrink-0"
+                                viewBox="0 0 12 12"
+                                fill={
+                                  position.direction === "HIGHER"
+                                    ? "#22c55e"
+                                    : "#ef4444"
+                                }
+                              >
+                                {position.direction === "HIGHER" ? (
+                                  <path d="M6 2L11 10H1L6 2Z" />
+                                ) : (
+                                  <path d="M6 10L1 2H11L6 10Z" />
+                                )}
+                              </svg>
+                              <div className="text-white text-xs font-medium whitespace-nowrap text-right">
+                                ${position.amount.toLocaleString()}
+                              </div>
+                            </div>
+                            {/* Row 2: Date under time, Binary under logo, P/L right */}
+                            <div className="flex items-center justify-between mt-0.5">
+                              <div className="flex items-center">
+                                <span className="text-[10px] text-gray-500 w-10">
+                                  {new Date(position.entryTime).getDate()}{" "}
+                                  {new Date(
+                                    position.entryTime,
+                                  ).toLocaleDateString([], { month: "short" })}
+                                </span>
+                                <span className="text-[10px] text-gray-500 ml-4">
+                                  Blitz
+                                </span>
+                              </div>
+                              <span
+                                className={`text-xs ${isWinning ? "text-green-400" : "text-red-400"}`}
+                              >
+                                {isWinning ? "+" : "-"}$
+                                {Math.abs(currentPL).toLocaleString()} (
+                                {isWinning ? "+" : ""}
+                                {plPercent}%)
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                    {/* Completed Trades */}
+                    {tradeHistory
+                      .filter((trade) => {
+                        // Filter by category
+                        if (historyFilter === "All Positions") return true;
+                        if (historyFilter === "Blitz Options") return true; // All short-term trades
+                        if (historyFilter === "Binary Options") return true; // All binary trades
+                        if (historyFilter === "Digital Options") return true;
+                        if (historyFilter === "Forex") {
+                          // Check if symbol contains forex pairs
+                          const forexPairs = [
+                            "EUR",
+                            "USD",
+                            "GBP",
+                            "JPY",
+                            "CHF",
+                            "AUD",
+                            "CAD",
+                            "NZD",
+                          ];
+                          return forexPairs.some((pair) =>
+                            trade.symbol.toUpperCase().includes(pair),
+                          );
+                        }
+                        if (historyFilter === "Crypto") {
+                          const cryptoSymbols = [
+                            "BTC",
+                            "ETH",
+                            "BNB",
+                            "SOL",
+                            "XRP",
+                            "ADA",
+                            "DOGE",
+                            "DOT",
+                            "MATIC",
+                            "LINK",
+                            "AVAX",
+                            "UNI",
+                            "ATOM",
+                            "LTC",
+                            "SHIB",
+                          ];
+                          return cryptoSymbols.some((sym) =>
+                            trade.symbol.toUpperCase().includes(sym),
+                          );
+                        }
+                        if (historyFilter === "Stocks, ETFs, Commodities") {
+                          const stockSymbols = [
+                            "AAPL",
+                            "GOOGL",
+                            "MSFT",
+                            "AMZN",
+                            "TSLA",
+                            "META",
+                            "NVDA",
+                            "GOLD",
+                            "OIL",
+                            "SILVER",
+                          ];
+                          return stockSymbols.some((sym) =>
+                            trade.symbol.toUpperCase().includes(sym),
+                          );
+                        }
+                        if (historyFilter === "Indices") {
+                          const indexSymbols = [
+                            "INDEX",
+                            "AUS 200",
+                            "EU 50",
+                            "FR 40",
+                            "GER 30",
+                            "US 500",
+                            "NASDAQ",
+                            "DOW",
+                            "MAGNIFICENT",
+                            "AIRLINES",
+                            "CANNABIS",
+                            "CASINO",
+                          ];
+                          return indexSymbols.some((sym) =>
+                            trade.symbol.toUpperCase().includes(sym),
+                          );
+                        }
+                        return true;
+                      })
+                      .map((trade) => {
+                        const isWin = trade.status === "WIN";
+                        const plPercent = isWin
+                          ? Math.round((trade.profit / trade.amount) * 100)
+                          : -100;
+
+                        return (
+                          <div
+                            key={trade.id}
+                            className="px-3 py-2.5 hover:bg-white/5 transition-colors cursor-pointer"
+                            style={{ borderBottom: "1px solid #2a2e39" }}
+                            onClick={() => setExpandedHistoryTradeId(trade.id)}
+                          >
+                            {/* Row 1: Time, Logo, Asset, Arrow, Amount */}
+                            <div className="flex items-center gap-1.5">
+                              <div className="text-sm text-white font-bold w-10">
+                                {new Date(trade.entryTime).toLocaleTimeString(
+                                  [],
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                    hour12: false,
+                                  },
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 ml-2 flex-1">
+                                <AssetFlag
+                                  flag={
+                                    symbols.find(
+                                      (s) => s.symbol === trade.symbol,
+                                    )?.flag || ""
+                                  }
+                                  symbol={trade.symbol}
+                                  size={18}
+                                />
+                                <div className="text-white text-xs truncate">
+                                  {trade.symbol}
+                                </div>
+                              </div>
+                              <svg
+                                className="w-2.5 h-2.5 flex-shrink-0"
+                                viewBox="0 0 12 12"
+                                fill={
+                                  trade.direction === "HIGHER"
+                                    ? "#22c55e"
+                                    : "#ef4444"
+                                }
+                              >
+                                {trade.direction === "HIGHER" ? (
+                                  <path d="M6 2L11 10H1L6 2Z" />
+                                ) : (
+                                  <path d="M6 10L1 2H11L6 10Z" />
+                                )}
+                              </svg>
+                              <div
+                                className={`text-xs font-medium whitespace-nowrap text-right ${isWin ? "text-green-400" : "text-red-400"}`}
+                              >
+                                ${trade.amount.toLocaleString()}
+                              </div>
+                            </div>
+                            {/* Row 2: Date under time, Binary under logo, P/L right */}
+                            <div className="flex items-center justify-between mt-0.5">
+                              <div className="flex items-center">
+                                <span className="text-[10px] text-gray-500 w-10">
+                                  {new Date(trade.entryTime).getDate()}{" "}
+                                  {new Date(trade.entryTime).toLocaleDateString(
+                                    [],
+                                    { month: "short" },
+                                  )}
+                                </span>
+                                <span className="text-[10px] text-gray-500 ml-4">
+                                  {selectedMarket}
+                                </span>
+                              </div>
+                              <span
+                                className={`text-xs ${isWin ? "text-green-400" : "text-red-400"}`}
+                              >
+                                {isWin ? "+" : "-"}$
+                                {Math.abs(trade.profit).toLocaleString()} (
+                                {isWin ? "+" : ""}
+                                {plPercent}%)
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                    {/* Empty State */}
+                    {tradeHistory.length === 0 &&
+                      openPositions.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-16 px-4">
+                          <History className="w-12 h-12 text-gray-600 mb-3" />
+                          <p className="text-gray-400 text-sm text-center">
+                            No trading history yet
+                          </p>
+                          <p className="text-gray-500 text-xs text-center mt-1">
+                            Execute some trades to see your history here
+                          </p>
+                        </div>
+                      )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Trade Detail Panel - Opens between Trading History and Chart */}
+            <AnimatePresence>
+              {expandedHistoryTradeId &&
+                (() => {
+                  const trade = tradeHistory.find(
+                    (t) => t.id === expandedHistoryTradeId,
+                  );
+                  if (!trade) return null;
+
+                  const isWin = trade.status === "WIN";
+                  const plPercent = isWin
+                    ? Math.round((trade.profit / trade.amount) * 100)
+                    : -100;
+                  const exitPrice = trade.exitPrice || trade.entryPrice;
+                  const exitTime = trade.exitTime || trade.expirationTime;
+                  const expirationTime = trade.expirationTime;
+
+                  // Format date as "23 Mar 2026" to match IQ Option
+                  const formatDate = (
+                    date: Date | number | undefined | null,
+                  ) => {
+                    if (!date) return "N/A";
+                    try {
+                      const d = new Date(date);
+                      if (isNaN(d.getTime())) return "N/A";
+                      return new Intl.DateTimeFormat("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      }).format(d);
+                    } catch {
+                      return "N/A";
+                    }
+                  };
+
+                  const formatTime = (
+                    date: Date | number | undefined | null,
+                  ) => {
+                    if (!date) return "N/A";
+                    try {
+                      const d = new Date(date);
+                      if (isNaN(d.getTime())) return "N/A";
+                      return d.toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
+                        hour12: false,
+                      });
+                    } catch {
+                      return "N/A";
+                    }
+                  };
+
+                  return (
+                    <motion.div
+                      initial={{ width: 0, opacity: 0 }}
+                      animate={{ width: 380, opacity: 1 }}
+                      exit={{ width: 0, opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="border-r flex-shrink-0 overflow-y-auto z-30 flex flex-col relative"
+                      style={{
+                        backgroundColor: "#1a1f2e",
+                        borderColor: "#2a2e39",
+                      }}
+                    >
+                      {/* Close Button */}
+                      <button
+                        onClick={() => setExpandedHistoryTradeId(null)}
+                        className="absolute top-3 right-3 p-2 rounded-full hover:bg-white/10 transition-colors z-50"
+                      >
+                        <X className="w-5 h-5 text-gray-400 hover:text-white" />
+                      </button>
+
+                      {/* Asset Header with Chart Background */}
+                      <div
+                        className="relative px-4 pt-4 pb-2"
+                        style={{ backgroundColor: "#1a1f2e" }}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <AssetFlag
+                            flag={
+                              symbols.find((s) => s.symbol === trade.symbol)
+                                ?.flag || ""
+                            }
+                            symbol={trade.symbol}
+                            size={24}
+                          />
+                          <span className="text-sm font-medium text-white">
+                            {trade.symbol} (OTC)
+                          </span>
+                          <span
+                            className="text-xs px-1.5 py-0.5 rounded"
+                            style={{
+                              backgroundColor: "#2a2e39",
+                              color: "#8b9ab8",
+                            }}
+                          >
+                            Binary
+                          </span>
+                        </div>
+                        <div className="text-base font-bold text-white mb-1">
+                          {exitPrice.toFixed(6)}
+                        </div>
+                      </div>
+
+                      {/* Mini Chart Area */}
+                      <div
+                        className="relative px-4"
+                        style={{ height: "200px", backgroundColor: "#1a1f2e" }}
+                      >
+                        {/* Simple candlestick visualization */}
+                        <svg
+                          width="100%"
+                          height="180"
+                          viewBox="0 0 340 180"
+                          style={{ marginTop: "10px" }}
+                        >
+                          {/* Grid lines */}
+                          <line
+                            x1="0"
+                            y1="60"
+                            x2="340"
+                            y2="60"
+                            stroke="#2a2e39"
+                            strokeWidth="1"
+                          />
+                          <line
+                            x1="0"
+                            y1="90"
+                            x2="340"
+                            y2="90"
+                            stroke="#2a2e39"
+                            strokeWidth="1"
+                          />
+                          <line
+                            x1="0"
+                            y1="120"
+                            x2="340"
+                            y2="120"
+                            stroke="#2a2e39"
+                            strokeWidth="1"
+                          />
+
+                          {/* Entry price line */}
+                          <line
+                            x1="0"
+                            y1="90"
+                            x2="340"
+                            y2="90"
+                            stroke="#ff8516"
+                            strokeWidth="2"
+                            strokeDasharray="4 4"
+                          />
+
+                          {/* Simple candlesticks - using trade data to show movement */}
+                          {Array.from({ length: 12 }).map((_, i) => {
+                            const x = 20 + i * 28;
+                            const variance =
+                              Math.sin(i * 0.8) * 20 +
+                              (i === 11 ? (isWin ? -15 : 15) : 0);
+                            const bodyTop = 90 - variance;
+                            const bodyBottom = 90 - variance + 15;
+                            const wickTop = bodyTop - 8;
+                            const wickBottom = bodyBottom + 8;
+                            const isGreen = variance < 0;
+                            const color = isGreen ? "#22c55e" : "#ef4444";
+
+                            return (
+                              <g key={i}>
+                                {/* Wick */}
+                                <line
+                                  x1={x}
+                                  y1={wickTop}
+                                  x2={x}
+                                  y2={wickBottom}
+                                  stroke={color}
+                                  strokeWidth="1"
+                                />
+                                {/* Body */}
+                                <rect
+                                  x={x - 6}
+                                  y={Math.min(bodyTop, bodyBottom)}
+                                  width="12"
+                                  height={Math.abs(bodyBottom - bodyTop)}
+                                  fill={color}
+                                />
+                              </g>
+                            );
+                          })}
+
+                          {/* Entry marker */}
+                          <circle
+                            cx="100"
+                            cy="90"
+                            r="8"
+                            fill="white"
+                            stroke="#ff8516"
+                            strokeWidth="2"
+                          />
+                          <circle cx="100" cy="90" r="3" fill="#ff8516" />
+
+                          {/* Exit marker */}
+                          <g>
+                            <circle
+                              cx="320"
+                              cy={isWin ? 75 : 105}
+                              r="10"
+                              fill={isWin ? "#22c55e" : "#ef4444"}
+                            />
+                            <path
+                              d={
+                                isWin
+                                  ? "M316 75 L319 78 L324 73"
+                                  : "M316 102 L324 110 M324 102 L316 110"
+                              }
+                              stroke="white"
+                              strokeWidth="2"
+                              fill="none"
+                            />
+                          </g>
+                        </svg>
+
+                        {/* Timeline */}
+                        <div className="flex justify-between text-[10px] text-gray-500 px-2">
+                          <span>{formatTime(trade.entryTime)}</span>
+                          <span className="text-orange-500">
+                            Historical Quotes
+                          </span>
+                          <span>{formatTime(expirationTime)}</span>
+                        </div>
+                      </div>
+
+                      {/* Trade Information Section */}
+                      <div className="p-4 space-y-4">
+                        {/* NET P/L */}
                         <div>
                           <div className="text-xs text-gray-400 mb-1">
-                            INVEST
+                            NET P/L
                           </div>
-                          <div className="flex items-center gap-1">
-                            <svg
-                              className="w-3 h-3"
-                              viewBox="0 0 12 12"
-                              fill={
-                                trade.direction === "HIGHER"
-                                  ? "#22c55e"
-                                  : "#ef4444"
-                              }
-                            >
-                              {trade.direction === "HIGHER" ? (
-                                <path d="M6 2L11 10H1L6 2Z" />
-                              ) : (
-                                <path d="M6 10L1 2H11L6 10Z" />
-                              )}
-                            </svg>
-                            <span className="text-base text-white font-medium">
-                              ${trade.amount.toFixed(2)}
+                          <div
+                            className={`text-3xl font-bold ${isWin ? "text-green-400" : "text-red-400"}`}
+                          >
+                            {isWin ? "+" : ""}${trade.profit.toFixed(2)}{" "}
+                            <span className="text-lg">
+                              ({isWin ? "+" : ""}
+                              {plPercent}.00%)
                             </span>
                           </div>
                         </div>
 
-                        {/* OPEN PRICE */}
-                        <div>
-                          <div className="text-xs text-gray-400 mb-1">
-                            OPEN PRICE
+                        {/* Three Column Layout */}
+                        <div className="grid grid-cols-3 gap-4">
+                          {/* INVEST */}
+                          <div>
+                            <div className="text-xs text-gray-400 mb-1">
+                              INVEST
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <svg
+                                className="w-3 h-3"
+                                viewBox="0 0 12 12"
+                                fill={
+                                  trade.direction === "HIGHER"
+                                    ? "#22c55e"
+                                    : "#ef4444"
+                                }
+                              >
+                                {trade.direction === "HIGHER" ? (
+                                  <path d="M6 2L11 10H1L6 2Z" />
+                                ) : (
+                                  <path d="M6 10L1 2H11L6 10Z" />
+                                )}
+                              </svg>
+                              <span className="text-base text-white font-medium">
+                                ${trade.amount.toFixed(2)}
+                              </span>
+                            </div>
                           </div>
-                          <div className="text-base text-white">
-                            {trade.entryPrice.toFixed(6)}
+
+                          {/* OPEN PRICE */}
+                          <div>
+                            <div className="text-xs text-gray-400 mb-1">
+                              OPEN PRICE
+                            </div>
+                            <div className="text-base text-white">
+                              {trade.entryPrice.toFixed(6)}
+                            </div>
+                          </div>
+
+                          {/* CLOSE PRICE */}
+                          <div>
+                            <div className="text-xs text-gray-400 mb-1 flex items-center gap-1">
+                              CLOSE PRICE
+                              <svg
+                                className="w-3 h-3 text-gray-500"
+                                viewBox="0 0 16 16"
+                                fill="currentColor"
+                              >
+                                <circle
+                                  cx="8"
+                                  cy="8"
+                                  r="7"
+                                  stroke="currentColor"
+                                  strokeWidth="1"
+                                  fill="none"
+                                />
+                                <text
+                                  x="8"
+                                  y="11"
+                                  fontSize="10"
+                                  textAnchor="middle"
+                                  fill="currentColor"
+                                >
+                                  ?
+                                </text>
+                              </svg>
+                            </div>
+                            <div className="text-base text-white">
+                              {exitPrice.toFixed(6)}
+                            </div>
                           </div>
                         </div>
 
-                        {/* CLOSE PRICE */}
-                        <div>
-                          <div className="text-xs text-gray-400 mb-1 flex items-center gap-1">
-                            CLOSE PRICE
+                        {/* Position Closed Message */}
+                        <div className="text-center py-3">
+                          <div className="text-sm text-gray-400">
+                            Position closed automatically
+                          </div>
+                          <div className="flex items-center justify-center gap-1 mt-1">
                             <svg
-                              className="w-3 h-3 text-gray-500"
+                              className="w-4 h-4 text-gray-500"
                               viewBox="0 0 16 16"
                               fill="currentColor"
                             >
@@ -4477,105 +4628,71 @@ function TradingInterface() {
                                 cy="8"
                                 r="7"
                                 stroke="currentColor"
-                                strokeWidth="1"
+                                strokeWidth="1.5"
                                 fill="none"
                               />
-                              <text
-                                x="8"
-                                y="11"
-                                fontSize="10"
-                                textAnchor="middle"
-                                fill="currentColor"
-                              >
-                                ?
-                              </text>
+                              <path
+                                d="M8 4v4.5l3 1.5"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                fill="none"
+                                strokeLinecap="round"
+                              />
                             </svg>
+                            <span className="text-xs text-gray-400">
+                              {formatDate(expirationTime).slice(0, -5)},{" "}
+                              {formatTime(expirationTime).slice(0, 5)}
+                            </span>
                           </div>
-                          <div className="text-base text-white">
-                            {exitPrice.toFixed(6)}
+                        </div>
+
+                        {/* Detailed Times */}
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Purchase time</span>
+                            <span className="text-white">
+                              {formatTime(trade.entryTime)},{" "}
+                              {formatDate(trade.entryTime)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Close Time</span>
+                            <span className="text-white">
+                              {formatTime(exitTime)}, {formatDate(exitTime)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">
+                              Expiration Time
+                            </span>
+                            <span className="text-white">
+                              {formatTime(expirationTime)},{" "}
+                              {formatDate(expirationTime)}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Position ID */}
+                        <div
+                          className="pt-3 border-t"
+                          style={{ borderColor: "#2a2e39" }}
+                        >
+                          <div className="text-xs text-gray-400 mb-1">
+                            Position ID
+                          </div>
+                          <div className="text-sm text-white font-mono">
+                            {trade.id}
                           </div>
                         </div>
                       </div>
+                    </motion.div>
+                  );
+                })()}
+            </AnimatePresence>
 
-                      {/* Position Closed Message */}
-                      <div className="text-center py-3">
-                        <div className="text-sm text-gray-400">
-                          Position closed automatically
-                        </div>
-                        <div className="flex items-center justify-center gap-1 mt-1">
-                          <svg
-                            className="w-4 h-4 text-gray-500"
-                            viewBox="0 0 16 16"
-                            fill="currentColor"
-                          >
-                            <circle
-                              cx="8"
-                              cy="8"
-                              r="7"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                            />
-                            <path
-                              d="M8 4v4.5l3 1.5"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              fill="none"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          <span className="text-xs text-gray-400">
-                            {formatDate(expirationTime).slice(0, -5)},{" "}
-                            {formatTime(expirationTime).slice(0, 5)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Detailed Times */}
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Purchase time</span>
-                          <span className="text-white">
-                            {formatTime(trade.entryTime)},{" "}
-                            {formatDate(trade.entryTime)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Close Time</span>
-                          <span className="text-white">
-                            {formatTime(exitTime)}, {formatDate(exitTime)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-400">Expiration Time</span>
-                          <span className="text-white">
-                            {formatTime(expirationTime)},{" "}
-                            {formatDate(expirationTime)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Position ID */}
-                      <div
-                        className="pt-3 border-t"
-                        style={{ borderColor: "#2a2e39" }}
-                      >
-                        <div className="text-xs text-gray-400 mb-1">
-                          Position ID
-                        </div>
-                        <div className="text-sm text-white font-mono">
-                          {trade.id}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })()}
-          </AnimatePresence>
-
-          {/* Center: Chart and Controls */}
-          <div className="flex-1 flex flex-col">
-            {/* Chart Header 
+            {/* Center: Chart and Controls */}
+            <div className="flex-1 flex flex-col">
+              {/* Chart Header 
           <div
             className="flex items-center justify-between p-4 border-b"
             style={{ borderColor: "#1a2d45" }}
@@ -4626,1424 +4743,1451 @@ function TradingInterface() {
             </div>
           </div> */}
 
-            {/* Chart Grids Panel */}
-            <AnimatePresence>
-              {showChartGrids && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="border-b overflow-hidden"
-                  style={{ backgroundColor: "#0d1626", borderColor: "#1a2d45" }}
-                >
-                  <div className="p-4">
-                    <h3
-                      className="text-sm font-semibold mb-4"
-                      style={{ color: "#eef2f7" }}
-                    >
-                      CHART GRIDS
-                    </h3>
-
-                    {/* 1 Chart */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm" style={{ color: "#8b9ab8" }}>
-                          1 chart
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => setSelectedChartGrid(1)}
-                        className="p-2 rounded transition-all duration-200"
-                        style={{
-                          backgroundColor:
-                            selectedChartGrid === 1 ? "#ff8516" : "#1a2d45",
-                          border: `1px solid ${
-                            selectedChartGrid === 1 ? "#ff8516" : "#1a2d45"
-                          }`,
-                        }}
+              {/* Chart Grids Panel */}
+              <AnimatePresence>
+                {showChartGrids && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="border-b overflow-hidden"
+                    style={{
+                      backgroundColor: "#0d1626",
+                      borderColor: "#1a2d45",
+                    }}
+                  >
+                    <div className="p-4">
+                      <h3
+                        className="text-sm font-semibold mb-4"
+                        style={{ color: "#eef2f7" }}
                       >
-                        <div
-                          className="w-8 h-6 rounded-sm"
+                        CHART GRIDS
+                      </h3>
+
+                      {/* 1 Chart */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span
+                            className="text-sm"
+                            style={{ color: "#8b9ab8" }}
+                          >
+                            1 chart
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => setSelectedChartGrid(1)}
+                          className="p-2 rounded transition-all duration-200"
                           style={{
                             backgroundColor:
-                              selectedChartGrid === 1 ? "#ffffff" : "#4a6080",
+                              selectedChartGrid === 1 ? "#ff8516" : "#1a2d45",
+                            border: `1px solid ${
+                              selectedChartGrid === 1 ? "#ff8516" : "#1a2d45"
+                            }`,
                           }}
+                        >
+                          <div
+                            className="w-8 h-6 rounded-sm"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 1 ? "#ffffff" : "#4a6080",
+                            }}
+                          />
+                        </button>
+                      </div>
+
+                      {/* 2 Charts */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span
+                            className="text-sm"
+                            style={{ color: "#8b9ab8" }}
+                          >
+                            2 charts
+                          </span>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => setSelectedChartGrid(2)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 2 ? "#ff8516" : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 2 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="flex space-x-1">
+                              <div
+                                className="w-4 h-6 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 2
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-4 h-6 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 2
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(22)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 22
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 22 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="flex flex-col space-y-1">
+                              <div
+                                className="w-8 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 22
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-8 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 22
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 3 Charts */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span
+                            className="text-sm"
+                            style={{ color: "#8b9ab8" }}
+                          >
+                            3 charts
+                          </span>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => setSelectedChartGrid(3)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 3 ? "#ff8516" : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 3 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="flex space-x-1">
+                              <div
+                                className="w-2 h-6 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 3
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-6 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 3
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-6 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 3
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(32)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 32
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 32 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-1">
+                              <div
+                                className="w-3 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 32
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 32
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-6 h-2 rounded-sm col-span-2"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 32
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(33)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 33
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 33 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-1">
+                              <div
+                                className="w-6 h-2 rounded-sm col-span-2"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 33
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 33
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 33
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(34)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 34
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 34 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-1">
+                              <div
+                                className="w-3 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 34
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-3 rounded-sm row-span-2"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 34
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 34
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(35)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 35
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 35 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-3 gap-1">
+                              <div
+                                className="w-2 h-4 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 35
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-4 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 35
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-4 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 35
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* 4 Charts */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span
+                            className="text-sm"
+                            style={{ color: "#8b9ab8" }}
+                          >
+                            4 charts
+                          </span>
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => setSelectedChartGrid(4)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 4 ? "#ff8516" : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 4 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-1">
+                              <div
+                                className="w-3 h-3 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 4
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-3 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 4
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-3 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 4
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-3 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 4
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(42)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 42
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 42 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="flex space-x-1">
+                              <div
+                                className="w-2 h-6 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 42
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-6 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 42
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-6 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 42
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-6 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 42
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(43)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 43
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 43 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-3 gap-1">
+                              <div
+                                className="w-2 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 43
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 43
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 43
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-6 h-2 rounded-sm col-span-3"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 43
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(44)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 44
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 44 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-1">
+                              <div
+                                className="w-3 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 44
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-2 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 44
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-6 h-2 rounded-sm col-span-2"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 44
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-6 h-2 rounded-sm col-span-2"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 44
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(45)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 45
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 45 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="flex flex-col space-y-1">
+                              <div
+                                className="w-8 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 45
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-8 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 45
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-8 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 45
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-8 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 45
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* More Grids */}
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span
+                            className="text-sm"
+                            style={{ color: "#8b9ab8" }}
+                          >
+                            More grids
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-5 gap-2">
+                          {/* Row 1 */}
+                          <button
+                            onClick={() => setSelectedChartGrid(51)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 51
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 51 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-3 gap-px">
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 51
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 51
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 51
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 51
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 51
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 51
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(52)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 52
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 52 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-px">
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 52
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 52
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 52
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 52
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 52
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 52
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(53)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 53
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 53 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-px">
+                              <div
+                                className="w-4 h-1 rounded-sm col-span-2"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 53
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 53
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 53
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 53
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 53
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(54)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 54
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 54 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-3 gap-px">
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 54
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 54
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 54
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-1 rounded-sm col-span-3"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 54
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-3 h-1 rounded-sm col-span-3"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 54
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(55)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 55
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 55 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-3 gap-px">
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 55
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 55
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 55
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 55
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 55
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 55
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+
+                          {/* Row 2 */}
+                          <button
+                            onClick={() => setSelectedChartGrid(56)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 56
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 56 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-px">
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 56
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 56
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 56
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 56
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-4 h-1 rounded-sm col-span-2"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 56
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(57)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 57
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 57 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-2 gap-px">
+                              <div
+                                className="w-4 h-1 rounded-sm col-span-2"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 57
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 57
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 57
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 57
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-2 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 57
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(58)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 58
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 58 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-3 gap-px">
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 58
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 58
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 58
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 58
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 58
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 58
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(59)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 59
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 59 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-3 gap-px">
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 59
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 59
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 59
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 59
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 59
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 59
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => setSelectedChartGrid(60)}
+                            className="p-2 rounded transition-all duration-200"
+                            style={{
+                              backgroundColor:
+                                selectedChartGrid === 60
+                                  ? "#ff8516"
+                                  : "#1a2d45",
+                              border: `1px solid ${
+                                selectedChartGrid === 60 ? "#ff8516" : "#1a2d45"
+                              }`,
+                            }}
+                          >
+                            <div className="grid grid-cols-3 gap-px">
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 60
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 60
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 60
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 60
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 60
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                              <div
+                                className="w-1 h-1 rounded-sm"
+                                style={{
+                                  backgroundColor:
+                                    selectedChartGrid === 60
+                                      ? "#ffffff"
+                                      : "#4a6080",
+                                }}
+                              />
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Remember checkbox */}
+                      <div
+                        className="flex items-center space-x-2 pt-2 border-t"
+                        style={{ borderColor: "#1a2d45" }}
+                      >
+                        <input
+                          type="checkbox"
+                          id="remember"
+                          className="w-4 h-4 rounded"
+                          style={{ accentColor: "#ff8516" }}
                         />
-                      </button>
-                    </div>
-
-                    {/* 2 Charts */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm" style={{ color: "#8b9ab8" }}>
-                          2 charts
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => setSelectedChartGrid(2)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 2 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 2 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
+                        <label
+                          htmlFor="remember"
+                          className="text-xs"
+                          style={{ color: "#8b9ab8" }}
                         >
-                          <div className="flex space-x-1">
-                            <div
-                              className="w-4 h-6 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 2
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-4 h-6 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 2
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(22)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 22 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 22 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="flex flex-col space-y-1">
-                            <div
-                              className="w-8 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 22
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-8 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 22
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
+                          Remember the number of charts (the first chart will be
+                          active)
+                        </label>
                       </div>
                     </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-                    {/* 3 Charts */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm" style={{ color: "#8b9ab8" }}>
-                          3 charts
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => setSelectedChartGrid(3)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 3 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 3 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="flex space-x-1">
-                            <div
-                              className="w-2 h-6 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 3
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-6 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 3
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-6 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 3
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(32)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 32 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 32 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-2 gap-1">
-                            <div
-                              className="w-3 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 32
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 32
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-6 h-2 rounded-sm col-span-2"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 32
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(33)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 33 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 33 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-2 gap-1">
-                            <div
-                              className="w-6 h-2 rounded-sm col-span-2"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 33
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 33
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 33
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(34)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 34 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 34 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-2 gap-1">
-                            <div
-                              className="w-3 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 34
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-3 rounded-sm row-span-2"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 34
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 34
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(35)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 35 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 35 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-3 gap-1">
-                            <div
-                              className="w-2 h-4 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 35
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-4 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 35
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-4 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 35
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* 4 Charts */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm" style={{ color: "#8b9ab8" }}>
-                          4 charts
-                        </span>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => setSelectedChartGrid(4)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 4 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 4 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-2 gap-1">
-                            <div
-                              className="w-3 h-3 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 4
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-3 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 4
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-3 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 4
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-3 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 4
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(42)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 42 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 42 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="flex space-x-1">
-                            <div
-                              className="w-2 h-6 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 42
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-6 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 42
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-6 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 42
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-6 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 42
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(43)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 43 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 43 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-3 gap-1">
-                            <div
-                              className="w-2 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 43
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 43
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 43
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-6 h-2 rounded-sm col-span-3"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 43
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(44)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 44 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 44 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-2 gap-1">
-                            <div
-                              className="w-3 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 44
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-2 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 44
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-6 h-2 rounded-sm col-span-2"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 44
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-6 h-2 rounded-sm col-span-2"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 44
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(45)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 45 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 45 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="flex flex-col space-y-1">
-                            <div
-                              className="w-8 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 45
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-8 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 45
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-8 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 45
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-8 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 45
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* More Grids */}
-                    <div className="mb-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm" style={{ color: "#8b9ab8" }}>
-                          More grids
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-5 gap-2">
-                        {/* Row 1 */}
-                        <button
-                          onClick={() => setSelectedChartGrid(51)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 51 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 51 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-3 gap-px">
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 51
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 51
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 51
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 51
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 51
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 51
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(52)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 52 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 52 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-2 gap-px">
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 52
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 52
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 52
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 52
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 52
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 52
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(53)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 53 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 53 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-2 gap-px">
-                            <div
-                              className="w-4 h-1 rounded-sm col-span-2"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 53
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 53
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 53
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 53
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 53
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(54)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 54 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 54 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-3 gap-px">
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 54
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 54
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 54
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-1 rounded-sm col-span-3"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 54
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-3 h-1 rounded-sm col-span-3"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 54
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(55)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 55 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 55 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-3 gap-px">
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 55
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 55
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 55
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 55
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 55
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 55
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-
-                        {/* Row 2 */}
-                        <button
-                          onClick={() => setSelectedChartGrid(56)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 56 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 56 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-2 gap-px">
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 56
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 56
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 56
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 56
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-4 h-1 rounded-sm col-span-2"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 56
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(57)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 57 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 57 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-2 gap-px">
-                            <div
-                              className="w-4 h-1 rounded-sm col-span-2"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 57
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 57
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 57
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 57
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-2 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 57
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(58)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 58 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 58 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-3 gap-px">
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 58
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 58
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 58
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 58
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 58
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 58
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(59)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 59 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 59 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-3 gap-px">
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 59
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 59
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 59
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 59
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 59
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 59
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedChartGrid(60)}
-                          className="p-2 rounded transition-all duration-200"
-                          style={{
-                            backgroundColor:
-                              selectedChartGrid === 60 ? "#ff8516" : "#1a2d45",
-                            border: `1px solid ${
-                              selectedChartGrid === 60 ? "#ff8516" : "#1a2d45"
-                            }`,
-                          }}
-                        >
-                          <div className="grid grid-cols-3 gap-px">
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 60
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 60
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 60
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 60
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 60
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                            <div
-                              className="w-1 h-1 rounded-sm"
-                              style={{
-                                backgroundColor:
-                                  selectedChartGrid === 60
-                                    ? "#ffffff"
-                                    : "#4a6080",
-                              }}
-                            />
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Remember checkbox */}
-                    <div
-                      className="flex items-center space-x-2 pt-2 border-t"
-                      style={{ borderColor: "#1a2d45" }}
-                    >
-                      <input
-                        type="checkbox"
-                        id="remember"
-                        className="w-4 h-4 rounded"
-                        style={{ accentColor: "#ff8516" }}
-                      />
-                      <label
-                        htmlFor="remember"
-                        className="text-xs"
-                        style={{ color: "#8b9ab8" }}
-                      >
-                        Remember the number of charts (the first chart will be
-                        active)
-                      </label>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Chart Area with World Map Background */}
-            <div
-              className="flex-1 relative overflow-visible"
-              style={{
-                backgroundColor: "#070c15",
-                zIndex: 10,
-                backgroundImage:
-                  'url("/traderoom/backgrounds/worldmapbackground.svg")',
-                backgroundSize: "80%",
-                backgroundPosition: "center center",
-                backgroundRepeat: "no-repeat",
-              }}
-            >
-              {/* IQ Option Style - Top Left Symbol Header */}
-              <div className="absolute top-2 left-12 z-40 flex flex-col gap-1.5">
-                {/* Symbol Badge with Flag */}
-                <div className="flex items-center gap-1.5">
-                  <div className="flex items-center -space-x-1.5">
-                    <div className="w-6 h-6 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e]">
-                      <CryptoIcon
-                        symbol={selectedSymbol.split("/")[0]}
-                        size="sm"
-                      />
-                    </div>
-                    {selectedSymbol.includes("/") && (
-                      <div className="w-6 h-6 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e] z-10">
+              {/* Chart Area with World Map Background */}
+              <div
+                className="flex-1 relative overflow-visible"
+                style={{
+                  backgroundColor: "#070c15",
+                  zIndex: 10,
+                  backgroundImage:
+                    'url("/traderoom/backgrounds/worldmapbackground.svg")',
+                  backgroundSize: "80%",
+                  backgroundPosition: "center center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              >
+                {/* IQ Option Style - Top Left Symbol Header */}
+                <div className="absolute top-2 left-12 z-40 flex flex-col gap-1.5">
+                  {/* Symbol Badge with Flag */}
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex items-center -space-x-1.5">
+                      <div className="w-6 h-6 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e]">
                         <CryptoIcon
-                          symbol={selectedSymbol.split("/")[1]}
+                          symbol={selectedSymbol.split("/")[0]}
                           size="sm"
                         />
                       </div>
-                    )}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-white font-semibold text-xs">
-                        {selectedSymbol.replace("/", "/")}
-                      </span>
-                      <ChevronDown className="w-2.5 h-2.5 text-gray-400" />
+                      {selectedSymbol.includes("/") && (
+                        <div className="w-6 h-6 rounded-full bg-[#2a2522] flex items-center justify-center overflow-hidden border-2 border-[#38312e] z-10">
+                          <CryptoIcon
+                            symbol={selectedSymbol.split("/")[1]}
+                            size="sm"
+                          />
+                        </div>
+                      )}
                     </div>
-                    <span className="text-gray-400 text-[10px]">
-                      {openTabs[activeTab]?.type || selectedMarket}
-                    </span>
+                    <div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-white font-semibold text-xs">
+                          {selectedSymbol.replace("/", "/")}
+                        </span>
+                        <ChevronDown className="w-2.5 h-2.5 text-gray-400" />
+                      </div>
+                      <span className="text-gray-400 text-[10px]">
+                        {openTabs[activeTab]?.type || selectedMarket}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Info, Bell, Star buttons - below asset info */}
+                  <div className="flex items-center gap-1">
+                    <button className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-[#1a2d45]/80 text-white text-[10px] font-medium hover:bg-[#1a2d45] transition-colors backdrop-blur-sm">
+                      <Info className="w-3 h-3" />
+                      <span>Info</span>
+                    </button>
+                    <button className="w-6 h-6 rounded-full bg-[#1a2d45]/80 flex items-center justify-center hover:bg-[#1a2d45] transition-colors backdrop-blur-sm">
+                      <Bell className="w-3 h-3 text-gray-400" />
+                    </button>
+                    <button className="w-6 h-6 rounded-full bg-[#1a2d45]/80 flex items-center justify-center hover:bg-[#1a2d45] transition-colors backdrop-blur-sm">
+                      <Star className="w-3 h-3 text-gray-400" />
+                    </button>
                   </div>
                 </div>
 
-                {/* Info, Bell, Star buttons - below asset info */}
-                <div className="flex items-center gap-1">
-                  <button className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-[#1a2d45]/80 text-white text-[10px] font-medium hover:bg-[#1a2d45] transition-colors backdrop-blur-sm">
-                    <Info className="w-3 h-3" />
-                    <span>Info</span>
-                  </button>
-                  <button className="w-6 h-6 rounded-full bg-[#1a2d45]/80 flex items-center justify-center hover:bg-[#1a2d45] transition-colors backdrop-blur-sm">
-                    <Bell className="w-3 h-3 text-gray-400" />
-                  </button>
-                  <button className="w-6 h-6 rounded-full bg-[#1a2d45]/80 flex items-center justify-center hover:bg-[#1a2d45] transition-colors backdrop-blur-sm">
-                    <Star className="w-3 h-3 text-gray-400" />
-                  </button>
-                </div>
-              </div>
-
-              {/* IQ Option Style HIGHER/LOWER Indicators + Tools on Left Side */}
-              <div className="absolute left-0 top-16 bottom-0 z-50 flex flex-col justify-between py-4 w-16">
-                {/* HIGHER Indicator - Top */}
-                <div className="flex flex-col items-start">
-                  <div className="text-[#22c55e] text-xs font-bold tracking-wider mb-0.5 ml-2">
-                    HIGHER
+                {/* IQ Option Style HIGHER/LOWER Indicators + Tools on Left Side */}
+                <div className="absolute left-0 top-16 bottom-0 z-50 flex flex-col justify-between py-4 w-16">
+                  {/* HIGHER Indicator - Top */}
+                  <div className="flex flex-col items-start">
+                    <div className="text-[#22c55e] text-xs font-bold tracking-wider mb-0.5 ml-2">
+                      HIGHER
+                    </div>
+                    <div className="text-[#22c55e] text-lg font-bold ml-2">
+                      90%
+                    </div>
+                    {/* Green gradient bar */}
+                    <div
+                      className="w-4 mt-1 ml-2"
+                      style={{
+                        height: "80px",
+                        background:
+                          "linear-gradient(to bottom, #22c55e 0%, transparent 100%)",
+                        opacity: 0.8,
+                      }}
+                    />
                   </div>
-                  <div className="text-[#22c55e] text-lg font-bold ml-2">
-                    90%
+
+                  {/* LOWER Indicator - Middle */}
+                  <div className="flex flex-col items-start">
+                    {/* Red gradient bar */}
+                    <div
+                      className="w-4 mb-1 ml-2"
+                      style={{
+                        height: "80px",
+                        background:
+                          "linear-gradient(to top, #ef4444 0%, transparent 100%)",
+                        opacity: 0.8,
+                      }}
+                    />
+                    <div className="text-[#ef4444] text-xs font-bold tracking-wider mb-0.5 ml-2">
+                      LOWER
+                    </div>
+                    <div className="text-[#ef4444] text-lg font-bold ml-2">
+                      10%
+                    </div>
                   </div>
-                  {/* Green gradient bar */}
-                  <div
-                    className="w-4 mt-1 ml-2"
-                    style={{
-                      height: "80px",
-                      background:
-                        "linear-gradient(to bottom, #22c55e 0%, transparent 100%)",
-                      opacity: 0.8,
-                    }}
-                  />
-                </div>
 
-                {/* LOWER Indicator - Middle */}
-                <div className="flex flex-col items-start">
-                  {/* Red gradient bar */}
-                  <div
-                    className="w-4 mb-1 ml-2"
-                    style={{
-                      height: "80px",
-                      background:
-                        "linear-gradient(to top, #ef4444 0%, transparent 100%)",
-                      opacity: 0.8,
-                    }}
-                  />
-                  <div className="text-[#ef4444] text-xs font-bold tracking-wider mb-0.5 ml-2">
-                    LOWER
-                  </div>
-                  <div className="text-[#ef4444] text-lg font-bold ml-2">
-                    10%
-                  </div>
-                </div>
-
-                {/* Tool Buttons - Bottom */}
-                <div className="flex flex-col items-center gap-1 mt-auto">
-                  {/* Drawing Tool */}
-                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
-                    <svg
-                      className="w-4 h-4 text-gray-400"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <rect x="3" y="3" width="7" height="7" rx="1" />
-                      <rect x="14" y="3" width="7" height="7" rx="1" />
-                      <rect x="3" y="14" width="7" height="7" rx="1" />
-                      <rect x="14" y="14" width="7" height="7" rx="1" />
-                    </svg>
-                  </button>
-
-                  {/* Expiration Time Selector */}
-                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e] text-white text-xs font-bold">
-                    {expirationSeconds}s
-                  </button>
-
-                  {/* Sound Toggle */}
-                  <button
-                    onClick={() => setIsSoundOn(!isSoundOn)}
-                    className={`w-9 h-9 rounded flex items-center justify-center transition-colors border ${
-                      isSoundOn
-                        ? "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
-                        : "bg-[#1a1512] border-[#2a2220] hover:bg-[#2a2220]"
-                    }`}
-                  >
-                    {isSoundOn ? (
+                  {/* Tool Buttons - Bottom */}
+                  <div className="flex flex-col items-center gap-1 mt-auto">
+                    {/* Drawing Tool */}
+                    <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
                       <svg
                         className="w-4 h-4 text-gray-400"
                         viewBox="0 0 24 24"
@@ -6051,2883 +6195,2319 @@ function TradingInterface() {
                         stroke="currentColor"
                         strokeWidth="2"
                       >
-                        <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                        <rect x="3" y="3" width="7" height="7" rx="1" />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
                       </svg>
-                    ) : (
+                    </button>
+
+                    {/* Expiration Time Selector */}
+                    <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e] text-white text-xs font-bold">
+                      {expirationSeconds}s
+                    </button>
+
+                    {/* Sound Toggle */}
+                    <button
+                      onClick={() => setIsSoundOn(!isSoundOn)}
+                      className={`w-9 h-9 rounded flex items-center justify-center transition-colors border ${
+                        isSoundOn
+                          ? "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
+                          : "bg-[#1a1512] border-[#2a2220] hover:bg-[#2a2220]"
+                      }`}
+                    >
+                      {isSoundOn ? (
+                        <svg
+                          className="w-4 h-4 text-gray-400"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="w-4 h-4 text-red-400"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                          <line x1="23" y1="9" x2="17" y2="15" />
+                          <line x1="17" y1="9" x2="23" y2="15" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Pencil/Draw */}
+                    <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
                       <svg
-                        className="w-4 h-4 text-red-400"
+                        className="w-4 h-4 text-gray-400"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
                       >
-                        <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                        <line x1="23" y1="9" x2="17" y2="15" />
-                        <line x1="17" y1="9" x2="23" y2="15" />
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
                       </svg>
-                    )}
-                  </button>
-
-                  {/* Pencil/Draw */}
-                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
-                    <svg
-                      className="w-4 h-4 text-gray-400"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                    </svg>
-                  </button>
-
-                  {/* Wave/Indicators */}
-                  <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
-                    <svg
-                      className="w-4 h-4 text-gray-400"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5 2 2 2 5" />
-                    </svg>
-                  </button>
-
-                  {/* Candle Timeframe - with dropdown */}
-                  <div className="relative" data-dropdown>
-                    <button
-                      onClick={() => {
-                        setShowCandleDropdown(!showCandleDropdown);
-                        setShowTimeframeDropdown(false);
-                      }}
-                      className={`w-9 h-9 rounded flex items-center justify-center transition-colors border text-white text-xs font-bold ${
-                        showCandleDropdown
-                          ? "bg-[#38312e] border-[#4a3f3a]"
-                          : "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
-                      }`}
-                    >
-                      {getCandleDisplayLabel()}
                     </button>
 
-                    {/* Candle Time Period Dropdown */}
-                    {showCandleDropdown && (
-                      <div className="absolute bottom-full left-10 mb-0 ml-1 bg-[#1e1e2d] border border-[#2a2a3d] rounded-lg shadow-2xl z-50 py-1 min-w-[160px] max-h-[320px] overflow-y-auto">
-                        <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider border-b border-[#2a2a3d]">
-                          Candle Time Period
-                        </div>
-                        {candleTimePeriods.map((period) => (
-                          <button
-                            key={period.value}
-                            onClick={() => {
-                              setCandleInterval(period.value);
-                              setShowCandleDropdown(false);
-                            }}
-                            className={`w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center justify-between ${
-                              candleInterval === period.value
-                                ? "bg-[#f0b90b]/10 text-[#f0b90b]"
-                                : "text-gray-300 hover:bg-[#2a2a3d]"
-                            }`}
-                          >
-                            <span>{period.label}</span>
-                            {candleInterval === period.value && (
-                              <svg
-                                className="w-3 h-3"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                              >
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                              </svg>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Chart Timeframe - with dropdown */}
-                  <div className="relative" data-dropdown>
-                    <button
-                      onClick={() => {
-                        setShowTimeframeDropdown(!showTimeframeDropdown);
-                        setShowCandleDropdown(false);
-                      }}
-                      className={`w-9 h-9 rounded flex items-center justify-center transition-colors border text-white text-xs font-bold ${
-                        showTimeframeDropdown
-                          ? "bg-[#38312e] border-[#4a3f3a]"
-                          : "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
-                      }`}
-                    >
-                      {chartTimeframe}
+                    {/* Wave/Indicators */}
+                    <button className="w-9 h-9 rounded bg-[#2a2522] flex items-center justify-center hover:bg-[#38312e] transition-colors border border-[#38312e]">
+                      <svg
+                        className="w-4 h-4 text-gray-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M2 12c2-3 4-5 6-5s4 5 6 5 4-5 6-5 2 2 2 5" />
+                      </svg>
                     </button>
 
-                    {/* Timeframe Dropdown */}
-                    {showTimeframeDropdown && (
-                      <div className="absolute bottom-full left-10 mb-0 ml-1 bg-[#1e1e2d] border border-[#2a2a3d] rounded-lg shadow-2xl z-50 py-1 min-w-[140px]">
-                        <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider border-b border-[#2a2a3d]">
-                          Chart Timeframe
+                    {/* Candle Timeframe - with dropdown */}
+                    <div className="relative" data-dropdown>
+                      <button
+                        onClick={() => {
+                          setShowCandleDropdown(!showCandleDropdown);
+                          setShowTimeframeDropdown(false);
+                        }}
+                        className={`w-9 h-9 rounded flex items-center justify-center transition-colors border text-white text-xs font-bold ${
+                          showCandleDropdown
+                            ? "bg-[#38312e] border-[#4a3f3a]"
+                            : "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
+                        }`}
+                      >
+                        {getCandleDisplayLabel()}
+                      </button>
+
+                      {/* Candle Time Period Dropdown */}
+                      {showCandleDropdown && (
+                        <div className="absolute bottom-full left-10 mb-0 ml-1 bg-[#1e1e2d] border border-[#2a2a3d] rounded-lg shadow-2xl z-50 py-1 min-w-[160px] max-h-[320px] overflow-y-auto">
+                          <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider border-b border-[#2a2a3d]">
+                            Candle Time Period
+                          </div>
+                          {candleTimePeriods.map((period) => (
+                            <button
+                              key={period.value}
+                              onClick={() => {
+                                setCandleInterval(period.value);
+                                setShowCandleDropdown(false);
+                              }}
+                              className={`w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center justify-between ${
+                                candleInterval === period.value
+                                  ? "bg-[#f0b90b]/10 text-[#f0b90b]"
+                                  : "text-gray-300 hover:bg-[#2a2a3d]"
+                              }`}
+                            >
+                              <span>{period.label}</span>
+                              {candleInterval === period.value && (
+                                <svg
+                                  className="w-3 h-3"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                >
+                                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                </svg>
+                              )}
+                            </button>
+                          ))}
                         </div>
-                        {timeframeOptions.map((tf) => (
-                          <button
-                            key={tf.value}
-                            onClick={() => {
-                              setChartTimeframe(tf.value);
-                              setShowTimeframeDropdown(false);
-                            }}
-                            className={`w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center justify-between ${
-                              chartTimeframe === tf.value
-                                ? "bg-[#f0b90b]/10 text-[#f0b90b]"
-                                : "text-gray-300 hover:bg-[#2a2a3d]"
-                            }`}
-                          >
-                            <span>{tf.label}</span>
-                            {chartTimeframe === tf.value && (
-                              <svg
-                                className="w-3 h-3"
-                                viewBox="0 0 24 24"
-                                fill="currentColor"
-                              >
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                              </svg>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+                      )}
+                    </div>
 
-              {/* IQ Option Style Stats Bar - Shows when trades are active */}
-              {(() => {
-                const activeTradesList = activeTrades.filter(
-                  (t) => t.status === "active" && t.symbol === selectedSymbol,
-                );
-                const hasActiveTrades = activeTradesList.length > 0;
+                    {/* Chart Timeframe - with dropdown */}
+                    <div className="relative" data-dropdown>
+                      <button
+                        onClick={() => {
+                          setShowTimeframeDropdown(!showTimeframeDropdown);
+                          setShowCandleDropdown(false);
+                        }}
+                        className={`w-9 h-9 rounded flex items-center justify-center transition-colors border text-white text-xs font-bold ${
+                          showTimeframeDropdown
+                            ? "bg-[#38312e] border-[#4a3f3a]"
+                            : "bg-[#2a2522] border-[#38312e] hover:bg-[#38312e]"
+                        }`}
+                      >
+                        {chartTimeframe}
+                      </button>
 
-                // Calculate totals
-                const totalInvestment = activeTradesList.reduce(
-                  (sum, t) => sum + t.amount,
-                  0,
-                );
-
-                // Calculate expected profit based on current price movement
-                const calculateExpectedProfit = () => {
-                  return activeTradesList.reduce((sum, trade) => {
-                    const priceChange = currentPrice - trade.entryPrice;
-                    const isWinning =
-                      (trade.direction === "higher" && priceChange > 0) ||
-                      (trade.direction === "lower" && priceChange < 0);
-                    // 85% profit if winning, -100% if losing
-                    return (
-                      sum + (isWinning ? trade.amount * 0.85 : -trade.amount)
-                    );
-                  }, 0);
-                };
-
-                const expectedProfit = calculateExpectedProfit();
-
-                // Calculate profit after sell (what you'd get if you close now)
-                const profitAfterSell = activeTradesList.reduce(
-                  (sum, trade) => {
-                    const priceChange = currentPrice - trade.entryPrice;
-                    const isWinning =
-                      (trade.direction === "higher" && priceChange > 0) ||
-                      (trade.direction === "lower" && priceChange < 0);
-                    // If winning, you get back investment + 85% profit
-                    // If losing, you lose everything (0 return - investment = negative)
-                    const payout = isWinning ? trade.amount * 1.85 : 0;
-                    return sum + (payout - trade.amount);
-                  },
-                  0,
-                );
-
-                // Find earliest active trade for countdown
-                const earliestTrade = activeTradesList.reduce(
-                  (earliest, trade) => {
-                    if (!earliest) return trade;
-                    const remainingTime = trade.expirationTime - Date.now();
-                    const earliestRemaining =
-                      earliest.expirationTime - Date.now();
-                    return remainingTime < earliestRemaining ? trade : earliest;
-                  },
-                  null as ActiveTrade | null,
-                );
-
-                const tradeCountdown = earliestTrade
-                  ? Math.max(
-                      0,
-                      Math.ceil(
-                        (earliestTrade.expirationTime - Date.now()) / 1000,
-                      ),
-                    )
-                  : countdown;
-
-                if (!hasActiveTrades) return null;
-
-                return (
-                  <div className="absolute top-2 right-2 z-20">
-                    {/* Compact stats bar - labels on top, values below */}
-                    <div className="flex items-start gap-6">
-                      {/* Remaining Time */}
-                      <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-1 text-[10px] text-white/70 uppercase tracking-wider">
-                          <Clock className="w-3 h-3" />
-                          Remaining
+                      {/* Timeframe Dropdown */}
+                      {showTimeframeDropdown && (
+                        <div className="absolute bottom-full left-10 mb-0 ml-1 bg-[#1e1e2d] border border-[#2a2a3d] rounded-lg shadow-2xl z-50 py-1 min-w-[140px]">
+                          <div className="px-3 py-1.5 text-[10px] text-gray-500 uppercase tracking-wider border-b border-[#2a2a3d]">
+                            Chart Timeframe
+                          </div>
+                          {timeframeOptions.map((tf) => (
+                            <button
+                              key={tf.value}
+                              onClick={() => {
+                                setChartTimeframe(tf.value);
+                                setShowTimeframeDropdown(false);
+                              }}
+                              className={`w-full px-3 py-1.5 text-left text-sm transition-colors flex items-center justify-between ${
+                                chartTimeframe === tf.value
+                                  ? "bg-[#f0b90b]/10 text-[#f0b90b]"
+                                  : "text-gray-300 hover:bg-[#2a2a3d]"
+                              }`}
+                            >
+                              <span>{tf.label}</span>
+                              {chartTimeframe === tf.value && (
+                                <svg
+                                  className="w-3 h-3"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                >
+                                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                </svg>
+                              )}
+                            </button>
+                          ))}
                         </div>
-                        <span className="text-lg text-white">
-                          {String(Math.floor(tradeCountdown / 60)).padStart(
-                            2,
-                            "0",
-                          )}
-                          :{String(tradeCountdown % 60).padStart(2, "0")}
-                        </span>
-                      </div>
-
-                      {/* Total Investment */}
-                      <div className="flex flex-col items-center">
-                        <span className="text-[10px] text-white/70 uppercase tracking-wider">
-                          TOTAL INVESTMENT
-                        </span>
-                        <span className="text-lg text-white">
-                          ${" "}
-                          {totalInvestment.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
-
-                      {/* Expected Profit */}
-                      <div className="flex flex-col items-center">
-                        <span className="text-[10px] text-white/70 uppercase tracking-wider">
-                          EXPECTED PROFIT
-                        </span>
-                        <span
-                          className={`text-lg ${expectedProfit >= 0 ? "text-green-400" : "text-red-400"}`}
-                        >
-                          {expectedProfit >= 0 ? "+" : "−"}${" "}
-                          {Math.abs(expectedProfit).toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
-
-                      {/* Profit After Sell */}
-                      <div className="flex flex-col items-center">
-                        <span className="text-[10px] text-white/70 uppercase tracking-wider">
-                          PROFIT AFTER SELL (P/L)
-                        </span>
-                        <span
-                          className={`text-lg ${profitAfterSell >= 0 ? "text-green-400" : "text-red-400"}`}
-                        >
-                          {profitAfterSell >= 0 ? "+" : "−"}${" "}
-                          {Math.abs(profitAfterSell).toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
-
-                      {/* Sell Button */}
-                      {activeTradesList.length > 0 && (
-                        <button className="px-3 py-1.5 bg-[#1e2a3e]/80 hover:bg-[#2a3a50] text-white text-xs font-medium rounded transition-colors self-center">
-                          Sell All ({activeTradesList.length})
-                        </button>
                       )}
                     </div>
                   </div>
-                );
-              })()}
+                </div>
 
-              {/* Candlestick Chart Container */}
-              <div
-                className="relative z-[2] h-full w-full"
-                style={{ pointerEvents: "auto" }}
-              >
-                <ChartGrid
-                  key={selectedSymbol}
-                  gridType={selectedChartGrid}
-                  defaultSymbol={selectedSymbol}
-                  availableSymbols={[
-                    "BTC",
-                    "ETH",
-                    "BNB",
-                    "SOL",
-                    "ADA",
-                    "DOGE",
-                    "XRP",
-                    "DOT",
-                    "MATIC",
-                    "LINK",
-                  ]}
-                  onPriceYPosition={setPriceYPosition}
-                  onLivePriceUpdate={handleLivePriceUpdate}
-                  onPriceToYConverter={handlePriceToYConverter}
-                  onTimeToXConverter={handleTimeToXConverter}
-                  expirationSeconds={expirationSeconds}
-                  expirationCountdown={countdown}
-                  hasActiveTrades={
-                    activeTrades.filter((t) => t.status === "active").length > 0
-                  }
-                  candleInterval={candleInterval}
-                  hoveredButton={hoveredButton}
-                  onLastCandleTimestamp={handleLastCandleTimestamp}
-                  activeTradeExpirationTime={(() => {
-                    const active = activeTrades.filter(
-                      (t) => t.status === "active",
-                    );
-                    if (active.length === 0) return undefined;
-                    return active.reduce((earliest, t) =>
-                      t.expirationTime < earliest.expirationTime ? t : earliest,
-                    ).expirationTime;
-                  })()}
-                  activeTradeEntryTime={(() => {
-                    const active = activeTrades.filter(
-                      (t) => t.status === "active",
-                    );
-                    if (active.length === 0) return undefined;
-                    return active.reduce((earliest, t) =>
-                      t.expirationTime < earliest.expirationTime ? t : earliest,
-                    ).entryTime;
-                  })()}
-                />
-              </div>
+                {/* IQ Option Style Stats Bar - Shows when trades are active */}
+                {(() => {
+                  const activeTradesList = activeTrades.filter(
+                    (t) => t.status === "active" && t.symbol === selectedSymbol,
+                  );
+                  const hasActiveTrades = activeTradesList.length > 0;
 
-              {/* Custom DOM-based live price badge - renders above all overlays */}
-              {currentPrice > 0 &&
-                (() => {
-                  // When a trade has finished on this symbol, freeze badge at exit price
-                  const isTradeFinished =
-                    lastFinishedTrade &&
-                    lastFinishedTrade.symbol === selectedSymbol &&
-                    lastFinishedTrade.exitPrice &&
-                    activeTrades.filter(
-                      (t) =>
-                        t.symbol === selectedSymbol && t.status === "active",
-                    ).length === 0;
+                  // Calculate totals
+                  const totalInvestment = activeTradesList.reduce(
+                    (sum, t) => sum + t.amount,
+                    0,
+                  );
 
-                  const displayPrice = isTradeFinished
-                    ? lastFinishedTrade.exitPrice!
-                    : currentPrice;
-                  const displayY = isTradeFinished
-                    ? priceToYRef.current
-                      ? priceToYRef.current(lastFinishedTrade.exitPrice!)
-                      : priceYPosition
-                    : priceYPosition;
+                  // Calculate expected profit based on current price movement
+                  const calculateExpectedProfit = () => {
+                    return activeTradesList.reduce((sum, trade) => {
+                      const priceChange = currentPrice - trade.entryPrice;
+                      const isWinning =
+                        (trade.direction === "higher" && priceChange > 0) ||
+                        (trade.direction === "lower" && priceChange < 0);
+                      // 85% profit if winning, -100% if losing
+                      return (
+                        sum + (isWinning ? trade.amount * 0.85 : -trade.amount)
+                      );
+                    }, 0);
+                  };
 
-                  const priceStr = displayPrice.toFixed(5);
-                  const smallPart = priceStr.slice(0, -4);
-                  const largePart = priceStr.slice(-4);
+                  const expectedProfit = calculateExpectedProfit();
 
-                  // When trade finished: match result color (green win, red loss)
-                  // When hovering buttons: match hover color
-                  // Default: grey
-                  const badgeColor = isTradeFinished
-                    ? lastFinishedTrade.status === "won"
-                      ? "#22c55e"
-                      : "#ef4444"
-                    : hoveredButton === "higher"
-                      ? "#00c853"
-                      : hoveredButton === "lower"
-                        ? "#ff1744"
-                        : "#888888";
+                  // Calculate profit after sell (what you'd get if you close now)
+                  const profitAfterSell = activeTradesList.reduce(
+                    (sum, trade) => {
+                      const priceChange = currentPrice - trade.entryPrice;
+                      const isWinning =
+                        (trade.direction === "higher" && priceChange > 0) ||
+                        (trade.direction === "lower" && priceChange < 0);
+                      // If winning, you get back investment + 85% profit
+                      // If losing, you lose everything (0 return - investment = negative)
+                      const payout = isWinning ? trade.amount * 1.85 : 0;
+                      return sum + (payout - trade.amount);
+                    },
+                    0,
+                  );
+
+                  // Find earliest active trade for countdown
+                  const earliestTrade = activeTradesList.reduce(
+                    (earliest, trade) => {
+                      if (!earliest) return trade;
+                      const remainingTime = trade.expirationTime - Date.now();
+                      const earliestRemaining =
+                        earliest.expirationTime - Date.now();
+                      return remainingTime < earliestRemaining
+                        ? trade
+                        : earliest;
+                    },
+                    null as ActiveTrade | null,
+                  );
+
+                  const tradeCountdown = earliestTrade
+                    ? Math.max(
+                        0,
+                        Math.ceil(
+                          (earliestTrade.expirationTime - Date.now()) / 1000,
+                        ),
+                      )
+                    : countdown;
+
+                  if (!hasActiveTrades) return null;
+
                   return (
-                    <div
-                      className="absolute left-0 right-0 z-[60] pointer-events-none flex items-center"
-                      style={{
-                        top: `${displayY}%`,
-                        transform: "translateY(-50%)",
-                      }}
-                    >
-                      {/* Dashed line extending from left edge to badge */}
-                      <div
-                        className="flex-1"
-                        style={{
-                          height: "1px",
-                          backgroundImage: `repeating-linear-gradient(to right, ${badgeColor} 0, ${badgeColor} 4px, transparent 4px, transparent 8px)`,
-                        }}
-                      />
-                      {/* Sharp arrow edge on the left */}
-                      <div
-                        style={{
-                          width: 0,
-                          height: 0,
-                          borderTop: "14px solid transparent",
-                          borderBottom: "14px solid transparent",
-                          borderRight: `10px solid ${badgeColor}`,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <div
-                        className="px-2 py-0.5 text-white font-bold whitespace-nowrap flex items-baseline"
-                        style={{
-                          backgroundColor: badgeColor,
-                          fontFamily: "Arial, sans-serif",
-                          lineHeight: 1.2,
-                          minHeight: "28px",
-                          alignItems: "center",
-                        }}
-                      >
-                        <span style={{ fontSize: "13px", fontWeight: 600 }}>
-                          {smallPart}
-                        </span>
-                        <span style={{ fontSize: "18px", fontWeight: 700 }}>
-                          {largePart}
-                        </span>
+                    <div className="absolute top-2 right-2 z-20">
+                      {/* Compact stats bar - labels on top, values below */}
+                      <div className="flex items-start gap-6">
+                        {/* Remaining Time */}
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-1 text-[10px] text-white/70 uppercase tracking-wider">
+                            <Clock className="w-3 h-3" />
+                            Remaining
+                          </div>
+                          <span className="text-lg text-white">
+                            {String(Math.floor(tradeCountdown / 60)).padStart(
+                              2,
+                              "0",
+                            )}
+                            :{String(tradeCountdown % 60).padStart(2, "0")}
+                          </span>
+                        </div>
+
+                        {/* Total Investment */}
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] text-white/70 uppercase tracking-wider">
+                            TOTAL INVESTMENT
+                          </span>
+                          <span className="text-lg text-white">
+                            ${" "}
+                            {totalInvestment.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </span>
+                        </div>
+
+                        {/* Expected Profit */}
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] text-white/70 uppercase tracking-wider">
+                            EXPECTED PROFIT
+                          </span>
+                          <span
+                            className={`text-lg ${expectedProfit >= 0 ? "text-green-400" : "text-red-400"}`}
+                          >
+                            {expectedProfit >= 0 ? "+" : "−"}${" "}
+                            {Math.abs(expectedProfit).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Profit After Sell */}
+                        <div className="flex flex-col items-center">
+                          <span className="text-[10px] text-white/70 uppercase tracking-wider">
+                            PROFIT AFTER SELL (P/L)
+                          </span>
+                          <span
+                            className={`text-lg ${profitAfterSell >= 0 ? "text-green-400" : "text-red-400"}`}
+                          >
+                            {profitAfterSell >= 0 ? "+" : "−"}${" "}
+                            {Math.abs(profitAfterSell).toLocaleString(
+                              undefined,
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )}
+                          </span>
+                        </div>
+
+                        {/* Sell Button */}
+                        {activeTradesList.length > 0 && (
+                          <button className="px-3 py-1.5 bg-[#1e2a3e]/80 hover:bg-[#2a3a50] text-white text-xs font-medium rounded transition-colors self-center">
+                            Sell All ({activeTradesList.length})
+                          </button>
+                        )}
                       </div>
                     </div>
                   );
                 })()}
 
-              {/* Hover Color Tint Overlay - subtle color wash when hovering HIGHER/LOWER */}
-              <AnimatePresence>
-                {hoveredButton && !lastFinishedTrade && (
-                  <>
-                    <motion.div
-                      key={hoveredButton}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute left-0 right-0 pointer-events-none"
-                      style={{
-                        zIndex: 200,
-                        ...(hoveredButton === "higher"
-                          ? {
-                              top: 0,
-                              bottom: `${100 - priceYPosition}%`,
-                              background: `linear-gradient(to top, rgba(34, 197, 94, 0.19) 0%, rgba(34, 197, 94, 0.09) 50%, rgba(34, 197, 94, 0.02) 80%, transparent 100%)`,
-                            }
-                          : {
-                              top: `${priceYPosition}%`,
-                              bottom: 0,
-                              background: `linear-gradient(to bottom, rgba(239, 68, 68, 0.19) 0%, rgba(239, 68, 68, 0.09) 50%, rgba(239, 68, 68, 0.02) 80%, transparent 100%)`,
-                            }),
-                      }}
-                    />
-                    {/* Direction Arrow */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.5 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.5 }}
-                      transition={{ duration: 0.15 }}
-                      className="absolute pointer-events-none"
-                      style={{
-                        zIndex: 201,
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        top:
-                          hoveredButton === "higher"
-                            ? `calc(${priceYPosition}% - 28px)`
-                            : `calc(${priceYPosition}% + 6px)`,
-                      }}
-                    >
-                      <div
-                        style={{
-                          transform:
-                            hoveredButton === "higher"
-                              ? "rotate(-45deg)"
-                              : "rotate(135deg)",
-                          filter:
-                            hoveredButton === "higher"
-                              ? "drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))"
-                              : "drop-shadow(0 0 6px rgba(239, 68, 68, 0.6))",
-                        }}
-                      >
-                        <svg
-                          width="22"
-                          height="22"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                        >
-                          {/* Colored shaft - shortened from tail end */}
-                          <line
-                            x1="7"
-                            y1="12"
-                            x2="16"
-                            y2="12"
-                            stroke={
-                              hoveredButton === "higher" ? "#22c55e" : "#ef4444"
-                            }
-                            strokeWidth="2.5"
-                            strokeLinecap="round"
-                          />
-                          {/* Filled colored pointer head */}
-                          <polygon
-                            points="14,4 23,12 14,20"
-                            fill={
-                              hoveredButton === "higher" ? "#22c55e" : "#ef4444"
-                            }
-                            stroke={
-                              hoveredButton === "higher" ? "#22c55e" : "#ef4444"
-                            }
-                            strokeWidth="1"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                      </div>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                {/* Candlestick Chart Container */}
+                <div
+                  className="relative z-[2] h-full w-full"
+                  style={{ pointerEvents: "auto" }}
+                >
+                  <ChartGrid
+                    key={selectedSymbol}
+                    gridType={selectedChartGrid}
+                    defaultSymbol={selectedSymbol}
+                    availableSymbols={[
+                      "BTC",
+                      "ETH",
+                      "BNB",
+                      "SOL",
+                      "ADA",
+                      "DOGE",
+                      "XRP",
+                      "DOT",
+                      "MATIC",
+                      "LINK",
+                    ]}
+                    onPriceYPosition={setPriceYPosition}
+                    onLivePriceUpdate={handleLivePriceUpdate}
+                    onPriceToYConverter={handlePriceToYConverter}
+                    onTimeToXConverter={handleTimeToXConverter}
+                    expirationSeconds={expirationSeconds}
+                    expirationCountdown={countdown}
+                    hasActiveTrades={
+                      activeTrades.filter((t) => t.status === "active").length >
+                      0
+                    }
+                    candleInterval={candleInterval}
+                    hoveredButton={hoveredButton}
+                    onLastCandleTimestamp={handleLastCandleTimestamp}
+                    activeTradeExpirationTime={(() => {
+                      const active = activeTrades.filter(
+                        (t) => t.status === "active",
+                      );
+                      if (active.length === 0) return undefined;
+                      return active.reduce((earliest, t) =>
+                        t.expirationTime < earliest.expirationTime
+                          ? t
+                          : earliest,
+                      ).expirationTime;
+                    })()}
+                    activeTradeEntryTime={(() => {
+                      const active = activeTrades.filter(
+                        (t) => t.status === "active",
+                      );
+                      if (active.length === 0) return undefined;
+                      return active.reduce((earliest, t) =>
+                        t.expirationTime < earliest.expirationTime
+                          ? t
+                          : earliest,
+                      ).entryTime;
+                    })()}
+                  />
+                </div>
 
-              {/* Persistent Entry Markers - Stay visible after trade finishes */}
-              {entryMarkers
-                .filter((m) => m.symbol === selectedSymbol)
-                .map((marker) => {
-                  const dynamicY = priceToYRef.current
-                    ? priceToYRef.current(marker.entryPrice)
-                    : marker.entryYPosition;
-                  const dynamicX = timeToXRef.current
-                    ? timeToXRef.current(marker.entryTime)
-                    : null;
-                  const isGreen = marker.direction === "higher";
-                  return (
-                    <div
-                      key={`entry-line-${marker.id}`}
-                      className="absolute left-0 right-[80px] z-[500] pointer-events-none"
-                      style={{ top: `${dynamicY}%` }}
-                    >
+                {/* Custom DOM-based live price badge - renders above all overlays */}
+                {currentPrice > 0 &&
+                  (() => {
+                    // When a trade has finished on this symbol, freeze badge at exit price
+                    const isTradeFinished =
+                      lastFinishedTrade &&
+                      lastFinishedTrade.symbol === selectedSymbol &&
+                      lastFinishedTrade.exitPrice &&
+                      activeTrades.filter(
+                        (t) =>
+                          t.symbol === selectedSymbol && t.status === "active",
+                      ).length === 0;
+
+                    const displayPrice = isTradeFinished
+                      ? lastFinishedTrade.exitPrice!
+                      : currentPrice;
+                    const displayY = isTradeFinished
+                      ? priceToYRef.current
+                        ? priceToYRef.current(lastFinishedTrade.exitPrice!)
+                        : priceYPosition
+                      : priceYPosition;
+
+                    const priceStr = displayPrice.toFixed(5);
+                    const smallPart = priceStr.slice(0, -4);
+                    const largePart = priceStr.slice(-4);
+
+                    // When trade finished: match result color (green win, red loss)
+                    // When hovering buttons: match hover color
+                    // Default: grey
+                    const badgeColor = isTradeFinished
+                      ? lastFinishedTrade.status === "won"
+                        ? "#22c55e"
+                        : "#ef4444"
+                      : hoveredButton === "higher"
+                        ? "#00c853"
+                        : hoveredButton === "lower"
+                          ? "#ff1744"
+                          : "#888888";
+                    return (
                       <div
+                        className="absolute left-0 right-0 z-[60] pointer-events-none flex items-center"
                         style={{
-                          height: "1px",
-                          backgroundImage: `repeating-linear-gradient(to right, ${isGreen ? "#22c55e" : "#ef4444"} 0, ${isGreen ? "#22c55e" : "#ef4444"} 6px, transparent 6px, transparent 12px)`,
-                        }}
-                      />
-                      {/* Entry point: check circle + price badge */}
-                      <div
-                        className="absolute flex items-center gap-1"
-                        style={{
-                          left: dynamicX !== null ? `${dynamicX}%` : undefined,
-                          right: dynamicX === null ? "142px" : undefined,
-                          top: "-10px",
-                          transform:
-                            dynamicX !== null ? "translateX(-50%)" : undefined,
+                          top: `${displayY}%`,
+                          transform: "translateY(-50%)",
                         }}
                       >
-                        {/* Check circle */}
+                        {/* Dashed line extending from left edge to badge */}
                         <div
-                          className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                          className="flex-1"
                           style={{
-                            backgroundColor: isGreen ? "#166534" : "#991b1b",
-                            border: `1.5px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
+                            height: "1px",
+                            backgroundImage: `repeating-linear-gradient(to right, ${badgeColor} 0, ${badgeColor} 4px, transparent 4px, transparent 8px)`,
+                          }}
+                        />
+                        {/* Sharp arrow edge on the left */}
+                        <div
+                          style={{
+                            width: 0,
+                            height: 0,
+                            borderTop: "14px solid transparent",
+                            borderBottom: "14px solid transparent",
+                            borderRight: `10px solid ${badgeColor}`,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <div
+                          className="px-2 py-0.5 text-white font-bold whitespace-nowrap flex items-baseline"
+                          style={{
+                            backgroundColor: badgeColor,
+                            fontFamily: "Arial, sans-serif",
+                            lineHeight: 1.2,
+                            minHeight: "28px",
+                            alignItems: "center",
                           }}
                         >
-                          <svg
-                            className="w-2.5 h-2.5 text-white"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="3"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        </div>
-                        {/* Entry price badge */}
-                        <div
-                          className="flex items-center justify-center flex-shrink-0"
-                          style={{
-                            backgroundColor: isGreen ? "#22c55e" : "#ef4444",
-                            borderRadius: "8px",
-                            padding: "4px 10px",
-                          }}
-                        >
-                          <span className="text-white font-bold text-sm leading-tight whitespace-nowrap">
-                            $ {marker.amount.toLocaleString()}
+                          <span style={{ fontSize: "13px", fontWeight: 600 }}>
+                            {smallPart}
+                          </span>
+                          <span style={{ fontSize: "18px", fontWeight: 700 }}>
+                            {largePart}
                           </span>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-
-              {/* Last Finished Trade Result - IQ Option Style */}
-              <AnimatePresence>
-                {lastFinishedTrade &&
-                  lastFinishedTrade.symbol === selectedSymbol &&
-                  activeTrades.filter(
-                    (t) => t.symbol === selectedSymbol && t.status === "active",
-                  ).length === 0 &&
-                  (() => {
-                    const finishedY = priceToYRef.current
-                      ? priceToYRef.current(lastFinishedTrade.entryPrice)
-                      : lastFinishedTrade.entryYPosition;
-                    const finishedEntryX = timeToXRef.current
-                      ? timeToXRef.current(lastFinishedTrade.entryTime)
-                      : null;
-                    const finishedEndX = timeToXRef.current
-                      ? timeToXRef.current(lastFinishedTrade.expirationTime)
-                      : null;
-                    // Hide if result popup is completely off screen
-                    const endOffScreen =
-                      finishedEndX !== null &&
-                      (finishedEndX < -10 || finishedEndX > 110);
-                    if (endOffScreen) return null;
-                    const isSessionWin = sessionTotalResult >= 0;
-                    // Entry price color stays based on trade direction (higher=green, lower=red) — never changes
-                    const isEntryGreen =
-                      lastFinishedTrade.direction === "higher";
-                    return (
-                      <>
-                        {/* Entry price horizontal dashed line - color based on trade direction, not win/loss */}
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="absolute left-0 right-[140px] h-[1px] z-[500] pointer-events-none"
-                          style={{
-                            top: `${finishedY}%`,
-                            backgroundImage: `linear-gradient(to right, ${isEntryGreen ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)"} 50%, transparent 50%)`,
-                            backgroundSize: "8px 1px",
-                          }}
-                        />
-
-                        {/* TOTAL RESULT (P/L) popup - shows accumulated session total */}
-                        <motion.div
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="absolute z-[500] pointer-events-auto"
-                          style={{
-                            left:
-                              finishedEndX !== null
-                                ? `${finishedEndX}%`
-                                : "55%",
-                            top: `${finishedY}%`,
-                            transform: "translate(-50%, -50%)",
-                          }}
-                        >
-                          <div
-                            className="relative flex flex-col items-start px-4 py-2.5 rounded-lg min-w-[140px]"
-                            style={{
-                              backgroundColor: isSessionWin
-                                ? "#22c55e"
-                                : "#ef4444",
-                            }}
-                          >
-                            {/* Close button */}
-                            <button
-                              onClick={() => {
-                                setLastFinishedTrade(null);
-                                setSessionTotalResult(0);
-                                setSessionTotalInvested(0);
-                                setSessionTradeCount(0);
-                                setEntryMarkers([]);
-                              }}
-                              className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
-                            >
-                              <svg
-                                className="w-3.5 h-3.5 text-white"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                              >
-                                <path d="M18 6L6 18M6 6l12 12" />
-                              </svg>
-                            </button>
-                            <span className="text-xs text-white/90 font-bold tracking-wider leading-tight uppercase">
-                              RESULTS (P/L)
-                            </span>
-                            <span className="text-white font-extrabold text-lg leading-tight mt-0.5">
-                              {isSessionWin ? "+" : "−"}${" "}
-                              {Math.abs(sessionTotalResult).toLocaleString(
-                                undefined,
-                                {
-                                  minimumFractionDigits: 0,
-                                  maximumFractionDigits: 0,
-                                },
-                              )}
-                            </span>
-                          </div>
-                        </motion.div>
-                      </>
                     );
                   })()}
-              </AnimatePresence>
-            </div>
-          </div>
 
-          {/* Right Panel: M4Capital Trading Panel */}
-          <div
-            className="flex-col flex"
-            style={{
-              overflow: "hidden",
-              width: "130px",
-              minWidth: "130px",
-            }}
-          >
-            <div className="p-2 h-full overflow-y-auto flex flex-col gap-1.5">
-              {/* Invest Section */}
-              <div
-                className="rounded overflow-hidden"
-                style={{
-                  backgroundColor: "#0f1a2a",
-                  border: "1px solid #1a2d45",
-                }}
-              >
-                <div
-                  className="flex items-center justify-between px-2 py-1"
-                  style={{ borderBottom: "1px solid #1a2d45" }}
-                >
-                  <span
-                    className="text-[11px] font-medium"
-                    style={{ color: "#8b9ab8" }}
-                  >
-                    Invest
-                  </span>
-                  <button
-                    className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold"
-                    style={{ backgroundColor: "#1a2d45", color: "#4a6080" }}
-                  >
-                    ?
-                  </button>
-                </div>
-                <div className="flex items-stretch">
-                  <div className="flex-1 px-2 py-1.5 flex items-center gap-0.5">
-                    <span
-                      className="font-semibold"
-                      style={{ color: "#4a6080", fontSize: "12px" }}
-                    >
-                      $
-                    </span>
-                    <input
-                      type="text"
-                      value={amountInput}
-                      onChange={(e) => {
-                        const raw = e.target.value.replace(/[^0-9]/g, "");
-                        if (raw === "") {
-                          setAmountInput("");
-                          return;
-                        }
-                        const val = parseInt(raw, 10);
-                        if (!isNaN(val)) {
-                          const clamped = Math.min(val, 1000000);
-                          setAmountInput(clamped.toLocaleString());
-                          setAmount(Math.max(clamped, 1));
-                        }
-                      }}
-                      onBlur={() => {
-                        if (
-                          amountInput === "" ||
-                          parseInt(amountInput.replace(/[^0-9]/g, ""), 10) < 1
-                        ) {
-                          setAmount(1);
-                          setAmountInput("1");
-                        }
-                      }}
-                      className="bg-transparent border-none outline-none font-bold w-full"
-                      style={{ color: "#eef2f7", fontSize: "14px" }}
-                    />
-                  </div>
-                  <div
-                    className="flex flex-col"
-                    style={{ borderLeft: "1px solid #1a2d45", width: "22px" }}
-                  >
-                    <button
-                      onClick={() => {
-                        const v = Math.min(amount + 1, 1000000);
-                        setAmount(v);
-                        setAmountInput(v.toLocaleString());
-                      }}
-                      className="flex-1 flex items-center justify-center transition-colors text-sm font-bold"
-                      style={{
-                        color: "#4a6080",
-                        borderBottom: "1px solid #1a2d45",
-                      }}
-                      onMouseEnter={(e) => (
-                        (e.currentTarget.style.backgroundColor = "#1a2d45"),
-                        (e.currentTarget.style.color = "#eef2f7")
-                      )}
-                      onMouseLeave={(e) => (
-                        (e.currentTarget.style.backgroundColor = "transparent"),
-                        (e.currentTarget.style.color = "#4a6080")
-                      )}
-                    >
-                      +
-                    </button>
-                    <button
-                      onClick={() => {
-                        const v = Math.max(amount - 1, 1);
-                        setAmount(v);
-                        setAmountInput(v.toLocaleString());
-                      }}
-                      className="flex-1 flex items-center justify-center transition-colors text-sm font-bold"
-                      style={{ color: "#4a6080" }}
-                      onMouseEnter={(e) => (
-                        (e.currentTarget.style.backgroundColor = "#1a2d45"),
-                        (e.currentTarget.style.color = "#eef2f7")
-                      )}
-                      onMouseLeave={(e) => (
-                        (e.currentTarget.style.backgroundColor = "transparent"),
-                        (e.currentTarget.style.color = "#4a6080")
-                      )}
-                    >
-                      -
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Expiration Section */}
-              <div className="relative" ref={expirationButtonRef}>
-                <div
-                  className="rounded overflow-hidden cursor-pointer transition-opacity hover:opacity-90"
-                  style={{
-                    backgroundColor: "#0f1a2a",
-                    border: "1px solid #1a2d45",
-                  }}
-                  onClick={() => {
-                    setShowExpirationModal(!showExpirationModal);
-                  }}
-                >
-                  <div className="flex items-stretch flex-1">
-                    <div className="flex-1">
-                      <div
-                        className="flex items-center justify-between px-2 py-1"
-                        style={{ borderBottom: "1px solid #1a2d45" }}
-                      >
-                        <span
-                          className="text-[11px] font-medium"
-                          style={{ color: "#8b9ab8" }}
-                        >
-                          Expiration
-                        </span>
-                        <button
-                          className="w-3.5 h-3.5 rounded-full flex items-center justify-center text-[7px] font-bold"
-                          style={{
-                            backgroundColor: "#1a2d45",
-                            color: "#4a6080",
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          ?
-                        </button>
-                      </div>
-                      <div className="px-2 py-1.5 flex items-center gap-1">
-                        <Clock
-                          className="w-3.5 h-3.5"
-                          style={{ color: "#8b9ab8" }}
-                        />
-                        <span
-                          className="font-bold font-mono"
-                          style={{ color: "#eef2f7", fontSize: "14px" }}
-                        >
-                          {(() => {
-                            const now = currentTime || new Date();
-                            const expirationTime = new Date(
-                              now.getTime() + expirationSeconds * 1000,
-                            );
-                            return `${String(expirationTime.getHours()).padStart(2, "0")}:${String(expirationTime.getMinutes()).padStart(2, "0")}`;
-                          })()}
-                        </span>
-                      </div>
-                    </div>
-                    <div
-                      className="flex flex-col"
-                      style={{ borderLeft: "1px solid #1a2d45", width: "22px" }}
-                    >
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const options = [
-                            30, 60, 120, 180, 240, 300, 600, 900, 1800, 3600,
-                          ];
-                          const currentIndex =
-                            options.indexOf(expirationSeconds);
-                          if (currentIndex < options.length - 1)
-                            setExpirationSeconds(options[currentIndex + 1]);
-                        }}
-                        className="flex-1 flex items-center justify-center transition-colors text-sm font-bold"
+                {/* Hover Color Tint Overlay - subtle color wash when hovering HIGHER/LOWER */}
+                <AnimatePresence>
+                  {hoveredButton && !lastFinishedTrade && (
+                    <>
+                      <motion.div
+                        key={hoveredButton}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute left-0 right-0 pointer-events-none"
                         style={{
-                          color: "#4a6080",
-                          borderBottom: "1px solid #1a2d45",
+                          zIndex: 200,
+                          ...(hoveredButton === "higher"
+                            ? {
+                                top: 0,
+                                bottom: `${100 - priceYPosition}%`,
+                                background: `linear-gradient(to top, rgba(34, 197, 94, 0.19) 0%, rgba(34, 197, 94, 0.09) 50%, rgba(34, 197, 94, 0.02) 80%, transparent 100%)`,
+                              }
+                            : {
+                                top: `${priceYPosition}%`,
+                                bottom: 0,
+                                background: `linear-gradient(to bottom, rgba(239, 68, 68, 0.19) 0%, rgba(239, 68, 68, 0.09) 50%, rgba(239, 68, 68, 0.02) 80%, transparent 100%)`,
+                              }),
                         }}
-                        onMouseEnter={(e) => (
-                          (e.currentTarget.style.backgroundColor = "#1a2d45"),
-                          (e.currentTarget.style.color = "#eef2f7")
-                        )}
-                        onMouseLeave={(e) => (
-                          (e.currentTarget.style.backgroundColor =
-                            "transparent"),
-                          (e.currentTarget.style.color = "#4a6080")
-                        )}
-                      >
-                        +
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const options = [
-                            30, 60, 120, 180, 240, 300, 600, 900, 1800, 3600,
-                          ];
-                          const currentIndex =
-                            options.indexOf(expirationSeconds);
-                          if (currentIndex > 0)
-                            setExpirationSeconds(options[currentIndex - 1]);
+                      />
+                      {/* Direction Arrow */}
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.5 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute pointer-events-none"
+                        style={{
+                          zIndex: 201,
+                          left: "50%",
+                          transform: "translateX(-50%)",
+                          top:
+                            hoveredButton === "higher"
+                              ? `calc(${priceYPosition}% - 28px)`
+                              : `calc(${priceYPosition}% + 6px)`,
                         }}
-                        className="flex-1 flex items-center justify-center transition-colors text-sm font-bold"
-                        style={{ color: "#4a6080" }}
-                        onMouseEnter={(e) => (
-                          (e.currentTarget.style.backgroundColor = "#1a2d45"),
-                          (e.currentTarget.style.color = "#eef2f7")
-                        )}
-                        onMouseLeave={(e) => (
-                          (e.currentTarget.style.backgroundColor =
-                            "transparent"),
-                          (e.currentTarget.style.color = "#4a6080")
-                        )}
                       >
-                        -
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Expiration Time Panel - IQ Option Style (beside right sidebar) */}
-                {showExpirationModal && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-[200]"
-                      onClick={() => setShowExpirationModal(false)}
-                    />
-                    <div
-                      className="fixed z-[201] rounded-l-xl shadow-2xl overflow-hidden"
-                      style={{
-                        backgroundColor: "#1c2127",
-                        border: "1px solid #2a2e35",
-                        borderRight: "none",
-                        width: "420px",
-                        right: "170px",
-                        top: "60px",
-                        maxHeight: "calc(100vh - 120px)",
-                      }}
-                    >
-                      {/* Header */}
-                      <div
-                        className="px-4 py-3 border-b"
-                        style={{ borderColor: "#2a2e35" }}
-                      >
-                        <h3
-                          className="text-sm font-semibold tracking-wide"
-                          style={{ color: "#eef2f7" }}
+                        <div
+                          style={{
+                            transform:
+                              hoveredButton === "higher"
+                                ? "rotate(-45deg)"
+                                : "rotate(135deg)",
+                            filter:
+                              hoveredButton === "higher"
+                                ? "drop-shadow(0 0 6px rgba(34, 197, 94, 0.6))"
+                                : "drop-shadow(0 0 6px rgba(239, 68, 68, 0.6))",
+                          }}
                         >
-                          EXPIRATION TIME
-                        </h3>
-                      </div>
+                          <svg
+                            width="22"
+                            height="22"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            {/* Colored shaft - shortened from tail end */}
+                            <line
+                              x1="7"
+                              y1="12"
+                              x2="16"
+                              y2="12"
+                              stroke={
+                                hoveredButton === "higher"
+                                  ? "#22c55e"
+                                  : "#ef4444"
+                              }
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                            />
+                            {/* Filled colored pointer head */}
+                            <polygon
+                              points="14,4 23,12 14,20"
+                              fill={
+                                hoveredButton === "higher"
+                                  ? "#22c55e"
+                                  : "#ef4444"
+                              }
+                              stroke={
+                                hoveredButton === "higher"
+                                  ? "#22c55e"
+                                  : "#ef4444"
+                              }
+                              strokeWidth="1"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
 
-                      <div className="p-4">
-                        <div className="flex gap-4">
-                          {/* Left Column - Short Expirations (1-5 minutes) */}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-3">
-                              <span
-                                className="text-sm font-medium"
-                                style={{ color: "#8b9ab8" }}
-                              >
-                                Profit
-                              </span>
-                              <span
-                                className="px-2 py-0.5 rounded text-xs font-bold"
-                                style={{
-                                  backgroundColor: "#00c087",
-                                  color: "white",
-                                }}
-                              >
-                                85%
-                              </span>
-                            </div>
-
-                            {/* Column Headers */}
-                            <div className="flex items-center justify-between mb-2 px-2">
-                              <span
-                                className="text-xs font-medium"
-                                style={{ color: "#4a6080" }}
-                              >
-                                Time
-                              </span>
-                              <span
-                                className="text-xs font-medium"
-                                style={{ color: "#4a6080" }}
-                              >
-                                Remaining
-                              </span>
-                            </div>
-
-                            {/* Options - Minute aligned like IQ Option */}
-                            <div className="space-y-1">
-                              {[1, 2, 3, 4, 5].map((minuteOffset) => {
-                                // Use currentTime state for real-time updates
-                                const now = currentTime || new Date();
-                                // Calculate next minute boundary
-                                const nextMinute = new Date(now);
-                                nextMinute.setSeconds(0, 0);
-                                nextMinute.setMinutes(
-                                  nextMinute.getMinutes() + minuteOffset,
-                                );
-
-                                // Time string (HH:MM)
-                                const timeStr = `${String(nextMinute.getHours()).padStart(2, "0")}:${String(nextMinute.getMinutes()).padStart(2, "0")}`;
-
-                                // Calculate remaining seconds until that target time
-                                const remainingMs =
-                                  nextMinute.getTime() - now.getTime();
-                                const remainingTotalSecs = Math.max(
-                                  0,
-                                  Math.ceil(remainingMs / 1000),
-                                );
-                                const remainingMins = Math.floor(
-                                  remainingTotalSecs / 60,
-                                );
-                                const remainingSecs = remainingTotalSecs % 60;
-                                const remainingLabel = `${String(remainingMins).padStart(2, "0")}:${String(remainingSecs).padStart(2, "0")}`;
-
-                                // Check if current expiration matches this minute offset range (within 60 seconds)
-                                const minSecs = (minuteOffset - 1) * 60 + 1;
-                                const maxSecs = minuteOffset * 60;
-                                const isSelected =
-                                  expirationSeconds >= minSecs &&
-                                  expirationSeconds <= maxSecs;
-
-                                return (
-                                  <button
-                                    key={minuteOffset}
-                                    onClick={() => {
-                                      setExpirationSeconds(remainingTotalSecs);
-                                      setShowExpirationModal(false);
-                                    }}
-                                    className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? "" : "hover:bg-white/5"}`}
-                                    style={{
-                                      backgroundColor: isSelected
-                                        ? "#00c087"
-                                        : "transparent",
-                                    }}
-                                  >
-                                    <span
-                                      className="text-sm font-medium"
-                                      style={{
-                                        color: isSelected
-                                          ? "#ffffff"
-                                          : "#eef2f7",
-                                      }}
-                                    >
-                                      {timeStr}
-                                    </span>
-                                    <span
-                                      className="flex items-center gap-1.5 text-sm"
-                                      style={{
-                                        color: isSelected
-                                          ? "#ffffff"
-                                          : "#8b9ab8",
-                                      }}
-                                    >
-                                      <svg
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                      >
-                                        <circle cx="12" cy="12" r="10" />
-                                        <polyline points="12 6 12 12 16 14" />
-                                      </svg>
-                                      {remainingLabel}
-                                    </span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Divider */}
+                {/* Persistent Entry Markers - Stay visible after trade finishes */}
+                {entryMarkers
+                  .filter((m) => m.symbol === selectedSymbol)
+                  .map((marker) => {
+                    const dynamicY = priceToYRef.current
+                      ? priceToYRef.current(marker.entryPrice)
+                      : marker.entryYPosition;
+                    const dynamicX = timeToXRef.current
+                      ? timeToXRef.current(marker.entryTime)
+                      : null;
+                    const isGreen = marker.direction === "higher";
+                    return (
+                      <div
+                        key={`entry-line-${marker.id}`}
+                        className="absolute left-0 right-[80px] z-[500] pointer-events-none"
+                        style={{ top: `${dynamicY}%` }}
+                      >
+                        <div
+                          style={{
+                            height: "1px",
+                            backgroundImage: `repeating-linear-gradient(to right, ${isGreen ? "#22c55e" : "#ef4444"} 0, ${isGreen ? "#22c55e" : "#ef4444"} 6px, transparent 6px, transparent 12px)`,
+                          }}
+                        />
+                        {/* Entry point: check circle + price badge */}
+                        <div
+                          className="absolute flex items-center gap-1"
+                          style={{
+                            left:
+                              dynamicX !== null ? `${dynamicX}%` : undefined,
+                            right: dynamicX === null ? "142px" : undefined,
+                            top: "-10px",
+                            transform:
+                              dynamicX !== null
+                                ? "translateX(-50%)"
+                                : undefined,
+                          }}
+                        >
+                          {/* Check circle */}
                           <div
-                            className="w-px"
-                            style={{ backgroundColor: "#2a2e35" }}
-                          />
-
-                          {/* Right Column - Long Expirations (15-60 minutes) */}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-3">
-                              <span
-                                className="text-sm font-medium"
-                                style={{ color: "#8b9ab8" }}
-                              >
-                                Profit
-                              </span>
-                              <span
-                                className="px-2 py-0.5 rounded text-xs font-bold"
-                                style={{
-                                  backgroundColor: "#00c087",
-                                  color: "white",
-                                }}
-                              >
-                                84%
-                              </span>
-                            </div>
-
-                            {/* Column Headers */}
-                            <div className="flex items-center justify-between mb-2 px-2">
-                              <span
-                                className="text-xs font-medium"
-                                style={{ color: "#4a6080" }}
-                              >
-                                Time
-                              </span>
-                              <span
-                                className="text-xs font-medium"
-                                style={{ color: "#4a6080" }}
-                              >
-                                Remaining
-                              </span>
-                            </div>
-
-                            {/* Options - Minute aligned like IQ Option */}
-                            <div className="space-y-1">
-                              {[15, 30, 45, 60, 120].map(
-                                (minuteOffset, idx, arr) => {
-                                  // Use currentTime state for real-time updates
-                                  const now = currentTime || new Date();
-                                  // Calculate target minute boundary
-                                  const targetTime = new Date(now);
-                                  targetTime.setSeconds(0, 0);
-                                  targetTime.setMinutes(
-                                    targetTime.getMinutes() + minuteOffset,
-                                  );
-
-                                  // Time string (HH:MM)
-                                  const timeStr = `${String(targetTime.getHours()).padStart(2, "0")}:${String(targetTime.getMinutes()).padStart(2, "0")}`;
-
-                                  // Calculate remaining seconds until that target time
-                                  const remainingMs =
-                                    targetTime.getTime() - now.getTime();
-                                  const remainingTotalSecs = Math.max(
-                                    0,
-                                    Math.ceil(remainingMs / 1000),
-                                  );
-                                  const remainingMins = Math.floor(
-                                    remainingTotalSecs / 60,
-                                  );
-                                  const remainingSecs = remainingTotalSecs % 60;
-                                  const remainingLabel = `${String(remainingMins).padStart(2, "0")}:${String(remainingSecs).padStart(2, "0")}`;
-
-                                  // Check if current expiration matches this minute offset range
-                                  const prevOffset = idx > 0 ? arr[idx - 1] : 5; // After short expirations (1-5 min)
-                                  const minSecs = prevOffset * 60 + 1;
-                                  const maxSecs = minuteOffset * 60;
-                                  const isSelected =
-                                    expirationSeconds >= minSecs &&
-                                    expirationSeconds <= maxSecs;
-
-                                  return (
-                                    <button
-                                      key={minuteOffset}
-                                      onClick={() => {
-                                        setExpirationSeconds(
-                                          remainingTotalSecs,
-                                        );
-                                        setShowExpirationModal(false);
-                                      }}
-                                      className={`w-full flex items-center justify-between py-2.5 px-3 rounded-lg transition-all ${isSelected ? "" : "hover:bg-white/5"}`}
-                                      style={{
-                                        backgroundColor: isSelected
-                                          ? "#00c087"
-                                          : "transparent",
-                                      }}
-                                    >
-                                      <span
-                                        className="text-sm font-medium"
-                                        style={{
-                                          color: isSelected
-                                            ? "#ffffff"
-                                            : "#eef2f7",
-                                        }}
-                                      >
-                                        {timeStr}
-                                      </span>
-                                      <span
-                                        className="flex items-center gap-1.5 text-sm"
-                                        style={{
-                                          color: isSelected
-                                            ? "#ffffff"
-                                            : "#8b9ab8",
-                                        }}
-                                      >
-                                        <svg
-                                          width="14"
-                                          height="14"
-                                          viewBox="0 0 24 24"
-                                          fill="none"
-                                          stroke="currentColor"
-                                          strokeWidth="2"
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                        >
-                                          <circle cx="12" cy="12" r="10" />
-                                          <polyline points="12 6 12 12 16 14" />
-                                        </svg>
-                                        {remainingLabel}
-                                      </span>
-                                    </button>
-                                  );
-                                },
-                              )}
-                            </div>
+                            className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{
+                              backgroundColor: isGreen ? "#166534" : "#991b1b",
+                              border: `1.5px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
+                            }}
+                          >
+                            <svg
+                              className="w-2.5 h-2.5 text-white"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="3"
+                            >
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          </div>
+                          {/* Entry price badge */}
+                          <div
+                            className="flex items-center justify-center flex-shrink-0"
+                            style={{
+                              backgroundColor: isGreen ? "#22c55e" : "#ef4444",
+                              borderRadius: "8px",
+                              padding: "4px 10px",
+                            }}
+                          >
+                            <span className="text-white font-bold text-sm leading-tight whitespace-nowrap">
+                              $ {marker.amount.toLocaleString()}
+                            </span>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              {/* Profit Display */}
-              <div className="py-2.5 text-center">
-                <div className="flex items-center justify-center gap-1 mb-1.5">
-                  <span
-                    className="text-[10px] font-medium"
-                    style={{ color: "#8b9ab8" }}
-                  >
-                    Profit
-                  </span>
-                  <div
-                    className="w-3 h-3 rounded-full flex items-center justify-center text-[7px] font-bold cursor-pointer"
-                    style={{ backgroundColor: "#1a2d45", color: "#4a6080" }}
-                  >
-                    ?
-                  </div>
-                </div>
-                <div
-                  className="font-normal"
-                  style={{
-                    color: "#00c087",
-                    fontSize: "40px",
-                    lineHeight: 1.6,
-                    fontWeight: 400,
-                  }}
-                >
-                  +85%
-                </div>
-                <div
-                  className="font-normal mt-1.5"
-                  style={{
-                    color: "#00c087",
-                    fontSize: "20px",
-                    lineHeight: 1.6,
-                    fontWeight: 400,
-                  }}
-                >
-                  +${" "}
-                  {(amount * 0.85)
-                    .toFixed(0)
-                    .replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                </div>
-              </div>
-
-              {/* Conditional: NEW OPTION or HIGHER/LOWER buttons */}
-              {lastFinishedTrade &&
-              lastFinishedTrade.symbol === selectedSymbol &&
-              activeTrades.filter(
-                (t) => t.symbol === selectedSymbol && t.status === "active",
-              ).length === 0 ? (
-                // NEW OPTION Button - Shows when there's a finished trade result displayed
-                <motion.button
-                  onClick={() => {
-                    // Stay in same tab, just clear finished trade result for fresh state
-                    setLastFinishedTrade(null);
-                    setSessionTotalResult(0);
-                    setSessionTotalInvested(0);
-                    setSessionTradeCount(0);
-                    setEntryMarkers([]);
-
-                    // Clear lastResult from the current tab
-                    setOpenTabs((prev) =>
-                      prev.map((tab, i) =>
-                        i === activeTab
-                          ? { ...tab, lastResult: undefined }
-                          : tab,
-                      ),
                     );
+                  })}
 
-                    // Focus on amount input
-                    setTimeout(() => {
-                      const amountInput =
-                        document.querySelector('input[type="text"]');
-                      if (amountInput)
-                        (amountInput as HTMLInputElement).focus();
-                    }, 100);
-                  }}
-                  className="w-full flex flex-col items-center justify-center py-6 rounded-lg transition-all duration-200 cursor-pointer"
-                  style={{
-                    backgroundColor: "#ff6b00",
-                    boxShadow: "0 0 30px rgba(255, 107, 0, 0.4)",
-                  }}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.96 }}
-                >
-                  <Plus
-                    className="w-10 h-10 text-white mb-1"
-                    strokeWidth={2.5}
-                  />
-                  <span className="text-white text-sm font-bold tracking-wide">
-                    NEW
-                  </span>
-                  <span className="text-white text-sm font-bold tracking-wide">
-                    OPTION
-                  </span>
-                </motion.button>
-              ) : (
-                // HIGHER/LOWER Buttons - Shows when there are active trades
-                <>
-                  {/* HIGHER Button */}
-                  <button
-                    onClick={() => executeTrade("higher")}
-                    onMouseEnter={() => setHoveredButton("higher")}
-                    onMouseLeave={() => setHoveredButton(null)}
-                    disabled={isExecutingTrade}
-                    className="w-full flex items-center justify-center disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0 select-none hover:brightness-75 transition-[filter] duration-200"
-                  >
-                    <img
-                      src="/traderoom/icons/higher-button.png"
-                      alt="Higher"
-                      className="w-full object-contain pointer-events-none select-none"
-                      style={{ maxHeight: "96px" }}
-                      draggable={false}
-                      onDragStart={(e) => e.preventDefault()}
-                    />
-                  </button>
-
-                  {/* LOWER Button */}
-                  <button
-                    onClick={() => executeTrade("lower")}
-                    onMouseEnter={() => setHoveredButton("lower")}
-                    onMouseLeave={() => setHoveredButton(null)}
-                    disabled={isExecutingTrade}
-                    className="w-full flex items-center justify-center disabled:opacity-50 cursor-pointer bg-transparent border-0 p-0 select-none hover:brightness-75 transition-[filter] duration-200"
-                  >
-                    <img
-                      src="/traderoom/icons/lower-button.png"
-                      alt="Lower"
-                      className="w-full object-contain pointer-events-none select-none"
-                      style={{ maxHeight: "96px" }}
-                      draggable={false}
-                      onDragStart={(e) => e.preventDefault()}
-                    />
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Open Positions Section - IQ Option Style */}
-        <AnimatePresence>
-          {showPortfolioPanel && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="border-t overflow-hidden transition-all duration-300 z-40"
-              style={{
-                backgroundColor: "#131722",
-                borderColor: "#1e2a3a",
-              }}
-            >
-              {/* Header Row */}
-              <div
-                className="flex items-center justify-between px-4 py-2 border-b"
-                style={{ borderColor: "#1e2a3a" }}
-              >
-                <div className="flex items-center gap-3">
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: "#eef2f7" }}
-                  >
-                    Options (
-                    {activeTrades.filter((t) => t.status === "active").length})
-                  </span>
-                  {(() => {
-                    const activePositions = activeTrades.filter(
-                      (t) => t.status === "active",
-                    );
-                    const totalPL = activePositions.reduce((sum, trade) => {
-                      const priceChange = currentPrice - trade.entryPrice;
-                      const isWinning =
-                        trade.direction === "higher"
-                          ? priceChange > 0
-                          : priceChange < 0;
+                {/* Last Finished Trade Result - IQ Option Style */}
+                <AnimatePresence>
+                  {lastFinishedTrade &&
+                    lastFinishedTrade.symbol === selectedSymbol &&
+                    activeTrades.filter(
+                      (t) =>
+                        t.symbol === selectedSymbol && t.status === "active",
+                    ).length === 0 &&
+                    (() => {
+                      const finishedY = priceToYRef.current
+                        ? priceToYRef.current(lastFinishedTrade.entryPrice)
+                        : lastFinishedTrade.entryYPosition;
+                      const finishedEntryX = timeToXRef.current
+                        ? timeToXRef.current(lastFinishedTrade.entryTime)
+                        : null;
+                      const finishedEndX = timeToXRef.current
+                        ? timeToXRef.current(lastFinishedTrade.expirationTime)
+                        : null;
+                      // Hide if result popup is completely off screen
+                      const endOffScreen =
+                        finishedEndX !== null &&
+                        (finishedEndX < -10 || finishedEndX > 110);
+                      if (endOffScreen) return null;
+                      const isSessionWin = sessionTotalResult >= 0;
+                      // Entry price color stays based on trade direction (higher=green, lower=red) — never changes
+                      const isEntryGreen =
+                        lastFinishedTrade.direction === "higher";
                       return (
-                        sum + (isWinning ? trade.amount * 0.85 : -trade.amount)
+                        <>
+                          {/* Entry price horizontal dashed line - color based on trade direction, not win/loss */}
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute left-0 right-[140px] h-[1px] z-[500] pointer-events-none"
+                            style={{
+                              top: `${finishedY}%`,
+                              backgroundImage: `linear-gradient(to right, ${isEntryGreen ? "rgba(34, 197, 94, 0.5)" : "rgba(239, 68, 68, 0.5)"} 50%, transparent 50%)`,
+                              backgroundSize: "8px 1px",
+                            }}
+                          />
+
+                          {/* TOTAL RESULT (P/L) popup - shows accumulated session total */}
+                          <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="absolute z-[500] pointer-events-auto"
+                            style={{
+                              left:
+                                finishedEndX !== null
+                                  ? `${finishedEndX}%`
+                                  : "55%",
+                              top: `${finishedY}%`,
+                              transform: "translate(-50%, -50%)",
+                            }}
+                          >
+                            <div
+                              className="relative flex flex-col items-start px-4 py-2.5 rounded-lg min-w-[140px]"
+                              style={{
+                                backgroundColor: isSessionWin
+                                  ? "#22c55e"
+                                  : "#ef4444",
+                              }}
+                            >
+                              {/* Close button */}
+                              <button
+                                onClick={() => {
+                                  setLastFinishedTrade(null);
+                                  setSessionTotalResult(0);
+                                  setSessionTotalInvested(0);
+                                  setSessionTradeCount(0);
+                                  setEntryMarkers([]);
+                                }}
+                                className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                              >
+                                <svg
+                                  className="w-3.5 h-3.5 text-white"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="3"
+                                >
+                                  <path d="M18 6L6 18M6 6l12 12" />
+                                </svg>
+                              </button>
+                              <span className="text-xs text-white/90 font-bold tracking-wider leading-tight uppercase">
+                                RESULTS (P/L)
+                              </span>
+                              <span className="text-white font-extrabold text-lg leading-tight mt-0.5">
+                                {isSessionWin ? "+" : "−"}${" "}
+                                {Math.abs(sessionTotalResult).toLocaleString(
+                                  undefined,
+                                  {
+                                    minimumFractionDigits: 0,
+                                    maximumFractionDigits: 0,
+                                  },
+                                )}
+                              </span>
+                            </div>
+                          </motion.div>
+                        </>
                       );
-                    }, 0);
-                    return (
-                      totalPL !== 0 && (
-                        <span
-                          className={`text-sm font-medium ${totalPL >= 0 ? "text-green-400" : "text-red-400"}`}
-                        >
-                          {totalPL >= 0 ? "+" : ""}
-                          {formatAmount(totalPL, 2)}
-                        </span>
-                      )
-                    );
-                  })()}
-                </div>
-                <button
-                  onClick={() => setShowPortfolioPanel(false)}
-                  className="p-1 rounded hover:bg-[#1e2a3a] transition-colors"
-                >
-                  <X className="w-4 h-4" style={{ color: "#8b9ab8" }} />
-                </button>
+                    })()}
+                </AnimatePresence>
               </div>
+            </div>
 
-              {/* Content */}
-              {activeTrades.filter((t) => t.status === "active").length ===
-              0 ? (
+            {/* Right Panel: M4Capital Trading Panel */}
+            <DesktopTradingPanel
+              amount={amount}
+              amountInput={amountInput}
+              onAmountChange={setAmount}
+              onAmountInputChange={setAmountInput}
+              expirationSeconds={expirationSeconds}
+              onExpirationChange={setExpirationSeconds}
+              showExpirationModal={showExpirationModal}
+              onToggleExpirationModal={() =>
+                setShowExpirationModal(!showExpirationModal)
+              }
+              onCloseExpirationModal={() => setShowExpirationModal(false)}
+              currentTime={currentTime}
+              onExecuteTrade={executeTrade}
+              isExecutingTrade={isExecutingTrade}
+              activeTrades={activeTrades}
+              selectedSymbol={selectedSymbol}
+              lastFinishedTrade={lastFinishedTrade}
+              onNewOption={() => {
+                setLastFinishedTrade(null);
+                setSessionTotalResult(0);
+                setSessionTotalInvested(0);
+                setSessionTradeCount(0);
+                setEntryMarkers([]);
+                setOpenTabs((prev) =>
+                  prev.map((tab, i) =>
+                    i === activeTab ? { ...tab, lastResult: undefined } : tab,
+                  ),
+                );
+                setTimeout(() => {
+                  const amountInput =
+                    document.querySelector('input[type="text"]');
+                  if (amountInput) (amountInput as HTMLInputElement).focus();
+                }, 100);
+              }}
+              hoveredButton={hoveredButton}
+              onHoveredButton={setHoveredButton}
+            />
+          </div>
+
+          {/* Open Positions Section - IQ Option Style */}
+          <AnimatePresence>
+            {showPortfolioPanel && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="border-t overflow-hidden transition-all duration-300 z-40"
+                style={{
+                  backgroundColor: "#131722",
+                  borderColor: "#1e2a3a",
+                }}
+              >
+                {/* Header Row */}
                 <div
-                  className="p-8 flex flex-col items-center justify-center"
-                  style={{ minHeight: "120px" }}
+                  className="flex items-center justify-between px-4 py-2 border-b"
+                  style={{ borderColor: "#1e2a3a" }}
                 >
-                  <p className="text-sm mb-3" style={{ color: "#8b9ab8" }}>
-                    You have no open positions yet
-                  </p>
-                  <button
-                    onClick={() => {
-                      setAddAssetSideTab("trending");
-                      setAddAssetSearch("");
-                      setShowAddAssetModal(true);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:bg-[#1e2a3a]"
-                    style={{ borderColor: "#1e2a3a", color: "#8b9ab8" }}
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span className="text-sm">Select asset</span>
-                  </button>
-                </div>
-              ) : (
-                <>
-                  {/* Table Header */}
-                  <div
-                    className="grid grid-cols-8 gap-2 px-4 py-2 text-xs border-b"
-                    style={{ borderColor: "#1e2a3a", color: "#626d7d" }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <Settings className="w-3 h-3" />
-                      <span>Name</span>
-                    </div>
-                    <div>Type</div>
-                    <div>Expiration</div>
-                    <div>Investment</div>
-                    <div>Open</div>
-                    <div>Current Price</div>
-                    <div>Expected P/L</div>
-                    <div>P/L after sell</div>
-                  </div>
-
-                  {/* Trade Rows */}
-                  <div className="max-h-[200px] overflow-y-auto">
-                    {activeTrades
-                      .filter((t) => t.status === "active")
-                      .map((trade) => {
-                        const remaining = Math.max(
-                          0,
-                          trade.expirationTime - Date.now(),
-                        );
-                        const remainingSeconds = Math.ceil(remaining / 1000);
-                        const minutes = Math.floor(remainingSeconds / 60);
-                        const seconds = remainingSeconds % 60;
-                        const timeStr =
-                          minutes > 0
-                            ? `${minutes}:${seconds.toString().padStart(2, "0")}`
-                            : `00:${seconds.toString().padStart(2, "0")}`;
-
+                  <div className="flex items-center gap-3">
+                    <span
+                      className="text-sm font-medium"
+                      style={{ color: "#eef2f7" }}
+                    >
+                      Options (
+                      {activeTrades.filter((t) => t.status === "active").length}
+                      )
+                    </span>
+                    {(() => {
+                      const activePositions = activeTrades.filter(
+                        (t) => t.status === "active",
+                      );
+                      const totalPL = activePositions.reduce((sum, trade) => {
                         const priceChange = currentPrice - trade.entryPrice;
                         const isWinning =
                           trade.direction === "higher"
                             ? priceChange > 0
                             : priceChange < 0;
-                        const expectedPL = isWinning
-                          ? trade.amount * 0.85
-                          : -trade.amount;
-
-                        const symbolData = symbols.find(
-                          (s) => s.symbol === trade.symbol,
-                        );
-                        const flagStr = symbolData?.flag || "";
-                        const flags = flagStr.includes(",")
-                          ? flagStr.split(",")
-                          : [flagStr];
-
                         return (
-                          <div
-                            key={trade.id}
-                            className="grid grid-cols-8 gap-2 px-4 py-3 items-center border-b hover:bg-[#1a2332] transition-colors"
-                            style={{ borderColor: "#1e2a3a" }}
+                          sum +
+                          (isWinning ? trade.amount * 0.85 : -trade.amount)
+                        );
+                      }, 0);
+                      return (
+                        totalPL !== 0 && (
+                          <span
+                            className={`text-sm font-medium ${totalPL >= 0 ? "text-green-400" : "text-red-400"}`}
                           >
-                            {/* Name with stacked flags */}
-                            <div className="flex items-center gap-2">
-                              <div className="relative flex items-center">
-                                {flags.length === 2 ? (
-                                  <>
-                                    <img
-                                      src={`/currencies/${flags[0].toLowerCase()}.svg`}
-                                      alt={flags[0]}
-                                      className="w-5 h-5 rounded-full object-cover border border-gray-600"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                      }}
+                            {totalPL >= 0 ? "+" : ""}
+                            {formatAmount(totalPL, 2)}
+                          </span>
+                        )
+                      );
+                    })()}
+                  </div>
+                  <button
+                    onClick={() => setShowPortfolioPanel(false)}
+                    className="p-1 rounded hover:bg-[#1e2a3a] transition-colors"
+                  >
+                    <X className="w-4 h-4" style={{ color: "#8b9ab8" }} />
+                  </button>
+                </div>
+
+                {/* Content */}
+                {activeTrades.filter((t) => t.status === "active").length ===
+                0 ? (
+                  <div
+                    className="p-8 flex flex-col items-center justify-center"
+                    style={{ minHeight: "120px" }}
+                  >
+                    <p className="text-sm mb-3" style={{ color: "#8b9ab8" }}>
+                      You have no open positions yet
+                    </p>
+                    <button
+                      onClick={() => {
+                        setAddAssetSideTab("trending");
+                        setAddAssetSearch("");
+                        setShowAddAssetModal(true);
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 rounded-full border transition-colors hover:bg-[#1e2a3a]"
+                      style={{ borderColor: "#1e2a3a", color: "#8b9ab8" }}
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span className="text-sm">Select asset</span>
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Table Header */}
+                    <div
+                      className="grid grid-cols-8 gap-2 px-4 py-2 text-xs border-b"
+                      style={{ borderColor: "#1e2a3a", color: "#626d7d" }}
+                    >
+                      <div className="flex items-center gap-1">
+                        <Settings className="w-3 h-3" />
+                        <span>Name</span>
+                      </div>
+                      <div>Type</div>
+                      <div>Expiration</div>
+                      <div>Investment</div>
+                      <div>Open</div>
+                      <div>Current Price</div>
+                      <div>Expected P/L</div>
+                      <div>P/L after sell</div>
+                    </div>
+
+                    {/* Trade Rows */}
+                    <div className="max-h-[200px] overflow-y-auto">
+                      {activeTrades
+                        .filter((t) => t.status === "active")
+                        .map((trade) => {
+                          const remaining = Math.max(
+                            0,
+                            trade.expirationTime - Date.now(),
+                          );
+                          const remainingSeconds = Math.ceil(remaining / 1000);
+                          const minutes = Math.floor(remainingSeconds / 60);
+                          const seconds = remainingSeconds % 60;
+                          const timeStr =
+                            minutes > 0
+                              ? `${minutes}:${seconds.toString().padStart(2, "0")}`
+                              : `00:${seconds.toString().padStart(2, "0")}`;
+
+                          const priceChange = currentPrice - trade.entryPrice;
+                          const isWinning =
+                            trade.direction === "higher"
+                              ? priceChange > 0
+                              : priceChange < 0;
+                          const expectedPL = isWinning
+                            ? trade.amount * 0.85
+                            : -trade.amount;
+
+                          const symbolData = symbols.find(
+                            (s) => s.symbol === trade.symbol,
+                          );
+                          const flagStr = symbolData?.flag || "";
+                          const flags = flagStr.includes(",")
+                            ? flagStr.split(",")
+                            : [flagStr];
+
+                          return (
+                            <div
+                              key={trade.id}
+                              className="grid grid-cols-8 gap-2 px-4 py-3 items-center border-b hover:bg-[#1a2332] transition-colors"
+                              style={{ borderColor: "#1e2a3a" }}
+                            >
+                              {/* Name with stacked flags */}
+                              <div className="flex items-center gap-2">
+                                <div className="relative flex items-center">
+                                  {flags.length === 2 ? (
+                                    <>
+                                      <img
+                                        src={`/currencies/${flags[0].toLowerCase()}.svg`}
+                                        alt={flags[0]}
+                                        className="w-5 h-5 rounded-full object-cover border border-gray-600"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display =
+                                            "none";
+                                        }}
+                                      />
+                                      <img
+                                        src={`/currencies/${flags[1].toLowerCase()}.svg`}
+                                        alt={flags[1]}
+                                        className="w-5 h-5 rounded-full object-cover border border-gray-600 -ml-2"
+                                        onError={(e) => {
+                                          e.currentTarget.style.display =
+                                            "none";
+                                        }}
+                                      />
+                                    </>
+                                  ) : (
+                                    <AssetFlag
+                                      flag={flagStr}
+                                      symbol={trade.symbol}
+                                      size={20}
                                     />
-                                    <img
-                                      src={`/currencies/${flags[1].toLowerCase()}.svg`}
-                                      alt={flags[1]}
-                                      className="w-5 h-5 rounded-full object-cover border border-gray-600 -ml-2"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = "none";
-                                      }}
-                                    />
-                                  </>
+                                  )}
+                                </div>
+                                <span
+                                  className="text-sm font-medium"
+                                  style={{ color: "#eef2f7" }}
+                                >
+                                  {trade.symbol}
+                                </span>
+                              </div>
+
+                              {/* Type */}
+                              <div
+                                className="text-sm"
+                                style={{ color: "#eef2f7" }}
+                              >
+                                Blitz
+                              </div>
+
+                              {/* Expiration countdown */}
+                              <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full border-2 border-green-400 flex items-center justify-center">
+                                  <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                                </div>
+                                <span
+                                  className="text-sm font-mono"
+                                  style={{ color: "#00c853" }}
+                                >
+                                  {timeStr}
+                                </span>
+                              </div>
+
+                              {/* Investment */}
+                              <div className="flex items-center gap-1">
+                                <span
+                                  className="text-sm font-medium"
+                                  style={{ color: "#eef2f7" }}
+                                >
+                                  {formatAmount(trade.amount, 2)}
+                                </span>
+                                {trade.direction === "higher" ? (
+                                  <ChevronUp className="w-4 h-4 text-green-400" />
                                 ) : (
-                                  <AssetFlag
-                                    flag={flagStr}
-                                    symbol={trade.symbol}
-                                    size={20}
-                                  />
+                                  <ChevronDown className="w-4 h-4 text-red-400" />
                                 )}
                               </div>
-                              <span
-                                className="text-sm font-medium"
+
+                              {/* Open price */}
+                              <div
+                                className="text-sm"
                                 style={{ color: "#eef2f7" }}
                               >
-                                {trade.symbol}
-                              </span>
-                            </div>
-
-                            {/* Type */}
-                            <div
-                              className="text-sm"
-                              style={{ color: "#eef2f7" }}
-                            >
-                              Blitz
-                            </div>
-
-                            {/* Expiration countdown */}
-                            <div className="flex items-center gap-1">
-                              <div className="w-3 h-3 rounded-full border-2 border-green-400 flex items-center justify-center">
-                                <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
+                                {trade.entryPrice.toFixed(5)}
                               </div>
-                              <span
-                                className="text-sm font-mono"
-                                style={{ color: "#00c853" }}
-                              >
-                                {timeStr}
-                              </span>
-                            </div>
 
-                            {/* Investment */}
-                            <div className="flex items-center gap-1">
-                              <span
-                                className="text-sm font-medium"
+                              {/* Current price */}
+                              <div
+                                className="text-sm"
                                 style={{ color: "#eef2f7" }}
                               >
-                                {formatAmount(trade.amount, 2)}
-                              </span>
-                              {trade.direction === "higher" ? (
-                                <ChevronUp className="w-4 h-4 text-green-400" />
-                              ) : (
-                                <ChevronDown className="w-4 h-4 text-red-400" />
-                              )}
-                            </div>
+                                {currentPrice.toFixed(5)}
+                              </div>
 
-                            {/* Open price */}
-                            <div
-                              className="text-sm"
-                              style={{ color: "#eef2f7" }}
-                            >
-                              {trade.entryPrice.toFixed(5)}
-                            </div>
+                              {/* Expected P/L */}
+                              <div
+                                className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}
+                              >
+                                {expectedPL >= 0 ? "+" : ""}
+                                {formatAmount(expectedPL, 2)}
+                              </div>
 
-                            {/* Current price */}
-                            <div
-                              className="text-sm"
-                              style={{ color: "#eef2f7" }}
-                            >
-                              {currentPrice.toFixed(5)}
+                              {/* P/L after sell - Same as Expected P/L in binary options */}
+                              <div
+                                className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}
+                              >
+                                {expectedPL >= 0 ? "+" : ""}
+                                {formatAmount(expectedPL, 2)}
+                              </div>
                             </div>
+                          );
+                        })}
+                    </div>
 
-                            {/* Expected P/L */}
-                            <div
-                              className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}
-                            >
-                              {expectedPL >= 0 ? "+" : ""}
-                              {formatAmount(expectedPL, 2)}
-                            </div>
-
-                            {/* P/L after sell - Same as Expected P/L in binary options */}
-                            <div
-                              className={`text-sm font-medium ${expectedPL >= 0 ? "text-green-400" : "text-red-400"}`}
-                            >
-                              {expectedPL >= 0 ? "+" : ""}
-                              {formatAmount(expectedPL, 2)}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-
-                  {/* Footer Summary */}
-                  <div
-                    className="flex items-center justify-between px-4 py-2 border-t"
-                    style={{ borderColor: "#1e2a3a" }}
-                  >
-                    <div className="flex items-center gap-6">
-                      {(() => {
-                        const activePositions = activeTrades.filter(
-                          (t) => t.status === "active",
-                        );
-                        const totalInvestment = activePositions.reduce(
-                          (sum, t) => sum + t.amount,
-                          0,
-                        );
-                        const totalExpectedPL = activePositions.reduce(
-                          (sum, trade) => {
-                            const priceChange = currentPrice - trade.entryPrice;
-                            const isWinning =
-                              trade.direction === "higher"
-                                ? priceChange > 0
-                                : priceChange < 0;
-                            return (
-                              sum +
-                              (isWinning ? trade.amount * 0.85 : -trade.amount)
-                            );
-                          },
-                          0,
-                        );
-                        return (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <Clock
-                                className="w-4 h-4"
-                                style={{ color: "#626d7d" }}
-                              />
-                              <Settings
-                                className="w-4 h-4"
-                                style={{ color: "#626d7d" }}
-                              />
-                              <span
+                    {/* Footer Summary */}
+                    <div
+                      className="flex items-center justify-between px-4 py-2 border-t"
+                      style={{ borderColor: "#1e2a3a" }}
+                    >
+                      <div className="flex items-center gap-6">
+                        {(() => {
+                          const activePositions = activeTrades.filter(
+                            (t) => t.status === "active",
+                          );
+                          const totalInvestment = activePositions.reduce(
+                            (sum, t) => sum + t.amount,
+                            0,
+                          );
+                          const totalExpectedPL = activePositions.reduce(
+                            (sum, trade) => {
+                              const priceChange =
+                                currentPrice - trade.entryPrice;
+                              const isWinning =
+                                trade.direction === "higher"
+                                  ? priceChange > 0
+                                  : priceChange < 0;
+                              return (
+                                sum +
+                                (isWinning
+                                  ? trade.amount * 0.85
+                                  : -trade.amount)
+                              );
+                            },
+                            0,
+                          );
+                          return (
+                            <>
+                              <div className="flex items-center gap-2">
+                                <Clock
+                                  className="w-4 h-4"
+                                  style={{ color: "#626d7d" }}
+                                />
+                                <Settings
+                                  className="w-4 h-4"
+                                  style={{ color: "#626d7d" }}
+                                />
+                                <span
+                                  className="text-sm"
+                                  style={{ color: "#8b9ab8" }}
+                                >
+                                  Investment{" "}
+                                  <span style={{ color: "#eef2f7" }}>
+                                    {formatAmount(totalInvestment, 2)}
+                                  </span>
+                                </span>
+                              </div>
+                              <div
                                 className="text-sm"
                                 style={{ color: "#8b9ab8" }}
                               >
-                                Investment{" "}
-                                <span style={{ color: "#eef2f7" }}>
-                                  {formatAmount(totalInvestment, 2)}
+                                Expected P/L{" "}
+                                <span
+                                  className={
+                                    totalExpectedPL >= 0
+                                      ? "text-green-400"
+                                      : "text-red-400"
+                                  }
+                                >
+                                  {totalExpectedPL >= 0 ? "+" : ""}
+                                  {formatAmount(totalExpectedPL, 2)}
                                 </span>
-                              </span>
-                            </div>
-                            <div
-                              className="text-sm"
-                              style={{ color: "#8b9ab8" }}
-                            >
-                              Expected P/L{" "}
-                              <span
-                                className={
-                                  totalExpectedPL >= 0
-                                    ? "text-green-400"
-                                    : "text-red-400"
-                                }
+                              </div>
+                              <div
+                                className="text-sm"
+                                style={{ color: "#8b9ab8" }}
                               >
-                                {totalExpectedPL >= 0 ? "+" : ""}
-                                {formatAmount(totalExpectedPL, 2)}
-                              </span>
-                            </div>
-                            <div
-                              className="text-sm"
-                              style={{ color: "#8b9ab8" }}
-                            >
-                              P/L after sell{" "}
-                              <span style={{ color: "#626d7d" }}>—</span>
-                            </div>
-                          </>
-                        );
-                      })()}
+                                P/L after sell{" "}
+                                <span style={{ color: "#626d7d" }}>—</span>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <button
+                        className="px-4 py-1.5 text-sm font-medium rounded border transition-colors hover:bg-[#1e2a3a]"
+                        style={{ borderColor: "#3a4553", color: "#8b9ab8" }}
+                      >
+                        Sell All
+                      </button>
                     </div>
-                    <button
-                      className="px-4 py-1.5 text-sm font-medium rounded border transition-colors hover:bg-[#1e2a3a]"
-                      style={{ borderColor: "#3a4553", color: "#8b9ab8" }}
-                    >
-                      Sell All
-                    </button>
-                  </div>
-                </>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-        {/* Show/Hide Positions Toggle - Total Portfolio Bar */}
-        <div
-          className="border-t flex items-center justify-between px-3 py-1 transition-all duration-300 flex-shrink-0"
-          style={{
-            backgroundColor: "#131722",
-            borderColor: "#1e2a3a",
-          }}
-        >
-          <span className="text-xs font-medium text-white">
-            Total portfolio
-          </span>
-          <button
-            onClick={() => setShowPortfolioPanel(!showPortfolioPanel)}
-            className="text-xs flex items-center gap-1 hover:opacity-80 transition-opacity"
-            style={{ color: "#ff8516" }}
+          {/* Show/Hide Positions Toggle - Total Portfolio Bar */}
+          <div
+            className="border-t flex items-center justify-between px-3 py-1 transition-all duration-300 flex-shrink-0"
+            style={{
+              backgroundColor: "#131722",
+              borderColor: "#1e2a3a",
+            }}
           >
-            {showPortfolioPanel ? "Hide positions" : "Show positions"}
-            <ChevronDown
-              className={`w-3.5 h-3.5 transition-transform ${showPortfolioPanel ? "rotate-180" : ""}`}
-            />
-          </button>
-        </div>
+            <span className="text-xs font-medium text-white">
+              Total portfolio
+            </span>
+            <button
+              onClick={() => setShowPortfolioPanel(!showPortfolioPanel)}
+              className="text-xs flex items-center gap-1 hover:opacity-80 transition-opacity"
+              style={{ color: "#ff8516" }}
+            >
+              {showPortfolioPanel ? "Hide positions" : "Show positions"}
+              <ChevronDown
+                className={`w-3.5 h-3.5 transition-transform ${showPortfolioPanel ? "rotate-180" : ""}`}
+              />
+            </button>
+          </div>
 
-        {/* Add Asset Modal - IQ Option Style */}
-        <AnimatePresence>
-          {showAddAssetModal &&
-            (() => {
-              const profitPctMap: Record<string, number> = {
-                "EUR/USD": 86,
-                "GBP/USD": 85,
-                "USD/JPY": 84,
-                "USD/CAD": 83,
-                "AUD/USD": 82,
-                "USD/BRL": 88,
-                "AUD/CHF": 88,
-                "BTC/USD": 87,
-                "ETH/USD": 85,
-                "XRP/USD": 84,
-                TSLA: 87,
-                AAPL: 89,
-                NVDA: 88,
-                GOOGL: 86,
-                MSFT: 85,
-                AMZN: 86,
-                META: 87,
-                NFLX: 83,
-              };
-              const popularityMap: Record<string, number> = {
-                "EUR/USD": 3,
-                "GBP/USD": 3,
-                "USD/JPY": 2,
-                "USD/CAD": 2,
-                "AUD/USD": 2,
-                "BTC/USD": 3,
-                "ETH/USD": 3,
-                "XRP/USD": 2,
-                TSLA: 3,
-                AAPL: 3,
-                NVDA: 3,
-                GOOGL: 2,
-                MSFT: 2,
-                AMZN: 2,
-                META: 2,
-                NFLX: 2,
-              };
-              const volatilityMap: Record<string, number> = {
-                "EUR/USD": 2,
-                "GBP/USD": 2,
-                "USD/JPY": 2,
-                "USD/CAD": 1,
-                "AUD/USD": 2,
-                "BTC/USD": 3,
-                "ETH/USD": 3,
-                "XRP/USD": 3,
-                TSLA: 2,
-                AAPL: 1,
-                NVDA: 2,
-                GOOGL: 1,
-                MSFT: 1,
-                AMZN: 2,
-                META: 2,
-                NFLX: 2,
-              };
-              const newBadgeSymbols = new Set([
-                "AUD Index",
-                "GBP Index",
-                "CAD Index",
-                "EUR Index",
-              ]);
+          {/* Add Asset Modal - IQ Option Style */}
+          <AnimatePresence>
+            {showAddAssetModal &&
+              (() => {
+                const profitPctMap: Record<string, number> = {
+                  "EUR/USD": 86,
+                  "GBP/USD": 85,
+                  "USD/JPY": 84,
+                  "USD/CAD": 83,
+                  "AUD/USD": 82,
+                  "USD/BRL": 88,
+                  "AUD/CHF": 88,
+                  "BTC/USD": 87,
+                  "ETH/USD": 85,
+                  "XRP/USD": 84,
+                  TSLA: 87,
+                  AAPL: 89,
+                  NVDA: 88,
+                  GOOGL: 86,
+                  MSFT: 85,
+                  AMZN: 86,
+                  META: 87,
+                  NFLX: 83,
+                };
+                const popularityMap: Record<string, number> = {
+                  "EUR/USD": 3,
+                  "GBP/USD": 3,
+                  "USD/JPY": 2,
+                  "USD/CAD": 2,
+                  "AUD/USD": 2,
+                  "BTC/USD": 3,
+                  "ETH/USD": 3,
+                  "XRP/USD": 2,
+                  TSLA: 3,
+                  AAPL: 3,
+                  NVDA: 3,
+                  GOOGL: 2,
+                  MSFT: 2,
+                  AMZN: 2,
+                  META: 2,
+                  NFLX: 2,
+                };
+                const volatilityMap: Record<string, number> = {
+                  "EUR/USD": 2,
+                  "GBP/USD": 2,
+                  "USD/JPY": 2,
+                  "USD/CAD": 1,
+                  "AUD/USD": 2,
+                  "BTC/USD": 3,
+                  "ETH/USD": 3,
+                  "XRP/USD": 3,
+                  TSLA: 2,
+                  AAPL: 1,
+                  NVDA: 2,
+                  GOOGL: 1,
+                  MSFT: 1,
+                  AMZN: 2,
+                  META: 2,
+                  NFLX: 2,
+                };
+                const newBadgeSymbols = new Set([
+                  "AUD Index",
+                  "GBP Index",
+                  "CAD Index",
+                  "EUR Index",
+                ]);
 
-              // Count for Options (total assets)
-              const optionsCount = symbols.length;
-              const marginCount = symbols.filter(
-                (s) => s.category === "Crypto",
-              ).length;
+                // Count for Options (total assets)
+                const optionsCount = symbols.length;
+                const marginCount = symbols.filter(
+                  (s) => s.category === "Crypto",
+                ).length;
 
-              // Filter based on selected market in dropdown
-              const getFilteredByMarket = () => {
-                const market = selectedMarket.toLowerCase();
-                if (
-                  market === "blitz" ||
-                  market === "binary" ||
-                  market === "digital"
-                ) {
-                  return [...symbols]; // All assets available
-                } else if (market === "forex") {
-                  return symbols.filter((s) => s.category === "Forex");
-                } else if (market === "crypto") {
-                  return symbols.filter((s) => s.category === "Crypto");
-                } else if (market === "stocks") {
-                  return symbols.filter((s) => s.category === "Stocks");
-                } else if (market === "commodities") {
-                  return symbols.filter((s) => s.category === "Commodities");
-                } else if (market === "indices") {
-                  return symbols.filter((s) => s.category === "Index");
-                }
-                return symbols;
-              };
-
-              const getDisplaySymbols = () => {
-                let filtered = [...symbols];
-                if (addAssetSideTab === "options") {
-                  filtered = getFilteredByMarket();
-                } else if (addAssetSideTab === "margin") {
-                  filtered = symbols.filter((s) => s.category === "Crypto");
-                } else if (addAssetSideTab === "watchlist") {
-                  filtered = symbols.filter((s) =>
-                    watchlistedSymbols.includes(s.symbol),
-                  );
-                } else if (addAssetSideTab === "trending") {
-                  filtered = getFilteredByMarket();
-                }
-                if (addAssetSearch.trim()) {
-                  const q = addAssetSearch.toLowerCase();
-                  filtered = filtered.filter((s) =>
-                    s.symbol.toLowerCase().includes(q),
-                  );
-                }
-                return filtered;
-              };
-
-              const displaySymbols = getDisplaySymbols();
-
-              // Get top gainers and losers for trending view
-              const trendingGainers = [...displaySymbols]
-                .filter((s) => s.change.startsWith("+"))
-                .sort(
-                  (a, b) => parseFloat(b.percentage) - parseFloat(a.percentage),
-                )
-                .slice(0, 3);
-              const trendingLosers = [...displaySymbols]
-                .filter((s) => s.change.startsWith("-"))
-                .sort(
-                  (a, b) => parseFloat(a.percentage) - parseFloat(b.percentage),
-                )
-                .slice(0, 3);
-              const tradersChoice = displaySymbols.slice(0, 3);
-
-              const handleSelectSymbol = (sym: (typeof symbols)[0]) => {
-                // Check if this symbol+type combination already exists
-                const existingTabIndex = openTabs.findIndex(
-                  (t) => t.symbol === sym.symbol && t.type === selectedMarket,
-                );
-                if (existingTabIndex === -1) {
-                  // Limit to 8 tabs maximum
-                  if (openTabs.length >= 4) {
-                    alert(
-                      "Maximum of 4 tabs allowed. Please close a tab first.",
-                    );
-                    return;
+                // Filter based on selected market in dropdown
+                const getFilteredByMarket = () => {
+                  const market = selectedMarket.toLowerCase();
+                  if (
+                    market === "blitz" ||
+                    market === "binary" ||
+                    market === "digital"
+                  ) {
+                    return [...symbols]; // All assets available
+                  } else if (market === "forex") {
+                    return symbols.filter((s) => s.category === "Forex");
+                  } else if (market === "crypto") {
+                    return symbols.filter((s) => s.category === "Crypto");
+                  } else if (market === "stocks") {
+                    return symbols.filter((s) => s.category === "Stocks");
+                  } else if (market === "commodities") {
+                    return symbols.filter((s) => s.category === "Commodities");
+                  } else if (market === "indices") {
+                    return symbols.filter((s) => s.category === "Index");
                   }
-                  // Add new tab with symbol and selected market type
-                  setOpenTabs([
-                    ...openTabs,
-                    { symbol: sym.symbol, type: selectedMarket },
-                  ]);
-                  setActiveTab(openTabs.length);
-                } else {
-                  // Switch to existing tab
-                  setActiveTab(existingTabIndex);
-                }
-                setSelectedSymbol(sym.symbol);
-                setShowAddAssetModal(false);
-              };
+                  return symbols;
+                };
 
-              const toggleWatchlist = (
-                e: React.MouseEvent,
-                symName: string,
-              ) => {
-                e.stopPropagation();
-                setWatchlistedSymbols((prev) =>
-                  prev.includes(symName)
-                    ? prev.filter((s) => s !== symName)
-                    : [...prev, symName],
+                const getDisplaySymbols = () => {
+                  let filtered = [...symbols];
+                  if (addAssetSideTab === "options") {
+                    filtered = getFilteredByMarket();
+                  } else if (addAssetSideTab === "margin") {
+                    filtered = symbols.filter((s) => s.category === "Crypto");
+                  } else if (addAssetSideTab === "watchlist") {
+                    filtered = symbols.filter((s) =>
+                      watchlistedSymbols.includes(s.symbol),
+                    );
+                  } else if (addAssetSideTab === "trending") {
+                    filtered = getFilteredByMarket();
+                  }
+                  if (addAssetSearch.trim()) {
+                    const q = addAssetSearch.toLowerCase();
+                    filtered = filtered.filter((s) =>
+                      s.symbol.toLowerCase().includes(q),
+                    );
+                  }
+                  return filtered;
+                };
+
+                const displaySymbols = getDisplaySymbols();
+
+                // Get top gainers and losers for trending view
+                const trendingGainers = [...displaySymbols]
+                  .filter((s) => s.change.startsWith("+"))
+                  .sort(
+                    (a, b) =>
+                      parseFloat(b.percentage) - parseFloat(a.percentage),
+                  )
+                  .slice(0, 3);
+                const trendingLosers = [...displaySymbols]
+                  .filter((s) => s.change.startsWith("-"))
+                  .sort(
+                    (a, b) =>
+                      parseFloat(a.percentage) - parseFloat(b.percentage),
+                  )
+                  .slice(0, 3);
+                const tradersChoice = displaySymbols.slice(0, 3);
+
+                const handleSelectSymbol = (sym: (typeof symbols)[0]) => {
+                  // Check if this symbol+type combination already exists
+                  const existingTabIndex = openTabs.findIndex(
+                    (t) => t.symbol === sym.symbol && t.type === selectedMarket,
+                  );
+                  if (existingTabIndex === -1) {
+                    // Limit to 8 tabs maximum
+                    if (openTabs.length >= 4) {
+                      alert(
+                        "Maximum of 4 tabs allowed. Please close a tab first.",
+                      );
+                      return;
+                    }
+                    // Add new tab with symbol and selected market type
+                    setOpenTabs([
+                      ...openTabs,
+                      { symbol: sym.symbol, type: selectedMarket },
+                    ]);
+                    setActiveTab(openTabs.length);
+                  } else {
+                    // Switch to existing tab
+                    setActiveTab(existingTabIndex);
+                  }
+                  setSelectedSymbol(sym.symbol);
+                  setShowAddAssetModal(false);
+                };
+
+                const toggleWatchlist = (
+                  e: React.MouseEvent,
+                  symName: string,
+                ) => {
+                  e.stopPropagation();
+                  setWatchlistedSymbols((prev) =>
+                    prev.includes(symName)
+                      ? prev.filter((s) => s !== symName)
+                      : [...prev, symName],
+                  );
+                };
+
+                const FlameIcons = ({ count }: { count: number }) => (
+                  <div className="flex items-center gap-0.5">
+                    {[1, 2, 3].map((i) => (
+                      <svg
+                        key={i}
+                        viewBox="0 0 24 24"
+                        className="w-3.5 h-3.5"
+                        fill="currentColor"
+                        style={{ color: i <= count ? "#e8690a" : "#1e2f44" }}
+                      >
+                        <path d="M12 2c0 0-5 5-5 10a5 5 0 0010 0c0-5-5-10-5-10zm0 14a3 3 0 110-6 3 3 0 010 6z" />
+                      </svg>
+                    ))}
+                  </div>
                 );
-              };
 
-              const FlameIcons = ({ count }: { count: number }) => (
-                <div className="flex items-center gap-0.5">
-                  {[1, 2, 3].map((i) => (
-                    <svg
-                      key={i}
-                      viewBox="0 0 24 24"
-                      className="w-3.5 h-3.5"
-                      fill="currentColor"
-                      style={{ color: i <= count ? "#e8690a" : "#1e2f44" }}
-                    >
-                      <path d="M12 2c0 0-5 5-5 10a5 5 0 0010 0c0-5-5-10-5-10zm0 14a3 3 0 110-6 3 3 0 010 6z" />
-                    </svg>
-                  ))}
-                </div>
-              );
+                const VolatilityBars = ({ count }: { count: number }) => (
+                  <div className="flex items-end gap-0.5 h-4">
+                    {[1, 2, 3].map((i) => (
+                      <div
+                        key={i}
+                        className="w-1.5 rounded-sm"
+                        style={{
+                          height: i === 1 ? "5px" : i === 2 ? "9px" : "14px",
+                          backgroundColor: i <= count ? "#e8690a" : "#1e2f44",
+                        }}
+                      />
+                    ))}
+                  </div>
+                );
 
-              const VolatilityBars = ({ count }: { count: number }) => (
-                <div className="flex items-end gap-0.5 h-4">
-                  {[1, 2, 3].map((i) => (
-                    <div
-                      key={i}
-                      className="w-1.5 rounded-sm"
-                      style={{
-                        height: i === 1 ? "5px" : i === 2 ? "9px" : "14px",
-                        backgroundColor: i <= count ? "#e8690a" : "#1e2f44",
-                      }}
-                    />
-                  ))}
-                </div>
-              );
-
-              return (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ type: "spring", damping: 30, stiffness: 340 }}
-                  className="absolute top-12 left-[700px] z-[60] flex rounded-xl overflow-hidden shadow-2xl"
-                  style={{
-                    width: "720px",
-                    maxWidth: "calc(100vw - 20px)",
-                    height: "520px",
-                    maxHeight: "calc(100vh - 150px)",
-                  }}
-                >
-                  {/* Close button */}
-                  <button
-                    onClick={() => setShowAddAssetModal(false)}
-                    className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-colors hover:bg-white/10"
-                    style={{ color: "#6b82a0" }}
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      className="w-4 h-4"
-                    >
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                  </button>
-
-                  {/* ── Left Sidebar ── */}
-                  <div
-                    className="flex flex-col flex-shrink-0 overflow-y-auto rounded-l-xl"
+                return (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ type: "spring", damping: 30, stiffness: 340 }}
+                    className="absolute top-12 left-[700px] z-[60] flex rounded-xl overflow-hidden shadow-2xl"
                     style={{
-                      width: "176px",
-                      backgroundColor: "#131c2e",
-                      borderRight: "1px solid #1d2d45",
+                      width: "720px",
+                      maxWidth: "calc(100vw - 20px)",
+                      height: "520px",
+                      maxHeight: "calc(100vh - 150px)",
                     }}
                   >
-                    {/* Trending */}
+                    {/* Close button */}
                     <button
-                      onClick={() => setAddAssetSideTab("trending")}
-                      className="flex items-center gap-1.5 px-2 py-2 transition-colors"
-                      style={{
-                        backgroundColor:
-                          addAssetSideTab === "trending"
-                            ? "#1a2840"
-                            : "transparent",
-                        color:
-                          addAssetSideTab === "trending" ? "#fff" : "#6b82a0",
-                        borderLeft:
-                          addAssetSideTab === "trending"
-                            ? "2px solid #4c8dff"
-                            : "2px solid transparent",
-                      }}
+                      onClick={() => setShowAddAssetModal(false)}
+                      className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-colors hover:bg-white/10"
+                      style={{ color: "#6b82a0" }}
                     >
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#162032" }}
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className="w-4 h-4"
                       >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="w-3 h-3"
-                        >
-                          <path d="M12 20V10M18 20V4M6 20v-4" />
-                        </svg>
-                      </div>
-                      <span className="text-sm font-medium">Trending</span>
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
                     </button>
 
-                    {/* Options */}
-                    <button
-                      onClick={() => setAddAssetSideTab("options")}
-                      className="flex items-center gap-1.5 px-2 py-2 transition-colors"
-                      style={{
-                        backgroundColor:
-                          addAssetSideTab === "options"
-                            ? "#1a2840"
-                            : "transparent",
-                        color:
-                          addAssetSideTab === "options" ? "#fff" : "#6b82a0",
-                        borderLeft:
-                          addAssetSideTab === "options"
-                            ? "2px solid #4c8dff"
-                            : "2px solid transparent",
-                      }}
-                    >
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#162032" }}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="w-3 h-3"
-                        >
-                          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                        </svg>
-                      </div>
-                      <span className="text-sm font-medium flex-1 text-left">
-                        Options
-                      </span>
-                      <span
-                        className="text-xs font-bold rounded-full px-1.5 py-0.5"
-                        style={{
-                          backgroundColor: "#e8690a",
-                          color: "#fff",
-                          minWidth: "26px",
-                          textAlign: "center",
-                        }}
-                      >
-                        {optionsCount}
-                      </span>
-                    </button>
-
-                    {/* Margin */}
-                    <button
-                      onClick={() => setAddAssetSideTab("margin")}
-                      className="flex items-center gap-1.5 px-2 py-2 transition-colors"
-                      style={{
-                        backgroundColor:
-                          addAssetSideTab === "margin"
-                            ? "#1a2840"
-                            : "transparent",
-                        color:
-                          addAssetSideTab === "margin" ? "#fff" : "#6b82a0",
-                        borderLeft:
-                          addAssetSideTab === "margin"
-                            ? "2px solid #4c8dff"
-                            : "2px solid transparent",
-                      }}
-                    >
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#162032" }}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="w-3 h-3"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <path d="M12 8v4l3 3" />
-                        </svg>
-                      </div>
-                      <span className="text-sm font-medium flex-1 text-left">
-                        Margin
-                      </span>
-                      <span
-                        className="text-xs font-bold rounded-full px-1.5 py-0.5"
-                        style={{
-                          backgroundColor: "#e8690a",
-                          color: "#fff",
-                          minWidth: "26px",
-                          textAlign: "center",
-                        }}
-                      >
-                        {marginCount}
-                      </span>
-                    </button>
-
-                    {/* Watchlist */}
-                    <button
-                      onClick={() => setAddAssetSideTab("watchlist")}
-                      className="flex items-center gap-1.5 px-2 py-2 transition-colors"
-                      style={{
-                        backgroundColor:
-                          addAssetSideTab === "watchlist"
-                            ? "#1a2840"
-                            : "transparent",
-                        color:
-                          addAssetSideTab === "watchlist" ? "#fff" : "#6b82a0",
-                        borderLeft:
-                          addAssetSideTab === "watchlist"
-                            ? "2px solid #4c8dff"
-                            : "2px solid transparent",
-                      }}
-                    >
-                      <div
-                        className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: "#162032" }}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          className="w-3 h-3"
-                        >
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
-                      </div>
-                      <span className="text-sm font-medium flex-1 text-left">
-                        Watchlist
-                      </span>
-                      <span
-                        className="text-xs font-bold rounded-full px-1.5 py-0.5"
-                        style={{
-                          backgroundColor: "#162032",
-                          color: "#6b82a0",
-                          minWidth: "26px",
-                          textAlign: "center",
-                        }}
-                      >
-                        {watchlistedSymbols.length}
-                      </span>
-                    </button>
-                  </div>
-
-                  {/* ── Main Content Panel ── */}
-                  <div
-                    className="flex flex-col flex-1 overflow-hidden rounded-r-xl"
-                    style={{ backgroundColor: "#0f1a2a" }}
-                  >
-                    {/* Search bar + Market Dropdown + Geo Toggle */}
+                    {/* ── Left Sidebar ── */}
                     <div
-                      className="px-4 py-3 flex-shrink-0 space-y-3"
-                      style={{ borderBottom: "1px solid #1a2d45" }}
+                      className="flex flex-col flex-shrink-0 overflow-y-auto rounded-l-xl"
+                      style={{
+                        width: "176px",
+                        backgroundColor: "#131c2e",
+                        borderRight: "1px solid #1d2d45",
+                      }}
                     >
-                      {/* Search */}
-                      <div className="relative">
-                        <Search
-                          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-                          style={{ color: "#3d5470" }}
-                        />
-                        <input
-                          type="text"
-                          placeholder="Search by name or ticker"
-                          value={addAssetSearch}
-                          onChange={(e) => setAddAssetSearch(e.target.value)}
-                          autoFocus
-                          className="w-full rounded-full pl-9 pr-4 py-2 text-sm outline-none"
-                          style={{
-                            backgroundColor: "#152030",
-                            border: "1px solid #1d3050",
-                            color: "#ffffff",
-                          }}
-                        />
-                      </div>
-
-                      {/* Market Dropdown + Geo Toggle Row */}
-                      <div className="flex items-center justify-between gap-3">
-                        {/* Market Dropdown */}
+                      {/* Trending */}
+                      <button
+                        onClick={() => setAddAssetSideTab("trending")}
+                        className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                        style={{
+                          backgroundColor:
+                            addAssetSideTab === "trending"
+                              ? "#1a2840"
+                              : "transparent",
+                          color:
+                            addAssetSideTab === "trending" ? "#fff" : "#6b82a0",
+                          borderLeft:
+                            addAssetSideTab === "trending"
+                              ? "2px solid #4c8dff"
+                              : "2px solid transparent",
+                        }}
+                      >
                         <div
-                          className="relative flex-1"
-                          style={{ maxWidth: "200px" }}
+                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: "#162032" }}
                         >
-                          <button
-                            onClick={() =>
-                              setShowMarketDropdown(!showMarketDropdown)
-                            }
-                            className="w-full flex items-center justify-between gap-2 px-4 py-2 rounded text-sm font-medium transition-colors"
-                            style={{
-                              backgroundColor: "#1e3a5f",
-                              color: "#fff",
-                            }}
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="w-3 h-3"
                           >
-                            <span>{selectedMarket}</span>
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              className="w-4 h-4 flex-shrink-0"
-                              style={{ color: "#6b82a0" }}
-                            >
-                              <path
-                                d={
-                                  showMarketDropdown
-                                    ? "M18 15l-6-6-6 6"
-                                    : "M6 9l6 6 6-6"
-                                }
-                              />
-                            </svg>
-                          </button>
-                          {showMarketDropdown && (
-                            <div
-                              className="absolute top-full left-0 mt-1 z-50 rounded overflow-hidden shadow-xl w-full"
-                              style={{ backgroundColor: "#1e3a5f" }}
-                            >
-                              {marketCategories.map((cat) => (
-                                <button
-                                  key={cat}
-                                  onClick={() => {
-                                    setSelectedMarket(cat);
-                                    setShowMarketDropdown(false);
-                                  }}
-                                  className="w-full text-left px-4 py-2 text-sm transition-colors hover:bg-[#2a4a70]"
-                                  style={{
-                                    backgroundColor:
-                                      selectedMarket === cat
-                                        ? "#2a4a70"
-                                        : "transparent",
-                                    color: "#fff",
-                                  }}
-                                >
-                                  {cat}
-                                </button>
-                              ))}
-                            </div>
-                          )}
+                            <path d="M12 20V10M18 20V4M6 20v-4" />
+                          </svg>
                         </div>
+                        <span className="text-sm font-medium">Trending</span>
+                      </button>
 
-                        {/* Worldwide / Local Toggle */}
-                        <div className="flex rounded overflow-hidden">
-                          <button
-                            onClick={() => setAddAssetGeoTab("worldwide")}
-                            className="px-4 py-2 text-sm font-medium transition-colors"
-                            style={{
-                              backgroundColor:
-                                addAssetGeoTab === "worldwide"
-                                  ? "#1e3a5f"
-                                  : "transparent",
-                              color: "#fff",
-                            }}
+                      {/* Options */}
+                      <button
+                        onClick={() => setAddAssetSideTab("options")}
+                        className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                        style={{
+                          backgroundColor:
+                            addAssetSideTab === "options"
+                              ? "#1a2840"
+                              : "transparent",
+                          color:
+                            addAssetSideTab === "options" ? "#fff" : "#6b82a0",
+                          borderLeft:
+                            addAssetSideTab === "options"
+                              ? "2px solid #4c8dff"
+                              : "2px solid transparent",
+                        }}
+                      >
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: "#162032" }}
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="w-3 h-3"
                           >
-                            Worldwide
-                          </button>
-                          <button
-                            onClick={() => setAddAssetGeoTab("local")}
-                            className="px-4 py-2 text-sm font-medium transition-colors"
-                            style={{
-                              backgroundColor:
-                                addAssetGeoTab === "local"
-                                  ? "#1e3a5f"
-                                  : "transparent",
-                              color:
-                                addAssetGeoTab === "local" ? "#fff" : "#6b82a0",
-                            }}
-                          >
-                            Brazil
-                          </button>
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                          </svg>
                         </div>
-                      </div>
+                        <span className="text-sm font-medium flex-1 text-left">
+                          Options
+                        </span>
+                        <span
+                          className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                          style={{
+                            backgroundColor: "#e8690a",
+                            color: "#fff",
+                            minWidth: "26px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {optionsCount}
+                        </span>
+                      </button>
+
+                      {/* Margin */}
+                      <button
+                        onClick={() => setAddAssetSideTab("margin")}
+                        className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                        style={{
+                          backgroundColor:
+                            addAssetSideTab === "margin"
+                              ? "#1a2840"
+                              : "transparent",
+                          color:
+                            addAssetSideTab === "margin" ? "#fff" : "#6b82a0",
+                          borderLeft:
+                            addAssetSideTab === "margin"
+                              ? "2px solid #4c8dff"
+                              : "2px solid transparent",
+                        }}
+                      >
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: "#162032" }}
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="w-3 h-3"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 8v4l3 3" />
+                          </svg>
+                        </div>
+                        <span className="text-sm font-medium flex-1 text-left">
+                          Margin
+                        </span>
+                        <span
+                          className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                          style={{
+                            backgroundColor: "#e8690a",
+                            color: "#fff",
+                            minWidth: "26px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {marginCount}
+                        </span>
+                      </button>
+
+                      {/* Watchlist */}
+                      <button
+                        onClick={() => setAddAssetSideTab("watchlist")}
+                        className="flex items-center gap-1.5 px-2 py-2 transition-colors"
+                        style={{
+                          backgroundColor:
+                            addAssetSideTab === "watchlist"
+                              ? "#1a2840"
+                              : "transparent",
+                          color:
+                            addAssetSideTab === "watchlist"
+                              ? "#fff"
+                              : "#6b82a0",
+                          borderLeft:
+                            addAssetSideTab === "watchlist"
+                              ? "2px solid #4c8dff"
+                              : "2px solid transparent",
+                        }}
+                      >
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ backgroundColor: "#162032" }}
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            className="w-3 h-3"
+                          >
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                          </svg>
+                        </div>
+                        <span className="text-sm font-medium flex-1 text-left">
+                          Watchlist
+                        </span>
+                        <span
+                          className="text-xs font-bold rounded-full px-1.5 py-0.5"
+                          style={{
+                            backgroundColor: "#162032",
+                            color: "#6b82a0",
+                            minWidth: "26px",
+                            textAlign: "center",
+                          }}
+                        >
+                          {watchlistedSymbols.length}
+                        </span>
+                      </button>
                     </div>
 
-                    {/* Trending View with Cards */}
-                    {addAssetSideTab === "trending" &&
-                      !addAssetSearch.trim() && (
-                        <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-6">
-                          {/* Trader's Choice Section */}
-                          <div>
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-lg font-medium text-white">
-                                Trader&apos;s choice
-                              </span>
-                              <span
-                                className="text-xs"
+                    {/* ── Main Content Panel ── */}
+                    <div
+                      className="flex flex-col flex-1 overflow-hidden rounded-r-xl"
+                      style={{ backgroundColor: "#0f1a2a" }}
+                    >
+                      {/* Search bar + Market Dropdown + Geo Toggle */}
+                      <div
+                        className="px-4 py-3 flex-shrink-0 space-y-3"
+                        style={{ borderBottom: "1px solid #1a2d45" }}
+                      >
+                        {/* Search */}
+                        <div className="relative">
+                          <Search
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+                            style={{ color: "#3d5470" }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Search by name or ticker"
+                            value={addAssetSearch}
+                            onChange={(e) => setAddAssetSearch(e.target.value)}
+                            autoFocus
+                            className="w-full rounded-full pl-9 pr-4 py-2 text-sm outline-none"
+                            style={{
+                              backgroundColor: "#152030",
+                              border: "1px solid #1d3050",
+                              color: "#ffffff",
+                            }}
+                          />
+                        </div>
+
+                        {/* Market Dropdown + Geo Toggle Row */}
+                        <div className="flex items-center justify-between gap-3">
+                          {/* Market Dropdown */}
+                          <div
+                            className="relative flex-1"
+                            style={{ maxWidth: "200px" }}
+                          >
+                            <button
+                              onClick={() =>
+                                setShowMarketDropdown(!showMarketDropdown)
+                              }
+                              className="w-full flex items-center justify-between gap-2 px-4 py-2 rounded text-sm font-medium transition-colors"
+                              style={{
+                                backgroundColor: "#1e3a5f",
+                                color: "#fff",
+                              }}
+                            >
+                              <span>{selectedMarket}</span>
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="w-4 h-4 flex-shrink-0"
                                 style={{ color: "#6b82a0" }}
                               >
-                                Last week
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-3 gap-3">
-                              {tradersChoice.map((sym) => {
-                                const profit = profitPctMap[sym.symbol] ?? 87;
-                                return (
+                                <path
+                                  d={
+                                    showMarketDropdown
+                                      ? "M18 15l-6-6-6 6"
+                                      : "M6 9l6 6 6-6"
+                                  }
+                                />
+                              </svg>
+                            </button>
+                            {showMarketDropdown && (
+                              <div
+                                className="absolute top-full left-0 mt-1 z-50 rounded overflow-hidden shadow-xl w-full"
+                                style={{ backgroundColor: "#1e3a5f" }}
+                              >
+                                {marketCategories.map((cat) => (
                                   <button
-                                    key={sym.symbol}
-                                    onClick={() => handleSelectSymbol(sym)}
-                                    className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
-                                    style={{ backgroundColor: "#131c2e" }}
+                                    key={cat}
+                                    onClick={() => {
+                                      setSelectedMarket(cat);
+                                      setShowMarketDropdown(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2 text-sm transition-colors hover:bg-[#2a4a70]"
+                                    style={{
+                                      backgroundColor:
+                                        selectedMarket === cat
+                                          ? "#2a4a70"
+                                          : "transparent",
+                                      color: "#fff",
+                                    }}
                                   >
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <AssetFlag
-                                        flag={sym.flag}
-                                        symbol={sym.symbol}
-                                        size={24}
-                                      />
-                                      <span className="text-sm font-medium text-white truncate">
-                                        {sym.symbol}
-                                      </span>
-                                    </div>
-                                    <div
-                                      className="text-xs mb-1"
-                                      style={{ color: "#6b82a0" }}
-                                    >
-                                      Profit
-                                    </div>
-                                    <div className="text-lg font-bold text-green-400 mb-2">
-                                      {profit}%
-                                    </div>
-                                    <div className="flex justify-between text-xs">
-                                      <div>
-                                        <span style={{ color: "#6b82a0" }}>
-                                          Price
-                                        </span>
-                                        <div className="text-white">
-                                          {sym.price}
-                                        </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <span style={{ color: "#6b82a0" }}>
-                                          5 min change
-                                        </span>
-                                        <div
-                                          style={{
-                                            color: sym.change.startsWith("+")
-                                              ? "#4ade80"
-                                              : "#f87171",
-                                          }}
-                                        >
-                                          {sym.change.startsWith("+")
-                                            ? "+"
-                                            : ""}
-                                          {sym.percentage}%
-                                        </div>
-                                      </div>
-                                    </div>
+                                    {cat}
                                   </button>
-                                );
-                              })}
-                            </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
 
-                          {/* Gainers Section */}
-                          <div>
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-lg font-medium text-white">
-                                Gainers
-                              </span>
-                              <span
-                                className="text-xs"
-                                style={{ color: "#6b82a0" }}
-                              >
-                                Last week
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-3 gap-3">
-                              {trendingGainers.map((sym) => {
-                                const profit = profitPctMap[sym.symbol] ?? 86;
-                                return (
-                                  <button
-                                    key={sym.symbol}
-                                    onClick={() => handleSelectSymbol(sym)}
-                                    className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
-                                    style={{ backgroundColor: "#131c2e" }}
-                                  >
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <AssetFlag
-                                        flag={sym.flag}
-                                        symbol={sym.symbol}
-                                        size={24}
-                                      />
-                                      <span className="text-sm font-medium text-white truncate">
-                                        {sym.symbol}
-                                      </span>
-                                    </div>
-                                    <div
-                                      className="text-xs mb-1"
-                                      style={{ color: "#6b82a0" }}
-                                    >
-                                      Profit
-                                    </div>
-                                    <div className="text-lg font-bold text-green-400 mb-2">
-                                      {profit}%
-                                    </div>
-                                    <div className="flex justify-between text-xs">
-                                      <div>
-                                        <span style={{ color: "#6b82a0" }}>
-                                          Price
-                                        </span>
-                                        <div className="text-white">
-                                          {sym.price}
-                                        </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <span style={{ color: "#6b82a0" }}>
-                                          5 min change
-                                        </span>
-                                        <div
-                                          style={{
-                                            color: sym.change.startsWith("+")
-                                              ? "#4ade80"
-                                              : "#f87171",
-                                          }}
-                                        >
-                                          {sym.change.startsWith("+")
-                                            ? "+"
-                                            : ""}
-                                          {sym.percentage}%
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Losers Section */}
-                          <div>
-                            <div className="flex items-center justify-between mb-3">
-                              <span className="text-lg font-medium text-white">
-                                Losers
-                              </span>
-                              <span
-                                className="text-xs"
-                                style={{ color: "#6b82a0" }}
-                              >
-                                Last week
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-3 gap-3">
-                              {trendingLosers.map((sym) => {
-                                const profit = profitPctMap[sym.symbol] ?? 86;
-                                return (
-                                  <button
-                                    key={sym.symbol}
-                                    onClick={() => handleSelectSymbol(sym)}
-                                    className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
-                                    style={{ backgroundColor: "#131c2e" }}
-                                  >
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <AssetFlag
-                                        flag={sym.flag}
-                                        symbol={sym.symbol}
-                                        size={24}
-                                      />
-                                      <span className="text-sm font-medium text-white truncate">
-                                        {sym.symbol}
-                                      </span>
-                                    </div>
-                                    <div
-                                      className="text-xs mb-1"
-                                      style={{ color: "#6b82a0" }}
-                                    >
-                                      Profit
-                                    </div>
-                                    <div className="text-lg font-bold text-green-400 mb-2">
-                                      {profit}%
-                                    </div>
-                                    <div className="flex justify-between text-xs">
-                                      <div>
-                                        <span style={{ color: "#6b82a0" }}>
-                                          Price
-                                        </span>
-                                        <div className="text-white">
-                                          {sym.price}
-                                        </div>
-                                      </div>
-                                      <div className="text-right">
-                                        <span style={{ color: "#6b82a0" }}>
-                                          5 min change
-                                        </span>
-                                        <div
-                                          style={{
-                                            color: sym.change.startsWith("+")
-                                              ? "#4ade80"
-                                              : "#f87171",
-                                          }}
-                                        >
-                                          {sym.change.startsWith("+")
-                                            ? "+"
-                                            : ""}
-                                          {sym.percentage}%
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </button>
-                                );
-                              })}
-                            </div>
+                          {/* Worldwide / Local Toggle */}
+                          <div className="flex rounded overflow-hidden">
+                            <button
+                              onClick={() => setAddAssetGeoTab("worldwide")}
+                              className="px-4 py-2 text-sm font-medium transition-colors"
+                              style={{
+                                backgroundColor:
+                                  addAssetGeoTab === "worldwide"
+                                    ? "#1e3a5f"
+                                    : "transparent",
+                                color: "#fff",
+                              }}
+                            >
+                              Worldwide
+                            </button>
+                            <button
+                              onClick={() => setAddAssetGeoTab("local")}
+                              className="px-4 py-2 text-sm font-medium transition-colors"
+                              style={{
+                                backgroundColor:
+                                  addAssetGeoTab === "local"
+                                    ? "#1e3a5f"
+                                    : "transparent",
+                                color:
+                                  addAssetGeoTab === "local"
+                                    ? "#fff"
+                                    : "#6b82a0",
+                              }}
+                            >
+                              Brazil
+                            </button>
                           </div>
                         </div>
-                      )}
+                      </div>
 
-                    {/* Table header - for Options/Margin/Watchlist or when searching in Trending */}
-                    {(addAssetSideTab !== "trending" ||
-                      addAssetSearch.trim()) &&
-                      addAssetSideTab !== "watchlist" && (
-                        <div
-                          className="flex items-center px-4 py-2 flex-shrink-0 text-xs select-none"
-                          style={{
-                            borderBottom: "1px solid #1a2d45",
-                            color: "#3d5470",
-                          }}
-                        >
-                          <div className="flex-1 font-medium">Asset</div>
-                          <div className="w-20 text-right pr-3 font-medium flex items-center justify-end gap-1">
-                            Profit
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              className="w-3 h-3 flex-shrink-0"
-                            >
-                              <path d="M18 15l-6-6-6 6" />
-                            </svg>
-                          </div>
-                          <div className="w-20 text-center font-medium">
-                            Popular
-                          </div>
-                          <div className="w-20 text-center font-medium">
-                            Volatility
-                          </div>
-                          <div className="w-14 text-center">
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              className="w-3.5 h-3.5 mx-auto"
-                            >
-                              <circle cx="12" cy="12" r="10" />
-                              <line x1="12" y1="8" x2="12" y2="12" />
-                              <line x1="12" y1="16" x2="12.01" y2="16" />
-                            </svg>
-                          </div>
-                        </div>
-                      )}
+                      {/* Trending View with Cards */}
+                      {addAssetSideTab === "trending" &&
+                        !addAssetSearch.trim() && (
+                          <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-6">
+                            {/* Trader's Choice Section */}
+                            <div>
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-lg font-medium text-white">
+                                  Trader&apos;s choice
+                                </span>
+                                <span
+                                  className="text-xs"
+                                  style={{ color: "#6b82a0" }}
+                                >
+                                  Last week
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-3">
+                                {tradersChoice.map((sym) => {
+                                  const profit = profitPctMap[sym.symbol] ?? 87;
+                                  return (
+                                    <button
+                                      key={sym.symbol}
+                                      onClick={() => handleSelectSymbol(sym)}
+                                      className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                      style={{ backgroundColor: "#131c2e" }}
+                                    >
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <AssetFlag
+                                          flag={sym.flag}
+                                          symbol={sym.symbol}
+                                          size={24}
+                                        />
+                                        <span className="text-sm font-medium text-white truncate">
+                                          {sym.symbol}
+                                        </span>
+                                      </div>
+                                      <div
+                                        className="text-xs mb-1"
+                                        style={{ color: "#6b82a0" }}
+                                      >
+                                        Profit
+                                      </div>
+                                      <div className="text-lg font-bold text-green-400 mb-2">
+                                        {profit}%
+                                      </div>
+                                      <div className="flex justify-between text-xs">
+                                        <div>
+                                          <span style={{ color: "#6b82a0" }}>
+                                            Price
+                                          </span>
+                                          <div className="text-white">
+                                            {sym.price}
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <span style={{ color: "#6b82a0" }}>
+                                            5 min change
+                                          </span>
+                                          <div
+                                            style={{
+                                              color: sym.change.startsWith("+")
+                                                ? "#4ade80"
+                                                : "#f87171",
+                                            }}
+                                          >
+                                            {sym.change.startsWith("+")
+                                              ? "+"
+                                              : ""}
+                                            {sym.percentage}%
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
 
-                    {/* Asset rows - for Options/Margin/Watchlist or when searching */}
-                    {(addAssetSideTab !== "trending" ||
-                      addAssetSearch.trim()) && (
-                      <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        {addAssetSideTab === "watchlist" &&
-                        displaySymbols.length === 0 ? (
-                          <div className="flex flex-col items-center justify-center h-52 gap-3 pt-8">
-                            <svg
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.5"
-                              className="w-14 h-14"
-                              style={{ color: "#1a2d45" }}
-                            >
-                              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                            </svg>
+                            {/* Gainers Section */}
+                            <div>
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-lg font-medium text-white">
+                                  Gainers
+                                </span>
+                                <span
+                                  className="text-xs"
+                                  style={{ color: "#6b82a0" }}
+                                >
+                                  Last week
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-3">
+                                {trendingGainers.map((sym) => {
+                                  const profit = profitPctMap[sym.symbol] ?? 86;
+                                  return (
+                                    <button
+                                      key={sym.symbol}
+                                      onClick={() => handleSelectSymbol(sym)}
+                                      className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                      style={{ backgroundColor: "#131c2e" }}
+                                    >
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <AssetFlag
+                                          flag={sym.flag}
+                                          symbol={sym.symbol}
+                                          size={24}
+                                        />
+                                        <span className="text-sm font-medium text-white truncate">
+                                          {sym.symbol}
+                                        </span>
+                                      </div>
+                                      <div
+                                        className="text-xs mb-1"
+                                        style={{ color: "#6b82a0" }}
+                                      >
+                                        Profit
+                                      </div>
+                                      <div className="text-lg font-bold text-green-400 mb-2">
+                                        {profit}%
+                                      </div>
+                                      <div className="flex justify-between text-xs">
+                                        <div>
+                                          <span style={{ color: "#6b82a0" }}>
+                                            Price
+                                          </span>
+                                          <div className="text-white">
+                                            {sym.price}
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <span style={{ color: "#6b82a0" }}>
+                                            5 min change
+                                          </span>
+                                          <div
+                                            style={{
+                                              color: sym.change.startsWith("+")
+                                                ? "#4ade80"
+                                                : "#f87171",
+                                            }}
+                                          >
+                                            {sym.change.startsWith("+")
+                                              ? "+"
+                                              : ""}
+                                            {sym.percentage}%
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* Losers Section */}
+                            <div>
+                              <div className="flex items-center justify-between mb-3">
+                                <span className="text-lg font-medium text-white">
+                                  Losers
+                                </span>
+                                <span
+                                  className="text-xs"
+                                  style={{ color: "#6b82a0" }}
+                                >
+                                  Last week
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-3 gap-3">
+                                {trendingLosers.map((sym) => {
+                                  const profit = profitPctMap[sym.symbol] ?? 86;
+                                  return (
+                                    <button
+                                      key={sym.symbol}
+                                      onClick={() => handleSelectSymbol(sym)}
+                                      className="rounded-lg p-3 transition-colors hover:bg-[#1a2840] text-left"
+                                      style={{ backgroundColor: "#131c2e" }}
+                                    >
+                                      <div className="flex items-center gap-2 mb-2">
+                                        <AssetFlag
+                                          flag={sym.flag}
+                                          symbol={sym.symbol}
+                                          size={24}
+                                        />
+                                        <span className="text-sm font-medium text-white truncate">
+                                          {sym.symbol}
+                                        </span>
+                                      </div>
+                                      <div
+                                        className="text-xs mb-1"
+                                        style={{ color: "#6b82a0" }}
+                                      >
+                                        Profit
+                                      </div>
+                                      <div className="text-lg font-bold text-green-400 mb-2">
+                                        {profit}%
+                                      </div>
+                                      <div className="flex justify-between text-xs">
+                                        <div>
+                                          <span style={{ color: "#6b82a0" }}>
+                                            Price
+                                          </span>
+                                          <div className="text-white">
+                                            {sym.price}
+                                          </div>
+                                        </div>
+                                        <div className="text-right">
+                                          <span style={{ color: "#6b82a0" }}>
+                                            5 min change
+                                          </span>
+                                          <div
+                                            style={{
+                                              color: sym.change.startsWith("+")
+                                                ? "#4ade80"
+                                                : "#f87171",
+                                            }}
+                                          >
+                                            {sym.change.startsWith("+")
+                                              ? "+"
+                                              : ""}
+                                            {sym.percentage}%
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Table header - for Options/Margin/Watchlist or when searching in Trending */}
+                      {(addAssetSideTab !== "trending" ||
+                        addAssetSearch.trim()) &&
+                        addAssetSideTab !== "watchlist" && (
+                          <div
+                            className="flex items-center px-4 py-2 flex-shrink-0 text-xs select-none"
+                            style={{
+                              borderBottom: "1px solid #1a2d45",
+                              color: "#3d5470",
+                            }}
+                          >
+                            <div className="flex-1 font-medium">Asset</div>
+                            <div className="w-20 text-right pr-3 font-medium flex items-center justify-end gap-1">
+                              Profit
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="w-3 h-3 flex-shrink-0"
+                              >
+                                <path d="M18 15l-6-6-6 6" />
+                              </svg>
+                            </div>
+                            <div className="w-20 text-center font-medium">
+                              Popular
+                            </div>
+                            <div className="w-20 text-center font-medium">
+                              Volatility
+                            </div>
+                            <div className="w-14 text-center">
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                className="w-3.5 h-3.5 mx-auto"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Asset rows - for Options/Margin/Watchlist or when searching */}
+                      {(addAssetSideTab !== "trending" ||
+                        addAssetSearch.trim()) && (
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                          {addAssetSideTab === "watchlist" &&
+                          displaySymbols.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-52 gap-3 pt-8">
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                                className="w-14 h-14"
+                                style={{ color: "#1a2d45" }}
+                              >
+                                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                              </svg>
+                              <p
+                                className="font-medium text-sm"
+                                style={{ color: "#3d5470" }}
+                              >
+                                Your watchlist is empty
+                              </p>
+                              <p
+                                className="text-xs text-center max-w-[200px]"
+                                style={{ color: "#233344" }}
+                              >
+                                Click ☆ on any asset to add it here
+                              </p>
+                            </div>
+                          ) : displaySymbols.length === 0 ? (
                             <p
-                              className="font-medium text-sm"
+                              className="text-center py-12 text-sm"
                               style={{ color: "#3d5470" }}
                             >
-                              Your watchlist is empty
+                              No assets found
                             </p>
-                            <p
-                              className="text-xs text-center max-w-[200px]"
-                              style={{ color: "#233344" }}
-                            >
-                              Click ☆ on any asset to add it here
-                            </p>
-                          </div>
-                        ) : displaySymbols.length === 0 ? (
-                          <p
-                            className="text-center py-12 text-sm"
-                            style={{ color: "#3d5470" }}
-                          >
-                            No assets found
-                          </p>
-                        ) : (
-                          displaySymbols.map((sym) => {
-                            const profit = profitPctMap[sym.symbol] ?? 87;
-                            const popularity = popularityMap[sym.symbol] ?? 2;
-                            const volatility = volatilityMap[sym.symbol] ?? 2;
-                            const isWatchlisted = watchlistedSymbols.includes(
-                              sym.symbol,
-                            );
-                            const isActive = openTabs.some(
-                              (t) =>
-                                t.symbol === sym.symbol &&
-                                t.type === selectedMarket,
-                            );
-                            const isNew = newBadgeSymbols.has(sym.symbol);
+                          ) : (
+                            displaySymbols.map((sym) => {
+                              const profit = profitPctMap[sym.symbol] ?? 87;
+                              const popularity = popularityMap[sym.symbol] ?? 2;
+                              const volatility = volatilityMap[sym.symbol] ?? 2;
+                              const isWatchlisted = watchlistedSymbols.includes(
+                                sym.symbol,
+                              );
+                              const isActive = openTabs.some(
+                                (t) =>
+                                  t.symbol === sym.symbol &&
+                                  t.type === selectedMarket,
+                              );
+                              const isNew = newBadgeSymbols.has(sym.symbol);
 
-                            return (
-                              <button
-                                key={sym.symbol}
-                                onClick={() => handleSelectSymbol(sym)}
-                                className="w-full flex items-center px-4 py-2 text-left transition-colors"
-                                style={{
-                                  backgroundColor: isActive
-                                    ? "#132030"
-                                    : "transparent",
-                                  borderBottom: "1px solid #0e1d2d",
-                                }}
-                                onMouseEnter={(e) => {
-                                  if (!isActive)
-                                    (
-                                      e.currentTarget as HTMLElement
-                                    ).style.backgroundColor = "#111d2f";
-                                }}
-                                onMouseLeave={(e) => {
-                                  if (!isActive)
-                                    (
-                                      e.currentTarget as HTMLElement
-                                    ).style.backgroundColor = "transparent";
-                                }}
-                              >
-                                {/* Icon + Name */}
-                                <div className="flex items-center gap-3 flex-1 min-w-0">
-                                  <div className="relative flex-shrink-0">
-                                    <div
-                                      className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
-                                      style={{
-                                        backgroundColor: "#172840",
-                                        border: "2px solid #1e3654",
-                                      }}
-                                    >
-                                      <AssetFlag
-                                        flag={sym.flag}
-                                        symbol={sym.symbol}
-                                        size={18}
-                                      />
+                              return (
+                                <button
+                                  key={sym.symbol}
+                                  onClick={() => handleSelectSymbol(sym)}
+                                  className="w-full flex items-center px-4 py-2 text-left transition-colors"
+                                  style={{
+                                    backgroundColor: isActive
+                                      ? "#132030"
+                                      : "transparent",
+                                    borderBottom: "1px solid #0e1d2d",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!isActive)
+                                      (
+                                        e.currentTarget as HTMLElement
+                                      ).style.backgroundColor = "#111d2f";
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!isActive)
+                                      (
+                                        e.currentTarget as HTMLElement
+                                      ).style.backgroundColor = "transparent";
+                                  }}
+                                >
+                                  {/* Icon + Name */}
+                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                    <div className="relative flex-shrink-0">
+                                      <div
+                                        className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden"
+                                        style={{
+                                          backgroundColor: "#172840",
+                                          border: "2px solid #1e3654",
+                                        }}
+                                      >
+                                        <AssetFlag
+                                          flag={sym.flag}
+                                          symbol={sym.symbol}
+                                          size={18}
+                                        />
+                                      </div>
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="flex items-center gap-1.5 flex-wrap">
+                                        <span className="text-sm font-semibold text-white truncate">
+                                          {(sym as any).displayName ??
+                                            sym.symbol}
+                                        </span>
+                                        {isNew && (
+                                          <span
+                                            className="text-white px-1 rounded flex-shrink-0 font-bold"
+                                            style={{
+                                              backgroundColor: "#1a5080",
+                                              fontSize: "9px",
+                                            }}
+                                          >
+                                            NEW
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span
+                                        className="text-xs block"
+                                        style={{ color: "#3d5470" }}
+                                      >
+                                        {sym.price}
+                                      </span>
                                     </div>
                                   </div>
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                      <span className="text-sm font-semibold text-white truncate">
-                                        {(sym as any).displayName ?? sym.symbol}
-                                      </span>
-                                      {isNew && (
-                                        <span
-                                          className="text-white px-1 rounded flex-shrink-0 font-bold"
-                                          style={{
-                                            backgroundColor: "#1a5080",
-                                            fontSize: "9px",
-                                          }}
-                                        >
-                                          NEW
-                                        </span>
-                                      )}
-                                    </div>
+
+                                  {/* Profit */}
+                                  <div className="w-20 text-right pr-3 flex-shrink-0">
                                     <span
-                                      className="text-xs block"
-                                      style={{ color: "#3d5470" }}
+                                      className="text-sm font-bold"
+                                      style={{ color: "#22c55e" }}
                                     >
-                                      {sym.price}
+                                      {profit}%
                                     </span>
                                   </div>
-                                </div>
 
-                                {/* Profit */}
-                                <div className="w-20 text-right pr-3 flex-shrink-0">
-                                  <span
-                                    className="text-sm font-bold"
-                                    style={{ color: "#22c55e" }}
-                                  >
-                                    {profit}%
-                                  </span>
-                                </div>
+                                  {/* Popular */}
+                                  <div className="w-20 flex justify-center flex-shrink-0">
+                                    <FlameIcons count={popularity} />
+                                  </div>
 
-                                {/* Popular */}
-                                <div className="w-20 flex justify-center flex-shrink-0">
-                                  <FlameIcons count={popularity} />
-                                </div>
+                                  {/* Volatility */}
+                                  <div className="w-20 flex justify-center flex-shrink-0">
+                                    <VolatilityBars count={volatility} />
+                                  </div>
 
-                                {/* Volatility */}
-                                <div className="w-20 flex justify-center flex-shrink-0">
-                                  <VolatilityBars count={volatility} />
-                                </div>
-
-                                {/* Star + Info */}
-                                <div className="w-14 flex items-center justify-center gap-1.5 flex-shrink-0">
-                                  <button
-                                    onClick={(e) =>
-                                      toggleWatchlist(e, sym.symbol)
-                                    }
-                                    className="p-1 rounded transition-colors"
-                                    style={{
-                                      color: isWatchlisted
-                                        ? "#f59e0b"
-                                        : "#2a3e56",
-                                    }}
-                                    onMouseEnter={(e) => {
-                                      if (!isWatchlisted)
+                                  {/* Star + Info */}
+                                  <div className="w-14 flex items-center justify-center gap-1.5 flex-shrink-0">
+                                    <button
+                                      onClick={(e) =>
+                                        toggleWatchlist(e, sym.symbol)
+                                      }
+                                      className="p-1 rounded transition-colors"
+                                      style={{
+                                        color: isWatchlisted
+                                          ? "#f59e0b"
+                                          : "#2a3e56",
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        if (!isWatchlisted)
+                                          (
+                                            e.currentTarget as HTMLElement
+                                          ).style.color = "#6b82a0";
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        if (!isWatchlisted)
+                                          (
+                                            e.currentTarget as HTMLElement
+                                          ).style.color = "#2a3e56";
+                                      }}
+                                    >
+                                      <svg
+                                        viewBox="0 0 24 24"
+                                        className="w-4 h-4"
+                                        fill={
+                                          isWatchlisted
+                                            ? "currentColor"
+                                            : "none"
+                                        }
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                      >
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                      </svg>
+                                    </button>
+                                    <button
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="p-1 rounded transition-colors"
+                                      style={{ color: "#2a3e56" }}
+                                      onMouseEnter={(e) => {
                                         (
                                           e.currentTarget as HTMLElement
                                         ).style.color = "#6b82a0";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      if (!isWatchlisted)
+                                      }}
+                                      onMouseLeave={(e) => {
                                         (
                                           e.currentTarget as HTMLElement
                                         ).style.color = "#2a3e56";
-                                    }}
-                                  >
-                                    <svg
-                                      viewBox="0 0 24 24"
-                                      className="w-4 h-4"
-                                      fill={
-                                        isWatchlisted ? "currentColor" : "none"
-                                      }
-                                      stroke="currentColor"
-                                      strokeWidth="2"
+                                      }}
                                     >
-                                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="p-1 rounded transition-colors"
-                                    style={{ color: "#2a3e56" }}
-                                    onMouseEnter={(e) => {
-                                      (
-                                        e.currentTarget as HTMLElement
-                                      ).style.color = "#6b82a0";
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      (
-                                        e.currentTarget as HTMLElement
-                                      ).style.color = "#2a3e56";
-                                    }}
-                                  >
-                                    <svg
-                                      viewBox="0 0 24 24"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      className="w-4 h-4"
-                                    >
-                                      <circle cx="12" cy="12" r="10" />
-                                      <line x1="12" y1="8" x2="12" y2="12" />
-                                      <line
-                                        x1="12"
-                                        y1="16"
-                                        x2="12.01"
-                                        y2="16"
-                                      />
-                                    </svg>
-                                  </button>
-                                </div>
-                              </button>
-                            );
-                          })
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              );
-            })()}
-        </AnimatePresence>
+                                      <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        className="w-4 h-4"
+                                      >
+                                        <circle cx="12" cy="12" r="10" />
+                                        <line x1="12" y1="8" x2="12" y2="12" />
+                                        <line
+                                          x1="12"
+                                          y1="16"
+                                          x2="12.01"
+                                          y2="16"
+                                        />
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })()}
+          </AnimatePresence>
 
-        {/* Footer */}
-        <footer
-          className="fixed bottom-0 left-0 right-0 flex items-center justify-between text-xs z-50"
-          style={{
-            backgroundColor: "#0a1020",
-            borderTop: "1px solid #1a2d45",
-            color: "#4a6080",
-            height: "40px",
-          }}
-        >
-          <div className="flex items-center pl-3 space-x-3">
-            {/* Double-round support button: outer ring + inner red button with icon and text */}
-            <div className="relative flex items-center justify-center">
-              <div
-                className="w-[80px] h-[32px] rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
-              >
-                <button
-                  className="h-[28px] px-3 rounded-md flex items-center space-x-1.5 transition-opacity duration-200 hover:opacity-90"
-                  style={{
-                    backgroundColor: "#e74c3c",
-                    color: "#ffffff",
-                  }}
+          {/* Footer */}
+          <footer
+            className="fixed bottom-0 left-0 right-0 flex items-center justify-between text-xs z-50"
+            style={{
+              backgroundColor: "#0a1020",
+              borderTop: "1px solid #1a2d45",
+              color: "#4a6080",
+              height: "40px",
+            }}
+          >
+            <div className="flex items-center pl-3 space-x-3">
+              {/* Double-round support button: outer ring + inner red button with icon and text */}
+              <div className="relative flex items-center justify-center">
+                <div
+                  className="w-[80px] h-[32px] rounded-lg flex items-center justify-center"
+                  style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
                 >
-                  <MessagesSquare className="w-3.5 h-3.5" />
-                  <span className="font-semibold text-[10px] tracking-wide">
-                    SUPPORT
-                  </span>
-                </button>
+                  <button
+                    className="h-[28px] px-3 rounded-md flex items-center space-x-1.5 transition-opacity duration-200 hover:opacity-90"
+                    style={{
+                      backgroundColor: "#e74c3c",
+                      color: "#ffffff",
+                    }}
+                  >
+                    <MessagesSquare className="w-3.5 h-3.5" />
+                    <span className="font-semibold text-[10px] tracking-wide">
+                      SUPPORT
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <CircleHelp className="w-4 h-4" style={{ color: "#95a5a6" }} />
+
+              <a
+                href="mailto:support@m4capital.online"
+                className="text-[13px] hover:text-orange-500 transition-colors duration-150"
+                style={{ color: "#ffffff" }}
+              >
+                support@m4capital.online
+              </a>
+
+              <div className="text-[12px] font-bold text-gray-400 ml-2">
+                EVERY DAY, AROUND THE CLOCK
               </div>
             </div>
 
-            <CircleHelp className="w-4 h-4" style={{ color: "#95a5a6" }} />
-
-            <a
-              href="mailto:support@m4capital.online"
-              className="text-[13px] hover:text-orange-500 transition-colors duration-150"
-              style={{ color: "#ffffff" }}
+            {/* Centered Powered by */}
+            <div
+              className="absolute left-1/2 flex items-center space-x-2"
+              style={{ transform: "translateX(calc(-50% + 216px))" }}
             >
-              support@m4capital.online
-            </a>
-
-            <div className="text-[12px] font-bold text-gray-400 ml-2">
-              EVERY DAY, AROUND THE CLOCK
+              <span className="text-sm">Powered by</span>
+              <Image
+                src="/m4capitallogo2.png"
+                alt="M4Capital"
+                width={24}
+                height={24}
+                className="object-contain"
+              />
             </div>
-          </div>
 
-          {/* Centered Powered by */}
-          <div
-            className="absolute left-1/2 flex items-center space-x-2"
-            style={{ transform: "translateX(calc(-50% + 216px))" }}
-          >
-            <span className="text-sm">Powered by</span>
-            <Image
-              src="/m4capitallogo2.png"
-              alt="M4Capital"
-              width={24}
-              height={24}
-              className="object-contain"
-            />
-          </div>
-
-          <div className="flex items-center space-x-6 pr-3">
-            <button className="hover:text-orange-500 transition-colors duration-200">
-              <Settings className="w-4 h-4" />
-            </button>
-            <button className="hover:text-orange-500 transition-colors duration-200">
-              <Bell className="w-4 h-4" />
-            </button>
-            {currentTime && (
-              <span className="font-mono">
-                CURRENT TIME:{" "}
-                {currentTime
-                  .toLocaleString("en-US", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit",
-                    hour12: false,
-                  })
-                  .toUpperCase()
-                  .replace(",", ",")}{" "}
-                (UTC+1)
-              </span>
-            )}
-          </div>
-        </footer>
-      </div>
+            <div className="flex items-center space-x-6 pr-3">
+              <button className="hover:text-orange-500 transition-colors duration-200">
+                <Settings className="w-4 h-4" />
+              </button>
+              <button className="hover:text-orange-500 transition-colors duration-200">
+                <Bell className="w-4 h-4" />
+              </button>
+              {currentTime && (
+                <span className="font-mono">
+                  CURRENT TIME:{" "}
+                  {currentTime
+                    .toLocaleString("en-US", {
+                      day: "2-digit",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                      hour12: false,
+                    })
+                    .toUpperCase()
+                    .replace(",", ",")}{" "}
+                  (UTC+1)
+                </span>
+              )}
+            </div>
+          </footer>
+        </div>
+      )}
 
       {/* Practice Account Top-Up Modal */}
       <AnimatePresence>
