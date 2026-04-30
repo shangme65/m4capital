@@ -2,6 +2,32 @@
 
 Welcome, agent! This guide provides the essential knowledge to be productive in the M4Capital codebase.
 
+## 📂 REFERENCE FOLDER - CHECK FIRST
+
+**CRITICAL RULE:** Before implementing ANY UI component, style, animation, or feature that references an external product/website, ALWAYS check the `reference/` folder first.
+
+**The `reference/` folder contains source code from external products** (e.g., `reference/iqoption/`) that serve as the gold standard for replicating their exact style, behavior, animations, and functionality.
+
+**REQUIRED workflow when user requests to copy/match a design:**
+
+1. **Check `reference/` folder FIRST** - Browse the relevant subfolder (e.g., `reference/iqoption/`)
+2. **Read the actual source code** - HTML, CSS, JS/TS files to understand exact implementation
+3. **Extract exact styles** - Colors, spacing, fonts, animations, transitions, layout
+4. **Extract exact behavior** - Interactions, timing, state changes, responsive behavior
+5. **Implement matching code** - Replicate as closely as possible using our tech stack
+
+**Available references:**
+
+| Folder                | Source            | Contains                                                             |
+| --------------------- | ----------------- | -------------------------------------------------------------------- |
+| `reference/iqoption/` | IQ Option website | Full source code for homepage, trading UI, asset tickers, animations |
+
+**NEVER guess or approximate when reference code is available. Always read the source first.**
+
+**NOTE:** The `reference/` folder is gitignored and will NOT be pushed to the repository.
+
+---
+
 ## ⚠️ CRITICAL SECURITY RULES - READ FIRST
 
 ### 🚫 NEVER Use Simulated or Fake Data

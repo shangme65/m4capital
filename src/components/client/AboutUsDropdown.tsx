@@ -1,17 +1,34 @@
 "use client";
 import Link from "next/link";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useState, useEffect } from "react";
 
 const AboutUsDropdown = () => {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  const isDark = mounted ? resolvedTheme === "dark" : true;
+
   return (
-    <div className="absolute top-full right-0 md:left-1/2 md:-translate-x-1/2 mt-2 w-max min-w-[200px] max-w-[90vw]">
-      <div className="bg-gray-800 text-white p-6 rounded-lg shadow-2xl">
-        <ul className="space-y-4">
+    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 w-max min-w-[200px]">
+      <div
+        className={`backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden p-4 ${
+          isDark
+            ? "bg-[#1a1a1a]/95 text-white border border-white/[0.06]"
+            : "bg-white text-gray-900 border border-gray-200"
+        }`}
+      >
+        <ul className="space-y-1">
           <li>
             <Link
               href="/in-numbers"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-orange-500 font-semibold"
+              className={`block px-4 py-2.5 text-[14px] rounded-lg transition-colors ${
+                isDark
+                  ? "text-white/80 hover:text-[#ff8516] hover:bg-white/[0.05]"
+                  : "text-gray-700 hover:text-[#ff660f] hover:bg-gray-100"
+              }`}
             >
               In Numbers
             </Link>
@@ -19,9 +36,11 @@ const AboutUsDropdown = () => {
           <li>
             <Link
               href="/press"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-orange-500 font-semibold"
+              className={`block px-4 py-2.5 text-[14px] rounded-lg transition-colors ${
+                isDark
+                  ? "text-white/80 hover:text-[#ff8516] hover:bg-white/[0.05]"
+                  : "text-gray-700 hover:text-[#ff660f] hover:bg-gray-100"
+              }`}
             >
               In the Press
             </Link>
@@ -29,9 +48,11 @@ const AboutUsDropdown = () => {
           <li>
             <Link
               href="/contact"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-orange-500 font-semibold"
+              className={`block px-4 py-2.5 text-[14px] rounded-lg transition-colors ${
+                isDark
+                  ? "text-white/80 hover:text-[#ff8516] hover:bg-white/[0.05]"
+                  : "text-gray-700 hover:text-[#ff660f] hover:bg-gray-100"
+              }`}
             >
               Contact Us
             </Link>
@@ -39,9 +60,11 @@ const AboutUsDropdown = () => {
           <li>
             <Link
               href="/awards"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-orange-500 font-semibold"
+              className={`block px-4 py-2.5 text-[14px] rounded-lg transition-colors ${
+                isDark
+                  ? "text-white/80 hover:text-[#ff8516] hover:bg-white/[0.05]"
+                  : "text-gray-700 hover:text-[#ff660f] hover:bg-gray-100"
+              }`}
             >
               Awards
             </Link>
@@ -49,9 +72,11 @@ const AboutUsDropdown = () => {
           <li>
             <Link
               href="/licenses-and-safeguards"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:text-orange-500 font-semibold"
+              className={`block px-4 py-2.5 text-[14px] rounded-lg transition-colors ${
+                isDark
+                  ? "text-white/80 hover:text-[#ff8516] hover:bg-white/[0.05]"
+                  : "text-gray-700 hover:text-[#ff660f] hover:bg-gray-100"
+              }`}
             >
               Licenses and Safeguards
             </Link>

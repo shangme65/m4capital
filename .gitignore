@@ -48,6 +48,9 @@ setup.sh
 /public/uploads/kyc/*
 !/public/uploads/kyc/.gitkeep
 
+# Reference source code (external products - not for distribution)
+/reference
+
 # Scripts directory (local utilities)
 /scripts
 
