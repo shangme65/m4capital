@@ -24,21 +24,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { userId, asset, investmentAmount, profitPercentage, direction } = await req.json();
+    const { userId, asset, investmentAmount, profitPercentage, direction } =
+      await req.json();
 
     // Validate inputs
-    if (!userId || !asset || !investmentAmount || !profitPercentage || !direction) {
+    if (
+      !userId ||
+      !asset ||
+      !investmentAmount ||
+      !profitPercentage ||
+      !direction
+    ) {
       return NextResponse.json(
-        { error: "Missing required fields: userId, asset, investmentAmount, profitPercentage, direction" },
-        { status: 400 }
+        {
+          error:
+            "Missing required fields: userId, asset, investmentAmount, profitPercentage, direction",
+        },
+        { status: 400 },
       );
     }
 
-    if (![
-      "HIGHER", "LOWER"].includes(direction)) {
+    if (!["HIGHER", "LOWER"].includes(direction)) {
       return NextResponse.json(
         { error: "Direction must be either HIGHER or LOWER" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -46,7 +55,7 @@ export async function POST(req: NextRequest) {
     if (isNaN(investment) || investment <= 0) {
       return NextResponse.json(
         { error: "Investment amount must be a positive number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -54,7 +63,7 @@ export async function POST(req: NextRequest) {
     if (isNaN(percentage) || percentage <= 0) {
       return NextResponse.json(
         { error: "Profit percentage must be a positive number" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,14 +91,14 @@ export async function POST(req: NextRequest) {
     if (!user.Portfolio) {
       return NextResponse.json(
         { error: "User has no portfolio" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Create trade record that looks like a real traderoom trade
     // Calculate realistic entry and exit prices based on profit and direction
     const entryPrice = 1.0; // Normalized entry price
-    
+
     // Calculate exit price based on direction and profit
     let exitPrice: number;
     if (direction === "HIGHER") {
@@ -113,9 +122,11 @@ export async function POST(req: NextRequest) {
         closedAt: new Date(),
         updatedAt: new Date(),
         metadata: {
+          type: "MANUAL_PROFIT",
           direction: direction, // Store direction for traderoom display
           tradeType: "binary",
           payout: percentage, // Store the percentage as payout
+          profitUSD: profit,
           addedByAdmin: true,
           addedBy: session.user.id,
           addedAt: new Date().toISOString(),
@@ -160,14 +171,20 @@ export async function POST(req: NextRequest) {
     });
 
     // Send email notification
-    if (user.email && user.isEmailVerified && user.emailNotifications !== false) {
+    if (
+      user.email &&
+      user.isEmailVerified &&
+      user.emailNotifications !== false
+    ) {
       try {
         const userCurrency = user.preferredCurrency || "USD";
         const currencySymbol = getCurrencySymbol(userCurrency);
         let displayAmount = profit;
 
         if (userCurrency !== "USD") {
-          const ratesResponse = await fetch("https://api.frankfurter.app/latest?from=USD");
+          const ratesResponse = await fetch(
+            "https://api.frankfurter.app/latest?from=USD",
+          );
           if (ratesResponse.ok) {
             const ratesData = await ratesResponse.json();
             const rate = ratesData.rates[userCurrency] || 1;
@@ -199,10 +216,23 @@ export async function POST(req: NextRequest) {
             ${emailParagraph(`Congratulations! Your ${asset} ${direction} trade has closed successfully with a profit.`)}
             ${emailTransactionTable([
               { label: "Asset", value: asset },
-              { label: "Direction", value: emailBadge(direction, direction === "HIGHER" ? "success" : "danger") },
+              {
+                label: "Direction",
+                value: emailBadge(
+                  direction,
+                  direction === "HIGHER" ? "success" : "danger",
+                ),
+              },
               { label: "Result", value: emailBadge("Won", "success") },
               { label: "Profit (USD)", value: `$${profit.toFixed(2)}` },
-              ...(userCurrency !== "USD" ? [{ label: `Profit (${userCurrency})`, value: `${currencySymbol}${displayAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` }] : []),
+              ...(userCurrency !== "USD"
+                ? [
+                    {
+                      label: `Profit (${userCurrency})`,
+                      value: `${currencySymbol}${displayAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+                    },
+                  ]
+                : []),
               { label: "Return", value: `+${percentage.toFixed(2)}%` },
               { label: "Date", value: new Date().toLocaleString() },
             ])}
@@ -255,7 +285,7 @@ export async function POST(req: NextRequest) {
     console.error("Error adding manual profit:", error);
     return NextResponse.json(
       { error: "Failed to add manual profit" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
