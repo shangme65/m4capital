@@ -55,4 +55,5 @@ setup.sh
 /scripts
 
 # emscripten toolchain
-/emsdk
+/emsdk\n# Ignore embedded external repo
+.github/awesome-copilot
