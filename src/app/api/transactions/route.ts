@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { getToken } from "next-auth/jwt";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { CURRENCIES } from "@/lib/currencies";
@@ -31,12 +32,19 @@ export async function GET(req: NextRequest) {
     
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.id) {
+    // Fallback: use JWT token directly (more reliable in serverless/Vercel)
+    let userId = session?.user?.id;
+    if (!userId) {
+      const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
+      userId = token?.sub || (token?.id as string | undefined);
+    }
+
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check cache first
-    const cacheKey = session.user.id;
+    const cacheKey = userId;
     const cached = transactionsCache.get(cacheKey);
     const now = Date.now();
     
@@ -50,7 +58,7 @@ export async function GET(req: NextRequest) {
 
     // Get user's portfolio ID and fetch all transactions in parallel
     const portfolio = await prisma.portfolio.findUnique({
-      where: { userId: session.user.id },
+      where: { userId },
     });
 
     if (!portfolio) {
@@ -73,18 +81,18 @@ export async function GET(req: NextRequest) {
         take: 50,
       }),
       prisma.trade.findMany({
-        where: { userId: session.user.id },
+        where: { userId },
         orderBy: { createdAt: "desc" },
         take: 50,
       }),
       prisma.p2PTransfer.findMany({
-        where: { senderId: session.user.id },
+        where: { senderId: userId },
         orderBy: { createdAt: "desc" },
         take: 50,
         include: { Receiver: { select: { name: true, email: true } } },
       }),
       prisma.p2PTransfer.findMany({
-        where: { receiverId: session.user.id },
+        where: { receiverId: userId },
         orderBy: { createdAt: "desc" },
         take: 50,
         include: { Sender: { select: { name: true, email: true } } },

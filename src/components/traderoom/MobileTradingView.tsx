@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   ChevronUp,
   ChevronDown,
@@ -272,15 +272,24 @@ function MobileAssetHeader({
                 </span>
               )}
               {openTabs.length > 1 && (
-                <button
+                <span
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Close ${tab.symbol}`}
                   onClick={(e) => {
                     e.stopPropagation();
                     onCloseTab(i);
                   }}
-                  className="ml-0.5 opacity-40 hover:opacity-100 transition-opacity"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.stopPropagation();
+                      onCloseTab(i);
+                    }
+                  }}
+                  className="ml-0.5 opacity-40 hover:opacity-100 transition-opacity inline-flex"
                 >
                   <X size={10} style={{ color: C.textSecondary }} />
-                </button>
+                </span>
               )}
             </button>
           );
@@ -911,6 +920,22 @@ function MobileBalanceBar({
 
 export default function MobileTradingView(props: MobileTradingViewProps) {
   const [activeNavItem, setActiveNavItem] = useState("trade");
+  // Track where the current price sits on the chart (0-100% from top)
+  const [priceYPercent, setPriceYPercent] = useState<number>(50);
+  const priceYPercentRef = useRef(50);
+
+  // Combined onPriceYPosition: update local state AND forward to parent
+  const handlePriceYPosition = useCallback(
+    (y: number) => {
+      // Throttle state updates to avoid too many re-renders (only update when moved >0.5%)
+      if (Math.abs(y - priceYPercentRef.current) > 0.5) {
+        priceYPercentRef.current = y;
+        setPriceYPercent(y);
+      }
+      props.onPriceYPosition(y);
+    },
+    [props.onPriceYPosition],
+  );
 
   return (
     <div
@@ -975,7 +1000,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
               "MATIC",
               "LINK",
             ]}
-            onPriceYPosition={props.onPriceYPosition}
+            onPriceYPosition={handlePriceYPosition}
             onLivePriceUpdate={props.onLivePriceUpdate}
             onPriceToYConverter={props.onPriceToYConverter}
             onTimeToXConverter={props.onTimeToXConverter}
@@ -992,25 +1017,62 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
           />
         </div>
 
-        {/* Live price badge overlay */}
+        {/* ── Current price dashed line + badge (IQ Option style) ── */}
         {props.currentPrice > 0 && (
-          <div
-            className="absolute right-2 z-10 px-2 py-0.5 rounded text-xs font-semibold tabular-nums"
-            style={{
-              top: "50%",
-              transform: "translateY(-50%)",
-              backgroundColor:
-                props.priceDirection === "up"
-                  ? C.green
-                  : props.priceDirection === "down"
-                    ? C.red
-                    : C.strokeSecondary,
-              color: C.white,
-              fontSize: "11px",
-            }}
-          >
-            {props.currentPrice.toFixed(5)}
-          </div>
+          <>
+            {/* Horizontal dashed price line spanning chart width (stops before badge) */}
+            <div
+              className="absolute left-0 pointer-events-none"
+              style={{
+                top: `${priceYPercent}%`,
+                right: "60px",
+                height: "1px",
+                backgroundImage: `repeating-linear-gradient(to right, ${
+                  props.priceDirection === "up"
+                    ? C.green
+                    : props.priceDirection === "down"
+                      ? C.red
+                      : C.textTertiary
+                } 0, ${
+                  props.priceDirection === "up"
+                    ? C.green
+                    : props.priceDirection === "down"
+                      ? C.red
+                      : C.textTertiary
+                } 4px, transparent 4px, transparent 8px)`,
+                zIndex: 20,
+                transform: "translateY(-0.5px)",
+                opacity: 0.85,
+              }}
+            />
+
+            {/* Price badge on the right edge */}
+            <div
+              className="absolute right-0 pointer-events-none"
+              style={{
+                top: `${priceYPercent}%`,
+                transform: "translateY(-50%)",
+                zIndex: 21,
+              }}
+            >
+              <div
+                className="px-2 py-0.5 rounded-sm text-[11px] font-bold tabular-nums whitespace-nowrap"
+                style={{
+                  backgroundColor:
+                    props.priceDirection === "up"
+                      ? C.green
+                      : props.priceDirection === "down"
+                        ? C.red
+                        : C.strokeSecondary,
+                  color: C.white,
+                  minWidth: "58px",
+                  textAlign: "center",
+                }}
+              >
+                {props.currentPrice.toFixed(5)}
+              </div>
+            </div>
+          </>
         )}
 
         {/* Horizontal sentiment bar overlay at bottom of chart */}

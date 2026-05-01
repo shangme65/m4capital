@@ -39,5 +39,6 @@ declare module "next-auth/jwt" {
     isVerified?: boolean;
     preferredCurrency?: string;
     lastUpdated?: number;
+    signedInAt?: number;
   }
 }

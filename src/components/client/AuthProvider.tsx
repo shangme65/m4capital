@@ -2,6 +2,7 @@
 
 import { SessionProvider } from "next-auth/react";
 import { ReactNode } from "react";
+import SessionExpiryGuard from "./SessionExpiryGuard";
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -13,6 +14,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       refetchInterval={5 * 60} // Refetch session every 5 minutes
       refetchOnWindowFocus={true} // Refetch when window regains focus
     >
+      <SessionExpiryGuard />
       {children}
     </SessionProvider>
   );

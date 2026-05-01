@@ -1,5 +1,6 @@
 import "server-only";
 import { AuthOptions } from "next-auth";
+import { JWT } from "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 import FacebookProvider from "next-auth/providers/facebook";
 import GoogleProvider from "next-auth/providers/google";
@@ -264,9 +265,20 @@ export const authOptions: AuthOptions = {
           token.preferredCurrency = dbUser.preferredCurrency;
           token.country = dbUser.country;
           token.lastUpdated = Date.now();
+          token.signedInAt = Date.now();
         }
         // If dbUser not found, just return the existing token
       } else if (token.id) {
+        // Auto-expire non-admin user sessions after 24 hours from sign-in
+        const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+        if (
+          token.role !== "ADMIN" &&
+          token.signedInAt &&
+          Date.now() - (token.signedInAt as number) > SESSION_MAX_AGE_MS
+        ) {
+          // Invalidate the token - returning empty token forces sign-out
+          return { ...token, id: "", role: "", _expired: true } as JWT;
+        }
         // Refresh user data from DB periodically (every 7 days to reduce DB calls)
         const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
         const shouldRefresh =
@@ -329,6 +341,13 @@ export const authOptions: AuthOptions = {
           | string
           | undefined;
         session.user.country = token.country as string | undefined;
+      }
+
+      // Cap session expiry at 24 hours from sign-in for non-admin users
+      if (token.role !== "ADMIN" && token.signedInAt) {
+        const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 hours
+        const expiresAt = (token.signedInAt as number) + SESSION_MAX_AGE_MS;
+        session.expires = new Date(expiresAt).toISOString() as any;
       }
       return session;
     },

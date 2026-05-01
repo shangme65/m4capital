@@ -7,6 +7,7 @@ import { useSidebar } from "./SidebarContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import NotificationsPanel from "./NotificationsPanel";
 import ThemeLogo from "./ThemeLogo";
+import Link from "next/link";
 import { useTheme } from "@/contexts/ThemeContext";
 
 const DashboardHeader = () => {
@@ -47,12 +48,14 @@ const DashboardHeader = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <ThemeLogo
-        width={120}
-        height={40}
-        className="w-24 md:w-auto"
-        priority
-      />
+      <Link href="/">
+        <ThemeLogo
+          width={120}
+          height={40}
+          className="w-24 md:w-auto"
+          priority
+        />
+      </Link>
       <div className="flex items-center mobile:gap-2 gap-3">
         <button
           onClick={() => setIsNotificationsPanelOpen(true)}

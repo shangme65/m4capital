@@ -144,12 +144,14 @@ const Sidebar = () => {
             >
               {/* Sidebar Logo */}
               <div className="mb-6">
-                <ThemeLogo
-                  width={120}
-                  height={40}
-                  className="object-contain"
-                  priority
-                />
+                <Link href="/">
+                  <ThemeLogo
+                    width={120}
+                    height={40}
+                    className="object-contain"
+                    priority
+                  />
+                </Link>
               </div>
 
               {/* User Name - Mobile Only */}

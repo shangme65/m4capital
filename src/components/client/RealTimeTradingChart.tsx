@@ -114,23 +114,16 @@ export default function RealTimeTradingChart({
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart || typeof chart.setStyles !== "function") return;
-    const color =
+    const greenColor = "#00c853";
+    const redColor = "#ff1744";
+    const lineColor =
       hoveredButton === "higher"
-        ? "#00c853"
+        ? greenColor
         : hoveredButton === "lower"
-          ? "#ff1744"
-          : "#888888";
-    chart.setStyles({
-      candle: {
-        priceMark: {
-          last: {
-            upColor: color,
-            downColor: color,
-            noChangeColor: color,
-          },
-        },
-      },
-    });
+          ? redColor
+          : undefined; // keep natural up/down coloring when no hover
+    // priceMark.last is disabled — custom overlays handle the dashed line & badge.
+    // Nothing to update here for hovered button color.
   }, [hoveredButton]);
 
   // Candle time period options like IQ Option
@@ -229,30 +222,12 @@ export default function RealTimeTradingChart({
           },
           priceMark: {
             show: true,
-            high: { show: true, color: "#00c853", textFamily: "Arial" },
-            low: { show: true, color: "#ff1744", textFamily: "Arial" },
+            high: { show: false },
+            low: { show: false },
+            // Disabled — custom overlays in MobileTradingView and desktop panel
+            // render the dashed line and price badge themselves.
             last: {
               show: false,
-              upColor: "#888888",
-              downColor: "#888888",
-              noChangeColor: "#888888",
-              line: {
-                show: false,
-                style: "dashed" as any,
-                dashedValue: [4, 4],
-              },
-              text: {
-                show: false,
-                paddingLeft: 8,
-                paddingRight: 12,
-                paddingTop: 6,
-                paddingBottom: 6,
-                color: "#ffffff",
-                family: "Arial",
-                size: 18,
-                weight: "bold" as any,
-                borderRadius: 6,
-              },
             },
           },
         },
@@ -434,11 +409,16 @@ export default function RealTimeTradingChart({
 
           // Set scroll limit to data range - position current price in middle like IQ Option
           if (forexData.length > 0) {
-            // Large right offset to show future time (for trade expiration visibility)
-            chartRef.current.setOffsetRightDistance(600); // Increased to show future times
-            chartRef.current.setLeftMinVisibleBarCount(10); // Minimum visible bars when scrolled left
-            chartRef.current.setRightMinVisibleBarCount(3); // Fewer bars needed on right
-            chartRef.current.setBarSpace(12); // Default zoom level - more zoomed in
+            // Responsive right offset: mobile needs much less than desktop
+            // 600px on a 360px mobile screen pushes all candles completely off-screen
+            const containerWidth = chartContainerRef.current?.clientWidth ?? 800;
+            const isMobileView = containerWidth < 540;
+            const rightOffset = isMobileView ? Math.round(containerWidth * 0.25) : 200;
+            const barSpacing = isMobileView ? 7 : 12;
+            chartRef.current.setOffsetRightDistance(rightOffset);
+            chartRef.current.setLeftMinVisibleBarCount(10);
+            chartRef.current.setRightMinVisibleBarCount(3);
+            chartRef.current.setBarSpace(barSpacing);
             // Scroll to show latest/current price
             chartRef.current.scrollToRealTime();
           }
@@ -495,11 +475,15 @@ export default function RealTimeTradingChart({
 
           // Set scroll limit to data range - position current price in middle like IQ Option
           if (klineData.length > 0) {
-            // Large right offset to show future time (for trade expiration visibility)
-            chartRef.current.setOffsetRightDistance(600); // Increased to show future times
-            chartRef.current.setLeftMinVisibleBarCount(10); // Minimum visible bars when scrolled left
-            chartRef.current.setRightMinVisibleBarCount(3); // Fewer bars needed on right
-            chartRef.current.setBarSpace(12); // Default zoom level - more zoomed in
+            // Responsive right offset: mobile needs much less than desktop
+            const containerWidth = chartContainerRef.current?.clientWidth ?? 800;
+            const isMobileView = containerWidth < 540;
+            const rightOffset = isMobileView ? Math.round(containerWidth * 0.25) : 200;
+            const barSpacing = isMobileView ? 7 : 12;
+            chartRef.current.setOffsetRightDistance(rightOffset);
+            chartRef.current.setLeftMinVisibleBarCount(10);
+            chartRef.current.setRightMinVisibleBarCount(3);
+            chartRef.current.setBarSpace(barSpacing);
             // Scroll to show latest/current price
             chartRef.current.scrollToRealTime();
           }
