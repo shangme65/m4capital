@@ -88,7 +88,7 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://hatscripts.github.io" />
         <link rel="dns-prefetch" href="https://raw.githubusercontent.com" />
         <link rel="dns-prefetch" href="https://flagcdn.com" />
-        
+
         {/* Viewport with safe area support for native apps */}
         <meta
           name="viewport"
@@ -101,6 +101,7 @@ export default function RootLayout({
           content="black-translucent"
         />
         <script
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `
               (function() {

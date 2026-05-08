@@ -24,6 +24,11 @@ interface ChartGridProps {
   hoveredButton?: "higher" | "lower" | null;
   // Callback with the timestamp of the latest candle on the chart
   onLastCandleTimestamp?: (timestamp: number) => void;
+  hideTradeOverlay?: boolean;
+  disableCrosshair?: boolean;
+  // Entry arrow for active trade
+  activeTradeEntryPrice?: number;
+  activeTradeDirection?: "higher" | "lower";
 }
 
 export default function ChartGrid({
@@ -53,6 +58,10 @@ export default function ChartGrid({
   candleInterval,
   hoveredButton,
   onLastCandleTimestamp,
+  hideTradeOverlay,
+  disableCrosshair,
+  activeTradeEntryPrice,
+  activeTradeDirection,
 }: ChartGridProps) {
   // Initialize chart symbols based on grid type
   const getInitialSymbols = () => {
@@ -126,6 +135,10 @@ export default function ChartGrid({
               interval={candleInterval}
               hoveredButton={hoveredButton}
               onLastCandleTimestamp={onLastCandleTimestamp}
+              hideTradeOverlay={hideTradeOverlay}
+              disableCrosshair={disableCrosshair}
+              activeTradeEntryPrice={activeTradeEntryPrice}
+              activeTradeDirection={activeTradeDirection}
             />
           </div>
         );

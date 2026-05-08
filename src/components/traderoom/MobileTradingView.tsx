@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   ChevronUp,
   ChevronDown,
@@ -14,6 +14,7 @@ import {
   Wallet,
   TrendingUp,
   Activity,
+  Search,
 } from "lucide-react";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import ChartGrid from "@/components/client/ChartGrid";
@@ -113,6 +114,8 @@ export interface MobileTradingViewProps {
   onShowHistory: () => void;
   onShowPortfolio: () => void;
   onShowAddAsset: () => void;
+  // Called when user picks a new symbol from the mobile asset picker
+  onAddTab: (symbol: string) => void;
 }
 
 // ─── IQ Option Color Tokens ──────────────────────────────────────────────────
@@ -651,6 +654,378 @@ function HorizontalSentiment() {
   );
 }
 
+// ─── Mobile Portfolio View ───────────────────────────────────────────────────
+
+function MobilePortfolioView({
+  activeTrades,
+  currentPrice,
+  traderoomBalance,
+  practiceAccountBalance,
+  selectedAccountType,
+  countdown,
+  symbols,
+  AssetFlag,
+}: {
+  activeTrades: ActiveTrade[];
+  currentPrice: number;
+  traderoomBalance: number;
+  practiceAccountBalance: number;
+  selectedAccountType: "real" | "practice";
+  countdown: number;
+  symbols: Array<{
+    symbol: string;
+    displayName?: string;
+    price: string;
+    change: string;
+    percentage: string;
+    flag: string;
+    category: string;
+  }>;
+  AssetFlag: React.ComponentType<{
+    flag: string;
+    symbol: string;
+    size?: number;
+    className?: string;
+  }>;
+}) {
+  const active = activeTrades.filter((t) => t.status === "active");
+  const closed = activeTrades.filter(
+    (t) => t.status === "won" || t.status === "lost",
+  );
+
+  // Total investment across active trades
+  const totalInvestment = active.reduce((sum, t) => sum + t.amount, 0);
+  const totalPnl = active.reduce((sum, t) => {
+    // Estimate P&L: if direction is higher and current price > entry → winning
+    const pnl =
+      t.direction === "higher"
+        ? currentPrice > t.entryPrice
+          ? t.amount * 0.85
+          : -t.amount
+        : currentPrice < t.entryPrice
+          ? t.amount * 0.85
+          : -t.amount;
+    return sum + pnl;
+  }, 0);
+  const pnlPercent =
+    totalInvestment > 0 ? (totalPnl / totalInvestment) * 100 : 0;
+
+  const formatCountdown = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
+  const getSymbolDisplay = (sym: string) => {
+    const found = symbols.find((s) => s.symbol === sym);
+    return {
+      displayName: found?.displayName || sym,
+      flag: found?.flag || sym.slice(0, 3),
+      price: found?.price || "0",
+    };
+  };
+
+  return (
+    <div
+      className="flex-1 overflow-y-auto"
+      style={{ backgroundColor: C.base, paddingBottom: "4px" }}
+    >
+      {/* ── Portfolio header ── */}
+      <div className="px-4 pt-3 pb-1">
+        <span
+          className="text-[26px] font-bold"
+          style={{ color: C.textPrimary }}
+        >
+          Portfolio
+        </span>
+      </div>
+
+      {/* ── Portfolio summary card ── */}
+      <div className="px-4 pt-4 pb-2">
+        <div
+          className="rounded-2xl px-4 py-3"
+          style={{ backgroundColor: C.quaternary }}
+        >
+          <div
+            className="text-[11px] font-medium mb-1"
+            style={{ color: C.textTertiary }}
+          >
+            Total investment{" "}
+            <span
+              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border text-[8px] ml-0.5"
+              style={{
+                borderColor: C.textTertiary,
+                color: C.textTertiary,
+              }}
+            >
+              i
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span
+              className="text-2xl font-bold tabular-nums"
+              style={{ color: C.textPrimary }}
+            >
+              ${totalInvestment.toFixed(2)}
+            </span>
+            {totalInvestment > 0 && (
+              <span
+                className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full"
+                style={{
+                  backgroundColor:
+                    totalPnl >= 0 ? C.greenSurface : C.redSurface,
+                  color: totalPnl >= 0 ? C.greenText : C.redText,
+                }}
+              >
+                {totalPnl >= 0 ? "+" : ""}${totalPnl.toFixed(2)} (
+                {totalPnl >= 0 ? "+" : ""}
+                {pnlPercent.toFixed(0)}%)
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Active section ── */}
+      <div className="px-4 pt-2 pb-1">
+        <div
+          className="text-base font-bold mb-2"
+          style={{ color: C.textPrimary }}
+        >
+          Active
+        </div>
+
+        {active.length === 0 ? (
+          <div
+            className="rounded-2xl flex flex-col items-center justify-center py-8 gap-2"
+            style={{ backgroundColor: C.quaternary }}
+          >
+            <div style={{ color: C.textTertiary }}>
+              {/* bar chart icon */}
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              >
+                <rect x="2" y="10" width="4" height="12" rx="1" />
+                <rect x="9" y="6" width="4" height="16" rx="1" />
+                <rect x="16" y="13" width="4" height="9" rx="1" />
+              </svg>
+            </div>
+            <span
+              className="text-sm font-medium"
+              style={{ color: C.textTertiary }}
+            >
+              No active trades
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {active.map((trade) => {
+              const sym = getSymbolDisplay(trade.symbol);
+              const isWinning =
+                trade.direction === "higher"
+                  ? currentPrice > trade.entryPrice
+                  : currentPrice < trade.entryPrice;
+              const pnl = isWinning ? trade.amount * 0.85 : -trade.amount;
+
+              return (
+                <div
+                  key={trade.id}
+                  className="rounded-2xl px-4 py-3"
+                  style={{ backgroundColor: C.quaternary }}
+                >
+                  {/* Row 1: asset info + P&L */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <AssetFlag
+                        flag={sym.flag}
+                        symbol={trade.symbol}
+                        size={28}
+                      />
+                      <div>
+                        <div
+                          className="text-[13px] font-semibold leading-tight"
+                          style={{ color: C.textPrimary }}
+                        >
+                          {sym.displayName}
+                        </div>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <Clock size={9} style={{ color: C.textTertiary }} />
+                          <span
+                            className="text-[11px] font-mono"
+                            style={{ color: C.textTertiary }}
+                          >
+                            {formatCountdown(countdown)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className="text-[13px] font-bold tabular-nums"
+                        style={{ color: isWinning ? C.greenText : C.redText }}
+                      >
+                        {isWinning ? "+" : ""}${pnl.toFixed(2)}
+                      </div>
+                      <div className="flex items-center justify-end gap-1 mt-0.5">
+                        <span
+                          className="text-[11px] tabular-nums"
+                          style={{ color: C.textSecondary }}
+                        >
+                          ${trade.amount}
+                        </span>
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{
+                            backgroundColor:
+                              trade.direction === "higher" ? C.green : C.red,
+                          }}
+                        >
+                          {trade.direction === "higher" ? (
+                            <ChevronUp
+                              size={11}
+                              color={C.white}
+                              strokeWidth={3}
+                            />
+                          ) : (
+                            <ChevronDown
+                              size={11}
+                              color={C.white}
+                              strokeWidth={3}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Close button */}
+                  <button
+                    className="w-full py-2.5 rounded-xl text-[13px] font-semibold flex items-center justify-center gap-1.5 active:opacity-70"
+                    style={{
+                      backgroundColor: C.tertiary,
+                      border: `1px solid ${C.strokeSecondary}`,
+                      color: C.textPrimary,
+                    }}
+                  >
+                    <span>Close</span>
+                    <span
+                      style={{ color: isWinning ? C.greenText : C.redText }}
+                    >
+                      {isWinning ? "+" : ""}${pnl.toFixed(2)}
+                    </span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* ── Closed section ── */}
+      {closed.length > 0 && (
+        <div className="px-4 pt-3 pb-2">
+          <div
+            className="text-base font-bold mb-1"
+            style={{ color: C.textPrimary }}
+          >
+            Closed
+          </div>
+          <div
+            className="text-[11px] font-medium mb-2"
+            style={{ color: C.textTertiary }}
+          >
+            Today
+          </div>
+
+          <div className="flex flex-col gap-2">
+            {closed.map((trade) => {
+              const sym = getSymbolDisplay(trade.symbol);
+              const won = trade.status === "won";
+              const pnl = won
+                ? (trade.result ?? trade.amount * 0.85)
+                : -trade.amount;
+
+              return (
+                <div
+                  key={trade.id}
+                  className="rounded-2xl px-4 py-3"
+                  style={{ backgroundColor: C.quaternary }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <AssetFlag
+                        flag={sym.flag}
+                        symbol={trade.symbol}
+                        size={28}
+                      />
+                      <div>
+                        <div
+                          className="text-[13px] font-semibold leading-tight"
+                          style={{ color: C.textPrimary }}
+                        >
+                          {sym.displayName}
+                        </div>
+                        <div
+                          className="text-[11px] mt-0.5"
+                          style={{ color: C.textTertiary }}
+                        >
+                          Binary
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div
+                        className="text-[13px] font-bold tabular-nums"
+                        style={{ color: won ? C.greenText : C.redText }}
+                      >
+                        {won ? "+" : ""}${Math.abs(pnl).toFixed(2)}
+                      </div>
+                      <div className="flex items-center justify-end gap-1 mt-0.5">
+                        <span
+                          className="text-[11px] tabular-nums"
+                          style={{ color: C.textSecondary }}
+                        >
+                          ${trade.amount}
+                        </span>
+                        <div
+                          className="w-5 h-5 rounded-full flex items-center justify-center"
+                          style={{
+                            backgroundColor:
+                              trade.direction === "higher" ? C.green : C.red,
+                          }}
+                        >
+                          {trade.direction === "higher" ? (
+                            <ChevronUp
+                              size={11}
+                              color={C.white}
+                              strokeWidth={3}
+                            />
+                          ) : (
+                            <ChevronDown
+                              size={11}
+                              color={C.white}
+                              strokeWidth={3}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Mobile Bottom Navigation ────────────────────────────────────────────────
 
 function MobileBottomNav({
@@ -676,12 +1051,12 @@ function MobileBottomNav({
       onClick: () => onItemChange("trade"),
     },
     {
-      id: "deals",
-      label: "Deals",
+      id: "portfolio",
+      label: "Portfolio",
       icon: BarChart3,
       badge: activeCount > 0 ? activeCount : undefined,
       onClick: () => {
-        onItemChange("deals");
+        onItemChange("portfolio");
         onShowPortfolio();
       },
     },
@@ -918,11 +1293,80 @@ function MobileBalanceBar({
 
 // ─── Main Mobile Trading View ────────────────────────────────────────────────
 
+// ─── Trade Notification Popups ────────────────────────────────────────────────
+
+interface TradePopup {
+  id: string;
+  type: "entry" | "result";
+  direction?: "higher" | "lower";
+  entryPrice?: number;
+  resultStatus?: "won" | "lost";
+  resultAmount?: number;
+  exitPrice?: number;
+}
+
 export default function MobileTradingView(props: MobileTradingViewProps) {
   const [activeNavItem, setActiveNavItem] = useState("trade");
   // Track where the current price sits on the chart (0-100% from top)
   const [priceYPercent, setPriceYPercent] = useState<number>(50);
   const priceYPercentRef = useRef(50);
+
+  // Asset picker bottom sheet
+  const [showAssetPicker, setShowAssetPicker] = useState(false);
+  const [assetSearch, setAssetSearch] = useState("");
+  const [assetCategory, setAssetCategory] = useState<string>("All");
+
+  // Trade notification popups
+  const [popups, setPopups] = useState<TradePopup[]>([]);
+  const prevTradesRef = useRef<ActiveTrade[]>([]);
+
+  const dismissPopup = useCallback((id: string) => {
+    setPopups((p) => p.filter((x) => x.id !== id));
+  }, []);
+
+  // Detect new trades (entry popup) and resolved trades (result popup)
+  useEffect(() => {
+    const prev = prevTradesRef.current;
+    const curr = props.activeTrades;
+
+    // New active trades → entry popup
+    curr.forEach((trade) => {
+      const wasPresent = prev.find((p) => p.id === trade.id);
+      if (!wasPresent && trade.status === "active") {
+        const popup: TradePopup = {
+          id: `entry-${trade.id}`,
+          type: "entry",
+          direction: trade.direction,
+          entryPrice: trade.entryPrice,
+        };
+        setPopups((p) => [...p.slice(-2), popup]);
+        setTimeout(() => dismissPopup(`entry-${trade.id}`), 4000);
+      }
+    });
+
+    // Resolved trades → result popup
+    curr.forEach((trade) => {
+      const prevTrade = prev.find((p) => p.id === trade.id);
+      if (
+        prevTrade &&
+        prevTrade.status === "active" &&
+        (trade.status === "won" || trade.status === "lost")
+      ) {
+        const popup: TradePopup = {
+          id: `result-${trade.id}`,
+          type: "result",
+          direction: trade.direction,
+          resultStatus: trade.status as "won" | "lost",
+          resultAmount: trade.result,
+          exitPrice: trade.exitPrice,
+        };
+        setPopups((p) => [...p.slice(-2), popup]);
+        setTimeout(() => dismissPopup(`result-${trade.id}`), 5000);
+      }
+    });
+
+    prevTradesRef.current = curr;
+  }, [props.activeTrades, dismissPopup]);
 
   // Combined onPriceYPosition: update local state AND forward to parent
   const handlePriceYPosition = useCallback(
@@ -962,28 +1406,62 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         onDeposit={props.onDeposit}
       />
 
-      {/* Asset header with tabs */}
-      <MobileAssetHeader
-        selectedSymbol={props.selectedSymbol}
-        currentPrice={props.currentPrice}
-        priceDirection={props.priceDirection}
-        openTabs={props.openTabs}
-        activeTab={props.activeTab}
-        activeTrades={props.activeTrades}
-        onTabChange={props.onTabChange}
-        onCloseTab={props.onCloseTab}
-        onAddAsset={props.onShowAddAsset}
-        AssetFlag={props.AssetFlag}
-        symbols={props.symbols}
-      />
+      {/* Asset header with tabs — hidden when portfolio tab is active */}
+      {activeNavItem !== "portfolio" && (
+        <MobileAssetHeader
+          selectedSymbol={props.selectedSymbol}
+          currentPrice={props.currentPrice}
+          priceDirection={props.priceDirection}
+          openTabs={props.openTabs}
+          activeTab={props.activeTab}
+          activeTrades={props.activeTrades}
+          onTabChange={props.onTabChange}
+          onCloseTab={props.onCloseTab}
+          onAddAsset={() => setShowAssetPicker(true)}
+          AssetFlag={props.AssetFlag}
+          symbols={props.symbols}
+        />
+      )}
+
+      {/* Portfolio View — replaces chart when portfolio tab is active */}
+      {activeNavItem === "portfolio" && (
+        <MobilePortfolioView
+          activeTrades={props.activeTrades}
+          currentPrice={props.currentPrice}
+          traderoomBalance={props.traderoomBalance}
+          practiceAccountBalance={props.practiceAccountBalance}
+          selectedAccountType={props.selectedAccountType}
+          countdown={props.countdown}
+          symbols={props.symbols}
+          AssetFlag={props.AssetFlag}
+        />
+      )}
 
       {/* Chart area — fills remaining space (IQ Option: grid-template-rows: minmax(140px,1fr) auto) */}
       <div
         className="flex-1 relative overflow-hidden"
-        style={{ minHeight: "140px" }}
+        style={{
+          minHeight: "140px",
+          display: activeNavItem === "portfolio" ? "none" : undefined,
+        }}
       >
+        {/* World map background */}
+        <div
+          className="absolute inset-0 pointer-events-none select-none"
+          style={{ zIndex: 0 }}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/traderoom/backgrounds/worldmapbackground.svg"
+            alt=""
+            className="w-full h-full"
+            style={{ objectFit: "cover", opacity: 0.06 }}
+            aria-hidden="true"
+          />
+        </div>
+
         {/* Full-bleed chart */}
-        <div className="absolute inset-0">
+        <div className="absolute inset-0" style={{ zIndex: 1 }}>
           <ChartGrid
             key={props.selectedSymbol}
             gridType={props.selectedChartGrid}
@@ -1012,8 +1490,22 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
             candleInterval={props.candleInterval}
             hoveredButton={props.hoveredButton}
             onLastCandleTimestamp={props.onLastCandleTimestamp}
+            hideTradeOverlay={true}
+            disableCrosshair={true}
             activeTradeExpirationTime={props.activeTradeExpirationTime}
             activeTradeEntryTime={props.activeTradeEntryTime}
+            activeTradeEntryPrice={
+              props.activeTrades.find(
+                (t) =>
+                  t.symbol === props.selectedSymbol && t.status === "active",
+              )?.entryPrice
+            }
+            activeTradeDirection={
+              props.activeTrades.find(
+                (t) =>
+                  t.symbol === props.selectedSymbol && t.status === "active",
+              )?.direction
+            }
           />
         </div>
 
@@ -1027,19 +1519,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
                 top: `${priceYPercent}%`,
                 right: "60px",
                 height: "1px",
-                backgroundImage: `repeating-linear-gradient(to right, ${
-                  props.priceDirection === "up"
-                    ? C.green
-                    : props.priceDirection === "down"
-                      ? C.red
-                      : C.textTertiary
-                } 0, ${
-                  props.priceDirection === "up"
-                    ? C.green
-                    : props.priceDirection === "down"
-                      ? C.red
-                      : C.textTertiary
-                } 4px, transparent 4px, transparent 8px)`,
+                backgroundImage: `repeating-linear-gradient(to right, ${C.textTertiary} 0, ${C.textTertiary} 4px, transparent 4px, transparent 8px)`,
                 zIndex: 20,
                 transform: "translateY(-0.5px)",
                 opacity: 0.85,
@@ -1079,28 +1559,137 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         <div className="absolute bottom-0 left-0 right-0 z-10">
           <HorizontalSentiment />
         </div>
+
+        {/* Trade notification popups — sticky top-left */}
+        <div
+          className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none"
+          style={{ zIndex: 30 }}
+        >
+          {popups.map((popup) => (
+            <div
+              key={popup.id}
+              className="pointer-events-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5"
+              style={{
+                backgroundColor:
+                  popup.type === "entry"
+                    ? "rgba(11,19,39,0.88)"
+                    : popup.resultStatus === "won"
+                      ? "rgba(27,73,49,0.92)"
+                      : "rgba(98,24,27,0.92)",
+                border: `1px solid ${
+                  popup.type === "entry"
+                    ? popup.direction === "higher"
+                      ? C.green
+                      : C.red
+                    : popup.resultStatus === "won"
+                      ? C.green
+                      : C.red
+                }`,
+                backdropFilter: "blur(6px)",
+                maxWidth: "180px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
+              }}
+            >
+              {popup.type === "entry" ? (
+                <>
+                  <div
+                    className="w-3.5 h-3.5 flex items-center justify-center rounded-sm flex-shrink-0"
+                    style={{
+                      backgroundColor:
+                        popup.direction === "higher" ? C.green : C.red,
+                    }}
+                  >
+                    {popup.direction === "higher" ? (
+                      <ChevronUp size={9} color={C.white} strokeWidth={3} />
+                    ) : (
+                      <ChevronDown size={9} color={C.white} strokeWidth={3} />
+                    )}
+                  </div>
+                  <div>
+                    <div
+                      className="text-[9px] font-medium leading-none mb-0.5"
+                      style={{ color: C.textTertiary }}
+                    >
+                      Entry Price
+                    </div>
+                    <div
+                      className="text-[11px] font-bold tabular-nums leading-none"
+                      style={{ color: C.textPrimary }}
+                    >
+                      {popup.entryPrice?.toFixed(5)}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    className="text-[11px] font-bold leading-none"
+                    style={{
+                      color:
+                        popup.resultStatus === "won" ? C.greenText : C.redText,
+                    }}
+                  >
+                    {popup.resultStatus === "won" ? "WIN" : "LOSS"}
+                  </div>
+                  <div
+                    className="w-px self-stretch"
+                    style={{
+                      backgroundColor:
+                        popup.resultStatus === "won" ? C.green : C.red,
+                      opacity: 0.4,
+                    }}
+                  />
+                  <div>
+                    <div
+                      className="text-[9px] font-medium leading-none mb-0.5"
+                      style={{ color: C.textTertiary }}
+                    >
+                      {popup.resultStatus === "won" ? "+" : "-"}$
+                      {Math.abs(popup.resultAmount ?? 0).toFixed(2)}
+                    </div>
+                    <div
+                      className="text-[9px] tabular-nums leading-none"
+                      style={{ color: C.textSecondary }}
+                    >
+                      {popup.exitPrice?.toFixed(5)}
+                    </div>
+                  </div>
+                </>
+              )}
+              <button
+                className="ml-auto flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity"
+                onClick={() => dismissPopup(popup.id)}
+                style={{ color: C.textSecondary }}
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Trading Panel — fixed height like IQ (168px area) */}
-      <MobileTradingPanel
-        amount={props.amount}
-        amountInput={props.amountInput}
-        onAmountChange={props.onAmountChange}
-        onAmountInputChange={props.onAmountInputChange}
-        expirationSeconds={props.expirationSeconds}
-        countdown={props.countdown}
-        onExpirationChange={props.onExpirationChange}
-        onExecuteTrade={props.onExecuteTrade}
-        isExecutingTrade={props.isExecutingTrade}
-        tradeDirection={props.tradeDirection}
-        selectedAccountType={props.selectedAccountType}
-        traderoomBalance={props.traderoomBalance}
-        practiceAccountBalance={props.practiceAccountBalance}
-        activeTrades={props.activeTrades}
-        selectedSymbol={props.selectedSymbol}
-        hoveredButton={props.hoveredButton}
-        onHoveredButton={props.onHoveredButton}
-      />
+      {/* Trading Panel — hidden when portfolio tab is active */}
+      {activeNavItem !== "portfolio" && (
+        <MobileTradingPanel
+          amount={props.amount}
+          amountInput={props.amountInput}
+          onAmountChange={props.onAmountChange}
+          onAmountInputChange={props.onAmountInputChange}
+          expirationSeconds={props.expirationSeconds}
+          countdown={props.countdown}
+          onExpirationChange={props.onExpirationChange}
+          onExecuteTrade={props.onExecuteTrade}
+          isExecutingTrade={props.isExecutingTrade}
+          tradeDirection={props.tradeDirection}
+          selectedAccountType={props.selectedAccountType}
+          traderoomBalance={props.traderoomBalance}
+          practiceAccountBalance={props.practiceAccountBalance}
+          activeTrades={props.activeTrades}
+          selectedSymbol={props.selectedSymbol}
+          hoveredButton={props.hoveredButton}
+          onHoveredButton={props.onHoveredButton}
+        />
+      )}
 
       {/* Bottom Navigation */}
       <MobileBottomNav
@@ -1110,6 +1699,199 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         onShowPortfolio={props.onShowPortfolio}
         activeTrades={props.activeTrades}
       />
+
+      {/* ─── Mobile Asset Picker (bottom sheet) ─────────────────────────────── */}
+      {showAssetPicker &&
+        (() => {
+          const categories = [
+            "All",
+            "Forex",
+            "Crypto",
+            "Stocks",
+            "Commodities",
+          ];
+          const filtered = props.symbols.filter((s) => {
+            const matchCat =
+              assetCategory === "All" || s.category === assetCategory;
+            const matchQ =
+              assetSearch === "" ||
+              s.symbol.toLowerCase().includes(assetSearch.toLowerCase()) ||
+              (s.displayName || "")
+                .toLowerCase()
+                .includes(assetSearch.toLowerCase());
+            return matchCat && matchQ;
+          });
+
+          const handleSelect = (sym: (typeof props.symbols)[0]) => {
+            props.onAddTab(sym.symbol);
+            setShowAssetPicker(false);
+            setAssetSearch("");
+          };
+
+          return (
+            <div
+              className="absolute inset-0 flex flex-col"
+              style={{ zIndex: 10000, backgroundColor: C.base }}
+            >
+              {/* Header */}
+              <div
+                className="flex items-center gap-3 px-4 py-3 flex-shrink-0"
+                style={{ borderBottom: `1px solid ${C.strokeTertiary}` }}
+              >
+                <button
+                  onClick={() => {
+                    setShowAssetPicker(false);
+                    setAssetSearch("");
+                  }}
+                  className="flex-shrink-0 p-1 rounded-lg transition-colors"
+                  style={{ color: C.textSecondary }}
+                >
+                  <X size={20} />
+                </button>
+                <span
+                  className="text-base font-semibold"
+                  style={{ color: C.textPrimary }}
+                >
+                  Select Asset
+                </span>
+              </div>
+
+              {/* Search bar */}
+              <div
+                className="px-4 py-2 flex-shrink-0"
+                style={{ borderBottom: `1px solid ${C.strokeTertiary}` }}
+              >
+                <div
+                  className="flex items-center gap-2 rounded-lg px-3 py-2"
+                  style={{ backgroundColor: C.tertiary }}
+                >
+                  <Search size={14} style={{ color: C.textTertiary }} />
+                  <input
+                    type="text"
+                    value={assetSearch}
+                    onChange={(e) => setAssetSearch(e.target.value)}
+                    placeholder="Search assets…"
+                    autoFocus
+                    className="flex-1 bg-transparent outline-none text-sm"
+                    style={{ color: C.textPrimary }}
+                  />
+                  {assetSearch && (
+                    <button
+                      onClick={() => setAssetSearch("")}
+                      style={{ color: C.textTertiary }}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Category tabs */}
+              <div
+                className="flex items-center gap-1 px-3 py-2 overflow-x-auto flex-shrink-0"
+                style={{
+                  scrollbarWidth: "none",
+                  borderBottom: `1px solid ${C.strokeTertiary}`,
+                }}
+              >
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setAssetCategory(cat)}
+                    className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-medium transition-colors"
+                    style={{
+                      backgroundColor:
+                        assetCategory === cat ? C.blue : C.quaternary,
+                      color: assetCategory === cat ? C.white : C.textSecondary,
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+
+              {/* Symbol list */}
+              <div className="flex-1 overflow-y-auto">
+                {filtered.length === 0 ? (
+                  <div className="flex items-center justify-center h-32">
+                    <span className="text-sm" style={{ color: C.textTertiary }}>
+                      No assets found
+                    </span>
+                  </div>
+                ) : (
+                  filtered.map((sym) => {
+                    const isOpen = props.openTabs.some(
+                      (t) => t.symbol === sym.symbol,
+                    );
+                    const isPositive = !sym.change.startsWith("-");
+                    return (
+                      <button
+                        key={sym.symbol}
+                        onClick={() => handleSelect(sym)}
+                        className="w-full flex items-center gap-3 px-4 py-3 transition-colors active:opacity-70"
+                        style={{
+                          borderBottom: `1px solid ${C.strokeTertiary}`,
+                          backgroundColor: isOpen
+                            ? C.quaternary
+                            : "transparent",
+                        }}
+                      >
+                        <props.AssetFlag
+                          flag={sym.flag}
+                          symbol={sym.symbol}
+                          size={28}
+                        />
+                        <div className="flex-1 text-left min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className="text-sm font-semibold"
+                              style={{ color: C.textPrimary }}
+                            >
+                              {sym.displayName || sym.symbol}
+                            </span>
+                            {isOpen && (
+                              <span
+                                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                                style={{
+                                  backgroundColor: C.blue + "33",
+                                  color: C.blue,
+                                }}
+                              >
+                                Open
+                              </span>
+                            )}
+                          </div>
+                          <div
+                            className="text-[11px] mt-0.5"
+                            style={{ color: C.textTertiary }}
+                          >
+                            {sym.category}
+                          </div>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <div
+                            className="text-sm font-mono tabular-nums"
+                            style={{ color: C.textPrimary }}
+                          >
+                            {sym.price}
+                          </div>
+                          <div
+                            className="text-[11px] tabular-nums"
+                            style={{
+                              color: isPositive ? C.greenText : C.redText,
+                            }}
+                          >
+                            {sym.percentage}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })()}
     </div>
   );
 }

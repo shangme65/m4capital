@@ -67,6 +67,13 @@ interface RealTimeTradingChartProps {
   hoveredButton?: "higher" | "lower" | null;
   // Callback with the timestamp of the latest candle on the chart
   onLastCandleTimestamp?: (timestamp: number) => void;
+  // Suppress the dark overlay after the entry line (e.g. on mobile)
+  hideTradeOverlay?: boolean;
+  // Disable crosshair entirely (e.g. on mobile touch)
+  disableCrosshair?: boolean;
+  // Entry arrow: price where the trade was opened + which direction
+  activeTradeEntryPrice?: number;
+  activeTradeDirection?: "higher" | "lower";
 }
 
 export default function RealTimeTradingChart({
@@ -84,6 +91,10 @@ export default function RealTimeTradingChart({
   onTimeToXConverter,
   hoveredButton,
   onLastCandleTimestamp,
+  hideTradeOverlay = false,
+  disableCrosshair = false,
+  activeTradeEntryPrice,
+  activeTradeDirection,
 }: RealTimeTradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -96,6 +107,8 @@ export default function RealTimeTradingChart({
   const [showCandleTimePeriod, setShowCandleTimePeriod] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Y position (0-100%) of the active trade entry price on the chart
+  const [entryArrowY, setEntryArrowY] = useState<number | null>(null);
   const [livePrice, setLivePrice] = useState<{
     price: number;
     direction: "up" | "down" | "neutral";
@@ -262,34 +275,34 @@ export default function RealTimeTradingChart({
           tickLine: { color: "rgba(150, 150, 150, 0.3)" },
           tickText: { color: "#9e9aa7", size: 11 },
         },
-        // Crosshair styling - more visible
+        // Crosshair styling
         crosshair: {
-          show: true,
+          show: !disableCrosshair,
           horizontal: {
-            show: true,
+            show: !disableCrosshair,
             line: {
-              show: true,
+              show: !disableCrosshair,
               style: "dashed" as any,
-              color: "rgba(255, 165, 0, 0.6)",
+              color: "rgba(255, 165, 0, 0.4)",
               size: 1,
             },
             text: {
-              show: true,
+              show: !disableCrosshair,
               color: "#ffffff",
               borderColor: "#f7931a",
               backgroundColor: "#f7931a",
             },
           },
           vertical: {
-            show: true,
+            show: !disableCrosshair,
             line: {
-              show: true,
+              show: !disableCrosshair,
               style: "dashed" as any,
-              color: "rgba(255, 165, 0, 0.6)",
+              color: "rgba(255, 165, 0, 0.4)",
               size: 1,
             },
             text: {
-              show: true,
+              show: !disableCrosshair,
               color: "#ffffff",
               borderColor: "#f7931a",
               backgroundColor: "#f7931a",
@@ -411,13 +424,17 @@ export default function RealTimeTradingChart({
           if (forexData.length > 0) {
             // Responsive right offset: mobile needs much less than desktop
             // 600px on a 360px mobile screen pushes all candles completely off-screen
-            const containerWidth = chartContainerRef.current?.clientWidth ?? 800;
+            const containerWidth =
+              chartContainerRef.current?.clientWidth ?? 800;
             const isMobileView = containerWidth < 540;
-            const rightOffset = isMobileView ? Math.round(containerWidth * 0.25) : 200;
+            // Increase right offset to push current price more toward center
+            const rightOffset = isMobileView
+              ? Math.round(containerWidth * 0.35)
+              : 300;
             const barSpacing = isMobileView ? 7 : 12;
             chartRef.current.setOffsetRightDistance(rightOffset);
             chartRef.current.setLeftMinVisibleBarCount(10);
-            chartRef.current.setRightMinVisibleBarCount(3);
+            chartRef.current.setRightMinVisibleBarCount(5);
             chartRef.current.setBarSpace(barSpacing);
             // Scroll to show latest/current price
             chartRef.current.scrollToRealTime();
@@ -476,13 +493,17 @@ export default function RealTimeTradingChart({
           // Set scroll limit to data range - position current price in middle like IQ Option
           if (klineData.length > 0) {
             // Responsive right offset: mobile needs much less than desktop
-            const containerWidth = chartContainerRef.current?.clientWidth ?? 800;
+            const containerWidth =
+              chartContainerRef.current?.clientWidth ?? 800;
             const isMobileView = containerWidth < 540;
-            const rightOffset = isMobileView ? Math.round(containerWidth * 0.25) : 200;
+            // Increase right offset to push current price more toward center
+            const rightOffset = isMobileView
+              ? Math.round(containerWidth * 0.35)
+              : 300;
             const barSpacing = isMobileView ? 7 : 12;
             chartRef.current.setOffsetRightDistance(rightOffset);
             chartRef.current.setLeftMinVisibleBarCount(10);
-            chartRef.current.setRightMinVisibleBarCount(3);
+            chartRef.current.setRightMinVisibleBarCount(5);
             chartRef.current.setBarSpace(barSpacing);
             // Scroll to show latest/current price
             chartRef.current.scrollToRealTime();
@@ -621,12 +642,41 @@ export default function RealTimeTradingChart({
             return -100;
           });
         }
+
+        // Compute entry arrow Y position when there is an active trade entry price
+        if (activeTradeEntryPrice) {
+          try {
+            const entryPt = chart.convertToPixel(
+              { value: activeTradeEntryPrice },
+              { paneId: "candle_pane" },
+            );
+            if (
+              entryPt &&
+              typeof entryPt.y === "number" &&
+              containerHeight > 0
+            ) {
+              const pct = Math.max(
+                5,
+                Math.min(95, (entryPt.y / containerHeight) * 100),
+              );
+              setEntryArrowY(pct);
+            }
+          } catch {}
+        } else {
+          setEntryArrowY(null);
+        }
       }
     } catch (e) {
       // Fallback to center if conversion fails
       if (onPriceYPosition) onPriceYPosition(50);
     }
-  }, [livePrice, onPriceYPosition, onPriceToYConverter, onTimeToXConverter]);
+  }, [
+    livePrice,
+    onPriceYPosition,
+    onPriceToYConverter,
+    onTimeToXConverter,
+    activeTradeEntryPrice,
+  ]);
 
   const addIndicator = (type: string) => {
     if (!chartRef.current) return;
@@ -659,10 +709,47 @@ export default function RealTimeTradingChart({
     if (chartRef.current) chartRef.current.removeIndicator();
   };
 
-  // Focus on current price - scroll to latest candle
+  // Focus on current price - scroll to latest candle AND center vertically (IQ Option style)
   const focusOnCurrentPrice = () => {
     if (chartRef.current) {
+      // Horizontal: scroll to show latest candle (current price)
       chartRef.current.scrollToRealTime();
+
+      // Vertical: reset/auto-fit the price scale to center current price
+      try {
+        // Get current visible data range
+        const dataList = chartRef.current.getDataList();
+        if (dataList && dataList.length > 0) {
+          // Get the last ~50 candles to calculate a reasonable price range
+          const visibleCount = Math.min(50, dataList.length);
+          const recentCandles = dataList.slice(-visibleCount);
+
+          // Find highest and lowest prices in recent visible range
+          let highestPrice = -Infinity;
+          let lowestPrice = Infinity;
+
+          recentCandles.forEach((candle: any) => {
+            if (candle.high > highestPrice) highestPrice = candle.high;
+            if (candle.low < lowestPrice) lowestPrice = candle.low;
+          });
+
+          // Add 10% padding above and below to keep price centered with breathing room
+          const priceRange = highestPrice - lowestPrice;
+          const padding = priceRange * 0.1;
+          const paddedHigh = highestPrice + padding;
+          const paddedLow = lowestPrice - padding;
+
+          // Set the Y-axis range to center the current price
+          chartRef.current.setPriceVolumePrecision(5, 0);
+
+          // Force chart to re-render with new scale
+          chartRef.current.setOffsetRightDistance(
+            chartRef.current.getOffsetRightDistance() || 200,
+          );
+        }
+      } catch (error) {
+        console.warn("Failed to reset vertical scale:", error);
+      }
     }
   };
 
@@ -814,76 +901,6 @@ export default function RealTimeTradingChart({
         </div>
       )}
 
-      {/* Chart controls - Bottom left */}
-      <div className="absolute bottom-2 left-4 flex items-center gap-2 z-10"></div>
-
-      {/* Zoom & Focus Controls - Bottom center, visible on hover only */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-10 opacity-0 hover:opacity-60 transition-opacity duration-300">
-        {/* Zoom out button */}
-        <button
-          onClick={zoomOut}
-          className="w-8 h-8 flex items-center justify-center rounded text-[#9e9aa7] hover:text-white transition-colors"
-          title="Zoom Out"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M20 12H4"
-            />
-          </svg>
-        </button>
-
-        {/* Focus on current price button */}
-        <button
-          onClick={focusOnCurrentPrice}
-          className="w-8 h-8 flex items-center justify-center rounded text-[#9e9aa7] hover:text-white transition-colors"
-          title="Focus on current price"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 8v4m0 0v4m0-4h4m-4 0H8"
-            />
-            <circle cx="12" cy="12" r="9" strokeWidth={2} />
-          </svg>
-        </button>
-
-        {/* Zoom in button */}
-        <button
-          onClick={zoomIn}
-          className="w-8 h-8 flex items-center justify-center rounded text-[#9e9aa7] hover:text-white transition-colors"
-          title="Zoom In"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-        </button>
-      </div>
-
       {/* IQ Option Style Expiration Lines - Purchase time (white) and End time (red) */}
       {expirationCountdown !== undefined &&
         (() => {
@@ -917,6 +934,19 @@ export default function RealTimeTradingChart({
 
           return (
             <>
+              {/* Dark overlay covering the RIGHT side of purchase time line - only during active trade, not on mobile */}
+              {hasActiveTrades && !hideTradeOverlay && (
+                <div
+                  className="absolute top-0 bottom-0 pointer-events-none"
+                  style={{
+                    left: `${purchaseLinePos}%`,
+                    right: 0,
+                    backgroundColor: "rgba(0, 0, 0, 0.35)",
+                    zIndex: 10,
+                  }}
+                />
+              )}
+
               {/* Purchase Time Line (White dashed) */}
               <div
                 className="absolute top-0 bottom-8 pointer-events-none"
@@ -939,13 +969,16 @@ export default function RealTimeTradingChart({
                 {/* PURCHASE TIME label at top - hide when trade is active */}
                 {!hasActiveTradeData && (
                   <div
-                    className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
-                    style={{ color: "rgba(255, 255, 255, 0.7)" }}
+                    className="absolute top-1 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5"
+                    style={{ color: "rgba(255, 255, 255, 0.55)" }}
                   >
-                    <span className="text-[10px] tracking-wide whitespace-nowrap">
-                      PURCHASE TIME
+                    <span className="text-[8px] tracking-wider whitespace-nowrap uppercase">
+                      Purchase
                     </span>
-                    <span className="text-white text-2xl font-bold font-mono tracking-wide">
+                    <span
+                      className="text-[13px] font-bold font-mono leading-none"
+                      style={{ color: "rgba(255,255,255,0.85)" }}
+                    >
                       {String(
                         Math.floor((expirationCountdown || 0) / 60),
                       ).padStart(2, "0")}
@@ -1011,6 +1044,134 @@ export default function RealTimeTradingChart({
             </>
           );
         })()}
+
+      {/* Entry Point Arrow - shown at the price level where the trade was opened */}
+      {hasActiveTrades &&
+        activeTradeEntryPrice &&
+        activeTradeDirection &&
+        entryArrowY !== null && (
+          <>
+            {/* Horizontal dashed entry price line */}
+            <div
+              className="absolute left-0 right-0 pointer-events-none"
+              style={{
+                top: `${entryArrowY}%`,
+                height: "1px",
+                backgroundImage:
+                  activeTradeDirection === "higher"
+                    ? "repeating-linear-gradient(to right, rgba(34,197,94,0.55) 0px, rgba(34,197,94,0.55) 6px, transparent 6px, transparent 12px)"
+                    : "repeating-linear-gradient(to right, rgba(239,68,68,0.55) 0px, rgba(239,68,68,0.55) 6px, transparent 6px, transparent 12px)",
+                zIndex: 1002,
+              }}
+            />
+
+            {/* Arrow at the purchase time line (60%) */}
+            <div
+              className="absolute pointer-events-none"
+              style={{
+                left: "60%",
+                top: `${entryArrowY}%`,
+                transform: "translateX(-50%) translateY(-50%)",
+                zIndex: 1003,
+              }}
+            >
+              {activeTradeDirection === "higher" ? (
+                /* Green upward arrow ▲ */
+                <div style={{ position: "relative", width: 0, height: 0 }}>
+                  {/* Glow */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      width: "14px",
+                      height: "14px",
+                      borderRadius: "50%",
+                      backgroundColor: "rgba(34,197,94,0.25)",
+                      boxShadow: "0 0 6px 2px rgba(34,197,94,0.35)",
+                    }}
+                  />
+                  {/* Triangle pointing up */}
+                  <div
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: "6px solid transparent",
+                      borderRight: "6px solid transparent",
+                      borderBottom: "11px solid #22c55e",
+                      filter: "drop-shadow(0 0 2px rgba(34,197,94,0.8))",
+                      position: "relative",
+                      top: "-5px",
+                    }}
+                  />
+                </div>
+              ) : (
+                /* Red downward arrow ▼ */
+                <div style={{ position: "relative", width: 0, height: 0 }}>
+                  {/* Glow */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      width: "14px",
+                      height: "14px",
+                      borderRadius: "50%",
+                      backgroundColor: "rgba(239,68,68,0.25)",
+                      boxShadow: "0 0 6px 2px rgba(239,68,68,0.35)",
+                    }}
+                  />
+                  {/* Triangle pointing down */}
+                  <div
+                    style={{
+                      width: 0,
+                      height: 0,
+                      borderLeft: "6px solid transparent",
+                      borderRight: "6px solid transparent",
+                      borderTop: "11px solid #ef4444",
+                      filter: "drop-shadow(0 0 2px rgba(239,68,68,0.8))",
+                      position: "relative",
+                      top: "5px",
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Entry price badge on right edge */}
+            <div
+              className="absolute pointer-events-none flex items-center"
+              style={{
+                right: "64px",
+                top: `${entryArrowY}%`,
+                transform: "translateY(-50%)",
+                zIndex: 1003,
+              }}
+            >
+              <div
+                className="text-white text-[10px] font-bold font-mono px-1 py-0.5 rounded"
+                style={{
+                  backgroundColor:
+                    activeTradeDirection === "higher"
+                      ? "rgba(34,197,94,0.85)"
+                      : "rgba(239,68,68,0.85)",
+                  border: `1px solid ${activeTradeDirection === "higher" ? "#22c55e" : "#ef4444"}`,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {activeTradeEntryPrice.toFixed(
+                  activeTradeEntryPrice >= 100
+                    ? 2
+                    : activeTradeEntryPrice >= 1
+                      ? 4
+                      : 6,
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
       {/* Live Price Display - Hidden */}
     </div>

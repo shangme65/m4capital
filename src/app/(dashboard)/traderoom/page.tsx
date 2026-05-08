@@ -245,7 +245,6 @@ function TradingInterface() {
     "Stocks",
     "Crypto",
     "Commodities",
-    "Indices",
   ];
   const [showAddAssetModal, setShowAddAssetModal] = useState(false);
   const [addAssetSideTab, setAddAssetSideTab] = useState<
@@ -386,6 +385,7 @@ function TradingInterface() {
       entryPrice: number;
       entryYPosition: number;
       entryTime: number;
+      entryXPosition: number; // Store exact X% position at entry time
     }>
   >([]);
 
@@ -466,125 +466,6 @@ function TradingInterface() {
 
   const symbols = useMemo(
     () => [
-      // ===== CURRENCY INDICES (NEW) =====
-      {
-        symbol: "AUD Index",
-        displayName: "Australian Dollar In.",
-        price: "71.40563",
-        change: "+0.123",
-        percentage: "+0.17%",
-        flag: "AUD",
-        category: "Index",
-      },
-      {
-        symbol: "GBP Index",
-        displayName: "Pound Index",
-        price: "134.8180",
-        change: "+0.234",
-        percentage: "+0.17%",
-        flag: "GBP",
-        category: "Index",
-      },
-      {
-        symbol: "CAD Index",
-        displayName: "Canadian Dollar Ind.",
-        price: "73.87260",
-        change: "-0.145",
-        percentage: "-0.20%",
-        flag: "CAD",
-        category: "Index",
-      },
-      {
-        symbol: "EUR Index",
-        displayName: "Euro Index",
-        price: "116.8683",
-        change: "+0.543",
-        percentage: "+0.47%",
-        flag: "EUR",
-        category: "Index",
-      },
-      {
-        symbol: "Dollar Index",
-        price: "99.62505",
-        change: "-0.234",
-        percentage: "-0.23%",
-        flag: "USD",
-        category: "Index",
-      },
-      {
-        symbol: "Yen Index",
-        price: "63.44698",
-        change: "+0.123",
-        percentage: "+0.19%",
-        flag: "JPY",
-        category: "Index",
-      },
-      // ===== MARKET INDICES =====
-      {
-        symbol: "Magnificent 7",
-        price: "2264.468",
-        change: "+45.23",
-        percentage: "+2.04%",
-        flag: "✦",
-        category: "Index",
-      },
-      {
-        symbol: "AUS 200",
-        price: "8641.562",
-        change: "+23.45",
-        percentage: "+0.27%",
-        flag: "AUD",
-        category: "Index",
-      },
-      {
-        symbol: "EU 50",
-        price: "5661.541",
-        change: "+12.34",
-        percentage: "+0.22%",
-        flag: "EUR",
-        category: "Index",
-      },
-      {
-        symbol: "FR 40",
-        price: "7956.030",
-        change: "-34.56",
-        percentage: "-0.43%",
-        flag: "EUR",
-        category: "Index",
-      },
-      {
-        symbol: "GER 30",
-        price: "23751.42",
-        change: "+156.23",
-        percentage: "+0.66%",
-        flag: "EUR",
-        category: "Index",
-      },
-      // ===== SECTOR INDICES =====
-      {
-        symbol: "Airlines",
-        price: "2978.252",
-        change: "+12.34",
-        percentage: "+0.42%",
-        flag: "✈️",
-        category: "Index",
-      },
-      {
-        symbol: "Cannabis",
-        price: "1556.239",
-        change: "-5.67",
-        percentage: "-0.36%",
-        flag: "🌿",
-        category: "Index",
-      },
-      {
-        symbol: "Casino",
-        price: "2465.190",
-        change: "+34.56",
-        percentage: "+1.42%",
-        flag: "🎰",
-        category: "Index",
-      },
       // ===== FOREX PAIRS =====
       {
         symbol: "EUR/USD",
@@ -2161,6 +2042,11 @@ function TradingInterface() {
 
     setActiveTrades((prev) => [...prev, newTrade]);
 
+    // Calculate exact X position at the moment of trade entry
+    const entryXPosition = timeToXRef.current
+      ? timeToXRef.current(entryTime)
+      : 50; // Default to center if converter not available
+
     // Add persistent entry marker
     setEntryMarkers((prev) => [
       ...prev,
@@ -2172,6 +2058,7 @@ function TradingInterface() {
         entryPrice: newTrade.entryPrice,
         entryYPosition: newTrade.entryYPosition,
         entryTime: newTrade.entryTime,
+        entryXPosition, // Store the exact X% position where trade was placed
       },
     ]);
 
@@ -2203,21 +2090,24 @@ function TradingInterface() {
     const interval = setInterval(() => {
       const now = Date.now();
 
+      // Collect side effects to apply AFTER computing new state (avoids setState-in-updater)
+      const toSettle: Array<{
+        trade: ActiveTrade;
+        finishedTrade: FinishedTrade;
+        won: boolean;
+        payout: number;
+      }> = [];
+
       setActiveTrades((prev) => {
         const updatedTrades = prev.map((trade) => {
           if (trade.status !== "active") return trade;
 
-          // Check if trade has expired
           if (now >= trade.expirationTime) {
-            const tradeId = `${trade.symbol}-${trade.entryTime}-${trade.amount}`;
-
-            // Determine win/loss based on price movement
             const priceChange = currentPrice - trade.entryPrice;
             const won =
               (trade.direction === "higher" && priceChange > 0) ||
               (trade.direction === "lower" && priceChange < 0);
-
-            const payout = won ? trade.amount * 1.85 : 0; // 85% profit + original amount
+            const payout = won ? trade.amount * 1.85 : 0;
 
             const finishedTrade = {
               ...trade,
@@ -2226,62 +2116,9 @@ function TradingInterface() {
               exitPrice: currentPrice,
             };
 
-            // Only process side effects once per trade using ref guard
-            if (!settledTradeIdsRef.current.has(tradeId)) {
-              settledTradeIdsRef.current.add(tradeId);
-
-              // Update balance and persist to database for real account
-              if (selectedAccountType === "real") {
-                if (won) {
-                  setTraderoomBalance((prev) => prev + payout);
-                }
-                // Settle trade in database (records trade history and updates balance)
-                settleBinaryTradeAction({
-                  payout,
-                  tradeAmount: trade.amount,
-                  won,
-                  symbol: trade.symbol,
-                  direction: trade.direction,
-                  entryPrice: trade.entryPrice,
-                  exitPrice: currentPrice,
-                })
-                  .then(() => reloadTradeHistory())
-                  .catch(console.error);
-              } else {
-                // Practice account - only update local state
-                if (won) {
-                  setPracticeAccountBalance((prev) => prev + payout);
-                }
-              }
-
-              // Save as last finished trade (for positioning the popup)
-              setLastFinishedTrade(finishedTrade);
-
-              // Clear hover overlay immediately when trade ends
-              setHoveredButton(null);
-
-              // Accumulate session totals
-              setSessionTotalResult(
-                (prev) => prev + (finishedTrade.result || 0),
-              );
-              setSessionTotalInvested((prev) => prev + trade.amount);
-              setSessionTradeCount((prev) => prev + 1);
-
-              // Accumulate result to the corresponding tab (sum across multiple trades)
-              setOpenTabs((prev) =>
-                prev.map((tab) => {
-                  if (tab.symbol !== trade.symbol) return tab;
-                  const prevAmount = tab.lastResult?.amount || 0;
-                  const newAmount = prevAmount + (finishedTrade.result || 0);
-                  return {
-                    ...tab,
-                    lastResult: {
-                      amount: newAmount,
-                      status: newAmount >= 0 ? "won" : "lost",
-                    },
-                  };
-                }),
-              );
+            if (!settledTradeIdsRef.current.has(trade.id)) {
+              settledTradeIdsRef.current.add(trade.id);
+              toSettle.push({ trade, finishedTrade, won, payout });
             }
 
             return finishedTrade;
@@ -2290,25 +2127,62 @@ function TradingInterface() {
           return trade;
         });
 
-        return updatedTrades;
-      });
-
-      // Remove completed trades after 3 seconds (lastFinishedTrade persists separately)
-      setActiveTrades((prev) =>
-        prev.filter((trade) => {
+        // Remove completed trades older than 3s in the same pass
+        return updatedTrades.filter((trade) => {
           if (trade.status === "won" || trade.status === "lost") {
-            const completedTime = trade.expirationTime;
-            const shouldRemove = now - completedTime >= 3000;
+            const shouldRemove = now - trade.expirationTime >= 3000;
             if (shouldRemove) {
-              // Clean up settled ref entry
-              const tradeId = `${trade.symbol}-${trade.entryTime}-${trade.amount}`;
-              settledTradeIdsRef.current.delete(tradeId);
+              settledTradeIdsRef.current.delete(trade.id);
             }
             return !shouldRemove;
           }
           return true;
-        }),
-      );
+        });
+      });
+
+      // Apply side effects outside the updater to avoid "setState while rendering" error
+      for (const { trade, finishedTrade, won, payout } of toSettle) {
+        if (selectedAccountType === "real") {
+          if (won) {
+            setTraderoomBalance((prev) => prev + payout);
+          }
+          settleBinaryTradeAction({
+            payout,
+            tradeAmount: trade.amount,
+            won,
+            symbol: trade.symbol,
+            direction: trade.direction,
+            entryPrice: trade.entryPrice,
+            exitPrice: currentPrice,
+          })
+            .then(() => reloadTradeHistory())
+            .catch(console.error);
+        } else {
+          if (won) {
+            setPracticeAccountBalance((prev) => prev + payout);
+          }
+        }
+
+        setLastFinishedTrade(finishedTrade);
+        setHoveredButton(null);
+        setSessionTotalResult((prev) => prev + (finishedTrade.result || 0));
+        setSessionTotalInvested((prev) => prev + trade.amount);
+        setSessionTradeCount((prev) => prev + 1);
+        setOpenTabs((prev) =>
+          prev.map((tab) => {
+            if (tab.symbol !== trade.symbol) return tab;
+            const prevAmount = tab.lastResult?.amount || 0;
+            const newAmount = prevAmount + (finishedTrade.result || 0);
+            return {
+              ...tab,
+              lastResult: {
+                amount: newAmount,
+                status: newAmount >= 0 ? "won" : "lost",
+              },
+            };
+          }),
+        );
+      }
     }, 100);
 
     return () => clearInterval(interval);
@@ -2517,6 +2391,22 @@ function TradingInterface() {
           onShowHistory={() => setShowTradingHistory(true)}
           onShowPortfolio={() => setShowPortfolioPanel(true)}
           onShowAddAsset={() => setShowAddAssetModal(true)}
+          onAddTab={(sym) => {
+            const existingIdx = openTabs.findIndex((t) => t.symbol === sym);
+            if (existingIdx !== -1) {
+              setActiveTab(existingIdx);
+              setSelectedSymbol(sym);
+            } else {
+              if (openTabs.length >= 4) return;
+              const newTabs = [
+                ...openTabs,
+                { symbol: sym, type: selectedMarket },
+              ];
+              setOpenTabs(newTabs);
+              setActiveTab(newTabs.length - 1);
+              setSelectedSymbol(sym);
+            }
+          }}
         />
       )}
 
@@ -6773,68 +6663,175 @@ function TradingInterface() {
                     const dynamicY = priceToYRef.current
                       ? priceToYRef.current(marker.entryPrice)
                       : marker.entryYPosition;
-                    const dynamicX = timeToXRef.current
-                      ? timeToXRef.current(marker.entryTime)
-                      : null;
+                    // Use stored X position from when trade was placed (fixed to exact candle)
+                    const fixedX = marker.entryXPosition;
                     const isGreen = marker.direction === "higher";
+                    const badgeColor = isGreen ? "#22c55e" : "#ef4444";
+
+                    // Hide marker if it's scrolled off screen
+                    if (fixedX < -10 || fixedX > 110) return null;
+
+                    // Format entry price for right-side badge
+                    const priceStr = marker.entryPrice.toFixed(5);
+                    const smallPart = priceStr.slice(0, -4);
+                    const largePart = priceStr.slice(-4);
+
                     return (
-                      <div
-                        key={`entry-line-${marker.id}`}
-                        className="absolute left-0 right-[80px] z-[500] pointer-events-none"
-                        style={{ top: `${dynamicY}%` }}
-                      >
-                        <div
+                      <div key={`entry-marker-${marker.id}`}>
+                        {/* Dashed line - stops at entry candle position */}
+                        <motion.div
+                          className="absolute left-0 z-[500] pointer-events-none"
                           style={{
-                            height: "1px",
-                            backgroundImage: `repeating-linear-gradient(to right, ${isGreen ? "#22c55e" : "#ef4444"} 0, ${isGreen ? "#22c55e" : "#ef4444"} 6px, transparent 6px, transparent 12px)`,
+                            top: `${dynamicY}%`,
+                            transform: "translateY(-50%)",
+                            width: `${fixedX}%`,
                           }}
-                        />
-                        {/* Entry point: check circle + price badge */}
-                        <div
-                          className="absolute flex items-center gap-1"
-                          style={{
-                            left:
-                              dynamicX !== null ? `${dynamicX}%` : undefined,
-                            right: dynamicX === null ? "142px" : undefined,
-                            top: "-10px",
-                            transform:
-                              dynamicX !== null
-                                ? "translateX(-50%)"
-                                : undefined,
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          transition={{
+                            duration: 0.4,
+                            ease: [0.4, 0, 0.2, 1],
+                            scale: {
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 25,
+                            },
                           }}
                         >
-                          {/* Check circle */}
-                          <div
-                            className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0"
+                          <motion.div
                             style={{
-                              backgroundColor: isGreen ? "#166534" : "#991b1b",
-                              border: `1.5px solid ${isGreen ? "#22c55e" : "#ef4444"}`,
+                              height: "1px",
+                              width: "100%",
+                              backgroundImage: `repeating-linear-gradient(to right, ${badgeColor} 0, ${badgeColor} 6px, transparent 6px, transparent 12px)`,
+                              transformOrigin: "100% center",
+                            }}
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: 1 }}
+                            transition={{
+                              duration: 0.5,
+                              delay: 0.1,
+                              ease: "easeOut",
+                            }}
+                          />
+                        </motion.div>
+
+                        {/* Right-side price badge with sharp arrow - unified */}
+                        <motion.div
+                          className="absolute right-0 z-[500] pointer-events-none flex items-center"
+                          style={{
+                            top: `${dynamicY}%`,
+                            transform: "translateY(-50%)",
+                          }}
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{
+                            duration: 0.4,
+                            delay: 0.2,
+                            ease: [0.4, 0, 0.2, 1],
+                          }}
+                        >
+                          {/* Sharp arrow edge */}
+                          <div
+                            style={{
+                              width: 0,
+                              height: 0,
+                              borderTop: "14px solid transparent",
+                              borderBottom: "14px solid transparent",
+                              borderRight: `10px solid ${badgeColor}`,
+                              flexShrink: 0,
+                            }}
+                          />
+                          {/* Price badge */}
+                          <div
+                            className="px-2 py-0.5 text-white font-bold whitespace-nowrap flex items-baseline"
+                            style={{
+                              backgroundColor: badgeColor,
+                              fontFamily: "Arial, sans-serif",
+                              lineHeight: 1.2,
+                              minHeight: "28px",
+                              alignItems: "center",
                             }}
                           >
-                            <svg
-                              className="w-2.5 h-2.5 text-white"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="3"
-                            >
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          </div>
-                          {/* Entry price badge */}
-                          <div
-                            className="flex items-center justify-center flex-shrink-0"
-                            style={{
-                              backgroundColor: isGreen ? "#22c55e" : "#ef4444",
-                              borderRadius: "8px",
-                              padding: "4px 10px",
-                            }}
-                          >
-                            <span className="text-white font-bold text-sm leading-tight whitespace-nowrap">
-                              $ {marker.amount.toLocaleString()}
+                            <span style={{ fontSize: "13px", fontWeight: 600 }}>
+                              {smallPart}
+                            </span>
+                            <span style={{ fontSize: "18px", fontWeight: 700 }}>
+                              {largePart}
                             </span>
                           </div>
-                        </div>
+                        </motion.div>
+
+                        {/* Entry point: amount badge with checkmark at candle position */}
+                        <motion.div
+                          className="absolute flex items-center z-[501]"
+                          style={{
+                            left: `${fixedX}%`,
+                            top: `${dynamicY}%`,
+                            transform: "translate(-50%, -50%)",
+                          }}
+                          initial={{ opacity: 0, y: -10, scale: 0.8 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{
+                            duration: 0.4,
+                            delay: 0.15,
+                            ease: [0.4, 0, 0.2, 1],
+                            scale: {
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 20,
+                            },
+                          }}
+                        >
+                          {/* Unified badge with integrated checkmark */}
+                          <motion.div
+                            className="flex items-center flex-shrink-0 overflow-hidden"
+                            style={{
+                              backgroundColor: badgeColor,
+                              borderRadius: "8px",
+                            }}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <span className="text-white font-medium text-sm leading-tight whitespace-nowrap px-2">
+                              $ {marker.amount.toLocaleString()}
+                            </span>
+                            {/* Integrated directional arrow icon with visual separator */}
+                            <motion.div
+                              className="h-full flex items-center justify-center flex-shrink-0 px-1.5"
+                              style={{
+                                backgroundColor: isGreen
+                                  ? "#166534"
+                                  : "#991b1b",
+                                borderLeft: `1.5px solid rgba(255,255,255,0.2)`,
+                                paddingTop: "2px",
+                                paddingBottom: "2px",
+                              }}
+                              initial={{ scale: 0, rotate: -90 }}
+                              animate={{ scale: 1, rotate: 0 }}
+                              transition={{
+                                duration: 0.4,
+                                delay: 0.3,
+                                type: "spring",
+                                stiffness: 400,
+                                damping: 20,
+                              }}
+                            >
+                              <svg
+                                className="w-2.5 h-2.5 text-white"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                              >
+                                {marker.direction === "higher" ? (
+                                  <path d="M12 4l8 8h-16z" />
+                                ) : (
+                                  <path d="M12 20l-8-8h16z" />
+                                )}
+                              </svg>
+                            </motion.div>
+                          </motion.div>
+                        </motion.div>
                       </div>
                     );
                   })}
@@ -6883,9 +6880,18 @@ function TradingInterface() {
 
                           {/* TOTAL RESULT (P/L) popup - shows accumulated session total */}
                           <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
+                            initial={{ opacity: 0, scale: 0.7, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.7, y: -20 }}
+                            transition={{
+                              duration: 0.5,
+                              ease: [0.34, 1.56, 0.64, 1],
+                              scale: {
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 20,
+                              },
+                            }}
                             className="absolute z-[500] pointer-events-auto"
                             style={{
                               left:
@@ -6896,16 +6902,31 @@ function TradingInterface() {
                               transform: "translate(-50%, -50%)",
                             }}
                           >
-                            <div
+                            {/* Unified Result badge with integrated checkmark */}
+                            <motion.div
                               className="relative flex flex-col items-start px-4 py-2.5 rounded-lg min-w-[140px]"
                               style={{
                                 backgroundColor: isSessionWin
                                   ? "#22c55e"
                                   : "#ef4444",
                               }}
+                              initial={{ scale: 0.9 }}
+                              animate={{
+                                scale: [0.9, 1.05, 1],
+                                boxShadow: [
+                                  `0 0 0 0 ${isSessionWin ? "rgba(34, 197, 94, 0.7)" : "rgba(239, 68, 68, 0.7)"}`,
+                                  `0 0 0 10px ${isSessionWin ? "rgba(34, 197, 94, 0)" : "rgba(239, 68, 68, 0)"}`,
+                                  `0 0 0 0 ${isSessionWin ? "rgba(34, 197, 94, 0)" : "rgba(239, 68, 68, 0)"}`,
+                                ],
+                              }}
+                              transition={{
+                                duration: 0.6,
+                                delay: 0.2,
+                                times: [0, 0.5, 1],
+                              }}
                             >
                               {/* Close button */}
-                              <button
+                              <motion.button
                                 onClick={() => {
                                   setLastFinishedTrade(null);
                                   setSessionTotalResult(0);
@@ -6914,6 +6935,11 @@ function TradingInterface() {
                                   setEntryMarkers([]);
                                 }}
                                 className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                                whileHover={{ scale: 1.15, rotate: 90 }}
+                                whileTap={{ scale: 0.9 }}
+                                initial={{ opacity: 0, rotate: -180 }}
+                                animate={{ opacity: 1, rotate: 0 }}
+                                transition={{ duration: 0.3, delay: 0.4 }}
                               >
                                 <svg
                                   className="w-3.5 h-3.5 text-white"
@@ -6924,21 +6950,71 @@ function TradingInterface() {
                                 >
                                   <path d="M18 6L6 18M6 6l12 12" />
                                 </svg>
-                              </button>
-                              <span className="text-xs text-white/90 font-bold tracking-wider leading-tight uppercase">
+                              </motion.button>
+                              <motion.span
+                                className="text-xs text-white/90 font-bold tracking-wider leading-tight uppercase"
+                                initial={{ opacity: 0, y: -5 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3, delay: 0.3 }}
+                              >
                                 RESULTS (P/L)
-                              </span>
-                              <span className="text-white font-extrabold text-lg leading-tight mt-0.5">
-                                {isSessionWin ? "+" : "−"}${" "}
-                                {Math.abs(sessionTotalResult).toLocaleString(
-                                  undefined,
-                                  {
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 0,
-                                  },
-                                )}
-                              </span>
-                            </div>
+                              </motion.span>
+                              <div className="flex items-stretch mt-0.5 overflow-hidden rounded-lg">
+                                <motion.span
+                                  className="text-white font-extrabold text-lg leading-tight px-3 py-1 flex items-center"
+                                  initial={{ opacity: 0, scale: 0.5 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  transition={{
+                                    duration: 0.4,
+                                    delay: 0.4,
+                                    type: "spring",
+                                    stiffness: 300,
+                                    damping: 15,
+                                  }}
+                                >
+                                  {isSessionWin ? "+" : "−"}${" "}
+                                  {Math.abs(sessionTotalResult).toLocaleString(
+                                    undefined,
+                                    {
+                                      minimumFractionDigits: 0,
+                                      maximumFractionDigits: 0,
+                                    },
+                                  )}
+                                </motion.span>
+                                {/* Integrated directional arrow icon with visual separator */}
+                                <motion.div
+                                  className="flex items-center justify-center flex-shrink-0 px-2"
+                                  style={{
+                                    backgroundColor: isSessionWin
+                                      ? "#166534"
+                                      : "#991b1b",
+                                    borderLeft: `1.5px solid ${isSessionWin ? "rgba(255,255,255,0.2)" : "rgba(255,255,255,0.2)"}`,
+                                  }}
+                                  initial={{ scale: 0, rotate: -180 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  transition={{
+                                    duration: 0.5,
+                                    delay: 0.5,
+                                    type: "spring",
+                                    stiffness: 400,
+                                    damping: 15,
+                                  }}
+                                >
+                                  <svg
+                                    className="w-3 h-3 text-white"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                  >
+                                    {lastFinishedTrade.direction ===
+                                    "higher" ? (
+                                      <path d="M12 4l8 8h-16z" />
+                                    ) : (
+                                      <path d="M12 20l-8-8h16z" />
+                                    )}
+                                  </svg>
+                                </motion.div>
+                              </div>
+                            </motion.div>
                           </motion.div>
                         </>
                       );
@@ -7451,8 +7527,6 @@ function TradingInterface() {
                     return symbols.filter((s) => s.category === "Stocks");
                   } else if (market === "commodities") {
                     return symbols.filter((s) => s.category === "Commodities");
-                  } else if (market === "indices") {
-                    return symbols.filter((s) => s.category === "Index");
                   }
                   return symbols;
                 };

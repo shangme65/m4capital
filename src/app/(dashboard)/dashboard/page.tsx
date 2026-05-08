@@ -29,7 +29,10 @@ import { useVerificationGate } from "@/hooks/useVerificationGate";
 import VerificationRequiredModal from "@/components/client/VerificationRequiredModal";
 import PendingDepositsWidget from "@/components/client/PendingDepositsWidget";
 import SignalStrength from "@/components/client/SignalStrength";
-import { formatCryptoAmount, truncateCurrencyString } from "@/lib/format-crypto-amount";
+import {
+  formatCryptoAmount,
+  truncateCurrencyString,
+} from "@/lib/format-crypto-amount";
 import {
   BalanceCardSkeleton,
   PortfolioGridSkeleton,
@@ -59,15 +62,19 @@ function DashboardContent() {
   } = usePortfolio("all");
 
   // Optimistic updates state - tracks local changes before server confirmation
-  const [optimisticAssets, setOptimisticAssets] = useState<{added: string[], removed: string[]}>({
+  const [optimisticAssets, setOptimisticAssets] = useState<{
+    added: string[];
+    removed: string[];
+  }>({
     added: [],
-    removed: []
+    removed: [],
   });
 
   // Memoize portfolio symbols to prevent unnecessary re-subscriptions
   // Include optimistically added assets in price subscriptions
   const portfolioSymbols = useMemo(() => {
-    const baseSymbols = portfolio?.portfolio?.assets?.map((a: any) => a.symbol) || [];
+    const baseSymbols =
+      portfolio?.portfolio?.assets?.map((a: any) => a.symbol) || [];
     const allSymbols = [...baseSymbols, ...optimisticAssets.added];
     // Remove duplicates
     return [...new Set(allSymbols)];
@@ -188,17 +195,13 @@ function DashboardContent() {
 
   // Removed "Just now" timer to prevent unnecessary re-renders
 
-  // Wait for session to fully load before rendering dashboard
-  if (status === "loading" || !session) {
-    return (
-      <div className={`flex items-center justify-center min-h-screen ${isDark ? "" : "bg-gray-50"}`}>
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className={isDark ? "text-gray-400" : "text-gray-600"}>Loading dashboard...</p>
-          <p className={`text-sm mt-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>Please wait...</p>
-        </div>
-      </div>
-    );
+  // Redirect if no session (Suspense boundary handles loading state)
+  if (status === "loading") {
+    return null; // Let Suspense boundary show loading
+  }
+
+  if (!session) {
+    return null; // Auth check handled by layout
   }
 
   const handleTransactionClick = (activity: Transaction) => {
@@ -298,7 +301,7 @@ function DashboardContent() {
     // Get proper payment method display from method field
     const getPaymentMethodDisplay = (
       method: string | undefined,
-      asset: string
+      asset: string,
     ): string => {
       if (!method) return `${getCryptoName(asset)} (${asset})`;
 
@@ -410,7 +413,7 @@ function DashboardContent() {
         {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
-        }
+        },
       )}`;
       return truncateCurrencyString(formatted, 18);
     }
@@ -421,54 +424,241 @@ function DashboardContent() {
   };
 
   // Currency accent colors based on dominant flag color
-  const getCurrencyAccentColor = (currency: string): { primary: string; secondary: string; glow: string } => {
-    const colors: Record<string, { primary: string; secondary: string; glow: string }> = {
-      BRL: { primary: "#009C3B", secondary: "#FFDF00", glow: "rgba(0,156,59,0.4)" },
-      USD: { primary: "#3C3B6E", secondary: "#B22234", glow: "rgba(178,34,52,0.4)" },
-      EUR: { primary: "#003399", secondary: "#FFCC00", glow: "rgba(0,51,153,0.4)" },
-      GBP: { primary: "#CF142B", secondary: "#00247D", glow: "rgba(207,20,43,0.4)" },
-      NGN: { primary: "#008751", secondary: "#FFFFFF", glow: "rgba(0,135,81,0.4)" },
-      ZAR: { primary: "#007A4D", secondary: "#FFB612", glow: "rgba(0,122,77,0.4)" },
-      KES: { primary: "#BB0000", secondary: "#006600", glow: "rgba(187,0,0,0.4)" },
-      GHS: { primary: "#006B3F", secondary: "#FCD116", glow: "rgba(0,107,63,0.4)" },
-      JPY: { primary: "#BC002D", secondary: "#FFFFFF", glow: "rgba(188,0,45,0.4)" },
-      CAD: { primary: "#FF0000", secondary: "#FFFFFF", glow: "rgba(255,0,0,0.4)" },
-      AUD: { primary: "#00008B", secondary: "#FF0000", glow: "rgba(0,0,139,0.4)" },
-      CHF: { primary: "#FF0000", secondary: "#FFFFFF", glow: "rgba(255,0,0,0.4)" },
-      CNY: { primary: "#DE2910", secondary: "#FFDE00", glow: "rgba(222,41,16,0.4)" },
-      INR: { primary: "#FF9933", secondary: "#138808", glow: "rgba(255,153,51,0.4)" },
-      MXN: { primary: "#006847", secondary: "#CE1126", glow: "rgba(0,104,71,0.4)" },
-      TRY: { primary: "#E30A17", secondary: "#FFFFFF", glow: "rgba(227,10,23,0.4)" },
-      SAR: { primary: "#006C35", secondary: "#FFFFFF", glow: "rgba(0,108,53,0.4)" },
-      AED: { primary: "#00732F", secondary: "#FF0000", glow: "rgba(0,115,47,0.4)" },
-      SGD: { primary: "#EF3340", secondary: "#FFFFFF", glow: "rgba(239,51,64,0.4)" },
-      KGS: { primary: "#E8112D", secondary: "#FFCC00", glow: "rgba(232,17,45,0.4)" },
-      KZT: { primary: "#00AFCA", secondary: "#FFE800", glow: "rgba(0,175,202,0.4)" },
-      UZS: { primary: "#1EB53A", secondary: "#0099B5", glow: "rgba(30,181,58,0.4)" },
-      PKR: { primary: "#01411C", secondary: "#FFFFFF", glow: "rgba(1,65,28,0.4)" },
-      BDT: { primary: "#006A4E", secondary: "#F42A41", glow: "rgba(0,106,78,0.4)" },
-      EGP: { primary: "#CE1126", secondary: "#000000", glow: "rgba(206,17,38,0.4)" },
-      MAD: { primary: "#C1272D", secondary: "#006233", glow: "rgba(193,39,45,0.4)" },
-      DZD: { primary: "#006233", secondary: "#D21034", glow: "rgba(0,98,51,0.4)" },
-      KWD: { primary: "#007A3D", secondary: "#CE1126", glow: "rgba(0,122,61,0.4)" },
-      QAR: { primary: "#8D1B3D", secondary: "#FFFFFF", glow: "rgba(141,27,61,0.4)" },
-      THB: { primary: "#A51931", secondary: "#2D2A4A", glow: "rgba(165,25,49,0.4)" },
-      IDR: { primary: "#CE1126", secondary: "#FFFFFF", glow: "rgba(206,17,38,0.4)" },
-      MYR: { primary: "#CC0001", secondary: "#010066", glow: "rgba(204,0,1,0.4)" },
-      VND: { primary: "#DA251D", secondary: "#FFFF00", glow: "rgba(218,37,29,0.4)" },
-      TWD: { primary: "#FE0000", secondary: "#000095", glow: "rgba(254,0,0,0.4)" },
-      HKD: { primary: "#DE2910", secondary: "#FFDE00", glow: "rgba(222,41,16,0.4)" },
-      KRW: { primary: "#CD2E3A", secondary: "#003478", glow: "rgba(205,46,58,0.4)" },
-      CZK: { primary: "#D7141A", secondary: "#11457E", glow: "rgba(215,20,26,0.4)" },
-      PLN: { primary: "#DC143C", secondary: "#FFFFFF", glow: "rgba(220,20,60,0.4)" },
-      HUF: { primary: "#CE2939", secondary: "#477050", glow: "rgba(206,41,57,0.4)" },
-      RON: { primary: "#002B7F", secondary: "#FCD116", glow: "rgba(0,43,127,0.4)" },
-      CLP: { primary: "#D52B1E", secondary: "#003087", glow: "rgba(213,43,30,0.4)" },
-      COP: { primary: "#FCD116", secondary: "#003087", glow: "rgba(252,209,22,0.4)" },
-      ARS: { primary: "#74ACDF", secondary: "#FFFFFF", glow: "rgba(116,172,223,0.4)" },
-      PEN: { primary: "#D91023", secondary: "#FFFFFF", glow: "rgba(217,16,35,0.4)" },
+  const getCurrencyAccentColor = (
+    currency: string,
+  ): { primary: string; secondary: string; glow: string } => {
+    const colors: Record<
+      string,
+      { primary: string; secondary: string; glow: string }
+    > = {
+      BRL: {
+        primary: "#009C3B",
+        secondary: "#FFDF00",
+        glow: "rgba(0,156,59,0.4)",
+      },
+      USD: {
+        primary: "#3C3B6E",
+        secondary: "#B22234",
+        glow: "rgba(178,34,52,0.4)",
+      },
+      EUR: {
+        primary: "#003399",
+        secondary: "#FFCC00",
+        glow: "rgba(0,51,153,0.4)",
+      },
+      GBP: {
+        primary: "#CF142B",
+        secondary: "#00247D",
+        glow: "rgba(207,20,43,0.4)",
+      },
+      NGN: {
+        primary: "#008751",
+        secondary: "#FFFFFF",
+        glow: "rgba(0,135,81,0.4)",
+      },
+      ZAR: {
+        primary: "#007A4D",
+        secondary: "#FFB612",
+        glow: "rgba(0,122,77,0.4)",
+      },
+      KES: {
+        primary: "#BB0000",
+        secondary: "#006600",
+        glow: "rgba(187,0,0,0.4)",
+      },
+      GHS: {
+        primary: "#006B3F",
+        secondary: "#FCD116",
+        glow: "rgba(0,107,63,0.4)",
+      },
+      JPY: {
+        primary: "#BC002D",
+        secondary: "#FFFFFF",
+        glow: "rgba(188,0,45,0.4)",
+      },
+      CAD: {
+        primary: "#FF0000",
+        secondary: "#FFFFFF",
+        glow: "rgba(255,0,0,0.4)",
+      },
+      AUD: {
+        primary: "#00008B",
+        secondary: "#FF0000",
+        glow: "rgba(0,0,139,0.4)",
+      },
+      CHF: {
+        primary: "#FF0000",
+        secondary: "#FFFFFF",
+        glow: "rgba(255,0,0,0.4)",
+      },
+      CNY: {
+        primary: "#DE2910",
+        secondary: "#FFDE00",
+        glow: "rgba(222,41,16,0.4)",
+      },
+      INR: {
+        primary: "#FF9933",
+        secondary: "#138808",
+        glow: "rgba(255,153,51,0.4)",
+      },
+      MXN: {
+        primary: "#006847",
+        secondary: "#CE1126",
+        glow: "rgba(0,104,71,0.4)",
+      },
+      TRY: {
+        primary: "#E30A17",
+        secondary: "#FFFFFF",
+        glow: "rgba(227,10,23,0.4)",
+      },
+      SAR: {
+        primary: "#006C35",
+        secondary: "#FFFFFF",
+        glow: "rgba(0,108,53,0.4)",
+      },
+      AED: {
+        primary: "#00732F",
+        secondary: "#FF0000",
+        glow: "rgba(0,115,47,0.4)",
+      },
+      SGD: {
+        primary: "#EF3340",
+        secondary: "#FFFFFF",
+        glow: "rgba(239,51,64,0.4)",
+      },
+      KGS: {
+        primary: "#E8112D",
+        secondary: "#FFCC00",
+        glow: "rgba(232,17,45,0.4)",
+      },
+      KZT: {
+        primary: "#00AFCA",
+        secondary: "#FFE800",
+        glow: "rgba(0,175,202,0.4)",
+      },
+      UZS: {
+        primary: "#1EB53A",
+        secondary: "#0099B5",
+        glow: "rgba(30,181,58,0.4)",
+      },
+      PKR: {
+        primary: "#01411C",
+        secondary: "#FFFFFF",
+        glow: "rgba(1,65,28,0.4)",
+      },
+      BDT: {
+        primary: "#006A4E",
+        secondary: "#F42A41",
+        glow: "rgba(0,106,78,0.4)",
+      },
+      EGP: {
+        primary: "#CE1126",
+        secondary: "#000000",
+        glow: "rgba(206,17,38,0.4)",
+      },
+      MAD: {
+        primary: "#C1272D",
+        secondary: "#006233",
+        glow: "rgba(193,39,45,0.4)",
+      },
+      DZD: {
+        primary: "#006233",
+        secondary: "#D21034",
+        glow: "rgba(0,98,51,0.4)",
+      },
+      KWD: {
+        primary: "#007A3D",
+        secondary: "#CE1126",
+        glow: "rgba(0,122,61,0.4)",
+      },
+      QAR: {
+        primary: "#8D1B3D",
+        secondary: "#FFFFFF",
+        glow: "rgba(141,27,61,0.4)",
+      },
+      THB: {
+        primary: "#A51931",
+        secondary: "#2D2A4A",
+        glow: "rgba(165,25,49,0.4)",
+      },
+      IDR: {
+        primary: "#CE1126",
+        secondary: "#FFFFFF",
+        glow: "rgba(206,17,38,0.4)",
+      },
+      MYR: {
+        primary: "#CC0001",
+        secondary: "#010066",
+        glow: "rgba(204,0,1,0.4)",
+      },
+      VND: {
+        primary: "#DA251D",
+        secondary: "#FFFF00",
+        glow: "rgba(218,37,29,0.4)",
+      },
+      TWD: {
+        primary: "#FE0000",
+        secondary: "#000095",
+        glow: "rgba(254,0,0,0.4)",
+      },
+      HKD: {
+        primary: "#DE2910",
+        secondary: "#FFDE00",
+        glow: "rgba(222,41,16,0.4)",
+      },
+      KRW: {
+        primary: "#CD2E3A",
+        secondary: "#003478",
+        glow: "rgba(205,46,58,0.4)",
+      },
+      CZK: {
+        primary: "#D7141A",
+        secondary: "#11457E",
+        glow: "rgba(215,20,26,0.4)",
+      },
+      PLN: {
+        primary: "#DC143C",
+        secondary: "#FFFFFF",
+        glow: "rgba(220,20,60,0.4)",
+      },
+      HUF: {
+        primary: "#CE2939",
+        secondary: "#477050",
+        glow: "rgba(206,41,57,0.4)",
+      },
+      RON: {
+        primary: "#002B7F",
+        secondary: "#FCD116",
+        glow: "rgba(0,43,127,0.4)",
+      },
+      CLP: {
+        primary: "#D52B1E",
+        secondary: "#003087",
+        glow: "rgba(213,43,30,0.4)",
+      },
+      COP: {
+        primary: "#FCD116",
+        secondary: "#003087",
+        glow: "rgba(252,209,22,0.4)",
+      },
+      ARS: {
+        primary: "#74ACDF",
+        secondary: "#FFFFFF",
+        glow: "rgba(116,172,223,0.4)",
+      },
+      PEN: {
+        primary: "#D91023",
+        secondary: "#FFFFFF",
+        glow: "rgba(217,16,35,0.4)",
+      },
     };
-    return colors[currency] || { primary: "#6366f1", secondary: "#818cf8", glow: "rgba(99,102,241,0.4)" };
+    return (
+      colors[currency] || {
+        primary: "#6366f1",
+        secondary: "#818cf8",
+        glow: "rgba(99,102,241,0.4)",
+      }
+    );
   };
 
   // Income percent: measure change of user's money (deposits + received + earnings)
@@ -771,7 +961,7 @@ function DashboardContent() {
           boxShadow: isDark
             ? "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)"
             : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
-          border: isDark 
+          border: isDark
             ? "1px solid rgba(255, 255, 255, 0.08)"
             : "1px solid rgba(0, 0, 0, 0.15)",
         }}
@@ -789,7 +979,9 @@ function DashboardContent() {
         {/* Portfolio Value Header */}
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-2 sm:mb-3">
-            <h1 className={`text-lg sm:text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            <h1
+              className={`text-lg sm:text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+            >
               Portfolio Value
             </h1>
           </div>
@@ -798,16 +990,25 @@ function DashboardContent() {
             <div className="flex items-center gap-2">
               <div
                 className={`text-xl sm:text-3xl font-bold mb-1 bg-clip-text text-transparent ${
-                  isDark 
+                  isDark
                     ? "bg-gradient-to-r from-blue-400 via-white to-blue-400 drop-shadow-[0_2px_10px_rgba(59,130,246,0.2)] [text-shadow:_0_0_20px_rgba(59,130,246,0.1),_0_2px_4px_rgba(0,0,0,0.8)]"
                     : "bg-gradient-to-r from-blue-600 via-gray-900 to-blue-600 drop-shadow-[0_2px_10px_rgba(59,130,246,0.15)]"
                 }`}
-                style={{ WebkitTextStroke: isDark ? "0.5px rgba(255,255,255,0.1)" : "0.5px rgba(0,0,0,0.05)" }}
+                style={{
+                  WebkitTextStroke: isDark
+                    ? "0.5px rgba(255,255,255,0.1)"
+                    : "0.5px rgba(0,0,0,0.05)",
+                }}
               >
                 {portfolioLoading ? (
-                  <div className={`animate-pulse h-12 w-48 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
+                  <div
+                    className={`animate-pulse h-12 w-48 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}
+                  ></div>
                 ) : showBalances ? (
-                  truncateCurrencyString(formatAmount(portfolioValueInUSD || 0, 2), 18)
+                  truncateCurrencyString(
+                    formatAmount(portfolioValueInUSD || 0, 2),
+                    18,
+                  )
                 ) : (
                   "••••••"
                 )}
@@ -857,20 +1058,28 @@ function DashboardContent() {
 
             <div className="flex items-center gap-2">
               {portfolioLoading ? (
-                <div className={`animate-pulse h-6 w-24 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
+                <div
+                  className={`animate-pulse h-6 w-24 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}
+                ></div>
               ) : (
                 <>
                   <span
                     className={`text-sm sm:text-base font-medium ${
-                      incomePercent >= 0 
-                        ? isDark ? "text-green-400" : "text-green-600" 
-                        : isDark ? "text-red-400" : "text-red-600"
+                      incomePercent >= 0
+                        ? isDark
+                          ? "text-green-400"
+                          : "text-green-600"
+                        : isDark
+                          ? "text-red-400"
+                          : "text-red-600"
                     }`}
                   >
                     {incomePercent >= 0 ? "+" : ""}
                     {incomePercent.toFixed(2)}%
                   </span>
-                  <span className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  <span
+                    className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  >
                     24hrs
                   </span>
                   {/* Info icon for tooltip */}
@@ -889,14 +1098,18 @@ function DashboardContent() {
                       />
                     </svg>
                     {/* Tooltip */}
-                    <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-2 text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 ${isDark ? "bg-gray-900 text-white border border-gray-700" : "bg-white text-gray-800 border border-gray-200"}`}>
+                    <div
+                      className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 p-2 text-xs rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 ${isDark ? "bg-gray-900 text-white border border-gray-700" : "bg-white text-gray-800 border border-gray-200"}`}
+                    >
                       <div className="text-center">
                         This percentage measures changes to your account balance
                         from deposits, withdrawals and trading results (not
                         market price movement).
                       </div>
                       <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
-                        <div className={`border-4 border-transparent ${isDark ? "border-t-gray-900" : "border-t-white"}`}></div>
+                        <div
+                          className={`border-4 border-transparent ${isDark ? "border-t-gray-900" : "border-t-white"}`}
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -981,7 +1194,9 @@ function DashboardContent() {
                 boxShadow: isDark
                   ? "inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
                   : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
-                border: isDark ? "1px solid rgba(59, 130, 246, 0.2)" : "1px solid rgba(0, 0, 0, 0.15)",
+                border: isDark
+                  ? "1px solid rgba(59, 130, 246, 0.2)"
+                  : "1px solid rgba(0, 0, 0, 0.15)",
               }}
             >
               <div className="relative z-10">
@@ -993,9 +1208,13 @@ function DashboardContent() {
                       width={28}
                       height={28}
                       className="rounded-full object-cover"
-                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                      style={{
+                        filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                      }}
                     />
-                    <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                    <span
+                      className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                    >
                       {preferredCurrency}
                     </span>
                   </div>
@@ -1003,7 +1222,9 @@ function DashboardContent() {
                     className={`text-sm sm:text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}
                   >
                     {portfolioLoading ? (
-                      <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
+                      <div
+                        className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}
+                      ></div>
                     ) : showBalances ? (
                       formatBalanceDisplay(availableBalance || 0)
                     ) : (
@@ -1013,14 +1234,16 @@ function DashboardContent() {
                 </div>
                 {/* Balance Progress bar */}
                 <div className="mt-1.5">
-                  <div className={`h-1 rounded-full overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-300/50"}`}>
+                  <div
+                    className={`h-1 rounded-full overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-300/50"}`}
+                  >
                     <div
                       className="h-full rounded-full transition-all duration-500 ease-out"
                       style={{
                         background: "#22c55e",
                         width: `${Math.min(
                           Math.max((availableBalance / 10000) * 100, 0),
-                          100
+                          100,
                         )}%`,
                       }}
                     />
@@ -1039,7 +1262,9 @@ function DashboardContent() {
                 boxShadow: isDark
                   ? "inset 0 2px 4px rgba(0, 0, 0, 0.4), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
                   : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
-                border: isDark ? "1px solid rgba(34, 197, 94, 0.2)" : "1px solid rgba(0, 0, 0, 0.15)",
+                border: isDark
+                  ? "1px solid rgba(34, 197, 94, 0.2)"
+                  : "1px solid rgba(0, 0, 0, 0.15)",
               }}
             >
               <div className="relative z-10">
@@ -1051,9 +1276,13 @@ function DashboardContent() {
                       width={28}
                       height={28}
                       className="rounded-full object-cover"
-                      style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                      style={{
+                        filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                      }}
                     />
-                    <span className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                    <span
+                      className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                    >
                       Traderoom
                     </span>
                   </div>
@@ -1061,9 +1290,14 @@ function DashboardContent() {
                     className={`text-sm sm:text-base font-bold ${isDark ? "text-white" : "text-gray-900"}`}
                   >
                     {portfolioLoading ? (
-                      <div className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}></div>
+                      <div
+                        className={`animate-pulse h-4 w-16 rounded ${isDark ? "bg-gray-700" : "bg-gray-300"}`}
+                      ></div>
                     ) : showBalances ? (
-                      truncateCurrencyString(formatAmount(traderoomBalance || 0, 2), 18)
+                      truncateCurrencyString(
+                        formatAmount(traderoomBalance || 0, 2),
+                        18,
+                      )
                     ) : (
                       "••••••"
                     )}
@@ -1071,14 +1305,16 @@ function DashboardContent() {
                 </div>
                 {/* Traderoom Progress bar */}
                 <div className="mt-1.5">
-                  <div className={`h-1 rounded-full overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-300/50"}`}>
+                  <div
+                    className={`h-1 rounded-full overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-300/50"}`}
+                  >
                     <div
                       className="h-full rounded-full transition-all duration-500 ease-out"
                       style={{
                         background: "#22c55e",
                         width: `${Math.min(
                           Math.max((traderoomBalance / 1000000) * 100, 0),
-                          100
+                          100,
                         )}%`,
                       }}
                     />
@@ -1190,16 +1426,18 @@ function DashboardContent() {
 
       {/* Crypto and History Toggle View */}
       <div className="grid grid-cols-1" data-tutorial="crypto-assets">
-        <div 
+        <div
           className="rounded-2xl p-1.5 sm:p-3 transition-colors"
           style={{
-            background: isDark 
+            background: isDark
               ? "linear-gradient(145deg, #1e293b 0%, #0f172a 50%, #1e293b 100%)"
               : "linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)",
-            boxShadow: isDark 
+            boxShadow: isDark
               ? "0 0 20px rgba(59,130,246,0.3), 0 20px 50px -10px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
               : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
-            border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.15)",
+            border: isDark
+              ? "1px solid rgba(255, 255, 255, 0.08)"
+              : "1px solid rgba(0, 0, 0, 0.15)",
           }}
         >
           {/* Header with Toggle and Add Button */}
@@ -1209,7 +1447,7 @@ function DashboardContent() {
               onClick={() => setActiveView("crypto")}
               className={`flex-1 flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg font-semibold transition-all text-xs ${
                 activeView === "crypto"
-                  ? isDark 
+                  ? isDark
                     ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
                     : "text-gray-900 border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
                   : isDark
@@ -1238,7 +1476,7 @@ function DashboardContent() {
               onClick={() => setActiveView("history")}
               className={`flex-1 flex items-center justify-center gap-1 px-2.5 py-2 rounded-lg font-semibold transition-all text-xs ${
                 activeView === "history"
-                  ? isDark 
+                  ? isDark
                     ? "text-white border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.6)]"
                     : "text-gray-900 border-b-2 border-blue-500 shadow-[0_4px_12px_-4px_rgba(59,130,246,0.4)]"
                   : isDark
@@ -1294,7 +1532,9 @@ function DashboardContent() {
             <div className="space-y-2 pb-4">
               {userAssets.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDark ? "bg-gray-700" : "bg-gray-200"}`}>
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isDark ? "bg-gray-700" : "bg-gray-200"}`}
+                  >
                     <svg
                       className={`w-8 h-8 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                       fill="none"
@@ -1309,7 +1549,11 @@ function DashboardContent() {
                       />
                     </svg>
                   </div>
-                  <p className={`mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}>No crypto assets yet</p>
+                  <p
+                    className={`mb-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  >
+                    No crypto assets yet
+                  </p>
                   <button
                     onClick={handleAddCrypto}
                     className="text-blue-500 hover:text-blue-400 font-medium"
@@ -1330,7 +1574,9 @@ function DashboardContent() {
                       boxShadow: isDark
                         ? "0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 6px 14px -3px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
                         : "0 8px 30px -4px rgba(0, 0, 0, 0.25), 0 12px 40px -8px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -2px 6px rgba(0, 0, 0, 0.12), inset 3px 0 6px rgba(0, 0, 0, 0.08), inset -3px 0 6px rgba(0, 0, 0, 0.08)",
-                      border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.15)",
+                      border: isDark
+                        ? "1px solid rgba(255, 255, 255, 0.08)"
+                        : "1px solid rgba(0, 0, 0, 0.15)",
                     }}
                   >
                     {/* Left side: Icon and Info */}
@@ -1339,7 +1585,9 @@ function DashboardContent() {
                       <div
                         className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 relative overflow-hidden"
                         style={{
-                          backgroundColor: isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.06)",
+                          backgroundColor: isDark
+                            ? "rgba(255,255,255,0.10)"
+                            : "rgba(0,0,0,0.06)",
                           boxShadow: isDark
                             ? "0 4px 12px rgba(0,0,0,0.5)"
                             : "0 2px 8px rgba(0,0,0,0.15)",
@@ -1355,22 +1603,32 @@ function DashboardContent() {
                       </div>
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-1 leading-none">
-                          <span className={`font-bold text-sm leading-none ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <span
+                            className={`font-bold text-sm leading-none ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
                             {asset.symbol}
                           </span>
-                          <span className={`font-medium text-[10px] px-1 py-[1px] rounded-md leading-tight border border-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)] ${isDark ? "text-gray-300 bg-gray-700/50" : "text-gray-600 bg-gray-200/50"}`}>
+                          <span
+                            className={`font-medium text-[10px] px-1 py-[1px] rounded-md leading-tight border border-blue-400/30 shadow-[0_0_8px_rgba(96,165,250,0.3)] ${isDark ? "text-gray-300 bg-gray-700/50" : "text-gray-600 bg-gray-200/50"}`}
+                          >
                             {asset.name}
                           </span>
                         </div>
                         <div className="flex items-center gap-1 leading-none mt-1">
-                          <span className={`font-semibold text-xs leading-none ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <span
+                            className={`font-semibold text-xs leading-none ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
                             {formatAmount(asset.currentPrice || 0, 2)}
                           </span>
                           <span
                             className={`text-xs font-semibold leading-none ${
                               asset.change >= 0
-                                ? isDark ? "text-green-400" : "text-green-600"
-                                : isDark ? "text-red-400" : "text-red-600"
+                                ? isDark
+                                  ? "text-green-400"
+                                  : "text-green-600"
+                                : isDark
+                                  ? "text-red-400"
+                                  : "text-red-600"
                             }`}
                           >
                             {asset.change >= 0 ? "+" : ""}
@@ -1390,7 +1648,10 @@ function DashboardContent() {
                       <div
                         className={`font-bold text-xs leading-none mt-1 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                       >
-                        {truncateCurrencyString(formatAmount(asset.value || 0, 2), 15)}
+                        {truncateCurrencyString(
+                          formatAmount(asset.value || 0, 2),
+                          15,
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1404,7 +1665,9 @@ function DashboardContent() {
             <div className="space-y-3">
               {recentActivity.length === 0 ? (
                 <div className="text-center py-12">
-                  <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl ${isDark ? "bg-gradient-to-br from-gray-700 to-gray-800" : "bg-gradient-to-br from-gray-200 to-gray-300"}`}>
+                  <div
+                    className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-xl ${isDark ? "bg-gradient-to-br from-gray-700 to-gray-800" : "bg-gradient-to-br from-gray-200 to-gray-300"}`}
+                  >
                     <svg
                       className={`w-10 h-10 ${isDark ? "text-gray-400" : "text-gray-500"}`}
                       fill="none"
@@ -1419,10 +1682,14 @@ function DashboardContent() {
                       />
                     </svg>
                   </div>
-                  <p className={`text-lg font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  <p
+                    className={`text-lg font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  >
                     No transaction history yet
                   </p>
-                  <p className={`text-sm mt-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
+                  <p
+                    className={`text-sm mt-2 ${isDark ? "text-gray-500" : "text-gray-500"}`}
+                  >
                     Your transactions will appear here
                   </p>
                 </div>
@@ -1433,25 +1700,57 @@ function DashboardContent() {
                     const assetSymbol = activity.asset?.split(" ")[0] || "";
                     const assetMetadata = getCryptoMetadata(assetSymbol);
                     const fullName = assetMetadata.name;
-                    
+
                     // Helper to format forex pair with slash
                     const formatPairSymbol = (sym: string) => {
                       if (sym.includes("/")) return sym;
-                      if (sym.length === 6) return `${sym.substring(0, 3)}/${sym.substring(3, 6)}`;
+                      if (sym.length === 6)
+                        return `${sym.substring(0, 3)}/${sym.substring(3, 6)}`;
                       return sym;
                     };
-                    
+
                     // Check if it's a forex pair
-                    const FOREX_CODES_CHECK = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+                    const FOREX_CODES_CHECK = new Set([
+                      "EUR",
+                      "USD",
+                      "GBP",
+                      "JPY",
+                      "CHF",
+                      "CAD",
+                      "AUD",
+                      "NZD",
+                      "SEK",
+                      "NOK",
+                      "DKK",
+                      "PLN",
+                      "CZK",
+                      "HUF",
+                      "SGD",
+                      "HKD",
+                      "MXN",
+                      "ZAR",
+                      "TRY",
+                      "BRL",
+                      "INR",
+                      "KRW",
+                      "THB",
+                      "CNY",
+                    ]);
                     const isForexPair = (sym: string) => {
                       if (sym.includes("/")) {
                         const [base, quote] = sym.split("/");
-                        return FOREX_CODES_CHECK.has(base) && FOREX_CODES_CHECK.has(quote);
+                        return (
+                          FOREX_CODES_CHECK.has(base) &&
+                          FOREX_CODES_CHECK.has(quote)
+                        );
                       }
                       if (sym.length === 6 && /^[A-Z]{6}$/.test(sym)) {
                         const base = sym.substring(0, 3);
                         const quote = sym.substring(3, 6);
-                        return FOREX_CODES_CHECK.has(base) && FOREX_CODES_CHECK.has(quote);
+                        return (
+                          FOREX_CODES_CHECK.has(base) &&
+                          FOREX_CODES_CHECK.has(quote)
+                        );
                       }
                       return false;
                     };
@@ -1461,7 +1760,10 @@ function DashboardContent() {
                       return `Closed Trade (${formatPairSymbol(assetSymbol)})`;
                     }
                     // For buy/sell of forex pairs, show as Closed Trade
-                    if ((activity.type === "buy" || activity.type === "sell") && isForexPair(assetSymbol)) {
+                    if (
+                      (activity.type === "buy" || activity.type === "sell") &&
+                      isForexPair(assetSymbol)
+                    ) {
                       return `Closed Trade (${formatPairSymbol(assetSymbol)})`;
                     }
                     if (activity.type === "buy") return `${fullName} Bought`;
@@ -1480,15 +1782,40 @@ function DashboardContent() {
                     return `${String(activity.type)
                       .charAt(0)
                       .toUpperCase()}${String(activity.type).slice(
-                      1
+                      1,
                     )} ${fullName}`;
                   };
 
                   // Get transaction type icon and color
                   const getTransactionIcon = () => {
                     const assetSymbol = activity.asset?.split(" ")[0] || "";
-                    const FOREX_CODES = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
-                    
+                    const FOREX_CODES = new Set([
+                      "EUR",
+                      "USD",
+                      "GBP",
+                      "JPY",
+                      "CHF",
+                      "CAD",
+                      "AUD",
+                      "NZD",
+                      "SEK",
+                      "NOK",
+                      "DKK",
+                      "PLN",
+                      "CZK",
+                      "HUF",
+                      "SGD",
+                      "HKD",
+                      "MXN",
+                      "ZAR",
+                      "TRY",
+                      "BRL",
+                      "INR",
+                      "KRW",
+                      "THB",
+                      "CNY",
+                    ]);
+
                     // Helper to check if it's a forex pair
                     const checkIsForexPair = (sym: string) => {
                       if (sym.includes("/")) {
@@ -1502,52 +1829,92 @@ function DashboardContent() {
                       }
                       return false;
                     };
-                    
+
                     // For trade_earned, or buy/sell forex pairs - show stacked pair logos side by side
-                    const isClosedTrade = activity.type === "trade_earned" ||
-                      ((activity.type === "buy" || activity.type === "sell") && checkIsForexPair(assetSymbol));
-                    
+                    const isClosedTrade =
+                      activity.type === "trade_earned" ||
+                      ((activity.type === "buy" || activity.type === "sell") &&
+                        checkIsForexPair(assetSymbol));
+
                     if (isClosedTrade) {
                       // Parse pair - handle both "EUR/JPY" and "EURJPY" formats
-                      let base = "", quote = "";
+                      let base = "",
+                        quote = "";
                       if (assetSymbol.includes("/")) {
                         [base, quote] = assetSymbol.split("/");
                       } else if (assetSymbol.length === 6) {
                         base = assetSymbol.substring(0, 3);
                         quote = assetSymbol.substring(3, 6);
                       }
-                      
+
                       if (base && quote) {
                         const baseIsForex = FOREX_CODES.has(base.toUpperCase());
-                        const quoteIsForex = FOREX_CODES.has(quote.toUpperCase());
+                        const quoteIsForex = FOREX_CODES.has(
+                          quote.toUpperCase(),
+                        );
                         const isWin = activity.value > 0;
-                        
+
                         return (
-                          <div className="relative flex-shrink-0" style={{ width: "44px", height: "32px" }}>
+                          <div
+                            className="relative flex-shrink-0"
+                            style={{ width: "44px", height: "32px" }}
+                          >
                             {/* Base currency - left side */}
                             <div className="absolute left-0 top-0">
                               {baseIsForex ? (
-                                <Image src={getCurrencyFlagUrl(base.toUpperCase())} alt={base} width={28} height={28} className="rounded-full object-cover" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
+                                <Image
+                                  src={getCurrencyFlagUrl(base.toUpperCase())}
+                                  alt={base}
+                                  width={28}
+                                  height={28}
+                                  className="rounded-full object-cover"
+                                  style={{
+                                    filter:
+                                      "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                                  }}
+                                  unoptimized
+                                />
                               ) : (
-                                <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+                                <div
+                                  style={{
+                                    filter:
+                                      "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                                  }}
+                                >
                                   <CryptoIcon symbol={base} size="sm" />
                                 </div>
                               )}
                             </div>
-                            
+
                             {/* Quote currency - right side, overlapping */}
                             <div className="absolute right-0 top-0">
                               {quoteIsForex ? (
-                                <Image src={getCurrencyFlagUrl(quote.toUpperCase())} alt={quote} width={28} height={28} className="rounded-full object-cover" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
+                                <Image
+                                  src={getCurrencyFlagUrl(quote.toUpperCase())}
+                                  alt={quote}
+                                  width={28}
+                                  height={28}
+                                  className="rounded-full object-cover"
+                                  style={{
+                                    filter:
+                                      "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                                  }}
+                                  unoptimized
+                                />
                               ) : (
-                                <div style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+                                <div
+                                  style={{
+                                    filter:
+                                      "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                                  }}
+                                >
                                   <CryptoIcon symbol={quote} size="sm" />
                                 </div>
                               )}
                             </div>
-                            
+
                             {/* Status indicator - centered between the two flags */}
-                            <div 
+                            <div
                               className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${isWin ? "bg-green-500" : "bg-red-500"} border-2 ${isDark ? "border-gray-800" : "border-white"}`}
                               style={{ zIndex: 10 }}
                             />
@@ -1558,18 +1925,28 @@ function DashboardContent() {
 
                     // For swap/convert transactions, show stacked logos with rotate icon
                     if (
-                      (activity.type === "convert" || activity.type === "swap") &&
+                      (activity.type === "convert" ||
+                        activity.type === "swap") &&
                       activity.fromAsset &&
                       activity.toAsset
                     ) {
                       const fromMeta = getCryptoMetadata(activity.fromAsset);
                       const toMeta = getCryptoMetadata(activity.toAsset);
-                      
+
                       return (
-                        <div className="relative flex-shrink-0" style={{ width: "44px", height: "32px" }}>
+                        <div
+                          className="relative flex-shrink-0"
+                          style={{ width: "44px", height: "32px" }}
+                        >
                           {/* From asset - left side */}
                           <div className="absolute left-0 top-0">
-                            <div className="w-7 h-7 flex items-center justify-center" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+                            <div
+                              className="w-7 h-7 flex items-center justify-center"
+                              style={{
+                                filter:
+                                  "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                              }}
+                            >
                               <Image
                                 src={fromMeta.imagePath}
                                 alt={activity.fromAsset}
@@ -1580,10 +1957,16 @@ function DashboardContent() {
                               />
                             </div>
                           </div>
-                          
+
                           {/* To asset - right side, overlapping */}
                           <div className="absolute right-0 top-0">
-                            <div className="w-7 h-7 flex items-center justify-center" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }}>
+                            <div
+                              className="w-7 h-7 flex items-center justify-center"
+                              style={{
+                                filter:
+                                  "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                              }}
+                            >
                               <Image
                                 src={toMeta.imagePath}
                                 alt={activity.toAsset}
@@ -1594,9 +1977,9 @@ function DashboardContent() {
                               />
                             </div>
                           </div>
-                          
+
                           {/* Swap/rotate indicator - centered between the two icons */}
-                          <div 
+                          <div
                             className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full ${isDark ? "bg-gray-800" : "bg-white"} border-2 border-cyan-400 flex items-center justify-center`}
                             style={{ zIndex: 10 }}
                           >
@@ -1608,30 +1991,68 @@ function DashboardContent() {
 
                     // Check if it's a forex pair for other buy/sell transactions
                     // Handle forex pairs (both "EUR/JPY" and "EURJPY" formats)
-                    let baseCurrency = "", quoteCurrency = "";
+                    let baseCurrency = "",
+                      quoteCurrency = "";
                     if (assetSymbol.includes("/")) {
                       [baseCurrency, quoteCurrency] = assetSymbol.split("/");
-                    } else if (assetSymbol.length === 6 && /^[A-Z]{6}$/.test(assetSymbol)) {
+                    } else if (
+                      assetSymbol.length === 6 &&
+                      /^[A-Z]{6}$/.test(assetSymbol)
+                    ) {
                       baseCurrency = assetSymbol.substring(0, 3);
                       quoteCurrency = assetSymbol.substring(3, 6);
                     }
-                    
-                    if (baseCurrency && quoteCurrency && FOREX_CODES.has(baseCurrency.toUpperCase()) && FOREX_CODES.has(quoteCurrency.toUpperCase())) {
+
+                    if (
+                      baseCurrency &&
+                      quoteCurrency &&
+                      FOREX_CODES.has(baseCurrency.toUpperCase()) &&
+                      FOREX_CODES.has(quoteCurrency.toUpperCase())
+                    ) {
                       const isGain = activity.value > 0;
                       return (
-                        <div className="relative flex-shrink-0" style={{ width: "44px", height: "32px" }}>
+                        <div
+                          className="relative flex-shrink-0"
+                          style={{ width: "44px", height: "32px" }}
+                        >
                           {/* Base currency - left side */}
                           <div className="absolute left-0 top-0">
-                            <Image src={getCurrencyFlagUrl(baseCurrency.toUpperCase())} alt={baseCurrency} width={28} height={28} className="rounded-full object-cover" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
+                            <Image
+                              src={getCurrencyFlagUrl(
+                                baseCurrency.toUpperCase(),
+                              )}
+                              alt={baseCurrency}
+                              width={28}
+                              height={28}
+                              className="rounded-full object-cover"
+                              style={{
+                                filter:
+                                  "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                              }}
+                              unoptimized
+                            />
                           </div>
-                          
+
                           {/* Quote currency - right side, overlapping */}
                           <div className="absolute right-0 top-0">
-                            <Image src={getCurrencyFlagUrl(quoteCurrency.toUpperCase())} alt={quoteCurrency} width={28} height={28} className="rounded-full object-cover" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))" }} unoptimized />
+                            <Image
+                              src={getCurrencyFlagUrl(
+                                quoteCurrency.toUpperCase(),
+                              )}
+                              alt={quoteCurrency}
+                              width={28}
+                              height={28}
+                              className="rounded-full object-cover"
+                              style={{
+                                filter:
+                                  "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
+                              }}
+                              unoptimized
+                            />
                           </div>
-                          
+
                           {/* Status indicator - centered between the two flags */}
-                          <div 
+                          <div
                             className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${isGain ? "bg-green-500" : "bg-red-500"} border-2 ${isDark ? "border-gray-800" : "border-white"}`}
                             style={{ zIndex: 10 }}
                           />
@@ -1641,7 +2062,12 @@ function DashboardContent() {
 
                     // Show proper currency/crypto SVG icon for all assets
                     return (
-                      <div className="relative flex-shrink-0" style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}>
+                      <div
+                        className="relative flex-shrink-0"
+                        style={{
+                          filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))",
+                        }}
+                      >
                         <CryptoIcon
                           symbol={assetSymbol.toUpperCase()}
                           size="md"
@@ -1654,7 +2080,7 @@ function DashboardContent() {
                   // Format amount - 8 decimals for crypto, 2 for fiat
                   const formatCryptoAmount = (
                     amount: number,
-                    asset: string
+                    asset: string,
                   ) => {
                     // Check if this is a fiat currency
                     const fiatCurrencies = new Set([
@@ -1687,13 +2113,13 @@ function DashboardContent() {
                       "PHP",
                       "VND",
                     ]);
-                    
+
                     // Check if forex pair (contains "/" like USD/CAD, EUR/USD)
                     const isForexPair = asset?.includes("/");
-                    
-                    const isFiat = fiatCurrencies.has(
-                      asset?.toUpperCase() || ""
-                    ) || isForexPair;
+
+                    const isFiat =
+                      fiatCurrencies.has(asset?.toUpperCase() || "") ||
+                      isForexPair;
                     const decimals = isFiat ? 2 : 8;
 
                     return amount.toLocaleString("en-US", {
@@ -1741,8 +2167,12 @@ function DashboardContent() {
                   ]);
                   const assetSymbol =
                     activity.asset?.split(" ")[0]?.toUpperCase() || "";
-                  const isFiatTransaction = FIAT_CURRENCIES.has(assetSymbol) && 
-                    (activity.type === "deposit" || activity.type === "withdraw" || activity.type === "receive" || activity.type === "transfer");
+                  const isFiatTransaction =
+                    FIAT_CURRENCIES.has(assetSymbol) &&
+                    (activity.type === "deposit" ||
+                      activity.type === "withdraw" ||
+                      activity.type === "receive" ||
+                      activity.type === "transfer");
 
                   const getFiatValue = () => {
                     // For fiat deposits/receives, value is already in user's currency - don't convert
@@ -1831,10 +2261,14 @@ function DashboardContent() {
                           {/* Title, Date and Status */}
                           <div className="flex items-start justify-between gap-1.5">
                             <div className="flex-1 min-w-0">
-                              <h3 className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+                              <h3
+                                className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}
+                              >
                                 {getTransactionText()}
                               </h3>
-                              <p className={`text-[11px] truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                              <p
+                                className={`text-[11px] truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                              >
                                 {formatDate(activity.timestamp)}
                               </p>
                             </div>
@@ -1846,17 +2280,19 @@ function DashboardContent() {
                                       ? "bg-gradient-to-r from-gray-700 to-gray-800 text-green-400 border border-green-400 shadow-[0_2px_6px_rgba(0,0,0,0.5)] animate-pulse-glow"
                                       : "bg-green-50 text-green-600 border border-green-400"
                                     : activity.status === "pending"
-                                    ? isDark
-                                      ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
-                                      : "bg-yellow-50 text-yellow-600 border border-yellow-400/60"
-                                    : isDark
-                                      ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                                      : "bg-red-50 text-red-500 border border-red-400/60"
+                                      ? isDark
+                                        ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30"
+                                        : "bg-yellow-50 text-yellow-600 border border-yellow-400/60"
+                                      : isDark
+                                        ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                                        : "bg-red-50 text-red-500 border border-red-400/60"
                                 }`}
                               >
                                 {activity.status}
                               </div>
-                              <p className={`text-[11px] mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                              <p
+                                className={`text-[11px] mt-0.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                              >
                                 {formatTime(activity.timestamp)}
                               </p>
                             </div>
@@ -1867,143 +2303,260 @@ function DashboardContent() {
                       {/* Bottom Row: Amount (left edge) and Value (right) - full width */}
                       <div className="flex justify-between items-start gap-3">
                         <div className="flex flex-col">
-                          <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Amount:</span>
+                          <span
+                            className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            Amount:
+                          </span>
                           {(() => {
                             // Check if this is a closed trade (forex pair)
-                            const assetSymbolAmt = activity.asset?.split(" ")[0] || "";
-                            const FOREX_CODES_AMT = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
+                            const assetSymbolAmt =
+                              activity.asset?.split(" ")[0] || "";
+                            const FOREX_CODES_AMT = new Set([
+                              "EUR",
+                              "USD",
+                              "GBP",
+                              "JPY",
+                              "CHF",
+                              "CAD",
+                              "AUD",
+                              "NZD",
+                              "SEK",
+                              "NOK",
+                              "DKK",
+                              "PLN",
+                              "CZK",
+                              "HUF",
+                              "SGD",
+                              "HKD",
+                              "MXN",
+                              "ZAR",
+                              "TRY",
+                              "BRL",
+                              "INR",
+                              "KRW",
+                              "THB",
+                              "CNY",
+                            ]);
                             const isForexPairTradeAmt = (sym: string) => {
                               if (sym.includes("/")) {
                                 const [base, quote] = sym.split("/");
-                                return FOREX_CODES_AMT.has(base) && FOREX_CODES_AMT.has(quote);
+                                return (
+                                  FOREX_CODES_AMT.has(base) &&
+                                  FOREX_CODES_AMT.has(quote)
+                                );
                               }
                               if (sym.length === 6 && /^[A-Z]{6}$/.test(sym)) {
                                 const base = sym.substring(0, 3);
                                 const quote = sym.substring(3, 6);
-                                return FOREX_CODES_AMT.has(base) && FOREX_CODES_AMT.has(quote);
+                                return (
+                                  FOREX_CODES_AMT.has(base) &&
+                                  FOREX_CODES_AMT.has(quote)
+                                );
                               }
                               return false;
                             };
-                            const isClosedTradeAmt = activity.type === "trade_earned" || 
-                              ((activity.type === "buy" || activity.type === "sell") && isForexPairTradeAmt(assetSymbolAmt));
-                            
+                            const isClosedTradeAmt =
+                              activity.type === "trade_earned" ||
+                              ((activity.type === "buy" ||
+                                activity.type === "sell") &&
+                                isForexPairTradeAmt(assetSymbolAmt));
+
                             // For closed trades, use the value to determine win/loss color
-                            const tradeValueAmt = activity.value || activity.amount || 0;
+                            const tradeValueAmt =
+                              activity.value || activity.amount || 0;
                             const isTradeWin = tradeValueAmt > 0;
-                            
+
                             // Determine if this is a debit (negative) transaction
-                            const isDebit = activity.type === "sell" || activity.type === "transfer" || activity.type === "convert" || activity.type === "withdraw";
-                            
+                            const isDebit =
+                              activity.type === "sell" ||
+                              activity.type === "transfer" ||
+                              activity.type === "convert" ||
+                              activity.type === "withdraw";
+
                             // For closed trades, color based on win/loss; otherwise based on debit/credit
-                            const showRed = isClosedTradeAmt ? !isTradeWin : isDebit;
-                            
+                            const showRed = isClosedTradeAmt
+                              ? !isTradeWin
+                              : isDebit;
+
                             return (
-                              <span className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
-                                showRed
-                                  ? isDark ? "bg-red-500/20 text-red-400" : "bg-red-100 text-red-500"
-                                  : isDark ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-600"
-                              }`}>
-                                {isClosedTradeAmt 
+                              <span
+                                className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
+                                  showRed
+                                    ? isDark
+                                      ? "bg-red-500/20 text-red-400"
+                                      : "bg-red-100 text-red-500"
+                                    : isDark
+                                      ? "bg-green-500/20 text-green-400"
+                                      : "bg-green-100 text-green-600"
+                                }`}
+                              >
+                                {isClosedTradeAmt
                                   ? `${isTradeWin ? "+" : "-"}$${formatCryptoAmount(Math.abs(activity.amount || 0), "USD")}`
                                   : `${isDebit ? "-" : "+"}${
                                       activity.type === "trade_earned"
-                                        ? formatCryptoAmount(activity.amount || 0, "USD")
-                                        : (activity.type === "convert" || activity.type === "swap") && activity.toAsset
-                                        ? `${formatCryptoAmount(activity.amount || 0, activity.toAsset)} ${activity.toAsset}`
-                                        : `${formatCryptoAmount(activity.amount || 0, activity.asset?.split(" ")[0] || "")} ${activity.asset?.split(" ")[0]}`
-                                    }`
-                                }
+                                        ? formatCryptoAmount(
+                                            activity.amount || 0,
+                                            "USD",
+                                          )
+                                        : (activity.type === "convert" ||
+                                              activity.type === "swap") &&
+                                            activity.toAsset
+                                          ? `${formatCryptoAmount(activity.amount || 0, activity.toAsset)} ${activity.toAsset}`
+                                          : `${formatCryptoAmount(activity.amount || 0, activity.asset?.split(" ")[0] || "")} ${activity.asset?.split(" ")[0]}`
+                                    }`}
                               </span>
                             );
                           })()}
                         </div>
                         <div className="flex flex-col items-end">
-                              <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>Value:</span>
-                              {(() => {
-                                // Check if this is a closed trade (trade_earned or forex pair buy/sell)
-                                const assetSym = activity.asset?.split(" ")[0] || "";
-                                const FOREX_CODES_VAL = new Set(["EUR","USD","GBP","JPY","CHF","CAD","AUD","NZD","SEK","NOK","DKK","PLN","CZK","HUF","SGD","HKD","MXN","ZAR","TRY","BRL","INR","KRW","THB","CNY"]);
-                                const isForexPairTrade = (sym: string) => {
-                                  if (sym.includes("/")) {
-                                    const [base, quote] = sym.split("/");
-                                    return FOREX_CODES_VAL.has(base) && FOREX_CODES_VAL.has(quote);
-                                  }
-                                  if (sym.length === 6 && /^[A-Z]{6}$/.test(sym)) {
-                                    const base = sym.substring(0, 3);
-                                    const quote = sym.substring(3, 6);
-                                    return FOREX_CODES_VAL.has(base) && FOREX_CODES_VAL.has(quote);
-                                  }
-                                  return false;
-                                };
-                                const isClosedTrade = activity.type === "trade_earned" || 
-                                  ((activity.type === "buy" || activity.type === "sell") && isForexPairTrade(assetSym));
-                                
-                                if (isClosedTrade) {
-                                  const tradeValue = activity.value || activity.amount || 0;
-                                  const isProfit = tradeValue > 0;
-                                  return (
-                                    <span
-                                      className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
-                                        isProfit
-                                          ? isDark ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-600"
-                                          : isDark ? "bg-red-500/20 text-red-400" : "bg-red-100 text-red-500"
-                                      }`}
-                                    >
-                                      {isProfit ? "+" : "-"}{truncateCurrencyString(formatAmount(Math.abs(tradeValue), 2), 12)}
-                                    </span>
-                                  );
-                                }
-                                
-                                // Default styling for non-trade transactions
+                          <span
+                            className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            Value:
+                          </span>
+                          {(() => {
+                            // Check if this is a closed trade (trade_earned or forex pair buy/sell)
+                            const assetSym =
+                              activity.asset?.split(" ")[0] || "";
+                            const FOREX_CODES_VAL = new Set([
+                              "EUR",
+                              "USD",
+                              "GBP",
+                              "JPY",
+                              "CHF",
+                              "CAD",
+                              "AUD",
+                              "NZD",
+                              "SEK",
+                              "NOK",
+                              "DKK",
+                              "PLN",
+                              "CZK",
+                              "HUF",
+                              "SGD",
+                              "HKD",
+                              "MXN",
+                              "ZAR",
+                              "TRY",
+                              "BRL",
+                              "INR",
+                              "KRW",
+                              "THB",
+                              "CNY",
+                            ]);
+                            const isForexPairTrade = (sym: string) => {
+                              if (sym.includes("/")) {
+                                const [base, quote] = sym.split("/");
                                 return (
-                                  <span
-                                    className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-800"}`}
-                                  >
-                                    {truncateCurrencyString(
-                                      activity.type === "trade_earned"
-                                        ? formatAmount(activity.amount || 0, 2)
-                                        : isFiatTransaction && assetSymbol === preferredCurrency
-                                        ? formatCurrencyUtil(activity.amount || 0, assetSymbol, 2)
-                                        : isFiatTransaction
+                                  FOREX_CODES_VAL.has(base) &&
+                                  FOREX_CODES_VAL.has(quote)
+                                );
+                              }
+                              if (sym.length === 6 && /^[A-Z]{6}$/.test(sym)) {
+                                const base = sym.substring(0, 3);
+                                const quote = sym.substring(3, 6);
+                                return (
+                                  FOREX_CODES_VAL.has(base) &&
+                                  FOREX_CODES_VAL.has(quote)
+                                );
+                              }
+                              return false;
+                            };
+                            const isClosedTrade =
+                              activity.type === "trade_earned" ||
+                              ((activity.type === "buy" ||
+                                activity.type === "sell") &&
+                                isForexPairTrade(assetSym));
+
+                            if (isClosedTrade) {
+                              const tradeValue =
+                                activity.value || activity.amount || 0;
+                              const isProfit = tradeValue > 0;
+                              return (
+                                <span
+                                  className={`font-bold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${
+                                    isProfit
+                                      ? isDark
+                                        ? "bg-green-500/20 text-green-400"
+                                        : "bg-green-100 text-green-600"
+                                      : isDark
+                                        ? "bg-red-500/20 text-red-400"
+                                        : "bg-red-100 text-red-500"
+                                  }`}
+                                >
+                                  {isProfit ? "+" : "-"}
+                                  {truncateCurrencyString(
+                                    formatAmount(Math.abs(tradeValue), 2),
+                                    12,
+                                  )}
+                                </span>
+                              );
+                            }
+
+                            // Default styling for non-trade transactions
+                            return (
+                              <span
+                                className={`font-semibold text-[11px] px-1.5 py-0.5 rounded-lg shadow-[0_2px_6px_rgba(0,0,0,0.5)] ${isDark ? "bg-gray-800 text-gray-200" : "bg-gray-200 text-gray-800"}`}
+                              >
+                                {truncateCurrencyString(
+                                  activity.type === "trade_earned"
+                                    ? formatAmount(activity.amount || 0, 2)
+                                    : isFiatTransaction &&
+                                        assetSymbol === preferredCurrency
+                                      ? formatCurrencyUtil(
+                                          activity.amount || 0,
+                                          assetSymbol,
+                                          2,
+                                        )
+                                      : isFiatTransaction
                                         ? formatAmount(
                                             assetSymbol === "USD"
-                                              ? (activity.amount || 0)
-                                              : (activity.amount || 0) / (exchangeRates[assetSymbol] || 1),
-                                            2
+                                              ? activity.amount || 0
+                                              : (activity.amount || 0) /
+                                                  (exchangeRates[assetSymbol] ||
+                                                    1),
+                                            2,
                                           )
                                         : formatAmount(activity.value || 0, 2),
-                                      12
-                                    )}
-                                  </span>
-                                );
-                              })()}
-                            </div>
-                          </div>
+                                  12,
+                                )}
+                              </span>
+                            );
+                          })()}
+                        </div>
+                      </div>
 
-                          {/* Show confirmation progress for pending deposits */}
-                          {activity.status === "pending" &&
-                            activity.type === "deposit" &&
-                            activity.confirmations !== undefined && (
-                              <div className={`flex items-center gap-2 mt-3 pt-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
-                                <div className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-200"}`}>
-                                  <div
-                                    className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded-full transition-all duration-500"
-                                    style={{
-                                      width: `${Math.min(
-                                        100,
-                                        (activity.confirmations /
-                                          (activity.maxConfirmations || 6)) *
-                                          100
-                                      )}%`,
-                                    }}
-                                  ></div>
-                                </div>
-                                <span className={`text-xs font-medium flex-shrink-0 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                                  {activity.confirmations}/
-                                  {activity.maxConfirmations || 6} confirmations
-                                </span>
-                              </div>
-                            )}
+                      {/* Show confirmation progress for pending deposits */}
+                      {activity.status === "pending" &&
+                        activity.type === "deposit" &&
+                        activity.confirmations !== undefined && (
+                          <div
+                            className={`flex items-center gap-2 mt-3 pt-3 border-t ${isDark ? "border-gray-700/50" : "border-gray-200"}`}
+                          >
+                            <div
+                              className={`flex-1 rounded-full h-2 overflow-hidden ${isDark ? "bg-gray-700/50" : "bg-gray-200"}`}
+                            >
+                              <div
+                                className="bg-gradient-to-r from-blue-500 to-blue-400 h-2 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    (activity.confirmations /
+                                      (activity.maxConfirmations || 6)) *
+                                      100,
+                                  )}%`,
+                                }}
+                              ></div>
+                            </div>
+                            <span
+                              className={`text-xs font-medium flex-shrink-0 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                            >
+                              {activity.confirmations}/
+                              {activity.maxConfirmations || 6} confirmations
+                            </span>
+                          </div>
+                        )}
                     </div>
                   );
                 })
@@ -2130,7 +2683,10 @@ function DashboardContent() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-white">
-                        {truncateCurrencyString(formatAmount(asset.value || 0, 2), 18)}
+                        {truncateCurrencyString(
+                          formatAmount(asset.value || 0, 2),
+                          18,
+                        )}
                       </p>
                       <p className="text-gray-400 text-sm">
                         {formatCryptoAmount(asset.amount || 0, 16)}{" "}
@@ -2215,7 +2771,7 @@ function DashboardContent() {
                   // Format amount with 8 decimals for crypto, 2 for fiat/forex
                   const formatCryptoAmount = (
                     amount: number,
-                    asset: string
+                    asset: string,
                   ) => {
                     if (
                       activity.type === "deposit" ||
@@ -2264,8 +2820,8 @@ function DashboardContent() {
                               activity.status === "completed"
                                 ? "bg-green-900/30 text-green-400"
                                 : activity.status === "pending"
-                                ? "bg-orange-900/30 text-orange-400"
-                                : "bg-red-900/30 text-red-400"
+                                  ? "bg-orange-900/30 text-orange-400"
+                                  : "bg-red-900/30 text-red-400"
                             }`}
                           >
                             {activity.status}
@@ -2275,7 +2831,7 @@ function DashboardContent() {
                           <span className="text-gray-400 text-sm">
                             {formatCryptoAmount(
                               activity.amount,
-                              activity.asset
+                              activity.asset,
                             )}{" "}
                             (${formatAmount(activity.value || 0, 2)})
                           </span>
@@ -2297,7 +2853,7 @@ function DashboardContent() {
                                       100,
                                       (activity.confirmations /
                                         (activity.maxConfirmations || 6)) *
-                                        100
+                                        100,
                                     )}%`,
                                   }}
                                 ></div>

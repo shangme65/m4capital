@@ -134,7 +134,7 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 h-[56px] ${getHeaderBg()}`}
+      className={`fixed top-0 left-0 right-0 z-50 h-[56px] ${session ? "md:h-[68px]" : ""} ${getHeaderBg()}`}
     >
       <nav className="container mx-auto px-4 sm:px-8 md:px-16 h-full flex justify-between items-center">
         <Link href="/" className="flex items-center group">
@@ -270,10 +270,10 @@ export function Header({ onLoginClick, onSignupClick }: HeaderProps) {
               <Link href="/dashboard">
                 <Button
                   variant="primary"
-                  size="md"
-                  className="!px-6 flex items-center space-x-2"
+                  size="sm"
+                  className="!px-6 !py-2.5 !text-sm !rounded-xl flex items-center space-x-2"
                 >
-                  <LayoutDashboard size={20} />
+                  <LayoutDashboard size={18} />
                   <span>Dashboard</span>
                 </Button>
               </Link>
