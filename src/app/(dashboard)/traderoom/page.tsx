@@ -360,6 +360,8 @@ function TradingInterface() {
   const activeTradesRef = useRef<ActiveTrade[]>([]);
   activeTradesRef.current = activeTrades;
   const [currentPrice, setCurrentPrice] = useState<number>(0);
+  const currentPriceRef = useRef<number>(0);
+  currentPriceRef.current = currentPrice;
   const prevPriceRef = useRef<number>(0);
   const [priceDirection, setPriceDirection] = useState<"up" | "down" | "none">(
     "none",
@@ -1732,7 +1734,16 @@ function TradingInterface() {
       } else {
         setCountdown((prev) => {
           if (prev <= 1) {
-            return expirationSeconds; // Reset when reaches 0
+            // Auto-advance to next minute boundary
+            const now = Date.now();
+            const nextMin = new Date(now + 60 * 1000);
+            nextMin.setSeconds(0, 0);
+            const newSecs = Math.max(
+              30,
+              Math.round((nextMin.getTime() - now) / 1000),
+            );
+            setTimeout(() => setExpirationSeconds(newSecs), 0);
+            return newSecs;
           }
           return prev - 1;
         });
@@ -1823,6 +1834,28 @@ function TradingInterface() {
       setRealAccountBalanceUSD(usdValue);
     }
   }, [realAccountBalance, balanceCurrency, exchangeRates]);
+
+  // SSE: listen for real-time traderoom balance updates pushed by admin profit actions
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
+    const eventSource = new EventSource("/api/sse/balance");
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (typeof data.traderoomBalance === "number") {
+          setTraderoomBalance(data.traderoomBalance);
+        }
+      } catch {
+        // Ignore malformed events
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [status]);
 
   // Close balance dropdown when clicking outside
   useEffect(() => {
@@ -2002,8 +2035,10 @@ function TradingInterface() {
       .toString(36)
       .substr(2, 9)}`;
     const now = Date.now();
+    // Use the actual wall-clock time as the real purchase time (shown in time label)
+    const entryTime = now;
     // Use the latest chart candle timestamp for accurate X positioning on the chart
-    const entryTime = lastCandleTimestampRef.current || now;
+    const chartPositionTime = lastCandleTimestampRef.current || now;
 
     // If there are already active trades on this symbol/tab, inherit the earliest expiration time
     const existingActiveOnTab = activeTradesRef.current.filter(
@@ -2042,9 +2077,13 @@ function TradingInterface() {
 
     setActiveTrades((prev) => [...prev, newTrade]);
 
+    // Immediately sync the countdown display to this trade's actual duration
+    // (prevents confusing jumps from the auto-advance after the previous trade ended)
+    setCountdown(effectiveExpirationSeconds);
+
     // Calculate exact X position at the moment of trade entry
     const entryXPosition = timeToXRef.current
-      ? timeToXRef.current(entryTime)
+      ? timeToXRef.current(chartPositionTime)
       : 50; // Default to center if converter not available
 
     // Add persistent entry marker
@@ -2103,7 +2142,8 @@ function TradingInterface() {
           if (trade.status !== "active") return trade;
 
           if (now >= trade.expirationTime) {
-            const priceChange = currentPrice - trade.entryPrice;
+            const exitPrice = currentPriceRef.current;
+            const priceChange = exitPrice - trade.entryPrice;
             const won =
               (trade.direction === "higher" && priceChange > 0) ||
               (trade.direction === "lower" && priceChange < 0);
@@ -2113,7 +2153,7 @@ function TradingInterface() {
               ...trade,
               status: won ? ("won" as const) : ("lost" as const),
               result: won ? payout - trade.amount : -trade.amount,
-              exitPrice: currentPrice,
+              exitPrice,
             };
 
             if (!settledTradeIdsRef.current.has(trade.id)) {
@@ -2127,9 +2167,16 @@ function TradingInterface() {
           return trade;
         });
 
-        // Remove completed trades older than 3s in the same pass
+        // Remove completed trades older than 3s in the same pass,
+        // BUT only if they were ALREADY won/lost in the previous state.
+        // If they were just settled in THIS pass (was "active" in prev),
+        // keep them for at least one render so the popup detection fires.
         return updatedTrades.filter((trade) => {
           if (trade.status === "won" || trade.status === "lost") {
+            const prevTrade = prev.find((p) => p.id === trade.id);
+            // Just settled now (was active in prev) — always keep for this render
+            if (!prevTrade || prevTrade.status === "active") return true;
+            // Was already settled in prev — safe to remove after 3s
             const shouldRemove = now - trade.expirationTime >= 3000;
             if (shouldRemove) {
               settledTradeIdsRef.current.delete(trade.id);
@@ -2153,7 +2200,7 @@ function TradingInterface() {
             symbol: trade.symbol,
             direction: trade.direction,
             entryPrice: trade.entryPrice,
-            exitPrice: currentPrice,
+            exitPrice: currentPriceRef.current,
           })
             .then(() => reloadTradeHistory())
             .catch(console.error);
@@ -2186,7 +2233,7 @@ function TradingInterface() {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [currentPrice, selectedAccountType]);
+  }, [selectedAccountType]);
 
   // Close tab handler for mobile (must be before early returns to respect Rules of Hooks)
   const handleCloseTab = useCallback(
@@ -6413,63 +6460,82 @@ function TradingInterface() {
                   );
                 })()}
 
-                {/* Candlestick Chart Container */}
+                {/* Candlestick Chart Container — one instance per open tab, show/hide with visibility */}
                 <div
                   className="relative z-[2] h-full w-full"
                   style={{ pointerEvents: "auto" }}
                 >
-                  <ChartGrid
-                    key={selectedSymbol}
-                    gridType={selectedChartGrid}
-                    defaultSymbol={selectedSymbol}
-                    availableSymbols={[
-                      "BTC",
-                      "ETH",
-                      "BNB",
-                      "SOL",
-                      "ADA",
-                      "DOGE",
-                      "XRP",
-                      "DOT",
-                      "MATIC",
-                      "LINK",
-                    ]}
-                    onPriceYPosition={setPriceYPosition}
-                    onLivePriceUpdate={handleLivePriceUpdate}
-                    onPriceToYConverter={handlePriceToYConverter}
-                    onTimeToXConverter={handleTimeToXConverter}
-                    expirationSeconds={expirationSeconds}
-                    expirationCountdown={countdown}
-                    hasActiveTrades={
-                      activeTrades.filter((t) => t.status === "active").length >
-                      0
-                    }
-                    candleInterval={candleInterval}
-                    hoveredButton={hoveredButton}
-                    onLastCandleTimestamp={handleLastCandleTimestamp}
-                    activeTradeExpirationTime={(() => {
-                      const active = activeTrades.filter(
-                        (t) => t.status === "active",
-                      );
-                      if (active.length === 0) return undefined;
-                      return active.reduce((earliest, t) =>
-                        t.expirationTime < earliest.expirationTime
-                          ? t
-                          : earliest,
-                      ).expirationTime;
-                    })()}
-                    activeTradeEntryTime={(() => {
-                      const active = activeTrades.filter(
-                        (t) => t.status === "active",
-                      );
-                      if (active.length === 0) return undefined;
-                      return active.reduce((earliest, t) =>
-                        t.expirationTime < earliest.expirationTime
-                          ? t
-                          : earliest,
-                      ).entryTime;
-                    })()}
-                  />
+                  {openTabs.map((tab, tabIndex) => {
+                    const isActive = tabIndex === activeTab;
+                    const tabActiveTrades = activeTrades.filter(
+                      (t) => t.status === "active" && t.symbol === tab.symbol,
+                    );
+                    const earliestActive =
+                      tabActiveTrades.length > 0
+                        ? tabActiveTrades.reduce((e, t) =>
+                            t.expirationTime < e.expirationTime ? t : e,
+                          )
+                        : null;
+                    return (
+                      <div
+                        key={`chart-${tab.symbol}`}
+                        className="absolute inset-0"
+                        style={{
+                          visibility: isActive ? "visible" : "hidden",
+                          pointerEvents: isActive ? "auto" : "none",
+                        }}
+                      >
+                        <ChartGrid
+                          gridType={selectedChartGrid}
+                          defaultSymbol={tab.symbol}
+                          availableSymbols={[
+                            "BTC",
+                            "ETH",
+                            "BNB",
+                            "SOL",
+                            "ADA",
+                            "DOGE",
+                            "XRP",
+                            "DOT",
+                            "MATIC",
+                            "LINK",
+                          ]}
+                          onPriceYPosition={
+                            isActive ? setPriceYPosition : undefined
+                          }
+                          onLivePriceUpdate={
+                            isActive ? handleLivePriceUpdate : undefined
+                          }
+                          onPriceToYConverter={
+                            isActive ? handlePriceToYConverter : undefined
+                          }
+                          onTimeToXConverter={
+                            isActive ? handleTimeToXConverter : undefined
+                          }
+                          expirationSeconds={
+                            isActive ? expirationSeconds : undefined
+                          }
+                          expirationCountdown={isActive ? countdown : undefined}
+                          hasActiveTrades={
+                            isActive && tabActiveTrades.length > 0
+                          }
+                          candleInterval={candleInterval}
+                          hoveredButton={isActive ? hoveredButton : null}
+                          onLastCandleTimestamp={
+                            isActive ? handleLastCandleTimestamp : undefined
+                          }
+                          activeTradeExpirationTime={
+                            isActive
+                              ? earliestActive?.expirationTime
+                              : undefined
+                          }
+                          activeTradeEntryTime={
+                            isActive ? earliestActive?.entryTime : undefined
+                          }
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Custom DOM-based live price badge - renders above all overlays */}

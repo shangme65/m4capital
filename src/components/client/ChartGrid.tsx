@@ -29,6 +29,15 @@ interface ChartGridProps {
   // Entry arrow for active trade
   activeTradeEntryPrice?: number;
   activeTradeDirection?: "higher" | "lower";
+  // Full trades array for per-trade IQ Option popups
+  activeTradesForChart?: Array<{
+    id: string;
+    symbol: string;
+    direction: "higher" | "lower";
+    amount: number;
+    entryPrice: number;
+    status: string;
+  }>;
 }
 
 export default function ChartGrid({
@@ -62,6 +71,7 @@ export default function ChartGrid({
   disableCrosshair,
   activeTradeEntryPrice,
   activeTradeDirection,
+  activeTradesForChart,
 }: ChartGridProps) {
   // Initialize chart symbols based on grid type
   const getInitialSymbols = () => {
@@ -139,6 +149,7 @@ export default function ChartGrid({
               disableCrosshair={disableCrosshair}
               activeTradeEntryPrice={activeTradeEntryPrice}
               activeTradeDirection={activeTradeDirection}
+              activeTradesForChart={activeTradesForChart}
             />
           </div>
         );

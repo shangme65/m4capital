@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import ReactDOM from "react-dom";
 import {
   ChevronUp,
   ChevronDown,
@@ -170,63 +171,17 @@ function MobileAssetHeader({
   AssetFlag: MobileTradingViewProps["AssetFlag"];
   symbols: MobileTradingViewProps["symbols"];
 }) {
-  const sym = symbols.find((s) => s.symbol === selectedSymbol);
-  const change = sym?.change || "+0.00";
-  const pct = sym?.percentage || "0.00%";
-  const isPositive = !change.startsWith("-");
-  const flag = sym?.flag || "";
-
   return (
     <div
       className="flex-shrink-0 select-none"
       style={{ backgroundColor: C.base }}
     >
-      {/* Asset info bar */}
-      <div
-        className="flex items-center gap-3 px-4 py-2"
-        style={{ borderBottom: `1.2px solid ${C.strokeTertiary}` }}
-      >
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <AssetFlag flag={flag} symbol={selectedSymbol} size={24} />
-          <div className="min-w-0">
-            <div
-              className="text-sm font-medium truncate"
-              style={{ color: C.textPrimary }}
-            >
-              {sym?.displayName || selectedSymbol}
-            </div>
-            <div className="flex items-center gap-2">
-              <span
-                className="text-xs font-medium tabular-nums"
-                style={{
-                  color:
-                    priceDirection === "up"
-                      ? C.greenText
-                      : priceDirection === "down"
-                        ? C.redText
-                        : C.textPrimary,
-                }}
-              >
-                {currentPrice > 0 ? currentPrice.toFixed(5) : "—"}
-              </span>
-              <span
-                className="text-[10px] tabular-nums"
-                style={{ color: isPositive ? C.greenText : C.redText }}
-              >
-                {pct}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Scrollable asset tabs */}
       <div
         className="flex items-center gap-1.5 px-3 py-1.5 overflow-x-auto"
         style={{
           scrollbarWidth: "none",
           WebkitOverflowScrolling: "touch",
-          borderBottom: `1.2px solid ${C.strokeTertiary}`,
         }}
       >
         {openTabs.map((tab, i) => {
@@ -355,16 +310,72 @@ function MobileTradingPanel({
   onHoveredButton: (btn: "higher" | "lower" | null) => void;
 }) {
   const [showAmountPresets, setShowAmountPresets] = useState(false);
+  const [showExpirationPicker, setShowExpirationPicker] = useState(false);
   const currentBalance =
     selectedAccountType === "real" ? traderoomBalance : practiceAccountBalance;
   const activeOnSymbol = activeTrades.filter(
     (t) => t.symbol === selectedSymbol && t.status === "active",
   );
 
-  const formatExpiration = (seconds: number) => {
-    if (seconds < 60) return `${seconds}s`;
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-    return `${Math.floor(seconds / 3600)}h`;
+  // Generate close-at time label from seconds
+  const getCloseAtLabel = (seconds: number) => {
+    const t = new Date(Date.now() + seconds * 1000);
+    return `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`;
+  };
+
+  // Generate list of selectable expiration options (close-at times)
+  const getExpirationOptions = () => {
+    const now = Date.now();
+    const options: { seconds: number; label: string }[] = [];
+    // Per-minute options for next 20 minutes
+    for (let m = 1; m <= 20; m++) {
+      const secs = m * 60;
+      const t = new Date(now + secs * 1000);
+      // Snap to the next whole minute at that offset
+      const snapped = new Date(
+        t.getFullYear(),
+        t.getMonth(),
+        t.getDate(),
+        t.getHours(),
+        t.getMinutes(),
+        0,
+      );
+      const actualSecs = Math.round((snapped.getTime() - now) / 1000);
+      if (actualSecs > 0) {
+        options.push({
+          seconds: actualSecs,
+          label: `${String(snapped.getHours()).padStart(2, "0")}:${String(snapped.getMinutes()).padStart(2, "0")}`,
+        });
+      }
+    }
+    // Quarter-hour options: :15, :30, :45, :00 of next hour etc.
+    [30, 45, 60, 90, 120].forEach((mins) => {
+      const secs = mins * 60;
+      const t = new Date(now + secs * 1000);
+      const snapped = new Date(
+        t.getFullYear(),
+        t.getMonth(),
+        t.getDate(),
+        t.getHours(),
+        t.getMinutes(),
+        0,
+      );
+      const actualSecs = Math.round((snapped.getTime() - now) / 1000);
+      if (
+        actualSecs > 0 &&
+        !options.find(
+          (o) =>
+            o.label ===
+            `${String(snapped.getHours()).padStart(2, "0")}:${String(snapped.getMinutes()).padStart(2, "0")}`,
+        )
+      ) {
+        options.push({
+          seconds: actualSecs,
+          label: `${String(snapped.getHours()).padStart(2, "0")}:${String(snapped.getMinutes()).padStart(2, "0")}`,
+        });
+      }
+    });
+    return options.sort((a, b) => a.seconds - b.seconds);
   };
 
   const formatCountdown = (seconds: number) => {
@@ -379,17 +390,6 @@ function MobileTradingPanel({
     onAmountInputChange(newAmount.toLocaleString());
   };
 
-  const adjustExpiration = (delta: number) => {
-    const steps = [5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
-    const currentIdx = steps.indexOf(expirationSeconds);
-    if (currentIdx === -1) {
-      onExpirationChange(30);
-      return;
-    }
-    const newIdx = Math.max(0, Math.min(steps.length - 1, currentIdx + delta));
-    onExpirationChange(steps[newIdx]);
-  };
-
   const amountPresets = [1, 2, 5, 10, 25, 50, 100, 500];
 
   return (
@@ -397,10 +397,9 @@ function MobileTradingPanel({
       className="flex-shrink-0 select-none"
       style={{
         backgroundColor: C.base,
-        borderTop: `1.2px solid ${C.strokeTertiary}`,
       }}
     >
-      {/* Trading controls grid — IQ Option mobile layout */}
+      {/* Trading controls grid - IQ Option mobile layout */}
       <div
         className="grid grid-cols-2 gap-y-2 gap-x-3 px-4 pt-3 pb-2"
         style={{ minHeight: "120px" }}
@@ -444,7 +443,7 @@ function MobileTradingPanel({
           </div>
         </div>
 
-        {/* Expiration control */}
+        {/* Expiration control — shows close-at time, opens picker on tap */}
         <div>
           <div
             className="text-[10px] font-medium uppercase tracking-wider mb-1"
@@ -457,34 +456,22 @@ function MobileTradingPanel({
             />
             Expiration
           </div>
-          <div
-            className="flex items-center rounded-xl overflow-hidden"
+          <button
+            className="w-full flex items-center justify-between rounded-xl px-3 transition-colors active:opacity-70"
             style={{
               backgroundColor: C.quaternary,
               height: "40px",
             }}
+            onClick={() => setShowExpirationPicker(true)}
           >
-            <button
-              onClick={() => adjustExpiration(-1)}
-              className="flex items-center justify-center w-9 h-full transition-colors active:opacity-70"
-              style={{ color: C.textSecondary }}
-            >
-              <Minus size={14} />
-            </button>
-            <div
-              className="flex-1 text-center text-sm font-medium tabular-nums"
+            <span
+              className="text-sm font-medium tabular-nums"
               style={{ color: C.textPrimary }}
             >
-              {formatExpiration(expirationSeconds)}
-            </div>
-            <button
-              onClick={() => adjustExpiration(1)}
-              className="flex items-center justify-center w-9 h-full transition-colors active:opacity-70"
-              style={{ color: C.textSecondary }}
-            >
-              <Plus size={14} />
-            </button>
-          </div>
+              {getCloseAtLabel(expirationSeconds)}
+            </span>
+            <ChevronDown size={13} style={{ color: C.textSecondary }} />
+          </button>
         </div>
 
         {/* Higher button */}
@@ -582,10 +569,7 @@ function MobileTradingPanel({
 
       {/* Amount presets dropdown */}
       {showAmountPresets && (
-        <div
-          className="grid grid-cols-4 gap-1.5 px-4 pb-3"
-          style={{ borderTop: `1px solid ${C.strokeTertiary}` }}
-        >
+        <div className="grid grid-cols-4 gap-1.5 px-4 pb-3">
           {amountPresets.map((preset) => (
             <button
               key={preset}
@@ -605,6 +589,89 @@ function MobileTradingPanel({
           ))}
         </div>
       )}
+
+      {/* Expiration Picker Sheet */}
+      {showExpirationPicker &&
+        typeof document !== "undefined" &&
+        (() => {
+          const options = getExpirationOptions();
+          const selectedLabel = getCloseAtLabel(expirationSeconds);
+          return ReactDOM.createPortal(
+            <div
+              className="fixed top-0 left-0 right-0 bottom-0 flex flex-col justify-end"
+              style={{ backgroundColor: "rgba(0,0,0,0.55)", zIndex: 10001 }}
+              onClick={() => setShowExpirationPicker(false)}
+            >
+              <div
+                className="rounded-t-2xl overflow-hidden"
+                style={{ backgroundColor: "#0f1822", maxHeight: "70vh" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Header */}
+                <div
+                  className="flex items-center justify-between px-5 py-4 border-b"
+                  style={{ borderColor: "rgba(255,255,255,0.07)" }}
+                >
+                  <span
+                    className="text-base font-semibold"
+                    style={{ color: C.textPrimary }}
+                  >
+                    Trade will close at
+                  </span>
+                  <button
+                    onClick={() => setShowExpirationPicker(false)}
+                    className="w-7 h-7 flex items-center justify-center rounded-full"
+                    style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
+                  >
+                    <X size={14} style={{ color: C.textSecondary }} />
+                  </button>
+                </div>
+
+                {/* Options list */}
+                <div className="overflow-y-auto" style={{ maxHeight: "55vh" }}>
+                  {options.map((opt) => {
+                    const isSelected = opt.label === selectedLabel;
+                    return (
+                      <button
+                        key={opt.label}
+                        className="w-full flex items-center justify-between px-5 py-4"
+                        style={{
+                          backgroundColor: isSelected
+                            ? "rgba(255,255,255,0.06)"
+                            : "transparent",
+                          borderBottom: "1px solid rgba(255,255,255,0.05)",
+                        }}
+                        onClick={() => {
+                          onExpirationChange(opt.seconds);
+                          setShowExpirationPicker(false);
+                        }}
+                      >
+                        <span
+                          className="text-base font-medium tabular-nums"
+                          style={{ color: C.textPrimary }}
+                        >
+                          {opt.label}
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span
+                            className="text-base font-medium"
+                            style={{ color: C.greenText }}
+                          >
+                            +85%
+                          </span>
+                          {isSelected && (
+                            <span style={{ color: C.greenText }}>✓</span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>,
+            document.body,
+          );
+        })()}
     </div>
   );
 }
@@ -1082,7 +1149,6 @@ function MobileBottomNav({
       className="flex-shrink-0 select-none"
       style={{
         backgroundColor: C.base,
-        borderTop: `1.2px solid ${C.strokeTertiary}`,
         paddingBottom: "env(safe-area-inset-bottom)",
       }}
     >
@@ -1158,7 +1224,6 @@ function MobileBalanceBar({
         className="flex items-center justify-between px-4 py-1.5"
         style={{
           backgroundColor: C.base,
-          borderBottom: `1.2px solid ${C.strokeTertiary}`,
         }}
       >
         <button
@@ -1406,7 +1471,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         onDeposit={props.onDeposit}
       />
 
-      {/* Asset header with tabs — hidden when portfolio tab is active */}
+      {/* Asset header with tabs - hidden when portfolio tab is active */}
       {activeNavItem !== "portfolio" && (
         <MobileAssetHeader
           selectedSymbol={props.selectedSymbol}
@@ -1423,7 +1488,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         />
       )}
 
-      {/* Portfolio View — replaces chart when portfolio tab is active */}
+      {/* Portfolio View - replaces chart when portfolio tab is active */}
       {activeNavItem === "portfolio" && (
         <MobilePortfolioView
           activeTrades={props.activeTrades}
@@ -1437,7 +1502,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         />
       )}
 
-      {/* Chart area — fills remaining space (IQ Option: grid-template-rows: minmax(140px,1fr) auto) */}
+      {/* Chart area - fills remaining space (IQ Option: grid-template-rows: minmax(140px,1fr) auto) */}
       <div
         className="flex-1 relative overflow-hidden"
         style={{
@@ -1460,53 +1525,87 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
           />
         </div>
 
-        {/* Full-bleed chart */}
+        {/* Full-bleed chart — one instance per open tab, show/hide with visibility */}
         <div className="absolute inset-0" style={{ zIndex: 1 }}>
-          <ChartGrid
-            key={props.selectedSymbol}
-            gridType={props.selectedChartGrid}
-            defaultSymbol={props.selectedSymbol}
-            availableSymbols={[
-              "BTC",
-              "ETH",
-              "BNB",
-              "SOL",
-              "ADA",
-              "DOGE",
-              "XRP",
-              "DOT",
-              "MATIC",
-              "LINK",
-            ]}
-            onPriceYPosition={handlePriceYPosition}
-            onLivePriceUpdate={props.onLivePriceUpdate}
-            onPriceToYConverter={props.onPriceToYConverter}
-            onTimeToXConverter={props.onTimeToXConverter}
-            expirationSeconds={props.expirationSeconds}
-            expirationCountdown={props.countdown}
-            hasActiveTrades={
-              props.activeTrades.filter((t) => t.status === "active").length > 0
-            }
-            candleInterval={props.candleInterval}
-            hoveredButton={props.hoveredButton}
-            onLastCandleTimestamp={props.onLastCandleTimestamp}
-            hideTradeOverlay={true}
-            disableCrosshair={true}
-            activeTradeExpirationTime={props.activeTradeExpirationTime}
-            activeTradeEntryTime={props.activeTradeEntryTime}
-            activeTradeEntryPrice={
-              props.activeTrades.find(
-                (t) =>
-                  t.symbol === props.selectedSymbol && t.status === "active",
-              )?.entryPrice
-            }
-            activeTradeDirection={
-              props.activeTrades.find(
-                (t) =>
-                  t.symbol === props.selectedSymbol && t.status === "active",
-              )?.direction
-            }
-          />
+          {props.openTabs.map((tab, tabIndex) => {
+            const isActive = tabIndex === props.activeTab;
+            const tabActiveTrades = props.activeTrades.filter(
+              (t) => t.status === "active" && t.symbol === tab.symbol,
+            );
+            const earliestActive =
+              tabActiveTrades.length > 0
+                ? tabActiveTrades.reduce((e, t) =>
+                    t.expirationTime < e.expirationTime ? t : e,
+                  )
+                : null;
+            return (
+              <div
+                key={`chart-${tab.symbol}`}
+                className="absolute inset-0"
+                style={{
+                  visibility: isActive ? "visible" : "hidden",
+                  pointerEvents: isActive ? "auto" : "none",
+                }}
+              >
+                <ChartGrid
+                  gridType={props.selectedChartGrid}
+                  defaultSymbol={tab.symbol}
+                  availableSymbols={[
+                    "BTC",
+                    "ETH",
+                    "BNB",
+                    "SOL",
+                    "ADA",
+                    "DOGE",
+                    "XRP",
+                    "DOT",
+                    "MATIC",
+                    "LINK",
+                  ]}
+                  onPriceYPosition={isActive ? handlePriceYPosition : undefined}
+                  onLivePriceUpdate={
+                    isActive ? props.onLivePriceUpdate : undefined
+                  }
+                  onPriceToYConverter={
+                    isActive ? props.onPriceToYConverter : undefined
+                  }
+                  onTimeToXConverter={
+                    isActive ? props.onTimeToXConverter : undefined
+                  }
+                  expirationSeconds={
+                    isActive ? props.expirationSeconds : undefined
+                  }
+                  expirationCountdown={isActive ? props.countdown : undefined}
+                  hasActiveTrades={isActive && tabActiveTrades.length > 0}
+                  candleInterval={props.candleInterval}
+                  hoveredButton={isActive ? props.hoveredButton : null}
+                  onLastCandleTimestamp={
+                    isActive ? props.onLastCandleTimestamp : undefined
+                  }
+                  hideTradeOverlay={true}
+                  disableCrosshair={true}
+                  activeTradeExpirationTime={
+                    isActive ? props.activeTradeExpirationTime : undefined
+                  }
+                  activeTradeEntryTime={
+                    isActive ? props.activeTradeEntryTime : undefined
+                  }
+                  activeTradesForChart={
+                    isActive
+                      ? tabActiveTrades.map((t) => ({
+                          id: t.id,
+                          symbol: t.symbol,
+                          direction: t.direction,
+                          amount: t.amount,
+                          entryPrice: t.entryPrice,
+                          status: t.status,
+                        }))
+                      : []
+                  }
+                />
+              </div>
+            );
+          })}
         </div>
 
         {/* ── Current price dashed line + badge (IQ Option style) ── */}
@@ -1517,7 +1616,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
               className="absolute left-0 pointer-events-none"
               style={{
                 top: `${priceYPercent}%`,
-                right: "60px",
+                right: "46px",
                 height: "1px",
                 backgroundImage: `repeating-linear-gradient(to right, ${C.textTertiary} 0, ${C.textTertiary} 4px, transparent 4px, transparent 8px)`,
                 zIndex: 20,
@@ -1536,7 +1635,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
               }}
             >
               <div
-                className="px-2 py-0.5 rounded-sm text-[11px] font-bold tabular-nums whitespace-nowrap"
+                className="px-1 py-px rounded-md text-[8px] font-bold tabular-nums whitespace-nowrap"
                 style={{
                   backgroundColor:
                     props.priceDirection === "up"
@@ -1545,7 +1644,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
                         ? C.red
                         : C.strokeSecondary,
                   color: C.white,
-                  minWidth: "58px",
+                  minWidth: "44px",
                   textAlign: "center",
                 }}
               >
@@ -1555,12 +1654,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
           </>
         )}
 
-        {/* Horizontal sentiment bar overlay at bottom of chart */}
-        <div className="absolute bottom-0 left-0 right-0 z-10">
-          <HorizontalSentiment />
-        </div>
-
-        {/* Trade notification popups — sticky top-left */}
+        {/* Trade notification popups - sticky top-left */}
         <div
           className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none"
           style={{ zIndex: 30 }}
@@ -1668,7 +1762,18 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         </div>
       </div>
 
-      {/* Trading Panel — hidden when portfolio tab is active */}
+      {/* Horizontal sentiment bar - below chart, above trading panel */}
+      {activeNavItem !== "portfolio" && (
+        <div
+          style={{
+            backgroundColor: C.base,
+          }}
+        >
+          <HorizontalSentiment />
+        </div>
+      )}
+
+      {/* Trading Panel - hidden when portfolio tab is active */}
       {activeNavItem !== "portfolio" && (
         <MobileTradingPanel
           amount={props.amount}

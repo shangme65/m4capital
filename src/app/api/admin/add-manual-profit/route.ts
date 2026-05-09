@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { Decimal } from "@prisma/client/runtime/library";
 import { sendWebPushToUser } from "@/lib/push-notifications";
 import { getCurrencySymbol } from "@/lib/currencies";
+import { pushTraderoomBalanceUpdate } from "@/lib/sse-connections";
 
 export async function POST(req: NextRequest) {
   try {
@@ -147,6 +148,12 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    // Push real-time balance update to user's open traderoom tab (SSE)
+    pushTraderoomBalanceUpdate(
+      userId,
+      Number(updatedPortfolio.traderoomBalance),
+    );
 
     // Create notification for user (matching traderoom exact format)
     await prisma.notification.create({

@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useLayoutEffect } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useLayoutEffect,
+} from "react";
 
 type Theme = "light" | "dark" | "system";
 
@@ -19,17 +25,19 @@ function getInitialTheme(): { theme: Theme; resolved: "light" | "dark" } {
   if (typeof window === "undefined") {
     return { theme: "system", resolved: "dark" };
   }
-  
+
   const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
   const theme = savedTheme || "system";
-  
+
   let resolved: "light" | "dark";
   if (theme === "system") {
-    resolved = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    resolved = window.matchMedia("(prefers-color-scheme: dark)").matches
+      ? "dark"
+      : "light";
   } else {
     resolved = theme;
   }
-  
+
   return { theme, resolved };
 }
 
@@ -44,19 +52,10 @@ function applyThemeToDocument(resolved: "light" | "dark") {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window === "undefined") return "system";
-    const saved = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
-    return saved || "system";
-  });
-  
-  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">(() => {
-    if (typeof window === "undefined") return "dark";
-    const initial = getInitialTheme();
-    // Apply immediately during initialization
-    applyThemeToDocument(initial.resolved);
-    return initial.resolved;
-  });
+  // Always initialize with same defaults on server and client to prevent hydration mismatch.
+  // The actual saved theme is applied in useLayoutEffect after hydration.
+  const [theme, setThemeState] = useState<Theme>("system");
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("dark");
 
   // Get system preference
   const getSystemTheme = (): "light" | "dark" => {
@@ -86,7 +85,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useLayoutEffect(() => {
     const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
     const initialTheme = savedTheme || "system";
-    const resolved = initialTheme === "system" ? getSystemTheme() : initialTheme;
+    const resolved =
+      initialTheme === "system" ? getSystemTheme() : initialTheme;
     setThemeState(initialTheme);
     setResolvedTheme(resolved);
     applyThemeToDocument(resolved);

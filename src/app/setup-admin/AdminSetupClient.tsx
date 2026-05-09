@@ -157,20 +157,24 @@ export default function AdminSetupClient({
               // Login succeeded - force a hard redirect with page reload
               showSuccess("Login successful! Redirecting to dashboard...");
               // Use a small delay to ensure the session cookie is set
-              await new Promise(resolve => setTimeout(resolve, 500));
+              await new Promise((resolve) => setTimeout(resolve, 500));
               window.location.href = "/dashboard";
               return; // Exit the function
             } else {
               // Login failed - show manual login option
               console.error("Auto-login failed:", signInResult?.error);
-              showError("Auto-login failed. Please login manually with your admin credentials.");
+              showError(
+                "Auto-login failed. Please login manually with your admin credentials.",
+              );
               setTimeout(() => {
                 window.location.href = "/?auth=login";
               }, 2500);
             }
           } catch (signInError) {
             console.error("SignIn error:", signInError);
-            showError("Auto-login failed. Please login manually with your admin credentials.");
+            showError(
+              "Auto-login failed. Please login manually with your admin credentials.",
+            );
             setTimeout(() => {
               window.location.href = "/?auth=login";
             }, 2500);
@@ -239,12 +243,20 @@ export default function AdminSetupClient({
   };
 
   return (
-    <div className={`min-h-screen relative overflow-hidden ${isDark ? "bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950" : "bg-slate-50"}`}>
+    <div
+      className={`min-h-screen relative overflow-hidden ${isDark ? "bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950" : "bg-slate-50"}`}
+    >
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className={`absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl animate-blob ${isDark ? "bg-purple-500 opacity-20" : "bg-gray-300 opacity-30"}`}></div>
-        <div className={`absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000 ${isDark ? "bg-blue-500 opacity-20" : "bg-gray-400 opacity-20"}`}></div>
-        <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000 ${isDark ? "bg-indigo-500 opacity-20" : "bg-slate-300 opacity-20"}`}></div>
+        <div
+          className={`absolute -top-40 -right-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl animate-blob ${isDark ? "bg-purple-500 opacity-20" : "bg-gray-300 opacity-30"}`}
+        ></div>
+        <div
+          className={`absolute -bottom-40 -left-40 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000 ${isDark ? "bg-blue-500 opacity-20" : "bg-gray-400 opacity-20"}`}
+        ></div>
+        <div
+          className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000 ${isDark ? "bg-indigo-500 opacity-20" : "bg-slate-300 opacity-20"}`}
+        ></div>
       </div>
 
       {/* Grid Pattern Overlay */}
@@ -270,10 +282,17 @@ export default function AdminSetupClient({
             <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl shadow-2xl mb-3 animate-pulse">
               <Shield className="w-8 h-8 text-white" />
             </div>
-            <h1 className={`text-3xl sm:text-4xl font-bold mb-2 tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>
-              Admin <span className={isDark ? "text-purple-400" : "text-purple-600"}>Setup</span>
+            <h1
+              className={`text-3xl sm:text-4xl font-bold mb-2 tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}
+            >
+              Admin{" "}
+              <span className={isDark ? "text-purple-400" : "text-purple-600"}>
+                Setup
+              </span>
             </h1>
-            <p className={`text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            <p
+              className={`text-base ${isDark ? "text-gray-400" : "text-gray-500"}`}
+            >
               Initialize and manage your super admin account
             </p>
 
@@ -303,18 +322,28 @@ export default function AdminSetupClient({
           </div>
 
           {adminExists && !isAuthenticated && (
-            <div className={`mb-4 backdrop-blur-xl rounded-xl p-4 shadow-xl ${isDark ? "bg-yellow-500/10 border border-yellow-500/20" : "bg-yellow-50 border border-yellow-200"}`}>
+            <div
+              className={`mb-4 backdrop-blur-xl rounded-xl p-4 shadow-xl ${isDark ? "bg-yellow-500/10 border border-yellow-500/20" : "bg-yellow-50 border border-yellow-200"}`}
+            >
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? "bg-yellow-500/20" : "bg-yellow-100"}`}>
-                    <Lock className={`w-5 h-5 ${isDark ? "text-yellow-400" : "text-yellow-600"}`} />
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? "bg-yellow-500/20" : "bg-yellow-100"}`}
+                  >
+                    <Lock
+                      className={`w-5 h-5 ${isDark ? "text-yellow-400" : "text-yellow-600"}`}
+                    />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className={`font-semibold text-base mb-1 ${isDark ? "text-yellow-300" : "text-yellow-700"}`}>
+                  <h3
+                    className={`font-semibold text-base mb-1 ${isDark ? "text-yellow-300" : "text-yellow-700"}`}
+                  >
                     Admin Already Exists
                   </h3>
-                  <p className={`text-xs leading-relaxed ${isDark ? "text-yellow-200/80" : "text-yellow-600"}`}>
+                  <p
+                    className={`text-xs leading-relaxed ${isDark ? "text-yellow-200/80" : "text-yellow-600"}`}
+                  >
                     An admin account exists in the database. You can still
                     reinitialize or update the origin admin from your .env file.
                     For security operations,{" "}
@@ -344,7 +373,9 @@ export default function AdminSetupClient({
                   <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center">
                     <Shield className="w-4 h-4 text-white" />
                   </div>
-                  <h2 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <h2
+                    className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
                     Initialize Origin Admin
                   </h2>
                 </div>
@@ -353,34 +384,54 @@ export default function AdminSetupClient({
                 )}
               </div>
 
-              <p className={`text-sm mb-3 leading-relaxed ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+              <p
+                className={`text-sm mb-3 leading-relaxed ${isDark ? "text-gray-300" : "text-gray-600"}`}
+              >
                 Create or update the super admin account using credentials from
                 your environment configuration.
               </p>
 
-              <div className={`rounded-xl p-4 mb-4 ${isDark ? "bg-white/5 border border-white/10" : "bg-gray-50 border border-gray-200"}`}>
+              <div
+                className={`rounded-xl p-4 mb-4 ${isDark ? "bg-white/5 border border-white/10" : "bg-gray-50 border border-gray-200"}`}
+              >
                 <div className="flex items-center gap-2 mb-3">
-                  <Terminal className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-600"}`} />
-                  <span className={`text-sm font-semibold ${isDark ? "text-purple-300" : "text-purple-700"}`}>
+                  <Terminal
+                    className={`w-4 h-4 ${isDark ? "text-purple-400" : "text-purple-600"}`}
+                  />
+                  <span
+                    className={`text-sm font-semibold ${isDark ? "text-purple-300" : "text-purple-700"}`}
+                  >
                     Required Environment Variables
                   </span>
                 </div>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <Mail className={`w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
-                    <code className={`font-mono text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    <Mail
+                      className={`w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    />
+                    <code
+                      className={`font-mono text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                    >
                       ORIGIN_ADMIN_EMAIL
                     </code>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <Key className={`w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
-                    <code className={`font-mono text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    <Key
+                      className={`w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    />
+                    <code
+                      className={`font-mono text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                    >
                       ORIGIN_ADMIN_PASSWORD
                     </code>
                   </div>
                   <div className="flex items-center gap-2 text-sm">
-                    <User className={`w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
-                    <code className={`font-mono text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    <User
+                      className={`w-4 h-4 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    />
+                    <code
+                      className={`font-mono text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                    >
                       ORIGIN_ADMIN_NAME
                     </code>
                   </div>
@@ -430,18 +481,30 @@ export default function AdminSetupClient({
 
           {/* Result Display */}
           {result && (
-            <div className={`mb-4 backdrop-blur-xl rounded-xl p-4 shadow-xl animate-slideIn ${isDark ? "bg-green-500/10 border border-green-500/20" : "bg-green-50 border border-green-200"}`}>
+            <div
+              className={`mb-4 backdrop-blur-xl rounded-xl p-4 shadow-xl animate-slideIn ${isDark ? "bg-green-500/10 border border-green-500/20" : "bg-green-50 border border-green-200"}`}
+            >
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? "bg-green-500/20" : "bg-green-100"}`}>
-                    <CheckCircle className={`w-5 h-5 ${isDark ? "text-green-400" : "text-green-600"}`} />
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? "bg-green-500/20" : "bg-green-100"}`}
+                  >
+                    <CheckCircle
+                      className={`w-5 h-5 ${isDark ? "text-green-400" : "text-green-600"}`}
+                    />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className={`font-semibold text-base mb-1 ${isDark ? "text-green-300" : "text-green-700"}`}>
+                  <h3
+                    className={`font-semibold text-base mb-1 ${isDark ? "text-green-300" : "text-green-700"}`}
+                  >
                     Operation Successful
                   </h3>
-                  <p className={`text-xs ${isDark ? "text-green-200/80" : "text-green-600"}`}>{result.message}</p>
+                  <p
+                    className={`text-xs ${isDark ? "text-green-200/80" : "text-green-600"}`}
+                  >
+                    {result.message}
+                  </p>
                 </div>
               </div>
             </div>
@@ -449,18 +512,28 @@ export default function AdminSetupClient({
 
           {/* Error Display */}
           {error && (
-            <div className={`mb-4 backdrop-blur-xl rounded-xl p-4 shadow-xl animate-shake ${isDark ? "bg-red-500/10 border border-red-500/20" : "bg-red-50 border border-red-200"}`}>
+            <div
+              className={`mb-4 backdrop-blur-xl rounded-xl p-4 shadow-xl animate-shake ${isDark ? "bg-red-500/10 border border-red-500/20" : "bg-red-50 border border-red-200"}`}
+            >
               <div className="flex items-start gap-3">
                 <div className="flex-shrink-0">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? "bg-red-500/20" : "bg-red-100"}`}>
-                    <XCircle className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`} />
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center ${isDark ? "bg-red-500/20" : "bg-red-100"}`}
+                  >
+                    <XCircle
+                      className={`w-5 h-5 ${isDark ? "text-red-400" : "text-red-600"}`}
+                    />
                   </div>
                 </div>
                 <div className="flex-1">
-                  <h3 className={`font-semibold text-base mb-1 ${isDark ? "text-red-300" : "text-red-700"}`}>
+                  <h3
+                    className={`font-semibold text-base mb-1 ${isDark ? "text-red-300" : "text-red-700"}`}
+                  >
                     Error Occurred
                   </h3>
-                  <p className={`text-xs leading-relaxed ${isDark ? "text-red-200/80" : "text-red-600"}`}>
+                  <p
+                    className={`text-xs leading-relaxed ${isDark ? "text-red-200/80" : "text-red-600"}`}
+                  >
                     {error}
                   </p>
                 </div>
@@ -481,80 +554,6 @@ export default function AdminSetupClient({
           onCancel={() => setShowConfirmDialog(false)}
         />
       )}
-
-      <style jsx global>{`
-        @keyframes blob {
-          0%,
-          100% {
-            transform: translate(0, 0) scale(1);
-          }
-          33% {
-            transform: translate(30px, -50px) scale(1.1);
-          }
-          66% {
-            transform: translate(-20px, 20px) scale(0.9);
-          }
-        }
-
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes slideDown {
-          from {
-            opacity: 0;
-            max-height: 0;
-          }
-          to {
-            opacity: 1;
-            max-height: 500px;
-          }
-        }
-
-        @keyframes shake {
-          0%,
-          100% {
-            transform: translateX(0);
-          }
-          25% {
-            transform: translateX(-10px);
-          }
-          75% {
-            transform: translateX(10px);
-          }
-        }
-
-        .animate-blob {
-          animation: blob 7s infinite;
-        }
-
-        .animation-delay-2000 {
-          animation-delay: 2s;
-        }
-
-        .animation-delay-4000 {
-          animation-delay: 4s;
-        }
-
-        .animate-slideIn {
-          animation: slideIn 0.5s ease-out;
-        }
-
-        .animate-slideDown {
-          animation: slideDown 0.3s ease-out;
-        }
-
-        .animate-shake {
-          animation: shake 0.5s ease-out;
-        }
-      `}</style>
     </div>
   );
 }

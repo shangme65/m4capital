@@ -74,6 +74,15 @@ interface RealTimeTradingChartProps {
   // Entry arrow: price where the trade was opened + which direction
   activeTradeEntryPrice?: number;
   activeTradeDirection?: "higher" | "lower";
+  // Full list of active trades for per-trade IQ Option style popups
+  activeTradesForChart?: Array<{
+    id: string;
+    symbol: string;
+    direction: "higher" | "lower";
+    amount: number;
+    entryPrice: number;
+    status: string;
+  }>;
 }
 
 export default function RealTimeTradingChart({
@@ -95,6 +104,7 @@ export default function RealTimeTradingChart({
   disableCrosshair = false,
   activeTradeEntryPrice,
   activeTradeDirection,
+  activeTradesForChart = [],
 }: RealTimeTradingChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -107,12 +117,27 @@ export default function RealTimeTradingChart({
   const [showCandleTimePeriod, setShowCandleTimePeriod] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // Y position (0-100%) of the active trade entry price on the chart
+  // Y position (0-100%) of the active trade entry price on the chart (legacy single-trade)
   const [entryArrowY, setEntryArrowY] = useState<number | null>(null);
+  // Per-trade Y positions: Map<tradeId, yPercent>
+  const [tradeYPositions, setTradeYPositions] = useState<
+    Record<string, number>
+  >({});
   const [livePrice, setLivePrice] = useState<{
     price: number;
     direction: "up" | "down" | "neutral";
   } | null>(null);
+
+  // Stable expiration target timestamp — only recalculated when countdown ticks,
+  // NOT on every render (prevents flicker caused by Date.now() drift between renders)
+  const expirationTargetMsRef = useRef<number>(
+    Date.now() + (expirationCountdown ?? expirationSeconds) * 1000,
+  );
+  useEffect(() => {
+    if (expirationCountdown !== undefined) {
+      expirationTargetMsRef.current = Date.now() + expirationCountdown * 1000;
+    }
+  }, [expirationCountdown]);
 
   // Keep the ref updated with latest callback without triggering re-renders
   useEffect(() => {
@@ -122,6 +147,17 @@ export default function RealTimeTradingChart({
   useEffect(() => {
     onLastCandleTimestampRef.current = onLastCandleTimestamp;
   }, [onLastCandleTimestamp]);
+
+  // Enforce axis text size based on mobile (disableCrosshair) — runs after chart init
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || typeof chart.setStyles !== "function") return;
+    const textSize = disableCrosshair ? 7 : 12;
+    chart.setStyles({
+      yAxis: { tickText: { size: textSize } },
+      xAxis: { tickText: { size: disableCrosshair ? 7 : 11 } },
+    } as any);
+  }, [disableCrosshair]);
 
   // Dynamically update price line color based on hovered button
   useEffect(() => {
@@ -267,13 +303,17 @@ export default function RealTimeTradingChart({
           reverse: false,
           axisLine: { show: false }, // Hide Y-axis line
           tickLine: { show: true, color: "rgba(150, 150, 150, 0.3)" },
-          tickText: { show: true, color: "#9e9aa7", size: 12 },
+          tickText: {
+            show: true,
+            color: "#9e9aa7",
+            size: disableCrosshair ? 8 : 12,
+          },
         },
         // X-axis styling
         xAxis: {
           axisLine: { show: false }, // Hide X-axis line
           tickLine: { color: "rgba(150, 150, 150, 0.3)" },
-          tickText: { color: "#9e9aa7", size: 11 },
+          tickText: { color: "#9e9aa7", size: disableCrosshair ? 8 : 11 },
         },
         // Crosshair styling
         crosshair: {
@@ -529,6 +569,14 @@ export default function RealTimeTradingChart({
         }
 
         setIsLoading(false);
+
+        // Enforce axis text size after data loads (overrides any default from klinecharts)
+        if (disableCrosshair && chartRef.current) {
+          (chartRef.current as any).setStyles?.({
+            yAxis: { tickText: { size: 7 } },
+            xAxis: { tickText: { size: 7 } },
+          });
+        }
       } catch (err) {
         console.error("Failed to load chart data:", err);
         if (isMounted) {
@@ -643,7 +691,7 @@ export default function RealTimeTradingChart({
           });
         }
 
-        // Compute entry arrow Y position when there is an active trade entry price
+        // Compute entry arrow Y position when there is an active trade entry price (legacy)
         if (activeTradeEntryPrice) {
           try {
             const entryPt = chart.convertToPixel(
@@ -665,6 +713,31 @@ export default function RealTimeTradingChart({
         } else {
           setEntryArrowY(null);
         }
+
+        // Compute per-trade Y positions for IQ Option style popups
+        if (
+          activeTradesForChart &&
+          activeTradesForChart.length > 0 &&
+          containerHeight > 0
+        ) {
+          const newPositions: Record<string, number> = {};
+          for (const trade of activeTradesForChart) {
+            if (trade.status !== "active") continue;
+            try {
+              const pt = chart.convertToPixel(
+                { value: trade.entryPrice },
+                { paneId: "candle_pane" },
+              );
+              if (pt && typeof pt.y === "number") {
+                newPositions[trade.id] = Math.max(
+                  5,
+                  Math.min(92, (pt.y / containerHeight) * 100),
+                );
+              }
+            } catch {}
+          }
+          setTradeYPositions(newPositions);
+        }
       }
     } catch (e) {
       // Fallback to center if conversion fails
@@ -676,6 +749,7 @@ export default function RealTimeTradingChart({
     onPriceToYConverter,
     onTimeToXConverter,
     activeTradeEntryPrice,
+    activeTradesForChart,
   ]);
 
   const addIndicator = (type: string) => {
@@ -906,31 +980,17 @@ export default function RealTimeTradingChart({
         (() => {
           const purchaseLinePos = 60; // current time at 60%
 
-          // End line: only show when there's an actual active trade
-          const hasActiveTradeData =
-            activeTradeExpirationTime && activeTradeEntryTime;
-          let endLinePos = 95;
-          let endTimeDisplay = "00:00";
+          // Compute end line position from countdown (simpler & always works)
+          const totalSecs = expirationSeconds || 60;
+          const remaining = Math.max(0, expirationCountdown);
+          const progress = totalSecs > 0 ? remaining / totalSecs : 0;
+          const endLinePos =
+            purchaseLinePos + (95 - purchaseLinePos) * progress;
 
-          if (hasActiveTradeData) {
-            const now = Date.now();
-            const totalDuration =
-              activeTradeExpirationTime - activeTradeEntryTime; // total trade duration in ms
-            const remaining = Math.max(0, activeTradeExpirationTime - now); // remaining ms
-            const maxEndLinePos = 95;
-
-            // progress goes from 1 (just started) to 0 (trade ending)
-            const progress = totalDuration > 0 ? remaining / totalDuration : 0;
-            endLinePos =
-              purchaseLinePos + (maxEndLinePos - purchaseLinePos) * progress;
-
-            // Calculate the actual clock time when the trade expires (entry time + expiration duration)
-            const endClockTime = new Date(activeTradeEntryTime + totalDuration);
-            const endHours = endClockTime.getHours();
-            const endMinutes = endClockTime.getMinutes();
-            const endSeconds = endClockTime.getSeconds();
-            endTimeDisplay = `${String(endHours).padStart(2, "0")}:${String(endMinutes).padStart(2, "0")}:${String(endSeconds).padStart(2, "0")}`;
-          }
+          // Real clock time when trade expires — use stable ref (updated only on countdown tick)
+          // to prevent label flickering caused by Date.now() varying between renders
+          const endClockTime = new Date(expirationTargetMsRef.current);
+          const endTimeDisplay = `${String(endClockTime.getHours()).padStart(2, "0")}:${String(endClockTime.getMinutes()).padStart(2, "0")}:${String(endClockTime.getSeconds()).padStart(2, "0")}`;
 
           return (
             <>
@@ -949,104 +1009,260 @@ export default function RealTimeTradingChart({
 
               {/* Purchase Time Line (White dashed) */}
               <div
-                className="absolute top-0 bottom-8 pointer-events-none"
+                className="absolute top-0 pointer-events-none"
                 style={{
+                  bottom: 0,
                   left: `${purchaseLinePos}%`,
                   transform: "translateX(-50%)",
                   zIndex: 1000,
                 }}
               >
+                {/* Thin dashed line - stops at the x-axis area (bottom-8) */}
                 <div
-                  className="h-full"
                   style={{
-                    width: "2px",
+                    position: "absolute",
+                    top: 0,
+                    bottom: "32px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: "1px",
                     backgroundImage:
-                      "linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 50%, transparent 50%)",
-                    backgroundSize: "2px 8px",
+                      "linear-gradient(to bottom, rgba(255, 255, 255, 0.35) 50%, transparent 50%)",
+                    backgroundSize: "1px 5px",
                   }}
                 />
 
-                {/* PURCHASE TIME label at top - hide when trade is active */}
-                {!hasActiveTradeData && (
-                  <div
-                    className="absolute top-1 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5"
-                    style={{ color: "rgba(255, 255, 255, 0.55)" }}
-                  >
-                    <span className="text-[8px] tracking-wider whitespace-nowrap uppercase">
-                      Purchase
-                    </span>
-                    <span
-                      className="text-[13px] font-bold font-mono leading-none"
-                      style={{ color: "rgba(255,255,255,0.85)" }}
-                    >
-                      {String(
-                        Math.floor((expirationCountdown || 0) / 60),
-                      ).padStart(2, "0")}
-                      :
-                      {String((expirationCountdown || 0) % 60).padStart(2, "0")}
-                    </span>
-                  </div>
-                )}
-
-                {/* Countdown at bottom of line during active trade */}
-                {hasActiveTradeData && (
-                  <div
-                    className="absolute bottom-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
-                    style={{ color: "rgba(255, 255, 255, 0.8)" }}
-                  >
-                    <span className="text-white text-sm font-bold font-mono tracking-wide whitespace-nowrap">
-                      {String(
-                        Math.floor((expirationCountdown || 0) / 60),
-                      ).padStart(2, "0")}
-                      :
-                      {String((expirationCountdown || 0) % 60).padStart(2, "0")}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Trade End Time Line (Solid Red) - Only shows with active trade, moves as time passes */}
-              {hasActiveTradeData && (
+                {/* PURCHASE + countdown label at top */}
                 <div
-                  className="absolute top-0 bottom-8 pointer-events-none"
+                  className="absolute top-1 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0"
+                  style={{ color: "rgba(255, 255, 255, 0.45)" }}
+                >
+                  <span className="text-[7px] tracking-wider whitespace-nowrap uppercase leading-tight">
+                    Purchase
+                  </span>
+                  <span
+                    className="text-[10px] font-bold font-mono leading-none"
+                    style={{ color: "rgba(255,255,255,0.65)" }}
+                  >
+                    {String(
+                      Math.floor((expirationCountdown || 0) / 60),
+                    ).padStart(2, "0")}
+                    :{String((expirationCountdown || 0) % 60).padStart(2, "0")}
+                  </span>
+                </div>
+
+                {/* Time label at bottom — sits in the x-axis area, always shows live current time */}
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center"
                   style={{
-                    left: `${endLinePos}%`,
-                    transform: "translateX(-50%)",
-                    zIndex: 1000,
-                    transition: "left 1s linear",
+                    bottom: "4px",
+                    color: "rgba(255, 255, 255, 0.55)",
                   }}
                 >
-                  {/* Solid red vertical line */}
-                  <div
-                    className="h-full"
-                    style={{
-                      width: "2px",
-                      backgroundColor: "rgba(239, 68, 68, 0.9)",
-                    }}
-                  />
-
-                  {/* END TIME label at top with real clock time */}
-                  <div
-                    className="absolute -top-0 left-1/2 -translate-x-1/2 flex flex-col items-center"
-                    style={{ color: "rgba(239, 68, 68, 0.9)" }}
-                  ></div>
-
-                  {/* Red glow effect at bottom of line */}
-                  <div
-                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full"
-                    style={{
-                      backgroundColor: "rgba(239, 68, 68, 0.8)",
-                      boxShadow: "0 0 8px 2px rgba(239, 68, 68, 0.5)",
-                    }}
-                  />
+                  <span className="text-[9px] font-mono whitespace-nowrap tabular-nums">
+                    {(() => {
+                      const t = new Date();
+                      return `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}:${String(t.getSeconds()).padStart(2, "0")}`;
+                    })()}
+                  </span>
                 </div>
-              )}
+              </div>
+
+              {/* Trade End Time Line (Solid Red) - Always visible */}
+              <div
+                className="absolute top-0 pointer-events-none"
+                style={{
+                  bottom: 0,
+                  left: `${endLinePos}%`,
+                  transform: "translateX(-50%)",
+                  zIndex: 1000,
+                  transition: "left 1s linear",
+                }}
+              >
+                {/* Solid red vertical line — stops at x-axis area */}
+                <div
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    bottom: "32px",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: "1px",
+                    backgroundColor: "rgba(239,68,68,0.85)",
+                  }}
+                />
+
+                {/* Expiration time label in x-axis area */}
+                <div
+                  className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center"
+                  style={{ bottom: "4px" }}
+                >
+                  <span
+                    className="text-[9px] font-mono whitespace-nowrap tabular-nums px-1 rounded"
+                    style={{
+                      color: "rgba(239,68,68,1)",
+                      backgroundColor: "rgba(239,68,68,0.15)",
+                    }}
+                  >
+                    {endTimeDisplay}
+                  </span>
+                </div>
+              </div>
             </>
           );
         })()}
 
-      {/* Entry Point Arrow - shown at the price level where the trade was opened */}
-      {hasActiveTrades &&
+      {/* IQ Option style per-trade entry popups */}
+      {activeTradesForChart
+        .filter(
+          (t) => t.status === "active" && tradeYPositions[t.id] !== undefined,
+        )
+        .map((trade) => {
+          const yPct = tradeYPositions[trade.id];
+          const isUp = trade.direction === "higher";
+          const mainColor = isUp ? "#30A46C" : "#E5484D";
+          const darkColor = isUp ? "#1B4931" : "#62181B";
+          const glowColor = isUp
+            ? "rgba(48,164,108,0.3)"
+            : "rgba(229,72,77,0.3)";
+          const dashColor = isUp
+            ? "rgba(48,164,108,0.6)"
+            : "rgba(229,72,77,0.6)";
+
+          return (
+            <div
+              key={`iq-popup-${trade.id}`}
+              className="absolute inset-0 pointer-events-none"
+              style={{ zIndex: 1003 }}
+            >
+              {/* Dashed horizontal line from left edge to the popup (at 60% purchase line) */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: `${yPct}%`,
+                  left: 0,
+                  width: "60%",
+                  height: "1px",
+                  backgroundImage: `repeating-linear-gradient(to right, ${dashColor} 0px, ${dashColor} 5px, transparent 5px, transparent 10px)`,
+                  transform: "translateY(-0.5px)",
+                }}
+              />
+
+              {/* Popup badge anchored at the 60% purchase line X, at the trade's Y price level */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: "60%",
+                  top: `${yPct}%`,
+                  transform: "translate(-50%, -50%)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0,
+                }}
+              >
+                {/* Glow circle behind arrow */}
+                <div
+                  style={{
+                    position: "absolute",
+                    width: "22px",
+                    height: "22px",
+                    borderRadius: "50%",
+                    backgroundColor: glowColor,
+                    boxShadow: `0 0 8px 3px ${glowColor}`,
+                    left: "-2px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                  }}
+                />
+
+                {/* Direction arrow triangle */}
+                <div
+                  style={{
+                    position: "relative",
+                    zIndex: 1,
+                    marginRight: "3px",
+                  }}
+                >
+                  {isUp ? (
+                    <div
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: "5px solid transparent",
+                        borderRight: "5px solid transparent",
+                        borderBottom: `9px solid ${mainColor}`,
+                        filter: `drop-shadow(0 0 3px ${mainColor})`,
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 0,
+                        height: 0,
+                        borderLeft: "5px solid transparent",
+                        borderRight: "5px solid transparent",
+                        borderTop: `9px solid ${mainColor}`,
+                        filter: `drop-shadow(0 0 3px ${mainColor})`,
+                      }}
+                    />
+                  )}
+                </div>
+
+                {/* Amount pill badge — IQ Option compact style */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "stretch",
+                    borderRadius: "6px",
+                    overflow: "hidden",
+                    boxShadow: `0 1px 6px 0 ${glowColor}`,
+                    border: `1px solid ${mainColor}`,
+                  }}
+                >
+                  {/* Amount text */}
+                  <div
+                    style={{
+                      backgroundColor: mainColor,
+                      color: "#fff",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      fontFamily: "Inter, sans-serif",
+                      letterSpacing: "-0.3px",
+                      padding: "2px 5px",
+                      whiteSpace: "nowrap",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    ${trade.amount.toLocaleString()}
+                  </div>
+                  {/* Dark direction icon section */}
+                  <div
+                    style={{
+                      backgroundColor: darkColor,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: "2px 4px",
+                      borderLeft: "1px solid rgba(255,255,255,0.15)",
+                    }}
+                  >
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="white">
+                      {isUp ? (
+                        <path d="M12 4l8 8H4z" />
+                      ) : (
+                        <path d="M12 20l-8-8h16z" />
+                      )}
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+      {/* Legacy single-trade entry arrow (desktop only, when no activeTradesForChart) */}
+      {activeTradesForChart.length === 0 &&
+        hasActiveTrades &&
         activeTradeEntryPrice &&
         activeTradeDirection &&
         entryArrowY !== null && (
@@ -1064,8 +1280,7 @@ export default function RealTimeTradingChart({
                 zIndex: 1002,
               }}
             />
-
-            {/* Arrow at the purchase time line (60%) */}
+            {/* Arrow at purchase line */}
             <div
               className="absolute pointer-events-none"
               style={{
@@ -1076,15 +1291,13 @@ export default function RealTimeTradingChart({
               }}
             >
               {activeTradeDirection === "higher" ? (
-                /* Green upward arrow ▲ */
                 <div style={{ position: "relative", width: 0, height: 0 }}>
-                  {/* Glow */}
                   <div
                     style={{
                       position: "absolute",
                       top: "50%",
                       left: "50%",
-                      transform: "translate(-50%, -50%)",
+                      transform: "translate(-50%,-50%)",
                       width: "14px",
                       height: "14px",
                       borderRadius: "50%",
@@ -1092,7 +1305,6 @@ export default function RealTimeTradingChart({
                       boxShadow: "0 0 6px 2px rgba(34,197,94,0.35)",
                     }}
                   />
-                  {/* Triangle pointing up */}
                   <div
                     style={{
                       width: 0,
@@ -1107,15 +1319,13 @@ export default function RealTimeTradingChart({
                   />
                 </div>
               ) : (
-                /* Red downward arrow ▼ */
                 <div style={{ position: "relative", width: 0, height: 0 }}>
-                  {/* Glow */}
                   <div
                     style={{
                       position: "absolute",
                       top: "50%",
                       left: "50%",
-                      transform: "translate(-50%, -50%)",
+                      transform: "translate(-50%,-50%)",
                       width: "14px",
                       height: "14px",
                       borderRadius: "50%",
@@ -1123,7 +1333,6 @@ export default function RealTimeTradingChart({
                       boxShadow: "0 0 6px 2px rgba(239,68,68,0.35)",
                     }}
                   />
-                  {/* Triangle pointing down */}
                   <div
                     style={{
                       width: 0,
@@ -1139,8 +1348,7 @@ export default function RealTimeTradingChart({
                 </div>
               )}
             </div>
-
-            {/* Entry price badge on right edge */}
+            {/* Entry price badge */}
             <div
               className="absolute pointer-events-none flex items-center"
               style={{
