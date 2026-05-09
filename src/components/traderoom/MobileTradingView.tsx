@@ -1637,129 +1637,33 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
               <div
                 className="px-1 py-px rounded-md text-[8px] font-bold tabular-nums whitespace-nowrap"
                 style={{
-                  backgroundColor:
-                    props.priceDirection === "up"
-                      ? C.green
-                      : props.priceDirection === "down"
-                        ? C.red
-                        : C.strokeSecondary,
-                  color: C.white,
+                  backgroundColor: "#ffffff",
+                  color: "#000000",
                   minWidth: "44px",
                   textAlign: "center",
                 }}
               >
-                {props.currentPrice.toFixed(5)}
+                {(() => {
+                  const priceStr = props.currentPrice.toFixed(5);
+                  const head = priceStr.slice(0, -3);
+                  const tail = priceStr.slice(-3);
+                  const tailColor =
+                    props.priceDirection === "up"
+                      ? C.green
+                      : props.priceDirection === "down"
+                        ? C.red
+                        : "#000000";
+                  return (
+                    <>
+                      <span>{head}</span>
+                      <span style={{ color: tailColor }}>{tail}</span>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </>
         )}
-
-        {/* Trade notification popups - sticky top-left */}
-        <div
-          className="absolute top-2 left-2 flex flex-col gap-1 pointer-events-none"
-          style={{ zIndex: 30 }}
-        >
-          {popups.map((popup) => (
-            <div
-              key={popup.id}
-              className="pointer-events-auto flex items-center gap-1.5 rounded-lg px-2.5 py-1.5"
-              style={{
-                backgroundColor:
-                  popup.type === "entry"
-                    ? "rgba(11,19,39,0.88)"
-                    : popup.resultStatus === "won"
-                      ? "rgba(27,73,49,0.92)"
-                      : "rgba(98,24,27,0.92)",
-                border: `1px solid ${
-                  popup.type === "entry"
-                    ? popup.direction === "higher"
-                      ? C.green
-                      : C.red
-                    : popup.resultStatus === "won"
-                      ? C.green
-                      : C.red
-                }`,
-                backdropFilter: "blur(6px)",
-                maxWidth: "180px",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
-              }}
-            >
-              {popup.type === "entry" ? (
-                <>
-                  <div
-                    className="w-3.5 h-3.5 flex items-center justify-center rounded-sm flex-shrink-0"
-                    style={{
-                      backgroundColor:
-                        popup.direction === "higher" ? C.green : C.red,
-                    }}
-                  >
-                    {popup.direction === "higher" ? (
-                      <ChevronUp size={9} color={C.white} strokeWidth={3} />
-                    ) : (
-                      <ChevronDown size={9} color={C.white} strokeWidth={3} />
-                    )}
-                  </div>
-                  <div>
-                    <div
-                      className="text-[9px] font-medium leading-none mb-0.5"
-                      style={{ color: C.textTertiary }}
-                    >
-                      Entry Price
-                    </div>
-                    <div
-                      className="text-[11px] font-bold tabular-nums leading-none"
-                      style={{ color: C.textPrimary }}
-                    >
-                      {popup.entryPrice?.toFixed(5)}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div
-                    className="text-[11px] font-bold leading-none"
-                    style={{
-                      color:
-                        popup.resultStatus === "won" ? C.greenText : C.redText,
-                    }}
-                  >
-                    {popup.resultStatus === "won" ? "WIN" : "LOSS"}
-                  </div>
-                  <div
-                    className="w-px self-stretch"
-                    style={{
-                      backgroundColor:
-                        popup.resultStatus === "won" ? C.green : C.red,
-                      opacity: 0.4,
-                    }}
-                  />
-                  <div>
-                    <div
-                      className="text-[9px] font-medium leading-none mb-0.5"
-                      style={{ color: C.textTertiary }}
-                    >
-                      {popup.resultStatus === "won" ? "+" : "-"}$
-                      {Math.abs(popup.resultAmount ?? 0).toFixed(2)}
-                    </div>
-                    <div
-                      className="text-[9px] tabular-nums leading-none"
-                      style={{ color: C.textSecondary }}
-                    >
-                      {popup.exitPrice?.toFixed(5)}
-                    </div>
-                  </div>
-                </>
-              )}
-              <button
-                className="ml-auto flex-shrink-0 opacity-50 hover:opacity-100 transition-opacity"
-                onClick={() => dismissPopup(popup.id)}
-                style={{ color: C.textSecondary }}
-              >
-                <X size={10} />
-              </button>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Horizontal sentiment bar - below chart, above trading panel */}

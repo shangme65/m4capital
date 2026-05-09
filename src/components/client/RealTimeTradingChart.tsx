@@ -1135,18 +1135,49 @@ export default function RealTimeTradingChart({
               className="absolute inset-0 pointer-events-none"
               style={{ zIndex: 1003 }}
             >
-              {/* Dashed horizontal line from left edge to the popup (at 60% purchase line) */}
+              {/* Dashed horizontal line spanning full width */}
               <div
                 style={{
                   position: "absolute",
                   top: `${yPct}%`,
                   left: 0,
-                  width: "60%",
+                  right: 0,
                   height: "1px",
-                  backgroundImage: `repeating-linear-gradient(to right, ${dashColor} 0px, ${dashColor} 5px, transparent 5px, transparent 10px)`,
+                  backgroundImage: `repeating-linear-gradient(to right, ${dashColor} 0, ${dashColor} 4px, transparent 4px, transparent 8px)`,
                   transform: "translateY(-0.5px)",
+                  opacity: 0.85,
                 }}
               />
+
+              {/* Entry price badge on the right edge */}
+              <div
+                className="absolute right-0 pointer-events-none"
+                style={{
+                  top: `${yPct}%`,
+                  transform: "translateY(-50%)",
+                  zIndex: 1004,
+                }}
+              >
+                <div
+                  className="px-1 py-px rounded-md text-[8px] font-bold tabular-nums whitespace-nowrap"
+                  style={{
+                    backgroundColor: mainColor,
+                    color: "#fff",
+                    minWidth: "44px",
+                    textAlign: "center",
+                  }}
+                >
+                  {trade.entryPrice
+                    ? Number(trade.entryPrice).toFixed(
+                        trade.entryPrice >= 100
+                          ? 2
+                          : trade.entryPrice >= 1
+                            ? 4
+                            : 5,
+                      )
+                    : ""}
+                </div>
+              </div>
 
               {/* Popup badge anchored at the 60% purchase line X, at the trade's Y price level */}
               <div
@@ -1160,27 +1191,21 @@ export default function RealTimeTradingChart({
                   gap: 0,
                 }}
               >
-                {/* Glow circle behind arrow */}
-                <div
-                  style={{
-                    position: "absolute",
-                    width: "22px",
-                    height: "22px",
-                    borderRadius: "50%",
-                    backgroundColor: glowColor,
-                    boxShadow: `0 0 8px 3px ${glowColor}`,
-                    left: "-2px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                  }}
-                />
-
-                {/* Direction arrow triangle */}
+                {/* Direction arrow with circle background */}
                 <div
                   style={{
                     position: "relative",
                     zIndex: 1,
                     marginRight: "3px",
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "50%",
+                    backgroundColor: mainColor,
+                    border: "1px solid #fff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
                   }}
                 >
                   {isUp ? (
@@ -1188,10 +1213,10 @@ export default function RealTimeTradingChart({
                       style={{
                         width: 0,
                         height: 0,
-                        borderLeft: "5px solid transparent",
-                        borderRight: "5px solid transparent",
-                        borderBottom: `9px solid ${mainColor}`,
-                        filter: `drop-shadow(0 0 3px ${mainColor})`,
+                        borderLeft: "2px solid transparent",
+                        borderRight: "2px solid transparent",
+                        borderBottom: "3px solid #fff",
+                        marginTop: "-1px",
                       }}
                     />
                   ) : (
@@ -1199,10 +1224,10 @@ export default function RealTimeTradingChart({
                       style={{
                         width: 0,
                         height: 0,
-                        borderLeft: "5px solid transparent",
-                        borderRight: "5px solid transparent",
-                        borderTop: `9px solid ${mainColor}`,
-                        filter: `drop-shadow(0 0 3px ${mainColor})`,
+                        borderLeft: "2px solid transparent",
+                        borderRight: "2px solid transparent",
+                        borderTop: "3px solid #fff",
+                        marginBottom: "-1px",
                       }}
                     />
                   )}
@@ -1215,7 +1240,6 @@ export default function RealTimeTradingChart({
                     alignItems: "stretch",
                     borderRadius: "6px",
                     overflow: "hidden",
-                    boxShadow: `0 1px 6px 0 ${glowColor}`,
                     border: `1px solid ${mainColor}`,
                   }}
                 >
@@ -1224,7 +1248,7 @@ export default function RealTimeTradingChart({
                     style={{
                       backgroundColor: mainColor,
                       color: "#fff",
-                      fontSize: "10px",
+                      fontSize: "8px",
                       fontWeight: 700,
                       fontFamily: "Inter, sans-serif",
                       letterSpacing: "-0.3px",
@@ -1234,25 +1258,6 @@ export default function RealTimeTradingChart({
                     }}
                   >
                     ${trade.amount.toLocaleString()}
-                  </div>
-                  {/* Dark direction icon section */}
-                  <div
-                    style={{
-                      backgroundColor: darkColor,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "2px 4px",
-                      borderLeft: "1px solid rgba(255,255,255,0.15)",
-                    }}
-                  >
-                    <svg width="8" height="8" viewBox="0 0 24 24" fill="white">
-                      {isUp ? (
-                        <path d="M12 4l8 8H4z" />
-                      ) : (
-                        <path d="M12 20l-8-8h16z" />
-                      )}
-                    </svg>
                   </div>
                 </div>
               </div>
