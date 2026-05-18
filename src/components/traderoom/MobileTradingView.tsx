@@ -407,8 +407,9 @@ function MobileTradingPanel({
         {/* Amount control */}
         <div>
           <div
-            className="text-[10px] font-medium uppercase tracking-wider mb-1"
+            className="text-[10px] font-medium uppercase tracking-wider mb-1 cursor-pointer"
             style={{ color: C.textTertiary }}
+            onClick={() => setShowAmountPresets(!showAmountPresets)}
           >
             Amount
           </div>
@@ -426,12 +427,39 @@ function MobileTradingPanel({
             >
               <Minus size={14} />
             </button>
-            <div
-              className="flex-1 text-center text-sm font-medium tabular-nums cursor-pointer"
-              style={{ color: C.textPrimary }}
-              onClick={() => setShowAmountPresets(!showAmountPresets)}
-            >
-              ${amount}
+            <div className="flex-1 flex items-center justify-center gap-0.5">
+              <span
+                className="text-sm font-medium"
+                style={{ color: C.textSecondary }}
+              >
+                $
+              </span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={amountInput}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9.]/g, "");
+                  onAmountInputChange(raw);
+                  const num = parseFloat(raw);
+                  if (!isNaN(num) && num > 0) {
+                    onAmountChange(Math.floor(num));
+                  }
+                }}
+                onBlur={() => {
+                  const num = parseFloat(amountInput);
+                  const clamped = isNaN(num) || num < 1 ? 1 : Math.floor(num);
+                  onAmountChange(clamped);
+                  onAmountInputChange(String(clamped));
+                }}
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+                className="bg-transparent outline-none text-center text-sm font-medium tabular-nums"
+                style={{
+                  color: C.textPrimary,
+                  width: "52px",
+                  caretColor: C.textPrimary,
+                }}
+              />
             </div>
             <button
               onClick={() => adjustAmount(1)}
@@ -1368,6 +1396,9 @@ interface TradePopup {
   resultStatus?: "won" | "lost";
   resultAmount?: number;
   exitPrice?: number;
+  symbol?: string;
+  symbolFlag?: string;
+  symbolDisplayName?: string;
 }
 
 export default function MobileTradingView(props: MobileTradingViewProps) {
@@ -1424,6 +1455,13 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
           resultStatus: trade.status as "won" | "lost",
           resultAmount: trade.result,
           exitPrice: trade.exitPrice,
+          symbol: trade.symbol,
+          symbolFlag:
+            props.symbols.find((s) => s.symbol === trade.symbol)?.flag ??
+            trade.symbol,
+          symbolDisplayName:
+            props.symbols.find((s) => s.symbol === trade.symbol)?.displayName ??
+            trade.symbol,
         };
         setPopups((p) => [...p.slice(-2), popup]);
         setTimeout(() => dismissPopup(`result-${trade.id}`), 5000);
@@ -1901,6 +1939,173 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
             </div>
           );
         })()}
+
+      {/* Trade Result Popups — slide in from top, grouped by symbol */}
+      {typeof document !== "undefined" &&
+        popups.filter((p) => p.type === "result").length > 0 &&
+        ReactDOM.createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 99999,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "stretch",
+              gap: 6,
+              padding: "10px 10px 0",
+              pointerEvents: "none",
+            }}
+          >
+            {(() => {
+              // Group result popups by symbol so multiple trades on same asset collapse
+              const resultPopups = popups.filter((p) => p.type === "result");
+              const groups: Record<string, typeof resultPopups> = {};
+              for (const p of resultPopups) {
+                const key = p.symbol ?? p.id;
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(p);
+              }
+              return Object.entries(groups).map(([key, group]) => {
+                const first = group[0];
+                const totalAmount = group.reduce(
+                  (sum, p) => sum + (p.resultAmount ?? 0),
+                  0,
+                );
+                const isWon = totalAmount >= 0;
+                const amountColor = isWon ? C.greenText : C.redText;
+                const amountSign = isWon ? "+" : "−";
+                const count = group.length;
+                const posLabel =
+                  count === 1 ? "1 position" : `${count} positions`;
+                const displayName =
+                  first.symbolDisplayName ?? first.symbol ?? key;
+                const title = `${displayName}: ${posLabel}`;
+                const dismissAll = () =>
+                  group.forEach((p) => dismissPopup(p.id));
+
+                return (
+                  <div
+                    key={key}
+                    style={{
+                      pointerEvents: "auto",
+                      animation:
+                        "slideDownFromTop 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                      backgroundColor: C.tertiary,
+                      border: `1px solid ${C.strokeTertiary}`,
+                      borderRadius: 14,
+                      padding: "10px 12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 10,
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+                    }}
+                  >
+                    {/* Asset icon + OTC badge */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 2,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: "50%",
+                          backgroundColor: C.quaternary,
+                          border: `1px solid ${C.strokeSecondary}`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {first.symbolFlag && first.symbol ? (
+                          <props.AssetFlag
+                            flag={first.symbolFlag}
+                            symbol={first.symbol}
+                            size={20}
+                          />
+                        ) : (
+                          <span
+                            style={{ fontSize: 11, color: C.textSecondary }}
+                          >
+                            ?
+                          </span>
+                        )}
+                      </div>
+                      {displayName.includes("OTC") && (
+                        <span
+                          style={{
+                            fontSize: 8,
+                            fontWeight: 700,
+                            color: C.textTertiary,
+                            letterSpacing: 0.3,
+                            lineHeight: 1,
+                          }}
+                        >
+                          OTC
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Text block */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          color: C.textPrimary,
+                          fontSize: 13,
+                          fontWeight: 600,
+                          lineHeight: 1.25,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {title}
+                      </div>
+                      <div
+                        style={{
+                          color: amountColor,
+                          fontSize: 13,
+                          fontWeight: 700,
+                          marginTop: 2,
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {amountSign}${Math.abs(totalAmount).toFixed(2)}
+                      </div>
+                    </div>
+
+                    {/* Dismiss */}
+                    <button
+                      onClick={dismissAll}
+                      style={{
+                        color: C.textTertiary,
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        padding: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                );
+              });
+            })()}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

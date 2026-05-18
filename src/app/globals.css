@@ -349,6 +349,17 @@ canvas[style*="cursor:crosshair"] {
   }
 }
 
+@keyframes slideDownFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes shake {
   0%,
   100% {
