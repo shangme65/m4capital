@@ -9,6 +9,7 @@ import {
   LogOut,
   Home,
   AlertCircle,
+  Users,
 } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
@@ -61,11 +62,13 @@ const Sidebar = () => {
     { icon: <Home size={24} />, name: "Homepage", href: "/" },
     { icon: <Briefcase size={24} />, name: "Dashboard", href: "/dashboard" },
     { icon: <TrendingUp size={24} />, name: "Traderoom", href: "/traderoom" },
+    { icon: <Users size={24} />, name: "CopyTrading", href: "/copy-trading" },
     { icon: <Settings size={24} />, name: "Settings", href: "/settings" },
   ];
 
   // Check if user is admin for Admin panel access
-  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "STAFF_ADMIN";
+  const isAdmin =
+    session?.user?.role === "ADMIN" || session?.user?.role === "STAFF_ADMIN";
 
   const adminItem = {
     icon: <Shield size={24} />,
@@ -156,9 +159,13 @@ const Sidebar = () => {
 
               {/* User Name - Mobile Only */}
               {session?.user?.name && (
-                <div className={`sm:hidden mb-4 pb-4 border-b ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
+                <div
+                  className={`sm:hidden mb-4 pb-4 border-b ${isDark ? "border-gray-700/50" : "border-gray-200"}`}
+                >
                   <div className="flex items-center gap-1.5">
-                    <span className={`text-lg font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+                    <span
+                      className={`text-lg font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
                       {session.user.name}
                     </span>
                     {isVerified && (
@@ -168,7 +175,9 @@ const Sidebar = () => {
                       />
                     )}
                   </div>
-                  <p className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  <p
+                    className={`text-xs truncate ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  >
                     {session.user.email}
                   </p>
                   {!isVerified && (
@@ -212,10 +221,14 @@ const Sidebar = () => {
                             onMouseEnter={() => setHoveredItem(item.name)}
                             onMouseLeave={() => setHoveredItem(null)}
                           >
-                            <motion.div className={`group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                            <motion.div
+                              className={`group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                            >
                               {item.icon}
                             </motion.div>
-                            <motion.span className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-400 transition-colors duration-300 ${isDark ? "" : "text-gray-700"}`}>
+                            <motion.span
+                              className={`ml-3 sm:ml-4 text-base sm:text-lg group-hover:text-orange-400 transition-colors duration-300 ${isDark ? "" : "text-gray-700"}`}
+                            >
                               {item.name}
                             </motion.span>
                           </Link>
@@ -426,13 +439,22 @@ const Sidebar = () => {
                           }
                           className={`flex items-center p-2 sm:p-3 rounded-lg transition-all duration-300 group ${isDark ? "hover:bg-gray-700/50" : "hover:bg-gray-100"}`}
                           onClick={closeSidebar}
-                          onMouseEnter={() => setHoveredItem(session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : "Admin")}
+                          onMouseEnter={() =>
+                            setHoveredItem(
+                              session?.user?.role === "STAFF_ADMIN"
+                                ? "Staff Admin"
+                                : "Admin",
+                            )
+                          }
                           onMouseLeave={() => setHoveredItem(null)}
                         >
                           <motion.div
                             className={`group-hover:text-orange-500 transition-colors duration-300 ${isDark ? "text-gray-300" : "text-gray-600"}`}
                             animate={
-                              hoveredItem === (session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : "Admin")
+                              hoveredItem ===
+                              (session?.user?.role === "STAFF_ADMIN"
+                                ? "Staff Admin"
+                                : "Admin")
                                 ? {
                                     rotate: 360,
                                     scale: 1.1,
@@ -489,7 +511,10 @@ const Sidebar = () => {
                             <motion.span
                               className="inline-block"
                               animate={
-                                hoveredItem === (session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : "Admin")
+                                hoveredItem ===
+                                (session?.user?.role === "STAFF_ADMIN"
+                                  ? "Staff Admin"
+                                  : "Admin")
                                   ? {
                                       x: [0, 3, 0],
                                       transition: {
@@ -513,7 +538,9 @@ const Sidebar = () => {
                                 },
                               }}
                             >
-                              {session?.user?.role === "STAFF_ADMIN" ? "Staff Admin" : adminItem.name}
+                              {session?.user?.role === "STAFF_ADMIN"
+                                ? "Staff Admin"
+                                : adminItem.name}
                             </motion.span>
                           </motion.span>
                         </Link>
@@ -523,7 +550,9 @@ const Sidebar = () => {
                 </ul>
               </nav>
               {/* Logout button at bottom */}
-              <div className={`mt-3 sm:mt-4 pt-3 sm:pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}>
+              <div
+                className={`mt-3 sm:mt-4 pt-3 sm:pt-4 border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}
+              >
                 <motion.div
                   animate={{
                     y: [0, -3, 0],

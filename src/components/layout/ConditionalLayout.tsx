@@ -39,7 +39,13 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     pathname?.startsWith("/settings") ||
     pathname?.startsWith("/news") ||
     pathname?.startsWith("/traderoom") ||
-    pathname?.startsWith("/finance");
+    pathname?.startsWith("/finance") ||
+    pathname?.startsWith("/copy-trading") ||
+    pathname?.startsWith("/academy") ||
+    pathname?.startsWith("/community") ||
+    pathname?.startsWith("/about") ||
+    pathname?.startsWith("/deposit") ||
+    pathname?.startsWith("/staff-admin");
 
   // Check if should hide footer only (keep header)
   const hideFooterOnly = pathname?.startsWith("/setup-admin");

@@ -18,11 +18,11 @@ const DashboardHeader = () => {
     useState(false);
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  
+
   useEffect(() => {
     setMounted(true);
   }, []);
-  
+
   const isDark = mounted ? resolvedTheme === "dark" : true;
 
   // Session update removed - it was causing continuous /api/auth/csrf and /api/auth/session spam
@@ -101,10 +101,16 @@ const DashboardHeader = () => {
               </div>
             )}
             <div className="text-left">
-              <p className={`font-semibold leading-tight truncate max-w-[100px] sm:max-w-[140px] text-sm sm:text-base ${isDark ? "text-white" : "text-gray-900"}`} suppressHydrationWarning>
+              <p
+                className={`font-semibold leading-tight truncate max-w-[100px] sm:max-w-[140px] text-sm sm:text-base ${isDark ? "text-white" : "text-gray-900"}`}
+                suppressHydrationWarning
+              >
                 {session?.user?.name || "User"}
               </p>
-              <p className={`text-xs uppercase tracking-wide ${isDark ? "text-gray-400" : "text-gray-500"}`} suppressHydrationWarning>
+              <p
+                className={`text-xs uppercase tracking-wide ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                suppressHydrationWarning
+              >
                 {secondaryLabel}
               </p>
             </div>
