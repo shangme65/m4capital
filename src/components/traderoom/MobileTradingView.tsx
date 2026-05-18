@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import ReactDOM from "react-dom";
 import {
   ChevronUp,
@@ -16,6 +17,9 @@ import {
   TrendingUp,
   Activity,
   Search,
+  Copy,
+  ArrowLeft,
+  LayoutDashboard,
 } from "lucide-react";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 import ChartGrid from "@/components/client/ChartGrid";
@@ -94,6 +98,8 @@ export interface MobileTradingViewProps {
   practiceAccountBalance: number;
   onAccountTypeChange: (type: "real" | "practice") => void;
   onDeposit: () => void;
+  onWithdraw: () => void;
+  onReplenishPractice: (amount: number) => void;
 
   // Active trades
   activeTrades: ActiveTrade[];
@@ -110,6 +116,21 @@ export interface MobileTradingViewProps {
   onLastCandleTimestamp: (timestamp: number) => void;
   activeTradeExpirationTime?: number;
   activeTradeEntryTime?: number;
+
+  // Trade history (for history tab)
+  tradeHistory?: Array<{
+    id: string;
+    symbol: string;
+    direction: "HIGHER" | "LOWER";
+    amount: number;
+    entryPrice?: number;
+    exitPrice?: number;
+    entryTime: Date | string | number;
+    exitTime?: Date | string | number | null;
+    expirationTime?: Date | string | number | null;
+    status: "WIN" | "LOSS";
+    profit: number;
+  }>;
 
   // Navigation callbacks
   onShowHistory: () => void;
@@ -1121,6 +1142,483 @@ function MobilePortfolioView({
   );
 }
 
+// ─── Mobile History View ─────────────────────────────────────────────────────
+
+function MobileHistoryView({
+  tradeHistory,
+  symbols,
+  AssetFlag,
+}: {
+  tradeHistory: MobileTradingViewProps["tradeHistory"];
+  symbols: MobileTradingViewProps["symbols"];
+  AssetFlag: MobileTradingViewProps["AssetFlag"];
+}) {
+  const history = tradeHistory ?? [];
+  const [selectedTrade, setSelectedTrade] = useState<
+    NonNullable<MobileTradingViewProps["tradeHistory"]>[0] | null
+  >(null);
+  const [copied, setCopied] = useState(false);
+
+  const getSymbolInfo = (sym: string) => {
+    const found = symbols.find((s) => s.symbol === sym);
+    return {
+      displayName: found?.displayName || sym,
+      flag: found?.flag || sym.slice(0, 3),
+    };
+  };
+
+  const fmtDateTime = (d: Date | string | number | null | undefined) => {
+    if (!d) return "—";
+    const date = new Date(d as string | number | Date);
+    if (isNaN(date.getTime())) return "—";
+    const dd = String(date.getDate()).padStart(2, "0");
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const yyyy = date.getFullYear();
+    const hh = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+    const ss = String(date.getSeconds()).padStart(2, "0");
+    return `${dd}.${mm}.${yyyy}, ${hh}:${mm}:${ss}`;
+  };
+
+  const fmtTimeOnly = (d: Date | string | number | null | undefined) => {
+    if (!d) return "—";
+    const date = new Date(d as string | number | Date);
+    if (isNaN(date.getTime())) return "—";
+    const hh = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+    const ss = String(date.getSeconds()).padStart(2, "0");
+    return `${hh}:${min}:${ss}`;
+  };
+
+  // ── Detail view ──────────────────────────────────────────────────────────
+  if (selectedTrade) {
+    const t = selectedTrade;
+    const info = getSymbolInfo(t.symbol);
+    const isWin = t.status === "WIN";
+    const totalReturn = isWin ? t.amount + t.profit : 0;
+    const returnSign = isWin ? "+" : "";
+    const profitability =
+      t.amount > 0 ? Math.round((t.profit / t.amount) * 100) : 0;
+    const isOTC = info.displayName.includes("OTC") || t.symbol.includes("OTC");
+
+    const detailRows: Array<{ label: string; value: React.ReactNode }> = [
+      {
+        label: "Position type",
+        value: (
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold" style={{ color: C.textPrimary }}>
+              {t.direction === "HIGHER" ? "Higher" : "Lower"}
+            </span>
+            <div
+              className="w-5 h-5 rounded-full flex items-center justify-center"
+              style={{
+                backgroundColor: t.direction === "HIGHER" ? C.green : C.red,
+              }}
+            >
+              {t.direction === "HIGHER" ? (
+                <ChevronUp size={11} color={C.white} strokeWidth={3} />
+              ) : (
+                <ChevronDown size={11} color={C.white} strokeWidth={3} />
+              )}
+            </div>
+          </div>
+        ),
+      },
+      {
+        label: "Profitability",
+        value: (
+          <span className="font-semibold" style={{ color: C.greenText }}>
+            {profitability}%
+          </span>
+        ),
+      },
+      {
+        label: "Position ID",
+        value: (
+          <div className="flex items-center gap-1.5">
+            <span
+              className="tabular-nums text-sm"
+              style={{ color: C.textPrimary }}
+            >
+              {t.id.length > 12 ? t.id.slice(-12) : t.id}
+            </span>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(t.id).then(() => {
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 1500);
+                });
+              }}
+              className="active:opacity-60"
+            >
+              <Copy
+                size={14}
+                style={{ color: copied ? C.greenText : C.textSecondary }}
+              />
+            </button>
+          </div>
+        ),
+      },
+      {
+        label: "Opening time",
+        value: (
+          <span
+            className="tabular-nums text-sm"
+            style={{ color: C.textPrimary }}
+          >
+            {fmtDateTime(t.entryTime)}
+          </span>
+        ),
+      },
+      {
+        label: "Expiration time",
+        value: (
+          <span
+            className="tabular-nums text-sm"
+            style={{ color: C.textPrimary }}
+          >
+            {fmtDateTime(t.expirationTime ?? t.exitTime)}
+          </span>
+        ),
+      },
+      {
+        label: "Closing time",
+        value: (
+          <span
+            className="tabular-nums text-sm"
+            style={{ color: C.textPrimary }}
+          >
+            {fmtDateTime(t.exitTime ?? t.expirationTime)}
+          </span>
+        ),
+      },
+      {
+        label: "Opening price",
+        value: (
+          <span
+            className="tabular-nums text-sm font-medium"
+            style={{ color: C.textPrimary }}
+          >
+            {t.entryPrice != null ? t.entryPrice.toString() : "—"}
+          </span>
+        ),
+      },
+      {
+        label: "Closing price",
+        value: (
+          <span
+            className="tabular-nums text-sm font-medium"
+            style={{ color: C.textPrimary }}
+          >
+            {t.exitPrice != null ? t.exitPrice.toString() : "—"}
+          </span>
+        ),
+      },
+      {
+        label: "Closing method",
+        value: (
+          <span
+            className="text-sm font-semibold"
+            style={{ color: C.textPrimary }}
+          >
+            Automatically (Expired)
+          </span>
+        ),
+      },
+    ];
+
+    return (
+      <div
+        className="flex-1 overflow-y-auto"
+        style={{ backgroundColor: C.base }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center gap-3 px-4 py-3"
+          style={{ backgroundColor: C.base }}
+        >
+          <button
+            onClick={() => setSelectedTrade(null)}
+            className="active:opacity-70 p-1 -ml-1"
+          >
+            <ArrowLeft size={22} style={{ color: C.textPrimary }} />
+          </button>
+          <div className="relative flex-shrink-0">
+            <AssetFlag flag={info.flag} symbol={t.symbol} size={32} />
+            {isOTC && (
+              <span
+                className="absolute -bottom-1 -right-2 rounded-sm text-[7px] font-bold px-0.5"
+                style={{
+                  backgroundColor: C.orange,
+                  color: C.white,
+                  lineHeight: "11px",
+                }}
+              >
+                OTC
+              </span>
+            )}
+          </div>
+          <div>
+            <div
+              className="text-base font-semibold"
+              style={{ color: C.textPrimary }}
+            >
+              {info.displayName}
+            </div>
+            <div className="text-xs" style={{ color: C.textSecondary }}>
+              Binary
+            </div>
+          </div>
+        </div>
+
+        <div className="px-4">
+          {/* Return */}
+          <div className="mb-4">
+            <div className="text-sm mb-1" style={{ color: C.textSecondary }}>
+              Return
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className="text-3xl font-bold tabular-nums"
+                style={{ color: isWin ? C.greenText : C.redText }}
+              >
+                {returnSign}${totalReturn.toFixed(2)}
+              </span>
+              {isWin && (
+                <span
+                  className="text-xs font-bold px-2 py-0.5 rounded-full"
+                  style={{
+                    backgroundColor: C.greenSurface,
+                    color: C.greenText,
+                  }}
+                >
+                  +{profitability + 100}%
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Investment + Expiration time row */}
+          <div className="flex gap-6 mb-5">
+            <div>
+              <div
+                className="text-xs mb-0.5"
+                style={{ color: C.textSecondary }}
+              >
+                Investment
+              </div>
+              <div
+                className="text-base font-semibold tabular-nums"
+                style={{ color: C.textPrimary }}
+              >
+                ${t.amount.toFixed(0)}
+              </div>
+            </div>
+            <div>
+              <div
+                className="text-xs mb-0.5"
+                style={{ color: C.textSecondary }}
+              >
+                Expiration time
+              </div>
+              <div
+                className="text-base font-semibold tabular-nums"
+                style={{ color: C.textPrimary }}
+              >
+                {fmtTimeOnly(t.expirationTime ?? t.exitTime)}
+              </div>
+            </div>
+          </div>
+
+          {/* Details card */}
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ backgroundColor: C.quaternary }}
+          >
+            {detailRows.map((row) => (
+              <div
+                key={row.label}
+                className="flex items-center justify-between px-4 py-2"
+              >
+                <span className="text-sm" style={{ color: C.textSecondary }}>
+                  {row.label}
+                </span>
+                {row.value}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── List view ────────────────────────────────────────────────────────────
+
+  // Group trades by date
+  const today = new Date();
+  const grouped: Array<{
+    label: string;
+    dateKey: string;
+    trades: NonNullable<MobileTradingViewProps["tradeHistory"]>;
+  }> = [];
+  const seen: Record<string, number> = {};
+  history.forEach((trade) => {
+    const date = new Date(trade.entryTime as string | number | Date);
+    const isToday = date.toDateString() === today.toDateString();
+    const label = isToday
+      ? "Today"
+      : date.toLocaleDateString([], { month: "short", day: "numeric" });
+    const key = date.toDateString();
+    if (seen[key] === undefined) {
+      seen[key] = grouped.length;
+      grouped.push({ label, dateKey: key, trades: [] });
+    }
+    grouped[seen[key]].trades.push(trade);
+  });
+
+  return (
+    <div
+      className="flex-1 overflow-y-auto"
+      style={{ backgroundColor: C.base, paddingBottom: "4px" }}
+    >
+      {/* Heading */}
+      <div className="px-4 pt-3 pb-1">
+        <span
+          className="text-[26px] font-bold"
+          style={{ color: C.textPrimary }}
+        >
+          Closed
+        </span>
+      </div>
+
+      {history.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <History
+            size={48}
+            strokeWidth={1.2}
+            style={{ color: C.textTertiary, marginBottom: 12 }}
+          />
+          <p className="text-sm" style={{ color: C.textSecondary }}>
+            No trading history yet
+          </p>
+          <p className="text-xs mt-1" style={{ color: C.textTertiary }}>
+            Execute some trades to see your history here
+          </p>
+        </div>
+      ) : (
+        grouped.map((group) => (
+          <div key={group.dateKey} className="px-4 pt-3 pb-2">
+            <div
+              className="text-[11px] font-medium mb-2"
+              style={{ color: C.textTertiary }}
+            >
+              {group.label}
+            </div>
+            <div className="flex flex-col gap-2">
+              {group.trades.map((trade) => {
+                const info = getSymbolInfo(trade.symbol);
+                const isWin = trade.status === "WIN";
+                const isOTC =
+                  info.displayName.includes("OTC") ||
+                  trade.symbol.includes("OTC");
+                const totalReturn = isWin ? trade.amount + trade.profit : 0;
+
+                return (
+                  <button
+                    key={trade.id}
+                    onClick={() => setSelectedTrade(trade)}
+                    className="rounded-2xl px-4 py-3 text-left w-full active:opacity-80"
+                    style={{ backgroundColor: C.quaternary }}
+                  >
+                    <div className="flex items-center justify-between">
+                      {/* Left: flag + asset name */}
+                      <div className="flex items-center gap-2">
+                        <div className="relative flex-shrink-0">
+                          <AssetFlag
+                            flag={info.flag}
+                            symbol={trade.symbol}
+                            size={28}
+                          />
+                          {isOTC && (
+                            <span
+                              className="absolute -bottom-1 -right-2 rounded-sm text-[7px] font-bold px-0.5"
+                              style={{
+                                backgroundColor: C.orange,
+                                color: C.white,
+                                lineHeight: "11px",
+                              }}
+                            >
+                              OTC
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <div
+                            className="text-[13px] font-semibold leading-tight"
+                            style={{ color: C.textPrimary }}
+                          >
+                            {info.displayName}
+                          </div>
+                          <div
+                            className="text-[11px] mt-0.5"
+                            style={{ color: C.textTertiary }}
+                          >
+                            Binary
+                          </div>
+                        </div>
+                      </div>
+                      {/* Right: P/L + investment + direction */}
+                      <div className="text-right">
+                        <div
+                          className="text-[13px] font-bold tabular-nums"
+                          style={{
+                            color: isWin ? C.greenText : C.textSecondary,
+                          }}
+                        >
+                          {isWin ? "+" : ""}${totalReturn.toFixed(2)}
+                        </div>
+                        <div className="flex items-center justify-end gap-1 mt-0.5">
+                          <span
+                            className="text-[11px] tabular-nums"
+                            style={{ color: C.textSecondary }}
+                          >
+                            ${trade.amount.toFixed(2)}
+                          </span>
+                          <div
+                            className="w-5 h-5 rounded-full flex items-center justify-center"
+                            style={{
+                              backgroundColor:
+                                trade.direction === "HIGHER" ? C.green : C.red,
+                            }}
+                          >
+                            {trade.direction === "HIGHER" ? (
+                              <ChevronUp
+                                size={11}
+                                color={C.white}
+                                strokeWidth={3}
+                              />
+                            ) : (
+                              <ChevronDown
+                                size={11}
+                                color={C.white}
+                                strokeWidth={3}
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
 // ─── Mobile Bottom Navigation ────────────────────────────────────────────────
 
 function MobileBottomNav({
@@ -1136,6 +1634,8 @@ function MobileBottomNav({
   onShowPortfolio: () => void;
   activeTrades: ActiveTrade[];
 }) {
+  const router = useRouter();
+  const [showDashboardConfirm, setShowDashboardConfirm] = useState(false);
   const activeCount = activeTrades.filter((t) => t.status === "active").length;
 
   const items = [
@@ -1161,69 +1661,121 @@ function MobileBottomNav({
       icon: History,
       onClick: () => {
         onItemChange("history");
-        onShowHistory();
       },
     },
     {
-      id: "more",
-      label: "More",
-      icon: MoreHorizontal,
-      onClick: () => onItemChange("more"),
+      id: "dashboard",
+      label: "Dashboard",
+      icon: LayoutDashboard,
+      onClick: () => setShowDashboardConfirm(true),
     },
   ];
 
   return (
-    <nav
-      className="flex-shrink-0 select-none"
-      style={{
-        backgroundColor: C.base,
-        paddingBottom: "env(safe-area-inset-bottom)",
-      }}
-    >
-      <div className="flex items-stretch">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeItem === item.id;
-
-          return (
-            <button
-              key={item.id}
-              onClick={item.onClick}
-              className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-colors duration-200 relative"
+    <>
+      {/* Dashboard confirmation dialog */}
+      {showDashboardConfirm &&
+        ReactDOM.createPortal(
+          <div
+            className="fixed inset-0 flex items-center justify-center px-6"
+            style={{ backgroundColor: "rgba(0,0,0,0.65)", zIndex: 100000 }}
+            onClick={() => setShowDashboardConfirm(false)}
+          >
+            <div
+              className="w-full max-w-xs rounded-2xl overflow-hidden"
+              style={{ backgroundColor: C.secondary }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="relative">
-                <Icon
-                  size={22}
-                  style={{
-                    color: isActive ? C.textPrimary : C.textSecondary,
-                  }}
-                  strokeWidth={isActive ? 2.2 : 1.8}
-                />
-                {item.badge && (
-                  <span
-                    className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[9px] font-bold px-1"
-                    style={{
-                      backgroundColor: C.orange,
-                      color: C.white,
-                    }}
-                  >
-                    {item.badge}
-                  </span>
-                )}
+              <div className="px-5 pt-5 pb-4">
+                <h3
+                  className="text-base font-semibold mb-1"
+                  style={{ color: C.textPrimary }}
+                >
+                  Leave Trade Room?
+                </h3>
+                <p className="text-sm" style={{ color: C.textSecondary }}>
+                  Any active trades will continue running. You can return to the
+                  trade room at any time.
+                </p>
               </div>
-              <span
-                className="text-[10px] font-medium"
-                style={{
-                  color: isActive ? C.textPrimary : C.textTertiary,
-                }}
+              <div
+                className="flex"
+                style={{ borderTop: `1px solid ${C.strokeTertiary}` }}
               >
-                {item.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+                <button
+                  className="flex-1 py-3.5 text-sm font-medium active:opacity-70"
+                  style={{
+                    color: C.textSecondary,
+                    borderRight: `1px solid ${C.strokeTertiary}`,
+                  }}
+                  onClick={() => setShowDashboardConfirm(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="flex-1 py-3.5 text-sm font-semibold active:opacity-70"
+                  style={{ color: C.blue }}
+                  onClick={() => router.push("/dashboard")}
+                >
+                  Go to Dashboard
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
+      <nav
+        className="flex-shrink-0 select-none"
+        style={{
+          backgroundColor: C.base,
+          paddingBottom: "env(safe-area-inset-bottom)",
+        }}
+      >
+        <div className="flex items-stretch">
+          {items.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeItem === item.id;
+
+            return (
+              <button
+                key={item.id}
+                onClick={item.onClick}
+                className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2.5 transition-colors duration-200 relative"
+              >
+                <div className="relative">
+                  <Icon
+                    size={22}
+                    style={{
+                      color: isActive ? C.textPrimary : C.textSecondary,
+                    }}
+                    strokeWidth={isActive ? 2.2 : 1.8}
+                  />
+                  {item.badge && (
+                    <span
+                      className="absolute -top-1.5 -right-2.5 min-w-[16px] h-4 flex items-center justify-center rounded-full text-[9px] font-bold px-1"
+                      style={{
+                        backgroundColor: C.orange,
+                        color: C.white,
+                      }}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <span
+                  className="text-[10px] font-medium"
+                  style={{
+                    color: isActive ? C.textPrimary : C.textTertiary,
+                  }}
+                >
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </>
   );
 }
 
@@ -1235,45 +1787,68 @@ function MobileBalanceBar({
   practiceAccountBalance,
   onAccountTypeChange,
   onDeposit,
+  onWithdraw,
+  onReplenishPractice,
 }: {
   selectedAccountType: "real" | "practice";
   traderoomBalance: number;
   practiceAccountBalance: number;
   onAccountTypeChange: (type: "real" | "practice") => void;
   onDeposit: () => void;
+  onWithdraw: () => void;
+  onReplenishPractice: (amount: number) => void;
 }) {
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [showSheet, setShowSheet] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(false);
+  const [customizeAmount, setCustomizeAmount] = useState(10000);
+
   const balance =
     selectedAccountType === "real" ? traderoomBalance : practiceAccountBalance;
+  const accountLabel =
+    selectedAccountType === "real" ? "Real account" : "Demo account";
+
+  const QUICK_AMOUNTS = [100, 1000, 5000, 10000];
+
+  const closeSheet = () => {
+    setShowSheet(false);
+    setShowCustomize(false);
+  };
 
   return (
-    <div className="relative">
+    <>
+      {/* ── Header bar ── */}
       <div
-        className="flex items-center justify-between px-4 py-1.5"
-        style={{
-          backgroundColor: C.base,
-        }}
+        className="flex items-center justify-between px-4"
+        style={{ backgroundColor: C.base, minHeight: "56px" }}
       >
-        <button
-          onClick={() => setShowDropdown(!showDropdown)}
-          className="flex items-center gap-2"
+        {/* Avatar */}
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: C.quaternary }}
         >
-          <div
-            className="w-2 h-2 rounded-full"
-            style={{
-              backgroundColor:
-                selectedAccountType === "real" ? C.green : C.orange,
-            }}
-          />
-          <span
-            className="text-xs font-medium"
-            style={{ color: C.textSecondary }}
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke={C.textSecondary}
+            strokeWidth="2"
           >
-            {selectedAccountType === "real" ? "Real" : "Practice"}
-          </span>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </div>
+
+        {/* Balance + account type — tappable */}
+        <button
+          className="flex flex-col items-center gap-0"
+          onClick={() => setShowSheet(true)}
+        >
           <span
-            className="text-sm font-semibold tabular-nums"
-            style={{ color: C.textPrimary }}
+            className="text-xl font-bold tabular-nums"
+            style={{
+              color: selectedAccountType === "practice" ? C.orange : C.green,
+            }}
           >
             $
             {balance.toLocaleString("en-US", {
@@ -1281,106 +1856,290 @@ function MobileBalanceBar({
               maximumFractionDigits: 2,
             })}
           </span>
-          <ChevronDown
-            size={12}
-            style={{
-              color: C.textSecondary,
-              transform: showDropdown ? "scaleY(-1)" : "none",
-              transition: "transform 0.2s",
-            }}
-          />
+          <div className="flex items-center gap-1">
+            <span className="text-xs" style={{ color: C.textSecondary }}>
+              {accountLabel}
+            </span>
+            <ChevronDown size={12} style={{ color: C.textSecondary }} />
+          </div>
         </button>
+
+        {/* Wallet / deposit button */}
         <button
           onClick={onDeposit}
-          className="px-3 py-1 rounded-lg text-xs font-semibold transition-colors active:opacity-80"
-          style={{
-            backgroundColor: C.green,
-            color: C.white,
-          }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 active:opacity-75"
+          style={{ backgroundColor: C.orange }}
         >
-          Deposit
+          <Wallet size={20} style={{ color: C.white }} />
         </button>
       </div>
 
-      {/* Account type dropdown */}
-      {showDropdown && (
-        <div
-          className="absolute top-full left-0 right-0 z-50 p-2"
-          style={{ backgroundColor: C.quaternary }}
-        >
-          <button
-            onClick={() => {
-              onAccountTypeChange("real");
-              setShowDropdown(false);
-            }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
-            style={{
-              backgroundColor:
-                selectedAccountType === "real" ? C.secondary : "transparent",
-            }}
-          >
+      {/* ── Bottom sheet portal ── */}
+      {showSheet &&
+        ReactDOM.createPortal(
+          <div className="fixed inset-0" style={{ zIndex: 99999 }}>
+            {/* Backdrop */}
             <div
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: C.green }}
+              className="absolute inset-0"
+              style={{ backgroundColor: "rgba(0,0,0,0.65)" }}
+              onClick={closeSheet}
             />
-            <div className="flex-1 text-left">
-              <div
-                className="text-sm font-medium"
-                style={{ color: C.textPrimary }}
-              >
-                Real Account
-              </div>
-              <div
-                className="text-xs tabular-nums"
-                style={{ color: C.textSecondary }}
-              >
-                $
-                {traderoomBalance.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </div>
-            </div>
-          </button>
-          <button
-            onClick={() => {
-              onAccountTypeChange("practice");
-              setShowDropdown(false);
-            }}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors"
-            style={{
-              backgroundColor:
-                selectedAccountType === "practice"
-                  ? C.secondary
-                  : "transparent",
-            }}
-          >
+
+            {/* Sheet */}
             <div
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: C.orange }}
-            />
-            <div className="flex-1 text-left">
-              <div
-                className="text-sm font-medium"
-                style={{ color: C.textPrimary }}
-              >
-                Practice Account
-              </div>
-              <div
-                className="text-xs tabular-nums"
-                style={{ color: C.textSecondary }}
-              >
-                $
-                {practiceAccountBalance.toLocaleString("en-US", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </div>
+              className="absolute left-0 right-0 bottom-0 rounded-t-3xl"
+              style={{ backgroundColor: C.quaternary }}
+            >
+              {showCustomize ? (
+                /* ── Customize / Amount picker screen ── */
+                <div className="px-5 pt-5 pb-10">
+                  {/* Back + title */}
+                  <div className="flex items-center mb-6">
+                    <button
+                      onClick={() => setShowCustomize(false)}
+                      className="active:opacity-70"
+                    >
+                      <ChevronDown
+                        size={22}
+                        style={{
+                          color: C.textPrimary,
+                          transform: "rotate(90deg)",
+                        }}
+                      />
+                    </button>
+                    <span
+                      className="ml-3 text-base font-semibold"
+                      style={{ color: C.textPrimary }}
+                    >
+                      Amount
+                    </span>
+                  </div>
+
+                  {/* Selected amount */}
+                  <div className="flex flex-col items-center mb-4">
+                    <span
+                      className="text-4xl font-bold tabular-nums"
+                      style={{ color: C.textPrimary }}
+                    >
+                      ${customizeAmount.toLocaleString("en-US")}
+                    </span>
+                    <span
+                      className="text-xs mt-2"
+                      style={{ color: C.textSecondary }}
+                    >
+                      Any amount from $10 to $10,000
+                    </span>
+                  </div>
+
+                  {/* Quick amount grid */}
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    {QUICK_AMOUNTS.map((amt) => (
+                      <button
+                        key={amt}
+                        onClick={() => setCustomizeAmount(amt)}
+                        className="py-4 rounded-xl text-sm font-semibold active:opacity-75"
+                        style={{
+                          backgroundColor:
+                            customizeAmount === amt ? C.secondary : C.quinary,
+                          color: C.textPrimary,
+                          border: `1px solid ${customizeAmount === amt ? C.strokeSecondary : C.strokeTertiary}`,
+                        }}
+                      >
+                        ${amt.toLocaleString("en-US")}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Helper text */}
+                  <p
+                    className="text-xs text-center mb-6"
+                    style={{ color: C.textSecondary }}
+                  >
+                    After applying, your demo balance will be topped up
+                    <br />
+                    to the set amount
+                  </p>
+
+                  {/* Confirm */}
+                  <button
+                    onClick={() => {
+                      onReplenishPractice(customizeAmount);
+                      closeSheet();
+                    }}
+                    className="w-full py-4 rounded-2xl text-base font-semibold active:opacity-80"
+                    style={{ backgroundColor: C.orange, color: C.white }}
+                  >
+                    Confirm
+                  </button>
+                </div>
+              ) : (
+                /* ── Account list ── */
+                <div className="px-5 pt-5 pb-10">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <span
+                      className="text-base font-semibold"
+                      style={{ color: C.textPrimary }}
+                    >
+                      Your accounts
+                    </span>
+                    <button onClick={closeSheet} className="active:opacity-70">
+                      <X size={20} style={{ color: C.textSecondary }} />
+                    </button>
+                  </div>
+
+                  {/* Real account card */}
+                  <div
+                    className="rounded-2xl p-4 mb-3"
+                    style={{ backgroundColor: C.secondary }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <div
+                          className="text-sm font-medium mb-0.5"
+                          style={{ color: C.textSecondary }}
+                        >
+                          Real account
+                        </div>
+                        <div
+                          className="text-2xl font-bold tabular-nums"
+                          style={{ color: C.textPrimary }}
+                        >
+                          $
+                          {traderoomBalance.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                      </div>
+                      {/* Radio */}
+                      <button
+                        onClick={() => onAccountTypeChange("real")}
+                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{
+                          border: `2px solid ${selectedAccountType === "real" ? C.orange : C.textTertiary}`,
+                          backgroundColor:
+                            selectedAccountType === "real"
+                              ? C.orange
+                              : "transparent",
+                        }}
+                      >
+                        {selectedAccountType === "real" && (
+                          <div
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: C.white }}
+                          />
+                        )}
+                      </button>
+                    </div>
+                    {selectedAccountType === "real" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            closeSheet();
+                            onWithdraw();
+                          }}
+                          className="flex-1 py-3 rounded-xl text-sm font-semibold active:opacity-75"
+                          style={{
+                            backgroundColor: C.tertiary,
+                            color: C.textPrimary,
+                          }}
+                        >
+                          Withdraw
+                        </button>
+                        <button
+                          onClick={() => {
+                            closeSheet();
+                            onDeposit();
+                          }}
+                          className="flex-1 py-3 rounded-xl text-sm font-semibold active:opacity-75"
+                          style={{ backgroundColor: C.orange, color: C.white }}
+                        >
+                          Deposit
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Demo / Practice account card */}
+                  <div
+                    className="rounded-2xl p-4"
+                    style={{ backgroundColor: C.secondary }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <div
+                          className="text-sm font-medium mb-0.5"
+                          style={{ color: C.textSecondary }}
+                        >
+                          Demo account
+                        </div>
+                        <div
+                          className="text-2xl font-bold tabular-nums"
+                          style={{ color: C.textPrimary }}
+                        >
+                          $
+                          {practiceAccountBalance.toLocaleString("en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </div>
+                      </div>
+                      {/* Radio */}
+                      <button
+                        onClick={() => onAccountTypeChange("practice")}
+                        className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                        style={{
+                          border: `2px solid ${selectedAccountType === "practice" ? C.orange : C.textTertiary}`,
+                          backgroundColor:
+                            selectedAccountType === "practice"
+                              ? C.orange
+                              : "transparent",
+                        }}
+                      >
+                        {selectedAccountType === "practice" && (
+                          <div
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: C.white }}
+                          />
+                        )}
+                      </button>
+                    </div>
+                    {selectedAccountType === "practice" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowCustomize(true)}
+                          className="flex-1 py-3 rounded-xl text-sm font-semibold active:opacity-75"
+                          style={{
+                            backgroundColor: C.tertiary,
+                            color: C.textPrimary,
+                          }}
+                        >
+                          Customize
+                        </button>
+                        <button
+                          onClick={() => {
+                            onReplenishPractice(10000);
+                            closeSheet();
+                          }}
+                          className="flex-1 py-3 rounded-xl text-sm font-semibold active:opacity-75"
+                          style={{
+                            backgroundColor: "#7B3810",
+                            color: C.white,
+                          }}
+                        >
+                          Top up
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          </button>
-        </div>
-      )}
-    </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
 
@@ -1507,10 +2266,12 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         practiceAccountBalance={props.practiceAccountBalance}
         onAccountTypeChange={props.onAccountTypeChange}
         onDeposit={props.onDeposit}
+        onWithdraw={props.onWithdraw}
+        onReplenishPractice={props.onReplenishPractice}
       />
 
-      {/* Asset header with tabs - hidden when portfolio tab is active */}
-      {activeNavItem !== "portfolio" && (
+      {/* Asset header with tabs - hidden when portfolio or history tab is active */}
+      {activeNavItem !== "portfolio" && activeNavItem !== "history" && (
         <MobileAssetHeader
           selectedSymbol={props.selectedSymbol}
           currentPrice={props.currentPrice}
@@ -1540,12 +2301,24 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         />
       )}
 
+      {/* History View - replaces chart when history tab is active */}
+      {activeNavItem === "history" && (
+        <MobileHistoryView
+          tradeHistory={props.tradeHistory}
+          symbols={props.symbols}
+          AssetFlag={props.AssetFlag}
+        />
+      )}
+
       {/* Chart area - fills remaining space (IQ Option: grid-template-rows: minmax(140px,1fr) auto) */}
       <div
         className="flex-1 relative overflow-hidden"
         style={{
           minHeight: "140px",
-          display: activeNavItem === "portfolio" ? "none" : undefined,
+          display:
+            activeNavItem === "portfolio" || activeNavItem === "history"
+              ? "none"
+              : undefined,
         }}
       >
         {/* World map background */}
@@ -1705,7 +2478,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
       </div>
 
       {/* Horizontal sentiment bar - below chart, above trading panel */}
-      {activeNavItem !== "portfolio" && (
+      {activeNavItem !== "portfolio" && activeNavItem !== "history" && (
         <div
           style={{
             backgroundColor: C.base,
@@ -1715,8 +2488,8 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
         </div>
       )}
 
-      {/* Trading Panel - hidden when portfolio tab is active */}
-      {activeNavItem !== "portfolio" && (
+      {/* Trading Panel - hidden when portfolio or history tab is active */}
+      {activeNavItem !== "portfolio" && activeNavItem !== "history" && (
         <MobileTradingPanel
           amount={props.amount}
           amountInput={props.amountInput}

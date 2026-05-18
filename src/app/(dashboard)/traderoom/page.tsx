@@ -2419,6 +2419,8 @@ function TradingInterface() {
           practiceAccountBalance={practiceAccountBalance}
           onAccountTypeChange={setSelectedAccountType}
           onDeposit={() => setShowFundModal(true)}
+          onWithdraw={() => setShowWithdrawModal(true)}
+          onReplenishPractice={(amount) => setPracticeAccountBalance(amount)}
           activeTrades={activeTrades}
           selectedChartGrid={1}
           candleInterval={candleInterval}
@@ -2438,6 +2440,7 @@ function TradingInterface() {
           onShowHistory={() => setShowTradingHistory(true)}
           onShowPortfolio={() => setShowPortfolioPanel(true)}
           onShowAddAsset={() => setShowAddAssetModal(true)}
+          tradeHistory={tradeHistory}
           onAddTab={(sym) => {
             const existingIdx = openTabs.findIndex((t) => t.symbol === sym);
             if (existingIdx !== -1) {
