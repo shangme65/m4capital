@@ -93,6 +93,13 @@ import { getCurrencySymbol, formatCurrency } from "@/lib/currencies";
 import { CryptoIcon } from "@/components/icons/CryptoIcon";
 
 // Helper to render asset icon - SVG for forex currencies, fallback for others
+const getIconSize = (size: number): "xs" | "sm" | "md" | "lg" => {
+  if (size >= 40) return "lg";
+  if (size >= 26) return "md";
+  if (size >= 18) return "sm";
+  return "xs";
+};
+
 const AssetFlag = ({
   flag,
   symbol,
@@ -104,6 +111,8 @@ const AssetFlag = ({
   size?: number;
   className?: string;
 }) => {
+  const iconSize = getIconSize(size);
+
   // For forex pairs like "EUR,USD" - render two currency SVG icons
   if (flag.includes(",")) {
     const [first, second] = flag.split(",");
@@ -111,15 +120,15 @@ const AssetFlag = ({
       <span
         className={`inline-flex items-center -space-x-1 ${className || ""}`}
       >
-        <CryptoIcon symbol={first} size="xs" />
-        <CryptoIcon symbol={second} size="xs" />
+        <CryptoIcon symbol={first} size={iconSize} />
+        <CryptoIcon symbol={second} size={iconSize} />
       </span>
     );
   }
 
   // For single currency/crypto codes (2-8 uppercase letters), use CryptoIcon
   if (/^[A-Z]{2,8}$/.test(flag)) {
-    return <CryptoIcon symbol={flag} size="xs" className={className} />;
+    return <CryptoIcon symbol={flag} size={iconSize} className={className} />;
   }
 
   // For symbols with "/" - extract parts and render pair icons
@@ -131,7 +140,9 @@ const AssetFlag = ({
 
     // If quote is USD, just show the base crypto icon
     if (cleanQuote === "USD" && /^[A-Z]{2,10}$/.test(cleanBase)) {
-      return <CryptoIcon symbol={cleanBase} size="xs" className={className} />;
+      return (
+        <CryptoIcon symbol={cleanBase} size={iconSize} className={className} />
+      );
     }
 
     // Show both icons for pairs
@@ -140,8 +151,8 @@ const AssetFlag = ({
         <span
           className={`inline-flex items-center -space-x-1 ${className || ""}`}
         >
-          <CryptoIcon symbol={cleanBase} size="xs" />
-          <CryptoIcon symbol={cleanQuote} size="xs" />
+          <CryptoIcon symbol={cleanBase} size={iconSize} />
+          <CryptoIcon symbol={cleanQuote} size={iconSize} />
         </span>
       );
     }
@@ -154,14 +165,18 @@ const AssetFlag = ({
     .toUpperCase()
     .trim();
   if (/^[A-Z]{2,10}$/.test(cleanSymbol)) {
-    return <CryptoIcon symbol={cleanSymbol} size="xs" className={className} />;
+    return (
+      <CryptoIcon symbol={cleanSymbol} size={iconSize} className={className} />
+    );
   }
 
   // For crypto/stocks with emoji flags, try using the symbol directly
   // Extract first word of symbol to use as icon code
   const symbolCode = symbol.split(/[\s\/]/)[0].toUpperCase();
   if (/^[A-Z]{2,10}$/.test(symbolCode)) {
-    return <CryptoIcon symbol={symbolCode} size="xs" className={className} />;
+    return (
+      <CryptoIcon symbol={symbolCode} size={iconSize} className={className} />
+    );
   }
 
   // Fallback to emoji/text flag

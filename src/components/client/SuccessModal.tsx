@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle, X } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -32,6 +33,26 @@ export default function SuccessModal({
   const { formatAmount } = useCurrency();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
+
+  const [transactionDate, setTransactionDate] = useState("");
+
+  useEffect(() => {
+    if (isOpen) {
+      setTransactionDate(
+        new Date()
+          .toLocaleString("en-CA", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+            hour12: false,
+          })
+          .replace(",", ""),
+      );
+    }
+  }, [isOpen]);
 
   // Format crypto amount to 8 decimal places
   const formatCryptoAmount = (amt: string | number) => {
@@ -71,19 +92,19 @@ export default function SuccessModal({
     switch (type) {
       case "buy":
         return `You have successfully purchased ${formatCryptoAmount(
-          amount
+          amount,
         )} ${asset}`;
       case "sell":
         return `You have successfully sold ${formatCryptoAmount(
-          amount
+          amount,
         )} ${asset}`;
       case "transfer":
         return `You have successfully transferred ${formatCryptoAmount(
-          amount
+          amount,
         )} ${asset}${recipient ? ` to ${recipient}` : ""}`;
       case "swap":
         return `You have successfully swapped ${formatCryptoAmount(
-          amount
+          amount,
         )} ${asset} for ${formatCryptoAmount(toAmount)} ${toAsset}`;
       default:
         return "Your transaction has been completed successfully";
@@ -111,137 +132,191 @@ export default function SuccessModal({
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-md rounded-2xl shadow-2xl border overflow-hidden"
+              className="w-full max-w-sm rounded-2xl shadow-2xl border overflow-hidden"
               style={{
                 background: isDark ? "#1f2937" : "#ffffff",
                 borderColor: isDark ? "#374151" : "#e5e7eb",
               }}
             >
-            {/* Header */}
-            <div className="relative p-6 bg-gradient-to-r from-green-600 to-emerald-600">
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 text-white/80 hover:text-white transition-colors"
-              >
-                <X size={24} />
-              </button>
-              <div className="flex flex-col items-center text-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              {/* Header */}
+              <div className="relative p-4 bg-gradient-to-r from-green-600 to-emerald-600">
+                <button
+                  onClick={onClose}
+                  className="absolute top-3 right-3 text-white/80 hover:text-white transition-colors"
                 >
-                  <CheckCircle size={64} className="text-white mb-4" />
-                </motion.div>
-                <h2 className="text-2xl font-bold text-white">{getTitle()}</h2>
+                  <X size={18} />
+                </button>
+                <div className="flex flex-col items-center text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  >
+                    <CheckCircle size={40} className="text-white mb-2" />
+                  </motion.div>
+                  <h2 className="text-lg font-bold text-white">{getTitle()}</h2>
+                </div>
               </div>
-            </div>
 
-            {/* Content */}
-            <div className="p-6">
-              <div className="text-center mb-6">
-                <p className={`text-lg ${isDark ? "text-gray-300" : "text-gray-700"}`}>{getMessage()}</p>
-              </div>
+              {/* Content */}
+              <div className="p-4">
+                <div className="text-center mb-3">
+                  <p
+                    className={`text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                  >
+                    {getMessage()}
+                  </p>
+                </div>
 
-              {/* Transaction Details */}
-              <div
-                className="rounded-xl p-4 mb-6 space-y-3"
-                style={{
-                  background: isDark ? "rgba(17, 24, 39, 0.5)" : "rgba(243, 244, 246, 0.8)",
-                }}
-              >
-                {type !== "swap" && asset && (
-                  <div className="flex items-center justify-between">
-                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Asset</span>
-                    <div className="flex items-center gap-2">
-                      <CryptoIcon symbol={asset} size="sm" />
-                      <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>{asset}</span>
-                    </div>
-                  </div>
-                )}
-
-                {type === "swap" && (
-                  <>
+                {/* Transaction Details */}
+                <div
+                  className="rounded-xl p-3 mb-3 space-y-2"
+                  style={{
+                    background: isDark
+                      ? "rgba(17, 24, 39, 0.5)"
+                      : "rgba(243, 244, 246, 0.8)",
+                  }}
+                >
+                  {type !== "swap" && asset && (
                     <div className="flex items-center justify-between">
-                      <span className={isDark ? "text-gray-400" : "text-gray-500"}>From</span>
-                      <div className="flex items-center gap-2">
+                      <span
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Asset
+                      </span>
+                      <div className="flex items-center gap-1.5">
                         <CryptoIcon symbol={asset} size="sm" />
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                          {formatCryptoAmount(amount)} {asset}
+                        <span
+                          className={`text-xs font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
+                          {asset}
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className={isDark ? "text-gray-400" : "text-gray-500"}>To</span>
-                      <div className="flex items-center gap-2">
-                        <CryptoIcon symbol={toAsset} size="sm" />
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                          {formatCryptoAmount(toAmount)} {toAsset}
+                  )}
+
+                  {type === "swap" && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          From
                         </span>
+                        <div className="flex items-center gap-1.5">
+                          <CryptoIcon symbol={asset} size="sm" />
+                          <span
+                            className={`text-xs font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
+                            {formatCryptoAmount(amount)} {asset}
+                          </span>
+                        </div>
                       </div>
+                      <div className="flex items-center justify-between">
+                        <span
+                          className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                        >
+                          To
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <CryptoIcon symbol={toAsset} size="sm" />
+                          <span
+                            className={`text-xs font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
+                            {formatCryptoAmount(toAmount)} {toAsset}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {amount && type !== "swap" && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Amount
+                      </span>
+                      <span
+                        className={`text-xs font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        {formatCryptoAmount(amount)}
+                      </span>
                     </div>
-                  </>
-                )}
+                  )}
 
-                {amount && type !== "swap" && (
-                  <div className="flex items-center justify-between">
-                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount</span>
-                    <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
-                      {formatCryptoAmount(amount)}
+                  {value && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Value
+                      </span>
+                      <span
+                        className={`text-xs font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        {formatFiatValue(value)}
+                      </span>
+                    </div>
+                  )}
+
+                  {recipient && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Recipient
+                      </span>
+                      <span
+                        className={`text-xs font-semibold truncate max-w-[160px] ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        {recipient}
+                      </span>
+                    </div>
+                  )}
+
+                  <div
+                    className={`border-t ${
+                      isDark ? "border-gray-700" : "border-gray-200"
+                    }`}
+                  />
+
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    >
+                      Status
+                    </span>
+                    <span
+                      className={`text-xs font-semibold ${isDark ? "text-green-400" : "text-green-600"}`}
+                    >
+                      Completed
                     </span>
                   </div>
-                )}
 
-                {value && (
-                  <div className="flex items-center justify-between">
-                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Value</span>
-                    <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>{formatFiatValue(value)}</span>
-                  </div>
-                )}
-
-                {recipient && (
-                  <div className="flex items-center justify-between">
-                    <span className={isDark ? "text-gray-400" : "text-gray-500"}>Recipient</span>
-                    <span className={`font-semibold truncate max-w-[200px] ${isDark ? "text-white" : "text-gray-900"}`}>
-                      {recipient}
+                  <div className="flex items-center justify-between gap-2">
+                    <span
+                      className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    >
+                      Date
+                    </span>
+                    <span
+                      className={`text-xs ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
+                      {transactionDate}
                     </span>
                   </div>
-                )}
-
-                <div className="flex items-center justify-between">
-                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Status</span>
-                  <span className={`font-semibold ${isDark ? "text-green-400" : "text-green-600"}`}>
-                    Completed
-                  </span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>Date</span>
-                  <span className={isDark ? "text-white" : "text-gray-900"}>
-                    {new Date()
-                      .toLocaleString("en-CA", {
-                        year: "numeric",
-                        month: "2-digit",
-                        day: "2-digit",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                        second: "2-digit",
-                        hour12: false,
-                      })
-                      .replace(",", "")}
-                  </span>
-                </div>
+                {/* Action Button */}
+                <button
+                  onClick={onClose}
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 text-xs rounded-xl transition-all"
+                >
+                  Done
+                </button>
               </div>
-
-              {/* Action Button */}
-              <button
-                onClick={onClose}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-2 text-xs rounded-xl transition-all"
-              >
-                Done
-              </button>
-            </div>
-          </motion.div>
+            </motion.div>
           </div>
         </>
       )}

@@ -110,6 +110,7 @@ export default function NotificationsPanel({
     archiveNotification,
     unarchiveNotification,
     deleteNotification,
+    markAllAsRead,
   } = useNotifications();
   const { formatAmount } = useCurrency();
   const { resolvedTheme } = useTheme();
@@ -119,6 +120,7 @@ export default function NotificationsPanel({
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [archiveConfirmId, setArchiveConfirmId] = useState<string | null>(null);
 
   const findCryptoSymbolInText = (text?: string): string | null => {
     if (!text) return null;
@@ -134,12 +136,14 @@ export default function NotificationsPanel({
   };
 
   const parsePairFromText = (
-    text?: string
+    text?: string,
   ): { base: string; quote: string } | null => {
     if (!text) return null;
 
     // Try slash pairs first, e.g. BTC/USD or EUR/USD
-    const slashPair = text.toUpperCase().match(/([A-Z0-9]{2,10})\s*\/\s*([A-Z0-9]{2,10})/);
+    const slashPair = text
+      .toUpperCase()
+      .match(/([A-Z0-9]{2,10})\s*\/\s*([A-Z0-9]{2,10})/);
     if (slashPair) {
       return { base: slashPair[1], quote: slashPair[2] };
     }
@@ -193,7 +197,10 @@ export default function NotificationsPanel({
       const indicatorColor = isTradeLost ? "bg-red-500" : "bg-green-500";
 
       return (
-        <div className="relative flex-shrink-0" style={{ width: "38px", height: "28px" }}>
+        <div
+          className="relative flex-shrink-0"
+          style={{ width: "38px", height: "28px" }}
+        >
           {/* Base currency - left side */}
           <div className="absolute left-0 top-0">
             {baseIsForex ? (
@@ -209,7 +216,7 @@ export default function NotificationsPanel({
               <CryptoIcon symbol={pair.base} size="sm" />
             )}
           </div>
-          
+
           {/* Quote currency - right side, overlapping */}
           <div className="absolute right-0 top-0">
             {quoteIsForex ? (
@@ -225,9 +232,9 @@ export default function NotificationsPanel({
               <CryptoIcon symbol={pair.quote} size="sm" />
             )}
           </div>
-          
+
           {/* Status indicator - centered between the two flags */}
-          <div 
+          <div
             className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full ${indicatorColor} border-2 border-white/60`}
             style={{ zIndex: 10 }}
           />
@@ -238,26 +245,31 @@ export default function NotificationsPanel({
     const detectedCryptoSymbol =
       findCryptoSymbolInText(notification.title) ||
       findCryptoSymbolInText(notification.message);
-    const iconAsset = asset in CRYPTO_METADATA ? asset : detectedCryptoSymbol || asset;
+    const iconAsset =
+      asset in CRYPTO_METADATA ? asset : detectedCryptoSymbol || asset;
     const isCrypto = iconAsset in CRYPTO_METADATA;
     const isFiat = FIAT_CURRENCIES.has(asset);
 
     // Show real crypto logo
     if (isCrypto) {
       const meta = getCryptoMetadata(iconAsset);
-      
+
       // Determine transfer direction
-      const isTransferSent = titleLower.includes("transfer sent") || (titleLower.includes("transfer") && (notification.amount || 0) < 0);
-      const isTransferReceived = titleLower.includes("transfer received") || titleLower.includes("received");
+      const isTransferSent =
+        titleLower.includes("transfer sent") ||
+        (titleLower.includes("transfer") && (notification.amount || 0) < 0);
+      const isTransferReceived =
+        titleLower.includes("transfer received") ||
+        titleLower.includes("received");
       const isSold = titleLower.includes("sold");
       const isWithdraw = titleLower.includes("withdraw");
       const isPurchase = titleLower.includes("purchase");
       const isTradeEarned2 = titleLower.includes("trade earned");
-      
+
       // Determine badge color and arrow direction
       let badgeColor = "bg-green-500";
       let showUpArrow = true;
-      
+
       if (isTransferSent) {
         badgeColor = "bg-red-500";
         showUpArrow = true; // Sent = red arrow UP
@@ -268,12 +280,15 @@ export default function NotificationsPanel({
         badgeColor = "bg-red-500";
         showUpArrow = true; // Sold/Withdraw = red arrow UP
       }
-      
+
       return (
         <div className="relative flex-shrink-0">
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg overflow-hidden"
-            style={{ backgroundColor: `${meta.bgColor}`, border: `1.5px solid ${meta.color}40` }}
+            style={{
+              backgroundColor: `${meta.bgColor}`,
+              border: `1.5px solid ${meta.color}40`,
+            }}
           >
             <Image
               src={meta.imagePath}
@@ -285,11 +300,37 @@ export default function NotificationsPanel({
             />
           </div>
           {/* Direction badge */}
-          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${badgeColor}`}>
+          <div
+            className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${badgeColor}`}
+          >
             {showUpArrow ? (
-              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+              <svg
+                className="w-2.5 h-2.5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 15l7-7 7 7"
+                />
+              </svg>
             ) : (
-              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              <svg
+                className="w-2.5 h-2.5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
             )}
           </div>
         </div>
@@ -299,16 +340,20 @@ export default function NotificationsPanel({
     // Show real currency flag
     if (isFiat) {
       const titleLower = notification.title?.toLowerCase() || "";
-      
+
       // Determine transfer direction: sent = red up, received = green down
-      const isTransferSent = titleLower.includes("transfer sent") || (titleLower.includes("transfer") && (notification.amount || 0) < 0);
-      const isTransferReceived = titleLower.includes("transfer received") || titleLower.includes("received");
+      const isTransferSent =
+        titleLower.includes("transfer sent") ||
+        (titleLower.includes("transfer") && (notification.amount || 0) < 0);
+      const isTransferReceived =
+        titleLower.includes("transfer received") ||
+        titleLower.includes("received");
       const isWithdraw = titleLower.includes("withdraw");
-      
+
       // Determine badge color and arrow direction
       let badgeColor = "bg-green-500";
       let showUpArrow = true;
-      
+
       if (isTransferSent) {
         badgeColor = "bg-red-500";
         showUpArrow = true; // Sent = red arrow UP
@@ -319,7 +364,7 @@ export default function NotificationsPanel({
         badgeColor = "bg-red-500";
         showUpArrow = false; // Withdraw = red arrow down
       }
-      
+
       return (
         <div className="relative flex-shrink-0">
           <div className="w-9 h-9 rounded-xl overflow-hidden shadow-lg border border-gray-200/20">
@@ -333,11 +378,37 @@ export default function NotificationsPanel({
             />
           </div>
           {/* Direction badge */}
-          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${badgeColor}`}>
+          <div
+            className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center shadow-md ${badgeColor}`}
+          >
             {showUpArrow ? (
-              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+              <svg
+                className="w-2.5 h-2.5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M5 15l7-7 7 7"
+                />
+              </svg>
             ) : (
-              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+              <svg
+                className="w-2.5 h-2.5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={3}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
             )}
           </div>
         </div>
@@ -359,29 +430,32 @@ export default function NotificationsPanel({
         titleLower.includes("requires attention") ||
         titleLower.includes("action required");
       const isUnderReview =
-        titleLower.includes("under review") ||
-        titleLower.includes("reviewing");
+        titleLower.includes("under review") || titleLower.includes("reviewing");
 
       const kycGradient = isApproved
         ? "from-green-400 to-emerald-600"
         : isRejected
-        ? "from-red-400 to-rose-600"
-        : isUnderReview
-        ? "from-blue-400 to-cyan-600"
-        : "from-indigo-400 to-purple-600";
+          ? "from-red-400 to-rose-600"
+          : isUnderReview
+            ? "from-blue-400 to-cyan-600"
+            : "from-indigo-400 to-purple-600";
 
       const KycIcon = isApproved
         ? ShieldCheck
         : isRejected
-        ? ShieldX
-        : isUnderReview
-        ? ShieldAlert
-        : ScanFace;
+          ? ShieldX
+          : isUnderReview
+            ? ShieldAlert
+            : ScanFace;
 
       return (
         <div className="relative flex-shrink-0">
-          <div className={`absolute inset-0 bg-gradient-to-br ${kycGradient} rounded-lg blur-sm opacity-50`} />
-          <div className={`relative w-9 h-9 bg-gradient-to-br ${kycGradient} rounded-lg flex items-center justify-center shadow-md`}>
+          <div
+            className={`absolute inset-0 bg-gradient-to-br ${kycGradient} rounded-lg blur-sm opacity-50`}
+          />
+          <div
+            className={`relative w-9 h-9 bg-gradient-to-br ${kycGradient} rounded-lg flex items-center justify-center shadow-md`}
+          >
             <KycIcon className="w-4 h-4 text-white" strokeWidth={2.5} />
           </div>
         </div>
@@ -397,11 +471,17 @@ export default function NotificationsPanel({
       SUCCESS: "from-green-400 to-emerald-600",
       WARNING: "from-yellow-400 to-orange-600",
     };
-    const gradient = typeGradients[notification.type?.toUpperCase() || ""] || "from-purple-400 to-indigo-600";
+    const gradient =
+      typeGradients[notification.type?.toUpperCase() || ""] ||
+      "from-purple-400 to-indigo-600";
     return (
       <div className="relative flex-shrink-0">
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} rounded-lg blur-sm opacity-50`}></div>
-        <div className={`relative w-9 h-9 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center shadow-md`}>
+        <div
+          className={`absolute inset-0 bg-gradient-to-br ${gradient} rounded-lg blur-sm opacity-50`}
+        ></div>
+        <div
+          className={`relative w-9 h-9 bg-gradient-to-br ${gradient} rounded-lg flex items-center justify-center shadow-md`}
+        >
           <TrendingUp className="w-4 h-4 text-white" strokeWidth={2.5} />
         </div>
       </div>
@@ -441,8 +521,12 @@ export default function NotificationsPanel({
           >
             {/* Smaller Header */}
             <div className="relative overflow-hidden">
-              <div className={`absolute inset-0 ${isDark ? "bg-gradient-to-r from-orange-500/10 via-purple-500/10 to-blue-500/10" : "bg-gradient-to-r from-orange-500/5 via-purple-500/5 to-blue-500/5"}`}></div>
-              <div className={`relative flex items-center justify-between p-4 border-b ${isDark ? "border-gray-700/50" : "border-gray-200"}`}>
+              <div
+                className={`absolute inset-0 ${isDark ? "bg-gradient-to-r from-orange-500/10 via-purple-500/10 to-blue-500/10" : "bg-gradient-to-r from-orange-500/5 via-purple-500/5 to-blue-500/5"}`}
+              ></div>
+              <div
+                className={`relative flex items-center justify-between p-4 border-b ${isDark ? "border-gray-700/50" : "border-gray-200"}`}
+              >
                 <div className="flex items-center space-x-2">
                   <div className="relative">
                     <Bell className="w-5 h-5 text-orange-500" />
@@ -459,10 +543,14 @@ export default function NotificationsPanel({
                     )}
                   </div>
                   <div>
-                    <h2 className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                    <h2
+                      className={`text-lg font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                    >
                       Notifications
                     </h2>
-                    <p className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    <p
+                      className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    >
                       {notifications.length} total
                     </p>
                   </div>
@@ -478,13 +566,19 @@ export default function NotificationsPanel({
               </div>
 
               {/* Smaller Filter Tabs */}
-              <div className={`relative flex items-center space-x-2 px-4 py-2 ${isDark ? "bg-gray-800/50" : "bg-gray-100/50"}`}>
+              <div
+                className={`relative flex items-center space-x-2 px-4 py-2 ${isDark ? "bg-gray-800/50" : "bg-gray-100/50"}`}
+              >
                 <button
                   onClick={() => setFilter("all")}
                   className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     filter === "all"
-                      ? isDark ? "text-white" : "text-gray-900"
-                      : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
+                      ? isDark
+                        ? "text-white"
+                        : "text-gray-900"
+                      : isDark
+                        ? "text-gray-400 hover:text-white"
+                        : "text-gray-500 hover:text-gray-900"
                   }`}
                 >
                   {filter === "all" && (
@@ -504,8 +598,12 @@ export default function NotificationsPanel({
                   onClick={() => setFilter("unread")}
                   className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     filter === "unread"
-                      ? isDark ? "text-white" : "text-gray-900"
-                      : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
+                      ? isDark
+                        ? "text-white"
+                        : "text-gray-900"
+                      : isDark
+                        ? "text-gray-400 hover:text-white"
+                        : "text-gray-500 hover:text-gray-900"
                   }`}
                 >
                   {filter === "unread" && (
@@ -532,8 +630,12 @@ export default function NotificationsPanel({
                   onClick={() => setFilter("archived")}
                   className={`relative px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                     filter === "archived"
-                      ? isDark ? "text-white" : "text-gray-900"
-                      : isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-gray-900"
+                      ? isDark
+                        ? "text-white"
+                        : "text-gray-900"
+                      : isDark
+                        ? "text-gray-400 hover:text-white"
+                        : "text-gray-500 hover:text-gray-900"
                   }`}
                 >
                   {filter === "archived" && (
@@ -552,6 +654,20 @@ export default function NotificationsPanel({
                     <span>Archived</span>
                   </span>
                 </button>
+
+                {/* Mark all as read */}
+                {unreadCount > 0 && filter !== "archived" && (
+                  <button
+                    onClick={markAllAsRead}
+                    className={`ml-auto text-[11px] font-medium px-2.5 py-1 rounded-lg transition-colors flex-shrink-0 ${
+                      isDark
+                        ? "text-orange-400 hover:bg-orange-500/10"
+                        : "text-orange-500 hover:bg-orange-500/10"
+                    }`}
+                  >
+                    Mark all as read
+                  </button>
+                )}
               </div>
             </div>
 
@@ -564,17 +680,27 @@ export default function NotificationsPanel({
                   className={`flex flex-col items-center justify-center h-full p-8 ${isDark ? "text-gray-500" : "text-gray-400"}`}
                 >
                   <div className="relative mb-6">
-                    <div className={`absolute inset-0 rounded-full blur-xl ${isDark ? "bg-gradient-to-br from-orange-500/20 to-purple-500/20" : "bg-gradient-to-br from-orange-500/10 to-purple-500/10"}`}></div>
-                    <div className={`relative w-24 h-24 rounded-full flex items-center justify-center border ${isDark ? "bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600/50" : "bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300/50"}`}>
-                      <Bell className={`w-12 h-12 ${isDark ? "text-gray-600" : "text-gray-400"}`} />
+                    <div
+                      className={`absolute inset-0 rounded-full blur-xl ${isDark ? "bg-gradient-to-br from-orange-500/20 to-purple-500/20" : "bg-gradient-to-br from-orange-500/10 to-purple-500/10"}`}
+                    ></div>
+                    <div
+                      className={`relative w-24 h-24 rounded-full flex items-center justify-center border ${isDark ? "bg-gradient-to-br from-gray-800 to-gray-700 border-gray-600/50" : "bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300/50"}`}
+                    >
+                      <Bell
+                        className={`w-12 h-12 ${isDark ? "text-gray-600" : "text-gray-400"}`}
+                      />
                     </div>
                   </div>
-                  <p className={`text-xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+                  <p
+                    className={`text-xl font-bold mb-2 ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
                     {filter === "unread"
                       ? "All caught up!"
                       : "No notifications"}
                   </p>
-                  <p className={`text-sm text-center max-w-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                  <p
+                    className={`text-sm text-center max-w-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                  >
                     {filter === "unread"
                       ? "You've read all your notifications. Great job staying on top of things!"
                       : "You're all caught up! New notifications will appear here."}
@@ -610,54 +736,67 @@ export default function NotificationsPanel({
                               }
                             }
                           }}
-                          className={`group relative overflow-hidden rounded-lg border transition-all duration-300 cursor-pointer ${
-                            (() => {
-                              const titleLow = notification.title?.toLowerCase() || "";
-                              const isWon = titleLow.includes("trade won") || titleLow.includes("trade earned");
-                              const isLost = titleLow.includes("trade lost");
-                              if (!notification.read) {
-                                if (isWon) {
-                                  return isDark
-                                    ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-green-500/30 shadow-lg shadow-green-500/10 hover:shadow-green-500/20"
-                                    : "bg-gradient-to-br from-green-50 to-emerald-50/50 border-green-300/50 shadow-lg shadow-green-200/30 hover:shadow-green-300/40";
-                                }
-                                if (isLost) {
-                                  return isDark
-                                    ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-red-500/30 shadow-lg shadow-red-500/10 hover:shadow-red-500/20"
-                                    : "bg-gradient-to-br from-red-50 to-rose-50/50 border-red-300/50 shadow-lg shadow-red-200/30 hover:shadow-red-300/40";
-                                }
+                          className={`group relative overflow-hidden rounded-lg border transition-all duration-300 cursor-pointer ${(() => {
+                            const titleLow =
+                              notification.title?.toLowerCase() || "";
+                            const isWon =
+                              titleLow.includes("trade won") ||
+                              titleLow.includes("trade earned");
+                            const isLost = titleLow.includes("trade lost");
+                            if (!notification.read) {
+                              if (isWon) {
                                 return isDark
-                                  ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-orange-500/30 shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20"
-                                  : "bg-gradient-to-br from-orange-50 to-amber-50/50 border-orange-300/50 shadow-lg shadow-orange-200/30 hover:shadow-orange-300/40";
+                                  ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-green-500/30 shadow-lg shadow-green-500/10 hover:shadow-green-500/20"
+                                  : "bg-gradient-to-br from-green-50 to-emerald-50/50 border-green-300/50 shadow-lg shadow-green-200/30 hover:shadow-green-300/40";
+                              }
+                              if (isLost) {
+                                return isDark
+                                  ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-red-500/30 shadow-lg shadow-red-500/10 hover:shadow-red-500/20"
+                                  : "bg-gradient-to-br from-red-50 to-rose-50/50 border-red-300/50 shadow-lg shadow-red-200/30 hover:shadow-red-300/40";
                               }
                               return isDark
-                                ? "bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50"
-                                : "bg-gray-50/50 border-gray-200/50 hover:bg-gray-100/70";
-                            })()
-                          }`}
+                                ? "bg-gradient-to-br from-gray-800/90 to-gray-800/50 border-orange-500/30 shadow-lg shadow-orange-500/10 hover:shadow-orange-500/20"
+                                : "bg-gradient-to-br from-orange-50 to-amber-50/50 border-orange-300/50 shadow-lg shadow-orange-200/30 hover:shadow-orange-300/40";
+                            }
+                            return isDark
+                              ? "bg-gray-800/30 border-gray-700/30 hover:bg-gray-800/50"
+                              : "bg-gray-50/50 border-gray-200/50 hover:bg-gray-100/70";
+                          })()}`}
                         >
                           {/* Gradient overlay for unread */}
                           {!notification.read && (
-                            <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-                              (() => {
-                                const titleLow = notification.title?.toLowerCase() || "";
-                                if (titleLow.includes("trade won") || titleLow.includes("trade earned")) return "bg-gradient-to-r from-green-500/5 via-emerald-500/5 to-green-500/5";
-                                if (titleLow.includes("trade lost")) return "bg-gradient-to-r from-red-500/5 via-rose-500/5 to-red-500/5";
+                            <div
+                              className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${(() => {
+                                const titleLow =
+                                  notification.title?.toLowerCase() || "";
+                                if (
+                                  titleLow.includes("trade won") ||
+                                  titleLow.includes("trade earned")
+                                )
+                                  return "bg-gradient-to-r from-green-500/5 via-emerald-500/5 to-green-500/5";
+                                if (titleLow.includes("trade lost"))
+                                  return "bg-gradient-to-r from-red-500/5 via-rose-500/5 to-red-500/5";
                                 return "bg-gradient-to-r from-orange-500/5 via-purple-500/5 to-blue-500/5";
-                              })()
-                            }`}></div>
+                              })()}`}
+                            ></div>
                           )}
 
                           {/* Unread indicator line */}
                           {!notification.read && (
-                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${
-                              (() => {
-                                const titleLow = notification.title?.toLowerCase() || "";
-                                if (titleLow.includes("trade won") || titleLow.includes("trade earned")) return "bg-gradient-to-b from-green-400 via-emerald-500 to-green-600";
-                                if (titleLow.includes("trade lost")) return "bg-gradient-to-b from-red-400 via-rose-500 to-red-600";
+                            <div
+                              className={`absolute left-0 top-0 bottom-0 w-1 ${(() => {
+                                const titleLow =
+                                  notification.title?.toLowerCase() || "";
+                                if (
+                                  titleLow.includes("trade won") ||
+                                  titleLow.includes("trade earned")
+                                )
+                                  return "bg-gradient-to-b from-green-400 via-emerald-500 to-green-600";
+                                if (titleLow.includes("trade lost"))
+                                  return "bg-gradient-to-b from-red-400 via-rose-500 to-red-600";
                                 return "bg-gradient-to-b from-orange-500 via-purple-500 to-blue-500";
-                              })()
-                            }`}></div>
+                              })()}`}
+                            ></div>
                           )}
 
                           <div className="relative p-2.5">
@@ -673,21 +812,29 @@ export default function NotificationsPanel({
                                   <h3
                                     className={`text-sm font-bold ${
                                       !notification.read
-                                        ? isDark ? "text-white" : "text-gray-900"
-                                        : isDark ? "text-gray-300" : "text-gray-600"
+                                        ? isDark
+                                          ? "text-white"
+                                          : "text-gray-900"
+                                        : isDark
+                                          ? "text-gray-300"
+                                          : "text-gray-600"
                                     }`}
                                   >
                                     {notification.title}
                                   </h3>
                                   <div className="flex items-center space-x-1.5 ml-2">
-                                    <span className={`text-[10px] flex-shrink-0 font-medium ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                    <span
+                                      className={`text-[10px] flex-shrink-0 font-medium ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                    >
                                       {formatTimeAgo(notification.timestamp)}
                                     </span>
                                     <motion.div
                                       animate={{ rotate: isExpanded ? 180 : 0 }}
                                       transition={{ duration: 0.2 }}
                                     >
-                                      <ChevronDown className={`w-3.5 h-3.5 ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+                                      <ChevronDown
+                                        className={`w-3.5 h-3.5 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                      />
                                     </motion.div>
                                   </div>
                                 </div>
@@ -703,61 +850,104 @@ export default function NotificationsPanel({
                                     >
                                       {/* Message */}
                                       {notification.message && (
-                                        <p className={`text-xs leading-relaxed mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                                        <p
+                                          className={`text-xs leading-relaxed mb-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                                        >
                                           {notification.message}
                                         </p>
                                       )}
 
                                       {/* Amount Display with User's Currency */}
                                       {notification.amount &&
-                                        notification.asset && (() => {
+                                        notification.asset &&
+                                        (() => {
                                           // Check if this is a manual profit notification (TRADE type with non-fiat asset)
-                                          const isFiatAsset = FIAT_CURRENCIES.has(notification.asset?.toUpperCase() || "");
-                                          const isTradeProfit = notification.type?.toUpperCase() === "TRADE" && !isFiatAsset;
-                                          
+                                          const isFiatAsset =
+                                            FIAT_CURRENCIES.has(
+                                              notification.asset?.toUpperCase() ||
+                                                "",
+                                            );
+                                          const isTradeProfit =
+                                            notification.type?.toUpperCase() ===
+                                              "TRADE" && !isFiatAsset;
+
                                           // For trade profits, amount is in USD - use formatAmount to convert to user's preferred currency
                                           // For fiat notifications (deposits/withdrawals), amount is already in user's currency
                                           const displayAmount = isTradeProfit
-                                            ? formatAmount(Math.abs(notification.amount), 2)
+                                            ? formatAmount(
+                                                Math.abs(notification.amount),
+                                                2,
+                                              )
                                             : isFiatAsset
-                                              ? formatCurrencyUtil(Math.abs(notification.amount), notification.asset || "USD", 2)
-                                              : Math.abs(notification.amount).toLocaleString("en-US", {
+                                              ? formatCurrencyUtil(
+                                                  Math.abs(notification.amount),
+                                                  notification.asset || "USD",
+                                                  2,
+                                                )
+                                              : Math.abs(
+                                                  notification.amount,
+                                                ).toLocaleString("en-US", {
                                                   minimumFractionDigits: 2,
                                                   maximumFractionDigits: 8,
                                                 });
-                                          
+
                                           // For trade profits, don't show asset symbol since formatAmount includes currency symbol
-                                          const showAssetSymbol = !isTradeProfit;
-                                          
-                                          const isPositive = notification.amount >= 0;
+                                          const showAssetSymbol =
+                                            !isTradeProfit;
+
+                                          const isPositive =
+                                            notification.amount >= 0;
                                           const colorClass = isPositive
                                             ? "bg-gradient-to-r from-green-500/10 to-emerald-500/10 border border-green-500/20"
                                             : "bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/20";
                                           const textGradient = isPositive
                                             ? "bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent"
                                             : "bg-gradient-to-r from-red-400 to-rose-400 bg-clip-text text-transparent";
-                                          const mutedTextClass = isPositive ? "text-green-500" : "text-red-500";
+                                          const mutedTextClass = isPositive
+                                            ? "text-green-500"
+                                            : "text-red-500";
 
                                           return (
-                                            <div className={`inline-flex flex-col px-2 py-1.5 rounded-lg ${colorClass} mb-2`}>
+                                            <div
+                                              className={`inline-flex flex-col px-2 py-1.5 rounded-lg ${colorClass} mb-2`}
+                                            >
                                               {isTradeProfit ? (
                                                 // Show USD → user currency conversion
                                                 <div className="flex items-center gap-1.5">
-                                                  <span className={`text-xs font-semibold ${mutedTextClass} opacity-70`}>
-                                                    {isPositive ? "+" : "-"}${Math.abs(notification.amount).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                  <span
+                                                    className={`text-xs font-semibold ${mutedTextClass} opacity-70`}
+                                                  >
+                                                    {isPositive ? "+" : "-"}$
+                                                    {Math.abs(
+                                                      notification.amount,
+                                                    ).toLocaleString("en-US", {
+                                                      minimumFractionDigits: 2,
+                                                      maximumFractionDigits: 2,
+                                                    })}
                                                   </span>
-                                                  <ArrowRight size={11} className={mutedTextClass} />
-                                                  <span className={`text-base font-black ${textGradient}`}>
-                                                    {isPositive ? "+" : "-"}{displayAmount}
+                                                  <ArrowRight
+                                                    size={11}
+                                                    className={mutedTextClass}
+                                                  />
+                                                  <span
+                                                    className={`text-base font-black ${textGradient}`}
+                                                  >
+                                                    {isPositive ? "+" : "-"}
+                                                    {displayAmount}
                                                   </span>
                                                 </div>
                                               ) : (
                                                 <div className="inline-flex items-center space-x-1.5">
-                                                  <span className={`text-base font-black ${textGradient}`}>
-                                                    {isPositive ? "+" : "-"}{displayAmount}
+                                                  <span
+                                                    className={`text-base font-black ${textGradient}`}
+                                                  >
+                                                    {isPositive ? "+" : "-"}
+                                                    {displayAmount}
                                                   </span>
                                                   {showAssetSymbol && (
-                                                    <span className={`text-xs font-bold ${mutedTextClass}`}>
+                                                    <span
+                                                      className={`text-xs font-bold ${mutedTextClass}`}
+                                                    >
                                                       {notification.asset}
                                                     </span>
                                                   )}
@@ -782,8 +972,12 @@ export default function NotificationsPanel({
                                       </div>
                                     ) : (
                                       <div className="flex items-center space-x-1">
-                                        <MailOpen className={`w-3 h-3 ${isDark ? "text-gray-500" : "text-gray-400"}`} />
-                                        <span className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                        <MailOpen
+                                          className={`w-3 h-3 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                        />
+                                        <span
+                                          className={`text-[10px] ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                        >
                                           Read
                                         </span>
                                       </div>
@@ -796,7 +990,9 @@ export default function NotificationsPanel({
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          unarchiveNotification(notification.id);
+                                          unarchiveNotification(
+                                            notification.id,
+                                          );
                                         }}
                                         className={`p-1.5 rounded-md transition-colors ${isDark ? "hover:bg-gray-700/50 text-gray-400" : "hover:bg-gray-200/70 text-gray-500"} hover:text-green-400`}
                                         title="Unarchive"
@@ -807,7 +1003,7 @@ export default function NotificationsPanel({
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
-                                          archiveNotification(notification.id);
+                                          setArchiveConfirmId(notification.id);
                                         }}
                                         className={`p-1.5 rounded-md transition-colors ${isDark ? "hover:bg-gray-700/50 text-gray-400" : "hover:bg-gray-200/70 text-gray-500"} hover:text-yellow-400`}
                                         title="Archive"
@@ -842,6 +1038,68 @@ export default function NotificationsPanel({
             </div>
           </motion.div>
 
+          {/* Archive Confirmation Dialog */}
+          <AnimatePresence>
+            {archiveConfirmId && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ zIndex: 10 }}
+                onClick={() => setArchiveConfirmId(null)}
+              >
+                <motion.div
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.9, opacity: 0 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className={`rounded-xl p-5 shadow-2xl max-w-xs w-full mx-4 ${isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"}`}
+                >
+                  <div className="flex items-center space-x-3 mb-4">
+                    <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center">
+                      <Archive className="w-5 h-5 text-yellow-400" />
+                    </div>
+                    <div>
+                      <h3
+                        className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Archive Notification
+                      </h3>
+                      <p
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        You can restore it later
+                      </p>
+                    </div>
+                  </div>
+                  <p
+                    className={`text-sm mb-5 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                  >
+                    Are you sure you want to archive this notification?
+                  </p>
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => setArchiveConfirmId(null)}
+                      className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isDark ? "bg-gray-700 hover:bg-gray-600 text-white" : "bg-gray-200 hover:bg-gray-300 text-gray-700"}`}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        archiveNotification(archiveConfirmId);
+                        setArchiveConfirmId(null);
+                      }}
+                      className="flex-1 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Archive
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Delete Confirmation Dialog */}
           <AnimatePresence>
             {deleteConfirmId && (
@@ -865,12 +1123,23 @@ export default function NotificationsPanel({
                       <Trash2 className="w-5 h-5 text-red-400" />
                     </div>
                     <div>
-                      <h3 className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>Delete Notification</h3>
-                      <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>This action cannot be undone</p>
+                      <h3
+                        className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
+                        Delete Notification
+                      </h3>
+                      <p
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        This action cannot be undone
+                      </p>
                     </div>
                   </div>
-                  <p className={`text-sm mb-5 ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                    Are you sure you want to permanently delete this notification?
+                  <p
+                    className={`text-sm mb-5 ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                  >
+                    Are you sure you want to permanently delete this
+                    notification?
                   </p>
                   <div className="flex space-x-3">
                     <button

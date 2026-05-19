@@ -217,15 +217,15 @@ function MobileAssetHeader({
             <button
               key={`${tab.symbol}-${i}`}
               onClick={() => onTabChange(i)}
-              className="flex items-center gap-1.5 flex-shrink-0 rounded-lg px-2.5 py-1.5 transition-all duration-200"
+              className="flex items-center gap-2 flex-shrink-0 rounded-lg px-3 py-2 transition-all duration-200"
               style={{
                 backgroundColor: isActive ? C.secondary : C.quaternary,
-                minHeight: "36px",
+                minHeight: "48px",
               }}
             >
-              <AssetFlag flag={tabFlag} symbol={tab.symbol} size={16} />
+              <AssetFlag flag={tabFlag} symbol={tab.symbol} size={24} />
               <span
-                className="text-xs font-medium whitespace-nowrap"
+                className="text-sm font-semibold whitespace-nowrap"
                 style={{
                   color: isActive ? C.textPrimary : C.textSecondary,
                 }}
@@ -240,7 +240,7 @@ function MobileAssetHeader({
               )}
               {tab.lastResult && (
                 <span
-                  className="text-[10px] font-bold tabular-nums"
+                  className="text-xs font-bold tabular-nums"
                   style={{
                     color:
                       tab.lastResult.status === "won" ? C.greenText : C.redText,
@@ -267,7 +267,7 @@ function MobileAssetHeader({
                   }}
                   className="ml-0.5 opacity-40 hover:opacity-100 transition-opacity inline-flex"
                 >
-                  <X size={10} style={{ color: C.textSecondary }} />
+                  <X size={12} style={{ color: C.textSecondary }} />
                 </span>
               )}
             </button>
@@ -280,8 +280,8 @@ function MobileAssetHeader({
           className="flex items-center justify-center flex-shrink-0 rounded-lg transition-colors"
           style={{
             backgroundColor: C.quaternary,
-            width: "36px",
-            height: "36px",
+            width: "48px",
+            height: "48px",
           }}
         >
           <Plus size={16} style={{ color: C.textSecondary }} />
@@ -727,10 +727,34 @@ function MobileTradingPanel({
 
 // ─── Sentiment Bars (Horizontal) ─────────────────────────────────────────────
 
-function HorizontalSentiment() {
-  // Static sentiment display - in production this would use real data
-  const buyPercent = 67;
-  const sellPercent = 33;
+/** Deterministic buy% for a symbol — recalculates on every 5-minute bucket */
+function computeSentiment(symbol: string): number {
+  const bucket = Math.floor(Date.now() / (5 * 60 * 1000));
+  const str = symbol + bucket;
+  let hash = bucket;
+  for (let i = 0; i < str.length; i++) {
+    hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+  }
+  hash = Math.abs(hash);
+  // Realistic range: 42–72% buy
+  return 42 + (hash % 31);
+}
+
+function HorizontalSentiment({ selectedSymbol }: { selectedSymbol: string }) {
+  const [buyPercent, setBuyPercent] = useState(() =>
+    computeSentiment(selectedSymbol),
+  );
+
+  useEffect(() => {
+    setBuyPercent(computeSentiment(selectedSymbol));
+    const id = setInterval(
+      () => setBuyPercent(computeSentiment(selectedSymbol)),
+      30_000,
+    );
+    return () => clearInterval(id);
+  }, [selectedSymbol]);
+
+  const sellPercent = 100 - buyPercent;
 
   return (
     <div
@@ -2222,7 +2246,8 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
             props.symbols.find((s) => s.symbol === trade.symbol)?.displayName ??
             trade.symbol,
         };
-        setPopups((p) => [...p.slice(-2), popup]);
+        // No cap here — result popups are grouped by symbol so all must be kept
+        setPopups((p) => [...p, popup]);
         setTimeout(() => dismissPopup(`result-${trade.id}`), 5000);
       }
     });
@@ -2484,7 +2509,7 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
             backgroundColor: C.base,
           }}
         >
-          <HorizontalSentiment />
+          <HorizontalSentiment selectedSymbol={props.selectedSymbol} />
         </div>
       )}
 
@@ -2788,26 +2813,22 @@ export default function MobileTradingView(props: MobileTradingViewProps) {
                     >
                       <div
                         style={{
-                          width: 32,
-                          height: 32,
-                          borderRadius: "50%",
-                          backgroundColor: C.quaternary,
-                          border: `1px solid ${C.strokeSecondary}`,
+                          width: 52,
+                          height: 52,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          overflow: "hidden",
                         }}
                       >
                         {first.symbolFlag && first.symbol ? (
                           <props.AssetFlag
                             flag={first.symbolFlag}
                             symbol={first.symbol}
-                            size={20}
+                            size={32}
                           />
                         ) : (
                           <span
-                            style={{ fontSize: 11, color: C.textSecondary }}
+                            style={{ fontSize: 18, color: C.textSecondary }}
                           >
                             ?
                           </span>

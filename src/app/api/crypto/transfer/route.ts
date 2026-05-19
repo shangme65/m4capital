@@ -30,10 +30,39 @@ function generateTransferEmailHtml(
   asset: string,
   direction: "sent" | "received",
   memo?: string,
-  currencySymbol?: string
+  currencySymbol?: string,
 ) {
   const currSym = currencySymbol || (asset === "USD" ? "$" : "");
-  const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN", "PHP", "MXN", "SGD", "HKD", "NOK", "SEK", "DKK", "NZD", "ZAR", "RUB", "TRY", "PLN", "THB", "IDR", "MYR", "VND", "JPY", "CAD", "AUD", "CHF", "CNY", "KRW"].includes(asset);
+  const isCrypto = ![
+    "USD",
+    "BRL",
+    "EUR",
+    "GBP",
+    "INR",
+    "NGN",
+    "PHP",
+    "MXN",
+    "SGD",
+    "HKD",
+    "NOK",
+    "SEK",
+    "DKK",
+    "NZD",
+    "ZAR",
+    "RUB",
+    "TRY",
+    "PLN",
+    "THB",
+    "IDR",
+    "MYR",
+    "VND",
+    "JPY",
+    "CAD",
+    "AUD",
+    "CHF",
+    "CNY",
+    "KRW",
+  ].includes(asset);
   const amountDisplay = isCrypto
     ? `${amount.toFixed(8)} ${asset}`
     : `${currSym}${amount.toFixed(2)}`;
@@ -73,8 +102,8 @@ function generateTransferEmailHtml(
                   <div style="display: inline-block; width: 60px; height: 60px; background: linear-gradient(135deg, ${
                     direction === "received" ? "#22c55e" : "#3b82f6"
                   } 0%, ${
-    direction === "received" ? "#16a34a" : "#2563eb"
-  } 100%); border-radius: 50%; margin-bottom: 12px; line-height: 60px; font-size: 28px;">
+                    direction === "received" ? "#16a34a" : "#2563eb"
+                  } 100%); border-radius: 50%; margin-bottom: 12px; line-height: 60px; font-size: 28px;">
                     ${direction === "received" ? "📥" : "📤"}
                   </div>
                   <h1 style="margin: 0; color: white; font-size: 22px; font-weight: 700;">${titleText}</h1>
@@ -139,13 +168,40 @@ async function sendTransferReceivedEmail(
   amount: number,
   asset: string,
   memo?: string,
-  currencySymbol?: string
+  currencySymbol?: string,
 ) {
   try {
     const currSym = currencySymbol || (asset === "USD" ? "$" : "");
-    const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN", "PHP", "MXN", "SGD", "HKD", "NOK", "SEK", "DKK", "NZD", "ZAR", "RUB", "TRY", "PLN", "THB", "IDR", "MYR", "VND", "JPY", "CAD", "AUD", "CHF", "CNY", "KRW"].includes(
-      asset
-    );
+    const isCrypto = ![
+      "USD",
+      "BRL",
+      "EUR",
+      "GBP",
+      "INR",
+      "NGN",
+      "PHP",
+      "MXN",
+      "SGD",
+      "HKD",
+      "NOK",
+      "SEK",
+      "DKK",
+      "NZD",
+      "ZAR",
+      "RUB",
+      "TRY",
+      "PLN",
+      "THB",
+      "IDR",
+      "MYR",
+      "VND",
+      "JPY",
+      "CAD",
+      "AUD",
+      "CHF",
+      "CNY",
+      "KRW",
+    ].includes(asset);
     const amountDisplay = isCrypto
       ? `${amount.toFixed(8)} ${asset}`
       : `${currSym}${amount.toFixed(2)}`;
@@ -160,7 +216,7 @@ async function sendTransferReceivedEmail(
         asset,
         "received",
         memo,
-        currencySymbol
+        currencySymbol,
       ),
       text: `You received ${amountDisplay} from ${senderName}${
         memo ? `. Memo: ${memo}` : ""
@@ -180,13 +236,40 @@ async function sendTransferSentEmail(
   amount: number,
   asset: string,
   memo?: string,
-  currencySymbol?: string
+  currencySymbol?: string,
 ) {
   try {
     const currSym = currencySymbol || (asset === "USD" ? "$" : "");
-    const isCrypto = !["USD", "BRL", "EUR", "GBP", "INR", "NGN", "PHP", "MXN", "SGD", "HKD", "NOK", "SEK", "DKK", "NZD", "ZAR", "RUB", "TRY", "PLN", "THB", "IDR", "MYR", "VND", "JPY", "CAD", "AUD", "CHF", "CNY", "KRW"].includes(
-      asset
-    );
+    const isCrypto = ![
+      "USD",
+      "BRL",
+      "EUR",
+      "GBP",
+      "INR",
+      "NGN",
+      "PHP",
+      "MXN",
+      "SGD",
+      "HKD",
+      "NOK",
+      "SEK",
+      "DKK",
+      "NZD",
+      "ZAR",
+      "RUB",
+      "TRY",
+      "PLN",
+      "THB",
+      "IDR",
+      "MYR",
+      "VND",
+      "JPY",
+      "CAD",
+      "AUD",
+      "CHF",
+      "CNY",
+      "KRW",
+    ].includes(asset);
     const amountDisplay = isCrypto
       ? `${amount.toFixed(8)} ${asset}`
       : `${currSym}${amount.toFixed(2)}`;
@@ -201,7 +284,7 @@ async function sendTransferSentEmail(
         asset,
         "sent",
         memo,
-        currencySymbol
+        currencySymbol,
       ),
       text: `You sent ${amountDisplay} to ${recipientName}${
         memo ? `. Memo: ${memo}` : ""
@@ -219,7 +302,7 @@ async function sendTransferPushNotification(
   title: string,
   message: string,
   amount: number,
-  asset: string
+  asset: string,
 ) {
   try {
     await sendPushNotificationLib(userId, title, message, {
@@ -241,7 +324,7 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -252,7 +335,7 @@ export async function POST(request: NextRequest) {
     if (!asset || !amount || !destination) {
       return NextResponse.json(
         { error: "Missing required fields: asset, amount, destination" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -301,7 +384,7 @@ export async function POST(request: NextRequest) {
     if (!sender.Portfolio) {
       return NextResponse.json(
         { error: "Portfolio not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -323,7 +406,7 @@ export async function POST(request: NextRequest) {
     if (!recipient) {
       return NextResponse.json(
         { error: "Recipient not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -337,7 +420,7 @@ export async function POST(request: NextRequest) {
     let exchangeRates: { [key: string]: number } = { USD: 1 };
     try {
       const ratesRes = await fetch(
-        `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/forex/rates`
+        `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/api/forex/rates`,
       );
       if (ratesRes.ok) {
         const ratesData = await ratesRes.json();
@@ -351,7 +434,7 @@ export async function POST(request: NextRequest) {
     const convertCurrency = (
       amount: number,
       fromCurrency: string,
-      toCurrency: string
+      toCurrency: string,
     ): number => {
       if (fromCurrency === toCurrency) return amount;
       // Convert to USD first, then to target currency
@@ -364,7 +447,7 @@ export async function POST(request: NextRequest) {
     if (!recipient.Portfolio) {
       return NextResponse.json(
         { error: "Recipient portfolio not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -386,14 +469,14 @@ export async function POST(request: NextRequest) {
       const amountInSenderBalanceCurrency = convertCurrency(
         amount,
         userPreferredCurrency,
-        userBalanceCurrency
+        userBalanceCurrency,
       );
 
       // Fee is in USD, convert to sender's balance currency
       const feeInBalanceCurrency = convertCurrency(
         feeInUSD,
         "USD",
-        userBalanceCurrency
+        userBalanceCurrency,
       );
       const totalDeducted =
         amountInSenderBalanceCurrency + feeInBalanceCurrency;
@@ -403,22 +486,22 @@ export async function POST(request: NextRequest) {
         const balanceInPreferred = convertCurrency(
           currentBalance,
           userBalanceCurrency,
-          userPreferredCurrency
+          userPreferredCurrency,
         );
         const neededInPreferred = convertCurrency(
           totalDeducted,
           userBalanceCurrency,
-          userPreferredCurrency
+          userPreferredCurrency,
         );
         return NextResponse.json(
           {
             error: `Insufficient balance. You have ${currSymbol}${balanceInPreferred.toFixed(
-              2
+              2,
             )} but need ${currSymbol}${neededInPreferred.toFixed(
-              2
+              2,
             )} (including fee)`,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
 
@@ -426,24 +509,24 @@ export async function POST(request: NextRequest) {
       const amountInRecipientBalanceCurrency = convertCurrency(
         amountInSenderBalanceCurrency,
         userBalanceCurrency,
-        recipientBalanceCurrency
+        recipientBalanceCurrency,
       );
 
       // Deduct from sender's balance (in sender's BALANCE currency)
       const newSenderBalance = new Decimal(senderPortfolio.balance).minus(
-        totalDeducted
+        totalDeducted,
       );
 
       // Add to recipient's balance (in recipient's BALANCE currency)
       const newRecipientBalance = new Decimal(recipientPortfolio.balance).plus(
-        amountInRecipientBalanceCurrency
+        amountInRecipientBalanceCurrency,
       );
 
       // Calculate display amounts in preferred currencies for history/notifications
       const recipientDisplayAmount = convertCurrency(
         amountInRecipientBalanceCurrency,
         recipientBalanceCurrency,
-        recipientPreferredCurrency
+        recipientPreferredCurrency,
       );
 
       // Update both portfolios and create P2PTransfer record in a transaction
@@ -507,7 +590,7 @@ export async function POST(request: NextRequest) {
           recipientDisplayAmount,
           recipientPreferredCurrency,
           memo,
-          recipientCurrSymbol
+          recipientCurrSymbol,
         );
       }
 
@@ -520,7 +603,7 @@ export async function POST(request: NextRequest) {
           amount,
           userPreferredCurrency,
           memo,
-          currSymbol
+          currSymbol,
         );
       }
 
@@ -529,10 +612,10 @@ export async function POST(request: NextRequest) {
         recipient.id,
         "Transfer Received",
         `You received ${recipientCurrSymbol}${recipientDisplayAmount.toFixed(
-          2
+          2,
         )} from ${sender.name || sender.email}`,
         recipientDisplayAmount,
-        recipientPreferredCurrency
+        recipientPreferredCurrency,
       );
 
       // Send push notification to sender in their preferred currency
@@ -543,13 +626,39 @@ export async function POST(request: NextRequest) {
           recipient.name || destination
         }`,
         amount,
-        userPreferredCurrency
+        userPreferredCurrency,
       );
+
+      // Save in-app notification for sender to the database
+      await prisma.notification.create({
+        data: {
+          id: `notif_transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: sender.id,
+          type: "TRANSACTION",
+          title: "Transfer Sent",
+          message: `You sent ${currSymbol}${amount.toFixed(2)} ${userPreferredCurrency} to ${recipient.name || destination}`,
+          amount: new Decimal(amount),
+          asset: userPreferredCurrency,
+        },
+      });
+
+      // Save in-app notification for recipient to the database
+      await prisma.notification.create({
+        data: {
+          id: `notif_transfer_rcv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          userId: recipient.id,
+          type: "TRANSACTION",
+          title: "Transfer Received",
+          message: `You received ${recipientCurrSymbol}${recipientDisplayAmount.toFixed(2)} ${recipientPreferredCurrency} from ${sender.name || sender.email}`,
+          amount: new Decimal(recipientDisplayAmount),
+          asset: recipientPreferredCurrency,
+        },
+      });
 
       return NextResponse.json({
         success: true,
         message: `Successfully transferred ${currSymbol}${amount.toFixed(
-          2
+          2,
         )} ${userPreferredCurrency} to ${recipient.name || destination}`,
         transactionId,
         asset: userPreferredCurrency, // Return sender's preferred currency
@@ -580,7 +689,7 @@ export async function POST(request: NextRequest) {
     if (assetIndex === -1) {
       return NextResponse.json(
         { error: `You don't own any ${asset}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -592,7 +701,7 @@ export async function POST(request: NextRequest) {
       const priceRes = await fetch(
         `${
           process.env.NEXTAUTH_URL || "http://localhost:3000"
-        }/api/crypto/prices?symbols=${asset}`
+        }/api/crypto/prices?symbols=${asset}`,
       );
       const priceData = await priceRes.json();
       if (priceData.prices && priceData.prices[0]) {
@@ -611,12 +720,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: `Insufficient ${asset}. You have ${senderAsset.amount.toFixed(
-            8
+            8,
           )} but need ${totalDeducted.toFixed(
-            8
+            8,
           )} (including ~$${feeInUSD.toFixed(2)} fee)`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -626,7 +735,7 @@ export async function POST(request: NextRequest) {
       updatedSenderAssets = senderAssets.filter((a) => a.symbol !== asset);
     } else {
       updatedSenderAssets = senderAssets.map((a) =>
-        a.symbol === asset ? { ...a, amount: a.amount - totalDeducted } : a
+        a.symbol === asset ? { ...a, amount: a.amount - totalDeducted } : a,
       );
     }
 
@@ -636,7 +745,7 @@ export async function POST(request: NextRequest) {
       : [];
 
     const recipientAssetIndex = recipientAssets.findIndex(
-      (a) => a.symbol === asset
+      (a) => a.symbol === asset,
     );
     let updatedRecipientAssets: Asset[];
 
@@ -649,7 +758,7 @@ export async function POST(request: NextRequest) {
     } else {
       // Recipient has this asset, add to it
       updatedRecipientAssets = recipientAssets.map((a) =>
-        a.symbol === asset ? { ...a, amount: a.amount + amount } : a
+        a.symbol === asset ? { ...a, amount: a.amount + amount } : a,
       );
     }
 
@@ -704,7 +813,7 @@ export async function POST(request: NextRequest) {
         sender.name || sender.email || "Someone",
         amount,
         asset,
-        memo
+        memo,
       );
     }
 
@@ -716,7 +825,7 @@ export async function POST(request: NextRequest) {
         recipient.name || destination,
         amount,
         asset,
-        memo
+        memo,
       );
     }
 
@@ -728,7 +837,7 @@ export async function POST(request: NextRequest) {
         sender.name || sender.email
       }`,
       amount,
-      asset
+      asset,
     );
 
     // Send push notification to sender
@@ -739,8 +848,34 @@ export async function POST(request: NextRequest) {
         recipient.name || destination
       }`,
       amount,
-      asset
+      asset,
     );
+
+    // Save in-app notification for sender to the database
+    await prisma.notification.create({
+      data: {
+        id: `notif_transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: sender.id,
+        type: "TRANSACTION",
+        title: `${asset} Sent`,
+        message: `You sent ${amount.toFixed(8)} ${asset} to ${recipient.name || destination}`,
+        amount: new Decimal(amount),
+        asset: asset,
+      },
+    });
+
+    // Save in-app notification for recipient to the database
+    await prisma.notification.create({
+      data: {
+        id: `notif_transfer_rcv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        userId: recipient.id,
+        type: "TRANSACTION",
+        title: `${asset} Received`,
+        message: `You received ${amount.toFixed(8)} ${asset} from ${sender.name || sender.email}`,
+        amount: new Decimal(amount),
+        asset: asset,
+      },
+    });
 
     return NextResponse.json({
       success: true,
@@ -763,7 +898,7 @@ export async function POST(request: NextRequest) {
       {
         error: error instanceof Error ? error.message : "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

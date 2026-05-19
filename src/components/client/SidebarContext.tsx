@@ -17,20 +17,19 @@ interface SidebarContextType {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export const SidebarProvider = ({ children }: { children: ReactNode }) => {
-  // Initialize sidebar state from sessionStorage or default to false
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
-    if (typeof window !== "undefined") {
-      const savedState = sessionStorage.getItem("sidebarOpen");
-      return savedState === "true";
+  // Always start closed to match SSR, then sync from sessionStorage after mount
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    const savedState = sessionStorage.getItem("sidebarOpen");
+    if (savedState === "true") {
+      setIsSidebarOpen(true);
     }
-    return false;
-  });
+  }, []);
 
   // Persist sidebar state to sessionStorage whenever it changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("sidebarOpen", String(isSidebarOpen));
-    }
+    sessionStorage.setItem("sidebarOpen", String(isSidebarOpen));
   }, [isSidebarOpen]);
 
   const toggleSidebar = () => {

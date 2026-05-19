@@ -13,6 +13,25 @@ interface Trader {
   image: string;
 }
 
+/** Returns a deterministic daily earnings figure seeded by trader name + UTC date.
+ * Changes every 24h at UTC midnight; higher win rate = higher range. */
+function get24hEarnings(name: string, winRate: string): number {
+  const rate = parseFloat(winRate);
+  const d = new Date();
+  const dateSeed =
+    d.getUTCFullYear() * 10000 + (d.getUTCMonth() + 1) * 100 + d.getUTCDate();
+  let hash = dateSeed;
+  for (let i = 0; i < name.length; i++) {
+    hash = (Math.imul(31, hash) + name.charCodeAt(i)) | 0;
+  }
+  hash = Math.abs(hash);
+  // Scale: 70% WR ~$450–$2 700 | 85% WR ~$2 700–$10 500 | 99% WR ~$12 000–$36 000
+  const t = Math.min(Math.max((rate - 70) / 29, 0), 1);
+  const rangeMin = Math.round(450 + t * 11550);
+  const rangeMax = Math.round(2700 + t * 33300);
+  return rangeMin + (hash % (rangeMax - rangeMin + 1));
+}
+
 function getMinimumAmount(name: string, winRate: string): number {
   const rate = parseFloat(winRate);
   let hash = 0;
@@ -545,9 +564,15 @@ export default function CopyTradingPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedTrader, setCopiedTrader] = useState<string | null>(null);
   const [confirmTrader, setConfirmTrader] = useState<Trader | null>(null);
-  const [dialogStep, setDialogStep] = useState<"confirm" | "payment">(
-    "confirm",
-  );
+  const [dialogStep, setDialogStep] = useState<
+    "confirm" | "select-crypto" | "payment"
+  >("confirm");
+  const [selectedCrypto, setSelectedCrypto] = useState<{
+    id: string;
+    symbol: string;
+    name: string;
+    network: string;
+  } | null>(null);
   const [paymentData, setPaymentData] = useState<{
     address: string;
     payAmount: number;
@@ -610,13 +635,21 @@ export default function CopyTradingPage() {
     setPaymentError(null);
     setIsLoadingPayment(false);
     setAddressCopied(false);
+    setSelectedCrypto(null);
   };
 
-  const handleConfirmCopy = async () => {
+  const handleConfirmCopy = async (crypto: {
+    id: string;
+    symbol: string;
+    name: string;
+    network: string;
+  }) => {
     if (!confirmTrader) return;
+    setSelectedCrypto(crypto);
     const minUsd = getMinimumAmount(confirmTrader.name, confirmTrader.winRate);
     setIsLoadingPayment(true);
     setPaymentError(null);
+    setDialogStep("payment");
     try {
       const res = await fetch("/api/payment/create-crypto", {
         method: "POST",
@@ -624,7 +657,7 @@ export default function CopyTradingPage() {
         body: JSON.stringify({
           amount: minUsd,
           currency: "USD",
-          cryptoCurrency: "btc",
+          cryptoCurrency: crypto.id,
         }),
       });
       const json = await res.json();
@@ -638,7 +671,6 @@ export default function CopyTradingPage() {
         currency: deposit.cryptoCurrency,
         minUsd,
       });
-      setDialogStep("payment");
     } catch (err: any) {
       setPaymentError(err.message || "Something went wrong");
     } finally {
@@ -657,6 +689,28 @@ export default function CopyTradingPage() {
   return (
     <div className={`min-h-screen ${isDark ? "bg-[#0a0f1a]" : "bg-gray-100"}`}>
       <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-4">
+        {/* Page Header */}
+        <div className="mb-6">
+          <h1
+            className={`text-2xl sm:text-3xl font-bold mb-2 ${
+              isDark ? "text-white" : "text-gray-900"
+            }`}
+          >
+            Copy Trades
+          </h1>
+          <p
+            className={`text-sm leading-relaxed max-w-2xl ${
+              isDark ? "text-gray-400" : "text-gray-500"
+            }`}
+          >
+            Copy trading lets you automatically mirror the live trades of
+            experienced investors. Select a trader, meet the minimum deposit,
+            and every position they open or close is instantly replicated in
+            your account — so you earn when they earn, with no manual trading
+            required.
+          </p>
+        </div>
+
         {/* Search + Sort Row */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           {/* Search Bar */}
@@ -855,8 +909,8 @@ export default function CopyTradingPage() {
                         confirmTrader.winRate,
                       ).toLocaleString()}
                     </span>{" "}
-                    is required to copy this trader. A BTC deposit address will
-                    be generated for you.
+                    is required to copy this trader. Select a crypto to generate
+                    a deposit address.
                   </p>
 
                   {paymentError && (
@@ -877,52 +931,172 @@ export default function CopyTradingPage() {
                       CANCEL
                     </button>
                     <button
-                      onClick={handleConfirmCopy}
-                      disabled={isLoadingPayment}
-                      className="flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wide bg-blue-600 text-white hover:bg-blue-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                      onClick={() => setDialogStep("select-crypto")}
+                      className="flex-1 py-2.5 rounded-xl text-xs font-bold tracking-wide bg-blue-600 text-white hover:bg-blue-500 transition-colors"
                     >
-                      {isLoadingPayment ? (
-                        <span className="flex items-center justify-center gap-1.5">
-                          <svg
-                            className="animate-spin h-3 w-3"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            />
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8v8z"
-                            />
-                          </svg>
-                          Loading...
-                        </span>
-                      ) : (
-                        "COPY"
-                      )}
+                      COPY
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Step 2 — Payment Address */}
-              {dialogStep === "payment" && paymentData && (
+              {/* Step 2 — Select Crypto */}
+              {dialogStep === "select-crypto" && (
                 <div className="px-4 py-4">
-                  <div className="flex items-center gap-2 mb-3">
+                  <p
+                    className={`text-xs mb-3 ${
+                      isDark ? "text-gray-400" : "text-gray-500"
+                    }`}
+                  >
+                    Select a cryptocurrency to deposit:
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 mb-4">
+                    {(
+                      [
+                        {
+                          id: "btc",
+                          symbol: "BTC",
+                          name: "Bitcoin",
+                          network: "Bitcoin",
+                        },
+                        {
+                          id: "eth",
+                          symbol: "ETH",
+                          name: "Ethereum",
+                          network: "ERC-20",
+                        },
+                        {
+                          id: "usdterc20",
+                          symbol: "USDT",
+                          name: "Tether",
+                          network: "ERC-20",
+                        },
+                        {
+                          id: "usdcerc20",
+                          symbol: "USDC",
+                          name: "USD Coin",
+                          network: "ERC-20",
+                        },
+                        {
+                          id: "sol",
+                          symbol: "SOL",
+                          name: "Solana",
+                          network: "Solana",
+                        },
+                        {
+                          id: "xrp",
+                          symbol: "XRP",
+                          name: "Ripple",
+                          network: "XRP Ledger",
+                        },
+                        {
+                          id: "bnb",
+                          symbol: "BNB",
+                          name: "BNB",
+                          network: "BSC",
+                        },
+                        {
+                          id: "ltc",
+                          symbol: "LTC",
+                          name: "Litecoin",
+                          network: "Litecoin",
+                        },
+                        {
+                          id: "trx",
+                          symbol: "TRX",
+                          name: "Tron",
+                          network: "TRC-20",
+                        },
+                        {
+                          id: "ton",
+                          symbol: "TON",
+                          name: "Toncoin",
+                          network: "TON",
+                        },
+                        {
+                          id: "doge",
+                          symbol: "DOGE",
+                          name: "Dogecoin",
+                          network: "Dogecoin",
+                        },
+                        {
+                          id: "bch",
+                          symbol: "BCH",
+                          name: "Bitcoin Cash",
+                          network: "Bitcoin Cash",
+                        },
+                      ] as {
+                        id: string;
+                        symbol: string;
+                        name: string;
+                        network: string;
+                      }[]
+                    ).map((crypto) => (
+                      <button
+                        key={crypto.id}
+                        onClick={() => handleConfirmCopy(crypto)}
+                        className={`flex flex-col items-center gap-1.5 p-2.5 rounded-xl border transition-colors ${
+                          isDark
+                            ? "bg-[#0a0f1a] border-[#1a2535] hover:border-blue-500 hover:bg-[#0f1923]"
+                            : "bg-gray-50 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
+                        }`}
+                      >
+                        <img
+                          src={`/crypto/${crypto.symbol.toLowerCase()}.svg`}
+                          alt={crypto.symbol}
+                          width={28}
+                          height={28}
+                          className="w-7 h-7"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              "https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/generic.svg";
+                          }}
+                        />
+                        <span
+                          className={`text-[10px] font-bold ${
+                            isDark ? "text-white" : "text-gray-900"
+                          }`}
+                        >
+                          {crypto.symbol}
+                        </span>
+                        <span
+                          className={`text-[9px] leading-tight text-center ${
+                            isDark ? "text-gray-500" : "text-gray-400"
+                          }`}
+                        >
+                          {crypto.network}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => setDialogStep("confirm")}
+                    className={`w-full py-2.5 rounded-xl text-xs font-bold tracking-wide transition-colors ${
+                      isDark
+                        ? "bg-[#1a2535] text-gray-300 hover:bg-[#1e2d42]"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    BACK
+                  </button>
+                </div>
+              )}
+
+              {/* Step 3 — Payment Address */}
+              {dialogStep === "payment" && (
+                <div className="px-4 py-4">
+                  <div className="flex items-center gap-3 mb-3">
                     <div className="w-8 h-8 shrink-0">
-                      <Image
-                        src="/crypto/btc.svg"
-                        alt="Bitcoin"
+                      <img
+                        src={`/crypto/${(selectedCrypto?.symbol ?? paymentData?.currency ?? "btc").toLowerCase()}.svg`}
+                        alt={selectedCrypto?.name ?? "Crypto"}
                         width={32}
                         height={32}
                         className="w-8 h-8"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src =
+                            "https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@master/svg/color/generic.svg";
+                        }}
                       />
                     </div>
                     <div>
@@ -931,94 +1105,147 @@ export default function CopyTradingPage() {
                           isDark ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        Bitcoin Deposit
+                        {selectedCrypto?.name ?? "Crypto"} Deposit
                       </p>
                       <p
                         className={`text-xs ${
                           isDark ? "text-gray-400" : "text-gray-500"
                         }`}
                       >
-                        Send exactly this amount to continue
+                        {isLoadingPayment
+                          ? "Generating address…"
+                          : "Send exactly this amount to continue"}
                       </p>
                     </div>
                   </div>
 
-                  {/* Amount badge */}
-                  <div
-                    className={`rounded-xl px-3 py-2 mb-3 flex items-center justify-between ${
-                      isDark
-                        ? "bg-[#0a0f1a] border border-[#1a2535]"
-                        : "bg-gray-50 border border-gray-100"
-                    }`}
-                  >
-                    <span
-                      className={`text-xs ${
-                        isDark ? "text-gray-400" : "text-gray-500"
-                      }`}
-                    >
-                      Amount
-                    </span>
-                    <div className="text-right">
+                  {isLoadingPayment && (
+                    <div className="flex flex-col items-center justify-center py-8 gap-3">
+                      <svg
+                        className="animate-spin h-8 w-8 text-blue-500"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
+                      </svg>
                       <p
-                        className={`text-sm font-bold ${
-                          isDark ? "text-white" : "text-gray-900"
+                        className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
+                        Generating your {selectedCrypto?.symbol} address…
+                      </p>
+                    </div>
+                  )}
+
+                  {paymentError && !isLoadingPayment && (
+                    <div className="py-4 text-center">
+                      <p className="text-xs text-red-400 mb-3">
+                        {paymentError}
+                      </p>
+                      <button
+                        onClick={() => setDialogStep("select-crypto")}
+                        className={`w-full py-2.5 rounded-xl text-xs font-bold tracking-wide transition-colors ${
+                          isDark
+                            ? "bg-[#1a2535] text-gray-300 hover:bg-[#1e2d42]"
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                         }`}
                       >
-                        {paymentData.payAmount.toFixed(8)}{" "}
-                        {paymentData.currency}
-                      </p>
+                        TRY ANOTHER COIN
+                      </button>
+                    </div>
+                  )}
+
+                  {!isLoadingPayment && !paymentError && paymentData && (
+                    <>
+                      {/* Amount badge */}
+                      <div
+                        className={`rounded-xl px-3 py-2 mb-3 flex items-center justify-between ${
+                          isDark
+                            ? "bg-[#0a0f1a] border border-[#1a2535]"
+                            : "bg-gray-50 border border-gray-100"
+                        }`}
+                      >
+                        <span
+                          className={`text-xs ${
+                            isDark ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          Amount
+                        </span>
+                        <div className="text-right">
+                          <p
+                            className={`text-sm font-bold ${
+                              isDark ? "text-white" : "text-gray-900"
+                            }`}
+                          >
+                            {paymentData.payAmount.toFixed(8)}{" "}
+                            {paymentData.currency}
+                          </p>
+                          <p
+                            className={`text-xs ${
+                              isDark ? "text-gray-500" : "text-gray-400"
+                            }`}
+                          >
+                            ≈ ${paymentData.minUsd.toLocaleString()} USD
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Address */}
                       <p
-                        className={`text-xs ${
+                        className={`text-xs mb-1 ${
+                          isDark ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        Deposit Address
+                      </p>
+                      <div
+                        className={`rounded-xl px-3 py-2.5 mb-3 ${
+                          isDark
+                            ? "bg-[#0a0f1a] border border-[#1a2535]"
+                            : "bg-gray-50 border border-gray-100"
+                        }`}
+                      >
+                        <p
+                          className={`text-xs font-mono break-all leading-relaxed ${
+                            isDark ? "text-blue-400" : "text-blue-600"
+                          }`}
+                        >
+                          {paymentData.address}
+                        </p>
+                      </div>
+
+                      <button
+                        onClick={handleCopyAddress}
+                        className={`w-full py-2.5 rounded-xl text-xs font-bold tracking-wide transition-colors ${
+                          addressCopied
+                            ? "bg-green-600 text-white"
+                            : "bg-blue-600 text-white hover:bg-blue-500"
+                        }`}
+                      >
+                        {addressCopied ? "✓ Address Copied!" : "Copy Address"}
+                      </button>
+
+                      <p
+                        className={`text-center text-xs mt-3 ${
                           isDark ? "text-gray-500" : "text-gray-400"
                         }`}
                       >
-                        ≈ ${paymentData.minUsd.toLocaleString()} USD
+                        Once confirmed, your copy trading will be activated
                       </p>
-                    </div>
-                  </div>
-
-                  {/* Address */}
-                  <p
-                    className={`text-xs mb-1 ${
-                      isDark ? "text-gray-400" : "text-gray-500"
-                    }`}
-                  >
-                    Deposit Address
-                  </p>
-                  <div
-                    className={`rounded-xl px-3 py-2.5 mb-3 ${
-                      isDark
-                        ? "bg-[#0a0f1a] border border-[#1a2535]"
-                        : "bg-gray-50 border border-gray-100"
-                    }`}
-                  >
-                    <p
-                      className={`text-xs font-mono break-all leading-relaxed ${
-                        isDark ? "text-blue-400" : "text-blue-600"
-                      }`}
-                    >
-                      {paymentData.address}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={handleCopyAddress}
-                    className={`w-full py-2.5 rounded-xl text-xs font-bold tracking-wide transition-colors ${
-                      addressCopied
-                        ? "bg-green-600 text-white"
-                        : "bg-blue-600 text-white hover:bg-blue-500"
-                    }`}
-                  >
-                    {addressCopied ? "✓ Address Copied!" : "Copy Address"}
-                  </button>
-
-                  <p
-                    className={`text-center text-xs mt-3 ${
-                      isDark ? "text-gray-500" : "text-gray-400"
-                    }`}
-                  >
-                    Once confirmed, your copy trading will be activated
-                  </p>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1137,6 +1364,24 @@ function TraderCard({ trader, isDark, isCopied, onCopy }: TraderCardProps) {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* 24h Earnings */}
+        <div
+          className={`flex items-center justify-between px-3 py-2 rounded-xl mb-3 ${
+            isDark
+              ? "bg-green-900/20 border border-green-800/30"
+              : "bg-green-50 border border-green-100"
+          }`}
+        >
+          <span
+            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+          >
+            24h Earned
+          </span>
+          <span className="text-xs font-bold text-green-400">
+            +${get24hEarnings(trader.name, trader.winRate).toLocaleString()}
+          </span>
         </div>
 
         {/* Copy Button */}

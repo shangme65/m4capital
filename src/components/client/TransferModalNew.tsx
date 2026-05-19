@@ -27,7 +27,9 @@ const getCard3DStyle = (isDark: boolean) => ({
   boxShadow: isDark
     ? "0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 10px 25px -5px rgba(0, 0, 0, 0.6), inset 0 2px 0 rgba(255, 255, 255, 0.1), inset 0 -2px 0 rgba(0, 0, 0, 0.4)"
     : "0 8px 30px -4px rgba(0, 0, 0, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
-  border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+  border: isDark
+    ? "1px solid rgba(255, 255, 255, 0.08)"
+    : "1px solid rgba(0, 0, 0, 0.08)",
 });
 
 const getInputStyle = (isDark: boolean) => ({
@@ -37,7 +39,9 @@ const getInputStyle = (isDark: boolean) => ({
   boxShadow: isDark
     ? "inset 0 2px 4px rgba(0, 0, 0, 0.3), inset 0 -1px 0 rgba(255, 255, 255, 0.05)"
     : "inset 0 2px 4px rgba(0, 0, 0, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 1)",
-  border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)",
+  border: isDark
+    ? "1px solid rgba(255, 255, 255, 0.1)"
+    : "1px solid rgba(0, 0, 0, 0.1)",
 });
 
 // Crypto gradient colors
@@ -78,19 +82,22 @@ export default function TransferModalNew({
   const [receiverName, setReceiverName] = useState<string | null>(null);
   const [receiverVerified, setReceiverVerified] = useState<boolean>(false);
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [userSuggestions, setUserSuggestions] = useState<Array<{
-    id: string;
-    name: string | null;
-    email: string | null;
-    accountNumber: string | null;
-    isVerified: boolean;
-    image: string | null;
-  }>>([]);
+  const [userSuggestions, setUserSuggestions] = useState<
+    Array<{
+      id: string;
+      name: string | null;
+      email: string | null;
+      accountNumber: string | null;
+      isVerified: boolean;
+      image: string | null;
+    }>
+  >([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
 
   const { portfolio, refetch } = usePortfolio();
-  const { preferredCurrency, convertAmount, formatAmount, exchangeRates } = useCurrency();
+  const { preferredCurrency, convertAmount, formatAmount, exchangeRates } =
+    useCurrency();
   const { addTransaction, addNotification } = useNotifications();
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
@@ -136,7 +143,7 @@ export default function TransferModalNew({
       (portfolio?.portfolio?.assets || [])
         .map((a: any) => a.symbol)
         .filter(Boolean) as string[],
-    [portfolio]
+    [portfolio],
   );
   const cryptoPrices = useCryptoPrices(cryptoSymbols);
 
@@ -169,7 +176,7 @@ export default function TransferModalNew({
   })();
 
   const currentAsset = supportedAssets.find(
-    (a) => a.symbol === transferData.asset
+    (a) => a.symbol === transferData.asset,
   );
   const currentBalance = currentAsset?.amount || 0;
   const currentPrice =
@@ -241,20 +248,14 @@ export default function TransferModalNew({
     };
   }, [isOpen, onClose, step]);
 
-  // Fetch user suggestions when step 2 becomes active
-  useEffect(() => {
-    if (step === 2 && showSuggestions) {
-      fetchUserSuggestions(transferData.destination);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  // (suggestions are only shown as recent recipients on focus when input is empty)
 
   // Fetch user suggestions from search API
   const fetchUserSuggestions = async (query: string) => {
     setSuggestionsLoading(true);
     try {
       const res = await fetch(
-        `/api/p2p-transfer/search-users?q=${encodeURIComponent(query)}`
+        `/api/p2p-transfer/search-users?q=${encodeURIComponent(query)}`,
       );
       const data = await res.json();
       if (res.ok && data.users) {
@@ -268,7 +269,12 @@ export default function TransferModalNew({
   };
 
   // Select a user from the suggestions list
-  const selectUser = (user: { name: string | null; email: string | null; accountNumber: string | null; isVerified: boolean }) => {
+  const selectUser = (user: {
+    name: string | null;
+    email: string | null;
+    accountNumber: string | null;
+    isVerified: boolean;
+  }) => {
     const identifier = user.email || user.accountNumber || "";
     setTransferData((prev) => ({ ...prev, destination: identifier }));
     setReceiverName(user.name || identifier);
@@ -289,8 +295,8 @@ export default function TransferModalNew({
     try {
       const res = await fetch(
         `/api/p2p-transfer/lookup-receiver?identifier=${encodeURIComponent(
-          identifier
-        )}`
+          identifier,
+        )}`,
       );
       const data = await res.json();
       if (res.ok && data.receiver) {
@@ -390,9 +396,10 @@ export default function TransferModalNew({
     // Convert from preferred currency to asset amount
     const assetAmount = getAssetAmount(inputAmount);
     // Get USD value for records - crypto amount * USD price
-    const usdValue = transferData.asset === "FIAT" 
-      ? convertAmount(inputAmount, true)  // For fiat, convert amount to USD
-      : assetAmount * currentPrice;        // For crypto, amount * USD price
+    const usdValue =
+      transferData.asset === "FIAT"
+        ? convertAmount(inputAmount, true) // For fiat, convert amount to USD
+        : assetAmount * currentPrice; // For crypto, amount * USD price
 
     startTransition(async () => {
       const result = await transferCryptoAction(
@@ -401,7 +408,7 @@ export default function TransferModalNew({
         transferData.destination,
         transferData.memo,
         inputAmount, // Pass original input amount for history display
-        currentPrice // Pass current market price for accurate USD conversion
+        currentPrice, // Pass current market price for accurate USD conversion
       );
 
       if (!result.success) {
@@ -478,9 +485,15 @@ export default function TransferModalNew({
         >
           {/* Animated background elements - PURPLE theme */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <div className={`absolute top-1/4 left-1/4 w-96 h-96 ${isDark ? "bg-purple-500/10" : "bg-purple-200/30"} rounded-full blur-3xl animate-pulse`} />
-            <div className={`absolute bottom-1/4 right-1/4 w-96 h-96 ${isDark ? "bg-violet-500/10" : "bg-violet-200/30"} rounded-full blur-3xl animate-pulse delay-1000`} />
-            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] ${isDark ? "bg-purple-500/5" : "bg-purple-100/40"} rounded-full blur-3xl`} />
+            <div
+              className={`absolute top-1/4 left-1/4 w-96 h-96 ${isDark ? "bg-purple-500/10" : "bg-purple-200/30"} rounded-full blur-3xl animate-pulse`}
+            />
+            <div
+              className={`absolute bottom-1/4 right-1/4 w-96 h-96 ${isDark ? "bg-violet-500/10" : "bg-violet-200/30"} rounded-full blur-3xl animate-pulse delay-1000`}
+            />
+            <div
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] ${isDark ? "bg-purple-500/5" : "bg-purple-100/40"} rounded-full blur-3xl`}
+            />
           </div>
 
           {/* Back button - top left (hidden on success) */}
@@ -541,7 +554,11 @@ export default function TransferModalNew({
                       />
                     </svg>
                   </div>
-                  <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>Transfer</h2>
+                  <h2
+                    className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                  >
+                    Transfer
+                  </h2>
                 </div>
 
                 {/* Progress Steps */}
@@ -555,8 +572,8 @@ export default function TransferModalNew({
                               step >= s
                                 ? "bg-gradient-to-r from-purple-500 to-violet-500 text-white shadow-sm shadow-purple-500/30"
                                 : isDark
-                                ? "bg-gray-800/50 text-gray-500"
-                                : "bg-gray-100 text-gray-400"
+                                  ? "bg-gray-800/50 text-gray-500"
+                                  : "bg-gray-100 text-gray-400"
                             }`}
                             style={step >= s ? {} : inputStyle}
                           >
@@ -581,7 +598,9 @@ export default function TransferModalNew({
                               className={`w-6 h-0.5 rounded-full ${
                                 step > s
                                   ? "bg-gradient-to-r from-purple-500 to-violet-500"
-                                  : isDark ? "bg-gray-700" : "bg-gray-200"
+                                  : isDark
+                                    ? "bg-gray-700"
+                                    : "bg-gray-200"
                               }`}
                             />
                           )}
@@ -589,7 +608,9 @@ export default function TransferModalNew({
                       ))}
                     </div>
                     <div className="flex justify-center mt-1">
-                      <span className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      <span
+                        className={`text-[10px] ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
                         {step === 1 && "Select Asset"}
                         {step === 2 && "Enter Details"}
                         {step === 3 && "Confirm"}
@@ -620,7 +641,9 @@ export default function TransferModalNew({
                         boxShadow: isDark
                           ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
                           : "0 4px 12px -2px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
-                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.06)",
+                        border: isDark
+                          ? "1px solid rgba(255, 255, 255, 0.08)"
+                          : "1px solid rgba(0, 0, 0, 0.06)",
                       }}
                     >
                       <div className="flex justify-between items-center">
@@ -631,135 +654,182 @@ export default function TransferModalNew({
                             width={28}
                             height={28}
                             className="rounded-full object-cover"
-                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            style={{
+                              filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                            }}
                             unoptimized
                           />
-                          <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                          <span
+                            className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                          >
                             {preferredCurrency}
                           </span>
                         </div>
-                        <span className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                        <span
+                          className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                        >
                           {formatBalanceDisplay(availableBalance)}
                         </span>
                       </div>
                     </div>
 
                     <div className="mb-3">
-                      <label className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      <label
+                        className={`block text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-700"}`}
+                      >
                         Select Asset to Send
                       </label>
-                      <p className={`text-xs mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                        Choose from your available fiat or crypto balance. Only assets with a positive balance are shown.
+                      <p
+                        className={`text-xs mt-0.5 ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                      >
+                        Choose from your available fiat or crypto balance. Only
+                        assets with a positive balance are shown.
                       </p>
                     </div>
                     <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
-                      {supportedAssets.filter((asset: any) => asset.amount > 0).map((asset: any) => {
-                        const isFiat = asset.isFiat || asset.symbol === "FIAT";
-                        const price = isFiat ? 1 : cryptoPrices[asset.symbol]?.price || 0;
-                        const cryptoValue = isFiat ? 0 : asset.amount * price;
-                        const changePercent = isFiat ? undefined : cryptoPrices[asset.symbol]?.changePercent24h;
-                        const isSelected = transferData.asset === asset.symbol;
+                      {supportedAssets
+                        .filter((asset: any) => asset.amount > 0)
+                        .map((asset: any) => {
+                          const isFiat =
+                            asset.isFiat || asset.symbol === "FIAT";
+                          const price = isFiat
+                            ? 1
+                            : cryptoPrices[asset.symbol]?.price || 0;
+                          const cryptoValue = isFiat ? 0 : asset.amount * price;
+                          const changePercent = isFiat
+                            ? undefined
+                            : cryptoPrices[asset.symbol]?.changePercent24h;
+                          const isSelected =
+                            transferData.asset === asset.symbol;
 
-                        return (
-                          <button
-                            key={asset.symbol}
-                            type="button"
-                            onClick={() =>
-                              setTransferData((prev) => ({
-                                ...prev,
-                                asset: asset.symbol,
-                              }))
-                            }
-                            className="w-full text-left transition-all duration-300 rounded-xl px-3 py-1"
-                            style={{
-                              background: isSelected
-                                ? isDark
-                                  ? "linear-gradient(145deg, rgba(168, 85, 247, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)"
-                                  : "linear-gradient(145deg, rgba(168, 85, 247, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%)"
-                                : isDark
-                                  ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
-                                  : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-                              boxShadow: isDark
-                                ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
-                                : "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
-                              border: isSelected
-                                ? "1px solid rgba(168, 85, 247, 0.3)"
-                                : isDark ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.08)",
-                            }}
-                          >
-                            <div className="flex items-center gap-3">
-                              {/* Logo */}
-                              <div
-                                className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
-                                style={{
-                                  background: isFiat
-                                    ? "transparent"
-                                    : isDark
-                                      ? cryptoGradients[asset.symbol] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
-                                      : "#ffffff",
-                                  filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
-                                }}
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                {isFiat ? (
-                                  <img
-                                    src={getCurrencyFlagUrl(preferredCurrency)}
-                                    alt={preferredCurrency}
-                                    width={32}
-                                    height={32}
-                                    className="w-8 h-8 object-cover"
-                                  />
-                                ) : (
-                                  <img
-                                    src={`/crypto/${asset.symbol.toLowerCase()}.svg`}
-                                    alt={asset.symbol}
-                                    width={32}
-                                    height={32}
-                                    className="w-8 h-8"
-                                  />
-                                )}
-                              </div>
-
-                              {/* Left text: amount on top, symbol + % on bottom */}
-                              <div className="flex-1 min-w-0 flex flex-col">
-                                {/* Top: crypto amount (or fiat balance) */}
-                                <div className={`text-base font-bold leading-none ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                                  {isFiat
-                                    ? formatBalanceDisplay(asset.amount)
-                                    : asset.amount.toFixed(8)}
-                                </div>
-                                {/* Bottom: symbol + % change */}
-                                <div className="flex items-baseline gap-1 leading-none mt-0.5">
-                                  <span className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                                    {isFiat ? preferredCurrency : asset.symbol}
-                                  </span>
-                                  {changePercent !== undefined && (
-                                    <span className={`text-xs font-semibold ${changePercent >= 0 ? "text-green-400" : "text-red-400"}`}>
-                                      {changePercent >= 0 ? "+" : ""}{changePercent.toFixed(2)}%
-                                    </span>
+                          return (
+                            <button
+                              key={asset.symbol}
+                              type="button"
+                              onClick={() =>
+                                setTransferData((prev) => ({
+                                  ...prev,
+                                  asset: asset.symbol,
+                                }))
+                              }
+                              className="w-full text-left transition-all duration-300 rounded-xl px-3 py-1"
+                              style={{
+                                background: isSelected
+                                  ? isDark
+                                    ? "linear-gradient(145deg, rgba(168, 85, 247, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%)"
+                                    : "linear-gradient(145deg, rgba(168, 85, 247, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%)"
+                                  : isDark
+                                    ? "linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%)"
+                                    : "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+                                boxShadow: isDark
+                                  ? "0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)"
+                                  : "0 2px 8px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,1)",
+                                border: isSelected
+                                  ? "1px solid rgba(168, 85, 247, 0.3)"
+                                  : isDark
+                                    ? "1px solid rgba(255, 255, 255, 0.05)"
+                                    : "1px solid rgba(0, 0, 0, 0.08)",
+                              }}
+                            >
+                              <div className="flex items-center gap-3">
+                                {/* Logo */}
+                                <div
+                                  className="w-8 h-8 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                                  style={{
+                                    background: isFiat
+                                      ? "transparent"
+                                      : isDark
+                                        ? cryptoGradients[asset.symbol] ||
+                                          "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                                        : "#ffffff",
+                                    filter:
+                                      "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                                  }}
+                                >
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  {isFiat ? (
+                                    <img
+                                      src={getCurrencyFlagUrl(
+                                        preferredCurrency,
+                                      )}
+                                      alt={preferredCurrency}
+                                      width={32}
+                                      height={32}
+                                      className="w-8 h-8 object-cover"
+                                    />
+                                  ) : (
+                                    <img
+                                      src={`/crypto/${asset.symbol.toLowerCase()}.svg`}
+                                      alt={asset.symbol}
+                                      width={32}
+                                      height={32}
+                                      className="w-8 h-8"
+                                    />
                                   )}
                                 </div>
-                              </div>
 
-                              {/* Right: tick on top (when selected), fiat value on bottom */}
-                              <div className="flex flex-col items-end justify-between flex-shrink-0" style={{ minHeight: '2.5rem' }}>
-                                <div className="h-4 flex items-center">
-                                  {isSelected && (
-                                    <svg className="w-4 h-4 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
-                                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                    </svg>
-                                  )}
-                                </div>
-                                {!isFiat && (
-                                  <div className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
-                                    {formatAmount(cryptoValue, 2)}
+                                {/* Left text: amount on top, symbol + % on bottom */}
+                                <div className="flex-1 min-w-0 flex flex-col">
+                                  {/* Top: crypto amount (or fiat balance) */}
+                                  <div
+                                    className={`text-base font-bold leading-none ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                  >
+                                    {isFiat
+                                      ? formatBalanceDisplay(asset.amount)
+                                      : asset.amount.toFixed(8)}
                                   </div>
-                                )}
+                                  {/* Bottom: symbol + % change */}
+                                  <div className="flex items-baseline gap-1 leading-none mt-0.5">
+                                    <span
+                                      className={`text-xs font-semibold ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                    >
+                                      {isFiat
+                                        ? preferredCurrency
+                                        : asset.symbol}
+                                    </span>
+                                    {changePercent !== undefined && (
+                                      <span
+                                        className={`text-xs font-semibold ${changePercent >= 0 ? "text-green-400" : "text-red-400"}`}
+                                      >
+                                        {changePercent >= 0 ? "+" : ""}
+                                        {changePercent.toFixed(2)}%
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Right: tick on top (when selected), fiat value on bottom */}
+                                <div
+                                  className="flex flex-col items-end justify-between flex-shrink-0"
+                                  style={{ minHeight: "2.5rem" }}
+                                >
+                                  <div className="h-4 flex items-center">
+                                    {isSelected && (
+                                      <svg
+                                        className="w-4 h-4 text-purple-400"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                      >
+                                        <path
+                                          fillRule="evenodd"
+                                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                          clipRule="evenodd"
+                                        />
+                                      </svg>
+                                    )}
+                                  </div>
+                                  {!isFiat && (
+                                    <div
+                                      className={`text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                                    >
+                                      {formatAmount(cryptoValue, 2)}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </button>
-                        );
-                      })}
+                            </button>
+                          );
+                        })}
                     </div>
 
                     <button
@@ -804,7 +874,9 @@ export default function TransferModalNew({
                         boxShadow: isDark
                           ? "0 10px 30px -5px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1)"
                           : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1)",
-                        border: isDark ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(0, 0, 0, 0.08)",
+                        border: isDark
+                          ? "1px solid rgba(255, 255, 255, 0.08)"
+                          : "1px solid rgba(0, 0, 0, 0.08)",
                       }}
                     >
                       <div className="flex justify-between items-center">
@@ -815,14 +887,20 @@ export default function TransferModalNew({
                             width={28}
                             height={28}
                             className="rounded-full object-cover"
-                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            style={{
+                              filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                            }}
                             unoptimized
                           />
-                          <span className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                          <span
+                            className={`text-sm font-semibold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                          >
                             {preferredCurrency}
                           </span>
                         </div>
-                        <span className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                        <span
+                          className={`text-lg font-bold ${isDark ? "text-gray-300" : "text-gray-600"}`}
+                        >
                           {formatBalanceDisplay(availableBalance)}
                         </span>
                       </div>
@@ -841,7 +919,8 @@ export default function TransferModalNew({
                         className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden"
                         style={{
                           background: isDark
-                            ? cryptoGradients[transferData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                            ? cryptoGradients[transferData.asset] ||
+                              "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : transferData.asset === "FIAT"
                               ? "transparent"
                               : "#ffffff",
@@ -855,7 +934,9 @@ export default function TransferModalNew({
                             src={getCurrencyFlagUrl(preferredCurrency)}
                             alt={preferredCurrency}
                             className="w-10 h-10 object-cover"
-                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            style={{
+                              filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                            }}
                           />
                         ) : (
                           <img
@@ -866,19 +947,22 @@ export default function TransferModalNew({
                         )}
                       </div>
                       <div>
-                        <div className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <div
+                          className={`text-sm font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           Sending{" "}
                           {transferData.asset === "FIAT"
                             ? preferredCurrency
                             : transferData.asset}
                         </div>
-
                       </div>
                     </div>
 
                     {/* Recipient Input */}
                     <div>
-                      <label className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
+                      <label
+                        className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}
+                      >
                         Recipient
                       </label>
                       <input
@@ -895,13 +979,16 @@ export default function TransferModalNew({
                             setReceiverVerified(false);
                           } else {
                             lookupReceiver(val);
+                            // Hide suggestions while typing — lookupReceiver handles exact match
+                            setShowSuggestions(false);
                           }
-                          fetchUserSuggestions(val);
-                          setShowSuggestions(true);
                         }}
                         onFocus={() => {
-                          setShowSuggestions(true);
-                          fetchUserSuggestions(transferData.destination);
+                          // Only show recent recipients when the field is empty
+                          if (!transferData.destination.trim()) {
+                            setShowSuggestions(true);
+                            fetchUserSuggestions(""); // empty query = sender's own transfer history only
+                          }
                         }}
                         onBlur={() => {
                           // Delay so onMouseDown in suggestion list fires first
@@ -927,16 +1014,27 @@ export default function TransferModalNew({
                               : "1px solid rgba(0,0,0,0.08)",
                           }}
                         >
-                          <div className={`px-3 py-2 text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                            {transferData.destination.length > 0 ? "Search Results" : "Recent Recipients"}
+                          <div
+                            className={`px-3 py-2 text-[10px] font-semibold uppercase tracking-wider ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                          >
+                            {transferData.destination.length > 0
+                              ? "Search Results"
+                              : "Recent Recipients"}
                           </div>
                           {suggestionsLoading ? (
-                            <div className={`px-3 py-3 text-xs flex items-center gap-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                              <span className="animate-spin">⏳</span> Searching...
+                            <div
+                              className={`px-3 py-3 text-xs flex items-center gap-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                            >
+                              <span className="animate-spin">⏳</span>{" "}
+                              Searching...
                             </div>
                           ) : userSuggestions.length === 0 ? (
-                            <div className={`px-3 py-3 text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}>
-                              {transferData.destination.length > 0 ? "No users found" : "No recent transfers yet"}
+                            <div
+                              className={`px-3 py-3 text-xs ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                            >
+                              {transferData.destination.length > 0
+                                ? "No users found"
+                                : "No recent transfers yet"}
                             </div>
                           ) : (
                             <div className="max-h-48 overflow-y-auto">
@@ -955,39 +1053,56 @@ export default function TransferModalNew({
                                   }`}
                                 >
                                   {/* Avatar */}
-                                  <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold overflow-hidden ${
-                                    user.isVerified
-                                      ? "bg-gradient-to-br from-green-500 to-green-600"
-                                      : "bg-gradient-to-br from-gray-500 to-gray-600"
-                                  }`}>
+                                  <div
+                                    className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-white text-sm font-bold overflow-hidden ${
+                                      user.isVerified
+                                        ? "bg-gradient-to-br from-green-500 to-green-600"
+                                        : "bg-gradient-to-br from-gray-500 to-gray-600"
+                                    }`}
+                                  >
                                     {user.image ? (
                                       // eslint-disable-next-line @next/next/no-img-element
-                                      <img src={user.image} alt={user.name || ""} className="w-8 h-8 object-cover" />
+                                      <img
+                                        src={user.image}
+                                        alt={user.name || ""}
+                                        className="w-8 h-8 object-cover"
+                                      />
                                     ) : (
-                                      (user.name || user.email || "?").charAt(0).toUpperCase()
+                                      (user.name || user.email || "?")
+                                        .charAt(0)
+                                        .toUpperCase()
                                     )}
                                   </div>
                                   {/* Info */}
                                   <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-1">
-                                      <span className={`text-sm font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+                                      <span
+                                        className={`text-sm font-semibold truncate ${isDark ? "text-white" : "text-gray-900"}`}
+                                      >
                                         {user.name || "Unknown"}
                                       </span>
                                       {user.isVerified && (
-                                        <VscVerifiedFilled className="text-green-500 flex-shrink-0" size={13} />
+                                        <VscVerifiedFilled
+                                          className="text-green-500 flex-shrink-0"
+                                          size={13}
+                                        />
                                       )}
                                     </div>
-                                    <div className={`text-xs truncate ${isDark ? "text-gray-500" : "text-gray-400"}`}>
+                                    <div
+                                      className={`text-xs truncate ${isDark ? "text-gray-500" : "text-gray-400"}`}
+                                    >
                                       {user.email}
                                     </div>
                                   </div>
                                   {/* Account number badge */}
                                   {user.accountNumber && (
-                                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex-shrink-0 ${
-                                      isDark
-                                        ? "bg-gray-700 text-gray-400"
-                                        : "bg-gray-100 text-gray-500"
-                                    }`}>
+                                    <span
+                                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded flex-shrink-0 ${
+                                        isDark
+                                          ? "bg-gray-700 text-gray-400"
+                                          : "bg-gray-100 text-gray-500"
+                                      }`}
+                                    >
                                       #{user.accountNumber}
                                     </span>
                                   )}
@@ -1026,30 +1141,47 @@ export default function TransferModalNew({
                             boxShadow: isDark
                               ? "0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 -1px 0 rgba(0, 0, 0, 0.3)"
                               : "0 4px 12px -2px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 1), inset 0 -1px 0 rgba(0, 0, 0, 0.05)",
-                            border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.08)",
+                            border: isDark
+                              ? "1px solid rgba(255, 255, 255, 0.1)"
+                              : "1px solid rgba(0, 0, 0, 0.08)",
                           }}
                         >
                           <div className="flex items-center gap-2">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${receiverVerified ? "bg-gradient-to-br from-green-500 to-green-600" : "bg-gradient-to-br from-gray-500 to-gray-600"}`}>
+                            <div
+                              className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold ${receiverVerified ? "bg-gradient-to-br from-green-500 to-green-600" : "bg-gradient-to-br from-gray-500 to-gray-600"}`}
+                            >
                               {receiverName.charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <span className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}>
+                                <span
+                                  className={`font-semibold text-sm truncate ${isDark ? "text-white" : "text-gray-900"}`}
+                                >
                                   {receiverName}
                                 </span>
                                 {receiverVerified && (
-                                  <VscVerifiedFilled className="text-green-500 flex-shrink-0" size={16} />
+                                  <VscVerifiedFilled
+                                    className="text-green-500 flex-shrink-0"
+                                    size={16}
+                                  />
                                 )}
                               </div>
-                              <p className={`text-xs ${receiverVerified ? "text-green-500" : "text-yellow-500"}`}>
-                                {receiverVerified ? "✓ Verified Account" : "⚠ Unverified Account"}
+                              <p
+                                className={`text-xs ${receiverVerified ? "text-green-500" : "text-yellow-500"}`}
+                              >
+                                {receiverVerified
+                                  ? "✓ Verified Account"
+                                  : "⚠ Unverified Account"}
                               </p>
                             </div>
                           </div>
                           {!receiverVerified && (
-                            <div className={`mt-2 p-2 rounded-lg text-xs ${isDark ? "bg-yellow-500/10 border border-yellow-500/20 text-yellow-300" : "bg-yellow-50 border border-yellow-200 text-yellow-700"}`}>
-                              ⚠️ This recipient&apos;s account is not verified. Please ensure you know this person before sending funds.
+                            <div
+                              className={`mt-2 p-2 rounded-lg text-xs ${isDark ? "bg-yellow-500/10 border border-yellow-500/20 text-yellow-300" : "bg-yellow-50 border border-yellow-200 text-yellow-700"}`}
+                            >
+                              ⚠️ This recipient&apos;s account is not verified.
+                              Please ensure you know this person before sending
+                              funds.
                             </div>
                           )}
                         </div>
@@ -1063,11 +1195,15 @@ export default function TransferModalNew({
 
                     {/* Amount Input - Always in preferred currency */}
                     <div>
-                      <label className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
+                      <label
+                        className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}
+                      >
                         Amount ({preferredCurrency})
                       </label>
                       <div className="relative">
-                        <span className={`absolute left-4 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400" : "text-gray-500"} font-medium text-sm`}>
+                        <span
+                          className={`absolute left-4 top-1/2 -translate-y-1/2 ${isDark ? "text-gray-400" : "text-gray-500"} font-medium text-sm`}
+                        >
                           {currencySymbol}
                         </span>
                         <input
@@ -1101,8 +1237,12 @@ export default function TransferModalNew({
                               background: isDark
                                 ? "linear-gradient(145deg, #374151 0%, #1f2937 100%)"
                                 : "linear-gradient(145deg, #f1f5f9 0%, #e2e8f0 100%)",
-                              boxShadow: isDark ? "0 2px 8px -2px rgba(0, 0, 0, 0.4)" : "0 2px 6px -2px rgba(0, 0, 0, 0.1)",
-                              border: isDark ? "1px solid rgba(255, 255, 255, 0.06)" : "1px solid rgba(0, 0, 0, 0.08)",
+                              boxShadow: isDark
+                                ? "0 2px 8px -2px rgba(0, 0, 0, 0.4)"
+                                : "0 2px 6px -2px rgba(0, 0, 0, 0.1)",
+                              border: isDark
+                                ? "1px solid rgba(255, 255, 255, 0.06)"
+                                : "1px solid rgba(0, 0, 0, 0.08)",
                             }}
                           >
                             {currencySymbol}
@@ -1117,7 +1257,7 @@ export default function TransferModalNew({
                           if (transferData.asset === "FIAT") {
                             const maxAmount = Math.max(
                               0,
-                              currentBalance - 0.01
+                              currentBalance - 0.01,
                             ); // Small fee buffer
                             setTransferData((prev) => ({
                               ...prev,
@@ -1126,7 +1266,7 @@ export default function TransferModalNew({
                           } else {
                             const maxInUSD = Math.max(
                               0,
-                              (currentBalance - transferFee) * currentPrice
+                              (currentBalance - transferFee) * currentPrice,
                             );
                             const maxInPreferred = convertAmount(maxInUSD);
                             setTransferData((prev) => ({
@@ -1147,7 +1287,9 @@ export default function TransferModalNew({
 
                     {/* Memo Input */}
                     <div>
-                      <label className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}>
+                      <label
+                        className={`block text-xs font-semibold ${isDark ? "text-gray-300" : "text-gray-700"} mb-2`}
+                      >
                         Memo (Optional)
                       </label>
                       <textarea
@@ -1176,27 +1318,41 @@ export default function TransferModalNew({
                         }}
                       >
                         <div className="flex justify-between items-center mb-2">
-                          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>Amount:</span>
-                          <span className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <span
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            Amount:
+                          </span>
+                          <span
+                            className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
                             {currencySymbol}
                             {parseFloat(transferData.amount).toFixed(2)}
                           </span>
                         </div>
                         {transferData.asset !== "FIAT" && (
                           <div className="flex justify-between items-center mb-2">
-                            <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                            <span
+                              className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                            >
                               You send:
                             </span>
-                            <span className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}>
+                            <span
+                              className={`font-medium text-sm ${isDark ? "text-white" : "text-gray-900"}`}
+                            >
                               {getAssetAmount(
-                                parseFloat(transferData.amount)
+                                parseFloat(transferData.amount),
                               ).toFixed(8)}{" "}
                               {transferData.asset}
                             </span>
                           </div>
                         )}
                         <div className="flex justify-between items-center">
-                          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>To:</span>
+                          <span
+                            className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                          >
+                            To:
+                          </span>
                           <span className="text-purple-400 font-bold">
                             {receiverName || transferData.destination}
                           </span>
@@ -1241,7 +1397,8 @@ export default function TransferModalNew({
                         className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 overflow-hidden"
                         style={{
                           background: isDark
-                            ? cryptoGradients[transferData.asset] || "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
+                            ? cryptoGradients[transferData.asset] ||
+                              "linear-gradient(145deg, #334155 0%, #1e293b 100%)"
                             : transferData.asset === "FIAT"
                               ? "transparent"
                               : "#ffffff",
@@ -1258,25 +1415,28 @@ export default function TransferModalNew({
                             src={getCurrencyFlagUrl(preferredCurrency)}
                             alt={preferredCurrency}
                             className="w-14 h-14 object-cover"
-                            style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))" }}
+                            style={{
+                              filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.35))",
+                            }}
                           />
                         ) : (
-                          <CryptoIcon
-                            symbol={transferData.asset}
-                            size="xl"
-                          />
+                          <CryptoIcon symbol={transferData.asset} size="xl" />
                         )}
                       </div>
-                      <p className={`text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      <p
+                        className={`text-xs mb-1 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
                         You&apos;re sending
                       </p>
-                      <p className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+                      <p
+                        className={`text-2xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}
+                      >
                         {transferData.asset === "FIAT"
                           ? `${currencySymbol}${parseFloat(
-                              transferData.amount
+                              transferData.amount,
                             ).toFixed(2)}`
                           : getAssetAmount(
-                              parseFloat(transferData.amount)
+                              parseFloat(transferData.amount),
                             ).toFixed(8)}
                       </p>
                       <p className="text-purple-400 font-semibold">
@@ -1284,7 +1444,9 @@ export default function TransferModalNew({
                           ? preferredCurrency
                           : transferData.asset}
                       </p>
-                      <p className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                      <p
+                        className={`text-xs mt-2 ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                      >
                         To: {receiverName || transferData.destination}
                       </p>
                     </div>
@@ -1294,47 +1456,81 @@ export default function TransferModalNew({
                       style={getCard3DStyle(isDark)}
                     >
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Recipient:</span>
-                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Recipient:
+                        </span>
+                        <span
+                          className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {receiverName || transferData.destination}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount:</span>
-                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Amount:
+                        </span>
+                        <span
+                          className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {transferData.asset === "FIAT"
                             ? `${currencySymbol}${parseFloat(
-                                transferData.amount
+                                transferData.amount,
                               ).toFixed(2)}`
                             : `${getAssetAmount(
-                                parseFloat(transferData.amount)
+                                parseFloat(transferData.amount),
                               ).toFixed(8)} ${transferData.asset}`}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Network Fee:</span>
-                        <span className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Network Fee:
+                        </span>
+                        <span
+                          className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {formatAmount(transferFee, 4)}
                         </span>
                       </div>
                       {transferData.memo && (
                         <div className="flex justify-between text-sm">
-                          <span className={isDark ? "text-gray-400" : "text-gray-500"}>Memo:</span>
-                          <span className={`font-medium truncate max-w-[150px] ${isDark ? "text-white" : "text-gray-900"}`}>
+                          <span
+                            className={
+                              isDark ? "text-gray-400" : "text-gray-500"
+                            }
+                          >
+                            Memo:
+                          </span>
+                          <span
+                            className={`font-medium truncate max-w-[150px] ${isDark ? "text-white" : "text-gray-900"}`}
+                          >
                             {transferData.memo}
                           </span>
                         </div>
                       )}
-                      <hr className={isDark ? "border-gray-700" : "border-gray-200"} />
+                      <hr
+                        className={
+                          isDark ? "border-gray-700" : "border-gray-200"
+                        }
+                      />
                       <div className="flex justify-between font-bold">
-                        <span className={isDark ? "text-gray-300" : "text-gray-700"}>Total:</span>
+                        <span
+                          className={isDark ? "text-gray-300" : "text-gray-700"}
+                        >
+                          Total:
+                        </span>
                         <span className="text-purple-400">
                           {transferData.asset === "FIAT"
                             ? `${currencySymbol}${parseFloat(
-                                transferData.amount
+                                transferData.amount,
                               ).toFixed(2)}`
                             : `${getAssetAmount(
-                                parseFloat(transferData.amount)
+                                parseFloat(transferData.amount),
                               ).toFixed(8)} ${transferData.asset}`}
                         </span>
                       </div>
@@ -1430,10 +1626,14 @@ export default function TransferModalNew({
                       </motion.div>
                     </div>
 
-                    <h3 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"} text-center`}>
+                    <h3
+                      className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"} text-center`}
+                    >
                       Transfer Successful!
                     </h3>
-                    <p className={`text-sm text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    <p
+                      className={`text-sm text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}
+                    >
                       Your transfer has been sent
                     </p>
 
@@ -1446,35 +1646,63 @@ export default function TransferModalNew({
                       }}
                     >
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Sent To:</span>
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Sent To:
+                        </span>
+                        <span
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {successData.recipientName || successData.recipient}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Asset:</span>
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Asset:
+                        </span>
+                        <span
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {successData.asset === "FIAT"
                             ? preferredCurrency
                             : successData.asset}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Amount Sent:</span>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Amount Sent:
+                        </span>
                         <span className="text-purple-400 font-bold">
                           {currencySymbol}
                           {parseFloat(transferData.amount).toFixed(2)}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Date:</span>
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Date:
+                        </span>
+                        <span
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {new Date().toLocaleDateString()}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className={isDark ? "text-gray-400" : "text-gray-500"}>Time:</span>
-                        <span className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+                        <span
+                          className={isDark ? "text-gray-400" : "text-gray-500"}
+                        >
+                          Time:
+                        </span>
+                        <span
+                          className={`font-semibold ${isDark ? "text-white" : "text-gray-900"}`}
+                        >
                           {new Date().toLocaleTimeString()}
                         </span>
                       </div>

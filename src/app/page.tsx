@@ -262,7 +262,7 @@ function Hero() {
 
       {/* Trustpilot Badge - IQ Option style */}
       <div className="absolute inset-0 z-20 pointer-events-none flex items-end justify-center pb-44">
-        <p className="flex items-center text-[16px] font-medium leading-6 tracking-[0.1px] text-[#4a4a4a] dark:text-[#afadac]">
+        <p className="flex items-center text-[16px] font-bold leading-6 tracking-[0.1px] text-[#4a4a4a] dark:text-[#afadac]">
           <svg
             width="25"
             height="24"

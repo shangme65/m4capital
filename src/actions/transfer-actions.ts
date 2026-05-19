@@ -27,7 +27,7 @@ export async function transferCryptoAction(
   destination: string,
   memo?: string,
   originalInputAmount?: number, // Original amount user entered in their preferred currency
-  currentPrice?: number // Current market price for accurate USD conversion
+  currentPrice?: number, // Current market price for accurate USD conversion
 ): Promise<TransferActionResult> {
   try {
     const session = await getServerSession(authOptions);
@@ -84,11 +84,11 @@ export async function transferCryptoAction(
 
     // Check if transferring FIAT or crypto
     const isFiat = asset === "FIAT" || asset === "USD";
-    
+
     // Get currencies for proper display
     const senderCurrency = sender.preferredCurrency || "USD";
     const recipientCurrency = recipient.preferredCurrency || "USD";
-    
+
     // Generate transaction reference
     const transactionReference = generateTransactionReference();
 
@@ -111,7 +111,7 @@ export async function transferCryptoAction(
           const convertedAmount = await convertCurrency(
             displayAmount,
             senderCurrency,
-            recipientCurrency
+            recipientCurrency,
           );
           receiverMessage = `You have successfully received a transfer of ${senderSymbol}${displayAmount.toFixed(2)} → ${recipientSymbol}${convertedAmount.toFixed(2)} from ${
             sender.name || sender.email
@@ -130,7 +130,7 @@ export async function transferCryptoAction(
 
         // Add to recipient
         const recipientBalance = parseFloat(
-          recipientPortfolio.balance.toString()
+          recipientPortfolio.balance.toString(),
         );
         await tx.portfolio.update({
           where: { id: recipientPortfolio.id },
@@ -140,7 +140,7 @@ export async function transferCryptoAction(
         // Create P2P Transfer record for transaction history
         // Use originalInputAmount if provided, otherwise fallback to amount
         const displaySenderAmount = originalInputAmount ?? amount;
-        
+
         await tx.p2PTransfer.create({
           data: {
             id: transactionReference,
@@ -196,7 +196,7 @@ export async function transferCryptoAction(
     } else {
       // Transfer crypto asset
       const senderAssetIndex = senderAssets.findIndex(
-        (a) => a.symbol.toUpperCase() === asset.toUpperCase()
+        (a) => a.symbol.toUpperCase() === asset.toUpperCase(),
       );
 
       if (senderAssetIndex === -1) {
@@ -215,17 +215,50 @@ export async function transferCryptoAction(
       const cryptoPrice = (currentPrice ?? senderAssetData.averagePrice) || 0;
       const usdValue = amount * cryptoPrice;
       const recipientSymbol = getCurrencySymbol(recipientCurrency);
+      const senderSymbolCrypto = getCurrencySymbol(senderCurrency);
       let receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} from ${
         sender.name || sender.email
       }`;
+      // Use the original input amount (what the user actually typed) for the sender message
+      // to avoid rounding errors from re-deriving fiat via cryptoQty × price → USD → fiat
+      const senderFiatDisplay =
+        originalInputAmount != null
+          ? `${senderSymbolCrypto}${originalInputAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+          : null;
+      let senderMessage = `Your transfer of ${amount.toFixed(8)} ${asset} to ${
+        recipient.name || recipient.email
+      } has been sent successfully`;
+      if (senderFiatDisplay) {
+        senderMessage = `You successfully sent ${amount.toFixed(8)} ${asset} (${asset}) for ${senderFiatDisplay} to ${
+          recipient.name || recipient.email
+        }`;
+      }
       if (usdValue > 0) {
         try {
-          const fiatValue = await convertCurrency(usdValue, "USD", recipientCurrency);
-          receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} → ${recipientSymbol}${fiatValue.toFixed(2)} from ${
+          const fiatValueRecipient = await convertCurrency(
+            usdValue,
+            "USD",
+            recipientCurrency,
+          );
+          receiverMessage = `You have successfully received a transfer of ${amount.toFixed(8)} ${asset} → ${recipientSymbol}${fiatValueRecipient.toFixed(2)} from ${
             sender.name || sender.email
           }`;
+          // Only derive sender fiat from conversion if originalInputAmount wasn't provided
+          if (!senderFiatDisplay) {
+            const fiatValueSender = await convertCurrency(
+              usdValue,
+              "USD",
+              senderCurrency,
+            );
+            senderMessage = `You successfully sent ${amount.toFixed(8)} ${asset} (${asset}) for ${senderSymbolCrypto}${fiatValueSender.toFixed(2)} to ${
+              recipient.name || recipient.email
+            }`;
+          }
         } catch (error) {
-          console.error("Failed to convert crypto value for notification:", error);
+          console.error(
+            "Failed to convert crypto value for notification:",
+            error,
+          );
         }
       }
 
@@ -245,12 +278,12 @@ export async function transferCryptoAction(
 
         // Add to recipient
         const recipientAssetIndex = recipientAssets.findIndex(
-          (a) => a.symbol.toUpperCase() === asset.toUpperCase()
+          (a) => a.symbol.toUpperCase() === asset.toUpperCase(),
         );
 
         if (recipientAssetIndex >= 0) {
           const currentRecipientBalance = parseFloat(
-            recipientAssets[recipientAssetIndex].amount.toString()
+            recipientAssets[recipientAssetIndex].amount.toString(),
           );
           recipientAssets[recipientAssetIndex].amount =
             currentRecipientBalance + amount;
@@ -301,9 +334,7 @@ export async function transferCryptoAction(
             userId: sender.id,
             type: "TRANSACTION",
             title: "Transfer Sent",
-            message: `Your transfer of ${amount.toFixed(8)} ${asset} to ${
-              recipient.name || recipient.email
-            } has been sent successfully`,
+            message: senderMessage,
             amount: -amount,
             asset: asset,
           },
