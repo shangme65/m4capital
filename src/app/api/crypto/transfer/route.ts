@@ -851,6 +851,18 @@ export async function POST(request: NextRequest) {
       asset,
     );
 
+    // Convert USD value to each user's preferred currency for notification display
+    const senderFiatValue = convertCurrency(
+      usdValue,
+      "USD",
+      userPreferredCurrency,
+    );
+    const recipientFiatValue = convertCurrency(
+      usdValue,
+      "USD",
+      recipientPreferredCurrency,
+    );
+
     // Save in-app notification for sender to the database
     await prisma.notification.create({
       data: {
@@ -858,7 +870,7 @@ export async function POST(request: NextRequest) {
         userId: sender.id,
         type: "TRANSACTION",
         title: `${asset} Sent`,
-        message: `You sent ${amount.toFixed(8)} ${asset} to ${recipient.name || destination}`,
+        message: `You sent ${amount.toFixed(8)} ${asset} (${currSymbol}${senderFiatValue.toFixed(2)} ${userPreferredCurrency}) to ${recipient.name || destination}`,
         amount: new Decimal(amount),
         asset: asset,
       },
@@ -871,7 +883,7 @@ export async function POST(request: NextRequest) {
         userId: recipient.id,
         type: "TRANSACTION",
         title: `${asset} Received`,
-        message: `You received ${amount.toFixed(8)} ${asset} from ${sender.name || sender.email}`,
+        message: `You received ${amount.toFixed(8)} ${asset} (${recipientCurrSymbol}${recipientFiatValue.toFixed(2)} ${recipientPreferredCurrency}) from ${sender.name || sender.email}`,
         amount: new Decimal(amount),
         asset: asset,
       },

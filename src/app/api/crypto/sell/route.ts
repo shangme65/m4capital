@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: "Authentication required" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
     if (!user.Portfolio) {
       return NextResponse.json(
         { error: "Portfolio not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -73,14 +73,13 @@ export async function POST(request: NextRequest) {
     // Convert netReceived from USD to the portfolio's balance currency
     let netReceivedInBalanceCurrency = netReceivedUSD;
     if (balanceCurrency !== "USD") {
-      const { getExchangeRates, convertCurrency } = await import(
-        "@/lib/currencies"
-      );
+      const { getExchangeRates, convertCurrency } =
+        await import("@/lib/currencies");
       const exchangeRates = await getExchangeRates();
       netReceivedInBalanceCurrency = convertCurrency(
         netReceivedUSD,
         balanceCurrency,
-        exchangeRates
+        exchangeRates,
       );
     }
 
@@ -95,7 +94,7 @@ export async function POST(request: NextRequest) {
     if (assetIndex === -1) {
       return NextResponse.json(
         { error: `You don't own any ${symbol}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -107,7 +106,7 @@ export async function POST(request: NextRequest) {
         {
           error: `Insufficient ${symbol}. You have ${currentAsset.amount} but tried to sell ${amount}`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -119,13 +118,13 @@ export async function POST(request: NextRequest) {
     } else {
       // Reduce amount
       updatedAssets = currentAssets.map((a) =>
-        a.symbol === symbol ? { ...a, amount: a.amount - amount } : a
+        a.symbol === symbol ? { ...a, amount: a.amount - amount } : a,
       );
     }
 
     // Update portfolio balance - add the converted amount in the portfolio's currency
     const newBalance = new Decimal(portfolio.balance).plus(
-      netReceivedInBalanceCurrency
+      netReceivedInBalanceCurrency,
     );
 
     const [updatedPortfolio, trade] = await prisma.$transaction([
@@ -168,12 +167,12 @@ export async function POST(request: NextRequest) {
 
     console.log(
       `✅ Crypto sale: ${amount} ${symbol} for ${balanceCurrency} ${netReceivedInBalanceCurrency.toFixed(
-        2
+        2,
       )} (USD $${netReceivedUSD.toFixed(
-        2
+        2,
       )}) | New balance: ${balanceCurrency} ${parseFloat(
-        newBalance.toString()
-      )}`
+        newBalance.toString(),
+      )}`,
     );
 
     // Send email notification
@@ -181,7 +180,8 @@ export async function POST(request: NextRequest) {
       console.log("📧 Starting email notification process for sell...");
 
       const { sendEmail } = await import("@/lib/email");
-      const { cryptoSaleTemplate, cryptoSaleTextTemplate } = await import("@/lib/email-templates");
+      const { cryptoSaleTemplate, cryptoSaleTextTemplate } =
+        await import("@/lib/email-templates");
       const { getCurrencySymbol, getExchangeRates, convertCurrency } =
         await import("@/lib/currencies");
 
@@ -225,18 +225,18 @@ export async function POST(request: NextRequest) {
           displayPrice = convertCurrency(
             price,
             preferredCurrency,
-            exchangeRates
+            exchangeRates,
           );
           displayTotalValue = convertCurrency(
             totalValue,
             preferredCurrency,
-            exchangeRates
+            exchangeRates,
           );
           displayFee = convertCurrency(fee, preferredCurrency, exchangeRates);
           displayNetReceived = convertCurrency(
             netReceivedUSD,
             preferredCurrency,
-            exchangeRates
+            exchangeRates,
           );
         }
 
@@ -253,24 +253,24 @@ export async function POST(request: NextRequest) {
           symbol === "BTC"
             ? "Bitcoin"
             : symbol === "ETH"
-            ? "Ethereum"
-            : symbol === "XRP"
-            ? "Ripple"
-            : symbol === "LTC"
-            ? "Litecoin"
-            : symbol === "BCH"
-            ? "Bitcoin Cash"
-            : symbol === "ETC"
-            ? "Ethereum Classic"
-            : symbol === "TRX"
-            ? "Tron"
-            : symbol === "TON"
-            ? "Toncoin"
-            : symbol === "USDC"
-            ? "USD Coin"
-            : symbol === "USDT"
-            ? "Tether"
-            : symbol;
+              ? "Ethereum"
+              : symbol === "XRP"
+                ? "Ripple"
+                : symbol === "LTC"
+                  ? "Litecoin"
+                  : symbol === "BCH"
+                    ? "Bitcoin Cash"
+                    : symbol === "ETC"
+                      ? "Ethereum Classic"
+                      : symbol === "TRX"
+                        ? "Tron"
+                        : symbol === "TON"
+                          ? "Toncoin"
+                          : symbol === "USDC"
+                            ? "USD Coin"
+                            : symbol === "USDT"
+                              ? "Tether"
+                              : symbol;
 
         const emailResult = await sendEmail({
           to: userWithPrefs.email,
@@ -285,7 +285,7 @@ export async function POST(request: NextRequest) {
             displayFee,
             displayNetReceived,
             displayNewBalance,
-            currencySymbol
+            currencySymbol,
           ),
           text: cryptoSaleTextTemplate(
             userWithPrefs.name || "User",
@@ -297,14 +297,14 @@ export async function POST(request: NextRequest) {
             displayFee,
             displayNetReceived,
             displayNewBalance,
-            currencySymbol
+            currencySymbol,
           ),
         });
 
         console.log(`📧 Email sent successfully:`, emailResult);
       } else {
         console.log(
-          "📧 Email not sent - user has notifications disabled or no email"
+          "📧 Email not sent - user has notifications disabled or no email",
         );
       }
     } catch (emailError) {
@@ -322,31 +322,31 @@ export async function POST(request: NextRequest) {
         symbol === "BTC"
           ? "Bitcoin"
           : symbol === "ETH"
-          ? "Ethereum"
-          : symbol === "XRP"
-          ? "Ripple"
-          : symbol === "LTC"
-          ? "Litecoin"
-          : symbol === "BCH"
-          ? "Bitcoin Cash"
-          : symbol === "ETC"
-          ? "Ethereum Classic"
-          : symbol === "TRX"
-          ? "Tron"
-          : symbol === "TON"
-          ? "Toncoin"
-          : symbol === "USDC"
-          ? "USD Coin"
-          : symbol === "USDT"
-          ? "Tether"
-          : symbol;
+            ? "Ethereum"
+            : symbol === "XRP"
+              ? "Ripple"
+              : symbol === "LTC"
+                ? "Litecoin"
+                : symbol === "BCH"
+                  ? "Bitcoin Cash"
+                  : symbol === "ETC"
+                    ? "Ethereum Classic"
+                    : symbol === "TRX"
+                      ? "Tron"
+                      : symbol === "TON"
+                        ? "Toncoin"
+                        : symbol === "USDC"
+                          ? "USD Coin"
+                          : symbol === "USDT"
+                            ? "Tether"
+                            : symbol;
 
       let displayAmount = netReceivedUSD;
       const currencySymbol = getCurrencySymbol(userCurrency);
 
       if (userCurrency !== "USD") {
         const ratesResponse = await fetch(
-          "https://api.frankfurter.app/latest?from=USD"
+          "https://api.frankfurter.app/latest?from=USD",
         );
         if (ratesResponse.ok) {
           const ratesData = await ratesResponse.json();
@@ -361,7 +361,7 @@ export async function POST(request: NextRequest) {
         .substr(2, 9)}`;
       const notificationTitle = `You've sold ${assetName}`;
       const notificationMessage = `Successfully sold ${amount.toFixed(
-        8
+        8,
       )} ${symbol} for ${currencySymbol}${displayAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
       await sendWebPushToUser(user.id, {
@@ -399,7 +399,7 @@ export async function POST(request: NextRequest) {
       {
         error: error instanceof Error ? error.message : "Internal server error",
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
